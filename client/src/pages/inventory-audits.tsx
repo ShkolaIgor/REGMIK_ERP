@@ -44,6 +44,7 @@ export default function InventoryAuditsPage() {
   const [isItemFormOpen, setIsItemFormOpen] = useState(false);
   const [editingAudit, setEditingAudit] = useState<any>(null);
   const [selectedAudit, setSelectedAudit] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -251,23 +252,49 @@ export default function InventoryAuditsPage() {
 
   if (isLoading) return <div>Завантаження...</div>;
 
+  // Фільтрація інвентаризацій за пошуковим запитом
+  const filteredAudits = audits.filter((audit: any) =>
+    audit.auditNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (audit.warehouse?.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (audit.responsiblePerson ? `${audit.responsiblePerson.firstName} ${audit.responsiblePerson.lastName}` : "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Інвентаризація</h1>
-          <p className="text-muted-foreground">
-            Управління інвентаризаціями товарних запасів
-          </p>
-        </div>
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => { setEditingAudit(null); form.reset(); }}>
-              <Plus className="mr-2 h-4 w-4" />
-              Нова інвентаризація
+    <div className="flex-1 overflow-auto">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <h2 className="text-2xl font-semibold text-gray-900">Інвентаризації</h2>
+            <Badge className="bg-green-100 text-green-800">
+              <div className="w-2 h-2 bg-green-500 rounded-full mr-1" />
+              Онлайн
+            </Badge>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Пошук інвентаризацій..."
+                className="w-80 pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Button onClick={() => { setEditingAudit(null); form.reset(); setIsFormOpen(true); }}>
+              <Plus className="w-4 h-4 mr-2" />
+              Створити інвентаризацію
             </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          </div>
+        </div>
+      </header>
+
+      {/* Content */}
+      <div className="p-6">
+        <div className="space-y-6">
+          {/* Dialog для форми */}
+          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>
                 {editingAudit ? "Редагувати інвентаризацію" : "Нова інвентаризація"}
