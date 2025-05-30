@@ -214,5 +214,26 @@ export type InsertTechCardStep = z.infer<typeof insertTechCardStepSchema>;
 export type TechCardMaterial = typeof techCardMaterials.$inferSelect;
 export type InsertTechCardMaterial = z.infer<typeof insertTechCardMaterialSchema>;
 
+export const costCalculations = pgTable("cost_calculations", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").references(() => products.id).notNull(),
+  materialCost: decimal("material_cost", { precision: 12, scale: 2 }).notNull().default("0"),
+  laborCost: decimal("labor_cost", { precision: 12, scale: 2 }).notNull().default("0"),
+  overheadCost: decimal("overhead_cost", { precision: 12, scale: 2 }).notNull().default("0"),
+  totalCost: decimal("total_cost", { precision: 12, scale: 2 }).notNull().default("0"),
+  profitMargin: decimal("profit_margin", { precision: 5, scale: 2 }).notNull().default("20"), // percentage
+  sellingPrice: decimal("selling_price", { precision: 12, scale: 2 }).notNull().default("0"),
+  calculatedAt: timestamp("calculated_at").defaultNow(),
+  notes: text("notes"),
+});
+
+// Insert schemas
+export const insertCostCalculationSchema = createInsertSchema(costCalculations).omit({ 
+  id: true, 
+  calculatedAt: true 
+});
+
 export type ProductComponent = typeof productComponents.$inferSelect;
 export type InsertProductComponent = z.infer<typeof insertProductComponentSchema>;
+export type CostCalculation = typeof costCalculations.$inferSelect;
+export type InsertCostCalculation = z.infer<typeof insertCostCalculationSchema>;

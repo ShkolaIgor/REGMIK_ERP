@@ -1,7 +1,7 @@
 import {
   users, categories, units, warehouses, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
-  productComponents,
+  productComponents, costCalculations,
   type User, type InsertUser, type Category, type InsertCategory,
   type Unit, type InsertUnit,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
@@ -13,7 +13,8 @@ import {
   type TechCard, type InsertTechCard,
   type TechCardStep, type InsertTechCardStep,
   type TechCardMaterial, type InsertTechCardMaterial,
-  type ProductComponent, type InsertProductComponent
+  type ProductComponent, type InsertProductComponent,
+  type CostCalculation, type InsertCostCalculation
 } from "@shared/schema";
 
 export interface IStorage {
@@ -83,6 +84,14 @@ export interface IStorage {
   addProductComponent(component: InsertProductComponent): Promise<ProductComponent>;
   removeProductComponent(id: number): Promise<boolean>;
   updateProductComponent(id: number, component: Partial<InsertProductComponent>): Promise<ProductComponent | undefined>;
+
+  // Cost Calculations
+  getCostCalculations(): Promise<(CostCalculation & { product: Product })[]>;
+  getCostCalculation(productId: number): Promise<(CostCalculation & { product: Product }) | undefined>;
+  createCostCalculation(calculation: InsertCostCalculation): Promise<CostCalculation>;
+  updateCostCalculation(id: number, calculation: Partial<InsertCostCalculation>): Promise<CostCalculation | undefined>;
+  deleteCostCalculation(id: number): Promise<boolean>;
+  calculateAutomaticCost(productId: number): Promise<CostCalculation>;
 
   // Analytics
   getDashboardStats(): Promise<{
