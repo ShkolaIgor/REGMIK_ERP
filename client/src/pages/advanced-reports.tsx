@@ -94,18 +94,23 @@ export default function AdvancedReports() {
     
     const doc = new jsPDF();
     
-    // Додаємо заголовок
+    // Встановлюємо кодування для підтримки кирилиці
+    doc.setFont("helvetica");
+    
+    // Додаємо заголовок (транслітерація для PDF)
     doc.setFontSize(16);
-    doc.text(reportTitle, 20, 20);
+    const titleTranslit = transliterateText(reportTitle);
+    doc.text(titleTranslit, 20, 20);
     
     // Додаємо дату
     doc.setFontSize(10);
-    doc.text(`Дата: ${new Date().toLocaleDateString('uk-UA')}`, 20, 30);
+    const dateText = `Data: ${new Date().toLocaleDateString('uk-UA')}`;
+    doc.text(dateText, 20, 30);
     
-    // Підготовляємо дані для таблиці
-    const headers = Object.keys(data[0]);
+    // Підготовляємо дані для таблиці з транслітерацією
+    const headers = Object.keys(data[0]).map(header => transliterateText(header));
     const rows = data.map(row => 
-      headers.map(header => String(row[header] || ''))
+      Object.keys(data[0]).map(header => transliterateText(String(row[header] || '')))
     );
     
     // Створюємо таблицю
@@ -115,11 +120,13 @@ export default function AdvancedReports() {
       startY: 40,
       styles: {
         fontSize: 8,
-        cellPadding: 2
+        cellPadding: 2,
+        font: "helvetica"
       },
       headStyles: {
         fillColor: [41, 128, 185],
-        textColor: 255
+        textColor: 255,
+        font: "helvetica"
       },
       alternateRowStyles: {
         fillColor: [245, 245, 245]
@@ -129,6 +136,24 @@ export default function AdvancedReports() {
     
     // Зберігаємо файл
     doc.save(`${filename}_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  // Функція транслітерації українського тексту
+  const transliterateText = (text: string): string => {
+    const translitMap: { [key: string]: string } = {
+      'а': 'a', 'б': 'b', 'в': 'v', 'г': 'h', 'ґ': 'g', 'д': 'd', 'е': 'e', 'є': 'ie', 
+      'ж': 'zh', 'з': 'z', 'и': 'y', 'і': 'i', 'ї': 'i', 'й': 'i', 'к': 'k', 'л': 'l', 
+      'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 
+      'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ь': '', 
+      'ю': 'iu', 'я': 'ia', "ʼ": "",
+      'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'H', 'Ґ': 'G', 'Д': 'D', 'Е': 'E', 'Є': 'Ie', 
+      'Ж': 'Zh', 'З': 'Z', 'И': 'Y', 'І': 'I', 'Ї': 'I', 'Й': 'I', 'К': 'K', 'Л': 'L', 
+      'М': 'M', 'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U', 
+      'Ф': 'F', 'Х': 'Kh', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Shch', 'Ь': '', 
+      'Ю': 'Iu', 'Я': 'Ia'
+    };
+    
+    return text.split('').map(char => translitMap[char] || char).join('');
   };
 
   // Підготовка даних для звітів
