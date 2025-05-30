@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Calculator, AlertTriangle, CheckCircle, Clock, TrendingUp } from "lucide-react";
+import { Plus, Calculator, AlertTriangle, CheckCircle, Clock, TrendingUp, Package, ShoppingCart } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
@@ -52,11 +52,30 @@ const statusLabels = {
 };
 
 export default function MaterialShortagesPage() {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const queryClient = useQueryClient();
+  const [selectedShortage, setSelectedShortage] = useState<MaterialShortage | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingShortage, setEditingShortage] = useState<MaterialShortage | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const { data: shortages = [], isLoading } = useQuery({
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      productId: 0,
+      warehouseId: undefined,
+      requiredQuantity: "0",
+      availableQuantity: "0",
+      shortageQuantity: "0",
+      priority: "medium",
+      status: "pending",
+      estimatedCost: "0",
+      supplierRecommendation: "",
+      notes: "",
+    },
+  });
+
+  // Запити даних
+  const { data: shortages = [], isLoading, refetch } = useQuery({
     queryKey: ["/api/material-shortages"],
   });
 
@@ -68,135 +87,153 @@ export default function MaterialShortagesPage() {
     queryKey: ["/api/warehouses"],
   });
 
-  const createShortage = useMutation({
-    mutationFn: async (data: FormData) => {
-      const response = await fetch("/api/material-shortages", {
+  // Мутації
+  const createMutation = useMutation({
+    mutationFn: (data: FormData) =>
+      apiRequest({
+        url: "/api/material-shortages",
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to create shortage");
-      return response.json();
-    },
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/material-shortages"] });
-      setDialogOpen(false);
+      setIsFormOpen(false);
       form.reset();
       toast({
         title: "Успіх",
-        description: "Запис дефіциту створено",
+        description: "Запис про дефіцит створено успішно",
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<FormData> }) =>
+      apiRequest({
+        url: `/api/material-shortages/${id}`,
+        method: "PATCH", 
+        body: data,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/material-shortages"] });
+      setEditingShortage(null);
+      setIsFormOpen(false);
+      form.reset();
+      toast({
+        title: "Успіх",
+        description: "Запис оновлено успішно",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) =>
+      apiRequest({
+        url: `/api/material-shortages/${id}`,
+        method: "DELETE",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/material-shortages"] });
+      toast({
+        title: "Успіх",
+        description: "Запис видалено успішно",
       });
     },
   });
 
   const calculateShortages = useMutation({
-    mutationFn: async () => {
-      const response = await fetch("/api/material-shortages/calculate", {
+    mutationFn: () =>
+      apiRequest({
+        url: "/api/material-shortages/calculate",
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) throw new Error("Failed to calculate shortages");
-      return response.json();
-    },
-    onSuccess: (data) => {
+      }),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/material-shortages"] });
       toast({
-        title: "Розрахунок завершено",
-        description: `Знайдено ${data.length} записів дефіциту`,
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Помилка",
-        description: "Не вдалося розрахувати дефіцит матеріалів",
-        variant: "destructive",
+        title: "Успіх",
+        description: "Дефіцити розраховано автоматично",
       });
     },
   });
 
   const updateShortageStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      const response = await fetch(`/api/material-shortages/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
-      if (!response.ok) throw new Error("Failed to update status");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/material-shortages"] });
-      toast({
-        title: "Статус оновлено",
-        description: "Статус дефіциту успішно змінено",
-      });
-    },
-  });
-
-  const orderMaterial = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await fetch(`/api/material-shortages/${id}/order`, {
+    mutationFn: ({ id, status }: { id: number; status: string }) =>
+      apiRequest({
+        url: `/api/material-shortages/${id}`,
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) throw new Error("Failed to order material");
-      return response.json();
-    },
+        body: { status },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/material-shortages"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       toast({
-        title: "Замовлення створено",
-        description: "Матеріал успішно замовлено",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Помилка",
-        description: "Не вдалося створити замовлення",
-        variant: "destructive",
+        title: "Успіх",
+        description: "Статус оновлено успішно",
       });
     },
   });
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      productId: 0,
-      warehouseId: null,
-      requiredQuantity: "",
-      availableQuantity: "0",
-      shortageQuantity: "",
-      unit: "шт",
-      priority: "medium",
-      estimatedCost: "",
-      supplierRecommendation: "",
-      notes: "",
-      status: "pending"
+  const createSupplierOrder = useMutation({
+    mutationFn: (shortageId: number) =>
+      apiRequest({
+        url: `/api/material-shortages/${shortageId}/create-order`,
+        method: "POST",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/material-shortages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/supplier-orders"] });
+      toast({
+        title: "Успіх",
+        description: "Замовлення постачальнику створено",
+      });
     },
   });
 
-  const onSubmit = (data: FormData) => {
-    createShortage.mutate(data);
+  // Обробники подій
+  const handleSubmit = (data: FormData) => {
+    if (editingShortage) {
+      updateMutation.mutate({ id: editingShortage.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const handleEdit = (shortage: any) => {
+    setEditingShortage(shortage);
+    form.reset({
+      productId: shortage.productId,
+      warehouseId: shortage.warehouseId || undefined,
+      requiredQuantity: shortage.requiredQuantity,
+      availableQuantity: shortage.availableQuantity,
+      shortageQuantity: shortage.shortageQuantity,
+      priority: shortage.priority,
+      status: shortage.status,
+      estimatedCost: shortage.estimatedCost || "0",
+      supplierRecommendation: shortage.supplierRecommendation || "",
+      notes: shortage.notes || "",
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm("Ви впевнені, що хочете видалити цей запис?")) {
+      deleteMutation.mutate(id);
+    }
   };
 
   // Статистика
   const stats = {
     total: shortages.length,
-    critical: shortages.filter((s: any) => s.priority === 'critical').length,
-    pending: shortages.filter((s: any) => s.status === 'pending').length,
-    totalCost: shortages.reduce((sum: number, s: any) => sum + parseFloat(s.estimatedCost || '0'), 0)
+    critical: shortages.filter((s: any) => s.priority === "critical").length,
+    pending: shortages.filter((s: any) => s.status === "pending").length,
+    totalCost: shortages.reduce((sum: number, s: any) => sum + (parseFloat(s.estimatedCost) || 0), 0),
   };
 
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-64"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded"></div>
-            ))}
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Завантаження даних про дефіцити...</p>
           </div>
         </div>
       </div>
@@ -219,37 +256,36 @@ export default function MaterialShortagesPage() {
             <Calculator className="h-4 w-4 mr-2" />
             {calculateShortages.isPending ? "Розрахунок..." : "Розрахувати"}
           </Button>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
             <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Додати дефіцит
+              <Button onClick={() => { setEditingShortage(null); form.reset(); }}>
+                <Plus className="mr-2 h-4 w-4" />
+                Додати запис
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Новий запис дефіциту</DialogTitle>
+                <DialogTitle>
+                  {editingShortage ? "Редагувати дефіцит" : "Додати новий запис про дефіцит"}
+                </DialogTitle>
               </DialogHeader>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="productId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Продукт</FormLabel>
-                          <Select 
-                            onValueChange={(value) => field.onChange(parseInt(value))}
-                            value={field.value.toString()}
-                          >
+                          <FormLabel>Продукт *</FormLabel>
+                          <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Виберіть продукт" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {products.map((product: Product) => (
+                              {products.map((product: any) => (
                                 <SelectItem key={product.id} value={product.id.toString()}>
                                   {product.name}
                                 </SelectItem>
@@ -260,25 +296,20 @@ export default function MaterialShortagesPage() {
                         </FormItem>
                       )}
                     />
-
                     <FormField
                       control={form.control}
                       name="warehouseId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Склад (опціонально)</FormLabel>
-                          <Select
-                            onValueChange={(value) => field.onChange(value === "null" ? null : parseInt(value))}
-                            value={field.value?.toString() || "null"}
-                          >
+                          <FormLabel>Склад</FormLabel>
+                          <Select onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)} value={field.value?.toString()}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Виберіть склад" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="null">Всі склади</SelectItem>
-                              {warehouses.map((warehouse: Warehouse) => (
+                              {warehouses.map((warehouse: any) => (
                                 <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
                                   {warehouse.name}
                                 </SelectItem>
@@ -291,7 +322,7 @@ export default function MaterialShortagesPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <FormField
                       control={form.control}
                       name="requiredQuantity"
@@ -299,13 +330,12 @@ export default function MaterialShortagesPage() {
                         <FormItem>
                           <FormLabel>Потрібна кількість</FormLabel>
                           <FormControl>
-                            <Input {...field} type="number" step="0.01" />
+                            <Input type="number" step="0.01" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-
                     <FormField
                       control={form.control}
                       name="availableQuantity"
@@ -313,13 +343,12 @@ export default function MaterialShortagesPage() {
                         <FormItem>
                           <FormLabel>Доступна кількість</FormLabel>
                           <FormControl>
-                            <Input {...field} type="number" step="0.01" />
+                            <Input type="number" step="0.01" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-
                     <FormField
                       control={form.control}
                       name="shortageQuantity"
@@ -327,21 +356,7 @@ export default function MaterialShortagesPage() {
                         <FormItem>
                           <FormLabel>Дефіцит</FormLabel>
                           <FormControl>
-                            <Input {...field} type="number" step="0.01" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="unit"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Одиниця виміру</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="шт, кг, л" />
+                            <Input type="number" step="0.01" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -373,15 +388,53 @@ export default function MaterialShortagesPage() {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Статус</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="pending">Очікує</SelectItem>
+                              <SelectItem value="ordered">Замовлено</SelectItem>
+                              <SelectItem value="delivered">Доставлено</SelectItem>
+                              <SelectItem value="cancelled">Скасовано</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
+                  <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="estimatedCost"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Орієнтовна вартість (₴)</FormLabel>
+                          <FormLabel>Орієнтовна вартість</FormLabel>
                           <FormControl>
-                            <Input {...field} type="number" step="0.01" />
+                            <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="supplierRecommendation"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Рекомендований постачальник</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Назва постачальника" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -391,42 +444,24 @@ export default function MaterialShortagesPage() {
 
                   <FormField
                     control={form.control}
-                    name="supplierRecommendation"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Рекомендований постачальник</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Назва постачальника" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
                     name="notes"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Примітки</FormLabel>
                         <FormControl>
-                          <Textarea {...field} placeholder="Додаткова інформація" />
+                          <Textarea placeholder="Додаткова інформація..." {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <div className="flex justify-end gap-2">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => setDialogOpen(false)}
-                    >
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
                       Скасувати
                     </Button>
-                    <Button type="submit" disabled={createShortage.isPending}>
-                      {createShortage.isPending ? "Збереження..." : "Зберегти"}
+                    <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                      {editingShortage ? "Оновити" : "Створити"}
                     </Button>
                   </div>
                 </form>
@@ -436,7 +471,7 @@ export default function MaterialShortagesPage() {
         </div>
       </div>
 
-      {/* Статистичні картки */}
+      {/* Статистика */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -480,10 +515,13 @@ export default function MaterialShortagesPage() {
       </div>
 
       {/* Список дефіцитів */}
-      <div className="grid grid-cols-1 gap-4">
-        {shortages.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
+      <Card>
+        <CardHeader>
+          <CardTitle>Список дефіцитів матеріалів</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {shortages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12">
               <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
               <h3 className="text-lg font-semibold mb-2">Дефіцитів не знайдено</h3>
               <p className="text-gray-600 mb-4">Поки що немає записів про дефіцит матеріалів</p>
@@ -491,101 +529,115 @@ export default function MaterialShortagesPage() {
                 <Calculator className="h-4 w-4 mr-2" />
                 Розрахувати автоматично
               </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          shortages.map((shortage: any) => (
-            <Card key={shortage.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold">{shortage.product?.name}</h3>
-                    <p className="text-sm text-gray-600">
-                      SKU: {shortage.product?.sku}
-                    </p>
-                    {shortage.warehouse && (
-                      <p className="text-sm text-gray-600">
-                        Склад: {shortage.warehouse.name}
-                      </p>
+            </div>
+          ) : (
+            <div className="max-h-96 overflow-y-auto space-y-4">
+              {shortages.map((shortage: any) => (
+                <Card key={shortage.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold">{shortage.product?.name}</h3>
+                        <p className="text-gray-600">SKU: {shortage.product?.sku}</p>
+                        {shortage.warehouse && (
+                          <p className="text-sm text-gray-500">Склад: {shortage.warehouse.name}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Badge className={priorityColors[shortage.priority as keyof typeof priorityColors]}>
+                          {priorityLabels[shortage.priority as keyof typeof priorityLabels]}
+                        </Badge>
+                        <Badge className={statusColors[shortage.status as keyof typeof statusColors]}>
+                          {statusLabels[shortage.status as keyof typeof statusLabels]}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Потрібно</p>
+                        <p className="font-semibold">{shortage.requiredQuantity}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Доступно</p>
+                        <p className="font-semibold">{shortage.availableQuantity}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-red-600">Дефіцит</p>
+                        <p className="font-semibold text-red-600">{shortage.shortageQuantity}</p>
+                      </div>
+                    </div>
+
+                    {shortage.estimatedCost && (
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-600">Орієнтовна вартість</p>
+                        <p className="font-semibold">₴{parseFloat(shortage.estimatedCost).toFixed(2)}</p>
+                      </div>
                     )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Badge className={priorityColors[shortage.priority as keyof typeof priorityColors]}>
-                      {priorityLabels[shortage.priority as keyof typeof priorityLabels]}
-                    </Badge>
-                    <Badge className={statusColors[shortage.status as keyof typeof statusColors]}>
-                      {statusLabels[shortage.status as keyof typeof statusLabels]}
-                    </Badge>
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Потрібно</p>
-                    <p className="font-semibold">{shortage.requiredQuantity} {shortage.unit}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Доступно</p>
-                    <p className="font-semibold">{shortage.availableQuantity} {shortage.unit}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Дефіцит</p>
-                    <p className="font-semibold text-red-600">{shortage.shortageQuantity} {shortage.unit}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Орієнтовна вартість</p>
-                    <p className="font-semibold">₴{parseFloat(shortage.estimatedCost || '0').toFixed(2)}</p>
-                  </div>
-                </div>
+                    {shortage.supplierRecommendation && (
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-600">Рекомендований постачальник</p>
+                        <p className="font-semibold">{shortage.supplierRecommendation}</p>
+                      </div>
+                    )}
 
-                {shortage.supplierRecommendation && (
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-600">Рекомендований постачальник</p>
-                    <p className="font-medium">{shortage.supplierRecommendation}</p>
-                  </div>
-                )}
+                    {shortage.notes && (
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-600">Примітки</p>
+                        <p className="text-sm">{shortage.notes}</p>
+                      </div>
+                    )}
 
-                {shortage.notes && (
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-600">Примітки</p>
-                    <p className="text-sm">{shortage.notes}</p>
-                  </div>
-                )}
-
-                {shortage.status === 'pending' && (
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => orderMaterial.mutate(shortage.id)}
-                      disabled={orderMaterial.isPending}
-                    >
-                      {orderMaterial.isPending ? "Замовляємо..." : "Замовити"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => updateShortageStatus.mutate({ id: shortage.id, status: 'cancelled' })}
-                      disabled={updateShortageStatus.isPending}
-                    >
-                      Скасувати
-                    </Button>
-                  </div>
-                )}
-
-                {shortage.status === 'ordered' && (
-                  <Button
-                    size="sm"
-                    onClick={() => updateShortageStatus.mutate({ id: shortage.id, status: 'delivered' })}
-                    disabled={updateShortageStatus.isPending}
-                  >
-                    Відмітити як доставлено
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+                    <div className="flex justify-between items-center">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(shortage)}
+                        >
+                          Редагувати
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(shortage.id)}
+                        >
+                          Видалити
+                        </Button>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        {shortage.status === "pending" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => createSupplierOrder.mutate(shortage.id)}
+                            disabled={createSupplierOrder.isPending}
+                          >
+                            <ShoppingCart className="h-4 w-4 mr-2" />
+                            Створити замовлення
+                          </Button>
+                        )}
+                        {shortage.status === "ordered" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => updateShortageStatus.mutate({ id: shortage.id, status: 'delivered' })}
+                            disabled={updateShortageStatus.isPending}
+                          >
+                            Відмітити як доставлено
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
