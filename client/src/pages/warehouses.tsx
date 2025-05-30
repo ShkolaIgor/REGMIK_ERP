@@ -25,8 +25,15 @@ export default function WarehousesPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: InsertWarehouse) => 
-      apiRequest('/api/warehouses', 'POST', data),
+    mutationFn: async (data: InsertWarehouse) => {
+      try {
+        const result = await apiRequest('/api/warehouses', 'POST', data);
+        return result;
+      } catch (error) {
+        console.error("Warehouse creation error:", error);
+        throw error;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/warehouses'] });
       setIsCreateOpen(false);
@@ -35,7 +42,8 @@ export default function WarehousesPage() {
         description: "Склад успішно створено"
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Mutation error:", error);
       toast({
         title: "Помилка",
         description: "Не вдалося створити склад",
@@ -45,8 +53,15 @@ export default function WarehousesPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<InsertWarehouse> }) =>
-      apiRequest(`/api/warehouses/${id}`, 'PUT', data),
+    mutationFn: async ({ id, data }: { id: number; data: Partial<InsertWarehouse> }) => {
+      try {
+        const result = await apiRequest(`/api/warehouses/${id}`, 'PUT', data);
+        return result;
+      } catch (error) {
+        console.error("Warehouse update error:", error);
+        throw error;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/warehouses'] });
       setEditingWarehouse(null);
@@ -55,7 +70,8 @@ export default function WarehousesPage() {
         description: "Склад успішно оновлено"
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Update mutation error:", error);
       toast({
         title: "Помилка",
         description: "Не вдалося оновити склад",
@@ -65,8 +81,15 @@ export default function WarehousesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) =>
-      apiRequest(`/api/warehouses/${id}`, 'DELETE'),
+    mutationFn: async (id: number) => {
+      try {
+        const result = await apiRequest(`/api/warehouses/${id}`, 'DELETE');
+        return result;
+      } catch (error) {
+        console.error("Warehouse delete error:", error);
+        throw error;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/warehouses'] });
       toast({
@@ -74,7 +97,8 @@ export default function WarehousesPage() {
         description: "Склад успішно видалено"
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Delete mutation error:", error);
       toast({
         title: "Помилка",
         description: "Не вдалося видалити склад",
@@ -125,7 +149,7 @@ export default function WarehousesPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {warehouses?.map((warehouse) => (
+        {warehouses && warehouses.map((warehouse) => (
           <Card key={warehouse.id} className="relative">
             <CardHeader>
               <div className="flex items-start justify-between">
@@ -196,7 +220,7 @@ export default function WarehousesPage() {
         ))}
       </div>
 
-      {warehouses?.length === 0 && (
+      {warehouses && warehouses.length === 0 && (
         <div className="text-center py-12">
           <Building2 className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-semibold text-gray-900">Немає складів</h3>
