@@ -1463,7 +1463,7 @@ export class DatabaseStorage implements IStorage {
     return result.filter(item => item.products).map(item => ({
       ...item.inventory_audit_items,
       product: item.products!
-    }));
+    })) as (InventoryAuditItem & { product: Product })[];
   }
 
   async createInventoryAuditItem(insertItem: InsertInventoryAuditItem): Promise<InventoryAuditItem> {
