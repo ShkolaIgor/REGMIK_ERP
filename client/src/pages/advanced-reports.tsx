@@ -92,27 +92,35 @@ export default function AdvancedReports() {
   const exportToPDF = (data: any[], filename: string, reportTitle: string) => {
     if (!data.length) return;
     
+    // Використовуємо Base64 для правильного кодування Unicode
     const doc = new jsPDF({
       orientation: 'landscape',
       unit: 'mm',
-      format: 'a4'
+      format: 'a4',
+      putOnlyUsedFonts: true,
+      compress: true
     });
+
+    // Конвертуємо українські символи в транслітерацію для PDF
+    const convertUkrainianText = (text: string): string => {
+      return transliterateText(text);
+    };
     
-    // Додаємо заголовок UTF-8
+    // Додаємо заголовок
     doc.setFontSize(16);
-    doc.text(reportTitle, 20, 20);
+    doc.text(convertUkrainianText(reportTitle), 20, 20);
     
     // Додаємо дату
     doc.setFontSize(10);
-    doc.text(`Дата: ${new Date().toLocaleDateString('uk-UA')}`, 20, 30);
+    doc.text(convertUkrainianText(`Дата: ${new Date().toLocaleDateString('uk-UA')}`), 20, 30);
     
-    // Підготовляємо дані для таблиці
-    const headers = Object.keys(data[0]);
+    // Підготовляємо дані для таблиці з конвертацією
+    const headers = Object.keys(data[0]).map(header => convertUkrainianText(header));
     const rows = data.map(row => 
-      headers.map(header => String(row[header] || ''))
+      Object.keys(data[0]).map(header => convertUkrainianText(String(row[header] || '')))
     );
     
-    // Створюємо таблицю з Unicode підтримкою
+    // Створюємо таблицю
     autoTable(doc, {
       head: [headers],
       body: rows,
@@ -120,7 +128,8 @@ export default function AdvancedReports() {
       styles: {
         fontSize: 8,
         cellPadding: 2,
-        fontStyle: 'normal'
+        overflow: 'linebreak',
+        cellWidth: 'wrap'
       },
       headStyles: {
         fillColor: [41, 128, 185],
@@ -131,14 +140,7 @@ export default function AdvancedReports() {
         fillColor: [245, 245, 245]
       },
       margin: { top: 40, left: 10, right: 10 },
-      tableWidth: 'auto',
-      columnStyles: {},
-      didParseCell: function(data) {
-        // Встановлюємо Unicode текст
-        if (data.cell.text && Array.isArray(data.cell.text)) {
-          data.cell.text = data.cell.text.map(text => String(text));
-        }
-      }
+      tableWidth: 'auto'
     });
     
     // Зберігаємо файл
