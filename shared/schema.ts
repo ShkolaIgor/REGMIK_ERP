@@ -14,6 +14,17 @@ export const categories = pgTable("categories", {
   description: text("description"),
 });
 
+export const units = pgTable("units", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(), // назва одиниці вимірювання
+  shortName: text("short_name").notNull().unique(), // скорочена назва
+  type: text("type").notNull(), // weight, volume, length, area, count, time
+  baseUnit: text("base_unit"), // базова одиниця для конвертації
+  conversionFactor: decimal("conversion_factor", { precision: 15, scale: 6 }).default("1"), // коефіцієнт конвертації
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const warehouses = pgTable("warehouses", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -156,6 +167,7 @@ export const productComponents = pgTable("product_components", {
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true });
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
+export const insertUnitSchema = createInsertSchema(units).omit({ id: true, createdAt: true });
 export const insertWarehouseSchema = createInsertSchema(warehouses).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true });
 export const insertInventorySchema = createInsertSchema(inventory).omit({ id: true, updatedAt: true });
@@ -175,6 +187,8 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type Unit = typeof units.$inferSelect;
+export type InsertUnit = z.infer<typeof insertUnitSchema>;
 export type Warehouse = typeof warehouses.$inferSelect;
 export type InsertWarehouse = z.infer<typeof insertWarehouseSchema>;
 export type Product = typeof products.$inferSelect;

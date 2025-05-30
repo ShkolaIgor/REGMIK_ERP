@@ -1,8 +1,9 @@
 import {
-  users, categories, warehouses, products, inventory, orders, orderItems,
+  users, categories, units, warehouses, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   productComponents,
   type User, type InsertUser, type Category, type InsertCategory,
+  type Unit, type InsertUnit,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
   type Inventory, type InsertInventory, type Order, type InsertOrder,
   type OrderItem, type InsertOrderItem, type Recipe, type InsertRecipe,
@@ -26,6 +27,12 @@ export interface IStorage {
   createCategory(category: InsertCategory): Promise<Category>;
   updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category | undefined>;
   deleteCategory(id: number): Promise<boolean>;
+
+  // Units
+  getUnits(): Promise<Unit[]>;
+  createUnit(unit: InsertUnit): Promise<Unit>;
+  updateUnit(id: number, unit: Partial<InsertUnit>): Promise<Unit | undefined>;
+  deleteUnit(id: number): Promise<boolean>;
 
   // Warehouses
   getWarehouses(): Promise<Warehouse[]>;
@@ -88,6 +95,7 @@ export interface IStorage {
 export class MemStorage implements IStorage {
   private users: Map<number, User> = new Map();
   private categories: Map<number, Category> = new Map();
+  private units: Map<number, Unit> = new Map();
   private warehouses: Map<number, Warehouse> = new Map();
   private products: Map<number, Product> = new Map();
   private inventory: Map<string, Inventory> = new Map();
@@ -104,6 +112,7 @@ export class MemStorage implements IStorage {
 
   private currentUserId = 1;
   private currentCategoryId = 1;
+  private currentUnitId = 1;
   private currentWarehouseId = 1;
   private currentProductId = 1;
   private currentInventoryId = 1;
