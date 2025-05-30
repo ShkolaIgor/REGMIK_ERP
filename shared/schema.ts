@@ -182,6 +182,49 @@ export const insertTechCardStepSchema = createInsertSchema(techCardSteps).omit({
 export const insertTechCardMaterialSchema = createInsertSchema(techCardMaterials).omit({ id: true });
 export const insertProductComponentSchema = createInsertSchema(productComponents).omit({ id: true, createdAt: true });
 
+// Таблиця для відстеження дефіциту матеріалів
+export const materialShortages = pgTable("material_shortages", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").references(() => products.id).notNull(),
+  warehouseId: integer("warehouse_id").references(() => warehouses.id),
+  requiredQuantity: decimal("required_quantity", { precision: 12, scale: 4 }).notNull(),
+  availableQuantity: decimal("available_quantity", { precision: 12, scale: 4 }).notNull().default("0"),
+  shortageQuantity: decimal("shortage_quantity", { precision: 12, scale: 4 }).notNull(),
+  unit: text("unit").notNull(),
+  priority: text("priority").notNull().default("medium"), // low, medium, high, critical
+  estimatedCost: decimal("estimated_cost", { precision: 12, scale: 2 }).default("0"),
+  supplierRecommendation: text("supplier_recommendation"),
+  notes: text("notes"),
+  status: text("status").notNull().default("pending"), // pending, ordered, received
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const costCalculations = pgTable("cost_calculations", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").references(() => products.id).notNull(),
+  materialCost: decimal("material_cost", { precision: 12, scale: 2 }).notNull().default("0"),
+  laborCost: decimal("labor_cost", { precision: 12, scale: 2 }).notNull().default("0"),
+  overheadCost: decimal("overhead_cost", { precision: 12, scale: 2 }).notNull().default("0"),
+  totalCost: decimal("total_cost", { precision: 12, scale: 2 }).notNull().default("0"),
+  profitMargin: decimal("profit_margin", { precision: 5, scale: 2 }).notNull().default("20"), // percentage
+  sellingPrice: decimal("selling_price", { precision: 12, scale: 2 }).notNull().default("0"),
+  calculatedAt: timestamp("calculated_at").defaultNow(),
+  notes: text("notes"),
+});
+
+// Insert schemas
+export const insertMaterialShortageSchema = createInsertSchema(materialShortages).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertCostCalculationSchema = createInsertSchema(costCalculations).omit({ 
+  id: true, 
+  calculatedAt: true 
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -213,27 +256,9 @@ export type TechCardStep = typeof techCardSteps.$inferSelect;
 export type InsertTechCardStep = z.infer<typeof insertTechCardStepSchema>;
 export type TechCardMaterial = typeof techCardMaterials.$inferSelect;
 export type InsertTechCardMaterial = z.infer<typeof insertTechCardMaterialSchema>;
-
-export const costCalculations = pgTable("cost_calculations", {
-  id: serial("id").primaryKey(),
-  productId: integer("product_id").references(() => products.id).notNull(),
-  materialCost: decimal("material_cost", { precision: 12, scale: 2 }).notNull().default("0"),
-  laborCost: decimal("labor_cost", { precision: 12, scale: 2 }).notNull().default("0"),
-  overheadCost: decimal("overhead_cost", { precision: 12, scale: 2 }).notNull().default("0"),
-  totalCost: decimal("total_cost", { precision: 12, scale: 2 }).notNull().default("0"),
-  profitMargin: decimal("profit_margin", { precision: 5, scale: 2 }).notNull().default("20"), // percentage
-  sellingPrice: decimal("selling_price", { precision: 12, scale: 2 }).notNull().default("0"),
-  calculatedAt: timestamp("calculated_at").defaultNow(),
-  notes: text("notes"),
-});
-
-// Insert schemas
-export const insertCostCalculationSchema = createInsertSchema(costCalculations).omit({ 
-  id: true, 
-  calculatedAt: true 
-});
-
 export type ProductComponent = typeof productComponents.$inferSelect;
 export type InsertProductComponent = z.infer<typeof insertProductComponentSchema>;
+export type MaterialShortage = typeof materialShortages.$inferSelect;
+export type InsertMaterialShortage = z.infer<typeof insertMaterialShortageSchema>;
 export type CostCalculation = typeof costCalculations.$inferSelect;
 export type InsertCostCalculation = z.infer<typeof insertCostCalculationSchema>;
