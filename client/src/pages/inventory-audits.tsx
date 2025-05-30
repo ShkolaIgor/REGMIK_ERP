@@ -702,7 +702,15 @@ export default function InventoryAuditsPage() {
                     </DialogContent>
                   </Dialog>
 
-
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => generateItemsMutation.mutate(selectedAudit.id)}
+                    disabled={generateItemsMutation.isPending}
+                  >
+                    <Calculator className="mr-2 h-4 w-4" />
+                    Згенерувати автоматично
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
