@@ -4,7 +4,8 @@ import { storage } from "./storage";
 import { 
   insertProductSchema, insertOrderSchema, insertRecipeSchema,
   insertProductionTaskSchema, insertCategorySchema, insertWarehouseSchema,
-  insertSupplierSchema, insertInventorySchema, insertTechCardSchema
+  insertSupplierSchema, insertInventorySchema, insertTechCardSchema,
+  insertProductComponentSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -416,6 +417,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ error: "Failed to update tech card" });
       }
+    }
+  });
+
+  // Product Components (BOM) routes
+  app.get("/api/products/:id/components", async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      const components = await storage.getProductComponents(productId);
+      res.json(components);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch product components" });
+    }
+  });
+
+  app.post("/api/product-components", async (req, res) => {
+    try {
+      const data = insertProductComponentSchema.parse(req.body);
+      const component = await storage.addProductComponent(data);
+      res.status(201).json(component);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid component data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create component" });
+      }
+    }
+  });
+
+  app.patch("/api/product-components/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const data = insertProductComponentSchema.partial().parse(req.body);
+      const component = await storage.updateProductComponent(id, data);
+      if (!component) {
+        return res.status(404).json({ error: "Component not found" });
+      }
+      res.json(component);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid component data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update component" });
+      }
+    }
+  });
+
+  app.delete("/api/product-components/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.removeProductComponent(id);
+      if (!success) {
+        return res.status(404).json({ error: "Component not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete component" });
     }
   });
 
