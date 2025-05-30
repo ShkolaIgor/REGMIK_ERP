@@ -67,6 +67,7 @@ export const orders = pgTable("orders", {
   customerPhone: text("customer_phone"),
   status: text("status").notNull().default("pending"), // pending, processing, completed, cancelled
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

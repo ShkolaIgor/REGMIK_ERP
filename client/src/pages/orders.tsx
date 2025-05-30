@@ -66,8 +66,12 @@ export default function Orders() {
 
   // Мутація для створення замовлення
   const createOrderMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("/api/orders", "POST", data),
-    onSuccess: () => {
+    mutationFn: (data: any) => {
+      console.log("Making API request with data:", data);
+      return apiRequest("/api/orders", "POST", data);
+    },
+    onSuccess: (result) => {
+      console.log("Order created successfully:", result);
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       handleCloseDialog();
       toast({
@@ -76,6 +80,7 @@ export default function Orders() {
       });
     },
     onError: (error: any) => {
+      console.error("Error creating order:", error);
       toast({
         title: "Помилка",
         description: error.message || "Не вдалося створити замовлення",
@@ -128,6 +133,9 @@ export default function Orders() {
   };
 
   const handleSubmit = (data: OrderFormData) => {
+    console.log("Form submitted with data:", data);
+    console.log("Order items:", orderItems);
+    
     // Перевіряємо, чи додані товари
     if (orderItems.length === 0) {
       toast({
@@ -142,6 +150,8 @@ export default function Orders() {
     const invalidItems = orderItems.filter(item => 
       !item.productId || !item.quantity || !item.unitPrice
     );
+    
+    console.log("Invalid items:", invalidItems);
     
     if (invalidItems.length > 0) {
       toast({
@@ -162,12 +172,13 @@ export default function Orders() {
       },
       items: orderItems.map(item => ({
         productId: item.productId,
-        quantity: item.quantity,
+        quantity: parseInt(item.quantity), // конвертуємо в число
         unitPrice: item.unitPrice,
         totalPrice: (parseFloat(item.quantity) * parseFloat(item.unitPrice)).toString(),
       })),
     };
     
+    console.log("Sending order data:", orderData);
     createOrderMutation.mutate(orderData);
   };
 
