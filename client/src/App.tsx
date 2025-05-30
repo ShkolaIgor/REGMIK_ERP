@@ -12,6 +12,7 @@ import Recipes from "@/pages/recipes";
 import TechCards from "@/pages/tech-cards";
 import BOM from "@/pages/bom";
 import Categories from "@/pages/categories";
+import Warehouses from "@/pages/warehouses";
 import Reports from "@/pages/reports";
 import NotFound from "@/pages/not-found";
 
@@ -27,8 +28,8 @@ function Router() {
         <Route path="/tech-cards" component={TechCards} />
         <Route path="/bom" component={BOM} />
         <Route path="/categories" component={Categories} />
+        <Route path="/warehouses" component={Warehouses} />
         <Route path="/reports" component={Reports} />
-        <Route path="/warehouses" component={() => <div className="p-6">Склади - В розробці</div>} />
         <Route path="/scanner" component={() => <div className="p-6">Сканер штрих-кодів - В розробці</div>} />
         <Route path="/costing" component={() => <div className="p-6">Калькуляція собівартості - В розробці</div>} />
         <Route path="/shortage" component={() => <div className="p-6">Дефіцит матеріалів - В розробці</div>} />
