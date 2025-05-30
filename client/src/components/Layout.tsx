@@ -40,7 +40,8 @@ const navigationItems = [
   {
     title: "Модуль Виробництво",
     items: [
-      { name: "Технологічні карти", href: "/recipes", icon: FileText },
+      { name: "Рецепти виробництва", href: "/recipes", icon: FileText },
+      { name: "Технологічні карти", href: "/tech-cards", icon: File },
       { name: "Планування (Kanban)", href: "/production", icon: Cog },
       { name: "Калькуляція собівартості", href: "/costing", icon: Calculator },
       { name: "Дефіцит матеріалів", href: "/shortage", icon: AlertTriangle }
