@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { 
   insertProductSchema, insertOrderSchema, insertRecipeSchema,
   insertProductionTaskSchema, insertCategorySchema, insertWarehouseSchema,
-  insertSupplierSchema, insertInventorySchema
+  insertSupplierSchema, insertInventorySchema, insertTechCardSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -325,6 +325,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(400).json({ error: "Invalid supplier data", details: error.errors });
       } else {
         res.status(500).json({ error: "Failed to create supplier" });
+      }
+    }
+  });
+
+  // Tech Cards routes
+  app.get("/api/tech-cards", async (req, res) => {
+    try {
+      const techCards = await storage.getTechCards();
+      res.json(techCards);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch tech cards" });
+    }
+  });
+
+  app.get("/api/tech-cards/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const techCard = await storage.getTechCard(id);
+      if (!techCard) {
+        return res.status(404).json({ error: "Tech card not found" });
+      }
+      res.json(techCard);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch tech card" });
+    }
+  });
+
+  app.post("/api/tech-cards", async (req, res) => {
+    try {
+      const { steps, materials, ...techCardData } = req.body;
+      const data = insertTechCardSchema.parse(techCardData);
+      const techCard = await storage.createTechCard(data, steps || [], materials || []);
+      res.status(201).json(techCard);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid tech card data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create tech card" });
+      }
+    }
+  });
+
+  app.patch("/api/tech-cards/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { steps, materials, ...techCardData } = req.body;
+      const data = insertTechCardSchema.partial().parse(techCardData);
+      const techCard = await storage.updateTechCard(id, data, steps, materials);
+      if (!techCard) {
+        return res.status(404).json({ error: "Tech card not found" });
+      }
+      res.json(techCard);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid tech card data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update tech card" });
       }
     }
   });

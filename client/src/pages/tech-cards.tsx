@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Plus, Eye, Edit, Clock, FileText, Tool, Settings } from "lucide-react";
+import { Plus, Eye, Edit, Clock, FileText, Wrench, Settings } from "lucide-react";
 import { TechCardForm } from "@/components/TechCardForm";
 
 export default function TechCards() {
@@ -115,7 +115,7 @@ export default function TechCards() {
             <CardTitle className="text-sm font-medium">
               Вартість матеріалів
             </CardTitle>
-            <Tool className="h-4 w-4 text-muted-foreground" />
+            <Wrench className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
