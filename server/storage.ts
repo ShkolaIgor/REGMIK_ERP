@@ -1,7 +1,7 @@
 import {
   users, categories, units, warehouses, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
-  productComponents, costCalculations, materialShortages,
+  productComponents, costCalculations, materialShortages, inventoryAudits, inventoryAuditItems,
   type User, type InsertUser, type Category, type InsertCategory,
   type Unit, type InsertUnit,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
@@ -18,6 +18,8 @@ import {
   type MaterialShortage, type InsertMaterialShortage,
   type SupplierOrder, type InsertSupplierOrder,
   type SupplierOrderItem, type InsertSupplierOrderItem,
+  type InventoryAudit, type InsertInventoryAudit,
+  type InventoryAuditItem, type InsertInventoryAuditItem,
   type AssemblyOperation, type InsertAssemblyOperation,
   type AssemblyOperationItem, type InsertAssemblyOperationItem
 } from "@shared/schema";
@@ -126,6 +128,19 @@ export interface IStorage {
   updateAssemblyOperation(id: number, operation: Partial<InsertAssemblyOperation>): Promise<AssemblyOperation | undefined>;
   deleteAssemblyOperation(id: number): Promise<boolean>;
   executeAssemblyOperation(id: number): Promise<AssemblyOperation | undefined>;
+
+  // Inventory Audits
+  getInventoryAudits(): Promise<(InventoryAudit & { warehouse?: Warehouse })[]>;
+  getInventoryAudit(id: number): Promise<(InventoryAudit & { warehouse?: Warehouse }) | undefined>;
+  createInventoryAudit(audit: InsertInventoryAudit): Promise<InventoryAudit>;
+  updateInventoryAudit(id: number, audit: Partial<InsertInventoryAudit>): Promise<InventoryAudit | undefined>;
+  deleteInventoryAudit(id: number): Promise<boolean>;
+  
+  getInventoryAuditItems(auditId: number): Promise<(InventoryAuditItem & { product: Product })[]>;
+  createInventoryAuditItem(item: InsertInventoryAuditItem): Promise<InventoryAuditItem>;
+  updateInventoryAuditItem(id: number, item: Partial<InsertInventoryAuditItem>): Promise<InventoryAuditItem | undefined>;
+  deleteInventoryAuditItem(id: number): Promise<boolean>;
+  generateInventoryAuditItems(auditId: number): Promise<InventoryAuditItem[]>;
 
   // Analytics
   getDashboardStats(): Promise<{

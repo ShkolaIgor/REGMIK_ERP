@@ -364,9 +364,7 @@ export const insertInventoryAuditSchema = createInsertSchema(inventoryAudits).om
 
 export const insertInventoryAuditItemSchema = createInsertSchema(inventoryAuditItems).omit({ 
   id: true, 
-  createdAt: true,
-  variance: true,
-  variancePercent: true 
+  createdAt: true
 });
 
 // Types
