@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 210 11% 98%; /* #F5F7FA */
+  --foreground: 220 15% 15%; /* #1E293B */
+  --muted: 210 8% 95%; /* #F1F5F9 */
+  --muted-foreground: 215 16% 47%; /* #64748B */
+  --popover: 0 0% 100%; /* #FFFFFF */
+  --popover-foreground: 220 15% 15%; /* #1E293B */
+  --card: 0 0% 100%; /* #FFFFFF */
+  --card-foreground: 220 15% 15%; /* #1E293B */
+  --border: 214 16% 90%; /* #E2E8F0 */
+  --input: 214 16% 90%; /* #E2E8F0 */
+  --primary: 207 90% 54%; /* #0078D4 */
+  --primary-foreground: 210 40% 98%; /* #F8FAFC */
+  --secondary: 210 8% 95%; /* #F1F5F9 */
+  --secondary-foreground: 220 15% 15%; /* #1E293B */
+  --accent: 198 93% 60%; /* #0EA5E9 */
+  --accent-foreground: 210 40% 98%; /* #F8FAFC */
+  --destructive: 0 84% 60%; /* #EF4444 */
+  --destructive-foreground: 210 40% 98%; /* #F8FAFC */
+  --ring: 207 90% 54%; /* #0078D4 */
+  --radius: 0.5rem;
+  
+  /* Regmik specific colors */
+  --success: 142 76% 36%; /* #16A34A */
+  --warning: 43 96% 56%; /* #F59E0B */
+  --error: 0 84% 60%; /* #EF4444 */
+}
+
+.dark {
+  --background: 222 84% 5%; /* #0F172A */
+  --foreground: 210 40% 98%; /* #F8FAFC */
+  --muted: 217 33% 17%; /* #1E293B */
+  --muted-foreground: 215 20% 65%; /* #94A3B8 */
+  --popover: 222 84% 5%; /* #0F172A */
+  --popover-foreground: 210 40% 98%; /* #F8FAFC */
+  --card: 222 84% 5%; /* #0F172A */
+  --card-foreground: 210 40% 98%; /* #F8FAFC */
+  --border: 217 33% 17%; /* #1E293B */
+  --input: 217 33% 17%; /* #1E293B */
+  --primary: 207 90% 54%; /* #0078D4 */
+  --primary-foreground: 210 40% 98%; /* #F8FAFC */
+  --secondary: 217 33% 17%; /* #1E293B */
+  --secondary-foreground: 210 40% 98%; /* #F8FAFC */
+  --accent: 198 93% 60%; /* #0EA5E9 */
+  --accent-foreground: 210 40% 98%; /* #F8FAFC */
+  --destructive: 0 84% 60%; /* #EF4444 */
+  --destructive-foreground: 210 40% 98%; /* #F8FAFC */
+  --ring: 207 90% 54%; /* #0078D4 */
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Segoe UI', 'system-ui', '-apple-system', sans-serif;
+  }
+}
+
+@layer components {
+  .nav-item {
+    @apply transition-colors duration-200;
+  }
+  
+  .nav-item.active {
+    @apply bg-primary text-white;
+  }
+  
+  .nav-item:not(.active):hover {
+    @apply bg-gray-100;
+  }
+  
+  .status-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .status-in-stock {
+    @apply bg-green-100 text-green-800;
+  }
+  
+  .status-low-stock {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+  
+  .status-out-of-stock {
+    @apply bg-red-100 text-red-800;
+  }
+  
+  .kanban-column {
+    @apply bg-gray-50 rounded-lg p-4 min-h-[500px];
+  }
+  
+  .kanban-card {
+    @apply bg-white rounded-lg p-3 border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition-shadow;
+  }
+  
+  .priority-high {
+    @apply bg-red-100 text-red-800;
+  }
+  
+  .priority-medium {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+  
+  .priority-low {
+    @apply bg-green-100 text-green-800;
+  }
+}
