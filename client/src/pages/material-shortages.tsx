@@ -133,6 +133,32 @@ export default function MaterialShortagesPage() {
     },
   });
 
+  const orderMaterial = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/material-shortages/${id}/order`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) throw new Error("Failed to order material");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/material-shortages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      toast({
+        title: "Замовлення створено",
+        description: "Матеріал успішно замовлено",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося створити замовлення",
+        variant: "destructive",
+      });
+    },
+  });
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -530,10 +556,10 @@ export default function MaterialShortagesPage() {
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      onClick={() => updateShortageStatus.mutate({ id: shortage.id, status: 'ordered' })}
-                      disabled={updateShortageStatus.isPending}
+                      onClick={() => orderMaterial.mutate(shortage.id)}
+                      disabled={orderMaterial.isPending}
                     >
-                      Замовити
+                      {orderMaterial.isPending ? "Замовляємо..." : "Замовити"}
                     </Button>
                     <Button
                       size="sm"
