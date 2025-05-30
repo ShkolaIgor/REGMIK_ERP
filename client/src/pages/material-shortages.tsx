@@ -12,6 +12,7 @@ import { Plus, Calculator, AlertTriangle, CheckCircle, Clock, TrendingUp } from 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { type MaterialShortage, type Product, type Warehouse, insertMaterialShortageSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -53,6 +54,7 @@ const statusLabels = {
 export default function MaterialShortagesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: shortages = [], isLoading } = useQuery({
     queryKey: ["/api/material-shortages"],
@@ -67,34 +69,67 @@ export default function MaterialShortagesPage() {
   });
 
   const createShortage = useMutation({
-    mutationFn: (data: FormData) => apiRequest("/api/material-shortages", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
+    mutationFn: async (data: FormData) => {
+      const response = await fetch("/api/material-shortages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to create shortage");
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/material-shortages"] });
       setDialogOpen(false);
       form.reset();
+      toast({
+        title: "Успіх",
+        description: "Запис дефіциту створено",
+      });
     },
   });
 
   const calculateShortages = useMutation({
-    mutationFn: () => apiRequest("/api/material-shortages/calculate", {
-      method: "POST",
-    }),
-    onSuccess: () => {
+    mutationFn: async () => {
+      const response = await fetch("/api/material-shortages/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) throw new Error("Failed to calculate shortages");
+      return response.json();
+    },
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/material-shortages"] });
+      toast({
+        title: "Розрахунок завершено",
+        description: `Знайдено ${data.length} записів дефіциту`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося розрахувати дефіцит матеріалів",
+        variant: "destructive",
+      });
     },
   });
 
   const updateShortageStatus = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: string }) =>
-      apiRequest(`/api/material-shortages/${id}`, {
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const response = await fetch(`/api/material-shortages/${id}`, {
         method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
-      }),
+      });
+      if (!response.ok) throw new Error("Failed to update status");
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/material-shortages"] });
+      toast({
+        title: "Статус оновлено",
+        description: "Статус дефіциту успішно змінено",
+      });
     },
   });
 
