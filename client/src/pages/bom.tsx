@@ -127,6 +127,7 @@ export default function BOMPage() {
   };
 
   const handleAddComponent = () => {
+    console.log("handleAddComponent called, selectedProductId:", selectedProductId);
     if (!selectedProductId) {
       toast({
         title: "Увага",
@@ -136,6 +137,7 @@ export default function BOMPage() {
       return;
     }
     form.setValue("parentProductId", selectedProductId);
+    console.log("Setting dialog open to true");
     setIsAddDialogOpen(true);
   };
 
