@@ -354,9 +354,28 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(suppliers);
   }
 
+  async getSupplier(id: number): Promise<Supplier | undefined> {
+    const result = await db.select().from(suppliers).where(eq(suppliers.id, id));
+    return result[0];
+  }
+
   async createSupplier(insertSupplier: InsertSupplier): Promise<Supplier> {
     const result = await db.insert(suppliers).values(insertSupplier).returning();
     return result[0];
+  }
+
+  async updateSupplier(id: number, supplierData: Partial<InsertSupplier>): Promise<Supplier | undefined> {
+    const result = await db
+      .update(suppliers)
+      .set({ ...supplierData, updatedAt: new Date() })
+      .where(eq(suppliers.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteSupplier(id: number): Promise<boolean> {
+    const result = await db.delete(suppliers).where(eq(suppliers.id, id));
+    return result.rowCount > 0;
   }
 
   // Tech Cards
