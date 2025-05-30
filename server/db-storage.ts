@@ -255,7 +255,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createOrder(insertOrder: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
-    const orderResult = await db.insert(orders).values(insertOrder).returning();
+    // Генеруємо номер замовлення
+    const orderNumber = `ORD-${Date.now()}`;
+    
+    // Розраховуємо загальну суму
+    const totalAmount = items.reduce((sum, item) => {
+      return sum + (parseFloat(item.totalPrice) || 0);
+    }, 0);
+
+    const orderData = {
+      ...insertOrder,
+      orderNumber,
+      totalAmount: totalAmount.toString(),
+    };
+
+    const orderResult = await db.insert(orders).values(orderData).returning();
     const order = orderResult[0];
 
     if (items.length > 0) {
