@@ -61,11 +61,11 @@ export default function WorkersPage() {
     mutationFn: (data: FormData) =>
       apiRequest("/api/workers", {
         method: "POST",
-        body: JSON.stringify({
+        body: {
           ...data,
           hireDate: data.hireDate ? new Date(data.hireDate).toISOString() : null,
           hourlyRate: data.hourlyRate ? parseFloat(data.hourlyRate) : null,
-        }),
+        },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workers"] });
@@ -78,11 +78,11 @@ export default function WorkersPage() {
     mutationFn: ({ id, data }: { id: number; data: FormData }) =>
       apiRequest(`/api/workers/${id}`, {
         method: "PATCH",
-        body: JSON.stringify({
+        body: {
           ...data,
           hireDate: data.hireDate ? new Date(data.hireDate).toISOString() : null,
           hourlyRate: data.hourlyRate ? parseFloat(data.hourlyRate) : null,
-        }),
+        },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workers"] });
