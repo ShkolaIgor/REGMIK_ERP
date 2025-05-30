@@ -703,51 +703,59 @@ export class DatabaseStorage implements IStorage {
   }
 
   async calculateAutomaticCost(productId: number): Promise<CostCalculation> {
-    // Отримуємо компоненти продукта
-    const components = await this.getProductComponents(productId);
-    
-    let materialCost = 0;
-    for (const component of components) {
-      const componentCostPrice = parseFloat(component.component.costPrice);
-      const quantity = parseFloat(component.quantity);
-      materialCost += componentCostPrice * quantity;
-    }
+    try {
+      // Отримуємо компоненти продукта
+      const components = await this.getProductComponents(productId);
+      
+      let materialCost = 0;
+      for (const component of components) {
+        const componentCostPrice = parseFloat(component.component.costPrice || "0");
+        const quantity = parseFloat(component.quantity);
+        materialCost += componentCostPrice * quantity;
+      }
 
-    // Отримуємо рецепт для розрахунку трудових витрат
-    const recipes = await db.select()
+      // Отримуємо рецепт для розрахунку трудових витрат
+      const productRecipes = await db.select({
+        id: recipes.id,
+        laborCost: recipes.laborCost
+      })
       .from(recipes)
       .where(eq(recipes.productId, productId));
 
-    let laborCost = 0;
-    if (recipes.length > 0) {
-      laborCost = parseFloat(recipes[0].laborCost || "0");
-    }
+      let laborCost = 0;
+      if (productRecipes.length > 0) {
+        laborCost = parseFloat(productRecipes[0].laborCost || "0");
+      }
 
-    // Розрахунок накладних витрат (20% від матеріальних + трудових витрат)
-    const overheadCost = (materialCost + laborCost) * 0.2;
-    const totalCost = materialCost + laborCost + overheadCost;
-    
-    // Розрахунок ціни продажу з маржою 20%
-    const profitMargin = 20;
-    const sellingPrice = totalCost * (1 + profitMargin / 100);
+      // Розрахунок накладних витрат (20% від матеріальних + трудових витрат)
+      const overheadCost = (materialCost + laborCost) * 0.2;
+      const totalCost = materialCost + laborCost + overheadCost;
+      
+      // Розрахунок ціни продажу з маржою 20%
+      const profitMargin = 20;
+      const sellingPrice = totalCost * (1 + profitMargin / 100);
 
-    const calculationData: InsertCostCalculation = {
-      productId,
-      materialCost: materialCost.toFixed(2),
-      laborCost: laborCost.toFixed(2),
-      overheadCost: overheadCost.toFixed(2),
-      totalCost: totalCost.toFixed(2),
-      profitMargin: profitMargin.toFixed(2),
-      sellingPrice: sellingPrice.toFixed(2),
-      notes: "Автоматично розраховано на основі компонентів та рецептів"
-    };
+      const calculationData: InsertCostCalculation = {
+        productId,
+        materialCost: materialCost.toFixed(2),
+        laborCost: laborCost.toFixed(2),
+        overheadCost: overheadCost.toFixed(2),
+        totalCost: totalCost.toFixed(2),
+        profitMargin: profitMargin.toFixed(2),
+        sellingPrice: sellingPrice.toFixed(2),
+        notes: "Автоматично розраховано на основі компонентів та рецептів"
+      };
 
-    // Перевіряємо чи існує калькуляція для цього продукта
-    const existing = await this.getCostCalculation(productId);
-    if (existing) {
-      return await this.updateCostCalculation(existing.id, calculationData) || existing;
-    } else {
-      return await this.createCostCalculation(calculationData);
+      // Перевіряємо чи існує калькуляція для цього продукта
+      const existing = await this.getCostCalculation(productId);
+      if (existing) {
+        return await this.updateCostCalculation(existing.id, calculationData) || existing;
+      } else {
+        return await this.createCostCalculation(calculationData);
+      }
+    } catch (error) {
+      console.error("Error calculating automatic cost:", error);
+      throw error;
     }
   }
 }
