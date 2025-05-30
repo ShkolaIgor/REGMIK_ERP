@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ProductForm } from "@/components/ProductForm";
-import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, getStockStatus } from "@/lib/utils";
 import { Search, Plus, Edit, Eye, Copy, Trash2, Scan, Download, Printer, DollarSign, AlertTriangle, Package, Barcode } from "lucide-react";
@@ -15,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Inventory() {
   const [showProductForm, setShowProductForm] = useState(false);
-  const [showScanner, setShowScanner] = useState(false);
+
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -267,9 +266,9 @@ export default function Inventory() {
                   <Download className="w-4 h-4 mr-2" />
                   Експорт
                 </Button>
-                <Button variant="outline" onClick={() => setShowScanner(true)}>
+                <Button variant="outline" disabled>
                   <Scan className="w-4 h-4 mr-2" />
-                  Сканувати
+                  Сканер штрих-кодів
                 </Button>
                 <Button variant="outline">
                   <Printer className="w-4 h-4 mr-2" />

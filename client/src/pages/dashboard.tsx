@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LineChart, DoughnutChart } from "@/components/Charts";
-import { BarcodeScanner } from "@/components/BarcodeScanner";
+
 import { useState } from "react";
 import { 
   Package, 
