@@ -27,15 +27,25 @@ interface SupplierOrderItem {
   product: Product;
 }
 
+interface Supplier {
+  id: number;
+  name: string;
+  contactPerson: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+}
+
 interface SupplierOrder {
   id: number;
-  supplierName: string;
+  supplierId: number;
   orderNumber: string;
   status: string;
   totalAmount: string;
   expectedDelivery: string | null;
   notes: string | null;
   createdAt: string;
+  supplier: Supplier;
   items: SupplierOrderItem[];
 }
 
@@ -205,7 +215,7 @@ export default function SupplierOrdersPage() {
                 {orders.map((order: SupplierOrder) => (
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">{order.orderNumber}</TableCell>
-                    <TableCell>{order.supplierName}</TableCell>
+                    <TableCell>{order.supplier.name}</TableCell>
                     <TableCell>
                       <Badge className={statusColors[order.status as keyof typeof statusColors]}>
                         <span className="flex items-center gap-1">
@@ -239,7 +249,7 @@ export default function SupplierOrdersPage() {
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
                                   <label className="text-sm font-medium">Постачальник</label>
-                                  <p className="text-sm text-gray-600">{selectedOrder.supplierName}</p>
+                                  <p className="text-sm text-gray-600">{selectedOrder.supplier.name}</p>
                                 </div>
                                 <div>
                                   <label className="text-sm font-medium">Статус</label>

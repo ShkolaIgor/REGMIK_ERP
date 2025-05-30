@@ -997,12 +997,12 @@ export class DatabaseStorage implements IStorage {
       // Генеруємо номер замовлення
       const orderNumber = `ORD-${Date.now()}`;
 
-      // Отримуємо постачальника з рекомендації або використовуємо загальний
-      const supplierName = "Основний постачальник";
+      // Отримуємо постачальника з рекомендації або використовуємо першого доступного
+      const supplierId = shortage.supplierRecommendationId || 1;
 
       // Створюємо замовлення постачальнику
       const orderData: InsertSupplierOrder = {
-        supplierName,
+        supplierId,
         orderNumber,
         status: 'draft',
         totalAmount: shortage.estimatedCost || '0',
@@ -1073,12 +1073,18 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getSupplierOrder(id: number): Promise<(SupplierOrder & { items: (SupplierOrderItem & { product: Product })[] }) | undefined> {
+  async getSupplierOrder(id: number): Promise<(SupplierOrder & { supplier: Supplier; items: (SupplierOrderItem & { product: Product })[] }) | undefined> {
     try {
-      const orders = await db.select().from(supplierOrders).where(eq(supplierOrders.id, id));
-      if (orders.length === 0) return undefined;
+      const orderResult = await db.select({
+        order: supplierOrders,
+        supplier: suppliers,
+      }).from(supplierOrders)
+        .leftJoin(suppliers, eq(supplierOrders.supplierId, suppliers.id))
+        .where(eq(supplierOrders.id, id));
+        
+      if (orderResult.length === 0 || !orderResult[0].supplier) return undefined;
 
-      const order = orders[0];
+      const { order, supplier } = orderResult[0];
       const items = await db.select({
         item: supplierOrderItems,
         product: products,
@@ -1090,6 +1096,7 @@ export class DatabaseStorage implements IStorage {
 
       return {
         ...order,
+        supplier,
         items: filteredItems.map(({ item, product }) => ({ ...item, product }))
       };
     } catch (error) {

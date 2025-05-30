@@ -113,8 +113,8 @@ export interface IStorage {
   deleteSupplier(id: number): Promise<boolean>;
 
   // Supplier Orders
-  getSupplierOrders(): Promise<(SupplierOrder & { items: (SupplierOrderItem & { product: Product })[] })[]>;
-  getSupplierOrder(id: number): Promise<(SupplierOrder & { items: (SupplierOrderItem & { product: Product })[] }) | undefined>;
+  getSupplierOrders(): Promise<(SupplierOrder & { supplier: Supplier; items: (SupplierOrderItem & { product: Product })[] })[]>;
+  getSupplierOrder(id: number): Promise<(SupplierOrder & { supplier: Supplier; items: (SupplierOrderItem & { product: Product })[] }) | undefined>;
   updateSupplierOrderStatus(id: number, status: string): Promise<SupplierOrder | undefined>;
 
   // Analytics
