@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarDays, Download, FileText, Package, ShoppingCart, TrendingUp, Users, Warehouse, Factory, AlertTriangle } from "lucide-react";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function AdvancedReports() {
   const [selectedReport, setSelectedReport] = useState<string>("inventory");
@@ -85,6 +87,48 @@ export default function AdvancedReports() {
   const exportToExcel = (data: any[], filename: string) => {
     // Простий метод створення Excel-подібного CSV
     exportToCSV(data, filename + "_excel");
+  };
+
+  const exportToPDF = (data: any[], filename: string, reportTitle: string) => {
+    if (!data.length) return;
+    
+    const doc = new jsPDF();
+    
+    // Додаємо заголовок
+    doc.setFontSize(16);
+    doc.text(reportTitle, 20, 20);
+    
+    // Додаємо дату
+    doc.setFontSize(10);
+    doc.text(`Дата: ${new Date().toLocaleDateString('uk-UA')}`, 20, 30);
+    
+    // Підготовляємо дані для таблиці
+    const headers = Object.keys(data[0]);
+    const rows = data.map(row => 
+      headers.map(header => String(row[header] || ''))
+    );
+    
+    // Створюємо таблицю
+    autoTable(doc, {
+      head: [headers],
+      body: rows,
+      startY: 40,
+      styles: {
+        fontSize: 8,
+        cellPadding: 2
+      },
+      headStyles: {
+        fillColor: [41, 128, 185],
+        textColor: 255
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245]
+      },
+      margin: { top: 40, left: 10, right: 10 }
+    });
+    
+    // Зберігаємо файл
+    doc.save(`${filename}_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   // Підготовка даних для звітів
@@ -241,12 +285,15 @@ export default function AdvancedReports() {
   const currentReport = reportTypes.find(r => r.id === selectedReport);
 
   const exportData = (format: string) => {
+    const reportTitle = currentReport?.name || "Звіт";
     if (format === "csv") {
       exportToCSV(currentReportData, `${selectedReport}-report`);
     } else if (format === "json") {
       exportToJSON(currentReportData, `${selectedReport}-report`);
     } else if (format === "excel") {
       exportToExcel(currentReportData, `${selectedReport}-report`);
+    } else if (format === "pdf") {
+      exportToPDF(currentReportData, `${selectedReport}-report`, reportTitle);
     }
   };
 
@@ -277,6 +324,7 @@ export default function AdvancedReports() {
               <SelectItem value="csv">CSV</SelectItem>
               <SelectItem value="json">JSON</SelectItem>
               <SelectItem value="excel">Excel</SelectItem>
+              <SelectItem value="pdf">PDF</SelectItem>
             </SelectContent>
           </Select>
           <Button 
