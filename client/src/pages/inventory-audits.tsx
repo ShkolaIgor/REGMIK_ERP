@@ -21,7 +21,7 @@ const formSchema = z.object({
   warehouseId: z.string().min(1, "Склад обов'язковий").transform(val => parseInt(val)),
   auditType: z.string().min(1, "Тип інвентаризації обов'язковий"),
   plannedDate: z.string().optional(),
-  responsiblePerson: z.string().min(1, "Відповідальна особа обов'язкова"),
+  responsiblePersonId: z.string().min(1, "Відповідальна особа обов'язкова").transform(val => parseInt(val)),
   notes: z.string().optional(),
 });
 
@@ -53,7 +53,7 @@ export default function InventoryAuditsPage() {
       warehouseId: "0",
       auditType: "full",
       plannedDate: "",
-      responsiblePerson: "",
+      responsiblePersonId: "0",
       notes: "",
     },
   });
@@ -82,6 +82,10 @@ export default function InventoryAuditsPage() {
 
   const { data: products = [] } = useQuery({
     queryKey: ["/api/products"],
+  });
+
+  const { data: workers = [] } = useQuery({
+    queryKey: ["/api/workers"],
   });
 
   const { data: auditItems = [] } = useQuery({
@@ -339,13 +343,25 @@ export default function InventoryAuditsPage() {
 
                 <FormField
                   control={form.control}
-                  name="responsiblePerson"
+                  name="responsiblePersonId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Відповідальна особа</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ім'я відповідальної особи" {...field} />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Оберіть відповідальну особу" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="0">Не вказано</SelectItem>
+                          {workers.map((worker: any) => (
+                            <SelectItem key={worker.id} value={worker.id.toString()}>
+                              {worker.firstName} {worker.lastName} - {worker.position}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
