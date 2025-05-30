@@ -83,6 +83,19 @@ export function KanbanBoard() {
     });
   };
 
+  const handleCreateTask = () => {
+    if (!newTask.recipeId || !newTask.quantity) {
+      toast({
+        title: "Помилка",
+        description: "Виберіть рецепт та вкажіть кількість",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createTaskMutation.mutate(newTask as InsertProductionTask);
+  };
+
   const getTasksByStatus = (status: string) => {
     return tasks.filter((task: any) => task.status === status);
   };
@@ -95,10 +108,104 @@ export function KanbanBoard() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900">Планування виробництва (Kanban)</h3>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          Нове завдання
-        </Button>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Нове завдання
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Створити виробниче завдання</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="recipe">Рецепт</Label>
+                <Select 
+                  value={newTask.recipeId?.toString() || ""} 
+                  onValueChange={(value) => setNewTask({ ...newTask, recipeId: parseInt(value) })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Виберіть рецепт" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {recipes.map((recipe: Recipe) => (
+                      <SelectItem key={recipe.id} value={recipe.id.toString()}>
+                        {recipe.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="quantity">Кількість</Label>
+                <Input
+                  id="quantity"
+                  type="number"
+                  value={newTask.quantity || 1}
+                  onChange={(e) => setNewTask({ ...newTask, quantity: parseInt(e.target.value) })}
+                  min="1"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="priority">Пріоритет</Label>
+                <Select 
+                  value={newTask.priority || "medium"} 
+                  onValueChange={(value) => setNewTask({ ...newTask, priority: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Низький</SelectItem>
+                    <SelectItem value="medium">Середній</SelectItem>
+                    <SelectItem value="high">Високий</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="assignedTo">Призначено</Label>
+                <Input
+                  id="assignedTo"
+                  value={newTask.assignedTo || ""}
+                  onChange={(e) => setNewTask({ ...newTask, assignedTo: e.target.value })}
+                  placeholder="Ім'я співробітника"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="notes">Примітки</Label>
+                <Textarea
+                  id="notes"
+                  value={newTask.notes || ""}
+                  onChange={(e) => setNewTask({ ...newTask, notes: e.target.value })}
+                  placeholder="Додаткові примітки..."
+                />
+              </div>
+              
+              <div className="flex gap-2 pt-4">
+                <Button 
+                  onClick={handleCreateTask} 
+                  disabled={createTaskMutation.isPending}
+                  className="flex-1"
+                >
+                  {createTaskMutation.isPending ? "Створення..." : "Створити"}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsCreateDialogOpen(false)}
+                  className="flex-1"
+                >
+                  Скасувати
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
