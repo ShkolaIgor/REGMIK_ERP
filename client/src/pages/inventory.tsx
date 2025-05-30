@@ -18,8 +18,8 @@ export default function Inventory() {
   const [showScanner, setShowScanner] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -67,11 +67,11 @@ export default function Inventory() {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          product.sku.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesCategory = !categoryFilter || product.categoryId?.toString() === categoryFilter;
+    const matchesCategory = !categoryFilter || categoryFilter === 'all' || product.categoryId?.toString() === categoryFilter;
     
     const productInventory = getProductInventory(product.id);
     const stockStatus = productInventory ? getStockStatus(productInventory.quantity, productInventory.minStock) : 'out-of-stock';
-    const matchesStatus = !statusFilter || stockStatus === statusFilter;
+    const matchesStatus = !statusFilter || statusFilter === 'all' || stockStatus === statusFilter;
 
     return matchesSearch && matchesCategory && matchesStatus;
   });
@@ -236,7 +236,7 @@ export default function Inventory() {
                       <SelectValue placeholder="Всі категорії" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Всі категорії</SelectItem>
+                      <SelectItem value="all">Всі категорії</SelectItem>
                       {categories.map((category: any) => (
                         <SelectItem key={category.id} value={category.id.toString()}>
                           {category.name}
@@ -253,7 +253,7 @@ export default function Inventory() {
                       <SelectValue placeholder="Всі статуси" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Всі статуси</SelectItem>
+                      <SelectItem value="all">Всі статуси</SelectItem>
                       <SelectItem value="in-stock">В наявності</SelectItem>
                       <SelectItem value="low-stock">Мало на складі</SelectItem>
                       <SelectItem value="out-of-stock">Немає в наявності</SelectItem>
