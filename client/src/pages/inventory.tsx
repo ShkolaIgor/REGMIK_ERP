@@ -372,11 +372,7 @@ export default function Inventory() {
         product={editingProduct}
       />
 
-      <BarcodeScanner
-        isOpen={showScanner}
-        onClose={() => setShowScanner(false)}
-        onScan={handleBarcodeScanned}
-      />
+
     </div>
   );
 }
