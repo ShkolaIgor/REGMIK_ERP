@@ -141,13 +141,13 @@ export default function BOMPage() {
     return <div className="p-6">Завантаження продуктів...</div>;
   }
 
-  const parentProducts = products?.filter((p: Product) => 
+  const parentProducts = (products as Product[] || []).filter((p: Product) => 
     p.productType === "товар" || p.productType === "комплект"
-  ) || [];
+  );
 
-  const componentProducts = products?.filter((p: Product) => 
+  const componentProducts = (products as Product[] || []).filter((p: Product) => 
     p.productType === "комплектуюча" || p.productType === "матеріал"
-  ) || [];
+  );
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -217,7 +217,7 @@ export default function BOMPage() {
           <CardContent>
             {isLoadingComponents ? (
               <div>Завантаження компонентів...</div>
-            ) : components?.length > 0 ? (
+            ) : (components as ProductComponent[] || []).length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -232,7 +232,7 @@ export default function BOMPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {components.map((component: ProductComponent) => (
+                  {(components as ProductComponent[] || []).map((component: ProductComponent) => (
                     <TableRow key={component.id}>
                       <TableCell className="font-medium">
                         {component.component.name}

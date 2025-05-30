@@ -14,7 +14,8 @@ import {
   BarChart,
   File,
   Users,
-  Box
+  Box,
+  Layers
 } from "lucide-react";
 
 interface LayoutProps {
@@ -43,6 +44,7 @@ const navigationItems = [
     items: [
       { name: "Рецепти виробництва", href: "/recipes", icon: FileText },
       { name: "Технологічні карти", href: "/tech-cards", icon: File },
+      { name: "Склад виробів (BOM)", href: "/bom", icon: Layers },
       { name: "Планування (Kanban)", href: "/production", icon: Cog },
       { name: "Калькуляція собівартості", href: "/costing", icon: Calculator },
       { name: "Дефіцит матеріалів", href: "/shortage", icon: AlertTriangle }
