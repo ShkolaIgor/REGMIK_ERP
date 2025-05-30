@@ -148,12 +148,20 @@ export default function InventoryAuditsPage() {
     mutationFn: (data: AuditItemFormData & { auditId: number }) =>
       apiRequest(`/api/inventory-audits/${data.auditId}/items`, {
         method: "POST",
-        body: JSON.stringify(data),
+        body: data,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory-audits", selectedAudit?.id, "items"] });
       setIsItemFormOpen(false);
-      itemForm.reset();
+      itemForm.reset({
+        productId: "0",
+        systemQuantity: "",
+        countedQuantity: "",
+        unit: "шт",
+        reason: "",
+        countedBy: "",
+        notes: "",
+      });
       toast({
         title: "Успішно",
         description: "Позицію додано до інвентаризації",
