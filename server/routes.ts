@@ -657,8 +657,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Material shortage not found" });
       }
       res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ error: "Failed to delete material shortage" });
+    } catch (error: any) {
+      console.error('Error in DELETE /api/material-shortages/:id:', error);
+      res.status(400).json({ error: error.message || "Failed to delete material shortage" });
     }
   });
 
