@@ -1047,6 +1047,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Workers
+  app.get("/api/workers", async (req, res) => {
+    try {
+      const workers = await storage.getWorkers();
+      res.json(workers);
+    } catch (error) {
+      console.error("Failed to get workers:", error);
+      res.status(500).json({ error: "Failed to get workers" });
+    }
+  });
+
+  app.get("/api/workers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const worker = await storage.getWorker(id);
+      if (worker) {
+        res.json(worker);
+      } else {
+        res.status(404).json({ error: "Worker not found" });
+      }
+    } catch (error) {
+      console.error("Failed to get worker:", error);
+      res.status(500).json({ error: "Failed to get worker" });
+    }
+  });
+
+  app.post("/api/workers", async (req, res) => {
+    try {
+      const workerData = insertWorkerSchema.parse(req.body);
+      const worker = await storage.createWorker(workerData);
+      res.json(worker);
+    } catch (error) {
+      console.error("Failed to create worker:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid worker data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create worker" });
+      }
+    }
+  });
+
+  app.patch("/api/workers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const workerData = insertWorkerSchema.partial().parse(req.body);
+      const worker = await storage.updateWorker(id, workerData);
+      if (worker) {
+        res.json(worker);
+      } else {
+        res.status(404).json({ error: "Worker not found" });
+      }
+    } catch (error) {
+      console.error("Failed to update worker:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid worker data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update worker" });
+      }
+    }
+  });
+
+  app.delete("/api/workers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteWorker(id);
+      if (!success) {
+        res.status(404).json({ error: "Worker not found" });
+        return;
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Failed to delete worker:", error);
+      res.status(500).json({ error: "Failed to delete worker" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
