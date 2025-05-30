@@ -69,6 +69,20 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async updateCategory(id: number, categoryData: Partial<InsertCategory>): Promise<Category | undefined> {
+    const result = await db
+      .update(categories)
+      .set(categoryData)
+      .where(eq(categories.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteCategory(id: number): Promise<boolean> {
+    const result = await db.delete(categories).where(eq(categories.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
   // Warehouses
   async getWarehouses(): Promise<Warehouse[]> {
     return await db.select().from(warehouses);
