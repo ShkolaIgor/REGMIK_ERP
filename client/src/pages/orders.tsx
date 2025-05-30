@@ -30,7 +30,6 @@ const orderSchema = z.object({
   customerPhone: z.string().optional(),
   status: z.string().default("pending"),
   notes: z.string().optional(),
-  items: z.array(orderItemSchema).min(1, "Додайте хоча б один товар"),
 });
 
 type OrderFormData = z.infer<typeof orderSchema>;
@@ -60,7 +59,6 @@ export default function Orders() {
       customerPhone: "",
       status: "pending",
       notes: "",
-      items: [],
     },
   });
 
