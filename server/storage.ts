@@ -15,7 +15,9 @@ import {
   type TechCardMaterial, type InsertTechCardMaterial,
   type ProductComponent, type InsertProductComponent,
   type CostCalculation, type InsertCostCalculation,
-  type MaterialShortage, type InsertMaterialShortage
+  type MaterialShortage, type InsertMaterialShortage,
+  type SupplierOrder, type InsertSupplierOrder,
+  type SupplierOrderItem, type InsertSupplierOrderItem
 } from "@shared/schema";
 
 export interface IStorage {

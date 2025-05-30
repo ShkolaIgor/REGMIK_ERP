@@ -4,7 +4,7 @@ import { IStorage } from "./storage";
 import {
   users, categories, warehouses, units, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
-  productComponents, costCalculations, materialShortages,
+  productComponents, costCalculations, materialShortages, supplierOrders, supplierOrderItems,
   type User, type InsertUser, type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
   type Product, type InsertProduct,
@@ -18,7 +18,9 @@ import {
   type TechCardMaterial, type InsertTechCardMaterial,
   type ProductComponent, type InsertProductComponent,
   type CostCalculation, type InsertCostCalculation,
-  type MaterialShortage, type InsertMaterialShortage
+  type MaterialShortage, type InsertMaterialShortage,
+  type SupplierOrder, type InsertSupplierOrder,
+  type SupplierOrderItem, type InsertSupplierOrderItem
 } from "@shared/schema";
 
 export class DatabaseStorage implements IStorage {
