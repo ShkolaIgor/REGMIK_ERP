@@ -6,7 +6,8 @@ import {
   insertProductionTaskSchema, insertCategorySchema, insertUnitSchema, insertWarehouseSchema,
   insertSupplierSchema, insertInventorySchema, insertTechCardSchema,
   insertProductComponentSchema, insertCostCalculationSchema, insertMaterialShortageSchema,
-  insertAssemblyOperationSchema, insertAssemblyOperationItemSchema
+  insertAssemblyOperationSchema, insertAssemblyOperationItemSchema,
+  insertInventoryAuditSchema, insertInventoryAuditItemSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -894,6 +895,154 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Failed to execute assembly operation:", error);
       res.status(500).json({ error: "Failed to execute assembly operation" });
+    }
+  });
+
+  // Inventory Audits API
+  app.get("/api/inventory-audits", async (_req, res) => {
+    try {
+      const audits = await storage.getInventoryAudits();
+      res.json(audits);
+    } catch (error) {
+      console.error("Failed to get inventory audits:", error);
+      res.status(500).json({ error: "Failed to get inventory audits" });
+    }
+  });
+
+  app.get("/api/inventory-audits/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const audit = await storage.getInventoryAudit(id);
+      if (!audit) {
+        return res.status(404).json({ error: "Inventory audit not found" });
+      }
+      res.json(audit);
+    } catch (error) {
+      console.error("Failed to get inventory audit:", error);
+      res.status(500).json({ error: "Failed to get inventory audit" });
+    }
+  });
+
+  app.post("/api/inventory-audits", async (req, res) => {
+    try {
+      const auditData = insertInventoryAuditSchema.parse(req.body);
+      const audit = await storage.createInventoryAudit(auditData);
+      res.status(201).json(audit);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid audit data", details: error.errors });
+      } else {
+        console.error("Failed to create inventory audit:", error);
+        res.status(500).json({ error: "Failed to create inventory audit" });
+      }
+    }
+  });
+
+  app.patch("/api/inventory-audits/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const auditData = insertInventoryAuditSchema.partial().parse(req.body);
+      const audit = await storage.updateInventoryAudit(id, auditData);
+      if (!audit) {
+        return res.status(404).json({ error: "Inventory audit not found" });
+      }
+      res.json(audit);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid audit data", details: error.errors });
+      } else {
+        console.error("Failed to update inventory audit:", error);
+        res.status(500).json({ error: "Failed to update inventory audit" });
+      }
+    }
+  });
+
+  app.delete("/api/inventory-audits/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteInventoryAudit(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Inventory audit not found" });
+      }
+      res.status(204).end();
+    } catch (error) {
+      console.error("Failed to delete inventory audit:", error);
+      res.status(500).json({ error: "Failed to delete inventory audit" });
+    }
+  });
+
+  // Inventory Audit Items API
+  app.get("/api/inventory-audits/:auditId/items", async (req, res) => {
+    try {
+      const auditId = parseInt(req.params.auditId);
+      const items = await storage.getInventoryAuditItems(auditId);
+      res.json(items);
+    } catch (error) {
+      console.error("Failed to get inventory audit items:", error);
+      res.status(500).json({ error: "Failed to get inventory audit items" });
+    }
+  });
+
+  app.post("/api/inventory-audits/:auditId/items", async (req, res) => {
+    try {
+      const auditId = parseInt(req.params.auditId);
+      const itemData = insertInventoryAuditItemSchema.parse({
+        ...req.body,
+        auditId
+      });
+      const item = await storage.createInventoryAuditItem(itemData);
+      res.status(201).json(item);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid audit item data", details: error.errors });
+      } else {
+        console.error("Failed to create inventory audit item:", error);
+        res.status(500).json({ error: "Failed to create inventory audit item" });
+      }
+    }
+  });
+
+  app.patch("/api/inventory-audit-items/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const itemData = insertInventoryAuditItemSchema.partial().parse(req.body);
+      const item = await storage.updateInventoryAuditItem(id, itemData);
+      if (!item) {
+        return res.status(404).json({ error: "Inventory audit item not found" });
+      }
+      res.json(item);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid audit item data", details: error.errors });
+      } else {
+        console.error("Failed to update inventory audit item:", error);
+        res.status(500).json({ error: "Failed to update inventory audit item" });
+      }
+    }
+  });
+
+  app.delete("/api/inventory-audit-items/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteInventoryAuditItem(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Inventory audit item not found" });
+      }
+      res.status(204).end();
+    } catch (error) {
+      console.error("Failed to delete inventory audit item:", error);
+      res.status(500).json({ error: "Failed to delete inventory audit item" });
+    }
+  });
+
+  app.post("/api/inventory-audits/:auditId/generate-items", async (req, res) => {
+    try {
+      const auditId = parseInt(req.params.auditId);
+      const items = await storage.generateInventoryAuditItems(auditId);
+      res.json(items);
+    } catch (error) {
+      console.error("Failed to generate inventory audit items:", error);
+      res.status(500).json({ error: "Failed to generate inventory audit items" });
     }
   });
 

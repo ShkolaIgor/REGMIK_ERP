@@ -17,7 +17,8 @@ import {
   Box,
   Layers,
   Truck,
-  PackageOpen
+  PackageOpen,
+  ClipboardList
 } from "lucide-react";
 
 interface LayoutProps {
@@ -39,6 +40,7 @@ const navigationItems = [
       { name: "Склади", href: "/warehouses", icon: Warehouse },
       { name: "Замовлення", href: "/orders", icon: ShoppingCart },
       { name: "Замовлення постачальникам", href: "/supplier-orders", icon: Truck },
+      { name: "Інвентаризація", href: "/inventory-audits", icon: ClipboardList },
       { name: "Сканер штрих-кодів", href: "/scanner", icon: Scan }
     ]
   },
