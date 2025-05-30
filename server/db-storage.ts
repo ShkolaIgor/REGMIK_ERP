@@ -846,10 +846,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteMaterialShortage(id: number): Promise<boolean> {
-    const result = await db.delete(materialShortages)
-      .where(eq(materialShortages.id, id));
-    
-    return result.rowCount > 0;
+    try {
+      // Перевіряємо, чи є пов'язані замовлення постачальникам
+      const relatedOrders = await db.select()
+        .from(supplierOrderItems)
+        .where(eq(supplierOrderItems.materialShortageId, id))
+        .limit(1);
+      
+      if (relatedOrders.length > 0) {
+        throw new Error("Неможливо видалити дефіцит: існують пов'язані замовлення постачальникам");
+      }
+      
+      const result = await db.delete(materialShortages)
+        .where(eq(materialShortages.id, id));
+      
+      return result.rowCount > 0;
+    } catch (error: any) {
+      console.error('Error deleting material shortage:', error);
+      throw new Error(error.message || "Помилка при видаленні дефіциту матеріалів");
+    }
   }
 
   async calculateMaterialShortages(): Promise<MaterialShortage[]> {
