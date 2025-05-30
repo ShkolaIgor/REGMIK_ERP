@@ -1,13 +1,16 @@
 import {
   users, categories, warehouses, products, inventory, orders, orderItems,
-  recipes, recipeIngredients, productionTasks, suppliers,
+  recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   type User, type InsertUser, type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
   type Inventory, type InsertInventory, type Order, type InsertOrder,
   type OrderItem, type InsertOrderItem, type Recipe, type InsertRecipe,
   type RecipeIngredient, type InsertRecipeIngredient,
   type ProductionTask, type InsertProductionTask,
-  type Supplier, type InsertSupplier
+  type Supplier, type InsertSupplier,
+  type TechCard, type InsertTechCard,
+  type TechCardStep, type InsertTechCardStep,
+  type TechCardMaterial, type InsertTechCardMaterial
 } from "@shared/schema";
 
 export interface IStorage {
@@ -99,6 +102,9 @@ export class MemStorage implements IStorage {
   private currentRecipeIngredientId = 1;
   private currentProductionTaskId = 1;
   private currentSupplierId = 1;
+  private currentTechCardId = 1;
+  private currentTechCardStepId = 1;
+  private currentTechCardMaterialId = 1;
 
   constructor() {
     this.initializeData();
@@ -455,6 +461,115 @@ export class MemStorage implements IStorage {
       activeOrders,
       productionTasks
     };
+  }
+
+  // Tech Cards
+  async getTechCards(): Promise<(TechCard & { product: Product; steps: TechCardStep[]; materials: (TechCardMaterial & { product: Product })[] })[]> {
+    const result: (TechCard & { product: Product; steps: TechCardStep[]; materials: (TechCardMaterial & { product: Product })[] })[] = [];
+    const techCardValues = [...this.techCards.values()];
+    
+    for (const techCard of techCardValues) {
+      const product = this.products.get(techCard.productId!);
+      const steps = this.techCardSteps.get(techCard.id) || [];
+      const materials = this.techCardMaterials.get(techCard.id) || [];
+      const materialsWithProducts = materials.map(material => {
+        const materialProduct = this.products.get(material.productId);
+        return { ...material, product: materialProduct! };
+      }).filter(m => m.product);
+      
+      if (product) {
+        result.push({ 
+          ...techCard, 
+          product, 
+          steps, 
+          materials: materialsWithProducts 
+        });
+      }
+    }
+    
+    return result;
+  }
+
+  async getTechCard(id: number): Promise<(TechCard & { product: Product; steps: TechCardStep[]; materials: (TechCardMaterial & { product: Product })[] }) | undefined> {
+    const techCard = this.techCards.get(id);
+    if (!techCard) return undefined;
+
+    const product = this.products.get(techCard.productId!);
+    if (!product) return undefined;
+
+    const steps = this.techCardSteps.get(id) || [];
+    const materials = this.techCardMaterials.get(id) || [];
+    const materialsWithProducts = materials.map(material => {
+      const materialProduct = this.products.get(material.productId);
+      return { ...material, product: materialProduct! };
+    }).filter(m => m.product);
+
+    return { 
+      ...techCard, 
+      product, 
+      steps, 
+      materials: materialsWithProducts 
+    };
+  }
+
+  async createTechCard(insertTechCard: InsertTechCard, steps: InsertTechCardStep[], materials: InsertTechCardMaterial[]): Promise<TechCard> {
+    const id = this.currentTechCardId++;
+    const techCard: TechCard = { 
+      ...insertTechCard, 
+      id,
+      createdAt: new Date()
+    };
+    this.techCards.set(id, techCard);
+
+    // Додати кроки
+    const techCardSteps: TechCardStep[] = steps.map((step, index) => ({
+      ...step,
+      id: this.currentTechCardStepId++,
+      techCardId: id,
+      stepNumber: index + 1
+    }));
+    this.techCardSteps.set(id, techCardSteps);
+
+    // Додати матеріали
+    const techCardMaterials: TechCardMaterial[] = materials.map(material => ({
+      ...material,
+      id: this.currentTechCardMaterialId++,
+      techCardId: id
+    }));
+    this.techCardMaterials.set(id, techCardMaterials);
+
+    return techCard;
+  }
+
+  async updateTechCard(id: number, techCardData: Partial<InsertTechCard>, steps?: InsertTechCardStep[], materials?: InsertTechCardMaterial[]): Promise<TechCard | undefined> {
+    const techCard = this.techCards.get(id);
+    if (!techCard) return undefined;
+
+    const updatedTechCard = { ...techCard, ...techCardData };
+    this.techCards.set(id, updatedTechCard);
+
+    // Оновити кроки, якщо надано
+    if (steps) {
+      const techCardSteps: TechCardStep[] = steps.map((step, index) => ({
+        ...step,
+        id: this.currentTechCardStepId++,
+        techCardId: id,
+        stepNumber: index + 1
+      }));
+      this.techCardSteps.set(id, techCardSteps);
+    }
+
+    // Оновити матеріали, якщо надано
+    if (materials) {
+      const techCardMaterials: TechCardMaterial[] = materials.map(material => ({
+        ...material,
+        id: this.currentTechCardMaterialId++,
+        techCardId: id
+      }));
+      this.techCardMaterials.set(id, techCardMaterials);
+    }
+
+    return updatedTechCard;
   }
 }
 
