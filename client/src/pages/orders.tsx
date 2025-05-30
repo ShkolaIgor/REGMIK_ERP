@@ -65,31 +65,21 @@ export default function Orders() {
   // Мутація для створення замовлення
   const createOrderMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log("Making API request with data:", data);
-      
-      try {
-        const response = await fetch("/api/orders", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        });
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        console.log("Raw response from server:", result);
-        return result;
-      } catch (error) {
-        console.error("Fetch error:", error);
-        throw error;
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      return await response.json();
     },
-    onSuccess: (result) => {
-      console.log("Order created successfully:", result);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       handleCloseDialog();
       toast({
@@ -98,7 +88,6 @@ export default function Orders() {
       });
     },
     onError: (error: any) => {
-      console.error("Error creating order:", error);
       toast({
         title: "Помилка",
         description: error.message || "Не вдалося створити замовлення",
@@ -151,9 +140,6 @@ export default function Orders() {
   };
 
   const handleSubmit = (data: OrderFormData) => {
-    console.log("Form submitted with data:", data);
-    console.log("Order items:", orderItems);
-    
     // Перевіряємо, чи додані товари
     if (orderItems.length === 0) {
       toast({
@@ -168,8 +154,6 @@ export default function Orders() {
     const invalidItems = orderItems.filter(item => 
       !item.productId || !item.quantity || !item.unitPrice
     );
-    
-    console.log("Invalid items:", invalidItems);
     
     if (invalidItems.length > 0) {
       toast({
@@ -190,13 +174,12 @@ export default function Orders() {
       },
       items: orderItems.map(item => ({
         productId: item.productId,
-        quantity: parseInt(item.quantity), // конвертуємо в число
+        quantity: parseInt(item.quantity),
         unitPrice: item.unitPrice,
         totalPrice: (parseFloat(item.quantity) * parseFloat(item.unitPrice)).toString(),
       })),
     };
     
-    console.log("Sending order data:", orderData);
     createOrderMutation.mutate(orderData);
   };
 
@@ -380,16 +363,7 @@ export default function Orders() {
                   <Button type="button" variant="outline" onClick={handleCloseDialog}>
                     Скасувати
                   </Button>
-                  <Button 
-                    type="button" 
-                    onClick={() => {
-                      console.log("Form errors:", form.formState.errors);
-                      console.log("Form values:", form.getValues());
-                      console.log("Order items:", orderItems);
-                      form.handleSubmit(handleSubmit)();
-                    }}
-                    disabled={createOrderMutation.isPending}
-                  >
+                  <Button type="submit" disabled={createOrderMutation.isPending}>
                     {createOrderMutation.isPending ? "Створення..." : "Створити замовлення"}
                   </Button>
                 </DialogFooter>

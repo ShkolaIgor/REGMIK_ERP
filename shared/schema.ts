@@ -227,8 +227,7 @@ export const suppliers = pgTable("suppliers", {
 // Таблиця замовлень постачальникам
 export const supplierOrders = pgTable("supplier_orders", {
   id: serial("id").primaryKey(),
-  supplierId: integer("supplier_id").references(() => suppliers.id),
-  supplierName: text("supplier_name").notNull(), // для зворотної сумісності
+  supplierId: integer("supplier_id").references(() => suppliers.id).notNull(),
   orderNumber: text("order_number").notNull(),
   status: text("status").notNull().default("draft"), // draft, sent, confirmed, received
   totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull().default("0"),

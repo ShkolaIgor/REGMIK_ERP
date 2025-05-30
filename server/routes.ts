@@ -265,20 +265,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/orders", async (req, res) => {
     try {
-      console.log("Received order data:", req.body);
       const { order, items } = req.body;
-      console.log("Order:", order);
-      console.log("Items:", items);
-      
       const orderData = insertOrderSchema.parse(order);
-      console.log("Parsed order data:", orderData);
-      
       const createdOrder = await storage.createOrder(orderData, items);
-      console.log("Created order:", createdOrder);
-      
       res.status(201).json(createdOrder);
     } catch (error) {
-      console.error("Error creating order:", error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: "Invalid order data", details: error.errors });
       } else {
