@@ -464,7 +464,11 @@ export default function InventoryAuditsPage() {
                               ? new Date(audit.plannedDate).toLocaleDateString()
                               : "-"}
                           </TableCell>
-                          <TableCell>{audit.responsiblePerson}</TableCell>
+                          <TableCell>
+                            {audit.responsiblePerson 
+                              ? `${audit.responsiblePerson.firstName} ${audit.responsiblePerson.lastName}`
+                              : "-"}
+                          </TableCell>
                           <TableCell>
                             <div className="flex space-x-2">
                               <Button

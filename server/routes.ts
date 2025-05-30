@@ -926,8 +926,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/inventory-audits", async (req, res) => {
     try {
-      console.log("Received audit data:", req.body);
-      
       // Перетворення рядків дат на об'єкти Date
       const processedData = {
         ...req.body,
@@ -937,9 +935,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         responsiblePersonId: req.body.responsiblePersonId === 0 ? null : req.body.responsiblePersonId,
       };
       
-      console.log("Processed audit data:", processedData);
       const auditData = insertInventoryAuditSchema.parse(processedData);
-      console.log("Parsed audit data:", auditData);
       const audit = await storage.createInventoryAudit(auditData);
       res.status(201).json(audit);
     } catch (error) {
