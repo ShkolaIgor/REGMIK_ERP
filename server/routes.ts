@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { 
   insertProductSchema, insertOrderSchema, insertRecipeSchema,
-  insertProductionTaskSchema, insertCategorySchema, insertWarehouseSchema,
+  insertProductionTaskSchema, insertCategorySchema, insertUnitSchema, insertWarehouseSchema,
   insertSupplierSchema, insertInventorySchema, insertTechCardSchema,
   insertProductComponentSchema
 } from "@shared/schema";
@@ -98,6 +98,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ error: "Failed to create warehouse" });
       }
+    }
+  });
+
+  app.put("/api/warehouses/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const warehouseData = insertWarehouseSchema.partial().parse(req.body);
+      const warehouse = await storage.updateWarehouse(id, warehouseData);
+      if (warehouse) {
+        res.json(warehouse);
+      } else {
+        res.status(404).json({ error: "Warehouse not found" });
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid warehouse data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update warehouse" });
+      }
+    }
+  });
+
+  app.delete("/api/warehouses/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteWarehouse(id);
+      if (!success) {
+        res.status(404).json({ error: "Warehouse not found" });
+        return;
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete warehouse" });
     }
   });
 

@@ -37,6 +37,8 @@ export interface IStorage {
   // Warehouses
   getWarehouses(): Promise<Warehouse[]>;
   createWarehouse(warehouse: InsertWarehouse): Promise<Warehouse>;
+  updateWarehouse(id: number, warehouse: Partial<InsertWarehouse>): Promise<Warehouse | undefined>;
+  deleteWarehouse(id: number): Promise<boolean>;
 
   // Products
   getProducts(): Promise<Product[]>;
@@ -137,6 +139,18 @@ export class MemStorage implements IStorage {
     this.categories.set(1, defaultCategory);
     this.currentCategoryId = 2;
 
+    // Initialize default units
+    const defaultUnits: Unit[] = [
+      { id: 1, name: "Штуки", shortName: "шт", type: "count", baseUnit: null, conversionFactor: "1", description: "Штучні одиниці", createdAt: new Date() },
+      { id: 2, name: "Кілограми", shortName: "кг", type: "weight", baseUnit: null, conversionFactor: "1", description: "Одиниці ваги", createdAt: new Date() },
+      { id: 3, name: "Літри", shortName: "л", type: "volume", baseUnit: null, conversionFactor: "1", description: "Одиниці об'єму", createdAt: new Date() },
+      { id: 4, name: "Метри", shortName: "м", type: "length", baseUnit: null, conversionFactor: "1", description: "Одиниці довжини", createdAt: new Date() },
+      { id: 5, name: "Квадратні метри", shortName: "м²", type: "area", baseUnit: null, conversionFactor: "1", description: "Одиниці площі", createdAt: new Date() }
+    ];
+    
+    defaultUnits.forEach(unit => this.units.set(unit.id, unit));
+    this.currentUnitId = 6;
+
     const defaultWarehouse: Warehouse = { id: 1, name: "Головний склад", location: "Київ", description: "Основний склад" };
     this.warehouses.set(1, defaultWarehouse);
     this.currentWarehouseId = 2;
@@ -188,6 +202,36 @@ export class MemStorage implements IStorage {
     return this.categories.delete(id);
   }
 
+  // Units
+  async getUnits(): Promise<Unit[]> {
+    return Array.from(this.units.values());
+  }
+
+  async createUnit(insertUnit: InsertUnit): Promise<Unit> {
+    const id = this.currentUnitId++;
+    const unit: Unit = { 
+      ...insertUnit, 
+      id,
+      createdAt: new Date()
+    };
+    this.units.set(id, unit);
+    return unit;
+  }
+
+  async updateUnit(id: number, unitData: Partial<InsertUnit>): Promise<Unit | undefined> {
+    const existingUnit = this.units.get(id);
+    if (!existingUnit) {
+      return undefined;
+    }
+    const updatedUnit = { ...existingUnit, ...unitData };
+    this.units.set(id, updatedUnit);
+    return updatedUnit;
+  }
+
+  async deleteUnit(id: number): Promise<boolean> {
+    return this.units.delete(id);
+  }
+
   // Warehouses
   async getWarehouses(): Promise<Warehouse[]> {
     return Array.from(this.warehouses.values());
@@ -203,6 +247,20 @@ export class MemStorage implements IStorage {
     };
     this.warehouses.set(id, warehouse);
     return warehouse;
+  }
+
+  async updateWarehouse(id: number, warehouseData: Partial<InsertWarehouse>): Promise<Warehouse | undefined> {
+    const existingWarehouse = this.warehouses.get(id);
+    if (!existingWarehouse) {
+      return undefined;
+    }
+    const updatedWarehouse = { ...existingWarehouse, ...warehouseData };
+    this.warehouses.set(id, updatedWarehouse);
+    return updatedWarehouse;
+  }
+
+  async deleteWarehouse(id: number): Promise<boolean> {
+    return this.warehouses.delete(id);
   }
 
   // Products
