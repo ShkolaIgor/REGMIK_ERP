@@ -923,6 +923,65 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+
+  async createSupplierOrderFromShortage(shortageId: number): Promise<{ order: SupplierOrder; item: SupplierOrderItem } | undefined> {
+    try {
+      // Отримуємо інформацію про дефіцит
+      const shortageResult = await db.select({
+        shortage: materialShortages,
+        product: products,
+      }).from(materialShortages)
+        .leftJoin(products, eq(materialShortages.productId, products.id))
+        .where(eq(materialShortages.id, shortageId));
+
+      if (shortageResult.length === 0 || !shortageResult[0].product) {
+        return undefined;
+      }
+
+      const { shortage, product } = shortageResult[0];
+
+      // Генеруємо номер замовлення
+      const orderNumber = `ORD-${Date.now()}`;
+
+      // Отримуємо постачальника з рекомендації або використовуємо загальний
+      const supplierName = shortage.supplierRecommendation || "Основний постачальник";
+
+      // Створюємо замовлення постачальнику
+      const orderData: InsertSupplierOrder = {
+        supplierName,
+        orderNumber,
+        status: 'draft',
+        totalAmount: shortage.estimatedCost || '0',
+        expectedDelivery: null,
+        notes: `Замовлення створено автоматично з дефіциту матеріалів #${shortageId}`,
+      };
+
+      const [newOrder] = await db.insert(supplierOrders).values(orderData).returning();
+
+      // Створюємо позицію замовлення
+      const itemData: InsertSupplierOrderItem = {
+        orderId: newOrder.id,
+        productId: product.id,
+        quantity: shortage.shortageQuantity,
+        unit: shortage.unit,
+        unitPrice: product.costPrice || '0',
+        totalPrice: shortage.estimatedCost || '0',
+        materialShortageId: shortageId,
+      };
+
+      const [newItem] = await db.insert(supplierOrderItems).values(itemData).returning();
+
+      // Оновлюємо статус дефіциту на "замовлено"
+      await db.update(materialShortages)
+        .set({ status: 'ordered' })
+        .where(eq(materialShortages.id, shortageId));
+
+      return { order: newOrder, item: newItem };
+    } catch (error) {
+      console.error('Error creating supplier order:', error);
+      throw error;
+    }
+  }
 }
 
 export const dbStorage = new DatabaseStorage();

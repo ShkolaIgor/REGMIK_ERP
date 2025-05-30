@@ -101,6 +101,7 @@ export interface IStorage {
   updateMaterialShortage(id: number, shortage: Partial<InsertMaterialShortage>): Promise<MaterialShortage | undefined>;
   deleteMaterialShortage(id: number): Promise<boolean>;
   calculateMaterialShortages(): Promise<MaterialShortage[]>;
+  createSupplierOrderFromShortage(shortageId: number): Promise<{ order: SupplierOrder; item: SupplierOrderItem } | undefined>;
 
   // Analytics
   getDashboardStats(): Promise<{

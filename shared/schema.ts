@@ -213,6 +213,32 @@ export const costCalculations = pgTable("cost_calculations", {
   notes: text("notes"),
 });
 
+// Таблиця замовлень постачальникам
+export const supplierOrders = pgTable("supplier_orders", {
+  id: serial("id").primaryKey(),
+  supplierName: text("supplier_name").notNull(),
+  orderNumber: text("order_number").notNull(),
+  status: text("status").notNull().default("draft"), // draft, sent, confirmed, received
+  totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull().default("0"),
+  expectedDelivery: timestamp("expected_delivery"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Таблиця елементів замовлень постачальникам
+export const supplierOrderItems = pgTable("supplier_order_items", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").references(() => supplierOrders.id).notNull(),
+  productId: integer("product_id").references(() => products.id).notNull(),
+  quantity: decimal("quantity", { precision: 12, scale: 4 }).notNull(),
+  unit: text("unit").notNull(),
+  unitPrice: decimal("unit_price", { precision: 12, scale: 2 }).notNull().default("0"),
+  totalPrice: decimal("total_price", { precision: 12, scale: 2 }).notNull().default("0"),
+  materialShortageId: integer("material_shortage_id").references(() => materialShortages.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertMaterialShortageSchema = createInsertSchema(materialShortages).omit({ 
   id: true, 
@@ -223,6 +249,17 @@ export const insertMaterialShortageSchema = createInsertSchema(materialShortages
 export const insertCostCalculationSchema = createInsertSchema(costCalculations).omit({ 
   id: true, 
   calculatedAt: true 
+});
+
+export const insertSupplierOrderSchema = createInsertSchema(supplierOrders).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertSupplierOrderItemSchema = createInsertSchema(supplierOrderItems).omit({ 
+  id: true, 
+  createdAt: true 
 });
 
 // Types
@@ -262,3 +299,7 @@ export type MaterialShortage = typeof materialShortages.$inferSelect;
 export type InsertMaterialShortage = z.infer<typeof insertMaterialShortageSchema>;
 export type CostCalculation = typeof costCalculations.$inferSelect;
 export type InsertCostCalculation = z.infer<typeof insertCostCalculationSchema>;
+export type SupplierOrder = typeof supplierOrders.$inferSelect;
+export type InsertSupplierOrder = z.infer<typeof insertSupplierOrderSchema>;
+export type SupplierOrderItem = typeof supplierOrderItems.$inferSelect;
+export type InsertSupplierOrderItem = z.infer<typeof insertSupplierOrderItemSchema>;
