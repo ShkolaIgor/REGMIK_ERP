@@ -98,7 +98,7 @@ export default function InventoryAuditsPage() {
     mutationFn: (data: FormData) =>
       apiRequest("/api/inventory-audits", {
         method: "POST",
-        body: JSON.stringify(data),
+        body: data,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory-audits"] });
@@ -122,7 +122,7 @@ export default function InventoryAuditsPage() {
     mutationFn: ({ id, data }: { id: number; data: Partial<FormData> }) =>
       apiRequest(`/api/inventory-audits/${id}`, {
         method: "PATCH",
-        body: JSON.stringify(data),
+        body: data,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inventory-audits"] });
