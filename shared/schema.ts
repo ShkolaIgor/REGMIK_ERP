@@ -31,6 +31,10 @@ export const products = pgTable("products", {
   costPrice: decimal("cost_price", { precision: 10, scale: 2 }).notNull(),
   retailPrice: decimal("retail_price", { precision: 10, scale: 2 }).notNull(),
   photo: text("photo"),
+  productType: text("product_type").notNull().default("product"), // product, component, material
+  unit: text("unit").notNull().default("шт"), // одиниця виміру
+  minStock: integer("min_stock").default(0),
+  maxStock: integer("max_stock").default(1000),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -137,6 +141,18 @@ export const techCardMaterials = pgTable("tech_card_materials", {
   unit: text("unit").notNull(),
 });
 
+// Таблиця для композиції продуктів (BOM - Bill of Materials)
+export const productComponents = pgTable("product_components", {
+  id: serial("id").primaryKey(),
+  parentProductId: integer("parent_product_id").references(() => products.id).notNull(),
+  componentProductId: integer("component_product_id").references(() => products.id).notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 4 }).notNull(),
+  unit: text("unit").notNull().default("шт"),
+  isOptional: boolean("is_optional").default(false),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true });
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
@@ -152,6 +168,7 @@ export const insertSupplierSchema = createInsertSchema(suppliers).omit({ id: tru
 export const insertTechCardSchema = createInsertSchema(techCards).omit({ id: true, createdAt: true });
 export const insertTechCardStepSchema = createInsertSchema(techCardSteps).omit({ id: true });
 export const insertTechCardMaterialSchema = createInsertSchema(techCardMaterials).omit({ id: true });
+export const insertProductComponentSchema = createInsertSchema(productComponents).omit({ id: true, createdAt: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -182,3 +199,6 @@ export type TechCardStep = typeof techCardSteps.$inferSelect;
 export type InsertTechCardStep = z.infer<typeof insertTechCardStepSchema>;
 export type TechCardMaterial = typeof techCardMaterials.$inferSelect;
 export type InsertTechCardMaterial = z.infer<typeof insertTechCardMaterialSchema>;
+
+export type ProductComponent = typeof productComponents.$inferSelect;
+export type InsertProductComponent = z.infer<typeof insertProductComponentSchema>;
