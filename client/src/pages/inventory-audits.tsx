@@ -43,6 +43,7 @@ export default function InventoryAuditsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isItemFormOpen, setIsItemFormOpen] = useState(false);
   const [editingAudit, setEditingAudit] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<any>(null);
   const [selectedAudit, setSelectedAudit] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
@@ -199,6 +200,39 @@ export default function InventoryAuditsPage() {
     },
   });
 
+  const updateItemMutation = useMutation({
+    mutationFn: (data: { id: number; itemData: Partial<AuditItemFormData> }) =>
+      apiRequest(`/api/inventory-audit-items/${data.id}`, {
+        method: "PATCH",
+        body: data.itemData,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/inventory-audits/${selectedAudit?.id}/items`] });
+      setIsItemFormOpen(false);
+      setEditingItem(null);
+      itemForm.reset({
+        productId: "0",
+        systemQuantity: "",
+        countedQuantity: "",
+        unit: "шт",
+        reason: "",
+        countedBy: "",
+        notes: "",
+      });
+      toast({
+        title: "Успішно",
+        description: "Позицію оновлено",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Не вдалося оновити позицію",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (data: FormData) => {
     if (editingAudit) {
       updateMutation.mutate({ id: editingAudit.id, data });
@@ -208,7 +242,6 @@ export default function InventoryAuditsPage() {
   };
 
   const handleEdit = (audit: any) => {
-    console.log("Editing audit:", audit);
     setEditingAudit(audit);
     form.reset({
       warehouseId: audit.warehouseId?.toString() || "0",
@@ -222,7 +255,25 @@ export default function InventoryAuditsPage() {
 
   const handleAddItem = (data: AuditItemFormData) => {
     if (!selectedAudit) return;
-    addItemMutation.mutate({ ...data, auditId: selectedAudit.id });
+    if (editingItem) {
+      updateItemMutation.mutate({ id: editingItem.id, itemData: data });
+    } else {
+      addItemMutation.mutate({ ...data, auditId: selectedAudit.id });
+    }
+  };
+
+  const handleEditItem = (item: any) => {
+    setEditingItem(item);
+    itemForm.reset({
+      productId: item.productId.toString(),
+      systemQuantity: item.systemQuantity,
+      countedQuantity: item.countedQuantity || "",
+      unit: item.unit,
+      reason: item.reason || "",
+      countedBy: item.countedBy || "",
+      notes: item.notes || "",
+    });
+    setIsItemFormOpen(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -565,9 +616,9 @@ export default function InventoryAuditsPage() {
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Додати позицію</DialogTitle>
+                        <DialogTitle>{editingItem ? "Редагувати позицію" : "Додати позицію"}</DialogTitle>
                         <DialogDescription>
-                          Додайте товар до інвентаризації
+                          {editingItem ? "Редагуйте дані позиції інвентаризації" : "Додайте товар до інвентаризації"}
                         </DialogDescription>
                       </DialogHeader>
                       <Form {...itemForm}>
@@ -629,12 +680,24 @@ export default function InventoryAuditsPage() {
                             <Button
                               type="button"
                               variant="outline"
-                              onClick={() => setIsItemFormOpen(false)}
+                              onClick={() => {
+                                setIsItemFormOpen(false);
+                                setEditingItem(null);
+                                itemForm.reset({
+                                  productId: "0",
+                                  systemQuantity: "",
+                                  countedQuantity: "",
+                                  unit: "шт",
+                                  reason: "",
+                                  countedBy: "",
+                                  notes: "",
+                                });
+                              }}
                             >
                               Скасувати
                             </Button>
-                            <Button type="submit" disabled={addItemMutation.isPending}>
-                              Додати
+                            <Button type="submit" disabled={addItemMutation.isPending || updateItemMutation.isPending}>
+                              {editingItem ? "Зберегти" : "Додати"}
                             </Button>
                           </div>
                         </form>
@@ -700,7 +763,11 @@ export default function InventoryAuditsPage() {
                             <TableCell>{item.unit}</TableCell>
                             <TableCell>{item.countedBy || "-"}</TableCell>
                             <TableCell>
-                              <Button variant="outline" size="sm">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleEditItem(item)}
+                              >
                                 Редагувати
                               </Button>
                             </TableCell>
