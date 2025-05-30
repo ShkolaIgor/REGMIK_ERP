@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Building2, MapPin, Edit, Trash2 } from "lucide-react";
+import { Plus, Building2, MapPin, Edit, Trash2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function WarehousesPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingWarehouse, setEditingWarehouse] = useState<Warehouse | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -24,15 +25,19 @@ export default function WarehousesPage() {
     queryKey: ['/api/warehouses'],
   });
 
+  // Фільтрація складів за пошуковим запитом
+  const filteredWarehouses = warehouses?.filter(warehouse =>
+    warehouse.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    warehouse.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    warehouse.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  ) || [];
+
   const createMutation = useMutation({
     mutationFn: async (data: InsertWarehouse) => {
-      try {
-        const result = await apiRequest('POST', '/api/warehouses', data);
-        return result;
-      } catch (error) {
-        console.error("Warehouse creation error:", error);
-        throw error;
-      }
+      return apiRequest("/api/warehouses", {
+        method: "POST",
+        body: data,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/warehouses'] });
@@ -54,13 +59,10 @@ export default function WarehousesPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<InsertWarehouse> }) => {
-      try {
-        const result = await apiRequest('PUT', `/api/warehouses/${id}`, data);
-        return result;
-      } catch (error) {
-        console.error("Warehouse update error:", error);
-        throw error;
-      }
+      return apiRequest(`/api/warehouses/${id}`, {
+        method: "PATCH",
+        body: data,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/warehouses'] });
@@ -82,13 +84,9 @@ export default function WarehousesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      try {
-        const result = await apiRequest('DELETE', `/api/warehouses/${id}`);
-        return result;
-      } catch (error) {
-        console.error("Warehouse delete error:", error);
-        throw error;
-      }
+      return apiRequest(`/api/warehouses/${id}`, {
+        method: "DELETE",
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/warehouses'] });
@@ -118,117 +116,143 @@ export default function WarehousesPage() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Склади</h1>
-          <p className="text-muted-foreground">
-            Управління складськими приміщеннями
-          </p>
+    <div className="h-screen flex flex-col">
+      {/* Header */}
+      <header className="bg-white border-b">
+        <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Building2 className="h-6 w-6 text-blue-600" />
+              <h1 className="text-xl font-semibold">Склади</h1>
+            </div>
+            <Badge variant="secondary" className="flex items-center">
+              <div className="w-2 h-2 bg-green-500 rounded-full mr-1" />
+              Онлайн
+            </Badge>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Пошук складів..."
+                className="w-80 pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Додати склад
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Створити новий склад</DialogTitle>
+                  <DialogDescription>
+                    Заповніть форму для створення нового складу
+                  </DialogDescription>
+                </DialogHeader>
+                <WarehouseForm
+                  onSubmit={(data) => createMutation.mutate(data)}
+                  isLoading={createMutation.isPending}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Додати склад
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Створити новий склад</DialogTitle>
-              <DialogDescription>
-                Заповніть форму для створення нового складу
-              </DialogDescription>
-            </DialogHeader>
-            <WarehouseForm
-              onSubmit={(data) => createMutation.mutate(data)}
-              isLoading={createMutation.isPending}
-            />
-          </DialogContent>
-        </Dialog>
-      </div>
+      </header>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {warehouses && warehouses.map((warehouse) => (
-          <Card key={warehouse.id} className="relative">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-2">
-                  <Building2 className="h-5 w-5 text-blue-600" />
-                  <CardTitle className="text-lg">{warehouse.name}</CardTitle>
+      {/* Content */}
+      <div className="p-6">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredWarehouses.map((warehouse) => (
+            <Card key={warehouse.id} className="relative">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Building2 className="h-5 w-5 text-blue-600" />
+                    <CardTitle className="text-lg">{warehouse.name}</CardTitle>
+                  </div>
+                  <div className="flex space-x-1">
+                    <Dialog 
+                      open={editingWarehouse?.id === warehouse.id} 
+                      onOpenChange={(open) => setEditingWarehouse(open ? warehouse : null)}
+                    >
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Редагувати склад</DialogTitle>
+                          <DialogDescription>
+                            Внесіть зміни до інформації про склад
+                          </DialogDescription>
+                        </DialogHeader>
+                        <WarehouseForm
+                          defaultValues={warehouse}
+                          onSubmit={(data) => updateMutation.mutate({ id: warehouse.id, data })}
+                          isLoading={updateMutation.isPending}
+                        />
+                      </DialogContent>
+                    </Dialog>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm('Ви впевнені, що хочете видалити цей склад?')) {
+                          deleteMutation.mutate(warehouse.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-600" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex space-x-1">
-                  <Dialog 
-                    open={editingWarehouse?.id === warehouse.id} 
-                    onOpenChange={(open) => setEditingWarehouse(open ? warehouse : null)}
-                  >
-                    <DialogTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Редагувати склад</DialogTitle>
-                        <DialogDescription>
-                          Внесіть зміни до інформації про склад
-                        </DialogDescription>
-                      </DialogHeader>
-                      <WarehouseForm
-                        defaultValues={warehouse}
-                        onSubmit={(data) => updateMutation.mutate({ id: warehouse.id, data })}
-                        isLoading={updateMutation.isPending}
-                      />
-                    </DialogContent>
-                  </Dialog>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (confirm('Ви впевнені, що хочете видалити цей склад?')) {
-                        deleteMutation.mutate(warehouse.id);
-                      }
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-600" />
-                  </Button>
-                </div>
-              </div>
-              {warehouse.location && (
-                <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  <span>{warehouse.location}</span>
-                </div>
-              )}
-            </CardHeader>
-            
-            <CardContent>
-              {warehouse.description && (
-                <CardDescription className="mb-4">
-                  {warehouse.description}
-                </CardDescription>
-              )}
+                {warehouse.location && (
+                  <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                    <MapPin className="h-4 w-4" />
+                    <span>{warehouse.location}</span>
+                  </div>
+                )}
+              </CardHeader>
               
-              <div className="flex justify-between items-center">
-                <Badge variant="outline">
-                  ID: {warehouse.id}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {warehouses && warehouses.length === 0 && (
-        <div className="text-center py-12">
-          <Building2 className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">Немає складів</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Почніть з створення свого першого складу
-          </p>
+              <CardContent>
+                {warehouse.description && (
+                  <CardDescription className="mb-4">
+                    {warehouse.description}
+                  </CardDescription>
+                )}
+                
+                <div className="flex justify-between items-center">
+                  <Badge variant="outline">
+                    ID: {warehouse.id}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      )}
+
+        {filteredWarehouses.length === 0 && (
+          <div className="text-center py-12">
+            <Building2 className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-semibold text-gray-900">
+              {searchQuery ? "Склади не знайдено" : "Немає складів"}
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              {searchQuery 
+                ? "Спробуйте змінити критерії пошуку"
+                : "Почніть з створення свого першого складу"
+              }
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
