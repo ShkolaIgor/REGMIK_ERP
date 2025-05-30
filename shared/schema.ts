@@ -332,7 +332,7 @@ export const inventoryAudits = pgTable("inventory_audits", {
   plannedDate: timestamp("planned_date"),
   startedDate: timestamp("started_date"),
   completedDate: timestamp("completed_date"),
-  responsiblePerson: varchar("responsible_person", { length: 255 }),
+  responsiblePersonId: integer("responsible_person_id").references(() => workers.id),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
