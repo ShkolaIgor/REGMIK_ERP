@@ -18,8 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   operationType: z.string().min(1, "Тип операції обов'язковий"),
-  productId: z.number().min(1, "Товар обов'язковий"),
-  warehouseId: z.number().min(1, "Склад обов'язковий"),
+  productId: z.string().min(1, "Товар обов'язковий").transform(val => parseInt(val)),
+  warehouseId: z.string().min(1, "Склад обов'язковий").transform(val => parseInt(val)),
   quantity: z.string().min(1, "Кількість обов'язкова"),
   unit: z.string().min(1, "Одиниця виміру обов'язкова"),
   plannedDate: z.string().optional(),
@@ -39,8 +39,8 @@ export default function AssemblyOperationsPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       operationType: "assembly",
-      productId: 0,
-      warehouseId: 0,
+      productId: "0",
+      warehouseId: "0",
       quantity: "",
       unit: "шт",
       plannedDate: "",
@@ -155,8 +155,8 @@ export default function AssemblyOperationsPage() {
     setEditingOperation(operation);
     form.reset({
       operationType: operation.operationType,
-      productId: operation.productId,
-      warehouseId: operation.warehouseId,
+      productId: operation.productId.toString(),
+      warehouseId: operation.warehouseId.toString(),
       quantity: operation.quantity,
       unit: operation.unit,
       plannedDate: operation.plannedDate ? new Date(operation.plannedDate).toISOString().slice(0, 16) : "",

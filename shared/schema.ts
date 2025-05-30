@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, decimal, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, decimal, timestamp, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -322,6 +322,53 @@ export const insertAssemblyOperationItemSchema = createInsertSchema(assemblyOper
   createdAt: true 
 });
 
+// Inventory Audits
+export const inventoryAudits = pgTable("inventory_audits", {
+  id: serial("id").primaryKey(),
+  auditNumber: varchar("audit_number", { length: 100 }).notNull().unique(),
+  warehouseId: integer("warehouse_id").references(() => warehouses.id),
+  status: varchar("status", { length: 50 }).notNull().default("planned"), // planned, in_progress, completed, cancelled
+  auditType: varchar("audit_type", { length: 50 }).notNull(), // full, partial, cycle_count
+  plannedDate: timestamp("planned_date"),
+  startedDate: timestamp("started_date"),
+  completedDate: timestamp("completed_date"),
+  responsiblePerson: varchar("responsible_person", { length: 255 }),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const inventoryAuditItems = pgTable("inventory_audit_items", {
+  id: serial("id").primaryKey(),
+  auditId: integer("audit_id").notNull().references(() => inventoryAudits.id),
+  productId: integer("product_id").notNull().references(() => products.id),
+  systemQuantity: decimal("system_quantity", { precision: 10, scale: 2 }).notNull(),
+  countedQuantity: decimal("counted_quantity", { precision: 10, scale: 2 }),
+  variance: decimal("variance", { precision: 10, scale: 2 }),
+  variancePercent: decimal("variance_percent", { precision: 5, scale: 2 }),
+  unit: varchar("unit", { length: 50 }).notNull(),
+  reason: text("reason"), // reason for variance
+  adjustmentMade: boolean("adjustment_made").default(false),
+  notes: text("notes"),
+  countedBy: varchar("counted_by", { length: 255 }),
+  countedAt: timestamp("counted_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertInventoryAuditSchema = createInsertSchema(inventoryAudits).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true,
+  auditNumber: true 
+});
+
+export const insertInventoryAuditItemSchema = createInsertSchema(inventoryAuditItems).omit({ 
+  id: true, 
+  createdAt: true,
+  variance: true,
+  variancePercent: true 
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -367,3 +414,7 @@ export type AssemblyOperation = typeof assemblyOperations.$inferSelect;
 export type InsertAssemblyOperation = z.infer<typeof insertAssemblyOperationSchema>;
 export type AssemblyOperationItem = typeof assemblyOperationItems.$inferSelect;
 export type InsertAssemblyOperationItem = z.infer<typeof insertAssemblyOperationItemSchema>;
+export type InventoryAudit = typeof inventoryAudits.$inferSelect;
+export type InsertInventoryAudit = z.infer<typeof insertInventoryAuditSchema>;
+export type InventoryAuditItem = typeof inventoryAuditItems.$inferSelect;
+export type InsertInventoryAuditItem = z.infer<typeof insertInventoryAuditItemSchema>;
