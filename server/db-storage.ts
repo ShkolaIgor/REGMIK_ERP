@@ -95,6 +95,44 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async updateWarehouse(id: number, warehouseData: Partial<InsertWarehouse>): Promise<Warehouse | undefined> {
+    const result = await db
+      .update(warehouses)
+      .set(warehouseData)
+      .where(eq(warehouses.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteWarehouse(id: number): Promise<boolean> {
+    const result = await db.delete(warehouses).where(eq(warehouses.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Units
+  async getUnits(): Promise<Unit[]> {
+    return await db.select().from(units);
+  }
+
+  async createUnit(insertUnit: InsertUnit): Promise<Unit> {
+    const result = await db.insert(units).values(insertUnit).returning();
+    return result[0];
+  }
+
+  async updateUnit(id: number, unitData: Partial<InsertUnit>): Promise<Unit | undefined> {
+    const result = await db
+      .update(units)
+      .set(unitData)
+      .where(eq(units.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteUnit(id: number): Promise<boolean> {
+    const result = await db.delete(units).where(eq(units.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
   // Products
   async getProducts(): Promise<Product[]> {
     return await db.select().from(products);

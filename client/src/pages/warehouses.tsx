@@ -258,7 +258,11 @@ function WarehouseForm({ defaultValues, onSubmit, isLoading }: WarehouseFormProp
             <FormItem>
               <FormLabel>Місцезнаходження</FormLabel>
               <FormControl>
-                <Input placeholder="Введіть адресу або місцезнаходження" {...field} />
+                <Input 
+                  placeholder="Введіть адресу або місцезнаходження" 
+                  {...field}
+                  value={field.value || ""}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -276,6 +280,7 @@ function WarehouseForm({ defaultValues, onSubmit, isLoading }: WarehouseFormProp
                   placeholder="Введіть опис складу"
                   className="resize-none"
                   {...field}
+                  value={field.value || ""}
                 />
               </FormControl>
               <FormMessage />
