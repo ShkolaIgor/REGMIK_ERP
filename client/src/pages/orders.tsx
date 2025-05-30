@@ -1,16 +1,134 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
-import { Plus, Eye, Edit } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, ShoppingCart } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+
+// Схеми валідації
+const orderItemSchema = z.object({
+  productId: z.number().min(1, "Оберіть товар"),
+  quantity: z.string().min(1, "Введіть кількість"),
+  unitPrice: z.string().min(1, "Введіть ціну"),
+});
+
+const orderSchema = z.object({
+  customerName: z.string().min(1, "Введіть ім'я клієнта"),
+  customerEmail: z.string().email("Введіть правильний email").optional().or(z.literal("")),
+  customerPhone: z.string().optional(),
+  status: z.string().default("pending"),
+  notes: z.string().optional(),
+  items: z.array(orderItemSchema).min(1, "Додайте хоча б один товар"),
+});
+
+type OrderFormData = z.infer<typeof orderSchema>;
+type OrderItemFormData = z.infer<typeof orderItemSchema>;
 
 export default function Orders() {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [orderItems, setOrderItems] = useState<OrderItemFormData[]>([]);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["/api/orders"],
   });
+
+  const { data: products = [] } = useQuery({
+    queryKey: ["/api/products"],
+  });
+
+  // Форма для замовлення
+  const form = useForm<OrderFormData>({
+    resolver: zodResolver(orderSchema),
+    defaultValues: {
+      customerName: "",
+      customerEmail: "",
+      customerPhone: "",
+      status: "pending",
+      notes: "",
+      items: [],
+    },
+  });
+
+  // Мутація для створення замовлення
+  const createOrderMutation = useMutation({
+    mutationFn: (data: OrderFormData) => apiRequest("/api/orders", "POST", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      setIsDialogOpen(false);
+      setOrderItems([]);
+      form.reset();
+      toast({
+        title: "Успіх",
+        description: "Замовлення створено успішно",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Не вдалося створити замовлення",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Мутація для оновлення статусу
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: string }) =>
+      apiRequest(`/api/orders/${id}/status`, "PATCH", { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      toast({
+        title: "Успіх",
+        description: "Статус оновлено",
+      });
+    },
+  });
+
+  // Функції для управління товарами в замовленні
+  const addOrderItem = () => {
+    setOrderItems([...orderItems, { productId: 0, quantity: "", unitPrice: "" }]);
+  };
+
+  const removeOrderItem = (index: number) => {
+    setOrderItems(orderItems.filter((_, i) => i !== index));
+  };
+
+  const updateOrderItem = (index: number, field: keyof OrderItemFormData, value: any) => {
+    const updated = [...orderItems];
+    updated[index] = { ...updated[index], [field]: value };
+    setOrderItems(updated);
+  };
+
+  const calculateTotal = () => {
+    return orderItems.reduce((sum, item) => {
+      const qty = parseFloat(item.quantity) || 0;
+      const price = parseFloat(item.unitPrice) || 0;
+      return sum + (qty * price);
+    }, 0);
+  };
+
+  const handleSubmit = (data: OrderFormData) => {
+    const orderData = {
+      ...data,
+      items: orderItems,
+    };
+    createOrderMutation.mutate(orderData);
+  };
 
   const getStatusText = (status: string) => {
     switch (status) {
@@ -35,10 +153,168 @@ export default function Orders() {
             <h2 className="text-2xl font-semibold text-gray-900">Замовлення</h2>
             <p className="text-gray-600">Управління клієнтськими замовленнями</p>
           </div>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Нове замовлення
-          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Нове замовлення
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Створити нове замовлення</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                {/* Інформація про клієнта */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="customerName">Ім'я клієнта *</Label>
+                    <Input
+                      id="customerName"
+                      {...form.register("customerName")}
+                      className={form.formState.errors.customerName ? "border-red-500" : ""}
+                    />
+                    {form.formState.errors.customerName && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {form.formState.errors.customerName.message}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="customerEmail">Email</Label>
+                    <Input
+                      id="customerEmail"
+                      type="email"
+                      {...form.register("customerEmail")}
+                      className={form.formState.errors.customerEmail ? "border-red-500" : ""}
+                    />
+                    {form.formState.errors.customerEmail && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {form.formState.errors.customerEmail.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="customerPhone">Телефон</Label>
+                    <Input
+                      id="customerPhone"
+                      {...form.register("customerPhone")}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="status">Статус</Label>
+                    <Select
+                      value={form.watch("status")}
+                      onValueChange={(value) => form.setValue("status", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Очікує</SelectItem>
+                        <SelectItem value="processing">В обробці</SelectItem>
+                        <SelectItem value="completed">Завершено</SelectItem>
+                        <SelectItem value="cancelled">Скасовано</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Товари в замовленні */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <Label>Товари в замовленні</Label>
+                    <Button type="button" onClick={addOrderItem} variant="outline" size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Додати товар
+                    </Button>
+                  </div>
+
+                  {orderItems.length === 0 ? (
+                    <div className="text-center py-8 bg-gray-50 rounded-lg">
+                      <ShoppingCart className="w-12 h-12 mx-auto text-gray-400 mb-2" />
+                      <p className="text-gray-500">Додайте товари до замовлення</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {orderItems.map((item, index) => (
+                        <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg">
+                          <Select
+                            value={item.productId.toString()}
+                            onValueChange={(value) => updateOrderItem(index, "productId", parseInt(value))}
+                          >
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="Оберіть товар" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {products.map((product: any) => (
+                                <SelectItem key={product.id} value={product.id.toString()}>
+                                  {product.name} ({product.sku})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          
+                          <Input
+                            placeholder="Кількість"
+                            value={item.quantity}
+                            onChange={(e) => updateOrderItem(index, "quantity", e.target.value)}
+                            className="w-24"
+                          />
+                          
+                          <Input
+                            placeholder="Ціна"
+                            value={item.unitPrice}
+                            onChange={(e) => updateOrderItem(index, "unitPrice", e.target.value)}
+                            className="w-24"
+                          />
+                          
+                          <div className="w-24 text-sm">
+                            {(parseFloat(item.quantity) * parseFloat(item.unitPrice) || 0).toFixed(2)} ₴
+                          </div>
+                          
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeOrderItem(index)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      
+                      <div className="text-right text-lg font-semibold">
+                        Загальна сума: {calculateTotal().toFixed(2)} ₴
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Примітки */}
+                <div>
+                  <Label htmlFor="notes">Примітки</Label>
+                  <Textarea
+                    id="notes"
+                    {...form.register("notes")}
+                    rows={3}
+                  />
+                </div>
+
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Скасувати
+                  </Button>
+                  <Button type="submit" disabled={createOrderMutation.isPending}>
+                    {createOrderMutation.isPending ? "Створення..." : "Створити замовлення"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </header>
 
@@ -97,7 +373,7 @@ export default function Orders() {
             {orders.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500">Замовлення відсутні</p>
-                <Button className="mt-4">
+                <Button className="mt-4" onClick={() => setIsDialogOpen(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   Створити перше замовлення
                 </Button>
@@ -133,12 +409,103 @@ export default function Orders() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
-                          <Button size="sm" variant="ghost">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button size="sm" variant="ghost">
-                            <Edit className="w-4 h-4" />
-                          </Button>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="sm" variant="ghost" onClick={() => setSelectedOrder(order)}>
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-4xl">
+                              <DialogHeader>
+                                <DialogTitle>Деталі замовлення {selectedOrder?.orderNumber}</DialogTitle>
+                              </DialogHeader>
+                              {selectedOrder && (
+                                <div className="space-y-6">
+                                  {/* Інформація про клієнта */}
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <Label className="text-sm font-medium">Клієнт</Label>
+                                      <p className="text-sm text-gray-600">{selectedOrder.customerName}</p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">Email</Label>
+                                      <p className="text-sm text-gray-600">{selectedOrder.customerEmail || "Не вказано"}</p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">Телефон</Label>
+                                      <p className="text-sm text-gray-600">{selectedOrder.customerPhone || "Не вказано"}</p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">Статус</Label>
+                                      <Select
+                                        value={selectedOrder.status}
+                                        onValueChange={(value) => updateStatusMutation.mutate({ id: selectedOrder.id, status: value })}
+                                      >
+                                        <SelectTrigger className="w-40">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="pending">Очікує</SelectItem>
+                                          <SelectItem value="processing">В обробці</SelectItem>
+                                          <SelectItem value="completed">Завершено</SelectItem>
+                                          <SelectItem value="cancelled">Скасовано</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  </div>
+
+                                  {/* Товари в замовленні */}
+                                  <div>
+                                    <Label className="text-lg font-medium">Товари</Label>
+                                    <Table className="mt-2">
+                                      <TableHeader>
+                                        <TableRow>
+                                          <TableHead>Товар</TableHead>
+                                          <TableHead>Кількість</TableHead>
+                                          <TableHead>Ціна за одиницю</TableHead>
+                                          <TableHead>Сума</TableHead>
+                                        </TableRow>
+                                      </TableHeader>
+                                      <TableBody>
+                                        {selectedOrder.items?.map((item: any) => (
+                                          <TableRow key={item.id}>
+                                            <TableCell>
+                                              <div>
+                                                <div className="font-medium">{item.product?.name}</div>
+                                                <div className="text-sm text-gray-500">SKU: {item.product?.sku}</div>
+                                              </div>
+                                            </TableCell>
+                                            <TableCell>{item.quantity}</TableCell>
+                                            <TableCell>{formatCurrency(item.unitPrice)}</TableCell>
+                                            <TableCell>{formatCurrency(item.totalPrice)}</TableCell>
+                                          </TableRow>
+                                        ))}
+                                      </TableBody>
+                                    </Table>
+                                    <div className="text-right mt-4">
+                                      <p className="text-lg font-semibold">
+                                        Загальна сума: {formatCurrency(selectedOrder.totalAmount)}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {/* Примітки */}
+                                  {selectedOrder.notes && (
+                                    <div>
+                                      <Label className="text-sm font-medium">Примітки</Label>
+                                      <p className="text-sm text-gray-600 mt-1">{selectedOrder.notes}</p>
+                                    </div>
+                                  )}
+
+                                  {/* Дата створення */}
+                                  <div>
+                                    <Label className="text-sm font-medium">Дата створення</Label>
+                                    <p className="text-sm text-gray-600">{formatDate(selectedOrder.createdAt)}</p>
+                                  </div>
+                                </div>
+                              )}
+                            </DialogContent>
+                          </Dialog>
                         </div>
                       </TableCell>
                     </TableRow>
