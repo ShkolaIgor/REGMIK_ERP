@@ -343,7 +343,10 @@ export default function InventoryAuditsPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-
+            <Button onClick={() => { setEditingAudit(null); form.reset(); setIsFormOpen(true); }}>
+              <Plus className="w-4 h-4 mr-2" />
+              Нова інвентаризація
+            </Button>
           </div>
         </div>
       </header>
