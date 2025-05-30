@@ -4,7 +4,7 @@ import { IStorage } from "./storage";
 import {
   users, categories, warehouses, units, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
-  productComponents, costCalculations,
+  productComponents, costCalculations, materialShortages,
   type User, type InsertUser, type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
   type Product, type InsertProduct,
@@ -17,7 +17,8 @@ import {
   type TechCardStep, type InsertTechCardStep,
   type TechCardMaterial, type InsertTechCardMaterial,
   type ProductComponent, type InsertProductComponent,
-  type CostCalculation, type InsertCostCalculation
+  type CostCalculation, type InsertCostCalculation,
+  type MaterialShortage, type InsertMaterialShortage
 } from "@shared/schema";
 
 export class DatabaseStorage implements IStorage {
@@ -755,6 +756,161 @@ export class DatabaseStorage implements IStorage {
       }
     } catch (error) {
       console.error("Error calculating automatic cost:", error);
+      throw error;
+    }
+  }
+
+  // Material Shortages methods
+  async getMaterialShortages(): Promise<(MaterialShortage & { product: Product; warehouse?: Warehouse })[]> {
+    const result = await db.select({
+      shortage: materialShortages,
+      product: products,
+      warehouse: warehouses
+    })
+    .from(materialShortages)
+    .leftJoin(products, eq(materialShortages.productId, products.id))
+    .leftJoin(warehouses, eq(materialShortages.warehouseId, warehouses.id))
+    .orderBy(materialShortages.priority, materialShortages.createdAt);
+
+    return result.map(row => ({
+      ...row.shortage,
+      product: row.product!,
+      warehouse: row.warehouse || undefined
+    }));
+  }
+
+  async getMaterialShortage(id: number): Promise<(MaterialShortage & { product: Product; warehouse?: Warehouse }) | undefined> {
+    const result = await db.select({
+      shortage: materialShortages,
+      product: products,
+      warehouse: warehouses
+    })
+    .from(materialShortages)
+    .leftJoin(products, eq(materialShortages.productId, products.id))
+    .leftJoin(warehouses, eq(materialShortages.warehouseId, warehouses.id))
+    .where(eq(materialShortages.id, id))
+    .limit(1);
+
+    if (result.length === 0) return undefined;
+
+    const row = result[0];
+    return {
+      ...row.shortage,
+      product: row.product!,
+      warehouse: row.warehouse || undefined
+    };
+  }
+
+  async createMaterialShortage(shortage: InsertMaterialShortage): Promise<MaterialShortage> {
+    const result = await db.insert(materialShortages).values(shortage).returning();
+    return result[0];
+  }
+
+  async updateMaterialShortage(id: number, shortageData: Partial<InsertMaterialShortage>): Promise<MaterialShortage | undefined> {
+    const result = await db.update(materialShortages)
+      .set({ ...shortageData, updatedAt: new Date() })
+      .where(eq(materialShortages.id, id))
+      .returning();
+    
+    return result[0];
+  }
+
+  async deleteMaterialShortage(id: number): Promise<boolean> {
+    const result = await db.delete(materialShortages)
+      .where(eq(materialShortages.id, id));
+    
+    return result.rowCount > 0;
+  }
+
+  async calculateMaterialShortages(): Promise<MaterialShortage[]> {
+    try {
+      // Спочатку очищаємо старі записи дефіциту
+      await db.delete(materialShortages);
+
+      // Отримуємо всі компоненти з BOM
+      const bomComponents = await db.select({
+        parentProductId: productComponents.parentProductId,
+        componentProductId: productComponents.componentProductId,
+        quantity: productComponents.quantity,
+        unit: productComponents.unit,
+        component: products
+      })
+      .from(productComponents)
+      .leftJoin(products, eq(productComponents.componentProductId, products.id));
+
+      // Отримуємо поточні запаси
+      const currentInventory = await db.select()
+        .from(inventory)
+        .leftJoin(products, eq(inventory.productId, products.id));
+
+      // Групуємо потреби за продуктами
+      const requirements: Map<number, { quantity: number; unit: string; product: Product }> = new Map();
+
+      for (const bom of bomComponents) {
+        if (!bom.component) continue;
+        
+        const key = bom.componentProductId;
+        const existingReq = requirements.get(key);
+        const quantity = parseFloat(bom.quantity);
+
+        if (existingReq) {
+          existingReq.quantity += quantity;
+        } else {
+          requirements.set(key, {
+            quantity,
+            unit: bom.unit,
+            product: bom.component
+          });
+        }
+      }
+
+      // Порівнюємо з наявними запасами та створюємо записи дефіциту
+      const shortages: MaterialShortage[] = [];
+
+      for (const [productId, requirement] of requirements) {
+        // Знаходимо загальну кількість в наявності
+        const availableStock = currentInventory
+          .filter(item => item.inventory.productId === productId)
+          .reduce((sum, item) => sum + item.inventory.quantity, 0);
+
+        const shortageQuantity = requirement.quantity - availableStock;
+
+        if (shortageQuantity > 0) {
+          // Визначаємо пріоритет на основі критичності дефіциту
+          let priority = 'low';
+          if (shortageQuantity > requirement.quantity * 0.8) {
+            priority = 'critical';
+          } else if (shortageQuantity > requirement.quantity * 0.5) {
+            priority = 'high';
+          } else if (shortageQuantity > requirement.quantity * 0.2) {
+            priority = 'medium';
+          }
+
+          // Розраховуємо орієнтовну вартість
+          const estimatedCost = shortageQuantity * parseFloat(requirement.product.costPrice || "0");
+
+          const shortageData: InsertMaterialShortage = {
+            productId,
+            warehouseId: null,
+            requiredQuantity: requirement.quantity.toString(),
+            availableQuantity: availableStock.toString(),
+            shortageQuantity: shortageQuantity.toString(),
+            unit: requirement.unit,
+            priority,
+            estimatedCost: estimatedCost.toString(),
+            supplierRecommendation: null,
+            notes: `Автоматично розраховано на основі BOM`,
+            status: 'pending'
+          };
+
+          const created = await this.createMaterialShortage(shortageData);
+          shortages.push(created);
+        }
+      }
+
+      return shortages;
+    } catch (error) {
+      console.error("Error calculating material shortages:", error);
       throw error;
     }
   }

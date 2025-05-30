@@ -1,7 +1,7 @@
 import {
   users, categories, units, warehouses, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
-  productComponents, costCalculations,
+  productComponents, costCalculations, materialShortages,
   type User, type InsertUser, type Category, type InsertCategory,
   type Unit, type InsertUnit,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
@@ -14,7 +14,8 @@ import {
   type TechCardStep, type InsertTechCardStep,
   type TechCardMaterial, type InsertTechCardMaterial,
   type ProductComponent, type InsertProductComponent,
-  type CostCalculation, type InsertCostCalculation
+  type CostCalculation, type InsertCostCalculation,
+  type MaterialShortage, type InsertMaterialShortage
 } from "@shared/schema";
 
 export interface IStorage {
@@ -92,6 +93,14 @@ export interface IStorage {
   updateCostCalculation(id: number, calculation: Partial<InsertCostCalculation>): Promise<CostCalculation | undefined>;
   deleteCostCalculation(id: number): Promise<boolean>;
   calculateAutomaticCost(productId: number): Promise<CostCalculation>;
+
+  // Material Shortages
+  getMaterialShortages(): Promise<(MaterialShortage & { product: Product; warehouse?: Warehouse })[]>;
+  getMaterialShortage(id: number): Promise<(MaterialShortage & { product: Product; warehouse?: Warehouse }) | undefined>;
+  createMaterialShortage(shortage: InsertMaterialShortage): Promise<MaterialShortage>;
+  updateMaterialShortage(id: number, shortage: Partial<InsertMaterialShortage>): Promise<MaterialShortage | undefined>;
+  deleteMaterialShortage(id: number): Promise<boolean>;
+  calculateMaterialShortages(): Promise<MaterialShortage[]>;
 
   // Analytics
   getDashboardStats(): Promise<{

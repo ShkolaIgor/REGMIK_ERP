@@ -5,7 +5,7 @@ import {
   insertProductSchema, insertOrderSchema, insertRecipeSchema,
   insertProductionTaskSchema, insertCategorySchema, insertUnitSchema, insertWarehouseSchema,
   insertSupplierSchema, insertInventorySchema, insertTechCardSchema,
-  insertProductComponentSchema, insertCostCalculationSchema
+  insertProductComponentSchema, insertCostCalculationSchema, insertMaterialShortageSchema
 } from "@shared/schema";
 import { z } from "zod";
 
