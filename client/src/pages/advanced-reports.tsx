@@ -92,28 +92,27 @@ export default function AdvancedReports() {
   const exportToPDF = (data: any[], filename: string, reportTitle: string) => {
     if (!data.length) return;
     
-    const doc = new jsPDF();
+    const doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4'
+    });
     
-    // Встановлюємо кодування для підтримки кирилиці
-    doc.setFont("helvetica");
-    
-    // Додаємо заголовок (транслітерація для PDF)
+    // Додаємо заголовок UTF-8
     doc.setFontSize(16);
-    const titleTranslit = transliterateText(reportTitle);
-    doc.text(titleTranslit, 20, 20);
+    doc.text(reportTitle, 20, 20);
     
     // Додаємо дату
     doc.setFontSize(10);
-    const dateText = `Data: ${new Date().toLocaleDateString('uk-UA')}`;
-    doc.text(dateText, 20, 30);
+    doc.text(`Дата: ${new Date().toLocaleDateString('uk-UA')}`, 20, 30);
     
-    // Підготовляємо дані для таблиці з транслітерацією
-    const headers = Object.keys(data[0]).map(header => transliterateText(header));
+    // Підготовляємо дані для таблиці
+    const headers = Object.keys(data[0]);
     const rows = data.map(row => 
-      Object.keys(data[0]).map(header => transliterateText(String(row[header] || '')))
+      headers.map(header => String(row[header] || ''))
     );
     
-    // Створюємо таблицю
+    // Створюємо таблицю з Unicode підтримкою
     autoTable(doc, {
       head: [headers],
       body: rows,
@@ -121,17 +120,25 @@ export default function AdvancedReports() {
       styles: {
         fontSize: 8,
         cellPadding: 2,
-        font: "helvetica"
+        fontStyle: 'normal'
       },
       headStyles: {
         fillColor: [41, 128, 185],
-        textColor: 255,
-        font: "helvetica"
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
       },
       alternateRowStyles: {
         fillColor: [245, 245, 245]
       },
-      margin: { top: 40, left: 10, right: 10 }
+      margin: { top: 40, left: 10, right: 10 },
+      tableWidth: 'auto',
+      columnStyles: {},
+      didParseCell: function(data) {
+        // Встановлюємо Unicode текст
+        if (data.cell.text && Array.isArray(data.cell.text)) {
+          data.cell.text = data.cell.text.map(text => String(text));
+        }
+      }
     });
     
     // Зберігаємо файл
