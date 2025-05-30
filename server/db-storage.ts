@@ -791,21 +791,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Material Shortages methods
-  async getMaterialShortages(): Promise<(MaterialShortage & { product: Product; warehouse?: Warehouse })[]> {
+  async getMaterialShortages(): Promise<(MaterialShortage & { product: Product; warehouse?: Warehouse; supplier?: Supplier })[]> {
     const result = await db.select({
       shortage: materialShortages,
       product: products,
-      warehouse: warehouses
+      warehouse: warehouses,
+      supplier: suppliers
     })
     .from(materialShortages)
     .leftJoin(products, eq(materialShortages.productId, products.id))
     .leftJoin(warehouses, eq(materialShortages.warehouseId, warehouses.id))
+    .leftJoin(suppliers, eq(materialShortages.supplierRecommendationId, suppliers.id))
     .orderBy(materialShortages.priority, materialShortages.createdAt);
 
     return result.map(row => ({
       ...row.shortage,
       product: row.product!,
-      warehouse: row.warehouse || undefined
+      warehouse: row.warehouse || undefined,
+      supplier: row.supplier || undefined
     }));
   }
 

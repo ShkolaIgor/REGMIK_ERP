@@ -186,7 +186,7 @@ export const materialShortages = pgTable("material_shortages", {
   unit: text("unit").notNull(),
   priority: text("priority").notNull().default("medium"), // low, medium, high, critical
   estimatedCost: decimal("estimated_cost", { precision: 12, scale: 2 }).default("0"),
-  supplierRecommendation: text("supplier_recommendation"),
+  supplierRecommendationId: integer("supplier_recommendation_id").references(() => suppliers.id),
   notes: text("notes"),
   status: text("status").notNull().default("pending"), // pending, ordered, received
   createdAt: timestamp("created_at").defaultNow(),
