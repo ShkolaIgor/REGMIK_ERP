@@ -202,7 +202,7 @@ export default function InventoryAuditsPage() {
       warehouseId: audit.warehouseId?.toString() || "0",
       auditType: audit.auditType,
       plannedDate: audit.plannedDate ? new Date(audit.plannedDate).toISOString().slice(0, 16) : "",
-      responsiblePerson: audit.responsiblePerson || "",
+      responsiblePersonId: audit.responsiblePersonId?.toString() || "0",
       notes: audit.notes || "",
     });
     setIsFormOpen(true);
