@@ -1505,7 +1505,6 @@ export class DatabaseStorage implements IStorage {
           auditId,
           productId: row.inventory.productId,
           systemQuantity: row.inventory.quantity.toString(),
-          unit: row.products.unit,
           countedQuantity: null,
           variance: null,
           reason: null,

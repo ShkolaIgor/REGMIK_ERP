@@ -14,7 +14,6 @@ import { Plus, Eye, Edit, Trash2, ShoppingCart } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Order, OrderItem, Product, insertOrderSchema, insertOrderItemSchema } from "@/../../shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
