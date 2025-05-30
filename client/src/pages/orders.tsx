@@ -16,8 +16,44 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-
 // Типи
+type Order = {
+  id: number;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string | null;
+  customerPhone: string | null;
+  status: string;
+  totalAmount: string;
+  notes: string | null;
+  createdAt: Date | null;
+};
+
+type OrderItem = {
+  id: number;
+  orderId: number;
+  productId: number;
+  quantity: string;
+  unitPrice: string;
+};
+
+type Product = {
+  id: number;
+  name: string;
+  sku: string;
+  description: string | null;
+  barcode: string | null;
+  categoryId: number | null;
+  costPrice: string;
+  retailPrice: string;
+  photo: string | null;
+  productType: string;
+  unit: string;
+  minStock: number | null;
+  maxStock: number | null;
+  createdAt: Date | null;
+};
+
 type OrderWithItems = Order & {
   items: (OrderItem & { product: Product })[];
 };
