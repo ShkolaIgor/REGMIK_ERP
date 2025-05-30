@@ -132,6 +132,75 @@ export default function Reports() {
   const productionCosts = getProductionCosts();
   const turnoverData = getTurnoverData();
 
+  // Функції експорту
+  const exportToCSV = (data: any[], filename: string) => {
+    if (!data.length) return;
+    
+    const headers = Object.keys(data[0]);
+    const csvContent = [
+      headers.join(","),
+      ...data.map(row => 
+        headers.map(header => {
+          const value = row[header];
+          if (typeof value === 'string' && value.includes(',')) {
+            return `"${value}"`;
+          }
+          return value || '';
+        }).join(",")
+      )
+    ].join("\n");
+    
+    // Додаємо BOM для правильного відображення українських символів
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
+  const exportToJSON = (data: any[], filename: string) => {
+    const jsonContent = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonContent], { type: "application/json;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}_${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+  };
+
+  const exportCurrentReport = () => {
+    const reportData = {
+      profitMetrics: [profitMetrics],
+      lowStockItems: lowStockItems.map(item => ({
+        Товар: item.product?.name || 'Невідомий товар',
+        SKU: item.product?.sku || '',
+        Кількість: item.quantity,
+        'Мін. запас': item.product?.minStock || 0,
+        Статус: item.status === 'out-of-stock' ? 'Немає в наявності' : 'Мало на складі',
+        'Вартість за одиницю': item.product?.costPrice || 0,
+        'Загальна вартість': (item.quantity * parseFloat(item.product?.costPrice || '0')).toFixed(2)
+      })),
+      productionCosts: [productionCosts],
+      turnoverData: turnoverData,
+      summary: {
+        'Загальний оборот': profitMetrics.totalRevenue,
+        'Чистий прибуток': profitMetrics.totalProfit,
+        'Маржа %': profitMetrics.profitMargin.toFixed(2),
+        'Витрати виробництва': productionCosts.totalProductionCost,
+        'Товарів в дефіциті': lowStockItems.length,
+        'Дата звіту': new Date().toLocaleDateString('uk-UA')
+      }
+    };
+
+    // Експорт як CSV
+    exportToCSV([reportData.summary], 'summary_report');
+    
+    // Якщо є товари в дефіциті, експортуємо їх окремо
+    if (reportData.lowStockItems.length > 0) {
+      exportToCSV(reportData.lowStockItems, 'shortage_report');
+    }
+  };
+
   // Chart data
   const turnoverChartData = {
     labels: turnoverData.map(d => d.month),
@@ -193,7 +262,7 @@ export default function Reports() {
                 <SelectItem value="last-year">Останній рік</SelectItem>
               </SelectContent>
             </Select>
-            <Button>
+            <Button onClick={() => exportCurrentReport()}>
               <Download className="w-4 h-4 mr-2" />
               Експорт звіту
             </Button>

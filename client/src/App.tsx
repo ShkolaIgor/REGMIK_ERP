@@ -14,6 +14,7 @@ import BOM from "@/pages/bom";
 import Categories from "@/pages/categories";
 import Warehouses from "@/pages/warehouses";
 import Reports from "@/pages/reports";
+import AdvancedReports from "@/pages/advanced-reports";
 import CostCalculations from "@/pages/cost-calculations";
 import MaterialShortages from "@/pages/material-shortages";
 import SupplierOrders from "@/pages/supplier-orders";
@@ -34,6 +35,7 @@ function Router() {
         <Route path="/categories" component={Categories} />
         <Route path="/warehouses" component={Warehouses} />
         <Route path="/reports" component={Reports} />
+        <Route path="/advanced-reports" component={AdvancedReports} />
         <Route path="/scanner" component={() => <div className="p-6">Сканер штрих-кодів - В розробці</div>} />
         <Route path="/costing" component={CostCalculations} />
         <Route path="/shortage" component={MaterialShortages} />
