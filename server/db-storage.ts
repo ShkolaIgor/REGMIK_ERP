@@ -835,8 +835,9 @@ export class DatabaseStorage implements IStorage {
 
   async calculateMaterialShortages(): Promise<MaterialShortage[]> {
     try {
-      // Спочатку очищаємо старі записи дефіциту
-      await db.delete(materialShortages);
+      // Очищаємо тільки записи дефіциту зі статусом 'pending' (не замовлені)
+      await db.delete(materialShortages)
+        .where(eq(materialShortages.status, 'pending'));
 
       // Отримуємо всі компоненти з BOM
       const bomComponents = await db.select({
