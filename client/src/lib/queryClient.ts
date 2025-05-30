@@ -40,7 +40,15 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
-  return method === 'GET' || method === 'get' ? await res.json() : res;
+  
+  // Завжди повертаємо JSON, якщо є контент
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return await res.json();
+  }
+  
+  // Якщо немає JSON контенту, повертаємо пустий об'єкт для успішних відповідей
+  return {};
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
