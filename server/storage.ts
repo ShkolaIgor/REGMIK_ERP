@@ -109,6 +109,8 @@ export interface IStorage {
     lowStockCount: number;
     activeOrders: number;
     productionTasks: number;
+    materialShortages: number;
+    criticalShortages: number;
   }>;
 }
 

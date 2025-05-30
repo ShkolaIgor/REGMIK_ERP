@@ -540,6 +540,13 @@ export class DatabaseStorage implements IStorage {
     const [productionTasksResult] = await db.select({ count: sql<number>`count(*)` }).from(productionTasks)
       .where(sql`${productionTasks.status} != 'completed'`);
 
+    // Підрахунок дефіциту матеріалів
+    const [materialShortagesResult] = await db.select({ count: sql<number>`count(*)` }).from(materialShortages)
+      .where(eq(materialShortages.status, 'pending'));
+
+    const [criticalShortagesResult] = await db.select({ count: sql<number>`count(*)` }).from(materialShortages)
+      .where(eq(materialShortages.priority, 'critical'));
+
     // Розрахунок загальної вартості та низьких запасів
     const inventoryData = await db.select({
       quantity: inventory.quantity,
@@ -566,7 +573,9 @@ export class DatabaseStorage implements IStorage {
       totalValue,
       lowStockCount,
       activeOrders: activeOrdersResult.count,
-      productionTasks: productionTasksResult.count
+      productionTasks: productionTasksResult.count,
+      materialShortages: materialShortagesResult.count,
+      criticalShortages: criticalShortagesResult.count
     };
   }
 

@@ -96,7 +96,7 @@ export default function Dashboard() {
 
       <main className="p-6 space-y-8">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -172,6 +172,44 @@ export default function Dashboard() {
               </div>
               <div className="flex items-center mt-4 text-sm">
                 <span className="text-red-600">Потребує уваги</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Дефіцит матеріалів</p>
+                  <p className="text-3xl font-semibold text-orange-600">
+                    {stats?.materialShortages || 0}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <ShoppingCartIcon className="w-6 h-6 text-orange-600" />
+                </div>
+              </div>
+              <div className="flex items-center mt-4 text-sm">
+                <span className="text-orange-600">Потребує замовлення</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Критичний дефіцит</p>
+                  <p className="text-3xl font-semibold text-red-600">
+                    {stats?.criticalShortages || 0}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+              </div>
+              <div className="flex items-center mt-4 text-sm">
+                <span className="text-red-600">Негайно</span>
               </div>
             </CardContent>
           </Card>

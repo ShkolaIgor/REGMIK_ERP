@@ -671,6 +671,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/material-shortages/:id/order", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const shortage = await storage.updateMaterialShortage(id, { status: "ordered" });
+      if (!shortage) {
+        return res.status(404).json({ error: "Material shortage not found" });
+      }
+      res.json(shortage);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to order material" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
