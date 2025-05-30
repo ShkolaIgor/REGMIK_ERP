@@ -10,7 +10,7 @@ import { ProductForm } from "@/components/ProductForm";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, getStockStatus } from "@/lib/utils";
-import { Search, Plus, Edit, Eye, Copy, Trash2, Scan, Download, Printer } from "lucide-react";
+import { Search, Plus, Edit, Eye, Copy, Trash2, Scan, Download, Printer, DollarSign, AlertTriangle, Package, Barcode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Inventory() {

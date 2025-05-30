@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Plus, Eye, Edit, Clock, DollarSign } from "lucide-react";
+import { Plus, Eye, Edit, Clock, DollarSign, FileText } from "lucide-react";
 
 export default function Recipes() {
   const { data: recipes = [], isLoading } = useQuery({

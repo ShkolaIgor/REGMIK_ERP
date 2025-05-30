@@ -195,8 +195,9 @@ export class MemStorage implements IStorage {
   // Inventory
   async getInventory(): Promise<(Inventory & { product: Product; warehouse: Warehouse })[]> {
     const result: (Inventory & { product: Product; warehouse: Warehouse })[] = [];
+    const inventoryValues = [...this.inventory.values()];
     
-    for (const inventory of Array.from(this.inventory.values())) {
+    for (const inventory of inventoryValues) {
       const product = this.products.get(inventory.productId);
       const warehouse = this.warehouses.get(inventory.warehouseId);
       
@@ -210,8 +211,9 @@ export class MemStorage implements IStorage {
 
   async getInventoryByWarehouse(warehouseId: number): Promise<(Inventory & { product: Product })[]> {
     const result: (Inventory & { product: Product })[] = [];
+    const inventoryValues = [...this.inventory.values()];
     
-    for (const inventory of Array.from(this.inventory.values())) {
+    for (const inventory of inventoryValues) {
       if (inventory.warehouseId === warehouseId) {
         const product = this.products.get(inventory.productId);
         if (product) {
@@ -352,8 +354,9 @@ export class MemStorage implements IStorage {
   // Production Tasks
   async getProductionTasks(): Promise<(ProductionTask & { recipe: Recipe })[]> {
     const result: (ProductionTask & { recipe: Recipe })[] = [];
+    const taskValues = [...this.productionTasks.values()];
     
-    for (const task of Array.from(this.productionTasks.values())) {
+    for (const task of taskValues) {
       const recipe = this.recipes.get(task.recipeId);
       if (recipe) {
         result.push({ ...task, recipe });
@@ -424,8 +427,9 @@ export class MemStorage implements IStorage {
     
     let totalValue = 0;
     let lowStockCount = 0;
+    const inventoryValues = [...this.inventory.values()];
     
-    for (const inventory of Array.from(this.inventory.values())) {
+    for (const inventory of inventoryValues) {
       const product = this.products.get(inventory.productId);
       if (product) {
         totalValue += inventory.quantity * parseFloat(product.costPrice);
