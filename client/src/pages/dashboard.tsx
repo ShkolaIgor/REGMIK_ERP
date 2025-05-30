@@ -16,9 +16,15 @@ import {
   Printer
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import BarcodeScanner from "@/components/BarcodeScanner";
 
 export default function Dashboard() {
   const [showScanner, setShowScanner] = useState(false);
+
+  const handleBarcodeScanned = (product: any) => {
+    console.log("Product found:", product);
+    // Тут можна додати логіку для роботи зі знайденим товаром
+  };
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["/api/dashboard/stats"],
@@ -62,11 +68,6 @@ export default function Dashboard() {
         'hsl(142, 76%, 36%)'
       ]
     }]
-  };
-
-  const handleBarcodeScanned = (barcode: string) => {
-    console.log("Scanned barcode:", barcode);
-    // Here you would implement barcode lookup logic
   };
 
   if (statsLoading) {
@@ -371,7 +372,7 @@ export default function Dashboard() {
       <BarcodeScanner
         isOpen={showScanner}
         onClose={() => setShowScanner(false)}
-        onScan={handleBarcodeScanned}
+        onProductFound={handleBarcodeScanned}
       />
     </div>
   );
