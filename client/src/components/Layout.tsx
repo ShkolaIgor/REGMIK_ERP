@@ -16,7 +16,8 @@ import {
   Users,
   Box,
   Layers,
-  Truck
+  Truck,
+  PackageOpen
 } from "lucide-react";
 
 interface LayoutProps {
@@ -48,6 +49,7 @@ const navigationItems = [
       { name: "Технологічні карти", href: "/tech-cards", icon: File },
       { name: "Склад виробів (BOM)", href: "/bom", icon: Layers },
       { name: "Планування (Kanban)", href: "/production", icon: Cog },
+      { name: "Збірка та розбірка", href: "/assembly", icon: PackageOpen },
       { name: "Калькуляція собівартості", href: "/costing", icon: Calculator },
       { name: "Дефіцит матеріалів", href: "/shortage", icon: AlertTriangle }
     ]

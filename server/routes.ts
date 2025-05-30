@@ -809,6 +809,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Assembly Operations
+  app.get("/api/assembly-operations", async (req, res) => {
+    try {
+      const operations = await storage.getAssemblyOperations();
+      res.json(operations);
+    } catch (error) {
+      console.error("Failed to fetch assembly operations:", error);
+      res.status(500).json({ error: "Failed to fetch assembly operations" });
+    }
+  });
+
+  app.get("/api/assembly-operations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const operation = await storage.getAssemblyOperation(id);
+      if (!operation) {
+        return res.status(404).json({ error: "Assembly operation not found" });
+      }
+      res.json(operation);
+    } catch (error) {
+      console.error("Failed to fetch assembly operation:", error);
+      res.status(500).json({ error: "Failed to fetch assembly operation" });
+    }
+  });
+
+  app.post("/api/assembly-operations", async (req, res) => {
+    try {
+      const operationData = insertAssemblyOperationSchema.parse(req.body);
+      const items = req.body.items ? req.body.items.map((item: any) => insertAssemblyOperationItemSchema.parse(item)) : [];
+      const operation = await storage.createAssemblyOperation(operationData, items);
+      res.status(201).json(operation);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid assembly operation data", details: error.errors });
+      } else {
+        console.error("Failed to create assembly operation:", error);
+        res.status(500).json({ error: "Failed to create assembly operation" });
+      }
+    }
+  });
+
+  app.patch("/api/assembly-operations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const operationData = insertAssemblyOperationSchema.partial().parse(req.body);
+      const operation = await storage.updateAssemblyOperation(id, operationData);
+      if (!operation) {
+        return res.status(404).json({ error: "Assembly operation not found" });
+      }
+      res.json(operation);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid assembly operation data", details: error.errors });
+      } else {
+        console.error("Failed to update assembly operation:", error);
+        res.status(500).json({ error: "Failed to update assembly operation" });
+      }
+    }
+  });
+
+  app.delete("/api/assembly-operations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteAssemblyOperation(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Assembly operation not found" });
+      }
+      res.status(204).end();
+    } catch (error) {
+      console.error("Failed to delete assembly operation:", error);
+      res.status(500).json({ error: "Failed to delete assembly operation" });
+    }
+  });
+
+  app.post("/api/assembly-operations/:id/execute", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const operation = await storage.executeAssemblyOperation(id);
+      if (!operation) {
+        return res.status(404).json({ error: "Assembly operation not found" });
+      }
+      res.json(operation);
+    } catch (error) {
+      console.error("Failed to execute assembly operation:", error);
+      res.status(500).json({ error: "Failed to execute assembly operation" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
