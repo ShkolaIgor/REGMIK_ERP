@@ -22,15 +22,11 @@ export default function WarehousesPage() {
 
   const { data: warehouses, isLoading } = useQuery({
     queryKey: ['/api/warehouses'],
-    queryFn: () => apiRequest('/api/warehouses') as Promise<Warehouse[]>
   });
 
   const createMutation = useMutation({
     mutationFn: (data: InsertWarehouse) => 
-      apiRequest('/api/warehouses', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      }),
+      apiRequest('/api/warehouses', 'POST', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/warehouses'] });
       setIsCreateOpen(false);

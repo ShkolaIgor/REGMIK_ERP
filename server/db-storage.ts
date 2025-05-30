@@ -2,11 +2,12 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "./db";
 import { IStorage } from "./storage";
 import {
-  users, categories, warehouses, products, inventory, orders, orderItems,
+  users, categories, warehouses, units, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   productComponents,
   type User, type InsertUser, type Category, type InsertCategory,
-  type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
+  type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
+  type Product, type InsertProduct,
   type Inventory, type InsertInventory, type Order, type InsertOrder,
   type OrderItem, type InsertOrderItem, type Recipe, type InsertRecipe,
   type RecipeIngredient, type InsertRecipeIngredient,

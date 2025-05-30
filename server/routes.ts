@@ -89,14 +89,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/warehouses", async (req, res) => {
     try {
+      console.log("Received warehouse data:", req.body);
       const warehouseData = insertWarehouseSchema.parse(req.body);
+      console.log("Parsed warehouse data:", warehouseData);
       const warehouse = await storage.createWarehouse(warehouseData);
+      console.log("Created warehouse:", warehouse);
       res.status(201).json(warehouse);
     } catch (error) {
+      console.error("Warehouse creation error:", error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: "Invalid warehouse data", details: error.errors });
       } else {
-        res.status(500).json({ error: "Failed to create warehouse" });
+        res.status(500).json({ error: "Failed to create warehouse", details: error instanceof Error ? error.message : String(error) });
       }
     }
   });
