@@ -15,7 +15,8 @@ import {
   File,
   Users,
   Box,
-  Layers
+  Layers,
+  Truck
 } from "lucide-react";
 
 interface LayoutProps {
@@ -36,6 +37,7 @@ const navigationItems = [
       { name: "Категорії", href: "/categories", icon: Box },
       { name: "Склади", href: "/warehouses", icon: Warehouse },
       { name: "Замовлення", href: "/orders", icon: ShoppingCart },
+      { name: "Замовлення постачальникам", href: "/supplier-orders", icon: Truck },
       { name: "Сканер штрих-кодів", href: "/scanner", icon: Scan }
     ]
   },

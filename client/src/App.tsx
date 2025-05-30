@@ -36,6 +36,7 @@ function Router() {
         <Route path="/scanner" component={() => <div className="p-6">Сканер штрих-кодів - В розробці</div>} />
         <Route path="/costing" component={CostCalculations} />
         <Route path="/shortage" component={MaterialShortages} />
+        <Route path="/supplier-orders" component={SupplierOrders} />
         <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
         <Route path="/suppliers" component={() => <div className="p-6">Постачальники - В розробці</div>} />
         <Route component={NotFound} />
