@@ -1,16 +1,111 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Plus, Eye, Edit, Clock, DollarSign, FileText } from "lucide-react";
+import { Plus, Eye, Edit, Clock, DollarSign, FileText, Trash2, X } from "lucide-react";
+import { Recipe, InsertRecipe, Product, InsertRecipeIngredient, RecipeIngredient } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+
+interface RecipeIngredientForm extends Omit<InsertRecipeIngredient, 'recipeId'> {
+  productName?: string;
+}
 
 export default function Recipes() {
-  const { data: recipes = [], isLoading } = useQuery({
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
+  const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
+  const [formData, setFormData] = useState<InsertRecipe>({
+    name: "",
+    description: "",
+    instructions: "",
+    productId: null,
+    estimatedTime: null,
+    laborCost: null
+  });
+  const [ingredients, setIngredients] = useState<RecipeIngredientForm[]>([]);
+  const { toast } = useToast();
+
+  const { data: recipes = [], isLoading } = useQuery<Recipe[]>({
     queryKey: ["/api/recipes"],
   });
+
+  const { data: products = [] } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: { recipe: InsertRecipe; ingredients: RecipeIngredientForm[] }) => {
+      try {
+        const result = await apiRequest('POST', '/api/recipes', data);
+        return result;
+      } catch (error) {
+        console.error("Recipe creation error:", error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/recipes'] });
+      setIsCreateOpen(false);
+      resetForm();
+      toast({
+        title: "Успіх",
+        description: "Рецепт успішно створено",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося створити рецепт",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      description: "",
+      instructions: "",
+      productId: null,
+      estimatedTime: null,
+      laborCost: null
+    });
+    setIngredients([]);
+    setEditingRecipe(null);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createMutation.mutate({ recipe: formData, ingredients });
+  };
+
+  const addIngredient = () => {
+    setIngredients([...ingredients, {
+      productId: 0,
+      quantity: "1",
+      unit: "шт"
+    }]);
+  };
+
+  const updateIngredient = (index: number, field: keyof RecipeIngredientForm, value: any) => {
+    const updated = [...ingredients];
+    updated[index] = { ...updated[index], [field]: value };
+    setIngredients(updated);
+  };
+
+  const removeIngredient = (index: number) => {
+    setIngredients(ingredients.filter((_, i) => i !== index));
+  };
 
   if (isLoading) {
     return <div className="p-6">Завантаження...</div>;
@@ -22,13 +117,170 @@ export default function Recipes() {
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-semibold text-gray-900">Технологічні карти</h2>
-            <p className="text-gray-600">Управління рецептами та технологічними процесами</p>
+            <h2 className="text-2xl font-semibold text-gray-900">Рецепти виробництва</h2>
+            <p className="text-gray-600">Управління рецептами та інгредієнтами для виробництва</p>
           </div>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Нова технологічна карта
-          </Button>
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Новий рецепт
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Створити новий рецепт</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Basic Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">Назва рецепту</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="productId">Кінцевий продукт</Label>
+                    <Select
+                      value={formData.productId?.toString() || ""}
+                      onValueChange={(value) => setFormData({ ...formData, productId: value ? parseInt(value) : null })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Оберіть продукт" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {products.map((product) => (
+                          <SelectItem key={product.id} value={product.id.toString()}>
+                            {product.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Опис</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description || ""}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="instructions">Інструкції</Label>
+                  <Textarea
+                    id="instructions"
+                    value={formData.instructions || ""}
+                    onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+                    rows={4}
+                    placeholder="Детальні інструкції з виробництва..."
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="estimatedTime">Час виробництва (хвилин)</Label>
+                    <Input
+                      id="estimatedTime"
+                      type="number"
+                      value={formData.estimatedTime || ""}
+                      onChange={(e) => setFormData({ ...formData, estimatedTime: e.target.value ? parseInt(e.target.value) : null })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="laborCost">Вартість робіт (грн)</Label>
+                    <Input
+                      id="laborCost"
+                      type="number"
+                      step="0.01"
+                      value={formData.laborCost || ""}
+                      onChange={(e) => setFormData({ ...formData, laborCost: e.target.value || null })}
+                    />
+                  </div>
+                </div>
+
+                {/* Ingredients */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <Label>Інгредієнти</Label>
+                    <Button type="button" onClick={addIngredient} size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Додати інгредієнт
+                    </Button>
+                  </div>
+                  
+                  {ingredients.length > 0 && (
+                    <div className="space-y-4">
+                      {ingredients.map((ingredient, index) => (
+                        <div key={index} className="grid grid-cols-5 gap-4 items-end p-4 border rounded-lg">
+                          <div>
+                            <Label>Продукт</Label>
+                            <Select
+                              value={ingredient.productId?.toString() || ""}
+                              onValueChange={(value) => updateIngredient(index, 'productId', parseInt(value))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Оберіть продукт" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {products.map((product) => (
+                                  <SelectItem key={product.id} value={product.id.toString()}>
+                                    {product.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label>Кількість</Label>
+                            <Input
+                              type="number"
+                              step="0.001"
+                              value={ingredient.quantity}
+                              onChange={(e) => updateIngredient(index, 'quantity', e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <Label>Одиниця</Label>
+                            <Input
+                              value={ingredient.unit}
+                              onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
+                            />
+                          </div>
+                          <div className="col-span-1">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeIngredient(index)}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end space-x-4">
+                  <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
+                    Скасувати
+                  </Button>
+                  <Button type="submit" disabled={createMutation.isPending}>
+                    {createMutation.isPending ? "Створення..." : "Створити рецепт"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </header>
 
@@ -91,15 +343,15 @@ export default function Recipes() {
         {/* Recipes Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Список технологічних карт</CardTitle>
+            <CardTitle>Список рецептів виробництва</CardTitle>
           </CardHeader>
           <CardContent>
             {recipes.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-500">Технологічні карти відсутні</p>
-                <Button className="mt-4">
+                <p className="text-gray-500">Рецепти відсутні</p>
+                <Button className="mt-4" onClick={() => setIsCreateOpen(true)}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Створити першу технологічну карту
+                  Створити перший рецепт
                 </Button>
               </div>
             ) : (
