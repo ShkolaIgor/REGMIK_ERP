@@ -56,6 +56,12 @@ export interface IStorage {
   getSuppliers(): Promise<Supplier[]>;
   createSupplier(supplier: InsertSupplier): Promise<Supplier>;
 
+  // Tech Cards
+  getTechCards(): Promise<(TechCard & { product: Product; steps: TechCardStep[]; materials: (TechCardMaterial & { product: Product })[] })[]>;
+  getTechCard(id: number): Promise<(TechCard & { product: Product; steps: TechCardStep[]; materials: (TechCardMaterial & { product: Product })[] }) | undefined>;
+  createTechCard(techCard: InsertTechCard, steps: InsertTechCardStep[], materials: InsertTechCardMaterial[]): Promise<TechCard>;
+  updateTechCard(id: number, techCard: Partial<InsertTechCard>, steps?: InsertTechCardStep[], materials?: InsertTechCardMaterial[]): Promise<TechCard | undefined>;
+
   // Analytics
   getDashboardStats(): Promise<{
     totalProducts: number;
@@ -78,6 +84,9 @@ export class MemStorage implements IStorage {
   private recipeIngredients: Map<number, RecipeIngredient[]> = new Map();
   private productionTasks: Map<number, ProductionTask> = new Map();
   private suppliers: Map<number, Supplier> = new Map();
+  private techCards: Map<number, TechCard> = new Map();
+  private techCardSteps: Map<number, TechCardStep[]> = new Map();
+  private techCardMaterials: Map<number, TechCardMaterial[]> = new Map();
 
   private currentUserId = 1;
   private currentCategoryId = 1;

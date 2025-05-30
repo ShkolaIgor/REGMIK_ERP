@@ -106,6 +106,37 @@ export const suppliers = pgTable("suppliers", {
   address: text("address"),
 });
 
+export const techCards = pgTable("tech_cards", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  productId: integer("product_id").references(() => products.id),
+  estimatedTime: integer("estimated_time").notNull(), // в хвилинах
+  difficulty: text("difficulty").notNull(), // easy, medium, hard
+  status: text("status").notNull().default("active"), // active, inactive
+  materialCost: decimal("material_cost", { precision: 10, scale: 2 }).default("0"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const techCardSteps = pgTable("tech_card_steps", {
+  id: serial("id").primaryKey(),
+  techCardId: integer("tech_card_id").references(() => techCards.id),
+  stepNumber: integer("step_number").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  duration: integer("duration").notNull(), // в хвилинах
+  equipment: text("equipment"),
+  notes: text("notes"),
+});
+
+export const techCardMaterials = pgTable("tech_card_materials", {
+  id: serial("id").primaryKey(),
+  techCardId: integer("tech_card_id").references(() => techCards.id),
+  productId: integer("product_id").references(() => products.id),
+  quantity: decimal("quantity", { precision: 10, scale: 3 }).notNull(),
+  unit: text("unit").notNull(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true });
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
@@ -118,6 +149,9 @@ export const insertRecipeSchema = createInsertSchema(recipes).omit({ id: true, c
 export const insertRecipeIngredientSchema = createInsertSchema(recipeIngredients).omit({ id: true });
 export const insertProductionTaskSchema = createInsertSchema(productionTasks).omit({ id: true, createdAt: true });
 export const insertSupplierSchema = createInsertSchema(suppliers).omit({ id: true });
+export const insertTechCardSchema = createInsertSchema(techCards).omit({ id: true, createdAt: true });
+export const insertTechCardStepSchema = createInsertSchema(techCardSteps).omit({ id: true });
+export const insertTechCardMaterialSchema = createInsertSchema(techCardMaterials).omit({ id: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -142,3 +176,9 @@ export type ProductionTask = typeof productionTasks.$inferSelect;
 export type InsertProductionTask = z.infer<typeof insertProductionTaskSchema>;
 export type Supplier = typeof suppliers.$inferSelect;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
+export type TechCard = typeof techCards.$inferSelect;
+export type InsertTechCard = z.infer<typeof insertTechCardSchema>;
+export type TechCardStep = typeof techCardSteps.$inferSelect;
+export type InsertTechCardStep = z.infer<typeof insertTechCardStepSchema>;
+export type TechCardMaterial = typeof techCardMaterials.$inferSelect;
+export type InsertTechCardMaterial = z.infer<typeof insertTechCardMaterialSchema>;
