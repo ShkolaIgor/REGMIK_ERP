@@ -3,9 +3,10 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Plus, Eye, Edit, Clock, FileText, Wrench, Settings } from "lucide-react";
+import { Plus, Eye, Edit, Clock, FileText, Wrench, Settings, Search, ClipboardList } from "lucide-react";
 import { TechCardForm } from "@/components/TechCardForm";
 
 export default function TechCards() {
