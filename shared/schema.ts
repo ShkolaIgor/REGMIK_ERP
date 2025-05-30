@@ -279,6 +279,49 @@ export const insertSupplierSchema = createInsertSchema(suppliers).omit({
   updatedAt: true 
 });
 
+// Таблиця операцій збірки та розбірки товарів
+export const assemblyOperations = pgTable("assembly_operations", {
+  id: serial("id").primaryKey(),
+  operationType: text("operation_type").notNull(), // assembly, disassembly
+  productId: integer("product_id").references(() => products.id).notNull(), // готовий виріб
+  warehouseId: integer("warehouse_id").references(() => warehouses.id).notNull(),
+  quantity: decimal("quantity", { precision: 12, scale: 4 }).notNull(),
+  unit: text("unit").notNull(),
+  status: text("status").notNull().default("planned"), // planned, in_progress, completed, cancelled
+  plannedDate: timestamp("planned_date"),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  performedBy: text("performed_by"), // хто виконував операцію
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Таблиця компонентів для операцій збірки/розбірки
+export const assemblyOperationItems = pgTable("assembly_operation_items", {
+  id: serial("id").primaryKey(),
+  operationId: integer("operation_id").references(() => assemblyOperations.id).notNull(),
+  componentId: integer("component_id").references(() => products.id).notNull(), // компонент
+  requiredQuantity: decimal("required_quantity", { precision: 12, scale: 4 }).notNull(),
+  actualQuantity: decimal("actual_quantity", { precision: 12, scale: 4 }).default("0"),
+  unit: text("unit").notNull(),
+  status: text("status").notNull().default("pending"), // pending, consumed, returned
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Insert schemas
+export const insertAssemblyOperationSchema = createInsertSchema(assemblyOperations).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertAssemblyOperationItemSchema = createInsertSchema(assemblyOperationItems).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -320,3 +363,7 @@ export type SupplierOrder = typeof supplierOrders.$inferSelect;
 export type InsertSupplierOrder = z.infer<typeof insertSupplierOrderSchema>;
 export type SupplierOrderItem = typeof supplierOrderItems.$inferSelect;
 export type InsertSupplierOrderItem = z.infer<typeof insertSupplierOrderItemSchema>;
+export type AssemblyOperation = typeof assemblyOperations.$inferSelect;
+export type InsertAssemblyOperation = z.infer<typeof insertAssemblyOperationSchema>;
+export type AssemblyOperationItem = typeof assemblyOperationItems.$inferSelect;
+export type InsertAssemblyOperationItem = z.infer<typeof insertAssemblyOperationItemSchema>;

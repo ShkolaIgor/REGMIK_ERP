@@ -117,6 +117,14 @@ export interface IStorage {
   getSupplierOrder(id: number): Promise<(SupplierOrder & { supplier: Supplier; items: (SupplierOrderItem & { product: Product })[] }) | undefined>;
   updateSupplierOrderStatus(id: number, status: string): Promise<SupplierOrder | undefined>;
 
+  // Assembly Operations
+  getAssemblyOperations(): Promise<(AssemblyOperation & { product: Product; warehouse: Warehouse; items: (AssemblyOperationItem & { component: Product })[] })[]>;
+  getAssemblyOperation(id: number): Promise<(AssemblyOperation & { product: Product; warehouse: Warehouse; items: (AssemblyOperationItem & { component: Product })[] }) | undefined>;
+  createAssemblyOperation(operation: InsertAssemblyOperation, items: InsertAssemblyOperationItem[]): Promise<AssemblyOperation>;
+  updateAssemblyOperation(id: number, operation: Partial<InsertAssemblyOperation>): Promise<AssemblyOperation | undefined>;
+  deleteAssemblyOperation(id: number): Promise<boolean>;
+  executeAssemblyOperation(id: number): Promise<AssemblyOperation | undefined>;
+
   // Analytics
   getDashboardStats(): Promise<{
     totalProducts: number;
