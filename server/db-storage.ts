@@ -1121,6 +1121,238 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+
+  // Assembly Operations
+  async getAssemblyOperations(): Promise<(AssemblyOperation & { product: Product; warehouse: Warehouse; items: (AssemblyOperationItem & { component: Product })[] })[]> {
+    try {
+      const operations = await db.select()
+        .from(assemblyOperations)
+        .leftJoin(products, eq(assemblyOperations.productId, products.id))
+        .leftJoin(warehouses, eq(assemblyOperations.warehouseId, warehouses.id))
+        .orderBy(assemblyOperations.createdAt);
+
+      const result = [];
+      for (const row of operations) {
+        const operation = row.assembly_operations;
+        const product = row.products;
+        const warehouse = row.warehouses;
+
+        // Отримуємо елементи операції
+        const items = await db.select()
+          .from(assemblyOperationItems)
+          .leftJoin(products, eq(assemblyOperationItems.componentId, products.id))
+          .where(eq(assemblyOperationItems.operationId, operation.id));
+
+        result.push({
+          ...operation,
+          product: product!,
+          warehouse: warehouse!,
+          items: items.map(item => ({
+            ...item.assembly_operation_items,
+            component: item.products!
+          }))
+        });
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error getting assembly operations:', error);
+      throw error;
+    }
+  }
+
+  async getAssemblyOperation(id: number): Promise<(AssemblyOperation & { product: Product; warehouse: Warehouse; items: (AssemblyOperationItem & { component: Product })[] }) | undefined> {
+    try {
+      const operationResult = await db.select()
+        .from(assemblyOperations)
+        .leftJoin(products, eq(assemblyOperations.productId, products.id))
+        .leftJoin(warehouses, eq(assemblyOperations.warehouseId, warehouses.id))
+        .where(eq(assemblyOperations.id, id))
+        .limit(1);
+
+      if (operationResult.length === 0) return undefined;
+
+      const row = operationResult[0];
+      const operation = row.assembly_operations;
+      const product = row.products;
+      const warehouse = row.warehouses;
+
+      // Отримуємо елементи операції
+      const items = await db.select()
+        .from(assemblyOperationItems)
+        .leftJoin(products, eq(assemblyOperationItems.componentId, products.id))
+        .where(eq(assemblyOperationItems.operationId, operation.id));
+
+      return {
+        ...operation,
+        product: product!,
+        warehouse: warehouse!,
+        items: items.map(item => ({
+          ...item.assembly_operation_items,
+          component: item.products!
+        }))
+      };
+    } catch (error) {
+      console.error('Error getting assembly operation:', error);
+      throw error;
+    }
+  }
+
+  async createAssemblyOperation(operation: InsertAssemblyOperation, items: InsertAssemblyOperationItem[]): Promise<AssemblyOperation> {
+    try {
+      const result = await db.insert(assemblyOperations).values(operation).returning();
+      const createdOperation = result[0];
+
+      // Додаємо елементи операції
+      if (items.length > 0) {
+        const itemsWithOperationId = items.map(item => ({
+          ...item,
+          operationId: createdOperation.id
+        }));
+        await db.insert(assemblyOperationItems).values(itemsWithOperationId);
+      }
+
+      return createdOperation;
+    } catch (error) {
+      console.error('Error creating assembly operation:', error);
+      throw error;
+    }
+  }
+
+  async updateAssemblyOperation(id: number, operation: Partial<InsertAssemblyOperation>): Promise<AssemblyOperation | undefined> {
+    try {
+      const result = await db.update(assemblyOperations)
+        .set(operation)
+        .where(eq(assemblyOperations.id, id))
+        .returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error updating assembly operation:', error);
+      throw error;
+    }
+  }
+
+  async deleteAssemblyOperation(id: number): Promise<boolean> {
+    try {
+      // Спочатку видаляємо елементи операції
+      await db.delete(assemblyOperationItems)
+        .where(eq(assemblyOperationItems.operationId, id));
+
+      // Потім видаляємо саму операцію
+      const result = await db.delete(assemblyOperations)
+        .where(eq(assemblyOperations.id, id));
+      
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting assembly operation:', error);
+      throw error;
+    }
+  }
+
+  async executeAssemblyOperation(id: number): Promise<AssemblyOperation | undefined> {
+    try {
+      const operation = await this.getAssemblyOperation(id);
+      if (!operation) throw new Error("Операція не знайдена");
+
+      if (operation.status !== "planned") {
+        throw new Error("Можна виконувати тільки заплановані операції");
+      }
+
+      // Оновлюємо статус операції
+      const updatedOperation = await db.update(assemblyOperations)
+        .set({ 
+          status: "completed",
+          actualDate: new Date()
+        })
+        .where(eq(assemblyOperations.id, id))
+        .returning();
+
+      // Оновлюємо інвентар залежно від типу операції
+      if (operation.operationType === "assembly") {
+        // Збірка: зменшуємо кількість компонентів, збільшуємо кількість готового товару
+        for (const item of operation.items) {
+          // Зменшуємо кількість компоненту
+          await db.update(inventory)
+            .set({ 
+              quantity: sql`${inventory.quantity} - ${parseFloat(item.quantity)}`,
+              updatedAt: new Date()
+            })
+            .where(
+              sql`${inventory.productId} = ${item.componentId} AND ${inventory.warehouseId} = ${operation.warehouseId}`
+            );
+        }
+
+        // Збільшуємо кількість готового товару
+        const existingInventory = await db.select()
+          .from(inventory)
+          .where(
+            sql`${inventory.productId} = ${operation.productId} AND ${inventory.warehouseId} = ${operation.warehouseId}`
+          )
+          .limit(1);
+
+        if (existingInventory.length > 0) {
+          await db.update(inventory)
+            .set({ 
+              quantity: sql`${inventory.quantity} + ${parseFloat(operation.quantity)}`,
+              updatedAt: new Date()
+            })
+            .where(
+              sql`${inventory.productId} = ${operation.productId} AND ${inventory.warehouseId} = ${operation.warehouseId}`
+            );
+        } else {
+          await db.insert(inventory).values({
+            productId: operation.productId,
+            warehouseId: operation.warehouseId,
+            quantity: parseFloat(operation.quantity),
+            updatedAt: new Date()
+          });
+        }
+      } else {
+        // Розбірка: зменшуємо кількість готового товару, збільшуємо кількість компонентів
+        await db.update(inventory)
+          .set({ 
+            quantity: sql`${inventory.quantity} - ${parseFloat(operation.quantity)}`,
+            updatedAt: new Date()
+          })
+          .where(
+            sql`${inventory.productId} = ${operation.productId} AND ${inventory.warehouseId} = ${operation.warehouseId}`
+          );
+
+        for (const item of operation.items) {
+          const existingInventory = await db.select()
+            .from(inventory)
+            .where(
+              sql`${inventory.productId} = ${item.componentId} AND ${inventory.warehouseId} = ${operation.warehouseId}`
+            )
+            .limit(1);
+
+          if (existingInventory.length > 0) {
+            await db.update(inventory)
+              .set({ 
+                quantity: sql`${inventory.quantity} + ${parseFloat(item.quantity)}`,
+                updatedAt: new Date()
+              })
+              .where(
+                sql`${inventory.productId} = ${item.componentId} AND ${inventory.warehouseId} = ${operation.warehouseId}`
+              );
+          } else {
+            await db.insert(inventory).values({
+              productId: item.componentId,
+              warehouseId: operation.warehouseId,
+              quantity: parseFloat(item.quantity),
+              updatedAt: new Date()
+            });
+          }
+        }
+      }
+
+      return updatedOperation[0];
+    } catch (error) {
+      console.error('Error executing assembly operation:', error);
+      throw error;
+    }
+  }
 }
 
 export const dbStorage = new DatabaseStorage();

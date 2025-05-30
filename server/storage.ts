@@ -17,7 +17,9 @@ import {
   type CostCalculation, type InsertCostCalculation,
   type MaterialShortage, type InsertMaterialShortage,
   type SupplierOrder, type InsertSupplierOrder,
-  type SupplierOrderItem, type InsertSupplierOrderItem
+  type SupplierOrderItem, type InsertSupplierOrderItem,
+  type AssemblyOperation, type InsertAssemblyOperation,
+  type AssemblyOperationItem, type InsertAssemblyOperationItem
 } from "@shared/schema";
 
 export interface IStorage {
