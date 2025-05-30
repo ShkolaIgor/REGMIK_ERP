@@ -337,9 +337,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Production Tasks
   app.get("/api/production-tasks", async (req, res) => {
     try {
+      console.log("Fetching production tasks...");
       const tasks = await storage.getProductionTasks();
+      console.log("Production tasks fetched:", tasks);
       res.json(tasks);
     } catch (error) {
+      console.error("Error fetching production tasks:", error);
       res.status(500).json({ error: "Failed to fetch production tasks" });
     }
   });

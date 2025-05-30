@@ -3,9 +3,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { apiRequest } from "@/lib/queryClient";
 import { cn, getPriorityColor, getStatusColor } from "@/lib/utils";
 import { Plus, User, Calendar, Clock } from "lucide-react";
+import { InsertProductionTask, Recipe } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
 
 const statusColumns = [
   { id: "planned", title: "Заплановано", color: "bg-gray-50" },
@@ -15,10 +22,21 @@ const statusColumns = [
 ];
 
 export function KanbanBoard() {
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newTask, setNewTask] = useState<Partial<InsertProductionTask>>({
+    quantity: 1,
+    status: "planned",
+    priority: "medium"
+  });
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["/api/production-tasks"],
+  });
+
+  const { data: recipes = [] } = useQuery({
+    queryKey: ["/api/recipes"],
   });
 
   const updateTaskMutation = useMutation({
@@ -28,6 +46,33 @@ export function KanbanBoard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/production-tasks"] });
+    },
+  });
+
+  const createTaskMutation = useMutation({
+    mutationFn: async (data: InsertProductionTask) => {
+      const res = await apiRequest("POST", "/api/production-tasks", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/production-tasks"] });
+      setIsCreateDialogOpen(false);
+      setNewTask({
+        quantity: 1,
+        status: "planned",
+        priority: "medium"
+      });
+      toast({
+        title: "Успіх",
+        description: "Виробниче завдання створено",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося створити виробниче завдання",
+        variant: "destructive",
+      });
     },
   });
 
