@@ -150,7 +150,7 @@ export default function BOMPage() {
   );
 
   const componentProducts = (products as Product[] || []).filter((p: Product) => 
-    p.productType === "комплектуюча" || p.productType === "матеріал" || p.productType === "component" || p.productType === "material"
+    p.id !== selectedProductId // Виключаємо сам продукт з списку компонентів
   );
 
   // Розрахунок загальної вартості BOM
