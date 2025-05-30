@@ -21,6 +21,7 @@ import SupplierOrders from "@/pages/supplier-orders";
 import Suppliers from "@/pages/suppliers";
 import AssemblyOperations from "@/pages/assembly-operations";
 import InventoryAudits from "@/pages/inventory-audits";
+import Workers from "@/pages/workers";
 import NotFound from "@/pages/not-found";
 
 function Router() {

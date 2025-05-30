@@ -367,6 +367,29 @@ export const insertInventoryAuditItemSchema = createInsertSchema(inventoryAuditI
   createdAt: true
 });
 
+// Таблиця робітників
+export const workers = pgTable("workers", {
+  id: serial("id").primaryKey(),
+  firstName: varchar("first_name", { length: 100 }).notNull(),
+  lastName: varchar("last_name", { length: 100 }).notNull(),
+  position: varchar("position", { length: 100 }).notNull(),
+  department: varchar("department", { length: 100 }),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 20 }),
+  hireDate: timestamp("hire_date"),
+  hourlyRate: decimal("hourly_rate", { precision: 8, scale: 2 }),
+  isActive: boolean("is_active").default(true).notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertWorkerSchema = createInsertSchema(workers).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -416,3 +439,5 @@ export type InventoryAudit = typeof inventoryAudits.$inferSelect;
 export type InsertInventoryAudit = z.infer<typeof insertInventoryAuditSchema>;
 export type InventoryAuditItem = typeof inventoryAuditItems.$inferSelect;
 export type InsertInventoryAuditItem = z.infer<typeof insertInventoryAuditItemSchema>;
+export type Worker = typeof workers.$inferSelect;
+export type InsertWorker = z.infer<typeof insertWorkerSchema>;

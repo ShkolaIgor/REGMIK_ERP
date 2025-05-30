@@ -1,7 +1,7 @@
 import {
   users, categories, units, warehouses, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
-  productComponents, costCalculations, materialShortages, inventoryAudits, inventoryAuditItems,
+  productComponents, costCalculations, materialShortages, inventoryAudits, inventoryAuditItems, workers,
   type User, type InsertUser, type Category, type InsertCategory,
   type Unit, type InsertUnit,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
@@ -20,6 +20,7 @@ import {
   type SupplierOrderItem, type InsertSupplierOrderItem,
   type InventoryAudit, type InsertInventoryAudit,
   type InventoryAuditItem, type InsertInventoryAuditItem,
+  type Worker, type InsertWorker,
   type AssemblyOperation, type InsertAssemblyOperation,
   type AssemblyOperationItem, type InsertAssemblyOperationItem
 } from "@shared/schema";
@@ -141,6 +142,13 @@ export interface IStorage {
   updateInventoryAuditItem(id: number, item: Partial<InsertInventoryAuditItem>): Promise<InventoryAuditItem | undefined>;
   deleteInventoryAuditItem(id: number): Promise<boolean>;
   generateInventoryAuditItems(auditId: number): Promise<InventoryAuditItem[]>;
+
+  // Workers
+  getWorkers(): Promise<Worker[]>;
+  getWorker(id: number): Promise<Worker | undefined>;
+  createWorker(worker: InsertWorker): Promise<Worker>;
+  updateWorker(id: number, worker: Partial<InsertWorker>): Promise<Worker | undefined>;
+  deleteWorker(id: number): Promise<boolean>;
 
   // Analytics
   getDashboardStats(): Promise<{
