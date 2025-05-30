@@ -73,7 +73,7 @@ export default function BOMPage() {
 
   // Fetch components for selected product
   const { data: components, isLoading: isLoadingComponents } = useQuery({
-    queryKey: ["/api/products", selectedProductId, "components"],
+    queryKey: [`/api/products/${selectedProductId}/components`],
     enabled: selectedProductId !== null
   });
 
@@ -81,7 +81,7 @@ export default function BOMPage() {
     mutationFn: (data: ComponentFormData) => 
       apiRequest("POST", "/api/product-components", data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products", selectedProductId, "components"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/products/${selectedProductId}/components`] });
       setIsAddDialogOpen(false);
       form.reset();
       toast({
@@ -198,7 +198,10 @@ export default function BOMPage() {
                 className={`cursor-pointer transition-colors hover:bg-accent ${
                   selectedProductId === product.id ? "border-primary bg-accent" : ""
                 }`}
-                onClick={() => setSelectedProductId(product.id)}
+                onClick={() => {
+                  console.log("Setting selectedProductId to:", product.id);
+                  setSelectedProductId(product.id);
+                }}
               >
                 <CardContent className="p-4">
                   <div className="space-y-2">
