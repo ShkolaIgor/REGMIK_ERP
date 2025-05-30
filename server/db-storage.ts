@@ -1037,12 +1037,19 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getSupplierOrders(): Promise<(SupplierOrder & { items: (SupplierOrderItem & { product: Product })[] })[]> {
+  async getSupplierOrders(): Promise<(SupplierOrder & { supplier: Supplier; items: (SupplierOrderItem & { product: Product })[] })[]> {
     try {
-      const orders = await db.select().from(supplierOrders).orderBy(sql`${supplierOrders.createdAt} DESC`);
+      const orders = await db.select({
+        order: supplierOrders,
+        supplier: suppliers,
+      }).from(supplierOrders)
+        .leftJoin(suppliers, eq(supplierOrders.supplierId, suppliers.id))
+        .orderBy(sql`${supplierOrders.createdAt} DESC`);
       
       const ordersWithItems = [];
-      for (const order of orders) {
+      for (const { order, supplier } of orders) {
+        if (!supplier) continue;
+
         const items = await db.select({
           item: supplierOrderItems,
           product: products,
@@ -1054,6 +1061,7 @@ export class DatabaseStorage implements IStorage {
         
         ordersWithItems.push({
           ...order,
+          supplier,
           items: filteredItems.map(({ item, product }) => ({ ...item, product }))
         });
       }
