@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Trash2, Package, Component, Calculator, Download, Upload, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, Package, Component, Calculator, Download, Upload, AlertTriangle, Search, Layers } from "lucide-react";
 import { insertProductComponentSchema } from "@shared/schema";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
@@ -50,6 +50,7 @@ type ComponentFormData = z.infer<typeof componentFormSchema>;
 export default function BOMPage() {
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -142,12 +143,21 @@ export default function BOMPage() {
   };
 
   if (isLoadingProducts) {
-    return <div className="p-6">Завантаження продуктів...</div>;
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Завантаження продуктів...</div>
+        </div>
+      </div>
+    );
   }
 
-  const parentProducts = (products as Product[] || []).filter((p: Product) => 
-    p.productType === "товар" || p.productType === "комплект" || p.productType === "product"
-  );
+  const parentProducts = (products as Product[] || []).filter((p: Product) => {
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         p.sku.toLowerCase().includes(searchQuery.toLowerCase());
+    const isParentType = p.productType === "товар" || p.productType === "комплект" || p.productType === "product";
+    return isParentType && matchesSearch;
+  });
 
   const componentProducts = (products as Product[] || []).filter((p: Product) => 
     p.id !== selectedProductId // Виключаємо сам продукт з списку компонентів
@@ -169,18 +179,44 @@ export default function BOMPage() {
     (products as Product[] || []).find((p: Product) => p.id === selectedProductId) : null;
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Склад продуктів (BOM)</h1>
-          <p className="text-muted-foreground">
-            Керування складом та компонентами продуктів
-          </p>
+    <div className="h-screen flex flex-col">
+      {/* Header */}
+      <header className="bg-white border-b">
+        <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Layers className="h-6 w-6 text-blue-600" />
+              <h1 className="text-xl font-semibold">Склад продуктів (BOM)</h1>
+            </div>
+            <Badge variant="secondary" className="flex items-center">
+              <div className="w-2 h-2 bg-green-500 rounded-full mr-1" />
+              Онлайн
+            </Badge>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Пошук продуктів..."
+                className="w-80 pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            {selectedProductId && (
+              <Button onClick={handleAddComponent}>
+                <Plus className="mr-2 h-4 w-4" />
+                Додати компонент
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Product Selection */}
-      <Card>
+      {/* Content */}
+      <div className="p-6 space-y-6 flex-1 overflow-auto">
+        {/* Product Selection */}
+        <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
@@ -467,6 +503,7 @@ export default function BOMPage() {
           </Form>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
