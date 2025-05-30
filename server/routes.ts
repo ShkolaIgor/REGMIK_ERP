@@ -196,8 +196,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { order, items } = req.body;
       const orderData = insertOrderSchema.parse(order);
-      const order = await storage.createOrder(orderData, items);
-      res.status(201).json(order);
+      const createdOrder = await storage.createOrder(orderData, items);
+      res.status(201).json(createdOrder);
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: "Invalid order data", details: error.errors });
