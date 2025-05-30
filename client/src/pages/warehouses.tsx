@@ -27,7 +27,7 @@ export default function WarehousesPage() {
   const createMutation = useMutation({
     mutationFn: async (data: InsertWarehouse) => {
       try {
-        const result = await apiRequest('/api/warehouses', 'POST', data);
+        const result = await apiRequest('POST', '/api/warehouses', data);
         return result;
       } catch (error) {
         console.error("Warehouse creation error:", error);
@@ -55,7 +55,7 @@ export default function WarehousesPage() {
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<InsertWarehouse> }) => {
       try {
-        const result = await apiRequest(`/api/warehouses/${id}`, 'PUT', data);
+        const result = await apiRequest('PUT', `/api/warehouses/${id}`, data);
         return result;
       } catch (error) {
         console.error("Warehouse update error:", error);
@@ -83,7 +83,7 @@ export default function WarehousesPage() {
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       try {
-        const result = await apiRequest(`/api/warehouses/${id}`, 'DELETE');
+        const result = await apiRequest('DELETE', `/api/warehouses/${id}`);
         return result;
       } catch (error) {
         console.error("Warehouse delete error:", error);
