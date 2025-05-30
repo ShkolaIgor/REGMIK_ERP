@@ -984,6 +984,73 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+
+  async getSupplierOrders(): Promise<(SupplierOrder & { items: (SupplierOrderItem & { product: Product })[] })[]> {
+    try {
+      const orders = await db.select().from(supplierOrders).orderBy(sql`${supplierOrders.createdAt} DESC`);
+      
+      const ordersWithItems = [];
+      for (const order of orders) {
+        const items = await db.select({
+          item: supplierOrderItems,
+          product: products,
+        }).from(supplierOrderItems)
+          .leftJoin(products, eq(supplierOrderItems.productId, products.id))
+          .where(eq(supplierOrderItems.orderId, order.id));
+
+        const filteredItems = items.filter(item => item.product) as { item: SupplierOrderItem; product: Product }[];
+        
+        ordersWithItems.push({
+          ...order,
+          items: filteredItems.map(({ item, product }) => ({ ...item, product }))
+        });
+      }
+
+      return ordersWithItems;
+    } catch (error) {
+      console.error('Error getting supplier orders:', error);
+      throw error;
+    }
+  }
+
+  async getSupplierOrder(id: number): Promise<(SupplierOrder & { items: (SupplierOrderItem & { product: Product })[] }) | undefined> {
+    try {
+      const orders = await db.select().from(supplierOrders).where(eq(supplierOrders.id, id));
+      if (orders.length === 0) return undefined;
+
+      const order = orders[0];
+      const items = await db.select({
+        item: supplierOrderItems,
+        product: products,
+      }).from(supplierOrderItems)
+        .leftJoin(products, eq(supplierOrderItems.productId, products.id))
+        .where(eq(supplierOrderItems.orderId, id));
+
+      const filteredItems = items.filter(item => item.product) as { item: SupplierOrderItem; product: Product }[];
+
+      return {
+        ...order,
+        items: filteredItems.map(({ item, product }) => ({ ...item, product }))
+      };
+    } catch (error) {
+      console.error('Error getting supplier order:', error);
+      throw error;
+    }
+  }
+
+  async updateSupplierOrderStatus(id: number, status: string): Promise<SupplierOrder | undefined> {
+    try {
+      const result = await db.update(supplierOrders)
+        .set({ status })
+        .where(eq(supplierOrders.id, id))
+        .returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error updating supplier order status:', error);
+      throw error;
+    }
+  }
 }
 
 export const dbStorage = new DatabaseStorage();

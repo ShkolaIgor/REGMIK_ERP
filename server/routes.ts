@@ -685,6 +685,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Supplier Orders endpoints
+  app.get("/api/supplier-orders", async (_req, res) => {
+    try {
+      const orders = await storage.getSupplierOrders();
+      res.json(orders);
+    } catch (error) {
+      console.error("Failed to get supplier orders:", error);
+      res.status(500).json({ error: "Failed to get supplier orders" });
+    }
+  });
+
+  app.get("/api/supplier-orders/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const order = await storage.getSupplierOrder(id);
+      if (!order) {
+        return res.status(404).json({ error: "Supplier order not found" });
+      }
+      res.json(order);
+    } catch (error) {
+      console.error("Failed to get supplier order:", error);
+      res.status(500).json({ error: "Failed to get supplier order" });
+    }
+  });
+
+  app.patch("/api/supplier-orders/:id/status", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+      const order = await storage.updateSupplierOrderStatus(id, status);
+      if (!order) {
+        return res.status(404).json({ error: "Supplier order not found" });
+      }
+      res.json(order);
+    } catch (error) {
+      console.error("Failed to update supplier order status:", error);
+      res.status(500).json({ error: "Failed to update supplier order status" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

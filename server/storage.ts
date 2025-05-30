@@ -105,6 +105,11 @@ export interface IStorage {
   calculateMaterialShortages(): Promise<MaterialShortage[]>;
   createSupplierOrderFromShortage(shortageId: number): Promise<{ order: SupplierOrder; item: SupplierOrderItem } | undefined>;
 
+  // Supplier Orders
+  getSupplierOrders(): Promise<(SupplierOrder & { items: (SupplierOrderItem & { product: Product })[] })[]>;
+  getSupplierOrder(id: number): Promise<(SupplierOrder & { items: (SupplierOrderItem & { product: Product })[] }) | undefined>;
+  updateSupplierOrderStatus(id: number, status: string): Promise<SupplierOrder | undefined>;
+
   // Analytics
   getDashboardStats(): Promise<{
     totalProducts: number;

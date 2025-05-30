@@ -16,6 +16,7 @@ import Warehouses from "@/pages/warehouses";
 import Reports from "@/pages/reports";
 import CostCalculations from "@/pages/cost-calculations";
 import MaterialShortages from "@/pages/material-shortages";
+import SupplierOrders from "@/pages/supplier-orders";
 import NotFound from "@/pages/not-found";
 
 function Router() {
