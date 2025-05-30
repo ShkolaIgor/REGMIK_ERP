@@ -1,6 +1,7 @@
 import {
   users, categories, warehouses, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
+  productComponents,
   type User, type InsertUser, type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
   type Inventory, type InsertInventory, type Order, type InsertOrder,
@@ -10,7 +11,8 @@ import {
   type Supplier, type InsertSupplier,
   type TechCard, type InsertTechCard,
   type TechCardStep, type InsertTechCardStep,
-  type TechCardMaterial, type InsertTechCardMaterial
+  type TechCardMaterial, type InsertTechCardMaterial,
+  type ProductComponent, type InsertProductComponent
 } from "@shared/schema";
 
 export interface IStorage {
@@ -67,6 +69,12 @@ export interface IStorage {
   createTechCard(techCard: InsertTechCard, steps: InsertTechCardStep[], materials: InsertTechCardMaterial[]): Promise<TechCard>;
   updateTechCard(id: number, techCard: Partial<InsertTechCard>, steps?: InsertTechCardStep[], materials?: InsertTechCardMaterial[]): Promise<TechCard | undefined>;
 
+  // Product Components (BOM)
+  getProductComponents(productId: number): Promise<(ProductComponent & { component: Product })[]>;
+  addProductComponent(component: InsertProductComponent): Promise<ProductComponent>;
+  removeProductComponent(id: number): Promise<boolean>;
+  updateProductComponent(id: number, component: Partial<InsertProductComponent>): Promise<ProductComponent | undefined>;
+
   // Analytics
   getDashboardStats(): Promise<{
     totalProducts: number;
@@ -92,6 +100,7 @@ export class MemStorage implements IStorage {
   private techCards: Map<number, TechCard> = new Map();
   private techCardSteps: Map<number, TechCardStep[]> = new Map();
   private techCardMaterials: Map<number, TechCardMaterial[]> = new Map();
+  private productComponents: Map<number, ProductComponent[]> = new Map();
 
   private currentUserId = 1;
   private currentCategoryId = 1;
@@ -107,6 +116,7 @@ export class MemStorage implements IStorage {
   private currentTechCardId = 1;
   private currentTechCardStepId = 1;
   private currentTechCardMaterialId = 1;
+  private currentProductComponentId = 1;
 
   constructor() {
     this.initializeData();
@@ -586,6 +596,63 @@ export class MemStorage implements IStorage {
     }
 
     return updatedTechCard;
+  }
+
+  // Product Components (BOM)
+  async getProductComponents(productId: number): Promise<(ProductComponent & { component: Product })[]> {
+    const components = this.productComponents.get(productId) || [];
+    const result: (ProductComponent & { component: Product })[] = [];
+    
+    for (const component of components) {
+      const componentProduct = this.products.get(component.componentProductId);
+      if (componentProduct) {
+        result.push({ ...component, component: componentProduct });
+      }
+    }
+    
+    return result;
+  }
+
+  async addProductComponent(insertComponent: InsertProductComponent): Promise<ProductComponent> {
+    const id = this.currentProductComponentId++;
+    const component: ProductComponent = {
+      ...insertComponent,
+      id,
+      createdAt: new Date(),
+      isOptional: insertComponent.isOptional ?? false,
+      notes: insertComponent.notes ?? null
+    };
+    
+    const existingComponents = this.productComponents.get(insertComponent.parentProductId) || [];
+    existingComponents.push(component);
+    this.productComponents.set(insertComponent.parentProductId, existingComponents);
+    
+    return component;
+  }
+
+  async removeProductComponent(id: number): Promise<boolean> {
+    for (const [productId, components] of this.productComponents.entries()) {
+      const index = components.findIndex(c => c.id === id);
+      if (index !== -1) {
+        components.splice(index, 1);
+        if (components.length === 0) {
+          this.productComponents.delete(productId);
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async updateProductComponent(id: number, componentData: Partial<InsertProductComponent>): Promise<ProductComponent | undefined> {
+    for (const components of this.productComponents.values()) {
+      const component = components.find(c => c.id === id);
+      if (component) {
+        Object.assign(component, componentData);
+        return component;
+      }
+    }
+    return undefined;
   }
 }
 

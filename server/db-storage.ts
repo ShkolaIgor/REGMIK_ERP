@@ -4,6 +4,7 @@ import { IStorage } from "./storage";
 import {
   users, categories, warehouses, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
+  productComponents,
   type User, type InsertUser, type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
   type Inventory, type InsertInventory, type Order, type InsertOrder,
@@ -13,7 +14,8 @@ import {
   type Supplier, type InsertSupplier,
   type TechCard, type InsertTechCard,
   type TechCardStep, type InsertTechCardStep,
-  type TechCardMaterial, type InsertTechCardMaterial
+  type TechCardMaterial, type InsertTechCardMaterial,
+  type ProductComponent, type InsertProductComponent
 } from "@shared/schema";
 
 export class DatabaseStorage implements IStorage {
@@ -526,6 +528,74 @@ export class DatabaseStorage implements IStorage {
       activeOrders: activeOrdersResult.count,
       productionTasks: productionTasksResult.count
     };
+  }
+
+  // Product Components (BOM)
+  async getProductComponents(productId: number): Promise<(ProductComponent & { component: Product })[]> {
+    const result = await db.select({
+      id: productComponents.id,
+      parentProductId: productComponents.parentProductId,
+      componentProductId: productComponents.componentProductId,
+      quantity: productComponents.quantity,
+      unit: productComponents.unit,
+      isOptional: productComponents.isOptional,
+      notes: productComponents.notes,
+      createdAt: productComponents.createdAt,
+      component: {
+        id: products.id,
+        name: products.name,
+        description: products.description,
+        sku: products.sku,
+        barcode: products.barcode,
+        categoryId: products.categoryId,
+        costPrice: products.costPrice,
+        retailPrice: products.retailPrice,
+        photo: products.photo,
+        productType: products.productType,
+        unit: products.unit,
+        minStock: products.minStock,
+        maxStock: products.maxStock,
+        createdAt: products.createdAt
+      }
+    })
+    .from(productComponents)
+    .leftJoin(products, eq(productComponents.componentProductId, products.id))
+    .where(eq(productComponents.parentProductId, productId));
+
+    return result.map(row => ({
+      id: row.id,
+      parentProductId: row.parentProductId,
+      componentProductId: row.componentProductId,
+      quantity: row.quantity,
+      unit: row.unit,
+      isOptional: row.isOptional,
+      notes: row.notes,
+      createdAt: row.createdAt,
+      component: row.component!
+    }));
+  }
+
+  async addProductComponent(insertComponent: InsertProductComponent): Promise<ProductComponent> {
+    const [result] = await db.insert(productComponents)
+      .values(insertComponent)
+      .returning();
+    return result;
+  }
+
+  async removeProductComponent(id: number): Promise<boolean> {
+    const result = await db.delete(productComponents)
+      .where(eq(productComponents.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  async updateProductComponent(id: number, componentData: Partial<InsertProductComponent>): Promise<ProductComponent | undefined> {
+    const result = await db.update(productComponents)
+      .set(componentData)
+      .where(eq(productComponents.id, id))
+      .returning();
+    
+    return result.length > 0 ? result[0] : undefined;
   }
 }
 
