@@ -926,11 +926,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/inventory-audits", async (req, res) => {
     try {
+      console.log("Received audit data:", req.body);
       const auditData = insertInventoryAuditSchema.parse(req.body);
+      console.log("Parsed audit data:", auditData);
       const audit = await storage.createInventoryAudit(auditData);
       res.status(201).json(audit);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Validation error:", error.errors);
         res.status(400).json({ error: "Invalid audit data", details: error.errors });
       } else {
         console.error("Failed to create inventory audit:", error);
