@@ -89,7 +89,7 @@ export default function Orders() {
   // Мутація для оновлення статусу
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: string }) =>
-      apiRequest(`/api/orders/${id}/status`, "PATCH", { status }),
+      apiRequest(`/api/orders/${id}/status`, "PUT", { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       toast({
