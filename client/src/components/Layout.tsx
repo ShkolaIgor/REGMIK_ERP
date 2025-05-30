@@ -57,6 +57,7 @@ const navigationItems = [
     items: [
       { name: "Документи", href: "/documents", icon: File },
       { name: "Прибутковість", href: "/reports", icon: BarChart },
+      { name: "Розширені звіти", href: "/advanced-reports", icon: FileText },
       { name: "Постачальники", href: "/suppliers", icon: Users }
     ]
   }
