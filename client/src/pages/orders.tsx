@@ -69,9 +69,7 @@ export default function Orders() {
     mutationFn: (data: OrderFormData) => apiRequest("/api/orders", "POST", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      setIsDialogOpen(false);
-      setOrderItems([]);
-      form.reset();
+      handleCloseDialog();
       toast({
         title: "Успіх",
         description: "Замовлення створено успішно",
@@ -98,6 +96,13 @@ export default function Orders() {
       });
     },
   });
+
+  // Функція для закриття діалогу та очищення форми
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setOrderItems([]);
+    form.reset();
+  };
 
   // Функції для управління товарами в замовленні
   const addOrderItem = () => {
@@ -153,7 +158,9 @@ export default function Orders() {
             <h2 className="text-2xl font-semibold text-gray-900">Замовлення</h2>
             <p className="text-gray-600">Управління клієнтськими замовленнями</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            if (!open) handleCloseDialog();
+          }}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
@@ -305,7 +312,7 @@ export default function Orders() {
                 </div>
 
                 <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  <Button type="button" variant="outline" onClick={handleCloseDialog}>
                     Скасувати
                   </Button>
                   <Button type="submit" disabled={createOrderMutation.isPending}>
