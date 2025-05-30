@@ -1,11 +1,11 @@
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
 import { db } from "./db";
 import { IStorage } from "./storage";
 import {
   users, categories, warehouses, units, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   productComponents, costCalculations, materialShortages, supplierOrders, supplierOrderItems,
-  assemblyOperations, assemblyOperationItems, workers,
+  assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
   type User, type InsertUser, type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
   type Product, type InsertProduct,
@@ -22,6 +22,8 @@ import {
   type MaterialShortage, type InsertMaterialShortage,
   type SupplierOrder, type InsertSupplierOrder,
   type SupplierOrderItem, type InsertSupplierOrderItem,
+  type InventoryAudit, type InsertInventoryAudit,
+  type InventoryAuditItem, type InsertInventoryAuditItem,
   type AssemblyOperation, type InsertAssemblyOperation,
   type AssemblyOperationItem, type InsertAssemblyOperationItem,
   type Worker, type InsertWorker
@@ -1383,6 +1385,139 @@ export class DatabaseStorage implements IStorage {
   async deleteWorker(id: number): Promise<boolean> {
     const result = await this.db.delete(workers).where(eq(workers.id, id));
     return result.rowCount > 0;
+  }
+
+  // Inventory Audits
+  async getInventoryAudits(): Promise<(InventoryAudit & { warehouse?: Warehouse; responsiblePerson?: Worker })[]> {
+    const result = await this.db
+      .select()
+      .from(inventoryAudits)
+      .leftJoin(warehouses, eq(inventoryAudits.warehouseId, warehouses.id))
+      .leftJoin(workers, eq(inventoryAudits.responsiblePersonId, workers.id))
+      .orderBy(desc(inventoryAudits.createdAt));
+
+    return result.map(row => ({
+      ...row.inventory_audits,
+      warehouse: row.warehouses || undefined,
+      responsiblePerson: row.workers || undefined
+    }));
+  }
+
+  async getInventoryAudit(id: number): Promise<(InventoryAudit & { warehouse?: Warehouse; items: (InventoryAuditItem & { product: Product })[] }) | undefined> {
+    const auditResult = await this.db
+      .select()
+      .from(inventoryAudits)
+      .leftJoin(warehouses, eq(inventoryAudits.warehouseId, warehouses.id))
+      .where(eq(inventoryAudits.id, id));
+
+    if (auditResult.length === 0) return undefined;
+
+    const itemsResult = await this.db
+      .select()
+      .from(inventoryAuditItems)
+      .leftJoin(products, eq(inventoryAuditItems.productId, products.id))
+      .where(eq(inventoryAuditItems.auditId, id));
+
+    const items = itemsResult.filter(item => item.products) as { inventory_audit_items: InventoryAuditItem; products: Product }[];
+
+    return {
+      ...auditResult[0].inventory_audits,
+      warehouse: auditResult[0].warehouses || undefined,
+      items: items.map(item => ({ ...item.inventory_audit_items, product: item.products }))
+    };
+  }
+
+  async createInventoryAudit(insertAudit: InsertInventoryAudit): Promise<InventoryAudit> {
+    const auditNumber = `AUDIT-${Date.now()}`;
+    const result = await this.db
+      .insert(inventoryAudits)
+      .values({ ...insertAudit, auditNumber })
+      .returning();
+    return result[0];
+  }
+
+  async updateInventoryAudit(id: number, auditData: Partial<InsertInventoryAudit>): Promise<InventoryAudit | undefined> {
+    const result = await this.db
+      .update(inventoryAudits)
+      .set({ ...auditData, updatedAt: new Date() })
+      .where(eq(inventoryAudits.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteInventoryAudit(id: number): Promise<boolean> {
+    // Delete audit items first
+    await this.db.delete(inventoryAuditItems).where(eq(inventoryAuditItems.auditId, id));
+    // Then delete the audit
+    const result = await this.db.delete(inventoryAudits).where(eq(inventoryAudits.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getInventoryAuditItems(auditId: number): Promise<(InventoryAuditItem & { product: Product })[]> {
+    const result = await this.db
+      .select()
+      .from(inventoryAuditItems)
+      .leftJoin(products, eq(inventoryAuditItems.productId, products.id))
+      .where(eq(inventoryAuditItems.auditId, auditId));
+
+    return result.filter(item => item.products).map(item => ({
+      ...item.inventory_audit_items,
+      product: item.products!
+    }));
+  }
+
+  async createInventoryAuditItem(insertItem: InsertInventoryAuditItem): Promise<InventoryAuditItem> {
+    const result = await this.db.insert(inventoryAuditItems).values(insertItem).returning();
+    return result[0];
+  }
+
+  async updateInventoryAuditItem(id: number, itemData: Partial<InsertInventoryAuditItem>): Promise<InventoryAuditItem | undefined> {
+    const result = await this.db
+      .update(inventoryAuditItems)
+      .set(itemData)
+      .where(eq(inventoryAuditItems.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteInventoryAuditItem(id: number): Promise<boolean> {
+    const result = await this.db.delete(inventoryAuditItems).where(eq(inventoryAuditItems.id, id));
+    return result.rowCount > 0;
+  }
+
+  async generateInventoryAuditItems(auditId: number, warehouseId?: number): Promise<InventoryAuditItem[]> {
+    // Get current inventory for the warehouse or all warehouses
+    let inventoryQuery = this.db
+      .select()
+      .from(inventory)
+      .leftJoin(products, eq(inventory.productId, products.id));
+
+    if (warehouseId) {
+      inventoryQuery = inventoryQuery.where(eq(inventory.warehouseId, warehouseId));
+    }
+
+    const inventoryResult = await inventoryQuery;
+    const items: InsertInventoryAuditItem[] = [];
+
+    for (const row of inventoryResult) {
+      if (row.products) {
+        items.push({
+          auditId,
+          productId: row.inventory.productId,
+          systemQuantity: row.inventory.quantity.toString(),
+          countedQuantity: null,
+          variance: null,
+          reason: null,
+          adjustmentMade: false,
+          notes: null,
+          countedBy: null,
+          countedAt: null
+        });
+      }
+    }
+
+    const result = await this.db.insert(inventoryAuditItems).values(items).returning();
+    return result;
   }
 }
 
