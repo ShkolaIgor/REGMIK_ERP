@@ -77,7 +77,7 @@ export default function BOMPage() {
     enabled: selectedProductId !== null
   });
 
-  const addComponentMutation = useMutation({
+  const addMutation = useMutation({
     mutationFn: (data: ComponentFormData) => 
       apiRequest("/api/product-components", "POST", data),
     onSuccess: () => {
@@ -120,7 +120,7 @@ export default function BOMPage() {
   const onSubmit = (data: ComponentFormData) => {
     if (!selectedProductId) return;
     
-    addComponentMutation.mutate({
+    addMutation.mutate({
       ...data,
       parentProductId: selectedProductId
     });
@@ -455,9 +455,9 @@ export default function BOMPage() {
                 </Button>
                 <Button 
                   type="submit" 
-                  disabled={addComponentMutation.isPending}
+                  disabled={addMutation.isPending}
                 >
-                  {addComponentMutation.isPending ? "Додавання..." : "Додати компонент"}
+                  {addMutation.isPending ? "Додавання..." : "Додати компонент"}
                 </Button>
               </DialogFooter>
             </form>
