@@ -64,9 +64,29 @@ export default function Orders() {
 
   // Мутація для створення замовлення
   const createOrderMutation = useMutation({
-    mutationFn: (data: any) => {
+    mutationFn: async (data: any) => {
       console.log("Making API request with data:", data);
-      return apiRequest("/api/orders", "POST", data);
+      
+      try {
+        const response = await fetch("/api/orders", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log("Raw response from server:", result);
+        return result;
+      } catch (error) {
+        console.error("Fetch error:", error);
+        throw error;
+      }
     },
     onSuccess: (result) => {
       console.log("Order created successfully:", result);
