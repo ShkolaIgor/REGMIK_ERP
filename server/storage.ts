@@ -620,7 +620,9 @@ export class MemStorage implements IStorage {
       totalValue,
       lowStockCount,
       activeOrders,
-      productionTasks
+      productionTasks,
+      materialShortages: 0,
+      criticalShortages: 0
     };
   }
 
