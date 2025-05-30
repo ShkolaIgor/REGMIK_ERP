@@ -155,8 +155,9 @@ export default function BOMPage() {
   const calculateTotalCost = () => {
     if (!components) return 0;
     return (components as ProductComponent[]).reduce((total, component) => {
+      if (!component.component) return total;
       const componentCost = parseFloat(component.component.costPrice || "0");
-      const quantity = parseFloat(component.quantity);
+      const quantity = parseFloat(component.quantity || "0");
       return total + (componentCost * quantity);
     }, 0);
   };
@@ -267,24 +268,26 @@ export default function BOMPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(components as ProductComponent[] || []).map((component: ProductComponent) => {
-                    const unitPrice = parseFloat(component.component.costPrice || "0");
-                    const quantity = parseFloat(component.quantity);
+                  {(components as ProductComponent[] || [])
+                    .filter(component => component.component)
+                    .map((component: ProductComponent) => {
+                    const unitPrice = parseFloat(component.component?.costPrice || "0");
+                    const quantity = parseFloat(component.quantity || "0");
                     const totalPrice = unitPrice * quantity;
                     
                     return (
                       <TableRow key={component.id}>
                         <TableCell className="font-medium">
-                          {component.component.name}
+                          {component.component?.name || 'Невідомий компонент'}
                         </TableCell>
-                        <TableCell>{component.component.sku}</TableCell>
+                        <TableCell>{component.component?.sku || '-'}</TableCell>
                         <TableCell>{component.quantity}</TableCell>
                         <TableCell>{component.unit}</TableCell>
                         <TableCell>{unitPrice.toFixed(2)} грн</TableCell>
                         <TableCell className="font-medium">{totalPrice.toFixed(2)} грн</TableCell>
                         <TableCell>
                           <Badge variant="outline">
-                            {component.component.productType}
+                            {component.component?.productType || 'невідомо'}
                           </Badge>
                         </TableCell>
                         <TableCell>
