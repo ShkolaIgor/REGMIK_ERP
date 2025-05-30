@@ -997,10 +997,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/inventory-audits/:auditId/items", async (req, res) => {
     try {
       const auditId = parseInt(req.params.auditId);
-      const itemData = insertInventoryAuditItemSchema.parse({
+      
+      // Обробка порожніх рядків для числових полів
+      const processedData = {
         ...req.body,
-        auditId
-      });
+        auditId,
+        countedQuantity: req.body.countedQuantity === "" ? null : req.body.countedQuantity,
+        variance: req.body.variance === "" ? null : req.body.variance,
+      };
+      
+      const itemData = insertInventoryAuditItemSchema.parse(processedData);
       const item = await storage.createInventoryAuditItem(itemData);
       res.status(201).json(item);
     } catch (error) {
