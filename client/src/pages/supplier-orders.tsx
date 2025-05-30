@@ -104,7 +104,7 @@ export default function SupplierOrdersPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="flex-1 p-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -116,7 +116,7 @@ export default function SupplierOrdersPage() {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="flex-1 p-6 overflow-y-auto">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Замовлення постачальникам</h1>
