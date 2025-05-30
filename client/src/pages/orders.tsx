@@ -66,7 +66,7 @@ export default function Orders() {
 
   // Мутація для створення замовлення
   const createOrderMutation = useMutation({
-    mutationFn: (data: OrderFormData) => apiRequest("/api/orders", "POST", data),
+    mutationFn: (data: any) => apiRequest("/api/orders", "POST", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       handleCloseDialog();
@@ -128,10 +128,46 @@ export default function Orders() {
   };
 
   const handleSubmit = (data: OrderFormData) => {
+    // Перевіряємо, чи додані товари
+    if (orderItems.length === 0) {
+      toast({
+        title: "Помилка",
+        description: "Додайте хоча б один товар до замовлення",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Перевіряємо валідність товарів
+    const invalidItems = orderItems.filter(item => 
+      !item.productId || !item.quantity || !item.unitPrice
+    );
+    
+    if (invalidItems.length > 0) {
+      toast({
+        title: "Помилка",
+        description: "Заповніть всі поля для кожного товару",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const orderData = {
-      ...data,
-      items: orderItems,
+      order: {
+        customerName: data.customerName,
+        customerEmail: data.customerEmail || null,
+        customerPhone: data.customerPhone || null,
+        status: data.status,
+        notes: data.notes || null,
+      },
+      items: orderItems.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        totalPrice: (parseFloat(item.quantity) * parseFloat(item.unitPrice)).toString(),
+      })),
     };
+    
     createOrderMutation.mutate(orderData);
   };
 
@@ -250,7 +286,7 @@ export default function Orders() {
                       {orderItems.map((item, index) => (
                         <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg">
                           <Select
-                            value={item.productId.toString()}
+                            value={item.productId > 0 ? item.productId.toString() : ""}
                             onValueChange={(value) => updateOrderItem(index, "productId", parseInt(value))}
                           >
                             <SelectTrigger className="flex-1">
