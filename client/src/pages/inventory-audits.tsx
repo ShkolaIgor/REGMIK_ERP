@@ -90,11 +90,11 @@ export default function InventoryAuditsPage() {
   });
 
   const { data: auditItems = [] } = useQuery({
-    queryKey: ["/api/inventory-audits", selectedAudit?.id, "items"],
+    queryKey: [`/api/inventory-audits/${selectedAudit?.id}/items`],
     enabled: !!selectedAudit?.id,
   });
 
-  console.log("auditItems:", auditItems);
+
 
   // Мутації
   const createMutation = useMutation({
@@ -153,7 +153,7 @@ export default function InventoryAuditsPage() {
         body: data,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory-audits", selectedAudit?.id, "items"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/inventory-audits/${selectedAudit?.id}/items`] });
       setIsItemFormOpen(false);
       itemForm.reset({
         productId: "0",
@@ -184,7 +184,7 @@ export default function InventoryAuditsPage() {
         method: "POST",
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/inventory-audits", selectedAudit?.id, "items"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/inventory-audits/${selectedAudit?.id}/items`] });
       toast({
         title: "Успішно",
         description: "Позиції згенеровано автоматично",
