@@ -102,7 +102,7 @@ export default function BOMPage() {
     mutationFn: (id: number) => 
       apiRequest("DELETE", `/api/product-components/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products", selectedProductId, "components"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/products/${selectedProductId}/components`] });
       toast({
         title: "Успішно",
         description: "Компонент видалено зі складу продукту"
