@@ -594,6 +594,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Material Shortages
+  app.get("/api/material-shortages", async (req, res) => {
+    try {
+      const shortages = await storage.getMaterialShortages();
+      res.json(shortages);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch material shortages" });
+    }
+  });
+
+  app.get("/api/material-shortages/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const shortage = await storage.getMaterialShortage(id);
+      if (!shortage) {
+        return res.status(404).json({ error: "Material shortage not found" });
+      }
+      res.json(shortage);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch material shortage" });
+    }
+  });
+
+  app.post("/api/material-shortages", async (req, res) => {
+    try {
+      const shortageData = insertMaterialShortageSchema.parse(req.body);
+      const shortage = await storage.createMaterialShortage(shortageData);
+      res.status(201).json(shortage);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid shortage data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create material shortage" });
+      }
+    }
+  });
+
+  app.put("/api/material-shortages/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const shortageData = insertMaterialShortageSchema.partial().parse(req.body);
+      const shortage = await storage.updateMaterialShortage(id, shortageData);
+      if (!shortage) {
+        return res.status(404).json({ error: "Material shortage not found" });
+      }
+      res.json(shortage);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid shortage data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update material shortage" });
+      }
+    }
+  });
+
+  app.delete("/api/material-shortages/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteMaterialShortage(id);
+      if (!success) {
+        return res.status(404).json({ error: "Material shortage not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete material shortage" });
+    }
+  });
+
+  app.post("/api/material-shortages/calculate", async (req, res) => {
+    try {
+      const shortages = await storage.calculateMaterialShortages();
+      res.json(shortages);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to calculate material shortages" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
