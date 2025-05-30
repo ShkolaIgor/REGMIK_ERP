@@ -208,6 +208,7 @@ export default function InventoryAuditsPage() {
   };
 
   const handleEdit = (audit: any) => {
+    console.log("Editing audit:", audit);
     setEditingAudit(audit);
     form.reset({
       warehouseId: audit.warehouseId?.toString() || "0",
