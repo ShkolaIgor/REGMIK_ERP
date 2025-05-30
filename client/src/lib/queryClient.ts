@@ -8,10 +8,25 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
+  urlOrOptions: string | { url: string; method?: string; body?: unknown },
+  options?: { method?: string; body?: unknown }
+): Promise<any> {
+  let url: string;
+  let method: string;
+  let data: unknown;
+
+  if (typeof urlOrOptions === 'string') {
+    // Простий виклик для GET запитів: apiRequest("/api/endpoint")
+    url = urlOrOptions;
+    method = options?.method || 'GET';
+    data = options?.body;
+  } else {
+    // Об'єктний виклик: apiRequest({ url: "/api/endpoint", method: "POST", body: data })
+    url = urlOrOptions.url;
+    method = urlOrOptions.method || 'GET';
+    data = urlOrOptions.body;
+  }
+
   const res = await fetch(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
@@ -20,7 +35,7 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
-  return res;
+  return method === 'GET' || method === 'get' ? await res.json() : res;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

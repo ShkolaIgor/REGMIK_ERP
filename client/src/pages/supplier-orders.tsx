@@ -68,10 +68,10 @@ export default function SupplierOrdersPage() {
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ orderId, status }: { orderId: number; status: string }) =>
-      apiRequest(`/api/supplier-orders/${orderId}/status`, {
+      apiRequest({
+        url: `/api/supplier-orders/${orderId}/status`,
         method: "PATCH",
-        body: JSON.stringify({ status }),
-        headers: { "Content-Type": "application/json" },
+        body: { status },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/supplier-orders"] });
