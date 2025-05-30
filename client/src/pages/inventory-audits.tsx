@@ -354,14 +354,7 @@ export default function InventoryAuditsPage() {
       {/* Content */}
       <div className="p-6">
         <div className="space-y-6">
-          {/* Кнопка для створення нової інвентаризації */}
           <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => { setEditingAudit(null); form.reset(); }}>
-                <Plus className="mr-2 h-4 w-4" />
-                Нова інвентаризація
-              </Button>
-            </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>
