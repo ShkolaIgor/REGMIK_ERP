@@ -362,7 +362,16 @@ export default function Orders() {
                   <Button type="button" variant="outline" onClick={handleCloseDialog}>
                     Скасувати
                   </Button>
-                  <Button type="submit" disabled={createOrderMutation.isPending}>
+                  <Button 
+                    type="button" 
+                    onClick={() => {
+                      console.log("Form errors:", form.formState.errors);
+                      console.log("Form values:", form.getValues());
+                      console.log("Order items:", orderItems);
+                      form.handleSubmit(handleSubmit)();
+                    }}
+                    disabled={createOrderMutation.isPending}
+                  >
                     {createOrderMutation.isPending ? "Створення..." : "Створити замовлення"}
                   </Button>
                 </DialogFooter>
