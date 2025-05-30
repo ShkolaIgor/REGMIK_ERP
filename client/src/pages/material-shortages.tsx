@@ -218,7 +218,7 @@ export default function MaterialShortagesPage() {
       priority: shortage.priority,
       status: shortage.status,
       estimatedCost: shortage.estimatedCost || "0",
-      supplierRecommendation: shortage.supplierRecommendation || "",
+      supplierRecommendationId: shortage.supplierRecommendationId || undefined,
       notes: shortage.notes || "",
     });
     setIsFormOpen(true);
@@ -440,13 +440,25 @@ export default function MaterialShortagesPage() {
                     />
                     <FormField
                       control={form.control}
-                      name="supplierRecommendation"
+                      name="supplierRecommendationId"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Рекомендований постачальник</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Назва постачальника" {...field} />
-                          </FormControl>
+                          <Select onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)} value={field.value?.toString()}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Виберіть постачальника" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="">Без постачальника</SelectItem>
+                              {(suppliers as any[])?.map((supplier: any) => (
+                                <SelectItem key={supplier.id} value={supplier.id.toString()}>
+                                  {supplier.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -586,10 +598,13 @@ export default function MaterialShortagesPage() {
                       </div>
                     )}
 
-                    {shortage.supplierRecommendation && (
+                    {shortage.supplier && (
                       <div className="mb-4">
                         <p className="text-sm text-gray-600">Рекомендований постачальник</p>
-                        <p className="font-semibold">{shortage.supplierRecommendation}</p>
+                        <p className="font-semibold">{shortage.supplier.name}</p>
+                        {shortage.supplier.contactPerson && (
+                          <p className="text-xs text-gray-500">Контактна особа: {shortage.supplier.contactPerson}</p>
+                        )}
                       </div>
                     )}
 
