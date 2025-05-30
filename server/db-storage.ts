@@ -321,8 +321,7 @@ export class DatabaseStorage implements IStorage {
       assignedTo: productionTasks.assignedTo,
       startDate: productionTasks.startDate,
       endDate: productionTasks.endDate,
-      estimatedDuration: productionTasks.estimatedDuration,
-      actualDuration: productionTasks.actualDuration,
+      progress: productionTasks.progress,
       notes: productionTasks.notes,
       createdAt: productionTasks.createdAt,
       recipe: recipes
