@@ -57,6 +57,9 @@ export default function WorkersPage() {
     queryKey: ["/api/workers"],
   });
 
+  // Debug: log workers data
+  console.log("Workers data:", workers);
+
   const createMutation = useMutation({
     mutationFn: (data: FormData) =>
       apiRequest("/api/workers", {
