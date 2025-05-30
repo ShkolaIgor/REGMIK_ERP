@@ -144,11 +144,11 @@ export default function BOMPage() {
   }
 
   const parentProducts = (products as Product[] || []).filter((p: Product) => 
-    p.productType === "товар" || p.productType === "комплект"
+    p.productType === "товар" || p.productType === "комплект" || p.productType === "product"
   );
 
   const componentProducts = (products as Product[] || []).filter((p: Product) => 
-    p.productType === "комплектуюча" || p.productType === "матеріал"
+    p.productType === "комплектуюча" || p.productType === "матеріал" || p.productType === "component" || p.productType === "material"
   );
 
   // Розрахунок загальної вартості BOM
