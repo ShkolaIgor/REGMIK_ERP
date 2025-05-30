@@ -53,7 +53,8 @@ const navigationItems = [
       { name: "Планування (Kanban)", href: "/production", icon: Cog },
       { name: "Збірка та розбірка", href: "/assembly", icon: PackageOpen },
       { name: "Калькуляція собівартості", href: "/costing", icon: Calculator },
-      { name: "Дефіцит матеріалів", href: "/shortage", icon: AlertTriangle }
+      { name: "Дефіцит матеріалів", href: "/shortage", icon: AlertTriangle },
+      { name: "Робітники", href: "/workers", icon: Users }
     ]
   },
   {

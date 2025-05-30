@@ -1353,6 +1353,34 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+
+  // Workers
+  async getWorkers(): Promise<Worker[]> {
+    return await this.db.select().from(workers).orderBy(workers.firstName, workers.lastName);
+  }
+
+  async getWorker(id: number): Promise<Worker | undefined> {
+    const result = await this.db.select().from(workers).where(eq(workers.id, id));
+    return result[0];
+  }
+
+  async createWorker(worker: InsertWorker): Promise<Worker> {
+    const result = await this.db.insert(workers).values(worker).returning();
+    return result[0];
+  }
+
+  async updateWorker(id: number, worker: Partial<InsertWorker>): Promise<Worker | undefined> {
+    const result = await this.db.update(workers)
+      .set(worker)
+      .where(eq(workers.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteWorker(id: number): Promise<boolean> {
+    const result = await this.db.delete(workers).where(eq(workers.id, id));
+    return result.rowCount > 0;
+  }
 }
 
 export const dbStorage = new DatabaseStorage();

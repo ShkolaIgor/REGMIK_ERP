@@ -46,6 +46,7 @@ function Router() {
         <Route path="/suppliers" component={Suppliers} />
         <Route path="/assembly" component={AssemblyOperations} />
         <Route path="/inventory-audits" component={InventoryAudits} />
+        <Route path="/workers" component={Workers} />
         <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
         <Route component={NotFound} />
       </Switch>
