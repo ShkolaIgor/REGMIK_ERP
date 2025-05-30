@@ -515,11 +515,11 @@ export default function MaterialShortagesPage() {
       </div>
 
       {/* Список дефіцитів */}
-      <Card>
+      <Card className="flex-1 flex flex-col">
         <CardHeader>
           <CardTitle>Список дефіцитів матеріалів</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 flex flex-col">
           {shortages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
@@ -531,7 +531,7 @@ export default function MaterialShortagesPage() {
               </Button>
             </div>
           ) : (
-            <div className="max-h-96 overflow-y-auto space-y-4">
+            <div className="flex-1 overflow-y-auto space-y-4">
               {shortages.map((shortage: any) => (
                 <Card key={shortage.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
