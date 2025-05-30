@@ -5,7 +5,7 @@ import {
   insertProductSchema, insertOrderSchema, insertRecipeSchema,
   insertProductionTaskSchema, insertCategorySchema, insertUnitSchema, insertWarehouseSchema,
   insertSupplierSchema, insertInventorySchema, insertTechCardSchema,
-  insertProductComponentSchema
+  insertProductComponentSchema, insertCostCalculationSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -513,6 +513,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete component" });
+    }
+  });
+
+  // Cost Calculations
+  app.get("/api/cost-calculations", async (req, res) => {
+    try {
+      const calculations = await storage.getCostCalculations();
+      res.json(calculations);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch cost calculations" });
+    }
+  });
+
+  app.get("/api/cost-calculations/product/:productId", async (req, res) => {
+    try {
+      const productId = parseInt(req.params.productId);
+      const calculation = await storage.getCostCalculation(productId);
+      if (!calculation) {
+        return res.status(404).json({ error: "Cost calculation not found" });
+      }
+      res.json(calculation);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch cost calculation" });
+    }
+  });
+
+  app.post("/api/cost-calculations", async (req, res) => {
+    try {
+      const calculationData = insertCostCalculationSchema.parse(req.body);
+      const calculation = await storage.createCostCalculation(calculationData);
+      res.status(201).json(calculation);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid calculation data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create cost calculation" });
+      }
+    }
+  });
+
+  app.put("/api/cost-calculations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const calculationData = insertCostCalculationSchema.partial().parse(req.body);
+      const calculation = await storage.updateCostCalculation(id, calculationData);
+      if (!calculation) {
+        return res.status(404).json({ error: "Cost calculation not found" });
+      }
+      res.json(calculation);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid calculation data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update cost calculation" });
+      }
+    }
+  });
+
+  app.delete("/api/cost-calculations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteCostCalculation(id);
+      if (!success) {
+        return res.status(404).json({ error: "Cost calculation not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete cost calculation" });
+    }
+  });
+
+  app.post("/api/cost-calculations/calculate/:productId", async (req, res) => {
+    try {
+      const productId = parseInt(req.params.productId);
+      const calculation = await storage.calculateAutomaticCost(productId);
+      res.json(calculation);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to calculate automatic cost" });
     }
   });
 

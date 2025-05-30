@@ -4,7 +4,7 @@ import { IStorage } from "./storage";
 import {
   users, categories, warehouses, units, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
-  productComponents,
+  productComponents, costCalculations,
   type User, type InsertUser, type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
   type Product, type InsertProduct,
@@ -16,7 +16,8 @@ import {
   type TechCard, type InsertTechCard,
   type TechCardStep, type InsertTechCardStep,
   type TechCardMaterial, type InsertTechCardMaterial,
-  type ProductComponent, type InsertProductComponent
+  type ProductComponent, type InsertProductComponent,
+  type CostCalculation, type InsertCostCalculation
 } from "@shared/schema";
 
 export class DatabaseStorage implements IStorage {
@@ -634,6 +635,120 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return result.length > 0 ? result[0] : undefined;
+  }
+
+  // Cost Calculations
+  async getCostCalculations(): Promise<(CostCalculation & { product: Product })[]> {
+    const result = await db.select({
+      id: costCalculations.id,
+      productId: costCalculations.productId,
+      materialCost: costCalculations.materialCost,
+      laborCost: costCalculations.laborCost,
+      overheadCost: costCalculations.overheadCost,
+      totalCost: costCalculations.totalCost,
+      profitMargin: costCalculations.profitMargin,
+      sellingPrice: costCalculations.sellingPrice,
+      calculatedAt: costCalculations.calculatedAt,
+      notes: costCalculations.notes,
+      product: products
+    })
+    .from(costCalculations)
+    .leftJoin(products, eq(costCalculations.productId, products.id));
+
+    return result.filter(item => item.product) as (CostCalculation & { product: Product })[];
+  }
+
+  async getCostCalculation(productId: number): Promise<(CostCalculation & { product: Product }) | undefined> {
+    const result = await db.select({
+      id: costCalculations.id,
+      productId: costCalculations.productId,
+      materialCost: costCalculations.materialCost,
+      laborCost: costCalculations.laborCost,
+      overheadCost: costCalculations.overheadCost,
+      totalCost: costCalculations.totalCost,
+      profitMargin: costCalculations.profitMargin,
+      sellingPrice: costCalculations.sellingPrice,
+      calculatedAt: costCalculations.calculatedAt,
+      notes: costCalculations.notes,
+      product: products
+    })
+    .from(costCalculations)
+    .leftJoin(products, eq(costCalculations.productId, products.id))
+    .where(eq(costCalculations.productId, productId))
+    .limit(1);
+
+    if (result.length === 0 || !result[0].product) return undefined;
+    return result[0] as CostCalculation & { product: Product };
+  }
+
+  async createCostCalculation(calculation: InsertCostCalculation): Promise<CostCalculation> {
+    const result = await db.insert(costCalculations).values(calculation).returning();
+    return result[0];
+  }
+
+  async updateCostCalculation(id: number, calculation: Partial<InsertCostCalculation>): Promise<CostCalculation | undefined> {
+    const result = await db.update(costCalculations)
+      .set(calculation)
+      .where(eq(costCalculations.id, id))
+      .returning();
+    
+    return result.length > 0 ? result[0] : undefined;
+  }
+
+  async deleteCostCalculation(id: number): Promise<boolean> {
+    const result = await db.delete(costCalculations)
+      .where(eq(costCalculations.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  async calculateAutomaticCost(productId: number): Promise<CostCalculation> {
+    // Отримуємо компоненти продукта
+    const components = await this.getProductComponents(productId);
+    
+    let materialCost = 0;
+    for (const component of components) {
+      const componentCostPrice = parseFloat(component.component.costPrice);
+      const quantity = parseFloat(component.quantity);
+      materialCost += componentCostPrice * quantity;
+    }
+
+    // Отримуємо рецепт для розрахунку трудових витрат
+    const recipes = await db.select()
+      .from(recipes)
+      .where(eq(recipes.productId, productId));
+
+    let laborCost = 0;
+    if (recipes.length > 0) {
+      laborCost = parseFloat(recipes[0].laborCost || "0");
+    }
+
+    // Розрахунок накладних витрат (20% від матеріальних + трудових витрат)
+    const overheadCost = (materialCost + laborCost) * 0.2;
+    const totalCost = materialCost + laborCost + overheadCost;
+    
+    // Розрахунок ціни продажу з маржою 20%
+    const profitMargin = 20;
+    const sellingPrice = totalCost * (1 + profitMargin / 100);
+
+    const calculationData: InsertCostCalculation = {
+      productId,
+      materialCost: materialCost.toFixed(2),
+      laborCost: laborCost.toFixed(2),
+      overheadCost: overheadCost.toFixed(2),
+      totalCost: totalCost.toFixed(2),
+      profitMargin: profitMargin.toFixed(2),
+      sellingPrice: sellingPrice.toFixed(2),
+      notes: "Автоматично розраховано на основі компонентів та рецептів"
+    };
+
+    // Перевіряємо чи існує калькуляція для цього продукта
+    const existing = await this.getCostCalculation(productId);
+    if (existing) {
+      return await this.updateCostCalculation(existing.id, calculationData) || existing;
+    } else {
+      return await this.createCostCalculation(calculationData);
+    }
   }
 }
 
