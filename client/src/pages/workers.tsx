@@ -17,6 +17,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -52,7 +53,7 @@ export default function WorkersPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingWorker, setEditingWorker] = useState<Worker | null>(null);
 
-  const { data: workers, isLoading } = useQuery({
+  const { data: workers, isLoading } = useQuery<Worker[]>({
     queryKey: ["/api/workers"],
   });
 
@@ -183,6 +184,9 @@ export default function WorkersPage() {
               <DialogTitle>
                 {editingWorker ? "Редагувати робітника" : "Створити нового робітника"}
               </DialogTitle>
+              <DialogDescription>
+                {editingWorker ? "Змініть дані робітника та збережіть зміни" : "Введіть дані нового робітника"}
+              </DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -279,7 +283,7 @@ export default function WorkersPage() {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input type="email" {...field} />
+                          <Input type="email" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -292,7 +296,7 @@ export default function WorkersPage() {
                       <FormItem>
                         <FormLabel>Телефон</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -358,7 +362,7 @@ export default function WorkersPage() {
                     <FormItem>
                       <FormLabel>Примітки</FormLabel>
                       <FormControl>
-                        <Textarea {...field} rows={3} />
+                        <Textarea {...field} value={field.value || ""} rows={3} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
