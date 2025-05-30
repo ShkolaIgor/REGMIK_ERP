@@ -444,14 +444,14 @@ export default function MaterialShortagesPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Рекомендований постачальник</FormLabel>
-                          <Select onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)} value={field.value?.toString()}>
+                          <Select onValueChange={(value) => field.onChange(value === "0" ? undefined : parseInt(value))} value={field.value ? field.value.toString() : "0"}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Виберіть постачальника" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Без постачальника</SelectItem>
+                              <SelectItem value="0">Без постачальника</SelectItem>
                               {(suppliers as any[])?.map((supplier: any) => (
                                 <SelectItem key={supplier.id} value={supplier.id.toString()}>
                                   {supplier.name}
