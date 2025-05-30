@@ -947,7 +947,7 @@ export class DatabaseStorage implements IStorage {
             unit: requirement.unit,
             priority,
             estimatedCost: estimatedCost.toString(),
-            supplierRecommendation: null,
+            supplierRecommendationId: null,
             notes: `Автоматично розраховано на основі BOM`,
             status: 'pending'
           };
@@ -984,7 +984,7 @@ export class DatabaseStorage implements IStorage {
       const orderNumber = `ORD-${Date.now()}`;
 
       // Отримуємо постачальника з рекомендації або використовуємо загальний
-      const supplierName = shortage.supplierRecommendation || "Основний постачальник";
+      const supplierName = "Основний постачальник";
 
       // Створюємо замовлення постачальнику
       const orderData: InsertSupplierOrder = {

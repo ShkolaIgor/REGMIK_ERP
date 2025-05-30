@@ -69,7 +69,7 @@ export default function MaterialShortagesPage() {
       priority: "medium",
       status: "pending",
       estimatedCost: "0",
-      supplierRecommendation: "",
+      supplierRecommendationId: undefined,
       notes: "",
     },
   });
@@ -85,6 +85,10 @@ export default function MaterialShortagesPage() {
 
   const { data: warehouses = [] } = useQuery({
     queryKey: ["/api/warehouses"],
+  });
+
+  const { data: suppliers = [] } = useQuery({
+    queryKey: ["/api/suppliers"],
   });
 
   // Мутації
