@@ -32,6 +32,7 @@ const navigationItems = [
     title: "Модуль Склад",
     items: [
       { name: "Каталог товарів", href: "/inventory", icon: Package },
+      { name: "Категорії", href: "/categories", icon: Box },
       { name: "Склади", href: "/warehouses", icon: Warehouse },
       { name: "Замовлення", href: "/orders", icon: ShoppingCart },
       { name: "Сканер штрих-кодів", href: "/scanner", icon: Scan }

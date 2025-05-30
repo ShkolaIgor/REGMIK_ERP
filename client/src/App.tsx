@@ -10,6 +10,7 @@ import Production from "@/pages/production";
 import Orders from "@/pages/orders";
 import Recipes from "@/pages/recipes";
 import TechCards from "@/pages/tech-cards";
+import Categories from "@/pages/categories";
 import Reports from "@/pages/reports";
 import NotFound from "@/pages/not-found";
 
@@ -23,6 +24,7 @@ function Router() {
         <Route path="/orders" component={Orders} />
         <Route path="/recipes" component={Recipes} />
         <Route path="/tech-cards" component={TechCards} />
+        <Route path="/categories" component={Categories} />
         <Route path="/reports" component={Reports} />
         <Route path="/warehouses" component={() => <div className="p-6">Склади - В розробці</div>} />
         <Route path="/scanner" component={() => <div className="p-6">Сканер штрих-кодів - В розробці</div>} />
