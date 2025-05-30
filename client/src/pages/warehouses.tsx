@@ -20,7 +20,7 @@ export default function WarehousesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: warehouses, isLoading } = useQuery({
+  const { data: warehouses, isLoading } = useQuery<Warehouse[]>({
     queryKey: ['/api/warehouses'],
   });
 
@@ -46,10 +46,7 @@ export default function WarehousesPage() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<InsertWarehouse> }) =>
-      apiRequest(`/api/warehouses/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data)
-      }),
+      apiRequest(`/api/warehouses/${id}`, 'PUT', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/warehouses'] });
       setEditingWarehouse(null);
@@ -69,9 +66,7 @@ export default function WarehousesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) =>
-      apiRequest(`/api/warehouses/${id}`, {
-        method: 'DELETE'
-      }),
+      apiRequest(`/api/warehouses/${id}`, 'DELETE'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/warehouses'] });
       toast({
