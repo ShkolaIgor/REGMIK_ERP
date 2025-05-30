@@ -1504,6 +1504,7 @@ export class DatabaseStorage implements IStorage {
         items.push({
           auditId,
           productId: row.inventory.productId,
+          unit: row.products.unit || 'шт',
           systemQuantity: row.inventory.quantity.toString(),
           countedQuantity: null,
           variance: null,
@@ -1514,6 +1515,11 @@ export class DatabaseStorage implements IStorage {
           countedAt: null
         });
       }
+    }
+
+    // Якщо немає позицій в інвентарі, створимо порожній результат
+    if (items.length === 0) {
+      return [];
     }
 
     const result = await this.db.insert(inventoryAuditItems).values(items).returning();
