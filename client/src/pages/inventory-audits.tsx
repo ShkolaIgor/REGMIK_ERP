@@ -94,6 +94,8 @@ export default function InventoryAuditsPage() {
     enabled: !!selectedAudit?.id,
   });
 
+  console.log("auditItems:", auditItems);
+
   // Мутації
   const createMutation = useMutation({
     mutationFn: (data: FormData) =>
