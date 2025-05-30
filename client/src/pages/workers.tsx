@@ -172,7 +172,11 @@ export default function WorkersPage() {
             Управління робітниками підприємства
           </p>
         </div>
-        <Dialog open={isCreateDialogOpen || !!editingWorker} onOpenChange={handleDialogClose}>
+        <Dialog open={isCreateDialogOpen || !!editingWorker} onOpenChange={(open) => {
+          if (!open) {
+            handleDialogClose();
+          }
+        }}>
           <DialogTrigger asChild>
             <Button onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
