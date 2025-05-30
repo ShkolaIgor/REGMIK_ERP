@@ -112,14 +112,7 @@ export const productionTasks = pgTable("production_tasks", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const suppliers = pgTable("suppliers", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  contactPerson: text("contact_person"),
-  email: text("email"),
-  phone: text("phone"),
-  address: text("address"),
-});
+
 
 export const techCards = pgTable("tech_cards", {
   id: serial("id").primaryKey(),
@@ -176,7 +169,7 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: t
 export const insertRecipeSchema = createInsertSchema(recipes).omit({ id: true, createdAt: true });
 export const insertRecipeIngredientSchema = createInsertSchema(recipeIngredients).omit({ id: true });
 export const insertProductionTaskSchema = createInsertSchema(productionTasks).omit({ id: true, createdAt: true });
-export const insertSupplierSchema = createInsertSchema(suppliers).omit({ id: true });
+
 export const insertTechCardSchema = createInsertSchema(techCards).omit({ id: true, createdAt: true });
 export const insertTechCardStepSchema = createInsertSchema(techCardSteps).omit({ id: true });
 export const insertTechCardMaterialSchema = createInsertSchema(techCardMaterials).omit({ id: true });
@@ -213,10 +206,28 @@ export const costCalculations = pgTable("cost_calculations", {
   notes: text("notes"),
 });
 
+// Таблиця постачальників
+export const suppliers = pgTable("suppliers", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  contactPerson: text("contact_person"),
+  email: text("email"),
+  phone: text("phone"),
+  address: text("address"),
+  description: text("description"),
+  paymentTerms: text("payment_terms"), // умови оплати
+  deliveryTerms: text("delivery_terms"), // умови доставки
+  rating: integer("rating").default(5), // рейтинг від 1 до 10
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Таблиця замовлень постачальникам
 export const supplierOrders = pgTable("supplier_orders", {
   id: serial("id").primaryKey(),
-  supplierName: text("supplier_name").notNull(),
+  supplierId: integer("supplier_id").references(() => suppliers.id),
+  supplierName: text("supplier_name").notNull(), // для зворотної сумісності
   orderNumber: text("order_number").notNull(),
   status: text("status").notNull().default("draft"), // draft, sent, confirmed, received
   totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull().default("0"),
@@ -260,6 +271,12 @@ export const insertSupplierOrderSchema = createInsertSchema(supplierOrders).omit
 export const insertSupplierOrderItemSchema = createInsertSchema(supplierOrderItems).omit({ 
   id: true, 
   createdAt: true 
+});
+
+export const insertSupplierSchema = createInsertSchema(suppliers).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
 });
 
 // Types

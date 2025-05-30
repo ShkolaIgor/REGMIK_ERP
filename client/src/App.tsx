@@ -17,6 +17,7 @@ import Reports from "@/pages/reports";
 import CostCalculations from "@/pages/cost-calculations";
 import MaterialShortages from "@/pages/material-shortages";
 import SupplierOrders from "@/pages/supplier-orders";
+import Suppliers from "@/pages/suppliers";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -37,8 +38,8 @@ function Router() {
         <Route path="/costing" component={CostCalculations} />
         <Route path="/shortage" component={MaterialShortages} />
         <Route path="/supplier-orders" component={SupplierOrders} />
+        <Route path="/suppliers" component={Suppliers} />
         <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
-        <Route path="/suppliers" component={() => <div className="p-6">Постачальники - В розробці</div>} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
