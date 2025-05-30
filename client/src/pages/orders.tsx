@@ -17,6 +17,11 @@ import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+// Типи
+type OrderWithItems = Order & {
+  items: (OrderItem & { product: Product })[];
+};
+
 // Схеми валідації
 const orderItemSchema = z.object({
   productId: z.number().min(1, "Оберіть товар"),
@@ -42,11 +47,11 @@ export default function Orders() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: orders = [], isLoading } = useQuery({
+  const { data: orders = [], isLoading } = useQuery<OrderWithItems[]>({
     queryKey: ["/api/orders"],
   });
 
-  const { data: products = [] } = useQuery({
+  const { data: products = [] } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
 
