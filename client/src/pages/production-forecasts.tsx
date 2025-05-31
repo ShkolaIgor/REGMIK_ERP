@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import { Search, Plus, TrendingUp, Calendar, BarChart3, AlertTriangle, CheckCirc
 export default function ProductionForecasts() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   const { data: forecasts = [], isLoading } = useQuery<ProductionForecast[]>({
@@ -341,7 +343,11 @@ export default function ProductionForecasts() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredForecasts.map((forecast) => (
-              <Card key={forecast.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+              <Card 
+                key={forecast.id} 
+                className="hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => setLocation(`/production-forecasts/${forecast.id}`)}
+              >
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg font-medium truncate">
