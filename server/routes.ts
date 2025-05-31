@@ -9,7 +9,7 @@ import {
   insertAssemblyOperationSchema, insertAssemblyOperationItemSchema,
   insertInventoryAuditSchema, insertInventoryAuditItemSchema,
   insertWorkerSchema, insertProductionForecastSchema,
-  insertWarehouseTransferSchema
+  insertWarehouseTransferSchema, insertPositionSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -1298,6 +1298,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Failed to execute warehouse transfer:", error);
       res.status(500).json({ error: "Failed to execute warehouse transfer" });
+    }
+  });
+
+  // Positions API
+  app.get("/api/positions", async (req, res) => {
+    try {
+      const positions = await storage.getPositions();
+      res.json(positions);
+    } catch (error) {
+      console.error("Failed to get positions:", error);
+      res.status(500).json({ error: "Failed to get positions" });
+    }
+  });
+
+  app.get("/api/positions/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const position = await storage.getPosition(id);
+      if (!position) {
+        return res.status(404).json({ error: "Position not found" });
+      }
+      res.json(position);
+    } catch (error) {
+      console.error("Failed to get position:", error);
+      res.status(500).json({ error: "Failed to get position" });
+    }
+  });
+
+  app.post("/api/positions", async (req, res) => {
+    try {
+      const positionData = insertPositionSchema.parse(req.body);
+      const position = await storage.createPosition(positionData);
+      res.status(201).json(position);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid position data", details: error.errors });
+      } else {
+        console.error("Failed to create position:", error);
+        res.status(500).json({ error: "Failed to create position" });
+      }
+    }
+  });
+
+  app.patch("/api/positions/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = insertPositionSchema.partial().parse(req.body);
+      const position = await storage.updatePosition(id, updateData);
+      if (!position) {
+        return res.status(404).json({ error: "Position not found" });
+      }
+      res.json(position);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid position data", details: error.errors });
+      } else {
+        console.error("Failed to update position:", error);
+        res.status(500).json({ error: "Failed to update position" });
+      }
+    }
+  });
+
+  app.delete("/api/positions/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deletePosition(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Position not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to delete position:", error);
+      res.status(500).json({ error: "Failed to delete position" });
     }
   });
 

@@ -23,7 +23,8 @@ import {
   type Worker, type InsertWorker,
   type AssemblyOperation, type InsertAssemblyOperation,
   type AssemblyOperationItem, type InsertAssemblyOperationItem,
-  type ProductionForecast, type InsertProductionForecast
+  type ProductionForecast, type InsertProductionForecast,
+  type Position, type InsertPosition
 } from "@shared/schema";
 
 export interface IStorage {

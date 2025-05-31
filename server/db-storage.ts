@@ -30,7 +30,8 @@ import {
   type Worker, type InsertWorker,
   type ProductionForecast, type InsertProductionForecast,
   type WarehouseTransfer, type InsertWarehouseTransfer,
-  type WarehouseTransferItem, type InsertWarehouseTransferItem
+  type WarehouseTransferItem, type InsertWarehouseTransferItem,
+  type Position, type InsertPosition
 } from "@shared/schema";
 
 export class DatabaseStorage implements IStorage {
@@ -1725,6 +1726,71 @@ export class DatabaseStorage implements IStorage {
       return result[0];
     } catch (error) {
       console.error('Error executing warehouse transfer:', error);
+      throw error;
+    }
+  }
+
+  // Positions
+  async getPositions(): Promise<Position[]> {
+    try {
+      const result = await this.db.select()
+        .from(positions)
+        .where(eq(positions.isActive, true))
+        .orderBy(positions.name);
+      return result;
+    } catch (error) {
+      console.error('Error getting positions:', error);
+      throw error;
+    }
+  }
+
+  async getPosition(id: number): Promise<Position | undefined> {
+    try {
+      const result = await this.db.select()
+        .from(positions)
+        .where(eq(positions.id, id))
+        .limit(1);
+      return result[0];
+    } catch (error) {
+      console.error('Error getting position:', error);
+      throw error;
+    }
+  }
+
+  async createPosition(position: InsertPosition): Promise<Position> {
+    try {
+      const result = await this.db.insert(positions)
+        .values(position)
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error creating position:', error);
+      throw error;
+    }
+  }
+
+  async updatePosition(id: number, position: Partial<InsertPosition>): Promise<Position | undefined> {
+    try {
+      const result = await this.db.update(positions)
+        .set({ ...position, updatedAt: new Date() })
+        .where(eq(positions.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error updating position:', error);
+      throw error;
+    }
+  }
+
+  async deletePosition(id: number): Promise<boolean> {
+    try {
+      // Soft delete by setting isActive to false
+      const result = await this.db.update(positions)
+        .set({ isActive: false, updatedAt: new Date() })
+        .where(eq(positions.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting position:', error);
       throw error;
     }
   }
