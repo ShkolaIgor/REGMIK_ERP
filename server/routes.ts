@@ -445,7 +445,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const components = await storage.getComponents();
       res.json(components);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch components" });
+      console.error("Error fetching components:", error);
+      res.status(500).json({ error: "Failed to fetch components", details: error.message });
     }
   });
 

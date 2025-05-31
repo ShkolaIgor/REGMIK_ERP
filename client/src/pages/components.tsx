@@ -75,7 +75,7 @@ export default function Components() {
     mutationFn: async (data: any) => {
       return await apiRequest("/api/components", {
         method: "POST",
-        body: JSON.stringify(data),
+        body: data,
       });
     },
     onSuccess: () => {
@@ -100,7 +100,7 @@ export default function Components() {
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
       return await apiRequest(`/api/components/${id}`, {
         method: "PATCH",
-        body: JSON.stringify(data),
+        body: data,
       });
     },
     onSuccess: () => {
