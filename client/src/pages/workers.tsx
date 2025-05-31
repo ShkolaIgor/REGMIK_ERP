@@ -40,11 +40,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, User } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { insertWorkerSchema, type Worker, type InsertWorker } from "@shared/schema";
+import { insertWorkerSchema, type Worker, type InsertWorker, type Position, type Department } from "@shared/schema";
 
 const formSchema = insertWorkerSchema.extend({
   hireDate: z.string().optional(),
   hourlyRate: z.string().optional(),
+  positionId: z.coerce.number().optional(),
+  departmentId: z.coerce.number().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -57,6 +59,14 @@ export default function WorkersPage() {
     queryKey: ["/api/workers"],
   });
 
+  const { data: positions } = useQuery<Position[]>({
+    queryKey: ["/api/positions"],
+  });
+
+  const { data: departments } = useQuery<Department[]>({
+    queryKey: ["/api/departments"],
+  });
+
 
 
   const createMutation = useMutation({
@@ -67,6 +77,8 @@ export default function WorkersPage() {
           ...data,
           hireDate: data.hireDate ? new Date(data.hireDate).toISOString() : null,
           hourlyRate: data.hourlyRate ? parseFloat(data.hourlyRate) : null,
+          positionId: data.positionId || null,
+          departmentId: data.departmentId || null,
         },
       }),
     onSuccess: () => {
@@ -340,6 +352,56 @@ export default function WorkersPage() {
                     )}
                   />
                 </div>
+
+                <FormField
+                  control={form.control}
+                  name="positionId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Посада</FormLabel>
+                      <FormControl>
+                        <Select value={field.value?.toString()} onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Оберіть посаду" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {positions?.map((position) => (
+                              <SelectItem key={position.id} value={position.id.toString()}>
+                                {position.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="departmentId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Відділ</FormLabel>
+                      <FormControl>
+                        <Select value={field.value?.toString()} onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Оберіть відділ" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {departments?.map((department) => (
+                              <SelectItem key={department.id} value={department.id.toString()}>
+                                {department.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={form.control}
