@@ -94,6 +94,10 @@ export default function Components() {
     queryKey: ["/api/package-types"],
   });
 
+  const { data: componentCategories = [] } = useQuery({
+    queryKey: ["/api/component-categories"],
+  });
+
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
       return await apiRequest("/api/components", {
@@ -343,12 +347,23 @@ export default function Components() {
 
                 <div>
                   <Label htmlFor="category">Категорія</Label>
-                  <Input
-                    id="category"
+                  <Select
                     value={formData.category}
-                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                    placeholder="Категорія"
-                  />
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Оберіть категорію" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Без категорії</SelectItem>
+                      {componentCategories.map((category: any) => (
+                        <SelectItem key={category.id} value={category.name}>
+                          {category.name}
+                          {category.description && ` - ${category.description}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
