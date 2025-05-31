@@ -41,7 +41,7 @@ interface Component {
   costPrice: string;
   supplier: string | null;
   partNumber: string | null;
-  category: string | null;
+  categoryId: number | null;
   manufacturer: string | null;
   uktzedCode: string | null;
   packageTypeId: number | null;
