@@ -249,56 +249,61 @@ export default function WorkersPage() {
                     <FormItem>
                       <FormLabel>Фото робітника</FormLabel>
                       <FormControl>
-                        <div className="space-y-4">
-                          {field.value && (
-                            <div className="flex justify-center">
-                              <div className="relative">
+                        <div className="flex flex-col items-center space-y-4">
+                          <div className="relative">
+                            <div 
+                              className="w-24 h-24 rounded-full border-2 border-gray-200 shadow-sm cursor-pointer hover:border-blue-300 transition-colors flex items-center justify-center bg-gray-50 overflow-hidden"
+                              onClick={() => document.getElementById('photo-input')?.click()}
+                            >
+                              {field.value ? (
                                 <img 
                                   src={field.value} 
                                   alt="Фото робітника" 
-                                  className="w-24 h-24 object-cover rounded-full border-2 border-gray-200 shadow-sm"
+                                  className="w-full h-full object-cover"
                                 />
-                                <Button 
-                                  type="button" 
-                                  variant="outline" 
-                                  size="sm"
-                                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
-                                  onClick={() => field.onChange('')}
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </div>
+                              ) : (
+                                <User className="w-8 h-8 text-gray-400" />
+                              )}
                             </div>
-                          )}
-                          <div className="grid grid-cols-1 gap-3">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Завантажити файл
-                              </label>
-                              <Input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    const reader = new FileReader();
-                                    reader.onload = (event) => {
-                                      field.onChange(event.target?.result);
-                                    };
-                                    reader.readAsDataURL(file);
-                                  }
+                            {field.value && (
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="sm"
+                                className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 bg-white"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  field.onChange('');
                                 }}
-                                className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Або вставте URL
-                              </label>
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                          <input
+                            id="photo-input"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                  field.onChange(event.target?.result);
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                          <div className="text-center">
+                            <p className="text-sm text-gray-500">Клацніть на зображення для вибору файлу</p>
+                            <div className="mt-2">
                               <Input
-                                placeholder="https://example.com/photo.jpg"
+                                placeholder="Або вставте URL зображення"
                                 value={typeof field.value === 'string' && !field.value.startsWith('data:') ? field.value : ''}
                                 onChange={(e) => field.onChange(e.target.value)}
+                                className="text-center"
                               />
                             </div>
                           </div>
