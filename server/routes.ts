@@ -508,6 +508,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Package Types routes
+  app.get("/api/package-types", async (req, res) => {
+    try {
+      const packageTypes = await storage.getPackageTypes();
+      res.json(packageTypes);
+    } catch (error) {
+      console.error("Error fetching package types:", error);
+      res.status(500).json({ error: "Failed to fetch package types" });
+    }
+  });
+
+  app.post("/api/package-types", async (req, res) => {
+    try {
+      const packageType = await storage.createPackageType(req.body);
+      res.status(201).json(packageType);
+    } catch (error) {
+      console.error("Error creating package type:", error);
+      res.status(500).json({ error: "Failed to create package type" });
+    }
+  });
+
+  app.patch("/api/package-types/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const packageType = await storage.updatePackageType(id, req.body);
+      if (!packageType) {
+        return res.status(404).json({ error: "Package type not found" });
+      }
+      res.json(packageType);
+    } catch (error) {
+      console.error("Error updating package type:", error);
+      res.status(500).json({ error: "Failed to update package type" });
+    }
+  });
+
+  app.delete("/api/package-types/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deletePackageType(id);
+      if (!success) {
+        return res.status(404).json({ error: "Package type not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting package type:", error);
+      res.status(500).json({ error: "Failed to delete package type" });
+    }
+  });
+
   // Tech Cards routes
   app.get("/api/tech-cards", async (req, res) => {
     try {

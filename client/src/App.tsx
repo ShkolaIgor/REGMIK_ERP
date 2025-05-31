@@ -32,6 +32,7 @@ import WarehouseTransfers from "@/pages/warehouse-transfers";
 import Positions from "@/pages/positions";
 import Departments from "@/pages/departments";
 import Components from "@/pages/components";
+import PackageTypes from "@/pages/package-types";
 import NotFound from "@/pages/not-found";
 
 function Router() {
