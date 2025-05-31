@@ -465,6 +465,9 @@ export const insertProductionForecastSchema = createInsertSchema(productionForec
   id: true, 
   createdAt: true, 
   updatedAt: true 
+}).extend({
+  startDate: z.date().optional(),
+  endDate: z.date().optional()
 });
 
 export const insertProductionForecastItemSchema = createInsertSchema(productionForecastItems).omit({ 
