@@ -6,6 +6,7 @@ import {
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   productComponents, costCalculations, materialShortages, supplierOrders, supplierOrderItems,
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
+  productionForecasts,
   type User, type InsertUser, type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
   type Product, type InsertProduct,
@@ -26,7 +27,8 @@ import {
   type InventoryAuditItem, type InsertInventoryAuditItem,
   type AssemblyOperation, type InsertAssemblyOperation,
   type AssemblyOperationItem, type InsertAssemblyOperationItem,
-  type Worker, type InsertWorker
+  type Worker, type InsertWorker,
+  type ProductionForecast, type InsertProductionForecast
 } from "@shared/schema";
 
 export class DatabaseStorage implements IStorage {
@@ -1524,6 +1526,66 @@ export class DatabaseStorage implements IStorage {
 
     const result = await this.db.insert(inventoryAuditItems).values(items).returning();
     return result;
+  }
+
+  // Production Forecasts
+  async getProductionForecasts(): Promise<ProductionForecast[]> {
+    try {
+      const forecasts = await db.select()
+        .from(productionForecasts)
+        .orderBy(desc(productionForecasts.createdAt));
+      return forecasts;
+    } catch (error) {
+      console.error('Error getting production forecasts:', error);
+      throw error;
+    }
+  }
+
+  async getProductionForecast(id: number): Promise<ProductionForecast | undefined> {
+    try {
+      const forecast = await db.select()
+        .from(productionForecasts)
+        .where(eq(productionForecasts.id, id))
+        .limit(1);
+      return forecast[0];
+    } catch (error) {
+      console.error('Error getting production forecast:', error);
+      throw error;
+    }
+  }
+
+  async createProductionForecast(forecast: InsertProductionForecast): Promise<ProductionForecast> {
+    try {
+      const result = await db.insert(productionForecasts).values(forecast).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error creating production forecast:', error);
+      throw error;
+    }
+  }
+
+  async updateProductionForecast(id: number, forecast: Partial<InsertProductionForecast>): Promise<ProductionForecast | undefined> {
+    try {
+      const result = await db.update(productionForecasts)
+        .set(forecast)
+        .where(eq(productionForecasts.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error updating production forecast:', error);
+      throw error;
+    }
+  }
+
+  async deleteProductionForecast(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(productionForecasts)
+        .where(eq(productionForecasts.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting production forecast:', error);
+      throw error;
+    }
   }
 }
 

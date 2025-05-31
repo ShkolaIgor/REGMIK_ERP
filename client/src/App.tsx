@@ -23,6 +23,7 @@ import AssemblyOperations from "@/pages/assembly-operations";
 import InventoryAudits from "@/pages/inventory-audits";
 import Workers from "@/pages/workers";
 import ProductionForecasts from "@/pages/production-forecasts";
+import WarehouseTransfers from "@/pages/warehouse-transfers";
 import NotFound from "@/pages/not-found";
 
 function Router() {

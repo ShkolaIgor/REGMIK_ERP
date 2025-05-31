@@ -458,6 +458,53 @@ export const insertForecastMaterialRequirementSchema = createInsertSchema(foreca
   createdAt: true 
 });
 
+// Таблиця переміщень між складами
+export const warehouseTransfers = pgTable("warehouse_transfers", {
+  id: serial("id").primaryKey(),
+  transferNumber: varchar("transfer_number", { length: 100 }).notNull().unique(),
+  fromWarehouseId: integer("from_warehouse_id").notNull().references(() => warehouses.id),
+  toWarehouseId: integer("to_warehouse_id").notNull().references(() => warehouses.id),
+  status: varchar("status", { length: 50 }).notNull().default("pending"), // pending, in_transit, completed, cancelled
+  requestedDate: timestamp("requested_date").notNull(),
+  scheduledDate: timestamp("scheduled_date"),
+  completedDate: timestamp("completed_date"),
+  responsiblePersonId: integer("responsible_person_id").references(() => workers.id),
+  transportMethod: varchar("transport_method", { length: 100 }), // truck, courier, internal
+  notes: text("notes"),
+  totalValue: decimal("total_value", { precision: 12, scale: 2 }).default("0"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Позиції переміщень між складами
+export const warehouseTransferItems = pgTable("warehouse_transfer_items", {
+  id: serial("id").primaryKey(),
+  transferId: integer("transfer_id").notNull().references(() => warehouseTransfers.id),
+  productId: integer("product_id").notNull().references(() => products.id),
+  requestedQuantity: decimal("requested_quantity", { precision: 12, scale: 4 }).notNull(),
+  transferredQuantity: decimal("transferred_quantity", { precision: 12, scale: 4 }).default("0"),
+  unit: varchar("unit", { length: 50 }).notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).default("0"),
+  totalPrice: decimal("total_price", { precision: 12, scale: 2 }).default("0"),
+  condition: varchar("condition", { length: 50 }).default("good"), // good, damaged, expired
+  batchNumber: varchar("batch_number", { length: 100 }),
+  expiryDate: timestamp("expiry_date"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertWarehouseTransferSchema = createInsertSchema(warehouseTransfers).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true,
+  transferNumber: true 
+});
+
+export const insertWarehouseTransferItemSchema = createInsertSchema(warehouseTransferItems).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -515,3 +562,7 @@ export type ProductionForecastItem = typeof productionForecastItems.$inferSelect
 export type InsertProductionForecastItem = z.infer<typeof insertProductionForecastItemSchema>;
 export type ForecastMaterialRequirement = typeof forecastMaterialRequirements.$inferSelect;
 export type InsertForecastMaterialRequirement = z.infer<typeof insertForecastMaterialRequirementSchema>;
+export type WarehouseTransfer = typeof warehouseTransfers.$inferSelect;
+export type InsertWarehouseTransfer = z.infer<typeof insertWarehouseTransferSchema>;
+export type WarehouseTransferItem = typeof warehouseTransferItems.$inferSelect;
+export type InsertWarehouseTransferItem = z.infer<typeof insertWarehouseTransferItemSchema>;
