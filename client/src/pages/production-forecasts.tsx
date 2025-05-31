@@ -71,6 +71,13 @@ export default function ProductionForecasts() {
     createMutation.mutate(submitData);
   };
 
+  const handleDialogChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      form.reset();
+    }
+  };
+
   const filteredForecasts = forecasts.filter((forecast) =>
     forecast.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (forecast.description && forecast.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -138,7 +145,7 @@ export default function ProductionForecasts() {
                 </div>
               </div>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
               <DialogTrigger asChild>
                 <Button className="bg-blue-600 hover:bg-blue-700">
                   <Plus className="h-4 w-4 mr-2" />

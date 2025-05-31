@@ -71,6 +71,13 @@ export default function WarehouseTransfers() {
     createMutation.mutate(data);
   };
 
+  const handleDialogChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      form.reset();
+    }
+  };
+
   const filteredTransfers = transfers.filter((transfer) =>
     transfer.transferNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     transfer.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -140,7 +147,7 @@ export default function WarehouseTransfers() {
                 </div>
               </div>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
               <DialogTrigger asChild>
                 <Button className="bg-blue-600 hover:bg-blue-700">
                   <Plus className="h-4 w-4 mr-2" />
