@@ -58,6 +58,7 @@ const navigationItems = [
       { name: "Калькуляція собівартості", href: "/costing", icon: Calculator },
       { name: "Дефіцит матеріалів", href: "/shortage", icon: AlertTriangle },
       { name: "Прогнозування виробництва", href: "/production-forecasts", icon: TrendingUp },
+      { name: "Статистика виробництва", href: "/production-stats", icon: BarChart },
       { name: "Робітники", href: "/workers", icon: Users }
     ]
   },
