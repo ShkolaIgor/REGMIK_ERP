@@ -63,9 +63,9 @@ function Router() {
         <Route path="/workers" component={Workers} />
         <Route path="/production-forecasts" component={ProductionForecasts} />
         <Route path="/production-forecasts/:id" component={ForecastDetails} />
-        <Route path="/warehouse-transfers" component={WarehouseTransfers} />
-        <Route path="/positions" component={Positions} />
-        <Route path="/departments" component={Departments} />
+          <Route path="/warehouse-transfers" component={WarehouseTransfers} />
+          <Route path="/positions" component={Positions} />
+          <Route path="/departments" component={Departments} />
           <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
           <Route component={NotFound} />
         </Layout>

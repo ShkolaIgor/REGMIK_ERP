@@ -633,4 +633,6 @@ export type InsertPosition = z.infer<typeof insertPositionSchema>;
 export type Department = typeof departments.$inferSelect;
 export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;
 
-
+// User types for Replit Auth
+export type User = typeof users.$inferSelect;
+export type UpsertUser = typeof users.$inferInsert;
