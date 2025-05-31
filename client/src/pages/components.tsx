@@ -42,6 +42,9 @@ interface Component {
   supplier: string | null;
   partNumber: string | null;
   category: string | null;
+  manufacturer: string | null;
+  uktzedCode: string | null;
+  packageTypeId: number | null;
   minStock: number | null;
   maxStock: number | null;
   createdAt: Date | null;
