@@ -613,7 +613,7 @@ function AlternativesManagement({ component, onClose }: { component: Component |
 
   // Запит аналогів для поточного компонента
   const { data: alternatives = [], isLoading: isLoadingAlternatives } = useQuery({
-    queryKey: ['/api/component-alternatives', component?.id],
+    queryKey: ['/api/components', component?.id, 'alternatives'],
     enabled: !!component?.id,
   });
 
@@ -624,8 +624,8 @@ function AlternativesManagement({ component, onClose }: { component: Component |
 
   // Мутація для додавання альтернативи
   const addAlternativeMutation = useMutation({
-    mutationFn: async (data: { originalComponentId: number, alternativeComponentId: number, compatibility: string, notes: string }) => {
-      const response = await fetch('/api/component-alternatives', {
+    mutationFn: async (data: { alternativeComponentId: number, compatibility: string, notes: string }) => {
+      const response = await fetch(`/api/components/${component?.id}/alternatives`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -634,7 +634,7 @@ function AlternativesManagement({ component, onClose }: { component: Component |
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/component-alternatives'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/components', component?.id, 'alternatives'] });
       setIsAddingAlternative(false);
       setSelectedAlternativeId(null);
       setCompatibility("100%");
@@ -659,7 +659,7 @@ function AlternativesManagement({ component, onClose }: { component: Component |
       if (!response.ok) throw new Error('Помилка видалення альтернативи');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/component-alternatives'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/components', component?.id, 'alternatives'] });
       toast({ title: "Альтернативу видалено успішно" });
     },
     onError: () => {
@@ -675,7 +675,6 @@ function AlternativesManagement({ component, onClose }: { component: Component |
     if (!component?.id || !selectedAlternativeId) return;
     
     addAlternativeMutation.mutate({
-      originalComponentId: component.id,
       alternativeComponentId: selectedAlternativeId,
       compatibility,
       notes,
