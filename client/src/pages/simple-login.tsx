@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Package, Eye, EyeOff } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 export default function SimpleLogin() {
@@ -35,8 +35,8 @@ export default function SimpleLogin() {
         throw new Error("Login failed");
       }
       
-      // Перезавантажити сторінку для оновлення стану авторизації
-      window.location.reload();
+      // Оновити кеш авторизації
+      await queryClient.invalidateQueries({ queryKey: ["/api/simple-auth/user"] });
     } catch (error) {
       toast({
         title: "Помилка входу",
