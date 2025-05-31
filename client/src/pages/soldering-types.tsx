@@ -55,7 +55,8 @@ export default function SolderingTypes() {
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest("/api/soldering-types", {
+      return await apiRequest({
+        url: "/api/soldering-types",
         method: "POST",
         body: data,
       });
@@ -80,7 +81,8 @@ export default function SolderingTypes() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return await apiRequest(`/api/soldering-types/${id}`, {
+      return await apiRequest({
+        url: `/api/soldering-types/${id}`,
         method: "PATCH",
         body: data,
       });
