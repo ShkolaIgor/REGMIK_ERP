@@ -57,8 +57,7 @@ const navigationItems = [
       { name: "Збірка та розбірка", href: "/assembly", icon: PackageOpen },
       { name: "Калькуляція собівартості", href: "/costing", icon: Calculator },
       { name: "Дефіцит матеріалів", href: "/shortage", icon: AlertTriangle },
-      { name: "Прогнозування виробництва", href: "/production-forecasts", icon: TrendingUp },
-      { name: "Робітники", href: "/workers", icon: Users }
+      { name: "Прогнозування виробництва", href: "/production-forecasts", icon: TrendingUp }
     ]
   },
   {
@@ -67,6 +66,7 @@ const navigationItems = [
       { name: "Компоненти", href: "/components", icon: Package },
       { name: "Типи корпусів", href: "/package-types", icon: Box },
       { name: "Постачальники", href: "/suppliers", icon: Users },
+      { name: "Робітники", href: "/workers", icon: Users },
       { name: "Посади", href: "/positions", icon: Users },
       { name: "Відділи", href: "/departments", icon: Building2 }
     ]

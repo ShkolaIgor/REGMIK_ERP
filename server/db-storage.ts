@@ -6,7 +6,7 @@ import {
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   components, productComponents, costCalculations, materialShortages, supplierOrders, supplierOrderItems,
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
-  productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments,
+  productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes,
   type User, type UpsertUser, type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
   type Product, type InsertProduct,
@@ -2153,16 +2153,16 @@ export class DatabaseStorage implements IStorage {
 
   // Package Types
   async getPackageTypes(): Promise<PackageType[]> {
-    return await this.db.select().from(packageTypes).orderBy(packageTypes.name);
+    return await db.select().from(packageTypes).orderBy(packageTypes.name);
   }
 
   async getPackageType(id: number): Promise<PackageType | undefined> {
-    const [packageType] = await this.db.select().from(packageTypes).where(eq(packageTypes.id, id));
+    const [packageType] = await db.select().from(packageTypes).where(eq(packageTypes.id, id));
     return packageType;
   }
 
   async createPackageType(packageTypeData: InsertPackageType): Promise<PackageType> {
-    const [packageType] = await this.db
+    const [packageType] = await db
       .insert(packageTypes)
       .values(packageTypeData)
       .returning();
@@ -2170,7 +2170,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updatePackageType(id: number, packageTypeData: Partial<InsertPackageType>): Promise<PackageType | undefined> {
-    const [packageType] = await this.db
+    const [packageType] = await db
       .update(packageTypes)
       .set(packageTypeData)
       .where(eq(packageTypes.id, id))
@@ -2180,7 +2180,7 @@ export class DatabaseStorage implements IStorage {
 
   async deletePackageType(id: number): Promise<boolean> {
     try {
-      const result = await this.db.delete(packageTypes).where(eq(packageTypes.id, id));
+      const result = await db.delete(packageTypes).where(eq(packageTypes.id, id));
       return (result.rowCount ?? 0) > 0;
     } catch (error) {
       console.error("Error deleting package type:", error);
