@@ -1,7 +1,7 @@
 import {
   users, categories, units, warehouses, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
-  productComponents, costCalculations, materialShortages, inventoryAudits, inventoryAuditItems, workers,
+  components, productComponents, costCalculations, materialShortages, inventoryAudits, inventoryAuditItems, workers,
   type User, type UpsertUser, type Category, type InsertCategory,
   type Unit, type InsertUnit,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
@@ -13,6 +13,7 @@ import {
   type TechCard, type InsertTechCard,
   type TechCardStep, type InsertTechCardStep,
   type TechCardMaterial, type InsertTechCardMaterial,
+  type Component, type InsertComponent,
   type ProductComponent, type InsertProductComponent,
   type CostCalculation, type InsertCostCalculation,
   type MaterialShortage, type InsertMaterialShortage,
@@ -232,6 +233,7 @@ export class MemStorage implements IStorage {
   private techCards: Map<number, TechCard> = new Map();
   private techCardSteps: Map<number, TechCardStep[]> = new Map();
   private techCardMaterials: Map<number, TechCardMaterial[]> = new Map();
+  private components: Map<number, Component> = new Map();
   private productComponents: Map<number, ProductComponent[]> = new Map();
 
   private currentUserId = 1;
@@ -249,6 +251,7 @@ export class MemStorage implements IStorage {
   private currentTechCardId = 1;
   private currentTechCardStepId = 1;
   private currentTechCardMaterialId = 1;
+  private currentComponentId = 1;
   private currentProductComponentId = 1;
 
   constructor() {
@@ -689,6 +692,39 @@ export class MemStorage implements IStorage {
       activeOrders,
       productionTasks
     };
+  }
+
+  // Components
+  async getComponents(): Promise<Component[]> {
+    return [...this.components.values()];
+  }
+
+  async getComponent(id: number): Promise<Component | undefined> {
+    return this.components.get(id);
+  }
+
+  async createComponent(insertComponent: InsertComponent): Promise<Component> {
+    const id = this.currentComponentId++;
+    const component: Component = {
+      ...insertComponent,
+      id,
+      createdAt: new Date()
+    };
+    this.components.set(id, component);
+    return component;
+  }
+
+  async updateComponent(id: number, componentData: Partial<InsertComponent>): Promise<Component | undefined> {
+    const component = this.components.get(id);
+    if (!component) return undefined;
+
+    const updatedComponent = { ...component, ...componentData };
+    this.components.set(id, updatedComponent);
+    return updatedComponent;
+  }
+
+  async deleteComponent(id: number): Promise<boolean> {
+    return this.components.delete(id);
   }
 
   // Tech Cards

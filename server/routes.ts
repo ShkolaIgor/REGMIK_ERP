@@ -439,6 +439,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Components routes
+  app.get("/api/components", async (req, res) => {
+    try {
+      const components = await storage.getComponents();
+      res.json(components);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch components" });
+    }
+  });
+
+  app.get("/api/components/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const component = await storage.getComponent(id);
+      if (!component) {
+        return res.status(404).json({ error: "Component not found" });
+      }
+      res.json(component);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch component" });
+    }
+  });
+
+  app.post("/api/components", async (req, res) => {
+    try {
+      const data = insertComponentSchema.parse(req.body);
+      const component = await storage.createComponent(data);
+      res.status(201).json(component);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid component data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create component" });
+      }
+    }
+  });
+
+  app.patch("/api/components/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const data = insertComponentSchema.partial().parse(req.body);
+      const component = await storage.updateComponent(id, data);
+      if (!component) {
+        return res.status(404).json({ error: "Component not found" });
+      }
+      res.json(component);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid component data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update component" });
+      }
+    }
+  });
+
+  app.delete("/api/components/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteComponent(id);
+      if (!success) {
+        return res.status(404).json({ error: "Component not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete component" });
+    }
+  });
+
   // Tech Cards routes
   app.get("/api/tech-cards", async (req, res) => {
     try {
