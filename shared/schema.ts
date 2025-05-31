@@ -564,12 +564,31 @@ export const insertDepartmentSchema = createInsertSchema(departments).omit({
   updatedAt: true 
 });
 
+// Таблиця виготовленої продукції
+export const productionOutput = pgTable("production_output", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull().references(() => products.id),
+  quantity: decimal("quantity", { precision: 12, scale: 4 }).notNull(),
+  unit: varchar("unit", { length: 50 }).notNull(),
+  warehouseId: integer("warehouse_id").references(() => warehouses.id),
+  workerId: integer("worker_id").references(() => workers.id),
+  recipeId: integer("recipe_id").references(() => recipes.id),
+  productionDate: timestamp("production_date").notNull().defaultNow(),
+  batchNumber: varchar("batch_number", { length: 100 }),
+  quality: varchar("quality", { length: 50 }).default("good"), // good, defective, excellent
+  productionCost: decimal("production_cost", { precision: 12, scale: 2 }),
+  laborHours: decimal("labor_hours", { precision: 8, scale: 2 }),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertProductionOutputSchema = createInsertSchema(productionOutput).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
 // User schema for auth (updated for Replit Auth)
 export const insertUserSchemaAuth = createInsertSchema(users);
-
-// Types for Replit Auth
-export type User = typeof users.$inferSelect;
-export type UpsertUser = z.infer<typeof insertUserSchemaAuth>;
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type Unit = typeof units.$inferSelect;
@@ -632,6 +651,8 @@ export type Position = typeof positions.$inferSelect;
 export type InsertPosition = z.infer<typeof insertPositionSchema>;
 export type Department = typeof departments.$inferSelect;
 export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;
+export type ProductionOutput = typeof productionOutput.$inferSelect;
+export type InsertProductionOutput = z.infer<typeof insertProductionOutputSchema>;
 
 // User types for Replit Auth
 export type User = typeof users.$inferSelect;

@@ -29,6 +29,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Production statistics by category
+  app.get("/api/production-stats/by-category", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const stats = await storage.getProductionStatsByCategory();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching production stats by category:", error);
+      res.status(500).json({ error: "Failed to fetch production stats by category" });
+    }
+  });
+
   // Categories
   app.get("/api/categories", async (req, res) => {
     try {
