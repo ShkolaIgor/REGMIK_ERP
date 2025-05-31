@@ -362,7 +362,7 @@ export default function WorkersPage() {
                     <FormItem>
                       <FormLabel>Посада</FormLabel>
                       <FormControl>
-                        <Select value={field.value?.toString()} onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}>
+                        <Select value={field.value?.toString() || ""} onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}>
                           <SelectTrigger>
                             <SelectValue placeholder="Оберіть посаду" />
                           </SelectTrigger>
@@ -387,7 +387,7 @@ export default function WorkersPage() {
                     <FormItem>
                       <FormLabel>Відділ</FormLabel>
                       <FormControl>
-                        <Select value={field.value?.toString()} onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}>
+                        <Select value={field.value?.toString() || ""} onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}>
                           <SelectTrigger>
                             <SelectValue placeholder="Оберіть відділ" />
                           </SelectTrigger>
