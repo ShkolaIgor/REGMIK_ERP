@@ -41,7 +41,7 @@ export default function ProductionForecasts() {
     mutationFn: async (data: InsertProductionForecast) => {
       return apiRequest("/api/production-forecasts", {
         method: "POST",
-        body: JSON.stringify(data),
+        body: data,
       });
     },
     onSuccess: () => {
