@@ -393,6 +393,7 @@ export const workers = pgTable("workers", {
   phone: varchar("phone", { length: 20 }),
   hireDate: timestamp("hire_date"),
   hourlyRate: decimal("hourly_rate", { precision: 8, scale: 2 }),
+  photo: text("photo"), // URL або base64 рядок фото
   isActive: boolean("is_active").default(true).notNull(),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),

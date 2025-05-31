@@ -241,7 +241,61 @@ export default function WorkersPage() {
                   />
                 </div>
 
-
+                <FormField
+                  control={form.control}
+                  name="photo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Фото робітника</FormLabel>
+                      <FormControl>
+                        <div className="space-y-4">
+                          {field.value && (
+                            <div className="flex justify-center">
+                              <img 
+                                src={field.value} 
+                                alt="Фото робітника" 
+                                className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200"
+                              />
+                            </div>
+                          )}
+                          <div className="flex flex-col gap-2">
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = (event) => {
+                                    field.onChange(event.target?.result);
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                              className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                            />
+                            <Input
+                              placeholder="Або вставте URL зображення"
+                              value={typeof field.value === 'string' && !field.value.startsWith('data:') ? field.value : ''}
+                              onChange={(e) => field.onChange(e.target.value)}
+                            />
+                            {field.value && (
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => field.onChange('')}
+                              >
+                                Видалити фото
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
@@ -422,8 +476,18 @@ export default function WorkersPage() {
             {workers?.map((worker: Worker) => (
               <TableRow key={worker.id}>
                 <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <User className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex items-center space-x-3">
+                    {worker.photo ? (
+                      <img 
+                        src={worker.photo} 
+                        alt={`${worker.firstName} ${worker.lastName}`}
+                        className="w-10 h-10 object-cover rounded-full border-2 border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                        <User className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    )}
                     <span className="font-medium">
                       {worker.firstName} {worker.lastName}
                     </span>
