@@ -375,12 +375,12 @@ export default function WorkersPage() {
                       <FormItem>
                         <FormLabel>Посада</FormLabel>
                         <FormControl>
-                          <Select value={field.value?.toString() || ""} onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}>
+                          <Select value={field.value?.toString() || "0"} onValueChange={(value) => field.onChange(value === "0" ? undefined : parseInt(value))}>
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Оберіть посаду" />
                             </SelectTrigger>
                             <SelectContent className="max-h-60">
-                              <SelectItem value="">Без посади</SelectItem>
+                              <SelectItem value="0">Без посади</SelectItem>
                               {positions?.map((position) => (
                                 <SelectItem key={position.id} value={position.id.toString()}>
                                   {position.name}
@@ -401,12 +401,12 @@ export default function WorkersPage() {
                       <FormItem>
                         <FormLabel>Відділ</FormLabel>
                         <FormControl>
-                          <Select value={field.value?.toString() || ""} onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}>
+                          <Select value={field.value?.toString() || "0"} onValueChange={(value) => field.onChange(value === "0" ? undefined : parseInt(value))}>
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Оберіть відділ" />
                             </SelectTrigger>
                             <SelectContent className="max-h-60">
-                              <SelectItem value="">Без відділу</SelectItem>
+                              <SelectItem value="0">Без відділу</SelectItem>
                               {departments?.map((department) => (
                                 <SelectItem key={department.id} value={department.id.toString()}>
                                   {department.name}
