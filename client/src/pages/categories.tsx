@@ -339,14 +339,13 @@ export default function Categories() {
             <p className="text-muted-foreground text-center mb-4">
               Почніть з створення першої категорії компонентів
             </p>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => setEditingCategory(null)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Створити категорію
-                </Button>
-              </DialogTrigger>
-            </Dialog>
+            <Button onClick={() => {
+              setEditingCategory(null);
+              setIsDialogOpen(true);
+            }}>
+              <Plus className="mr-2 h-4 w-4" />
+              Створити категорію
+            </Button>
           </CardContent>
         </Card>
       )}
