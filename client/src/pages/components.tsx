@@ -702,29 +702,53 @@ function AlternativesManagement({ component, onClose }: { component: Component |
           </div>
         ) : (
           <div className="space-y-2">
-            {alternatives.map((alt: ComponentAlternative) => (
-              <div key={alt.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex-1">
-                  <div className="font-medium">{alt.alternativeComponent.name}</div>
-                  <div className="text-sm text-gray-600">
-                    SKU: {alt.alternativeComponent.sku} | 
-                    Сумісність: {alt.compatibility} | 
-                    Ціна: {parseFloat(alt.alternativeComponent.costPrice).toFixed(2)} грн
+            {alternatives.map((alt: ComponentAlternative) => {
+              // Безпечна перевірка на існування альтернативного компонента
+              if (!alt.alternativeComponent) {
+                return (
+                  <div key={alt.id} className="flex items-center justify-between p-3 border rounded-lg bg-red-50">
+                    <div className="flex-1">
+                      <div className="font-medium text-red-600">Помилка: дані компонента відсутні</div>
+                      <div className="text-sm text-red-500">
+                        ID: {alt.alternativeComponentId} | Сумісність: {alt.compatibility}
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteAlternativeMutation.mutate(alt.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
-                  {alt.notes && (
-                    <div className="text-sm text-gray-500 mt-1">{alt.notes}</div>
-                  )}
+                );
+              }
+
+              return (
+                <div key={alt.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">{alt.alternativeComponent.name}</div>
+                    <div className="text-sm text-gray-600">
+                      SKU: {alt.alternativeComponent.sku} | 
+                      Сумісність: {alt.compatibility} | 
+                      Ціна: {parseFloat(alt.alternativeComponent.costPrice || "0").toFixed(2)} грн
+                    </div>
+                    {alt.notes && (
+                      <div className="text-sm text-gray-500 mt-1">{alt.notes}</div>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deleteAlternativeMutation.mutate(alt.id)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => deleteAlternativeMutation.mutate(alt.id)}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
