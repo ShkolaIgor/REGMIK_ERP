@@ -122,8 +122,8 @@ export default function WorkersPage() {
     defaultValues: {
       firstName: "",
       lastName: "",
-      position: "",
-      department: "",
+      positionId: undefined,
+      departmentId: undefined,
       email: "",
       phone: "",
       hireDate: "",
@@ -146,8 +146,8 @@ export default function WorkersPage() {
     form.reset({
       firstName: worker.firstName,
       lastName: worker.lastName,
-      position: worker.position,
-      department: worker.department || "",
+      positionId: worker.positionId || undefined,
+      departmentId: worker.departmentId || undefined,
       email: worker.email || "",
       phone: worker.phone || "",
       hireDate: worker.hireDate ? new Date(worker.hireDate).toISOString().split('T')[0] : "",
@@ -481,8 +481,18 @@ export default function WorkersPage() {
                     </span>
                   </div>
                 </TableCell>
-                <TableCell>{worker.position}</TableCell>
-                <TableCell>{worker.department || "—"}</TableCell>
+                <TableCell>
+                  {worker.positionId 
+                    ? positions?.find(p => p.id === worker.positionId)?.name || "—"
+                    : "—"
+                  }
+                </TableCell>
+                <TableCell>
+                  {worker.departmentId 
+                    ? departments?.find(d => d.id === worker.departmentId)?.name || "—"
+                    : "—"
+                  }
+                </TableCell>
                 <TableCell>
                   <div className="text-sm">
                     {worker.email && <div>{worker.email}</div>}
