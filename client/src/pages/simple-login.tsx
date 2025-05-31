@@ -35,8 +35,8 @@ export default function SimpleLogin() {
         throw new Error("Login failed");
       }
       
-      // Оновити кеш авторизації
-      await queryClient.invalidateQueries({ queryKey: ["/api/simple-auth/user"] });
+      // Перезавантажити сторінку після успішного логіну
+      window.location.href = "/";
     } catch (error) {
       toast({
         title: "Помилка входу",
