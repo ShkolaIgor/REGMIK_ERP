@@ -162,6 +162,15 @@ export const techCardMaterials = pgTable("tech_card_materials", {
   unit: text("unit").notNull(),
 });
 
+// Таблиця типів корпусів
+export const packageTypes = pgTable("package_types", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  pinCount: integer("pin_count"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Таблиця компонентів для BOM
 export const components = pgTable("components", {
   id: serial("id").primaryKey(),
@@ -173,6 +182,9 @@ export const components = pgTable("components", {
   supplier: varchar("supplier"),
   partNumber: varchar("part_number"),
   category: varchar("category"),
+  manufacturer: varchar("manufacturer"),
+  uktzedCode: varchar("uktzed_code"),
+  packageTypeId: integer("package_type_id").references(() => packageTypes.id),
   minStock: integer("min_stock"),
   maxStock: integer("max_stock"),
   createdAt: timestamp("created_at").defaultNow(),
