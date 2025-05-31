@@ -241,61 +241,7 @@ export default function WorkersPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="position"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Посада *</FormLabel>
-                        <FormControl>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Оберіть посаду" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Оператор">Оператор</SelectItem>
-                              <SelectItem value="Технік">Технік</SelectItem>
-                              <SelectItem value="Інженер">Інженер</SelectItem>
-                              <SelectItem value="Майстер">Майстер</SelectItem>
-                              <SelectItem value="Контролер якості">Контролер якості</SelectItem>
-                              <SelectItem value="Начальник виробництва">Начальник виробництва</SelectItem>
-                              <SelectItem value="Логіст">Логіст</SelectItem>
-                              <SelectItem value="Кладовщик">Кладовщик</SelectItem>
-                              <SelectItem value="Інша">Інша</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="department"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Відділ</FormLabel>
-                        <FormControl>
-                          <Select value={field.value || ""} onValueChange={field.onChange}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Оберіть відділ" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Виробництво">Виробництво</SelectItem>
-                              <SelectItem value="Склад">Склад</SelectItem>
-                              <SelectItem value="Контроль якості">Контроль якості</SelectItem>
-                              <SelectItem value="Технічний">Технічний</SelectItem>
-                              <SelectItem value="Логістика">Логістика</SelectItem>
-                              <SelectItem value="Адміністрація">Адміністрація</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+
 
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
