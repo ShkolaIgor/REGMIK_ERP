@@ -63,6 +63,9 @@ export default function Components() {
     supplier: "",
     partNumber: "",
     category: "",
+    manufacturer: "",
+    uktzedCode: "",
+    packageTypeId: "",
     minStock: "",
     maxStock: "",
   });
@@ -157,6 +160,9 @@ export default function Components() {
       supplier: "",
       partNumber: "",
       category: "",
+      manufacturer: "",
+      uktzedCode: "",
+      packageTypeId: "",
       minStock: "",
       maxStock: "",
     });
@@ -170,6 +176,7 @@ export default function Components() {
       costPrice: formData.costPrice || "0",
       minStock: formData.minStock ? parseInt(formData.minStock) : null,
       maxStock: formData.maxStock ? parseInt(formData.maxStock) : null,
+      packageTypeId: formData.packageTypeId ? parseInt(formData.packageTypeId) : null,
     };
 
     if (editingComponent) {
@@ -190,6 +197,9 @@ export default function Components() {
       supplier: component.supplier || "",
       partNumber: component.partNumber || "",
       category: component.category || "",
+      manufacturer: component.manufacturer || "",
+      uktzedCode: component.uktzedCode || "",
+      packageTypeId: component.packageTypeId?.toString() || "",
       minStock: component.minStock?.toString() || "",
       maxStock: component.maxStock?.toString() || "",
     });
@@ -343,6 +353,39 @@ export default function Components() {
                     value={formData.partNumber}
                     onChange={(e) => setFormData(prev => ({ ...prev, partNumber: e.target.value }))}
                     placeholder="Номер деталі"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="manufacturer">Виробник</Label>
+                  <Input
+                    id="manufacturer"
+                    value={formData.manufacturer}
+                    onChange={(e) => setFormData(prev => ({ ...prev, manufacturer: e.target.value }))}
+                    placeholder="Виробник"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="uktzedCode">Код УКТЗЕД</Label>
+                  <Input
+                    id="uktzedCode"
+                    value={formData.uktzedCode}
+                    onChange={(e) => setFormData(prev => ({ ...prev, uktzedCode: e.target.value }))}
+                    placeholder="Код УКТЗЕД"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="packageTypeId">Тип корпусу</Label>
+                  <Input
+                    id="packageTypeId"
+                    type="number"
+                    value={formData.packageTypeId}
+                    onChange={(e) => setFormData(prev => ({ ...prev, packageTypeId: e.target.value }))}
+                    placeholder="ID типу корпусу"
                   />
                 </div>
               </div>
