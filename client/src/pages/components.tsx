@@ -180,7 +180,7 @@ export default function Components() {
       costPrice: formData.costPrice || "0",
       minStock: formData.minStock ? parseInt(formData.minStock) : null,
       maxStock: formData.maxStock ? parseInt(formData.maxStock) : null,
-      packageTypeId: formData.packageTypeId ? parseInt(formData.packageTypeId) : null,
+      packageTypeId: formData.packageTypeId && formData.packageTypeId !== "none" ? parseInt(formData.packageTypeId) : null,
     };
 
     if (editingComponent) {
@@ -203,7 +203,7 @@ export default function Components() {
       category: component.category || "",
       manufacturer: component.manufacturer || "",
       uktzedCode: component.uktzedCode || "",
-      packageTypeId: component.packageTypeId?.toString() || "",
+      packageTypeId: component.packageTypeId?.toString() || "none",
       minStock: component.minStock?.toString() || "",
       maxStock: component.maxStock?.toString() || "",
     });
@@ -392,7 +392,7 @@ export default function Components() {
                       <SelectValue placeholder="Оберіть тип корпусу" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Без типу корпусу</SelectItem>
+                      <SelectItem value="none">Без типу корпусу</SelectItem>
                       {packageTypes.map((packageType: any) => (
                         <SelectItem key={packageType.id} value={packageType.id.toString()}>
                           {packageType.name}
