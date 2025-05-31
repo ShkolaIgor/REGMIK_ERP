@@ -41,9 +41,15 @@ interface PeriodStat {
 export default function ProductionStats() {
   const [selectedTab, setSelectedTab] = useState<'category' | 'period'>('category');
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'year'>('month');
+  const [categoryPeriod, setCategoryPeriod] = useState<'week' | 'month' | 'year'>('month');
 
   const { data: categoryStats, isLoading: categoryLoading } = useQuery<ProductionStat[]>({
-    queryKey: ["/api/production-stats/by-category"],
+    queryKey: ["/api/production-stats/by-category", categoryPeriod],
+    queryFn: async () => {
+      const response = await fetch(`/api/production-stats/by-category?period=${categoryPeriod}`);
+      if (!response.ok) throw new Error('Failed to fetch category stats');
+      return response.json();
+    },
   });
 
   const { data: periodStats, isLoading: periodLoading } = useQuery<PeriodStat[]>({
@@ -170,31 +176,30 @@ export default function ProductionStats() {
         </Button>
       </div>
 
-      {selectedTab === 'period' && (
-        <div className="flex space-x-2">
-          <Button
-            variant={selectedPeriod === 'week' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedPeriod('week')}
-          >
-            Тиждень
-          </Button>
-          <Button
-            variant={selectedPeriod === 'month' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedPeriod('month')}
-          >
-            Місяць
-          </Button>
-          <Button
-            variant={selectedPeriod === 'year' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedPeriod('year')}
-          >
-            Рік
-          </Button>
-        </div>
-      )}
+      {/* Period filters for both tabs */}
+      <div className="flex space-x-2">
+        <Button
+          variant={(selectedTab === 'category' ? categoryPeriod : selectedPeriod) === 'week' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => selectedTab === 'category' ? setCategoryPeriod('week') : setSelectedPeriod('week')}
+        >
+          Тиждень
+        </Button>
+        <Button
+          variant={(selectedTab === 'category' ? categoryPeriod : selectedPeriod) === 'month' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => selectedTab === 'category' ? setCategoryPeriod('month') : setSelectedPeriod('month')}
+        >
+          Місяць
+        </Button>
+        <Button
+          variant={(selectedTab === 'category' ? categoryPeriod : selectedPeriod) === 'year' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => selectedTab === 'category' ? setCategoryPeriod('year') : setSelectedPeriod('year')}
+        >
+          Рік
+        </Button>
+      </div>
 
       {/* Category Statistics Tab */}
       {selectedTab === 'category' && (

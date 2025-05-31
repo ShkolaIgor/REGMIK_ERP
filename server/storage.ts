@@ -186,7 +186,7 @@ export interface IStorage {
   }>;
 
   // Production statistics
-  getProductionStatsByCategory(): Promise<Array<{
+  getProductionStatsByCategory(period?: string, startDate?: string, endDate?: string): Promise<Array<{
     categoryId: number;
     categoryName: string;
     totalProduced: number;

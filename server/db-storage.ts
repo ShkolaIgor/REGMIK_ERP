@@ -1866,7 +1866,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getProductionStatsByCategory(): Promise<Array<{
+  async getProductionStatsByCategory(period?: string, startDate?: string, endDate?: string): Promise<Array<{
     categoryId: number;
     categoryName: string;
     totalProduced: number;
