@@ -1213,6 +1213,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Warehouse Transfers API
+  app.get("/api/warehouse-transfers", async (req, res) => {
+    try {
+      const transfers = await storage.getWarehouseTransfers();
+      res.json(transfers);
+    } catch (error) {
+      console.error("Failed to get warehouse transfers:", error);
+      res.status(500).json({ error: "Failed to get warehouse transfers" });
+    }
+  });
+
+  app.get("/api/warehouse-transfers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const transfer = await storage.getWarehouseTransfer(id);
+      if (!transfer) {
+        return res.status(404).json({ error: "Warehouse transfer not found" });
+      }
+      res.json(transfer);
+    } catch (error) {
+      console.error("Failed to get warehouse transfer:", error);
+      res.status(500).json({ error: "Failed to get warehouse transfer" });
+    }
+  });
+
+  app.post("/api/warehouse-transfers", async (req, res) => {
+    try {
+      const transferData = insertWarehouseTransferSchema.parse(req.body);
+      const transfer = await storage.createWarehouseTransfer(transferData);
+      res.status(201).json(transfer);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid transfer data", details: error.errors });
+      } else {
+        console.error("Failed to create warehouse transfer:", error);
+        res.status(500).json({ error: "Failed to create warehouse transfer" });
+      }
+    }
+  });
+
+  app.patch("/api/warehouse-transfers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = insertWarehouseTransferSchema.partial().parse(req.body);
+      const transfer = await storage.updateWarehouseTransfer(id, updateData);
+      if (!transfer) {
+        return res.status(404).json({ error: "Warehouse transfer not found" });
+      }
+      res.json(transfer);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid transfer data", details: error.errors });
+      } else {
+        console.error("Failed to update warehouse transfer:", error);
+        res.status(500).json({ error: "Failed to update warehouse transfer" });
+      }
+    }
+  });
+
+  app.delete("/api/warehouse-transfers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteWarehouseTransfer(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Warehouse transfer not found" });
+      }
+      res.status(204).end();
+    } catch (error) {
+      console.error("Failed to delete warehouse transfer:", error);
+      res.status(500).json({ error: "Failed to delete warehouse transfer" });
+    }
+  });
+
+  app.post("/api/warehouse-transfers/:id/execute", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const transfer = await storage.executeWarehouseTransfer(id);
+      if (!transfer) {
+        return res.status(404).json({ error: "Warehouse transfer not found" });
+      }
+      res.json(transfer);
+    } catch (error) {
+      console.error("Failed to execute warehouse transfer:", error);
+      res.status(500).json({ error: "Failed to execute warehouse transfer" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

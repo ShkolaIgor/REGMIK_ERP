@@ -6,7 +6,7 @@ import {
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   productComponents, costCalculations, materialShortages, supplierOrders, supplierOrderItems,
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
-  productionForecasts,
+  productionForecasts, warehouseTransfers, warehouseTransferItems,
   type User, type InsertUser, type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
   type Product, type InsertProduct,
@@ -1584,6 +1584,159 @@ export class DatabaseStorage implements IStorage {
       return result.rowCount > 0;
     } catch (error) {
       console.error('Error deleting production forecast:', error);
+      throw error;
+    }
+  }
+
+  // Warehouse Transfers
+  async getWarehouseTransfers(): Promise<(WarehouseTransfer & { fromWarehouse?: Warehouse; toWarehouse?: Warehouse; responsiblePerson?: Worker })[]> {
+    try {
+      const result = await this.db.select({
+        transfer: warehouseTransfers,
+        fromWarehouse: warehouses,
+        toWarehouse: warehouses,
+        responsiblePerson: workers,
+      })
+      .from(warehouseTransfers)
+      .leftJoin(warehouses, eq(warehouseTransfers.fromWarehouseId, warehouses.id))
+      .leftJoin(warehouses, eq(warehouseTransfers.toWarehouseId, warehouses.id))
+      .leftJoin(workers, eq(warehouseTransfers.responsiblePersonId, workers.id))
+      .orderBy(desc(warehouseTransfers.createdAt));
+
+      return result.map(row => ({
+        ...row.transfer,
+        fromWarehouse: row.fromWarehouse || undefined,
+        toWarehouse: row.toWarehouse || undefined,
+        responsiblePerson: row.responsiblePerson || undefined,
+      }));
+    } catch (error) {
+      console.error('Error getting warehouse transfers:', error);
+      throw error;
+    }
+  }
+
+  async getWarehouseTransfer(id: number): Promise<(WarehouseTransfer & { fromWarehouse?: Warehouse; toWarehouse?: Warehouse; items: (WarehouseTransferItem & { product: Product })[] }) | undefined> {
+    try {
+      const transfer = await this.db.select()
+        .from(warehouseTransfers)
+        .where(eq(warehouseTransfers.id, id))
+        .limit(1);
+
+      if (!transfer[0]) return undefined;
+
+      // Get transfer items
+      const itemsResult = await this.db.select({
+        item: warehouseTransferItems,
+        product: products,
+      })
+      .from(warehouseTransferItems)
+      .leftJoin(products, eq(warehouseTransferItems.productId, products.id))
+      .where(eq(warehouseTransferItems.transferId, id));
+
+      const items = itemsResult.filter(item => item.product) as { item: WarehouseTransferItem; product: Product }[];
+
+      return {
+        ...transfer[0],
+        items: items.map(({ item, product }) => ({ ...item, product })),
+      };
+    } catch (error) {
+      console.error('Error getting warehouse transfer:', error);
+      throw error;
+    }
+  }
+
+  async createWarehouseTransfer(transfer: InsertWarehouseTransfer, items?: InsertWarehouseTransferItem[]): Promise<WarehouseTransfer> {
+    try {
+      // Generate unique transfer number
+      const transferNumber = `WT-${Date.now()}`;
+      
+      const transferData = {
+        ...transfer,
+        transferNumber,
+      };
+
+      const result = await this.db.insert(warehouseTransfers).values(transferData).returning();
+      const createdTransfer = result[0];
+
+      // Create transfer items if provided
+      if (items && items.length > 0) {
+        const transferItems = items.map(item => ({
+          ...item,
+          transferId: createdTransfer.id,
+        }));
+        await this.db.insert(warehouseTransferItems).values(transferItems);
+      }
+
+      return createdTransfer;
+    } catch (error) {
+      console.error('Error creating warehouse transfer:', error);
+      throw error;
+    }
+  }
+
+  async updateWarehouseTransfer(id: number, transfer: Partial<InsertWarehouseTransfer>): Promise<WarehouseTransfer | undefined> {
+    try {
+      const result = await this.db.update(warehouseTransfers)
+        .set(transfer)
+        .where(eq(warehouseTransfers.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error updating warehouse transfer:', error);
+      throw error;
+    }
+  }
+
+  async deleteWarehouseTransfer(id: number): Promise<boolean> {
+    try {
+      // First delete transfer items
+      await this.db.delete(warehouseTransferItems)
+        .where(eq(warehouseTransferItems.transferId, id));
+      
+      // Then delete the transfer
+      const result = await this.db.delete(warehouseTransfers)
+        .where(eq(warehouseTransfers.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting warehouse transfer:', error);
+      throw error;
+    }
+  }
+
+  async executeWarehouseTransfer(id: number): Promise<WarehouseTransfer | undefined> {
+    try {
+      // Get transfer with items
+      const transfer = await this.getWarehouseTransfer(id);
+      if (!transfer || transfer.status !== 'pending') {
+        throw new Error('Transfer not found or not in pending status');
+      }
+
+      // Update inventory for each item
+      for (const item of transfer.items) {
+        // Reduce from source warehouse
+        await this.updateInventory(item.productId, transfer.fromWarehouseId, -parseFloat(item.requestedQuantity));
+        
+        // Add to destination warehouse
+        await this.updateInventory(item.productId, transfer.toWarehouseId, parseFloat(item.requestedQuantity));
+        
+        // Update transferred quantity
+        await this.db.update(warehouseTransferItems)
+          .set({ transferredQuantity: item.requestedQuantity })
+          .where(eq(warehouseTransferItems.id, item.id));
+      }
+
+      // Update transfer status
+      const result = await this.db.update(warehouseTransfers)
+        .set({ 
+          status: 'completed',
+          completedDate: new Date(),
+        })
+        .where(eq(warehouseTransfers.id, id))
+        .returning();
+
+      return result[0];
+    } catch (error) {
+      console.error('Error executing warehouse transfer:', error);
       throw error;
     }
   }

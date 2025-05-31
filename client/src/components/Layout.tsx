@@ -41,6 +41,7 @@ const navigationItems = [
       { name: "Склади", href: "/warehouses", icon: Warehouse },
       { name: "Замовлення", href: "/orders", icon: ShoppingCart },
       { name: "Замовлення постачальникам", href: "/supplier-orders", icon: Truck },
+      { name: "Переміщення між складами", href: "/warehouse-transfers", icon: PackageOpen },
       { name: "Інвентаризація", href: "/inventory-audits", icon: ClipboardList },
       { name: "Сканер штрих-кодів", href: "/scanner", icon: Scan }
     ]

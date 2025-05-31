@@ -50,6 +50,7 @@ function Router() {
         <Route path="/inventory-audits" component={InventoryAudits} />
         <Route path="/workers" component={Workers} />
         <Route path="/production-forecasts" component={ProductionForecasts} />
+        <Route path="/warehouse-transfers" component={WarehouseTransfers} />
         <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
         <Route component={NotFound} />
       </Switch>
