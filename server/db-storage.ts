@@ -20,6 +20,7 @@ import {
   type TechCardStep, type InsertTechCardStep,
   type TechCardMaterial, type InsertTechCardMaterial,
   type Component, type InsertComponent,
+  type ComponentCategory, type InsertComponentCategory,
   type PackageType, type InsertPackageType,
   type ProductComponent, type InsertProductComponent,
   type CostCalculation, type InsertCostCalculation,

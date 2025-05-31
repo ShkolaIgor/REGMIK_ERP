@@ -2,7 +2,7 @@ import {
   users, categories, units, warehouses, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   components, productComponents, costCalculations, materialShortages, inventoryAudits, inventoryAuditItems, workers,
-  packageTypes, solderingTypes,
+  packageTypes, solderingTypes, componentCategories,
   type User, type UpsertUser, type Category, type InsertCategory,
   type Unit, type InsertUnit,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
@@ -15,6 +15,7 @@ import {
   type TechCardStep, type InsertTechCardStep,
   type TechCardMaterial, type InsertTechCardMaterial,
   type Component, type InsertComponent,
+  type ComponentCategory, type InsertComponentCategory,
   type ProductComponent, type InsertProductComponent,
   type CostCalculation, type InsertCostCalculation,
   type MaterialShortage, type InsertMaterialShortage,
@@ -109,6 +110,13 @@ export interface IStorage {
   createSolderingType(solderingType: InsertSolderingType): Promise<SolderingType>;
   updateSolderingType(id: number, solderingType: Partial<InsertSolderingType>): Promise<SolderingType | undefined>;
   deleteSolderingType(id: number): Promise<boolean>;
+
+  // Component Categories
+  getComponentCategories(): Promise<ComponentCategory[]>;
+  getComponentCategory(id: number): Promise<ComponentCategory | undefined>;
+  createComponentCategory(category: InsertComponentCategory): Promise<ComponentCategory>;
+  updateComponentCategory(id: number, category: Partial<InsertComponentCategory>): Promise<ComponentCategory | undefined>;
+  deleteComponentCategory(id: number): Promise<boolean>;
 
   // Tech Cards
   getTechCards(): Promise<(TechCard & { product: Product; steps: TechCardStep[]; materials: (TechCardMaterial & { product: Product })[] })[]>;
