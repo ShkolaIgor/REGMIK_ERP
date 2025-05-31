@@ -1618,21 +1618,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/soldering-types", async (req, res) => {
-    try {
-      console.log("Received request body:", req.body);
-      console.log("Body type:", typeof req.body);
-      const solderingTypeData = insertSolderingTypeSchema.parse(req.body);
-      const solderingType = await storage.createSolderingType(solderingTypeData);
-      res.status(201).json(solderingType);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Invalid soldering type data", details: error.errors });
-      } else {
-        console.error("Failed to create soldering type:", error);
-        res.status(500).json({ error: "Failed to create soldering type" });
+  app.post("/api/soldering-types", (req, res) => {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    req.on('end', async () => {
+      try {
+        console.log("Raw body:", body);
+        console.log("Body type:", typeof body);
+        
+        let parsedBody;
+        try {
+          // Try to parse as JSON
+          parsedBody = JSON.parse(body);
+        } catch (parseError) {
+          // If first parse fails, it might be double-encoded
+          console.log("First parse failed, trying to parse double-encoded JSON");
+          const unescaped = JSON.parse(body);
+          parsedBody = JSON.parse(unescaped);
+        }
+        
+        console.log("Parsed body:", parsedBody);
+        const solderingTypeData = insertSolderingTypeSchema.parse(parsedBody);
+        const solderingType = await storage.createSolderingType(solderingTypeData);
+        res.status(201).json(solderingType);
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          res.status(400).json({ error: "Invalid soldering type data", details: error.errors });
+        } else {
+          console.error("Failed to create soldering type:", error);
+          res.status(500).json({ error: "Failed to create soldering type" });
+        }
       }
-    }
+    });
   });
 
   app.get("/api/soldering-types/:id", async (req, res) => {
