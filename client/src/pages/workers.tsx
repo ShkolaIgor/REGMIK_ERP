@@ -38,7 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, User } from "lucide-react";
+import { Plus, Edit, Trash2, User, X } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { insertWorkerSchema, type Worker, type InsertWorker, type Position, type Department } from "@shared/schema";
 
@@ -252,44 +252,55 @@ export default function WorkersPage() {
                         <div className="space-y-4">
                           {field.value && (
                             <div className="flex justify-center">
-                              <img 
-                                src={field.value} 
-                                alt="Фото робітника" 
-                                className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200"
-                              />
+                              <div className="relative">
+                                <img 
+                                  src={field.value} 
+                                  alt="Фото робітника" 
+                                  className="w-24 h-24 object-cover rounded-full border-2 border-gray-200 shadow-sm"
+                                />
+                                <Button 
+                                  type="button" 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                                  onClick={() => field.onChange('')}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
                             </div>
                           )}
-                          <div className="flex flex-col gap-2">
-                            <Input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  const reader = new FileReader();
-                                  reader.onload = (event) => {
-                                    field.onChange(event.target?.result);
-                                  };
-                                  reader.readAsDataURL(file);
-                                }
-                              }}
-                              className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                            />
-                            <Input
-                              placeholder="Або вставте URL зображення"
-                              value={typeof field.value === 'string' && !field.value.startsWith('data:') ? field.value : ''}
-                              onChange={(e) => field.onChange(e.target.value)}
-                            />
-                            {field.value && (
-                              <Button 
-                                type="button" 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => field.onChange('')}
-                              >
-                                Видалити фото
-                              </Button>
-                            )}
+                          <div className="grid grid-cols-1 gap-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Завантажити файл
+                              </label>
+                              <Input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onload = (event) => {
+                                      field.onChange(event.target?.result);
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                                className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Або вставте URL
+                              </label>
+                              <Input
+                                placeholder="https://example.com/photo.jpg"
+                                value={typeof field.value === 'string' && !field.value.startsWith('data:') ? field.value : ''}
+                                onChange={(e) => field.onChange(e.target.value)}
+                              />
+                            </div>
                           </div>
                         </div>
                       </FormControl>
@@ -356,55 +367,59 @@ export default function WorkersPage() {
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="positionId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Посада</FormLabel>
-                      <FormControl>
-                        <Select value={field.value?.toString() || ""} onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Оберіть посаду" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {positions?.map((position) => (
-                              <SelectItem key={position.id} value={position.id.toString()}>
-                                {position.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="positionId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Посада</FormLabel>
+                        <FormControl>
+                          <Select value={field.value?.toString() || ""} onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Оберіть посаду" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60">
+                              <SelectItem value="">Без посади</SelectItem>
+                              {positions?.map((position) => (
+                                <SelectItem key={position.id} value={position.id.toString()}>
+                                  {position.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="departmentId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Відділ</FormLabel>
-                      <FormControl>
-                        <Select value={field.value?.toString() || ""} onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Оберіть відділ" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {departments?.map((department) => (
-                              <SelectItem key={department.id} value={department.id.toString()}>
-                                {department.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="departmentId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Відділ</FormLabel>
+                        <FormControl>
+                          <Select value={field.value?.toString() || ""} onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Оберіть відділ" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60">
+                              <SelectItem value="">Без відділу</SelectItem>
+                              {departments?.map((department) => (
+                                <SelectItem key={department.id} value={department.id.toString()}>
+                                  {department.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={form.control}
