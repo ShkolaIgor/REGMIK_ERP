@@ -1,28 +1,13 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Package } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Plus, Edit, Trash2, Package } from "lucide-react";
 import type { ComponentCategory, InsertComponentCategory } from "@shared/schema";
 
 interface ComponentCategoryFormData {
@@ -32,6 +17,9 @@ interface ComponentCategoryFormData {
 }
 
 export default function Categories() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ComponentCategory | null>(null);
   const [formData, setFormData] = useState<ComponentCategoryFormData>({
@@ -39,31 +27,31 @@ export default function Categories() {
     description: "",
     color: "#3B82F6"
   });
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const { data: categories = [], isLoading } = useQuery({
+  const { data: categories, isLoading } = useQuery({
     queryKey: ["/api/component-categories"],
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertComponentCategory) => {
-      const response = await fetch('/api/component-categories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+      const response = await fetch("/api/component-categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
       });
+      
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Помилка створення категорії');
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Помилка створення категорії");
       }
+      
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/component-categories"] });
       toast({
-        title: "Успішно",
-        description: "Категорію компонентів створено",
+        title: "Успіх",
+        description: "Категорію створено успішно",
       });
       handleCloseDialog();
     },
@@ -79,21 +67,23 @@ export default function Categories() {
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<InsertComponentCategory> }) => {
       const response = await fetch(`/api/component-categories/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
       });
+      
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Помилка оновлення категорії');
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Помилка оновлення категорії");
       }
+      
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/component-categories"] });
       toast({
-        title: "Успішно",
-        description: "Категорію компонентів оновлено",
+        title: "Успіх",
+        description: "Категорію оновлено успішно",
       });
       handleCloseDialog();
     },
@@ -109,18 +99,21 @@ export default function Categories() {
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       const response = await fetch(`/api/component-categories/${id}`, {
-        method: 'DELETE'
+        method: "DELETE",
       });
+      
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Помилка видалення категорії');
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Помилка видалення категорії");
       }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/component-categories"] });
       toast({
-        title: "Успішно",
-        description: "Категорію компонентів видалено",
+        title: "Успіх",
+        description: "Категорію видалено успішно",
       });
     },
     onError: (error: Error) => {
@@ -135,15 +128,6 @@ export default function Categories() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name.trim()) {
-      toast({
-        title: "Помилка",
-        description: "Назва категорії обов'язкова",
-        variant: "destructive",
-      });
-      return;
-    }
-
     const submitData: InsertComponentCategory = {
       name: formData.name.trim(),
       description: formData.description.trim() || null,
@@ -200,86 +184,17 @@ export default function Categories() {
             Управління категоріями електронних компонентів
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setEditingCategory(null)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Додати категорію
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>
-                {editingCategory ? "Редагувати категорію" : "Нова категорія компонентів"}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Назва категорії *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Наприклад: Мікроконтролери"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Опис</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Опис категорії компонентів"
-                  rows={3}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="color">Колір категорії</Label>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    id="color"
-                    type="color"
-                    value={formData.color}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    className="w-16 h-10"
-                  />
-                  <Input
-                    value={formData.color}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    placeholder="#3B82F6"
-                    className="flex-1"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCloseDialog}
-                >
-                  Скасувати
-                </Button>
-                <Button 
-                  type="submit"
-                  disabled={createMutation.isPending || updateMutation.isPending}
-                >
-                  {createMutation.isPending || updateMutation.isPending ? 
-                    "Збереження..." : 
-                    (editingCategory ? "Оновити" : "Створити")
-                  }
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => {
+          setEditingCategory(null);
+          setIsDialogOpen(true);
+        }}>
+          <Plus className="mr-2 h-4 w-4" />
+          Додати категорію
+        </Button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {(categories as ComponentCategory[]).map((category) => (
+        {(categories as ComponentCategory[])?.map((category) => (
           <Card key={category.id} className="relative">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -288,14 +203,11 @@ export default function Categories() {
                     className="w-4 h-4 rounded-full border"
                     style={{ backgroundColor: category.color || "#3B82F6" }}
                   />
-                  <CardTitle className="text-lg">{category.name}</CardTitle>
+                  <h3 className="font-semibold text-lg">{category.name}</h3>
                 </div>
-                <Badge variant="secondary">
-                  <Package className="mr-1 h-3 w-3" />
-                  ID: {category.id}
-                </Badge>
               </div>
             </CardHeader>
+            
             <CardContent>
               <div className="space-y-3">
                 {category.description && (
@@ -331,7 +243,7 @@ export default function Categories() {
         ))}
       </div>
 
-      {categories.length === 0 && (
+      {(!categories || categories.length === 0) && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Package className="h-12 w-12 text-muted-foreground mb-4" />
@@ -349,6 +261,77 @@ export default function Categories() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingCategory ? "Редагувати категорію" : "Нова категорія компонентів"}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Назва категорії *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Наприклад: Мікроконтролери"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Опис</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Опис категорії компонентів"
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="color">Колір категорії</Label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  id="color"
+                  type="color"
+                  value={formData.color}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  className="w-16 h-10"
+                />
+                <Input
+                  value={formData.color}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  placeholder="#3B82F6"
+                  className="flex-1"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCloseDialog}
+              >
+                Скасувати
+              </Button>
+              <Button 
+                type="submit"
+                disabled={createMutation.isPending || updateMutation.isPending}
+              >
+                {createMutation.isPending || updateMutation.isPending ? 
+                  "Збереження..." : 
+                  (editingCategory ? "Оновити" : "Створити")
+                }
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
