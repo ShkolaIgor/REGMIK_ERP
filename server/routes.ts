@@ -1169,7 +1169,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/production-forecasts", async (req, res) => {
     try {
-      const forecastData = insertProductionForecastSchema.parse(req.body);
+      // Convert date strings to Date objects
+      const bodyWithDates = {
+        ...req.body,
+        startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
+        endDate: req.body.endDate ? new Date(req.body.endDate) : undefined,
+      };
+      
+      const forecastData = insertProductionForecastSchema.parse(bodyWithDates);
       const forecast = await storage.createProductionForecast(forecastData);
       res.status(201).json(forecast);
     } catch (error) {
