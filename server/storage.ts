@@ -276,6 +276,7 @@ export class MemStorage implements IStorage {
   private techCardMaterials: Map<number, TechCardMaterial[]> = new Map();
   private components: Map<number, Component> = new Map();
   private productComponents: Map<number, ProductComponent[]> = new Map();
+  private shipments: Map<number, any> = new Map();
 
   private currentUserId = 1;
   private currentCategoryId = 1;
@@ -294,6 +295,7 @@ export class MemStorage implements IStorage {
   private currentTechCardMaterialId = 1;
   private currentComponentId = 1;
   private currentProductComponentId = 1;
+  private currentShipmentId = 1;
 
   constructor() {
     this.initializeData();
@@ -932,6 +934,74 @@ export class MemStorage implements IStorage {
       }
     }
     return undefined;
+  }
+
+  // Shipments methods
+  async getShipments(): Promise<any[]> {
+    const shipmentsArray = Array.from(this.shipments.values());
+    return shipmentsArray.map(shipment => {
+      const order = this.orders.get(shipment.orderId);
+      return {
+        ...shipment,
+        order
+      };
+    });
+  }
+
+  async getShipment(id: number): Promise<any> {
+    const shipment = this.shipments.get(id);
+    if (!shipment) return undefined;
+    
+    const order = this.orders.get(shipment.orderId);
+    return {
+      ...shipment,
+      order
+    };
+  }
+
+  async createShipment(shipmentData: any): Promise<any> {
+    const id = this.currentShipmentId++;
+    const shipment = {
+      ...shipmentData,
+      id,
+      shipmentNumber: `SH-${String(id).padStart(6, '0')}`,
+      status: 'preparing',
+      createdAt: new Date(),
+      shippedAt: null,
+      actualDelivery: null
+    };
+    
+    this.shipments.set(id, shipment);
+    return shipment;
+  }
+
+  async updateShipment(id: number, shipmentData: any): Promise<any> {
+    const shipment = this.shipments.get(id);
+    if (!shipment) return undefined;
+    
+    Object.assign(shipment, shipmentData);
+    this.shipments.set(id, shipment);
+    return shipment;
+  }
+
+  async updateShipmentStatus(id: number, status: string): Promise<any> {
+    const shipment = this.shipments.get(id);
+    if (!shipment) return undefined;
+    
+    shipment.status = status;
+    if (status === 'shipped' && !shipment.shippedAt) {
+      shipment.shippedAt = new Date();
+    }
+    if (status === 'delivered' && !shipment.actualDelivery) {
+      shipment.actualDelivery = new Date();
+    }
+    
+    this.shipments.set(id, shipment);
+    return shipment;
+  }
+
+  async deleteShipment(id: number): Promise<boolean> {
+    return this.shipments.delete(id);
   }
 }
 
