@@ -184,6 +184,16 @@ export interface IStorage {
     materialShortages: number;
     criticalShortages: number;
   }>;
+
+  // Production statistics
+  getProductionStatsByCategory(): Promise<Array<{
+    categoryId: number;
+    categoryName: string;
+    totalProduced: number;
+    totalValue: number;
+    productsCount: number;
+    averageQuality: string;
+  }>>;
 }
 
 export class MemStorage implements IStorage {
