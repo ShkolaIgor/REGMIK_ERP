@@ -98,6 +98,10 @@ export default function Components() {
     queryKey: ["/api/component-categories"],
   });
 
+  const { data: suppliers = [] } = useQuery({
+    queryKey: ["/api/suppliers"],
+  });
+
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
       return await apiRequest("/api/components", {
@@ -198,6 +202,8 @@ export default function Components() {
       minStock: formData.minStock ? parseInt(formData.minStock) : null,
       maxStock: formData.maxStock ? parseInt(formData.maxStock) : null,
       packageTypeId: formData.packageTypeId && formData.packageTypeId !== "none" ? parseInt(formData.packageTypeId) : null,
+      category: formData.category === "none" ? null : formData.category,
+      supplier: formData.supplier === "none" ? null : formData.supplier,
     };
 
     if (editingComponent) {
@@ -370,12 +376,23 @@ export default function Components() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="supplier">Постачальник</Label>
-                  <Input
-                    id="supplier"
+                  <Select
                     value={formData.supplier}
-                    onChange={(e) => setFormData(prev => ({ ...prev, supplier: e.target.value }))}
-                    placeholder="Назва постачальника"
-                  />
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, supplier: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Оберіть постачальника" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Без постачальника</SelectItem>
+                      {suppliers.map((supplier: any) => (
+                        <SelectItem key={supplier.id} value={supplier.name}>
+                          {supplier.name}
+                          {supplier.description && ` - ${supplier.description}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
