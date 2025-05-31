@@ -1545,7 +1545,7 @@ export class DatabaseStorage implements IStorage {
 
   async getProductionForecast(id: number): Promise<ProductionForecast | undefined> {
     try {
-      const forecast = await db.select()
+      const forecast = await this.db.select()
         .from(productionForecasts)
         .where(eq(productionForecasts.id, id))
         .limit(1);
@@ -1558,7 +1558,7 @@ export class DatabaseStorage implements IStorage {
 
   async createProductionForecast(forecast: InsertProductionForecast): Promise<ProductionForecast> {
     try {
-      const result = await db.insert(productionForecasts).values(forecast).returning();
+      const result = await this.db.insert(productionForecasts).values(forecast).returning();
       return result[0];
     } catch (error) {
       console.error('Error creating production forecast:', error);
@@ -1568,7 +1568,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateProductionForecast(id: number, forecast: Partial<InsertProductionForecast>): Promise<ProductionForecast | undefined> {
     try {
-      const result = await db.update(productionForecasts)
+      const result = await this.db.update(productionForecasts)
         .set(forecast)
         .where(eq(productionForecasts.id, id))
         .returning();
@@ -1581,7 +1581,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProductionForecast(id: number): Promise<boolean> {
     try {
-      const result = await db.delete(productionForecasts)
+      const result = await this.db.delete(productionForecasts)
         .where(eq(productionForecasts.id, id));
       return result.rowCount > 0;
     } catch (error) {
