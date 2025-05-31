@@ -27,6 +27,7 @@ import InventoryAudits from "@/pages/inventory-audits";
 import Workers from "@/pages/workers";
 import ProductionForecasts from "@/pages/production-forecasts";
 import ForecastDetails from "@/pages/forecast-details";
+import ProductionStats from "@/pages/production-stats";
 import WarehouseTransfers from "@/pages/warehouse-transfers";
 import Positions from "@/pages/positions";
 import Departments from "@/pages/departments";
@@ -63,6 +64,7 @@ function Router() {
           <Route path="/workers" component={Workers} />
           <Route path="/production-forecasts" component={ProductionForecasts} />
           <Route path="/production-forecasts/:id" component={ForecastDetails} />
+          <Route path="/production-stats" component={ProductionStats} />
           <Route path="/warehouse-transfers" component={WarehouseTransfers} />
           <Route path="/positions" component={Positions} />
           <Route path="/departments" component={Departments} />
