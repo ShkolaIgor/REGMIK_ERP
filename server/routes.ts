@@ -11,7 +11,7 @@ import {
   insertInventoryAuditSchema, insertInventoryAuditItemSchema,
   insertWorkerSchema, insertProductionForecastSchema,
   insertWarehouseTransferSchema, insertPositionSchema, insertDepartmentSchema,
-  insertPackageTypeSchema, insertSolderingTypeSchema
+  insertPackageTypeSchema, insertSolderingTypeSchema, insertComponentAlternativeSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -506,6 +506,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete component" });
+    }
+  });
+
+  // Component Alternatives routes
+  app.get("/api/components/:id/alternatives", async (req, res) => {
+    try {
+      const componentId = parseInt(req.params.id);
+      const alternatives = await storage.getComponentAlternatives(componentId);
+      res.json(alternatives);
+    } catch (error) {
+      console.error("Error fetching component alternatives:", error);
+      res.status(500).json({ error: "Failed to fetch component alternatives" });
+    }
+  });
+
+  app.post("/api/components/:id/alternatives", async (req, res) => {
+    try {
+      const originalComponentId = parseInt(req.params.id);
+      const alternativeData = {
+        ...req.body,
+        originalComponentId
+      };
+      const validatedData = insertComponentAlternativeSchema.parse(alternativeData);
+      const alternative = await storage.createComponentAlternative(validatedData);
+      res.status(201).json(alternative);
+    } catch (error) {
+      console.error("Error creating component alternative:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid alternative data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create component alternative" });
+      }
+    }
+  });
+
+  app.patch("/api/component-alternatives/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const alternativeData = insertComponentAlternativeSchema.partial().parse(req.body);
+      const alternative = await storage.updateComponentAlternative(id, alternativeData);
+      if (!alternative) {
+        return res.status(404).json({ error: "Component alternative not found" });
+      }
+      res.json(alternative);
+    } catch (error) {
+      console.error("Error updating component alternative:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid alternative data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update component alternative" });
+      }
+    }
+  });
+
+  app.delete("/api/component-alternatives/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteComponentAlternative(id);
+      if (!success) {
+        return res.status(404).json({ error: "Component alternative not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting component alternative:", error);
+      res.status(500).json({ error: "Failed to delete component alternative" });
     }
   });
 

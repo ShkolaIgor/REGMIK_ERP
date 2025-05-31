@@ -2239,6 +2239,80 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
   }
+
+  // Component Alternatives
+  async getComponentAlternatives(componentId: number): Promise<(ComponentAlternative & { alternativeComponent: Component })[]> {
+    try {
+      const alternatives = await db
+        .select({
+          id: componentAlternatives.id,
+          originalComponentId: componentAlternatives.originalComponentId,
+          alternativeComponentId: componentAlternatives.alternativeComponentId,
+          compatibility: componentAlternatives.compatibility,
+          notes: componentAlternatives.notes,
+          verified: componentAlternatives.verified,
+          createdAt: componentAlternatives.createdAt,
+          alternativeComponent: {
+            id: components.id,
+            name: components.name,
+            sku: components.sku,
+            description: components.description,
+            unit: components.unit,
+            costPrice: components.costPrice,
+            minStock: components.minStock,
+            maxStock: components.maxStock,
+            supplier: components.supplier,
+            partNumber: components.partNumber,
+            category: components.category,
+            manufacturer: components.manufacturer,
+            uktzedCode: components.uktzedCode,
+            packageTypeId: components.packageTypeId,
+            createdAt: components.createdAt,
+          }
+        })
+        .from(componentAlternatives)
+        .innerJoin(components, eq(componentAlternatives.alternativeComponentId, components.id))
+        .where(eq(componentAlternatives.originalComponentId, componentId))
+        .orderBy(componentAlternatives.verified, componentAlternatives.createdAt);
+
+      return alternatives;
+    } catch (error) {
+      console.error("Error fetching component alternatives:", error);
+      return [];
+    }
+  }
+
+  async createComponentAlternative(alternative: InsertComponentAlternative): Promise<ComponentAlternative> {
+    const [created] = await db
+      .insert(componentAlternatives)
+      .values(alternative)
+      .returning();
+    return created;
+  }
+
+  async deleteComponentAlternative(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(componentAlternatives).where(eq(componentAlternatives.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error("Error deleting component alternative:", error);
+      return false;
+    }
+  }
+
+  async updateComponentAlternative(id: number, alternative: Partial<InsertComponentAlternative>): Promise<ComponentAlternative | undefined> {
+    try {
+      const [updated] = await db
+        .update(componentAlternatives)
+        .set(alternative)
+        .where(eq(componentAlternatives.id, id))
+        .returning();
+      return updated;
+    } catch (error) {
+      console.error("Error updating component alternative:", error);
+      return undefined;
+    }
+  }
 }
 
 export const dbStorage = new DatabaseStorage();

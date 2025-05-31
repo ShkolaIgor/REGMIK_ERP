@@ -30,6 +30,7 @@ import {
   type Department, type InsertDepartment,
   type PackageType, type InsertPackageType,
   type SolderingType, type InsertSolderingType,
+  type ComponentAlternative, type InsertComponentAlternative,
   departments
 } from "@shared/schema";
 
@@ -198,6 +199,12 @@ export interface IStorage {
   createDepartment(department: InsertDepartment): Promise<Department>;
   updateDepartment(id: number, department: Partial<InsertDepartment>): Promise<Department | undefined>;
   deleteDepartment(id: number): Promise<boolean>;
+
+  // Component Alternatives
+  getComponentAlternatives(componentId: number): Promise<(ComponentAlternative & { alternativeComponent: Component })[]>;
+  createComponentAlternative(alternative: InsertComponentAlternative): Promise<ComponentAlternative>;
+  deleteComponentAlternative(id: number): Promise<boolean>;
+  updateComponentAlternative(id: number, alternative: Partial<InsertComponentAlternative>): Promise<ComponentAlternative | undefined>;
 
   // Analytics
   getDashboardStats(): Promise<{
