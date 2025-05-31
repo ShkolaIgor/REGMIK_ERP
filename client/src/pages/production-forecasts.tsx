@@ -275,6 +275,11 @@ export default function ProductionForecasts() {
                         type="submit" 
                         disabled={createMutation.isPending}
                         className="bg-blue-600 hover:bg-blue-700"
+                        onClick={() => {
+                          console.log("Submit button clicked");
+                          console.log("Form errors:", form.formState.errors);
+                          console.log("Form values:", form.getValues());
+                        }}
                       >
                         {createMutation.isPending ? "Створення..." : "Створити"}
                       </Button>
