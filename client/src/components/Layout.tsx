@@ -85,7 +85,7 @@ export function Layout({ children }: LayoutProps) {
               <Box className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">Regmik ERP</h1>
+              <h1 className="text-xl font-semibold text-gray-900">REGMIK: ERP</h1>
               <p className="text-sm text-gray-500">Система обліку</p>
             </div>
           </div>
