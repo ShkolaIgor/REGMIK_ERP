@@ -6,7 +6,7 @@ import {
   insertProductSchema, insertOrderSchema, insertRecipeSchema,
   insertProductionTaskSchema, insertCategorySchema, insertUnitSchema, insertWarehouseSchema,
   insertSupplierSchema, insertInventorySchema, insertTechCardSchema,
-  insertProductComponentSchema, insertCostCalculationSchema, insertMaterialShortageSchema,
+  insertComponentSchema, insertProductComponentSchema, insertCostCalculationSchema, insertMaterialShortageSchema,
   insertAssemblyOperationSchema, insertAssemblyOperationItemSchema,
   insertInventoryAuditSchema, insertInventoryAuditItemSchema,
   insertWorkerSchema, insertProductionForecastSchema,

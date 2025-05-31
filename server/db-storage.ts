@@ -4,7 +4,7 @@ import { IStorage } from "./storage";
 import {
   users, categories, warehouses, units, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
-  productComponents, costCalculations, materialShortages, supplierOrders, supplierOrderItems,
+  components, productComponents, costCalculations, materialShortages, supplierOrders, supplierOrderItems,
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments,
   type User, type UpsertUser, type Category, type InsertCategory,
@@ -18,6 +18,7 @@ import {
   type TechCard, type InsertTechCard,
   type TechCardStep, type InsertTechCardStep,
   type TechCardMaterial, type InsertTechCardMaterial,
+  type Component, type InsertComponent,
   type ProductComponent, type InsertProductComponent,
   type CostCalculation, type InsertCostCalculation,
   type MaterialShortage, type InsertMaterialShortage,
@@ -409,6 +410,35 @@ export class DatabaseStorage implements IStorage {
   async deleteSupplier(id: number): Promise<boolean> {
     const result = await db.delete(suppliers).where(eq(suppliers.id, id));
     return result.rowCount > 0;
+  }
+
+  // Components
+  async getComponents(): Promise<Component[]> {
+    return await db.select().from(components);
+  }
+
+  async getComponent(id: number): Promise<Component | undefined> {
+    const result = await db.select().from(components).where(eq(components.id, id));
+    return result[0];
+  }
+
+  async createComponent(insertComponent: InsertComponent): Promise<Component> {
+    const result = await db.insert(components).values(insertComponent).returning();
+    return result[0];
+  }
+
+  async updateComponent(id: number, componentData: Partial<InsertComponent>): Promise<Component | undefined> {
+    const result = await db
+      .update(components)
+      .set({ ...componentData })
+      .where(eq(components.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteComponent(id: number): Promise<boolean> {
+    const result = await db.delete(components).where(eq(components.id, id));
+    return result.rowCount! > 0;
   }
 
   // Tech Cards
