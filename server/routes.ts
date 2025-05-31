@@ -11,7 +11,7 @@ import {
   insertInventoryAuditSchema, insertInventoryAuditItemSchema,
   insertWorkerSchema, insertProductionForecastSchema,
   insertWarehouseTransferSchema, insertPositionSchema, insertDepartmentSchema,
-  insertPackageTypeSchema, insertSolderingTypeSchema, insertComponentAlternativeSchema
+  insertPackageTypeSchema, insertSolderingTypeSchema, insertComponentAlternativeSchema, insertComponentCategorySchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -571,6 +571,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting component alternative:", error);
       res.status(500).json({ error: "Failed to delete component alternative" });
+    }
+  });
+
+  // Component Categories routes
+  app.get("/api/component-categories", async (req, res) => {
+    try {
+      const categories = await storage.getComponentCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching component categories:", error);
+      res.status(500).json({ error: "Failed to fetch component categories" });
+    }
+  });
+
+  app.post("/api/component-categories", async (req, res) => {
+    try {
+      const validatedData = insertComponentCategorySchema.parse(req.body);
+      const category = await storage.createComponentCategory(validatedData);
+      res.status(201).json(category);
+    } catch (error) {
+      console.error("Error creating component category:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid category data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create component category" });
+      }
+    }
+  });
+
+  app.patch("/api/component-categories/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertComponentCategorySchema.partial().parse(req.body);
+      const category = await storage.updateComponentCategory(id, validatedData);
+      if (!category) {
+        return res.status(404).json({ error: "Component category not found" });
+      }
+      res.json(category);
+    } catch (error) {
+      console.error("Error updating component category:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid category data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update component category" });
+      }
+    }
+  });
+
+  app.delete("/api/component-categories/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteComponentCategory(id);
+      if (!success) {
+        return res.status(404).json({ error: "Component category not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting component category:", error);
+      res.status(500).json({ error: "Failed to delete component category" });
     }
   });
 

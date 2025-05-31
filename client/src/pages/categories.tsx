@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit2, Trash2, Package, Search } from "lucide-react";
-import { CategoryForm } from "@/components/CategoryForm";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import type { Category } from "@shared/schema";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -19,92 +19,168 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Plus, Edit, Trash2, Package } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import type { ComponentCategory, InsertComponentCategory } from "@shared/schema";
+
+interface ComponentCategoryFormData {
+  name: string;
+  description: string;
+  color: string;
+}
 
 export default function Categories() {
-  const [showCategoryForm, setShowCategoryForm] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<ComponentCategory | null>(null);
+  const [formData, setFormData] = useState<ComponentCategoryFormData>({
+    name: "",
+    description: "",
+    color: "#3B82F6"
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: categories = [], isLoading } = useQuery({
-    queryKey: ["/api/categories"],
+    queryKey: ["/api/component-categories"],
   });
 
-  const { data: products = [] } = useQuery({
-    queryKey: ["/api/products"],
-  });
-
-  const deleteCategoryMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/categories/${id}`);
+  const createMutation = useMutation({
+    mutationFn: async (data: InsertComponentCategory) => {
+      const response = await fetch('/api/component-categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Помилка створення категорії');
+      }
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/component-categories"] });
       toast({
-        title: "Успіх",
-        description: "Категорію успішно видалено",
+        title: "Успішно",
+        description: "Категорію компонентів створено",
       });
+      handleCloseDialog();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Помилка",
-        description: error.message || "Не вдалося видалити категорію",
+        description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const filteredCategories = categories.filter((category: any) =>
-    category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (category.description && category.description.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-
-  const getProductCount = (categoryId: number) => {
-    return products.filter((product: any) => product.categoryId === categoryId).length;
-  };
-
-  const handleEditCategory = (category: Category) => {
-    setEditingCategory(category);
-    setShowCategoryForm(true);
-  };
-
-  const handleDeleteCategory = (id: number) => {
-    const productCount = getProductCount(id);
-    if (productCount > 0) {
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<InsertComponentCategory> }) => {
+      const response = await fetch(`/api/component-categories/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Помилка оновлення категорії');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/component-categories"] });
       toast({
-        title: "Неможливо видалити",
-        description: `У цій категорії є ${productCount} товарів. Спочатку переведіть товари в іншу категорію.`,
+        title: "Успішно",
+        description: "Категорію компонентів оновлено",
+      });
+      handleCloseDialog();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Помилка",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/component-categories/${id}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Помилка видалення категорії');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/component-categories"] });
+      toast({
+        title: "Успішно",
+        description: "Категорію компонентів видалено",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Помилка",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name.trim()) {
+      toast({
+        title: "Помилка",
+        description: "Назва категорії обов'язкова",
         variant: "destructive",
       });
       return;
     }
-    deleteCategoryMutation.mutate(id);
+
+    const submitData: InsertComponentCategory = {
+      name: formData.name.trim(),
+      description: formData.description.trim() || null,
+      color: formData.color,
+    };
+
+    if (editingCategory) {
+      updateMutation.mutate({ id: editingCategory.id, data: submitData });
+    } else {
+      createMutation.mutate(submitData);
+    }
   };
 
-  const handleAddCategory = () => {
-    setEditingCategory(null);
-    setShowCategoryForm(true);
+  const handleEdit = (category: ComponentCategory) => {
+    setEditingCategory(category);
+    setFormData({
+      name: category.name,
+      description: category.description || "",
+      color: category.color || "#3B82F6"
+    });
+    setIsDialogOpen(true);
   };
 
-  const handleFormClose = () => {
-    setShowCategoryForm(false);
+  const handleDelete = (id: number) => {
+    if (confirm("Ви впевнені, що хочете видалити цю категорію?")) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
     setEditingCategory(null);
+    setFormData({
+      name: "",
+      description: "",
+      color: "#3B82F6"
+    });
   };
 
   if (isLoading) {
@@ -116,205 +192,164 @@ export default function Categories() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Категорії товарів</h1>
-              <p className="text-gray-600 mt-1">Управління категоріями для організації товарів</p>
-            </div>
-            <Button onClick={handleAddCategory}>
-              <Plus className="w-4 h-4 mr-2" />
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Категорії компонентів</h1>
+          <p className="text-muted-foreground mt-2">
+            Управління категоріями електронних компонентів
+          </p>
+        </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setEditingCategory(null)}>
+              <Plus className="mr-2 h-4 w-4" />
               Додати категорію
             </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="p-6 space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Загальна кількість категорій</p>
-                  <p className="text-3xl font-semibold text-gray-900">{categories.length}</p>
-                </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Package className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Загальна кількість товарів</p>
-                  <p className="text-3xl font-semibold text-gray-900">{products.length}</p>
-                </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Package className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Середня кількість товарів на категорію</p>
-                  <p className="text-3xl font-semibold text-gray-900">
-                    {categories.length > 0 ? Math.round(products.length / categories.length) : 0}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Package className="w-6 h-6 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Search and Filters */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>
+                {editingCategory ? "Редагувати категорію" : "Нова категорія компонентів"}
+              </DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Назва категорії *</Label>
                 <Input
-                  placeholder="Пошук категорій..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Наприклад: Мікроконтролери"
+                  required
                 />
               </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Categories Table */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Список категорій</CardTitle>
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <span>Показано: {filteredCategories.length} з {categories.length}</span>
+              <div className="space-y-2">
+                <Label htmlFor="description">Опис</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Опис категорії компонентів"
+                  rows={3}
+                />
               </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {filteredCategories.length === 0 ? (
-              <div className="text-center py-8">
-                <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {searchQuery ? "Категорії не знайдено" : "Немає категорій"}
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  {searchQuery 
-                    ? "Спробуйте змінити критерії пошуку" 
-                    : "Почніть з створення першої категорії товарів"
+
+              <div className="space-y-2">
+                <Label htmlFor="color">Колір категорії</Label>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    id="color"
+                    type="color"
+                    value={formData.color}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    className="w-16 h-10"
+                  />
+                  <Input
+                    value={formData.color}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    placeholder="#3B82F6"
+                    className="flex-1"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCloseDialog}
+                >
+                  Скасувати
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={createMutation.isPending || updateMutation.isPending}
+                >
+                  {createMutation.isPending || updateMutation.isPending ? 
+                    "Збереження..." : 
+                    (editingCategory ? "Оновити" : "Створити")
                   }
-                </p>
-                {!searchQuery && (
-                  <Button onClick={handleAddCategory}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Додати категорію
-                  </Button>
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {(categories as ComponentCategory[]).map((category) => (
+          <Card key={category.id} className="relative">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div 
+                    className="w-4 h-4 rounded-full border"
+                    style={{ backgroundColor: category.color || "#3B82F6" }}
+                  />
+                  <CardTitle className="text-lg">{category.name}</CardTitle>
+                </div>
+                <Badge variant="secondary">
+                  <Package className="mr-1 h-3 w-3" />
+                  ID: {category.id}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {category.description && (
+                  <p className="text-sm text-muted-foreground">
+                    {category.description}
+                  </p>
                 )}
+                
+                <div className="text-xs text-muted-foreground">
+                  Створено: {category.createdAt ? new Date(category.createdAt).toLocaleDateString('uk-UA') : 'Невідомо'}
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(category)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDelete(category.id)}
+                    disabled={deleteMutation.isPending}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Назва</TableHead>
-                      <TableHead>Опис</TableHead>
-                      <TableHead>Кількість товарів</TableHead>
-                      <TableHead>Дії</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredCategories.map((category: any) => {
-                      const productCount = getProductCount(category.id);
-                      
-                      return (
-                        <TableRow key={category.id} className="hover:bg-gray-50">
-                          <TableCell>
-                            <div className="font-medium text-gray-900">{category.name}</div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm text-gray-500 max-w-xs truncate">
-                              {category.description || "Без опису"}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={productCount > 0 ? "default" : "secondary"}>
-                              {productCount} товарів
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditCategory(category)}
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="sm">
-                                    <Trash2 className="w-4 h-4 text-red-500" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Видалити категорію</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Ви впевнені, що хочете видалити категорію "{category.name}"?
-                                      {productCount > 0 && (
-                                        <span className="block mt-2 text-red-600 font-medium">
-                                          Увага: У цій категорії є {productCount} товарів. 
-                                          Спочатку переведіть товари в іншу категорію.
-                                        </span>
-                                      )}
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Скасувати</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => handleDeleteCategory(category.id)}
-                                      disabled={productCount > 0}
-                                      className={productCount > 0 ? "opacity-50 cursor-not-allowed" : ""}
-                                    >
-                                      Видалити
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {categories.length === 0 && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Package className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">Немає категорій</h3>
+            <p className="text-muted-foreground text-center mb-4">
+              Почніть з створення першої категорії компонентів
+            </p>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => setEditingCategory(null)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Створити категорію
+                </Button>
+              </DialogTrigger>
+            </Dialog>
           </CardContent>
         </Card>
-      </main>
-
-      <CategoryForm
-        open={showCategoryForm}
-        onOpenChange={handleFormClose}
-        category={editingCategory}
-      />
+      )}
     </div>
   );
 }

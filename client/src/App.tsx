@@ -73,6 +73,7 @@ function Router() {
           <Route path="/positions" component={Positions} />
           <Route path="/departments" component={Departments} />
           <Route path="/components" component={Components} />
+          <Route path="/categories" component={Categories} />
           <Route path="/package-types" component={PackageTypes} />
           <Route path="/soldering-types" component={SolderingTypes} />
           <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />

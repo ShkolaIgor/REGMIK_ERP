@@ -2264,7 +2264,7 @@ export class DatabaseStorage implements IStorage {
             maxStock: components.maxStock,
             supplier: components.supplier,
             partNumber: components.partNumber,
-            category: components.category,
+            categoryId: components.categoryId,
             manufacturer: components.manufacturer,
             uktzedCode: components.uktzedCode,
             packageTypeId: components.packageTypeId,
@@ -2312,6 +2312,40 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Error updating component alternative:", error);
       return undefined;
+    }
+  }
+
+  // Component Categories
+  async getComponentCategories(): Promise<ComponentCategory[]> {
+    return await db.select().from(componentCategories).orderBy(componentCategories.name);
+  }
+
+  async getComponentCategory(id: number): Promise<ComponentCategory | undefined> {
+    const [category] = await db.select().from(componentCategories).where(eq(componentCategories.id, id));
+    return category;
+  }
+
+  async createComponentCategory(category: InsertComponentCategory): Promise<ComponentCategory> {
+    const [created] = await db.insert(componentCategories).values(category).returning();
+    return created;
+  }
+
+  async updateComponentCategory(id: number, categoryData: Partial<InsertComponentCategory>): Promise<ComponentCategory | undefined> {
+    const [updated] = await db
+      .update(componentCategories)
+      .set({ ...categoryData, updatedAt: new Date() })
+      .where(eq(componentCategories.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteComponentCategory(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(componentCategories).where(eq(componentCategories.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error("Error deleting component category:", error);
+      return false;
     }
   }
 }
