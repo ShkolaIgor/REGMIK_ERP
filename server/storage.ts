@@ -22,7 +22,8 @@ import {
   type InventoryAuditItem, type InsertInventoryAuditItem,
   type Worker, type InsertWorker,
   type AssemblyOperation, type InsertAssemblyOperation,
-  type AssemblyOperationItem, type InsertAssemblyOperationItem
+  type AssemblyOperationItem, type InsertAssemblyOperationItem,
+  type ProductionForecast, type InsertProductionForecast
 } from "@shared/schema";
 
 export interface IStorage {
@@ -149,6 +150,13 @@ export interface IStorage {
   createWorker(worker: InsertWorker): Promise<Worker>;
   updateWorker(id: number, worker: Partial<InsertWorker>): Promise<Worker | undefined>;
   deleteWorker(id: number): Promise<boolean>;
+
+  // Production Forecasts
+  getProductionForecasts(): Promise<ProductionForecast[]>;
+  getProductionForecast(id: number): Promise<ProductionForecast | undefined>;
+  createProductionForecast(forecast: InsertProductionForecast): Promise<ProductionForecast>;
+  updateProductionForecast(id: number, forecast: Partial<InsertProductionForecast>): Promise<ProductionForecast | undefined>;
+  deleteProductionForecast(id: number): Promise<boolean>;
 
   // Analytics
   getDashboardStats(): Promise<{

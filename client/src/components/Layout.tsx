@@ -18,7 +18,8 @@ import {
   Layers,
   Truck,
   PackageOpen,
-  ClipboardList
+  ClipboardList,
+  TrendingUp
 } from "lucide-react";
 
 interface LayoutProps {

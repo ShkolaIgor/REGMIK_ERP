@@ -244,6 +244,7 @@ export default function ProductionForecasts() {
                               placeholder="Введіть опис прогнозу"
                               rows={3}
                               {...field}
+                              value={field.value || ""}
                             />
                           </FormControl>
                         </FormItem>

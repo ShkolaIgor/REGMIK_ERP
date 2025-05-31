@@ -8,7 +8,7 @@ import {
   insertProductComponentSchema, insertCostCalculationSchema, insertMaterialShortageSchema,
   insertAssemblyOperationSchema, insertAssemblyOperationItemSchema,
   insertInventoryAuditSchema, insertInventoryAuditItemSchema,
-  insertWorkerSchema
+  insertWorkerSchema, insertProductionForecastSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -1136,6 +1136,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Failed to delete worker:", error);
       res.status(500).json({ error: "Failed to delete worker" });
+    }
+  });
+
+  // Production Forecasts API
+  app.get("/api/production-forecasts", async (req, res) => {
+    try {
+      const forecasts = await storage.getProductionForecasts();
+      res.json(forecasts);
+    } catch (error) {
+      console.error("Failed to get production forecasts:", error);
+      res.status(500).json({ error: "Failed to get production forecasts" });
+    }
+  });
+
+  app.get("/api/production-forecasts/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const forecast = await storage.getProductionForecast(id);
+      if (!forecast) {
+        return res.status(404).json({ error: "Production forecast not found" });
+      }
+      res.json(forecast);
+    } catch (error) {
+      console.error("Failed to get production forecast:", error);
+      res.status(500).json({ error: "Failed to get production forecast" });
+    }
+  });
+
+  app.post("/api/production-forecasts", async (req, res) => {
+    try {
+      const forecastData = insertProductionForecastSchema.parse(req.body);
+      const forecast = await storage.createProductionForecast(forecastData);
+      res.status(201).json(forecast);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        console.error("Validation error:", error.errors);
+        res.status(400).json({ error: "Invalid forecast data", details: error.errors });
+      } else {
+        console.error("Failed to create production forecast:", error);
+        res.status(500).json({ error: "Failed to create production forecast" });
+      }
+    }
+  });
+
+  app.patch("/api/production-forecasts/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const forecastData = insertProductionForecastSchema.partial().parse(req.body);
+      const forecast = await storage.updateProductionForecast(id, forecastData);
+      if (!forecast) {
+        return res.status(404).json({ error: "Production forecast not found" });
+      }
+      res.json(forecast);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid forecast data", details: error.errors });
+      } else {
+        console.error("Failed to update production forecast:", error);
+        res.status(500).json({ error: "Failed to update production forecast" });
+      }
+    }
+  });
+
+  app.delete("/api/production-forecasts/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteProductionForecast(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Production forecast not found" });
+      }
+      res.status(204).end();
+    } catch (error) {
+      console.error("Failed to delete production forecast:", error);
+      res.status(500).json({ error: "Failed to delete production forecast" });
     }
   });
 
