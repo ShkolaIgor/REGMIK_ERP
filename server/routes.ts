@@ -522,11 +522,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/package-types", async (req, res) => {
     try {
-      const packageType = await storage.createPackageType(req.body);
+      console.log("Raw body:", req.body);
+      console.log("Body type:", typeof req.body);
+      
+      const validatedData = insertPackageTypeSchema.parse(req.body);
+      console.log("Validated data:", validatedData);
+      
+      const packageType = await storage.createPackageType(validatedData);
       res.status(201).json(packageType);
     } catch (error) {
       console.error("Error creating package type:", error);
-      res.status(500).json({ error: "Failed to create package type" });
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid package type data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create package type" });
+      }
     }
   });
 
