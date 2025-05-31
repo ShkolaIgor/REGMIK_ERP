@@ -28,7 +28,9 @@ import {
   type AssemblyOperation, type InsertAssemblyOperation,
   type AssemblyOperationItem, type InsertAssemblyOperationItem,
   type Worker, type InsertWorker,
-  type ProductionForecast, type InsertProductionForecast
+  type ProductionForecast, type InsertProductionForecast,
+  type WarehouseTransfer, type InsertWarehouseTransfer,
+  type WarehouseTransferItem, type InsertWarehouseTransferItem
 } from "@shared/schema";
 
 export class DatabaseStorage implements IStorage {
@@ -1531,7 +1533,7 @@ export class DatabaseStorage implements IStorage {
   // Production Forecasts
   async getProductionForecasts(): Promise<ProductionForecast[]> {
     try {
-      const forecasts = await db.select()
+      const forecasts = await this.db.select()
         .from(productionForecasts)
         .orderBy(desc(productionForecasts.createdAt));
       return forecasts;
