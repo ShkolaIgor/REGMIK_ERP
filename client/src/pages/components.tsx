@@ -613,7 +613,7 @@ function AlternativesManagement({ component, onClose }: { component: Component |
 
   // Запит аналогів для поточного компонента
   const { data: alternatives = [], isLoading: isLoadingAlternatives } = useQuery({
-    queryKey: ['/api/components', component?.id, 'alternatives'],
+    queryKey: [`/api/components/${component?.id}/alternatives`],
     enabled: !!component?.id,
   });
 
@@ -634,7 +634,7 @@ function AlternativesManagement({ component, onClose }: { component: Component |
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/components', component?.id, 'alternatives'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/components/${component?.id}/alternatives`] });
       setIsAddingAlternative(false);
       setSelectedAlternativeId(null);
       setCompatibility("100%");
@@ -659,7 +659,7 @@ function AlternativesManagement({ component, onClose }: { component: Component |
       if (!response.ok) throw new Error('Помилка видалення альтернативи');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/components', component?.id, 'alternatives'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/components/${component?.id}/alternatives`] });
       toast({ title: "Альтернативу видалено успішно" });
     },
     onError: () => {
