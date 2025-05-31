@@ -218,6 +218,11 @@ export const insertProductionTaskSchema = createInsertSchema(productionTasks).om
 export const insertTechCardSchema = createInsertSchema(techCards).omit({ id: true, createdAt: true });
 export const insertTechCardStepSchema = createInsertSchema(techCardSteps).omit({ id: true });
 export const insertTechCardMaterialSchema = createInsertSchema(techCardMaterials).omit({ id: true });
+export const insertPackageTypeSchema = createInsertSchema(packageTypes).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
 export const insertComponentSchema = createInsertSchema(components).omit({ id: true, createdAt: true });
 export const insertProductComponentSchema = createInsertSchema(productComponents).omit({ id: true, createdAt: true });
 
@@ -647,6 +652,8 @@ export type TechCardStep = typeof techCardSteps.$inferSelect;
 export type InsertTechCardStep = z.infer<typeof insertTechCardStepSchema>;
 export type TechCardMaterial = typeof techCardMaterials.$inferSelect;
 export type InsertTechCardMaterial = z.infer<typeof insertTechCardMaterialSchema>;
+export type PackageType = typeof packageTypes.$inferSelect;
+export type InsertPackageType = z.infer<typeof insertPackageTypeSchema>;
 export type Component = typeof components.$inferSelect;
 export type InsertComponent = z.infer<typeof insertComponentSchema>;
 export type ProductComponent = typeof productComponents.$inferSelect;

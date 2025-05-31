@@ -19,6 +19,7 @@ import {
   type TechCardStep, type InsertTechCardStep,
   type TechCardMaterial, type InsertTechCardMaterial,
   type Component, type InsertComponent,
+  type PackageType, type InsertPackageType,
   type ProductComponent, type InsertProductComponent,
   type CostCalculation, type InsertCostCalculation,
   type MaterialShortage, type InsertMaterialShortage,
