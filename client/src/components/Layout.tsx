@@ -39,7 +39,7 @@ const navigationItems = [
     title: "Модуль Склад",
     items: [
       { name: "Каталог товарів", href: "/inventory", icon: Package },
-      { name: "Категорії", href: "/categories", icon: Box },
+      { name: "Категорії товарів", href: "/product-categories", icon: Box },
       { name: "Склади", href: "/warehouses", icon: Warehouse },
       { name: "Замовлення", href: "/orders", icon: ShoppingCart },
       { name: "Замовлення постачальникам", href: "/supplier-orders", icon: Truck },
@@ -65,6 +65,7 @@ const navigationItems = [
     title: "Довідники",
     items: [
       { name: "Компоненти", href: "/components", icon: Package },
+      { name: "Категорії компонентів", href: "/categories", icon: Layers },
       { name: "Типи корпусів", href: "/package-types", icon: Box },
       { name: "Типи пайки", href: "/soldering-types", icon: Flame },
       { name: "Постачальники", href: "/suppliers", icon: Users },

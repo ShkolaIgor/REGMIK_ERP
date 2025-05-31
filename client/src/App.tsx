@@ -15,6 +15,7 @@ import Recipes from "@/pages/recipes";
 import TechCards from "@/pages/tech-cards";
 import BOM from "@/pages/bom";
 import Categories from "@/pages/categories";
+import ProductCategories from "@/pages/product-categories";
 import Warehouses from "@/pages/warehouses";
 import Reports from "@/pages/reports";
 import AdvancedReports from "@/pages/advanced-reports";
