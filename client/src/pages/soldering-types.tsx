@@ -57,7 +57,7 @@ export default function SolderingTypes() {
     mutationFn: async (data: any) => {
       return await apiRequest("/api/soldering-types", {
         method: "POST",
-        body: JSON.stringify(data),
+        body: data,
       });
     },
     onSuccess: () => {
@@ -82,7 +82,7 @@ export default function SolderingTypes() {
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
       return await apiRequest(`/api/soldering-types/${id}`, {
         method: "PATCH",
-        body: JSON.stringify(data),
+        body: data,
       });
     },
     onSuccess: () => {
