@@ -37,13 +37,14 @@ import SolderingTypes from "@/pages/soldering-types";
 import NotFound from "@/pages/not-found";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  // Тимчасово відключаємо аутентифікацію для тестування
+  // const { isAuthenticated, isLoading } = useAuth();
 
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
+      {/* {isLoading || !isAuthenticated ? (
         <Route path="/" component={SimpleLogin} />
-      ) : (
+      ) : ( */}
         <Layout>
           <Route path="/" component={Home} />
           <Route path="/dashboard" component={Dashboard} />
@@ -76,7 +77,7 @@ function Router() {
           <Route path="/soldering-types" component={SolderingTypes} />
           <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
         </Layout>
-      )}
+      <Route component={NotFound} />
     </Switch>
   );
 }
