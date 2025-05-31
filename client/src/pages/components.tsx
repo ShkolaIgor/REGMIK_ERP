@@ -206,6 +206,8 @@ export default function Components() {
       supplier: formData.supplier === "none" ? null : formData.supplier,
     };
 
+    console.log("Submitting data:", submitData);
+
     if (editingComponent) {
       updateMutation.mutate({ id: editingComponent.id, data: submitData });
     } else {
