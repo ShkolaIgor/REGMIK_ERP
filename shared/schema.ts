@@ -82,10 +82,39 @@ export const orders = pgTable("orders", {
   customerName: text("customer_name").notNull(),
   customerEmail: text("customer_email"),
   customerPhone: text("customer_phone"),
-  status: text("status").notNull().default("pending"), // pending, processing, completed, cancelled
+  status: text("status").notNull().default("pending"), // pending, processing, shipped, delivered, cancelled
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Таблиця відвантажень
+export const shipments = pgTable("shipments", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").references(() => orders.id).notNull(),
+  shipmentNumber: text("shipment_number").notNull().unique(),
+  trackingNumber: text("tracking_number"),
+  carrier: text("carrier"), // транспортна компанія
+  shippingAddress: text("shipping_address").notNull(),
+  weight: decimal("weight", { precision: 8, scale: 3 }), // кг
+  dimensions: text("dimensions"), // ДхШхВ в см
+  shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }),
+  status: text("status").notNull().default("preparing"), // preparing, shipped, in_transit, delivered
+  estimatedDelivery: timestamp("estimated_delivery"),
+  actualDelivery: timestamp("actual_delivery"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  shippedAt: timestamp("shipped_at"),
+});
+
+// Елементи відвантаження
+export const shipmentItems = pgTable("shipment_items", {
+  id: serial("id").primaryKey(),
+  shipmentId: integer("shipment_id").references(() => shipments.id).notNull(),
+  orderItemId: integer("order_item_id").references(() => orderItems.id).notNull(),
+  productId: integer("product_id").references(() => products.id).notNull(),
+  quantity: integer("quantity").notNull(),
+  serialNumbers: text("serial_numbers").array(), // серійні номери для відстеження
 });
 
 export const orderItems = pgTable("order_items", {
@@ -249,6 +278,16 @@ export const insertPackageTypeSchema = createInsertSchema(packageTypes).omit({
 export const insertSolderingTypeSchema = createInsertSchema(solderingTypes).omit({ 
   id: true, 
   createdAt: true 
+});
+
+export const insertShipmentSchema = createInsertSchema(shipments).omit({ 
+  id: true, 
+  createdAt: true,
+  shipmentNumber: true 
+});
+
+export const insertShipmentItemSchema = createInsertSchema(shipmentItems).omit({ 
+  id: true 
 });
 
 export const insertComponentCategorySchema = createInsertSchema(componentCategories).omit({ 
