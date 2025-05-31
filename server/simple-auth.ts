@@ -12,6 +12,8 @@ export const isSimpleAuthenticated: RequestHandler = (req, res, next) => {
 
 // Налаштування сесій
 export function setupSimpleSession(app: Express) {
+  app.set('trust proxy', 1);
+  
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 тиждень
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
@@ -31,6 +33,7 @@ export function setupSimpleSession(app: Express) {
       secure: false, // false для development
       maxAge: sessionTtl,
     },
+    name: 'sessionId'
   }));
 }
 
@@ -59,11 +62,13 @@ const demoUsers = [
 export function setupSimpleAuth(app: Express) {
   // Маршрут для простого входу
   app.post("/api/auth/simple-login", (req, res) => {
+    console.log("Login attempt:", req.body);
     const { username, password } = req.body;
     
     const user = demoUsers.find(u => u.username === username && u.password === password);
     
     if (user) {
+      console.log("User found, creating session");
       // Створюємо сесію
       (req.session as any).user = {
         id: user.id,
@@ -74,8 +79,16 @@ export function setupSimpleAuth(app: Express) {
         profileImageUrl: user.profileImageUrl
       };
       
-      res.json({ success: true, user: user });
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Помилка збереження сесії" });
+        }
+        console.log("Session saved successfully");
+        res.json({ success: true, user: user });
+      });
     } else {
+      console.log("Invalid credentials");
       res.status(401).json({ message: "Невірний логін або пароль" });
     }
   });

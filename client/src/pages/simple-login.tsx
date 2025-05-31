@@ -19,10 +19,21 @@ export default function SimpleLogin() {
     setIsLoading(true);
 
     try {
-      await apiRequest("/api/auth/simple-login", "POST", {
-        username,
-        password
+      const response = await fetch("/api/auth/simple-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          username,
+          password
+        })
       });
+
+      if (!response.ok) {
+        throw new Error("Login failed");
+      }
       
       // Перезавантажити сторінку для оновлення стану авторизації
       window.location.reload();
@@ -41,10 +52,21 @@ export default function SimpleLogin() {
     setIsLoading(true);
     
     try {
-      await apiRequest("/api/auth/simple-login", "POST", {
-        username: "demo",
-        password: "demo123"
+      const response = await fetch("/api/auth/simple-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          username: "demo",
+          password: "demo123"
+        })
       });
+
+      if (!response.ok) {
+        throw new Error("Demo login failed");
+      }
       
       window.location.reload();
     } catch (error) {
