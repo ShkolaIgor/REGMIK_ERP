@@ -188,8 +188,7 @@ export const componentCategories = pgTable("component_categories", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull().unique(),
   description: text("description"),
-  parentCategoryId: integer("parent_category_id").references(() => componentCategories.id),
-  code: varchar("code", { length: 20 }).unique(), // Код категорії для ідентифікації
+  color: varchar("color", { length: 7 }).default("#3B82F6"), // Колір для візуальної ідентифікації
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
