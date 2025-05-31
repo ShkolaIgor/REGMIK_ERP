@@ -171,6 +171,17 @@ export const packageTypes = pgTable("package_types", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Таблиця типів пайки
+export const solderingTypes = pgTable("soldering_types", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  temperature: varchar("temperature", { length: 50 }),
+  method: varchar("method", { length: 100 }),
+  equipment: text("equipment"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Таблиця компонентів для BOM
 export const components = pgTable("components", {
   id: serial("id").primaryKey(),
@@ -219,6 +230,11 @@ export const insertTechCardSchema = createInsertSchema(techCards).omit({ id: tru
 export const insertTechCardStepSchema = createInsertSchema(techCardSteps).omit({ id: true });
 export const insertTechCardMaterialSchema = createInsertSchema(techCardMaterials).omit({ id: true });
 export const insertPackageTypeSchema = createInsertSchema(packageTypes).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertSolderingTypeSchema = createInsertSchema(solderingTypes).omit({ 
   id: true, 
   createdAt: true 
 });
@@ -654,6 +670,8 @@ export type TechCardMaterial = typeof techCardMaterials.$inferSelect;
 export type InsertTechCardMaterial = z.infer<typeof insertTechCardMaterialSchema>;
 export type PackageType = typeof packageTypes.$inferSelect;
 export type InsertPackageType = z.infer<typeof insertPackageTypeSchema>;
+export type SolderingType = typeof solderingTypes.$inferSelect;
+export type InsertSolderingType = z.infer<typeof insertSolderingTypeSchema>;
 export type Component = typeof components.$inferSelect;
 export type InsertComponent = z.infer<typeof insertComponentSchema>;
 export type ProductComponent = typeof productComponents.$inferSelect;

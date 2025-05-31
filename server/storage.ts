@@ -101,6 +101,13 @@ export interface IStorage {
   updatePackageType(id: number, packageType: Partial<InsertPackageType>): Promise<PackageType | undefined>;
   deletePackageType(id: number): Promise<boolean>;
 
+  // Soldering Types
+  getSolderingTypes(): Promise<SolderingType[]>;
+  getSolderingType(id: number): Promise<SolderingType | undefined>;
+  createSolderingType(solderingType: InsertSolderingType): Promise<SolderingType>;
+  updateSolderingType(id: number, solderingType: Partial<InsertSolderingType>): Promise<SolderingType | undefined>;
+  deleteSolderingType(id: number): Promise<boolean>;
+
   // Tech Cards
   getTechCards(): Promise<(TechCard & { product: Product; steps: TechCardStep[]; materials: (TechCardMaterial & { product: Product })[] })[]>;
   getTechCard(id: number): Promise<(TechCard & { product: Product; steps: TechCardStep[]; materials: (TechCardMaterial & { product: Product })[] }) | undefined>;
