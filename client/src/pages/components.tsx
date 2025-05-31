@@ -355,7 +355,7 @@ export default function Components() {
                       <SelectValue placeholder="Оберіть категорію" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Без категорії</SelectItem>
+                      <SelectItem value="none">Без категорії</SelectItem>
                       {componentCategories.map((category: any) => (
                         <SelectItem key={category.id} value={category.name}>
                           {category.name}
