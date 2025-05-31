@@ -2,7 +2,7 @@ import {
   users, categories, units, warehouses, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   components, productComponents, costCalculations, materialShortages, inventoryAudits, inventoryAuditItems, workers,
-  packageTypes,
+  packageTypes, solderingTypes,
   type User, type UpsertUser, type Category, type InsertCategory,
   type Unit, type InsertUnit,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
@@ -29,6 +29,7 @@ import {
   type Position, type InsertPosition,
   type Department, type InsertDepartment,
   type PackageType, type InsertPackageType,
+  type SolderingType, type InsertSolderingType,
   departments
 } from "@shared/schema";
 

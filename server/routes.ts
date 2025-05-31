@@ -10,7 +10,8 @@ import {
   insertAssemblyOperationSchema, insertAssemblyOperationItemSchema,
   insertInventoryAuditSchema, insertInventoryAuditItemSchema,
   insertWorkerSchema, insertProductionForecastSchema,
-  insertWarehouseTransferSchema, insertPositionSchema, insertDepartmentSchema
+  insertWarehouseTransferSchema, insertPositionSchema, insertDepartmentSchema,
+  insertPackageTypeSchema, insertSolderingTypeSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -1603,6 +1604,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Failed to delete department:", error);
       res.status(500).json({ error: "Failed to delete department" });
+    }
+  });
+
+  // Soldering Types API
+  app.get("/api/soldering-types", async (req, res) => {
+    try {
+      const solderingTypes = await storage.getSolderingTypes();
+      res.json(solderingTypes);
+    } catch (error) {
+      console.error("Failed to get soldering types:", error);
+      res.status(500).json({ error: "Failed to get soldering types" });
+    }
+  });
+
+  app.post("/api/soldering-types", async (req, res) => {
+    try {
+      const solderingTypeData = insertSolderingTypeSchema.parse(req.body);
+      const solderingType = await storage.createSolderingType(solderingTypeData);
+      res.status(201).json(solderingType);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid soldering type data", details: error.errors });
+      } else {
+        console.error("Failed to create soldering type:", error);
+        res.status(500).json({ error: "Failed to create soldering type" });
+      }
+    }
+  });
+
+  app.get("/api/soldering-types/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const solderingType = await storage.getSolderingType(id);
+      if (!solderingType) {
+        return res.status(404).json({ error: "Soldering type not found" });
+      }
+      res.json(solderingType);
+    } catch (error) {
+      console.error("Failed to get soldering type:", error);
+      res.status(500).json({ error: "Failed to get soldering type" });
+    }
+  });
+
+  app.patch("/api/soldering-types/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const solderingTypeData = insertSolderingTypeSchema.partial().parse(req.body);
+      const solderingType = await storage.updateSolderingType(id, solderingTypeData);
+      if (!solderingType) {
+        return res.status(404).json({ error: "Soldering type not found" });
+      }
+      res.json(solderingType);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid soldering type data", details: error.errors });
+      } else {
+        console.error("Failed to update soldering type:", error);
+        res.status(500).json({ error: "Failed to update soldering type" });
+      }
+    }
+  });
+
+  app.delete("/api/soldering-types/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteSolderingType(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Soldering type not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to delete soldering type:", error);
+      res.status(500).json({ error: "Failed to delete soldering type" });
     }
   });
 
