@@ -249,7 +249,7 @@ export default function WorkersPage() {
                     <FormItem>
                       <FormLabel>Фото робітника</FormLabel>
                       <FormControl>
-                        <div className="flex flex-col items-center space-y-4">
+                        <div className="flex items-start space-x-4">
                           <div className="relative">
                             <div 
                               className="w-24 h-24 rounded-full border-2 border-gray-200 shadow-sm cursor-pointer hover:border-blue-300 transition-colors flex items-center justify-center bg-gray-50 overflow-hidden"
@@ -280,6 +280,14 @@ export default function WorkersPage() {
                               </Button>
                             )}
                           </div>
+                          <div className="flex-1 space-y-3">
+                            <p className="text-sm text-gray-500">Клацніть на зображення для вибору файлу</p>
+                            <Input
+                              placeholder="Або вставте URL зображення"
+                              value={typeof field.value === 'string' && !field.value.startsWith('data:') ? field.value : ''}
+                              onChange={(e) => field.onChange(e.target.value)}
+                            />
+                          </div>
                           <input
                             id="photo-input"
                             type="file"
@@ -296,17 +304,6 @@ export default function WorkersPage() {
                               }
                             }}
                           />
-                          <div className="text-center">
-                            <p className="text-sm text-gray-500">Клацніть на зображення для вибору файлу</p>
-                            <div className="mt-2">
-                              <Input
-                                placeholder="Або вставте URL зображення"
-                                value={typeof field.value === 'string' && !field.value.startsWith('data:') ? field.value : ''}
-                                onChange={(e) => field.onChange(e.target.value)}
-                                className="text-center"
-                              />
-                            </div>
-                          </div>
                         </div>
                       </FormControl>
                       <FormMessage />
