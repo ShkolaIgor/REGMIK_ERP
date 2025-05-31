@@ -2,7 +2,7 @@ import {
   users, categories, units, warehouses, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   productComponents, costCalculations, materialShortages, inventoryAudits, inventoryAuditItems, workers,
-  type User, type InsertUser, type Category, type InsertCategory,
+  type User, type UpsertUser, type Category, type InsertCategory,
   type Unit, type InsertUnit,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
   type Inventory, type InsertInventory, type Order, type InsertOrder,
@@ -30,10 +30,9 @@ import {
 } from "@shared/schema";
 
 export interface IStorage {
-  // Users
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // Users (updated for Replit Auth)
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
 
   // Categories
   getCategories(): Promise<Category[]>;
@@ -249,20 +248,33 @@ export class MemStorage implements IStorage {
     this.currentWarehouseId = 2;
   }
 
-  // Users
-  async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+  // Users (updated for Replit Auth)
+  async getUser(id: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.id === id);
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.username === username);
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const existingUser = Array.from(this.users.values()).find(user => user.id === userData.id);
+    
+    if (existingUser) {
+      // Update existing user
+      const updatedUser: User = {
+        ...existingUser,
+        ...userData,
+        updatedAt: new Date(),
+      };
+      this.users.set(userData.id!, updatedUser);
+      return updatedUser;
+    } else {
+      // Create new user
+      const newUser: User = {
+        ...userData,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as User;
+      this.users.set(userData.id!, newUser);
+      return newUser;
+    }
   }
 
   // Categories

@@ -174,8 +174,7 @@ export const productComponents = pgTable("product_components", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Insert schemas
-export const insertUserSchema = createInsertSchema(users).omit({ id: true });
+// Insert schemas (old user schema removed for Replit Auth)
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertUnitSchema = createInsertSchema(units).omit({ id: true, createdAt: true });
 export const insertWarehouseSchema = createInsertSchema(warehouses).omit({ id: true });
@@ -561,9 +560,9 @@ export const insertDepartmentSchema = createInsertSchema(departments).omit({
 // User schema for auth (updated for Replit Auth)
 export const insertUserSchemaAuth = createInsertSchema(users);
 
-// Types
+// Types for Replit Auth
 export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpsertUser = z.infer<typeof insertUserSchemaAuth>;
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type Unit = typeof units.$inferSelect;
