@@ -21,7 +21,8 @@ import {
   ClipboardList,
   TrendingUp,
   Building2,
-  Flame
+  Flame,
+  Ruler
 } from "lucide-react";
 
 interface LayoutProps {
@@ -68,6 +69,7 @@ const navigationItems = [
       { name: "Категорії товарів", href: "/product-categories", icon: Box },
       { name: "Типи корпусів", href: "/package-types", icon: Box },
       { name: "Типи пайки", href: "/soldering-types", icon: Flame },
+      { name: "Одиниці виміру", href: "/units", icon: Ruler },
       { name: "Постачальники", href: "/suppliers", icon: Users },
       { name: "Робітники", href: "/workers", icon: Users },
       { name: "Посади", href: "/positions", icon: Users },
