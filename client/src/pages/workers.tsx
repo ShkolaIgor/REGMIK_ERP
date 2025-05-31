@@ -98,6 +98,8 @@ export default function WorkersPage() {
           ...data,
           hireDate: data.hireDate ? new Date(data.hireDate).toISOString() : null,
           hourlyRate: data.hourlyRate ? parseFloat(data.hourlyRate) : null,
+          positionId: data.positionId || null,
+          departmentId: data.departmentId || null,
         },
       }),
     onSuccess: () => {
