@@ -162,11 +162,28 @@ export const techCardMaterials = pgTable("tech_card_materials", {
   unit: text("unit").notNull(),
 });
 
+// Таблиця компонентів для BOM
+export const components = pgTable("components", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull(),
+  sku: varchar("sku").notNull().unique(),
+  description: text("description"),
+  unit: varchar("unit").notNull().default("шт"),
+  costPrice: varchar("cost_price").notNull().default("0"),
+  supplier: varchar("supplier"),
+  partNumber: varchar("part_number"),
+  category: varchar("category"),
+  minStock: integer("min_stock"),
+  maxStock: integer("max_stock"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Таблиця для композиції продуктів (BOM - Bill of Materials)
 export const productComponents = pgTable("product_components", {
   id: serial("id").primaryKey(),
   parentProductId: integer("parent_product_id").references(() => products.id).notNull(),
-  componentProductId: integer("component_product_id").references(() => products.id).notNull(),
+  componentProductId: integer("component_product_id").references(() => products.id),
+  componentId: integer("component_id").references(() => components.id),
   quantity: decimal("quantity", { precision: 10, scale: 4 }).notNull(),
   unit: text("unit").notNull().default("шт"),
   isOptional: boolean("is_optional").default(false),
@@ -189,6 +206,7 @@ export const insertProductionTaskSchema = createInsertSchema(productionTasks).om
 export const insertTechCardSchema = createInsertSchema(techCards).omit({ id: true, createdAt: true });
 export const insertTechCardStepSchema = createInsertSchema(techCardSteps).omit({ id: true });
 export const insertTechCardMaterialSchema = createInsertSchema(techCardMaterials).omit({ id: true });
+export const insertComponentSchema = createInsertSchema(components).omit({ id: true, createdAt: true });
 export const insertProductComponentSchema = createInsertSchema(productComponents).omit({ id: true, createdAt: true });
 
 // Таблиця для відстеження дефіциту матеріалів
