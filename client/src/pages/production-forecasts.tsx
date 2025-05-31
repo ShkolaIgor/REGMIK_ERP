@@ -39,12 +39,14 @@ export default function ProductionForecasts() {
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertProductionForecast) => {
+      console.log("Creating forecast with data:", data);
       return apiRequest("/api/production-forecasts", {
         method: "POST",
         body: data,
       });
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log("Forecast created successfully:", result);
       queryClient.invalidateQueries({ queryKey: ["/api/production-forecasts"] });
       setIsDialogOpen(false);
       form.reset();
@@ -54,6 +56,7 @@ export default function ProductionForecasts() {
       });
     },
     onError: (error) => {
+      console.error("Failed to create forecast:", error);
       toast({
         title: "Помилка",
         description: "Не вдалося створити прогноз виробництва",
