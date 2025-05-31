@@ -183,6 +183,18 @@ export const solderingTypes = pgTable("soldering_types", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Таблиця категорій компонентів
+export const componentCategories = pgTable("component_categories", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+  description: text("description"),
+  parentCategoryId: integer("parent_category_id").references(() => componentCategories.id),
+  code: varchar("code", { length: 20 }).unique(), // Код категорії для ідентифікації
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Таблиця компонентів для BOM
 export const components = pgTable("components", {
   id: serial("id").primaryKey(),
@@ -193,7 +205,7 @@ export const components = pgTable("components", {
   costPrice: varchar("cost_price").notNull().default("0"),
   supplier: varchar("supplier"),
   partNumber: varchar("part_number"),
-  category: varchar("category"),
+  categoryId: integer("category_id").references(() => componentCategories.id),
   manufacturer: varchar("manufacturer"),
   uktzedCode: varchar("uktzed_code"),
   packageTypeId: integer("package_type_id").references(() => packageTypes.id),
@@ -238,6 +250,12 @@ export const insertPackageTypeSchema = createInsertSchema(packageTypes).omit({
 export const insertSolderingTypeSchema = createInsertSchema(solderingTypes).omit({ 
   id: true, 
   createdAt: true 
+});
+
+export const insertComponentCategorySchema = createInsertSchema(componentCategories).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
 });
 
 export const insertComponentSchema = createInsertSchema(components).omit({ id: true, createdAt: true });
@@ -673,6 +691,8 @@ export type PackageType = typeof packageTypes.$inferSelect;
 export type InsertPackageType = z.infer<typeof insertPackageTypeSchema>;
 export type SolderingType = typeof solderingTypes.$inferSelect;
 export type InsertSolderingType = z.infer<typeof insertSolderingTypeSchema>;
+export type ComponentCategory = typeof componentCategories.$inferSelect;
+export type InsertComponentCategory = z.infer<typeof insertComponentCategorySchema>;
 export type Component = typeof components.$inferSelect;
 export type InsertComponent = z.infer<typeof insertComponentSchema>;
 export type ProductComponent = typeof productComponents.$inferSelect;

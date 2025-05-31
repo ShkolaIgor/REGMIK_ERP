@@ -7,7 +7,7 @@ import {
   components, productComponents, costCalculations, materialShortages, supplierOrders, supplierOrderItems,
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes, solderingTypes,
-  componentAlternatives,
+  componentCategories, componentAlternatives,
   type User, type UpsertUser, type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
   type Product, type InsertProduct,
