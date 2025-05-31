@@ -404,7 +404,8 @@ export const insertWorkerSchema = createInsertSchema(workers).omit({
   createdAt: true, 
   updatedAt: true 
 }).extend({
-  hourlyRate: z.union([z.string(), z.number()]).transform((val) => val?.toString()).optional().nullable()
+  hourlyRate: z.union([z.string(), z.number()]).transform((val) => val?.toString()).optional().nullable(),
+  hireDate: z.union([z.string(), z.date()]).transform((val) => val ? new Date(val) : null).optional().nullable()
 });
 
 // Таблиця прогнозування виробництва
