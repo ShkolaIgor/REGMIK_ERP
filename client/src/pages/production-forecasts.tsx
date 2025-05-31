@@ -66,11 +66,13 @@ export default function ProductionForecasts() {
   });
 
   const onSubmit = (data: InsertProductionForecast) => {
+    console.log("onSubmit called with data:", data);
     const submitData = {
       ...data,
       startDate: new Date(),
       endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // +30 днів
     };
+    console.log("Submit data:", submitData);
     createMutation.mutate(submitData);
   };
 
