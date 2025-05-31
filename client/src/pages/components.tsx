@@ -99,7 +99,7 @@ export default function Components() {
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
       return await apiRequest(`/api/components/${id}`, {
-        method: "PUT",
+        method: "PATCH",
         body: JSON.stringify(data),
       });
     },
