@@ -75,7 +75,7 @@ export default function Components() {
     costPrice: "",
     supplier: "",
     partNumber: "",
-    category: "",
+    categoryId: "",
     manufacturer: "",
     uktzedCode: "",
     packageTypeId: "",
@@ -184,7 +184,7 @@ export default function Components() {
       costPrice: "",
       supplier: "",
       partNumber: "",
-      category: "",
+      categoryId: "",
       manufacturer: "",
       uktzedCode: "",
       packageTypeId: "",
@@ -202,7 +202,7 @@ export default function Components() {
       minStock: formData.minStock ? parseInt(formData.minStock) : null,
       maxStock: formData.maxStock ? parseInt(formData.maxStock) : null,
       packageTypeId: formData.packageTypeId && formData.packageTypeId !== "none" ? parseInt(formData.packageTypeId) : null,
-      category: formData.category === "none" ? null : formData.category,
+      categoryId: formData.categoryId && formData.categoryId !== "none" ? parseInt(formData.categoryId) : null,
       supplier: formData.supplier === "none" ? null : formData.supplier,
     };
 
@@ -225,7 +225,7 @@ export default function Components() {
       costPrice: component.costPrice,
       supplier: component.supplier || "none",
       partNumber: component.partNumber || "",
-      category: component.category || "none",
+      categoryId: component.categoryId?.toString() || "none",
       manufacturer: component.manufacturer || "",
       uktzedCode: component.uktzedCode || "",
       packageTypeId: component.packageTypeId?.toString() || "none",
@@ -356,8 +356,8 @@ export default function Components() {
                 <div>
                   <Label htmlFor="category">Категорія</Label>
                   <Select
-                    value={formData.category}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                    value={formData.categoryId}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, categoryId: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Оберіть категорію" />
@@ -365,7 +365,7 @@ export default function Components() {
                     <SelectContent>
                       <SelectItem value="none">Без категорії</SelectItem>
                       {componentCategories.map((category: any) => (
-                        <SelectItem key={category.id} value={category.name}>
+                        <SelectItem key={category.id} value={category.id.toString()}>
                           {category.name}
                           {category.description && ` - ${category.description}`}
                         </SelectItem>
