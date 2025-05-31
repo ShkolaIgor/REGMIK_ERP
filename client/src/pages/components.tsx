@@ -545,8 +545,15 @@ export default function Components() {
                     </TableCell>
                     <TableCell className="font-mono">{component.sku}</TableCell>
                     <TableCell>
-                      {component.category ? (
-                        <Badge variant="secondary">{component.category}</Badge>
+                      {component.categoryId ? (
+                        (() => {
+                          const category = componentCategories.find((cat: any) => cat.id === component.categoryId);
+                          return category ? (
+                            <Badge variant="secondary">{category.name}</Badge>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          );
+                        })()
                       ) : (
                         <span className="text-gray-400">—</span>
                       )}
