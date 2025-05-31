@@ -1591,26 +1591,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Warehouse Transfers
-  async getWarehouseTransfers(): Promise<(WarehouseTransfer & { fromWarehouse?: Warehouse; toWarehouse?: Warehouse; responsiblePerson?: Worker })[]> {
+  async getWarehouseTransfers(): Promise<WarehouseTransfer[]> {
     try {
-      const result = await this.db.select({
-        transfer: warehouseTransfers,
-        fromWarehouse: warehouses,
-        toWarehouse: warehouses,
-        responsiblePerson: workers,
-      })
-      .from(warehouseTransfers)
-      .leftJoin(warehouses, eq(warehouseTransfers.fromWarehouseId, warehouses.id))
-      .leftJoin(warehouses, eq(warehouseTransfers.toWarehouseId, warehouses.id))
-      .leftJoin(workers, eq(warehouseTransfers.responsiblePersonId, workers.id))
-      .orderBy(desc(warehouseTransfers.createdAt));
-
-      return result.map(row => ({
-        ...row.transfer,
-        fromWarehouse: row.fromWarehouse || undefined,
-        toWarehouse: row.toWarehouse || undefined,
-        responsiblePerson: row.responsiblePerson || undefined,
-      }));
+      const transfers = await this.db.select()
+        .from(warehouseTransfers)
+        .orderBy(desc(warehouseTransfers.createdAt));
+      return transfers;
     } catch (error) {
       console.error('Error getting warehouse transfers:', error);
       throw error;

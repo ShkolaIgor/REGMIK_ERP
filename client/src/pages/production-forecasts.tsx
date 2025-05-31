@@ -262,7 +262,7 @@ export default function ProductionForecasts() {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => setIsDialogOpen(false)}
+                        onClick={() => handleDialogChange(false)}
                       >
                         Скасувати
                       </Button>
