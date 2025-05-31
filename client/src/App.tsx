@@ -31,6 +31,7 @@ import ProductionStats from "@/pages/production-stats";
 import WarehouseTransfers from "@/pages/warehouse-transfers";
 import Positions from "@/pages/positions";
 import Departments from "@/pages/departments";
+import Components from "@/pages/components";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -68,6 +69,7 @@ function Router() {
           <Route path="/warehouse-transfers" component={WarehouseTransfers} />
           <Route path="/positions" component={Positions} />
           <Route path="/departments" component={Departments} />
+          <Route path="/components" component={Components} />
           <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
         </Layout>
       )}

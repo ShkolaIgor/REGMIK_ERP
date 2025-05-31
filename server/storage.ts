@@ -84,6 +84,13 @@ export interface IStorage {
   getSuppliers(): Promise<Supplier[]>;
   createSupplier(supplier: InsertSupplier): Promise<Supplier>;
 
+  // Components
+  getComponents(): Promise<Component[]>;
+  getComponent(id: number): Promise<Component | undefined>;
+  createComponent(insertComponent: InsertComponent): Promise<Component>;
+  updateComponent(id: number, componentData: Partial<InsertComponent>): Promise<Component | undefined>;
+  deleteComponent(id: number): Promise<boolean>;
+
   // Tech Cards
   getTechCards(): Promise<(TechCard & { product: Product; steps: TechCardStep[]; materials: (TechCardMaterial & { product: Product })[] })[]>;
   getTechCard(id: number): Promise<(TechCard & { product: Product; steps: TechCardStep[]; materials: (TechCardMaterial & { product: Product })[] }) | undefined>;

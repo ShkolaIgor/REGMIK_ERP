@@ -64,6 +64,7 @@ const navigationItems = [
   {
     title: "Налаштування",
     items: [
+      { name: "Компоненти", href: "/components", icon: Package },
       { name: "Посади", href: "/positions", icon: Users },
       { name: "Відділи", href: "/departments", icon: Building2 }
     ]
