@@ -34,7 +34,8 @@ import {
   type WarehouseTransfer, type InsertWarehouseTransfer,
   type WarehouseTransferItem, type InsertWarehouseTransferItem,
   type Position, type InsertPosition,
-  type Department, type InsertDepartment
+  type Department, type InsertDepartment,
+  type SolderingType, type InsertSolderingType
 } from "@shared/schema";
 
 export class DatabaseStorage implements IStorage {
@@ -2184,6 +2185,55 @@ export class DatabaseStorage implements IStorage {
       return (result.rowCount ?? 0) > 0;
     } catch (error) {
       console.error("Error deleting package type:", error);
+      return false;
+    }
+  }
+
+  // Soldering Types methods
+  async getSolderingTypes(): Promise<SolderingType[]> {
+    try {
+      return await db.select().from(solderingTypes).orderBy(solderingTypes.name);
+    } catch (error) {
+      console.error("Error fetching soldering types:", error);
+      return [];
+    }
+  }
+
+  async getSolderingType(id: number): Promise<SolderingType | undefined> {
+    try {
+      const [solderingType] = await db.select().from(solderingTypes).where(eq(solderingTypes.id, id));
+      return solderingType;
+    } catch (error) {
+      console.error("Error fetching soldering type:", error);
+      return undefined;
+    }
+  }
+
+  async createSolderingType(solderingTypeData: InsertSolderingType): Promise<SolderingType> {
+    const [solderingType] = await db.insert(solderingTypes).values(solderingTypeData).returning();
+    return solderingType;
+  }
+
+  async updateSolderingType(id: number, solderingTypeData: Partial<InsertSolderingType>): Promise<SolderingType | undefined> {
+    try {
+      const [updated] = await db
+        .update(solderingTypes)
+        .set(solderingTypeData)
+        .where(eq(solderingTypes.id, id))
+        .returning();
+      return updated;
+    } catch (error) {
+      console.error("Error updating soldering type:", error);
+      return undefined;
+    }
+  }
+
+  async deleteSolderingType(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(solderingTypes).where(eq(solderingTypes.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error("Error deleting soldering type:", error);
       return false;
     }
   }
