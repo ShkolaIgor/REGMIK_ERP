@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Package, Search } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Search, GitFork } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 interface Component {
@@ -50,9 +50,22 @@ interface Component {
   createdAt: Date | null;
 }
 
+interface ComponentAlternative {
+  id: number;
+  originalComponentId: number;
+  alternativeComponentId: number;
+  compatibility: string;
+  notes: string | null;
+  verified: boolean;
+  createdAt: Date | null;
+  alternativeComponent: Component;
+}
+
 export default function Components() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingComponent, setEditingComponent] = useState<Component | null>(null);
+  const [selectedComponentForAlternatives, setSelectedComponentForAlternatives] = useState<Component | null>(null);
+  const [isAlternativesDialogOpen, setIsAlternativesDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
     name: "",
@@ -537,6 +550,17 @@ export default function Components() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => {
+                            setSelectedComponentForAlternatives(component);
+                            setIsAlternativesDialogOpen(true);
+                          }}
+                          title="Управління аналогами"
+                        >
+                          <GitFork className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleEdit(component)}
                         >
                           <Edit className="w-4 h-4" />
@@ -558,6 +582,265 @@ export default function Components() {
           )}
         </CardContent>
       </Card>
+
+      {/* Діалог управління аналогами */}
+      <Dialog open={isAlternativesDialogOpen} onOpenChange={setIsAlternativesDialogOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>
+              Аналоги компонента: {selectedComponentForAlternatives?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <AlternativesManagement 
+            component={selectedComponentForAlternatives}
+            onClose={() => setIsAlternativesDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// Компонент для управління аналогами
+function AlternativesManagement({ component, onClose }: { component: Component | null, onClose: () => void }) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isAddingAlternative, setIsAddingAlternative] = useState(false);
+  const [selectedAlternativeId, setSelectedAlternativeId] = useState<number | null>(null);
+  const [compatibility, setCompatibility] = useState("100%");
+  const [notes, setNotes] = useState("");
+
+  // Запит аналогів для поточного компонента
+  const { data: alternatives = [], isLoading: isLoadingAlternatives } = useQuery({
+    queryKey: ['/api/component-alternatives', component?.id],
+    enabled: !!component?.id,
+  });
+
+  // Запит всіх компонентів для вибору альтернативи
+  const { data: allComponents = [] } = useQuery({
+    queryKey: ['/api/components'],
+  });
+
+  // Мутація для додавання альтернативи
+  const addAlternativeMutation = useMutation({
+    mutationFn: async (data: { originalComponentId: number, alternativeComponentId: number, compatibility: string, notes: string }) => {
+      const response = await fetch('/api/component-alternatives', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Помилка додавання альтернативи');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/component-alternatives'] });
+      setIsAddingAlternative(false);
+      setSelectedAlternativeId(null);
+      setCompatibility("100%");
+      setNotes("");
+      toast({ title: "Альтернативу додано успішно" });
+    },
+    onError: () => {
+      toast({ 
+        title: "Помилка", 
+        description: "Не вдалося додати альтернативу",
+        variant: "destructive" 
+      });
+    },
+  });
+
+  // Мутація для видалення альтернативи
+  const deleteAlternativeMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/component-alternatives/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Помилка видалення альтернативи');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/component-alternatives'] });
+      toast({ title: "Альтернативу видалено успішно" });
+    },
+    onError: () => {
+      toast({ 
+        title: "Помилка", 
+        description: "Не вдалося видалити альтернативу",
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const handleAddAlternative = () => {
+    if (!component?.id || !selectedAlternativeId) return;
+    
+    addAlternativeMutation.mutate({
+      originalComponentId: component.id,
+      alternativeComponentId: selectedAlternativeId,
+      compatibility,
+      notes,
+    });
+  };
+
+  const filteredComponents = allComponents.filter((comp: Component) => 
+    comp.id !== component?.id && 
+    (comp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+     comp.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  if (!component) return null;
+
+  return (
+    <div className="space-y-6">
+      {/* Існуючі аналоги */}
+      <div>
+        <h3 className="text-lg font-semibold mb-3">Поточні аналоги</h3>
+        {isLoadingAlternatives ? (
+          <div className="text-center py-4">Завантаження...</div>
+        ) : alternatives.length === 0 ? (
+          <div className="text-center py-4 text-gray-500">
+            Аналоги не знайдено
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {alternatives.map((alt: ComponentAlternative) => (
+              <div key={alt.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex-1">
+                  <div className="font-medium">{alt.alternativeComponent.name}</div>
+                  <div className="text-sm text-gray-600">
+                    SKU: {alt.alternativeComponent.sku} | 
+                    Сумісність: {alt.compatibility} | 
+                    Ціна: {parseFloat(alt.alternativeComponent.costPrice).toFixed(2)} грн
+                  </div>
+                  {alt.notes && (
+                    <div className="text-sm text-gray-500 mt-1">{alt.notes}</div>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => deleteAlternativeMutation.mutate(alt.id)}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Додавання нового аналога */}
+      <div className="border-t pt-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold">Додати новий аналог</h3>
+          <Button
+            onClick={() => setIsAddingAlternative(!isAddingAlternative)}
+            variant={isAddingAlternative ? "outline" : "default"}
+          >
+            {isAddingAlternative ? "Скасувати" : "Додати аналог"}
+          </Button>
+        </div>
+
+        {isAddingAlternative && (
+          <div className="space-y-4">
+            {/* Пошук компонентів */}
+            <div>
+              <Label htmlFor="component-search">Пошук компонента</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                <Input
+                  id="component-search"
+                  placeholder="Введіть назву або SKU компонента..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            {/* Список компонентів для вибору */}
+            {searchTerm && (
+              <div className="max-h-40 overflow-y-auto border rounded-lg">
+                {filteredComponents.length === 0 ? (
+                  <div className="p-3 text-center text-gray-500">
+                    Компоненти не знайдено
+                  </div>
+                ) : (
+                  filteredComponents.map((comp: Component) => (
+                    <div
+                      key={comp.id}
+                      className={`p-3 cursor-pointer hover:bg-gray-50 border-b last:border-b-0 ${
+                        selectedAlternativeId === comp.id ? 'bg-blue-50' : ''
+                      }`}
+                      onClick={() => setSelectedAlternativeId(comp.id)}
+                    >
+                      <div className="font-medium">{comp.name}</div>
+                      <div className="text-sm text-gray-600">
+                        SKU: {comp.sku} | Ціна: {parseFloat(comp.costPrice).toFixed(2)} грн
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Параметри альтернативи */}
+            {selectedAlternativeId && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="compatibility">Сумісність (%)</Label>
+                  <Select value={compatibility} onValueChange={setCompatibility}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="100%">100% (повна сумісність)</SelectItem>
+                      <SelectItem value="95%">95% (майже повна сумісність)</SelectItem>
+                      <SelectItem value="90%">90% (висока сумісність)</SelectItem>
+                      <SelectItem value="80%">80% (помірна сумісність)</SelectItem>
+                      <SelectItem value="70%">70% (часткова сумісність)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-1">
+                  <Label htmlFor="notes">Примітки</Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Додаткова інформація про сумісність..."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={2}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Кнопки дій */}
+            {selectedAlternativeId && (
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleAddAlternative}
+                  disabled={addAlternativeMutation.isPending}
+                >
+                  {addAlternativeMutation.isPending ? "Додавання..." : "Додати аналог"}
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedAlternativeId(null);
+                    setCompatibility("100%");
+                    setNotes("");
+                    setSearchTerm("");
+                  }}
+                >
+                  Очистити
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
