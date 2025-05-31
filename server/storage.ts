@@ -2,7 +2,7 @@ import {
   users, categories, units, warehouses, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   components, productComponents, costCalculations, materialShortages, inventoryAudits, inventoryAuditItems, workers,
-  packageTypes, solderingTypes, componentCategories,
+  packageTypes, solderingTypes, componentCategories, shipments, shipmentItems,
   type User, type UpsertUser, type Category, type InsertCategory,
   type Unit, type InsertUnit,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
@@ -32,6 +32,7 @@ import {
   type PackageType, type InsertPackageType,
   type SolderingType, type InsertSolderingType,
   type ComponentAlternative, type InsertComponentAlternative,
+  type Shipment, type InsertShipment,
   departments
 } from "@shared/schema";
 
@@ -247,6 +248,14 @@ export interface IStorage {
     producedValue: number;
     shippedValue: number;
   }>>;
+
+  // Shipments
+  getShipments(): Promise<any[]>;
+  getShipment(id: number): Promise<any>;
+  createShipment(shipment: any): Promise<any>;
+  updateShipment(id: number, shipment: any): Promise<any>;
+  updateShipmentStatus(id: number, status: string): Promise<any>;
+  deleteShipment(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {

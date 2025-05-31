@@ -1878,6 +1878,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Shipments API
+  app.get("/api/shipments", async (req, res) => {
+    try {
+      const shipments = await storage.getShipments();
+      res.json(shipments);
+    } catch (error) {
+      console.error("Failed to get shipments:", error);
+      res.status(500).json({ error: "Failed to get shipments" });
+    }
+  });
+
+  app.get("/api/shipments/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const shipment = await storage.getShipment(id);
+      if (!shipment) {
+        return res.status(404).json({ error: "Shipment not found" });
+      }
+      res.json(shipment);
+    } catch (error) {
+      console.error("Failed to get shipment:", error);
+      res.status(500).json({ error: "Failed to get shipment" });
+    }
+  });
+
+  app.post("/api/shipments", async (req, res) => {
+    try {
+      const shipmentData = insertShipmentSchema.parse(req.body);
+      const shipment = await storage.createShipment(shipmentData);
+      res.status(201).json(shipment);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid shipment data", details: error.errors });
+      } else {
+        console.error("Failed to create shipment:", error);
+        res.status(500).json({ error: "Failed to create shipment" });
+      }
+    }
+  });
+
+  app.patch("/api/shipments/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const shipmentData = insertShipmentSchema.partial().parse(req.body);
+      const shipment = await storage.updateShipment(id, shipmentData);
+      if (!shipment) {
+        return res.status(404).json({ error: "Shipment not found" });
+      }
+      res.json(shipment);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid shipment data", details: error.errors });
+      } else {
+        console.error("Failed to update shipment:", error);
+        res.status(500).json({ error: "Failed to update shipment" });
+      }
+    }
+  });
+
+  app.patch("/api/shipments/:id/status", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+      const shipment = await storage.updateShipmentStatus(id, status);
+      if (!shipment) {
+        return res.status(404).json({ error: "Shipment not found" });
+      }
+      res.json(shipment);
+    } catch (error) {
+      console.error("Failed to update shipment status:", error);
+      res.status(500).json({ error: "Failed to update shipment status" });
+    }
+  });
+
+  app.delete("/api/shipments/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteShipment(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Shipment not found" });
+      }
+      res.status(204).end();
+    } catch (error) {
+      console.error("Failed to delete shipment:", error);
+      res.status(500).json({ error: "Failed to delete shipment" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
