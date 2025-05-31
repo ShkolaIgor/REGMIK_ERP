@@ -77,6 +77,10 @@ export default function Components() {
     queryKey: ["/api/components"],
   });
 
+  const { data: packageTypes = [] } = useQuery({
+    queryKey: ["/api/package-types"],
+  });
+
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
       return await apiRequest("/api/components", {
@@ -380,13 +384,23 @@ export default function Components() {
 
                 <div>
                   <Label htmlFor="packageTypeId">Тип корпусу</Label>
-                  <Input
-                    id="packageTypeId"
-                    type="number"
+                  <Select
                     value={formData.packageTypeId}
-                    onChange={(e) => setFormData(prev => ({ ...prev, packageTypeId: e.target.value }))}
-                    placeholder="ID типу корпусу"
-                  />
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, packageTypeId: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Оберіть тип корпусу" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Без типу корпусу</SelectItem>
+                      {packageTypes.map((packageType: any) => (
+                        <SelectItem key={packageType.id} value={packageType.id.toString()}>
+                          {packageType.name}
+                          {packageType.description && ` - ${packageType.description}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -463,6 +477,7 @@ export default function Components() {
                   <TableHead>Назва</TableHead>
                   <TableHead>Артикул</TableHead>
                   <TableHead>Категорія</TableHead>
+                  <TableHead>Тип корпусу</TableHead>
                   <TableHead>Одиниця</TableHead>
                   <TableHead>Собівартість</TableHead>
                   <TableHead>Постачальник</TableHead>
@@ -485,6 +500,20 @@ export default function Components() {
                     <TableCell>
                       {component.category ? (
                         <Badge variant="secondary">{component.category}</Badge>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {component.packageTypeId ? (
+                        (() => {
+                          const packageType = packageTypes.find((pt: any) => pt.id === component.packageTypeId);
+                          return packageType ? (
+                            <Badge variant="outline">{packageType.name}</Badge>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          );
+                        })()
                       ) : (
                         <span className="text-gray-400">—</span>
                       )}
