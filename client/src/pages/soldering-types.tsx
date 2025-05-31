@@ -71,8 +71,10 @@ export default function SolderingTypes() {
       
       return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Success callback triggered with data:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/soldering-types"] });
+      console.log("Setting dialog open to false");
       setIsDialogOpen(false);
       resetForm();
       toast({
