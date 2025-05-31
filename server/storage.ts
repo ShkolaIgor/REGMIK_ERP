@@ -158,6 +158,13 @@ export interface IStorage {
   updateProductionForecast(id: number, forecast: Partial<InsertProductionForecast>): Promise<ProductionForecast | undefined>;
   deleteProductionForecast(id: number): Promise<boolean>;
 
+  // Positions
+  getPositions(): Promise<Position[]>;
+  getPosition(id: number): Promise<Position | undefined>;
+  createPosition(position: InsertPosition): Promise<Position>;
+  updatePosition(id: number, position: Partial<InsertPosition>): Promise<Position | undefined>;
+  deletePosition(id: number): Promise<boolean>;
+
   // Analytics
   getDashboardStats(): Promise<{
     totalProducts: number;

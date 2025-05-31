@@ -505,6 +505,26 @@ export const insertWarehouseTransferItemSchema = createInsertSchema(warehouseTra
   createdAt: true 
 });
 
+// Таблиця посад робітників
+export const positions = pgTable("positions", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+  description: text("description"),
+  department: varchar("department", { length: 100 }),
+  salaryRange: varchar("salary_range", { length: 50 }),
+  responsibilities: text("responsibilities"),
+  requirements: text("requirements"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertPositionSchema = createInsertSchema(positions).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -566,3 +586,5 @@ export type WarehouseTransfer = typeof warehouseTransfers.$inferSelect;
 export type InsertWarehouseTransfer = z.infer<typeof insertWarehouseTransferSchema>;
 export type WarehouseTransferItem = typeof warehouseTransferItems.$inferSelect;
 export type InsertWarehouseTransferItem = z.infer<typeof insertWarehouseTransferItemSchema>;
+export type Position = typeof positions.$inferSelect;
+export type InsertPosition = z.infer<typeof insertPositionSchema>;
