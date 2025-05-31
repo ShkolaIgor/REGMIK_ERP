@@ -1620,6 +1620,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/soldering-types", async (req, res) => {
     try {
+      console.log("Received request body:", req.body);
+      console.log("Body type:", typeof req.body);
       const solderingTypeData = insertSolderingTypeSchema.parse(req.body);
       const solderingType = await storage.createSolderingType(solderingTypeData);
       res.status(201).json(solderingType);
