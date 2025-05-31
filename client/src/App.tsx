@@ -43,31 +43,30 @@ function Router() {
         <Layout>
           <Route path="/" component={Home} />
           <Route path="/dashboard" component={Dashboard} />
-        <Route path="/inventory" component={Inventory} />
-        <Route path="/production" component={Production} />
-        <Route path="/orders" component={Orders} />
-        <Route path="/recipes" component={Recipes} />
-        <Route path="/tech-cards" component={TechCards} />
-        <Route path="/bom" component={BOM} />
-        <Route path="/categories" component={Categories} />
-        <Route path="/warehouses" component={Warehouses} />
-        <Route path="/reports" component={Reports} />
-        <Route path="/advanced-reports" component={AdvancedReports} />
-        <Route path="/scanner" component={() => <div className="p-6">Сканер штрих-кодів - В розробці</div>} />
-        <Route path="/costing" component={CostCalculations} />
-        <Route path="/shortage" component={MaterialShortages} />
-        <Route path="/supplier-orders" component={SupplierOrders} />
-        <Route path="/suppliers" component={Suppliers} />
-        <Route path="/assembly" component={AssemblyOperations} />
-        <Route path="/inventory-audits" component={InventoryAudits} />
-        <Route path="/workers" component={Workers} />
-        <Route path="/production-forecasts" component={ProductionForecasts} />
-        <Route path="/production-forecasts/:id" component={ForecastDetails} />
+          <Route path="/inventory" component={Inventory} />
+          <Route path="/production" component={Production} />
+          <Route path="/orders" component={Orders} />
+          <Route path="/recipes" component={Recipes} />
+          <Route path="/tech-cards" component={TechCards} />
+          <Route path="/bom" component={BOM} />
+          <Route path="/categories" component={Categories} />
+          <Route path="/warehouses" component={Warehouses} />
+          <Route path="/reports" component={Reports} />
+          <Route path="/advanced-reports" component={AdvancedReports} />
+          <Route path="/scanner" component={() => <div className="p-6">Сканер штрих-кодів - В розробці</div>} />
+          <Route path="/costing" component={CostCalculations} />
+          <Route path="/shortage" component={MaterialShortages} />
+          <Route path="/supplier-orders" component={SupplierOrders} />
+          <Route path="/suppliers" component={Suppliers} />
+          <Route path="/assembly" component={AssemblyOperations} />
+          <Route path="/inventory-audits" component={InventoryAudits} />
+          <Route path="/workers" component={Workers} />
+          <Route path="/production-forecasts" component={ProductionForecasts} />
+          <Route path="/production-forecasts/:id" component={ForecastDetails} />
           <Route path="/warehouse-transfers" component={WarehouseTransfers} />
           <Route path="/positions" component={Positions} />
           <Route path="/departments" component={Departments} />
           <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
-          <Route component={NotFound} />
         </Layout>
       )}
     </Switch>
