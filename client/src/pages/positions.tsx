@@ -110,7 +110,11 @@ export default function PositionsPage() {
   });
 
   const onCreateSubmit = (data: InsertPosition) => {
-    createMutation.mutate(data);
+    createMutation.mutate(data, {
+      onSuccess: () => {
+        createForm.reset();
+      }
+    });
   };
 
   const onEditSubmit = (data: InsertPosition) => {
