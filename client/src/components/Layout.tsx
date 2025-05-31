@@ -19,7 +19,8 @@ import {
   Truck,
   PackageOpen,
   ClipboardList,
-  TrendingUp
+  TrendingUp,
+  Building2
 } from "lucide-react";
 
 interface LayoutProps {
@@ -63,7 +64,8 @@ const navigationItems = [
   {
     title: "Налаштування",
     items: [
-      { name: "Посади", href: "/positions", icon: Users }
+      { name: "Посади", href: "/positions", icon: Users },
+      { name: "Відділи", href: "/departments", icon: Building2 }
     ]
   },
   {

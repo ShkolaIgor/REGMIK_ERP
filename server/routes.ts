@@ -9,7 +9,7 @@ import {
   insertAssemblyOperationSchema, insertAssemblyOperationItemSchema,
   insertInventoryAuditSchema, insertInventoryAuditItemSchema,
   insertWorkerSchema, insertProductionForecastSchema,
-  insertWarehouseTransferSchema, insertPositionSchema
+  insertWarehouseTransferSchema, insertPositionSchema, insertDepartmentSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -1371,6 +1371,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Failed to delete position:", error);
       res.status(500).json({ error: "Failed to delete position" });
+    }
+  });
+
+  // Departments
+  app.get("/api/departments", async (req, res) => {
+    try {
+      const departments = await storage.getDepartments();
+      res.json(departments);
+    } catch (error) {
+      console.error("Failed to get departments:", error);
+      res.status(500).json({ error: "Failed to get departments" });
+    }
+  });
+
+  app.get("/api/departments/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const department = await storage.getDepartment(id);
+      if (!department) {
+        return res.status(404).json({ error: "Department not found" });
+      }
+      res.json(department);
+    } catch (error) {
+      console.error("Failed to get department:", error);
+      res.status(500).json({ error: "Failed to get department" });
+    }
+  });
+
+  app.post("/api/departments", async (req, res) => {
+    try {
+      const departmentData = insertDepartmentSchema.parse(req.body);
+      const department = await storage.createDepartment(departmentData);
+      res.status(201).json(department);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid department data", details: error.errors });
+      } else {
+        console.error("Failed to create department:", error);
+        res.status(500).json({ error: "Failed to create department" });
+      }
+    }
+  });
+
+  app.put("/api/departments/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const departmentData = insertDepartmentSchema.partial().parse(req.body);
+      const department = await storage.updateDepartment(id, departmentData);
+      if (!department) {
+        return res.status(404).json({ error: "Department not found" });
+      }
+      res.json(department);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid department data", details: error.errors });
+      } else {
+        console.error("Failed to update department:", error);
+        res.status(500).json({ error: "Failed to update department" });
+      }
+    }
+  });
+
+  app.delete("/api/departments/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteDepartment(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Department not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to delete department:", error);
+      res.status(500).json({ error: "Failed to delete department" });
     }
   });
 
