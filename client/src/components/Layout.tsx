@@ -58,7 +58,6 @@ const navigationItems = [
       { name: "Калькуляція собівартості", href: "/costing", icon: Calculator },
       { name: "Дефіцит матеріалів", href: "/shortage", icon: AlertTriangle },
       { name: "Прогнозування виробництва", href: "/production-forecasts", icon: TrendingUp },
-      { name: "Статистика виробництва", href: "/production-stats", icon: BarChart },
       { name: "Робітники", href: "/workers", icon: Users }
     ]
   },
@@ -75,6 +74,7 @@ const navigationItems = [
       { name: "Документи", href: "/documents", icon: File },
       { name: "Прибутковість", href: "/reports", icon: BarChart },
       { name: "Розширені звіти", href: "/advanced-reports", icon: FileText },
+      { name: "Статистика виробництва", href: "/production-stats", icon: TrendingUp },
       { name: "Постачальники", href: "/suppliers", icon: Users }
     ]
   }
