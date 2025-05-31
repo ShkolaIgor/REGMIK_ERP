@@ -148,6 +148,7 @@ export default function WorkersPage() {
     form.reset({
       firstName: worker.firstName,
       lastName: worker.lastName,
+      photo: worker.photo || "",
       positionId: worker.positionId || undefined,
       departmentId: worker.departmentId || undefined,
       email: worker.email || "",
