@@ -390,6 +390,74 @@ export const insertWorkerSchema = createInsertSchema(workers).omit({
   updatedAt: true 
 });
 
+// Таблиця прогнозування виробництва
+export const productionForecasts = pgTable("production_forecasts", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  forecastType: varchar("forecast_type", { length: 50 }).notNull(), // demand, capacity, material
+  periodType: varchar("period_type", { length: 50 }).notNull(), // daily, weekly, monthly, quarterly
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  status: varchar("status", { length: 50 }).notNull().default("draft"), // draft, active, completed, archived
+  accuracy: decimal("accuracy", { precision: 5, scale: 2 }), // точність прогнозу в відсотках
+  confidence: decimal("confidence", { precision: 5, scale: 2 }), // рівень довіри до прогнозу
+  methodology: varchar("methodology", { length: 100 }), // linear_regression, moving_average, exponential_smoothing
+  notes: text("notes"),
+  createdBy: varchar("created_by", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Деталі прогнозування по продуктах
+export const productionForecastItems = pgTable("production_forecast_items", {
+  id: serial("id").primaryKey(),
+  forecastId: integer("forecast_id").notNull().references(() => productionForecasts.id),
+  productId: integer("product_id").notNull().references(() => products.id),
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  forecastedDemand: decimal("forecasted_demand", { precision: 12, scale: 4 }).notNull(),
+  forecastedProduction: decimal("forecasted_production", { precision: 12, scale: 4 }).notNull(),
+  currentStock: decimal("current_stock", { precision: 12, scale: 4 }).default("0"),
+  requiredCapacity: decimal("required_capacity", { precision: 10, scale: 2 }), // година роботи
+  estimatedCost: decimal("estimated_cost", { precision: 12, scale: 2 }),
+  unit: varchar("unit", { length: 50 }).notNull(),
+  priority: varchar("priority", { length: 20 }).default("medium"), // low, medium, high, critical
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Матеріальні потреби для прогнозу
+export const forecastMaterialRequirements = pgTable("forecast_material_requirements", {
+  id: serial("id").primaryKey(),
+  forecastItemId: integer("forecast_item_id").notNull().references(() => productionForecastItems.id),
+  materialId: integer("material_id").notNull().references(() => products.id),
+  requiredQuantity: decimal("required_quantity", { precision: 12, scale: 4 }).notNull(),
+  currentStock: decimal("current_stock", { precision: 12, scale: 4 }).default("0"),
+  shortageQuantity: decimal("shortage_quantity", { precision: 12, scale: 4 }).default("0"),
+  estimatedCost: decimal("estimated_cost", { precision: 12, scale: 2 }),
+  unit: varchar("unit", { length: 50 }).notNull(),
+  leadTime: integer("lead_time").default(0), // час постачання в днях
+  supplierId: integer("supplier_id").references(() => suppliers.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertProductionForecastSchema = createInsertSchema(productionForecasts).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertProductionForecastItemSchema = createInsertSchema(productionForecastItems).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertForecastMaterialRequirementSchema = createInsertSchema(forecastMaterialRequirements).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -441,3 +509,9 @@ export type InventoryAuditItem = typeof inventoryAuditItems.$inferSelect;
 export type InsertInventoryAuditItem = z.infer<typeof insertInventoryAuditItemSchema>;
 export type Worker = typeof workers.$inferSelect;
 export type InsertWorker = z.infer<typeof insertWorkerSchema>;
+export type ProductionForecast = typeof productionForecasts.$inferSelect;
+export type InsertProductionForecast = z.infer<typeof insertProductionForecastSchema>;
+export type ProductionForecastItem = typeof productionForecastItems.$inferSelect;
+export type InsertProductionForecastItem = z.infer<typeof insertProductionForecastItemSchema>;
+export type ForecastMaterialRequirement = typeof forecastMaterialRequirements.$inferSelect;
+export type InsertForecastMaterialRequirement = z.infer<typeof insertForecastMaterialRequirementSchema>;

@@ -22,6 +22,7 @@ import Suppliers from "@/pages/suppliers";
 import AssemblyOperations from "@/pages/assembly-operations";
 import InventoryAudits from "@/pages/inventory-audits";
 import Workers from "@/pages/workers";
+import ProductionForecasts from "@/pages/production-forecasts";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -47,6 +48,7 @@ function Router() {
         <Route path="/assembly" component={AssemblyOperations} />
         <Route path="/inventory-audits" component={InventoryAudits} />
         <Route path="/workers" component={Workers} />
+        <Route path="/production-forecasts" component={ProductionForecasts} />
         <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
         <Route component={NotFound} />
       </Switch>
