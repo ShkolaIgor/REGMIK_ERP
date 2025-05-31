@@ -2,6 +2,7 @@ import {
   users, categories, units, warehouses, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   components, productComponents, costCalculations, materialShortages, inventoryAudits, inventoryAuditItems, workers,
+  packageTypes,
   type User, type UpsertUser, type Category, type InsertCategory,
   type Unit, type InsertUnit,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
@@ -27,6 +28,7 @@ import {
   type ProductionForecast, type InsertProductionForecast,
   type Position, type InsertPosition,
   type Department, type InsertDepartment,
+  type PackageType, type InsertPackageType,
   departments
 } from "@shared/schema";
 
@@ -91,6 +93,13 @@ export interface IStorage {
   createComponent(insertComponent: InsertComponent): Promise<Component>;
   updateComponent(id: number, componentData: Partial<InsertComponent>): Promise<Component | undefined>;
   deleteComponent(id: number): Promise<boolean>;
+
+  // Package Types
+  getPackageTypes(): Promise<PackageType[]>;
+  getPackageType(id: number): Promise<PackageType | undefined>;
+  createPackageType(packageType: InsertPackageType): Promise<PackageType>;
+  updatePackageType(id: number, packageType: Partial<InsertPackageType>): Promise<PackageType | undefined>;
+  deletePackageType(id: number): Promise<boolean>;
 
   // Tech Cards
   getTechCards(): Promise<(TechCard & { product: Product; steps: TechCardStep[]; materials: (TechCardMaterial & { product: Product })[] })[]>;

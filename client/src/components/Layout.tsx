@@ -62,9 +62,11 @@ const navigationItems = [
     ]
   },
   {
-    title: "Налаштування",
+    title: "Довідники",
     items: [
       { name: "Компоненти", href: "/components", icon: Package },
+      { name: "Типи корпусів", href: "/package-types", icon: Box },
+      { name: "Постачальники", href: "/suppliers", icon: Users },
       { name: "Посади", href: "/positions", icon: Users },
       { name: "Відділи", href: "/departments", icon: Building2 }
     ]
@@ -75,8 +77,7 @@ const navigationItems = [
       { name: "Документи", href: "/documents", icon: File },
       { name: "Прибутковість", href: "/reports", icon: BarChart },
       { name: "Розширені звіти", href: "/advanced-reports", icon: FileText },
-      { name: "Статистика виробництва", href: "/production-stats", icon: TrendingUp },
-      { name: "Постачальники", href: "/suppliers", icon: Users }
+      { name: "Статистика виробництва", href: "/production-stats", icon: TrendingUp }
     ]
   }
 ];
