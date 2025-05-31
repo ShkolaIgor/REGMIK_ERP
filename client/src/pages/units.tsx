@@ -79,10 +79,17 @@ export default function Units() {
   // Мутація створення
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest("/api/units", {
+      const response = await fetch("/api/units", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(data),
       });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/units"] });
@@ -106,10 +113,17 @@ export default function Units() {
   // Мутація оновлення
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return await apiRequest(`/api/units/${id}`, {
+      const response = await fetch(`/api/units/${id}`, {
         method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(data),
       });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/units"] });
@@ -133,9 +147,13 @@ export default function Units() {
   // Мутація видалення
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      return await apiRequest(`/api/units/${id}`, {
+      const response = await fetch(`/api/units/${id}`, {
         method: "DELETE",
       });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.ok;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/units"] });
