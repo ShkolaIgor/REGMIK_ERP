@@ -56,11 +56,20 @@ export default function SolderingTypes() {
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
       console.log("Sending data:", data);
-      return await apiRequest({
-        url: "/api/soldering-types",
+      const response = await fetch("/api/soldering-types", {
         method: "POST",
-        body: data,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+        credentials: "include",
       });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to create soldering type: ${response.statusText}`);
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/soldering-types"] });
@@ -82,11 +91,20 @@ export default function SolderingTypes() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return await apiRequest({
-        url: `/api/soldering-types/${id}`,
+      const response = await fetch(`/api/soldering-types/${id}`, {
         method: "PATCH",
-        body: data,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+        credentials: "include",
       });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to update soldering type: ${response.statusText}`);
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/soldering-types"] });
