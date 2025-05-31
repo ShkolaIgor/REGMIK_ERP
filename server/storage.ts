@@ -194,6 +194,19 @@ export interface IStorage {
     productsCount: number;
     averageQuality: string;
   }>>;
+
+  // Order statistics by period
+  getOrderStatsByPeriod(period: string, startDate?: string, endDate?: string): Promise<Array<{
+    date: string;
+    ordered: number;
+    paid: number;
+    produced: number;
+    shipped: number;
+    orderedValue: number;
+    paidValue: number;
+    producedValue: number;
+    shippedValue: number;
+  }>>;
 }
 
 export class MemStorage implements IStorage {

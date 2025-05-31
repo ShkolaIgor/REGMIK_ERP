@@ -1,4 +1,4 @@
-import { eq, sql, desc } from "drizzle-orm";
+import { eq, sql, desc, and, gte, lte } from "drizzle-orm";
 import { db } from "./db";
 import { IStorage } from "./storage";
 import {
@@ -1944,6 +1944,178 @@ export class DatabaseStorage implements IStorage {
       }));
     } catch (error) {
       console.error('Error getting production stats by category:', error);
+      throw error;
+    }
+  }
+
+  async getOrderStatsByPeriod(period: string, startDate?: string, endDate?: string): Promise<Array<{
+    date: string;
+    ordered: number;
+    paid: number;
+    produced: number;
+    shipped: number;
+    orderedValue: number;
+    paidValue: number;
+    producedValue: number;
+    shippedValue: number;
+  }>> {
+    try {
+      // Визначаємо діапазон дат
+      const now = new Date();
+      let start: Date;
+      let end: Date = new Date(now);
+
+      if (startDate && endDate) {
+        start = new Date(startDate);
+        end = new Date(endDate);
+      } else {
+        switch (period) {
+          case 'week':
+            start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+            break;
+          case 'month':
+            start = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+          case 'year':
+            start = new Date(now.getFullYear(), 0, 1);
+            break;
+          default:
+            start = new Date(now.getFullYear(), now.getMonth(), 1);
+        }
+      }
+
+      // Отримуємо замовлення за період
+      const ordersData = await this.db
+        .select({
+          id: orders.id,
+          status: orders.status,
+          totalAmount: orders.totalAmount,
+          createdAt: orders.createdAt,
+        })
+        .from(orders)
+        .where(
+          and(
+            gte(orders.createdAt, start),
+            lte(orders.createdAt, end)
+          )
+        );
+
+      // Отримуємо завдання виробництва за період
+      const productionData = await this.db
+        .select({
+          id: productionTasks.id,
+          status: productionTasks.status,
+          quantity: productionTasks.quantity,
+          createdAt: productionTasks.createdAt,
+        })
+        .from(productionTasks)
+        .where(
+          and(
+            gte(productionTasks.createdAt, start),
+            lte(productionTasks.createdAt, end)
+          )
+        );
+
+      // Групуємо дані по періодах
+      const statsByDate = new Map<string, {
+        ordered: number;
+        paid: number;
+        produced: number;
+        shipped: number;
+        orderedValue: number;
+        paidValue: number;
+        producedValue: number;
+        shippedValue: number;
+      }>();
+
+      // Ініціалізуємо дати в межах періоду
+      const current = new Date(start);
+      while (current <= end) {
+        let dateKey: string;
+        if (period === 'year') {
+          dateKey = current.toISOString().substr(0, 7); // YYYY-MM
+        } else {
+          dateKey = current.toISOString().substr(0, 10); // YYYY-MM-DD
+        }
+        
+        if (!statsByDate.has(dateKey)) {
+          statsByDate.set(dateKey, {
+            ordered: 0,
+            paid: 0,
+            produced: 0,
+            shipped: 0,
+            orderedValue: 0,
+            paidValue: 0,
+            producedValue: 0,
+            shippedValue: 0,
+          });
+        }
+
+        if (period === 'year') {
+          current.setMonth(current.getMonth() + 1);
+        } else {
+          current.setDate(current.getDate() + 1);
+        }
+      }
+
+      // Обробляємо дані замовлень
+      for (const order of ordersData) {
+        if (!order.createdAt) continue;
+        
+        let dateKey: string;
+        if (period === 'year') {
+          dateKey = order.createdAt.toISOString().substr(0, 7);
+        } else {
+          dateKey = order.createdAt.toISOString().substr(0, 10);
+        }
+
+        const stats = statsByDate.get(dateKey);
+        if (stats) {
+          const amount = parseFloat(order.totalAmount || '0');
+          
+          stats.ordered += 1;
+          stats.orderedValue += amount;
+
+          if (order.status === 'paid') {
+            stats.paid += 1;
+            stats.paidValue += amount;
+          }
+
+          if (order.status === 'shipped') {
+            stats.shipped += 1;
+            stats.shippedValue += amount;
+          }
+        }
+      }
+
+      // Обробляємо дані виробництва
+      for (const task of productionData) {
+        if (!task.createdAt) continue;
+        
+        let dateKey: string;
+        if (period === 'year') {
+          dateKey = task.createdAt.toISOString().substr(0, 7);
+        } else {
+          dateKey = task.createdAt.toISOString().substr(0, 10);
+        }
+
+        const stats = statsByDate.get(dateKey);
+        if (stats && task.status === 'completed') {
+          const quantity = parseInt(task.quantity || '0');
+          const estimatedValue = quantity * 100; // Оціночна вартість
+          
+          stats.produced += quantity;
+          stats.producedValue += estimatedValue;
+        }
+      }
+
+      return Array.from(statsByDate.entries()).map(([date, stats]) => ({
+        date,
+        ...stats,
+      })).sort((a, b) => a.date.localeCompare(b.date));
+
+    } catch (error) {
+      console.error('Error getting order stats by period:', error);
       throw error;
     }
   }

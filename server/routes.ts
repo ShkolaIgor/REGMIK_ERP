@@ -40,6 +40,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Order statistics by period
+  app.get("/api/production-stats/by-period", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { period = 'month', startDate, endDate } = req.query;
+      const stats = await storage.getOrderStatsByPeriod(
+        period as string, 
+        startDate as string, 
+        endDate as string
+      );
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching order stats by period:", error);
+      res.status(500).json({ error: "Failed to fetch order stats by period" });
+    }
+  });
+
   // Categories
   app.get("/api/categories", async (req, res) => {
     try {

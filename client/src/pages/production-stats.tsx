@@ -1,15 +1,19 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   BarChart3, 
   TrendingUp, 
   Package, 
   DollarSign,
   Star,
-  Activity
+  Activity,
+  Calendar,
+  Clock
 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 
 interface ProductionStat {
   categoryId: number;
@@ -20,9 +24,33 @@ interface ProductionStat {
   averageQuality: string;
 }
 
+interface PeriodStat {
+  date: string;
+  ordered: number;
+  paid: number;
+  produced: number;
+  shipped: number;
+  orderedValue: number;
+  paidValue: number;
+  producedValue: number;
+  shippedValue: number;
+}
+
 export default function ProductionStats() {
-  const { data: stats, isLoading } = useQuery<ProductionStat[]>({
+  const [selectedTab, setSelectedTab] = useState<'category' | 'period'>('category');
+  const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'year'>('month');
+
+  const { data: categoryStats, isLoading: categoryLoading } = useQuery<ProductionStat[]>({
     queryKey: ["/api/production-stats/by-category"],
+  });
+
+  const { data: periodStats, isLoading: periodLoading } = useQuery<PeriodStat[]>({
+    queryKey: ["/api/production-stats/by-period", selectedPeriod],
+    queryFn: async () => {
+      const response = await fetch(`/api/production-stats/by-period?period=${selectedPeriod}`);
+      if (!response.ok) throw new Error('Failed to fetch period stats');
+      return response.json();
+    },
   });
 
   if (isLoading) {
