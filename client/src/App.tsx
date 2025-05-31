@@ -3,7 +3,10 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
+import Landing from "@/pages/landing";
+import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import Inventory from "@/pages/inventory";
 import Production from "@/pages/production";
@@ -30,10 +33,16 @@ import Departments from "@/pages/departments";
 import NotFound from "@/pages/not-found";
 
 function Router() {
+  const { isAuthenticated, isLoading } = useAuth();
+
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={Dashboard} />
+    <Switch>
+      {isLoading || !isAuthenticated ? (
+        <Route path="/" component={Landing} />
+      ) : (
+        <Layout>
+          <Route path="/" component={Home} />
+          <Route path="/dashboard" component={Dashboard} />
         <Route path="/inventory" component={Inventory} />
         <Route path="/production" component={Production} />
         <Route path="/orders" component={Orders} />
@@ -57,10 +66,11 @@ function Router() {
         <Route path="/warehouse-transfers" component={WarehouseTransfers} />
         <Route path="/positions" component={Positions} />
         <Route path="/departments" component={Departments} />
-        <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+          <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
+          <Route component={NotFound} />
+        </Layout>
+      )}
+    </Switch>
   );
 }
 
