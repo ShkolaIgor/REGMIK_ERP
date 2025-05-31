@@ -1108,7 +1108,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/workers/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      console.log("Updating worker with data:", req.body);
       const workerData = insertWorkerSchema.partial().parse(req.body);
+      console.log("Parsed worker data:", workerData);
       const worker = await storage.updateWorker(id, workerData);
       if (worker) {
         res.json(worker);
