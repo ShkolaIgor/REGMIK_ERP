@@ -24,7 +24,9 @@ import {
   type AssemblyOperation, type InsertAssemblyOperation,
   type AssemblyOperationItem, type InsertAssemblyOperationItem,
   type ProductionForecast, type InsertProductionForecast,
-  type Position, type InsertPosition
+  type Position, type InsertPosition,
+  type Department, type InsertDepartment,
+  departments
 } from "@shared/schema";
 
 export interface IStorage {
@@ -165,6 +167,13 @@ export interface IStorage {
   createPosition(position: InsertPosition): Promise<Position>;
   updatePosition(id: number, position: Partial<InsertPosition>): Promise<Position | undefined>;
   deletePosition(id: number): Promise<boolean>;
+
+  // Departments
+  getDepartments(): Promise<Department[]>;
+  getDepartment(id: number): Promise<Department | undefined>;
+  createDepartment(department: InsertDepartment): Promise<Department>;
+  updateDepartment(id: number, department: Partial<InsertDepartment>): Promise<Department | undefined>;
+  deleteDepartment(id: number): Promise<boolean>;
 
   // Analytics
   getDashboardStats(): Promise<{

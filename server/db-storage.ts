@@ -6,7 +6,7 @@ import {
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   productComponents, costCalculations, materialShortages, supplierOrders, supplierOrderItems,
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
-  productionForecasts, warehouseTransfers, warehouseTransferItems, positions,
+  productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments,
   type User, type InsertUser, type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
   type Product, type InsertProduct,
@@ -31,7 +31,8 @@ import {
   type ProductionForecast, type InsertProductionForecast,
   type WarehouseTransfer, type InsertWarehouseTransfer,
   type WarehouseTransferItem, type InsertWarehouseTransferItem,
-  type Position, type InsertPosition
+  type Position, type InsertPosition,
+  type Department, type InsertDepartment
 } from "@shared/schema";
 
 export class DatabaseStorage implements IStorage {
@@ -1791,6 +1792,71 @@ export class DatabaseStorage implements IStorage {
       return result.rowCount > 0;
     } catch (error) {
       console.error('Error deleting position:', error);
+      throw error;
+    }
+  }
+
+  // Departments
+  async getDepartments(): Promise<Department[]> {
+    try {
+      const result = await this.db.select()
+        .from(departments)
+        .where(eq(departments.isActive, true))
+        .orderBy(departments.name);
+      return result;
+    } catch (error) {
+      console.error('Error getting departments:', error);
+      throw error;
+    }
+  }
+
+  async getDepartment(id: number): Promise<Department | undefined> {
+    try {
+      const result = await this.db.select()
+        .from(departments)
+        .where(eq(departments.id, id))
+        .limit(1);
+      return result[0];
+    } catch (error) {
+      console.error('Error getting department:', error);
+      throw error;
+    }
+  }
+
+  async createDepartment(department: InsertDepartment): Promise<Department> {
+    try {
+      const result = await this.db.insert(departments)
+        .values(department)
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error creating department:', error);
+      throw error;
+    }
+  }
+
+  async updateDepartment(id: number, department: Partial<InsertDepartment>): Promise<Department | undefined> {
+    try {
+      const result = await this.db.update(departments)
+        .set({ ...department, updatedAt: new Date() })
+        .where(eq(departments.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error updating department:', error);
+      throw error;
+    }
+  }
+
+  async deleteDepartment(id: number): Promise<boolean> {
+    try {
+      // Soft delete by setting isActive to false
+      const result = await this.db.update(departments)
+        .set({ isActive: false, updatedAt: new Date() })
+        .where(eq(departments.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting department:', error);
       throw error;
     }
   }

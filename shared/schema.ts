@@ -525,6 +525,23 @@ export const insertPositionSchema = createInsertSchema(positions).omit({
   updatedAt: true 
 });
 
+// Таблиця відділів
+export const departments = pgTable("departments", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  description: text("description"),
+  managerId: integer("manager_id"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertDepartmentSchema = createInsertSchema(departments).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -588,3 +605,5 @@ export type WarehouseTransferItem = typeof warehouseTransferItems.$inferSelect;
 export type InsertWarehouseTransferItem = z.infer<typeof insertWarehouseTransferItemSchema>;
 export type Position = typeof positions.$inferSelect;
 export type InsertPosition = z.infer<typeof insertPositionSchema>;
+export type Department = typeof departments.$inferSelect;
+export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;
