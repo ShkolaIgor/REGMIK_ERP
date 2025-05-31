@@ -1819,6 +1819,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Units routes
+  app.get("/api/units", async (req, res) => {
+    try {
+      const units = await storage.getUnits();
+      res.json(units);
+    } catch (error) {
+      console.error("Error fetching units:", error);
+      res.status(500).json({ error: "Failed to fetch units" });
+    }
+  });
+
+  app.post("/api/units", async (req, res) => {
+    try {
+      const validatedData = insertUnitSchema.parse(req.body);
+      const unit = await storage.createUnit(validatedData);
+      res.status(201).json(unit);
+    } catch (error) {
+      console.error("Error creating unit:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid unit data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create unit" });
+      }
+    }
+  });
+
+  app.patch("/api/units/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertUnitSchema.partial().parse(req.body);
+      const unit = await storage.updateUnit(id, validatedData);
+      if (!unit) {
+        return res.status(404).json({ error: "Unit not found" });
+      }
+      res.json(unit);
+    } catch (error) {
+      console.error("Error updating unit:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid unit data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update unit" });
+      }
+    }
+  });
+
+  app.delete("/api/units/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteUnit(id);
+      if (!success) {
+        return res.status(404).json({ error: "Unit not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting unit:", error);
+      res.status(500).json({ error: "Failed to delete unit" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
