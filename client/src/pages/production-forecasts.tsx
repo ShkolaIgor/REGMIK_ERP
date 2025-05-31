@@ -39,14 +39,12 @@ export default function ProductionForecasts() {
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertProductionForecast) => {
-      console.log("Creating forecast with data:", data);
       return apiRequest("/api/production-forecasts", {
         method: "POST",
         body: data,
       });
     },
-    onSuccess: (result) => {
-      console.log("Forecast created successfully:", result);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/production-forecasts"] });
       setIsDialogOpen(false);
       form.reset();
@@ -56,7 +54,6 @@ export default function ProductionForecasts() {
       });
     },
     onError: (error) => {
-      console.error("Failed to create forecast:", error);
       toast({
         title: "Помилка",
         description: "Не вдалося створити прогноз виробництва",
@@ -66,13 +63,11 @@ export default function ProductionForecasts() {
   });
 
   const onSubmit = (data: InsertProductionForecast) => {
-    console.log("onSubmit called with data:", data);
     const submitData = {
       ...data,
       startDate: new Date(),
       endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // +30 днів
     };
-    console.log("Submit data:", submitData);
     createMutation.mutate(submitData);
   };
 
@@ -162,9 +157,7 @@ export default function ProductionForecasts() {
                   <DialogTitle>Створення нового прогнозу</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
-                    console.log("Form validation failed:", errors);
-                  })} className="space-y-4">
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -277,11 +270,6 @@ export default function ProductionForecasts() {
                         type="submit" 
                         disabled={createMutation.isPending}
                         className="bg-blue-600 hover:bg-blue-700"
-                        onClick={() => {
-                          console.log("Submit button clicked");
-                          console.log("Form errors:", form.formState.errors);
-                          console.log("Form values:", form.getValues());
-                        }}
                       >
                         {createMutation.isPending ? "Створення..." : "Створити"}
                       </Button>
