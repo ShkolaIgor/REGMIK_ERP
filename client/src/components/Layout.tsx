@@ -20,7 +20,8 @@ import {
   PackageOpen,
   ClipboardList,
   TrendingUp,
-  Building2
+  Building2,
+  Flame
 } from "lucide-react";
 
 interface LayoutProps {
@@ -65,6 +66,7 @@ const navigationItems = [
     items: [
       { name: "Компоненти", href: "/components", icon: Package },
       { name: "Типи корпусів", href: "/package-types", icon: Box },
+      { name: "Типи пайки", href: "/soldering-types", icon: Flame },
       { name: "Постачальники", href: "/suppliers", icon: Users },
       { name: "Робітники", href: "/workers", icon: Users },
       { name: "Посади", href: "/positions", icon: Users },

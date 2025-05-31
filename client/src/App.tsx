@@ -33,6 +33,7 @@ import Positions from "@/pages/positions";
 import Departments from "@/pages/departments";
 import Components from "@/pages/components";
 import PackageTypes from "@/pages/package-types";
+import SolderingTypes from "@/pages/soldering-types";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -72,6 +73,7 @@ function Router() {
           <Route path="/departments" component={Departments} />
           <Route path="/components" component={Components} />
           <Route path="/package-types" component={PackageTypes} />
+          <Route path="/soldering-types" component={SolderingTypes} />
           <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
         </Layout>
       )}
