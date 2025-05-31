@@ -28,6 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { UnitSelect } from "@/components/UnitSelect";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, Package, Search, GitFork } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
@@ -325,20 +326,11 @@ export default function Components() {
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="unit">Одиниця виміру</Label>
-                  <Select value={formData.unit} onValueChange={(value) => setFormData(prev => ({ ...prev, unit: value }))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="шт">шт</SelectItem>
-                      <SelectItem value="кг">кг</SelectItem>
-                      <SelectItem value="л">л</SelectItem>
-                      <SelectItem value="м">м</SelectItem>
-                      <SelectItem value="м²">м²</SelectItem>
-                      <SelectItem value="м³">м³</SelectItem>
-                      <SelectItem value="комплект">комплект</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <UnitSelect 
+                    value={formData.unit} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, unit: value }))}
+                    placeholder="Оберіть одиницю"
+                  />
                 </div>
 
                 <div>
