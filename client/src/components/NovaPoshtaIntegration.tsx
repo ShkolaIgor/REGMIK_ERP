@@ -93,13 +93,24 @@ export function NovaPoshtaIntegration({
       
       if (response.ok) {
         const result = await response.json();
-        setDeliveryCost({
-          cost: result.Cost,
-          estimatedDeliveryDate: result.EstimatedDeliveryDate || 'Не визначено'
-        });
-        if (onCostCalculated) {
-          onCostCalculated(result);
+        console.log('API response:', result);
+        
+        // Перевірка структури відповіді
+        if (result && typeof result === 'object') {
+          setDeliveryCost({
+            cost: result.Cost || result.cost || 'Не визначено',
+            estimatedDeliveryDate: result.EstimatedDeliveryDate || result.estimatedDeliveryDate || 'Не визначено'
+          });
+          if (onCostCalculated) {
+            onCostCalculated(result);
+          }
+        } else {
+          console.error('Неочікувана структура відповіді:', result);
         }
+      } else {
+        console.error('Помилка API:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.error('Текст помилки:', errorText);
       }
     } catch (error) {
       console.error('Помилка розрахунку вартості:', error);
