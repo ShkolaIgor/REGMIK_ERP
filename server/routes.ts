@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { dbStorage as storage } from "./db-storage";
+import { storage } from "./storage";
 import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./simple-auth";
 import { 
   insertProductSchema, insertOrderSchema, insertRecipeSchema,
