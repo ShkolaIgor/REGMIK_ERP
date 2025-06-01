@@ -2137,8 +2137,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('=== Nova Poshta create invoice endpoint hit ===');
     console.log('Request method:', req.method);
     console.log('Request URL:', req.url);
-    console.log('Request headers:', req.headers);
-    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    console.log('Content-Type:', req.headers['content-type']);
+    console.log('Request body raw:', req.body);
+    console.log('Request body stringified:', JSON.stringify(req.body, null, 2));
     
     try {
 
@@ -2157,7 +2158,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } = req.body;
 
       // Форматуємо номер телефону для Nova Poshta API (має бути у форматі +380XXXXXXXXX)
-      let formattedPhone = recipientPhone.replace(/\D/g, ''); // Видаляємо всі нецифрові символи
+      let formattedPhone = '';
+      if (recipientPhone) {
+        formattedPhone = recipientPhone.replace(/\D/g, ''); // Видаляємо всі нецифрові символи
+      } else {
+        console.log('Warning: recipientPhone is undefined');
+        return res.status(400).json({ error: "Номер телефону отримувача обов'язковий" });
+      }
       if (formattedPhone.startsWith('0')) {
         formattedPhone = '38' + formattedPhone; // Замінюємо 0 на 38
       }
