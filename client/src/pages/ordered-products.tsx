@@ -20,6 +20,9 @@ export default function OrderedProducts() {
   const [selectedWarehouse, setSelectedWarehouse] = useState<string>("");
   const [orderQuantity, setOrderQuantity] = useState<number>(0);
   const [orderNotes, setOrderNotes] = useState("");
+  const [isProductionDialogOpen, setIsProductionDialogOpen] = useState(false);
+  const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
+  const [isSupplierOrderDialogOpen, setIsSupplierOrderDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -72,6 +75,10 @@ export default function OrderedProducts() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/ordered-products-info"] });
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+      setIsCompleteDialogOpen(false);
+      setSelectedProduct(null);
+      setCompleteQuantity(0);
+      setSelectedWarehouse("");
     },
     onError: (error: any) => {
       toast({
@@ -95,6 +102,11 @@ export default function OrderedProducts() {
         description: "Створено замовлення постачальнику",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/supplier-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ordered-products-info"] });
+      setIsSupplierOrderDialogOpen(false);
+      setSelectedProduct(null);
+      setOrderQuantity(0);
+      setOrderNotes("");
     },
     onError: (error: any) => {
       toast({
