@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MapPin, Package, Truck } from "lucide-react";
+import { Loader2, MapPin, Package, Truck, FileText } from "lucide-react";
 
 interface City {
   ref: string;
@@ -64,6 +64,81 @@ export function NovaPoshtaIntegration({
   const [warehouseQuery, setWarehouseQuery] = useState("");
   const [weight, setWeight] = useState("");
   const [cost, setCost] = useState("");
+  const [deliveryCost, setDeliveryCost] = useState<{ cost: string; estimatedDeliveryDate: string } | null>(null);
+  const [recipientName, setRecipientName] = useState('');
+  const [recipientPhone, setRecipientPhone] = useState('');
+  const [description, setDescription] = useState('');
+  const [seatsAmount, setSeatsAmount] = useState('1');
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [createdInvoice, setCreatedInvoice] = useState<{ number: string; cost: string } | null>(null);
+
+  // Функція розрахунку вартості доставки
+  const calculateDeliveryCost = async () => {
+    if (!selectedCity || !selectedWarehouse || !weight || !cost) return;
+    
+    try {
+      const response = await fetch('/api/nova-poshta/delivery-cost', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          citySender: 'db5c8978-391c-11dd-90d9-001a92567626', // Київ
+          cityRecipient: selectedCity.ref,
+          weight: parseFloat(weight),
+          serviceType: 'WarehouseWarehouse',
+          cost: parseFloat(cost),
+          cargoType: 'Parcel',
+          seatsAmount: 1
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        setDeliveryCost({
+          cost: result.Cost,
+          estimatedDeliveryDate: result.EstimatedDeliveryDate || 'Не визначено'
+        });
+        if (onCostCalculated) {
+          onCostCalculated(result);
+        }
+      }
+    } catch (error) {
+      console.error('Помилка розрахунку вартості:', error);
+    }
+  };
+
+  // Функція створення накладної
+  const createInvoice = async () => {
+    if (!selectedCity || !selectedWarehouse || !recipientName || !recipientPhone) return;
+    
+    try {
+      const response = await fetch('/api/nova-poshta/create-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cityRecipient: selectedCity.ref,
+          warehouseRecipient: selectedWarehouse.ref,
+          recipientName,
+          recipientPhone,
+          description,
+          weight: parseFloat(weight),
+          cost: parseFloat(cost),
+          seatsAmount: parseInt(seatsAmount),
+          paymentMethod,
+          payerType: 'Sender'
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        setCreatedInvoice({
+          number: result.Number,
+          cost: result.Cost
+        });
+      }
+    } catch (error) {
+      console.error('Помилка створення накладної:', error);
+    }
+  };
 
   // Пошук міст
   const { data: cities = [], isLoading: citiesLoading } = useQuery<City[]>({
@@ -137,32 +212,7 @@ export function NovaPoshtaIntegration({
     enabled: !!trackingNumber,
   });
 
-  const calculateDeliveryCost = async () => {
-    if (!selectedCity || !weight || !cost) return;
 
-    try {
-      const response = await fetch("/api/nova-poshta/calculate-delivery", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          CitySender: "8d5a980d-391c-11dd-90d9-001a92567626", // Київ
-          CityRecipient: selectedCity.ref,
-          Weight: weight,
-          ServiceType: "WarehouseWarehouse",
-          Cost: cost,
-          CargoType: "Cargo",
-          SeatsAmount: "1"
-        })
-      });
-
-      if (response.ok) {
-        const deliveryCost = await response.json();
-        onCostCalculated?.(deliveryCost);
-      }
-    } catch (error) {
-      console.error("Помилка розрахунку вартості:", error);
-    }
-  };
 
   const handleWarehouseSelect = (warehouseRef: string) => {
     const warehouse = warehouses.find(w => w.ref === warehouseRef);
@@ -387,13 +437,122 @@ export function NovaPoshtaIntegration({
           </div>
           <Button 
             onClick={calculateDeliveryCost}
-            disabled={!selectedCity || !weight || !cost}
+            disabled={!selectedCity || !selectedWarehouse || !weight || !cost}
             className="w-full"
           >
             Розрахувати вартість доставки
           </Button>
+          
+          {deliveryCost && (
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <p className="font-medium">Вартість доставки: {deliveryCost.cost} грн</p>
+              <p className="text-sm text-gray-600">Орієнтовний час доставки: {deliveryCost.estimatedDeliveryDate}</p>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Створення накладної */}
+      {selectedCity && selectedWarehouse && deliveryCost && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Створення накладної
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">ПІБ отримувача</label>
+                <Input
+                  placeholder="Іваненко Іван Іванович"
+                  value={recipientName}
+                  onChange={(e) => setRecipientName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Телефон отримувача</label>
+                <Input
+                  placeholder="+380501234567"
+                  value={recipientPhone}
+                  onChange={(e) => setRecipientPhone(e.target.value)}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Опис відправлення</label>
+              <Input
+                placeholder="Документи, товар тощо"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="text-sm font-medium">Кількість місць</label>
+                <Input
+                  type="number"
+                  placeholder="1"
+                  value={seatsAmount}
+                  onChange={(e) => setSeatsAmount(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Тип оплати</label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Оберіть тип" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Cash">Готівка</SelectItem>
+                    <SelectItem value="NonCash">Безготівковий</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Хто платить</label>
+                <Select value="Sender" onValueChange={() => {}}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Відправник" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Sender">Відправник</SelectItem>
+                    <SelectItem value="Recipient">Отримувач</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <Button 
+              onClick={createInvoice}
+              disabled={!recipientName || !recipientPhone || !description || !seatsAmount || !paymentMethod}
+              className="w-full"
+            >
+              Створити накладну
+            </Button>
+            
+            {createdInvoice && (
+              <div className="p-3 bg-green-50 rounded-lg">
+                <p className="font-medium">Накладну створено успішно!</p>
+                <p className="text-sm">Номер накладної: <span className="font-mono">{createdInvoice.number}</span></p>
+                <p className="text-sm text-gray-600">Вартість доставки: {createdInvoice.cost} грн</p>
+                <div className="mt-2 flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => window.open(`https://novaposhta.ua/tracking/?cargo_number=${createdInvoice.number}`, '_blank')}>
+                    Відстежити
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => {
+                    if (trackingNumber !== createdInvoice.number) {
+                      window.location.href = `/shipments?tracking=${createdInvoice.number}`;
+                    }
+                  }}>
+                    Показати статус
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Відстеження відвантаження */}
       {trackingNumber && (
