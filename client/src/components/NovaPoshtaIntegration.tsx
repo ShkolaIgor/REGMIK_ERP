@@ -81,10 +81,17 @@ export function NovaPoshtaIntegration({
 
   // Дебагінг
   console.log('Cities from server:', filteredCities, 'Query:', cityQuery, 'Loading:', citiesLoading);
+  console.log('Warehouses:', warehouses, 'Selected city:', selectedCity, 'Loading warehouses:', warehousesLoading);
 
   // Отримання відділень для обраного міста
   const { data: warehouses = [], isLoading: warehousesLoading } = useQuery<Warehouse[]>({
     queryKey: ["/api/nova-poshta/warehouses", selectedCity?.ref],
+    queryFn: async () => {
+      if (!selectedCity?.ref) throw new Error('No city selected');
+      const response = await fetch(`/api/nova-poshta/warehouses/${selectedCity.ref}`);
+      if (!response.ok) throw new Error('Failed to fetch warehouses');
+      return response.json();
+    },
     enabled: !!selectedCity?.ref,
   });
 
