@@ -177,6 +177,26 @@ class NovaPoshtaCache {
       warehousesCacheValid: !this.shouldUpdateWarehouses()
     };
   }
+
+  async updateApiKey(apiKey: string) {
+    // Оновлюємо API ключ у nova-poshta-api
+    const { novaPoshtaApi } = await import('./nova-poshta-api');
+    novaPoshtaApi.updateApiKey(apiKey);
+  }
+
+  async syncData() {
+    // Форсуємо оновлення всіх даних
+    await this.updateCities();
+    await this.updateWarehouses();
+  }
+
+  getCitiesCount(): number {
+    return this.cities.size;
+  }
+
+  getWarehousesCount(): number {
+    return this.warehouses.size;
+  }
 }
 
 export const novaPoshtaCache = new NovaPoshtaCache();

@@ -2032,6 +2032,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sync carrier data with Nova Poshta API
+  app.post('/api/carriers/:id/sync', async (req, res) => {
+    try {
+      const carrierId = parseInt(req.params.id);
+      
+      // Get carrier with API key
+      const carrier = await storage.getCarrier(carrierId);
+      if (!carrier) {
+        return res.status(404).json({ error: 'Carrier not found' });
+      }
+
+      if (!carrier.apiKey) {
+        return res.status(400).json({ error: 'API key not configured for this carrier' });
+      }
+
+      // Update cache with new API key and sync data
+      await novaPoshtaCache.updateApiKey(carrier.apiKey);
+      await novaPoshtaCache.syncData();
+      
+      // Get updated counts
+      const citiesCount = await novaPoshtaCache.getCitiesCount();
+      const warehousesCount = await novaPoshtaCache.getWarehousesCount();
+      
+      // Update carrier with sync statistics
+      const updatedCarrier = await storage.updateCarrier(carrierId, {
+        citiesCount,
+        warehousesCount, 
+        lastSyncAt: new Date()
+      });
+
+      res.json({ 
+        success: true,
+        citiesCount,
+        warehousesCount,
+        lastSyncAt: updatedCarrier?.lastSyncAt
+      });
+    } catch (error) {
+      console.error('Failed to sync carrier data:', error);
+      res.status(500).json({ error: 'Failed to sync carrier data' });
+    }
+  });
+
   // Nova Poshta API integration routes (з кешуванням)
   app.get("/api/nova-poshta/cities", async (req, res) => {
     try {

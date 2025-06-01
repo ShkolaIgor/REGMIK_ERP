@@ -209,7 +209,7 @@ interface DeliveryCost {
 
 class NovaPoshtaApi {
   private readonly baseUrl = 'https://api.novaposhta.ua/v2.0/json/';
-  private readonly apiKey: string;
+  private apiKey: string;
 
   constructor() {
     const apiKey = process.env.NOVA_POSHTA_API_KEY;
@@ -217,6 +217,10 @@ class NovaPoshtaApi {
       throw new Error('NOVA_POSHTA_API_KEY environment variable is required');
     }
     this.apiKey = apiKey;
+  }
+
+  updateApiKey(newApiKey: string) {
+    this.apiKey = newApiKey;
   }
 
   private async makeRequest<T>(

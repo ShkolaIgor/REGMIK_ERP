@@ -130,24 +130,24 @@ export default function Carriers() {
   });
 
   const syncMutation = useMutation({
-    mutationFn: async (carrierId: number) => {
-      const response = await fetch(`/api/carriers/${carrierId}/sync`, {
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/carriers/${id}/sync`, {
         method: "POST",
       });
-      if (!response.ok) throw new Error("Помилка синхронізації з Nova Poshta");
+      if (!response.ok) throw new Error("Помилка синхронізації даних");
       return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/carriers"] });
       toast({ 
-        title: "Синхронізація завершена",
-        description: `Оновлено: ${data.citiesCount} міст, ${data.warehousesCount} відділень`
+        title: "Синхронізацію завершено успішно",
+        description: `Синхронізовано: ${data.citiesCount} міст, ${data.warehousesCount} відділень`
       });
     },
     onError: () => {
       toast({ 
         title: "Помилка синхронізації", 
-        description: "Перевірте API ключ та спробуйте ще раз",
+        description: "Перевірте API ключ та налаштування перевізника",
         variant: "destructive" 
       });
     },
