@@ -96,7 +96,7 @@ export function NovaPoshtaIntegration({
   const [description, setDescription] = useState('');
   const [seatsAmount, setSeatsAmount] = useState('1');
   const [paymentMethod, setPaymentMethod] = useState('Cash');
-  const [payerType, setPayerType] = useState('Sender');
+  const [payerType, setPayerType] = useState('Recipient');
   const [createdInvoice, setCreatedInvoice] = useState<{ number: string; cost: string } | null>(null);
   
   // Нові стани для відправника та адрес клієнтів
@@ -581,9 +581,9 @@ export function NovaPoshtaIntegration({
               </div>
               <div>
                 <label className="text-sm font-medium">Хто платить</label>
-                <Select value="Sender" onValueChange={() => {}}>
+                <Select value={payerType} onValueChange={setPayerType}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Відправник" />
+                    <SelectValue placeholder="Отримувач" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Sender">Відправник</SelectItem>
