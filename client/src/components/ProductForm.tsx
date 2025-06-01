@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -40,6 +40,34 @@ export function ProductForm({ isOpen, onClose, product }: ProductFormProps) {
   const { data: categories } = useQuery({
     queryKey: ["/api/categories"],
   });
+
+  // Reset form when product changes
+  useEffect(() => {
+    if (product) {
+      console.log('Resetting form with product:', product);
+      form.reset({
+        name: product.name || "",
+        sku: product.sku || "",
+        description: product.description || "",
+        barcode: product.barcode || "",
+        categoryId: product.categoryId || null,
+        costPrice: product.costPrice || "0",
+        retailPrice: product.retailPrice || "0",
+        photo: product.photo || null,
+      });
+    } else {
+      form.reset({
+        name: "",
+        sku: "",
+        description: "",
+        barcode: "",
+        categoryId: null,
+        costPrice: "0",
+        retailPrice: "0",
+        photo: null,
+      });
+    }
+  }, [product, form]);
 
   const createProductMutation = useMutation({
     mutationFn: async (data: InsertProduct) => {
