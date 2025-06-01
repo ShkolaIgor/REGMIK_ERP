@@ -95,7 +95,8 @@ export function NovaPoshtaIntegration({
   const [recipientPhone, setRecipientPhone] = useState('');
   const [description, setDescription] = useState('');
   const [seatsAmount, setSeatsAmount] = useState('1');
-  const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [payerType, setPayerType] = useState('Sender');
   const [createdInvoice, setCreatedInvoice] = useState<{ number: string; cost: string } | null>(null);
   
   // Нові стани для відправника та адрес клієнтів
@@ -198,8 +199,8 @@ export function NovaPoshtaIntegration({
           weight: parseFloat(externalWeight),
           cost: parseFloat(externalDeclaredValue),
           seatsAmount: parseInt(seatsAmount),
-          paymentMethod: 'Cash',
-          payerType: 'Sender'
+          paymentMethod,
+          payerType
         })
       });
       
