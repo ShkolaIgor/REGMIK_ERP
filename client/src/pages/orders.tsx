@@ -348,7 +348,9 @@ export default function Orders() {
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Створити нове замовлення</DialogTitle>
+                <DialogTitle>
+                  {isEditMode ? `Редагувати замовлення ${editingOrder?.orderNumber}` : "Створити нове замовлення"}
+                </DialogTitle>
               </DialogHeader>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                 {/* Інформація про клієнта */}
@@ -392,20 +394,28 @@ export default function Orders() {
                   </div>
                   <div>
                     <Label htmlFor="status">Статус</Label>
-                    <Select
-                      value={form.watch("status")}
-                      onValueChange={(value) => form.setValue("status", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Очікує</SelectItem>
-                        <SelectItem value="processing">В обробці</SelectItem>
-                        <SelectItem value="completed">Завершено</SelectItem>
-                        <SelectItem value="cancelled">Скасовано</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    {!isEditMode ? (
+                      <Input
+                        value="Нове"
+                        disabled
+                        className="bg-gray-50"
+                      />
+                    ) : (
+                      <Select
+                        value={form.watch("status")}
+                        onValueChange={(value) => form.setValue("status", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Нове</SelectItem>
+                          <SelectItem value="processing">В обробці</SelectItem>
+                          <SelectItem value="completed">Завершено</SelectItem>
+                          <SelectItem value="cancelled">Скасовано</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                 </div>
 
@@ -491,11 +501,21 @@ export default function Orders() {
                 </div>
 
                 <DialogFooter>
-                  <Button type="button" variant="outline" onClick={handleCloseDialog}>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={isEditMode ? handleCloseEditDialog : handleCloseDialog}
+                  >
                     Скасувати
                   </Button>
-                  <Button type="submit" disabled={createOrderMutation.isPending}>
-                    {createOrderMutation.isPending ? "Створення..." : "Створити замовлення"}
+                  <Button 
+                    type="submit" 
+                    disabled={isEditMode ? updateOrderMutation.isPending : createOrderMutation.isPending}
+                  >
+                    {isEditMode 
+                      ? (updateOrderMutation.isPending ? "Оновлення..." : "Оновити замовлення")
+                      : (createOrderMutation.isPending ? "Створення..." : "Створити замовлення")
+                    }
                   </Button>
                 </DialogFooter>
               </form>

@@ -344,6 +344,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/orders/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { order, items } = req.body;
+      
+      const orderData = insertOrderSchema.parse(order);
+      const updatedOrder = await storage.updateOrder(id, orderData, items || []);
+      
+      if (!updatedOrder) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+      
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error("Error updating order:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid order data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update order" });
+      }
+    }
+  });
+
   app.delete("/api/orders/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
