@@ -150,6 +150,25 @@ export default function Orders() {
     },
   });
 
+  // Мутація для видалення замовлення
+  const deleteOrderMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/orders/${id}`, "DELETE"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      toast({
+        title: "Успіх",
+        description: "Замовлення видалено",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося видалити замовлення",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Функція для закриття діалогу та очищення форми
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
@@ -600,6 +619,19 @@ export default function Orders() {
                               )}
                             </DialogContent>
                           </Dialog>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => {
+                              if (confirm('Ви впевнені, що хочете видалити це замовлення?')) {
+                                deleteOrderMutation.mutate(order.id);
+                              }
+                            }}
+                            disabled={deleteOrderMutation.isPending}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
