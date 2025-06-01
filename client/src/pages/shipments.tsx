@@ -178,6 +178,37 @@ export default function Shipments() {
     },
   });
 
+  // Мутація оновлення відвантаження
+  const updateMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch(`/api/shipments/${editingShipment?.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to update shipment");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shipments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      setIsDialogOpen(false);
+      setEditingShipment(null);
+      resetForm();
+      toast({
+        title: "Успіх",
+        description: "Відвантаження оновлено",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося оновити відвантаження",
+        variant: "destructive",
+      });
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       orderId: "",
@@ -195,14 +226,20 @@ export default function Shipments() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate({
+    const data = {
       ...formData,
       orderId: parseInt(formData.orderId),
       carrierId: formData.carrierId ? parseInt(formData.carrierId) : null,
       weight: formData.weight ? parseFloat(formData.weight) : null,
       shippingCost: formData.shippingCost ? parseFloat(formData.shippingCost) : null,
       estimatedDelivery: formData.estimatedDelivery ? new Date(formData.estimatedDelivery) : null,
-    });
+    };
+
+    if (editingShipment) {
+      updateMutation.mutate(data);
+    } else {
+      createMutation.mutate(data);
+    }
   };
 
   const handleStatusChange = (shipmentId: number, newStatus: string) => {
@@ -236,7 +273,9 @@ export default function Shipments() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Нове відвантаження</DialogTitle>
+              <DialogTitle>
+                {editingShipment ? "Редагувати відвантаження" : "Нове відвантаження"}
+              </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -471,7 +510,21 @@ export default function Shipments() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          // Можна додати детальний перегляд
+                          setEditingShipment(shipment);
+                          setFormData({
+                            orderId: shipment.orderId.toString(),
+                            carrierId: shipment.carrierId?.toString() || "",
+                            shippingAddress: shipment.shippingAddress,
+                            weight: shipment.weight || "",
+                            dimensions: shipment.dimensions || "",
+                            shippingCost: shipment.shippingCost || "",
+                            estimatedDelivery: shipment.estimatedDelivery 
+                              ? new Date(shipment.estimatedDelivery).toISOString().split('T')[0] 
+                              : "",
+                            trackingNumber: shipment.trackingNumber || "",
+                            notes: shipment.notes || ""
+                          });
+                          setIsDialogOpen(true);
                         }}
                       >
                         <Edit className="h-4 w-4" />
