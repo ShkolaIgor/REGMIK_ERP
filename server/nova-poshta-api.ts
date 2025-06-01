@@ -450,7 +450,11 @@ class NovaPoshtaApi {
       RecipientsPhone: params.recipientPhone
     };
 
+    console.log('Nova Poshta invoice request properties:', methodProperties);
+    
     const response = await this.makeRequest('InternetDocument', 'save', methodProperties);
+    
+    console.log('Nova Poshta invoice response:', response);
     
     if (response.success && response.data && response.data.length > 0) {
       const data = response.data[0] as any;
@@ -460,6 +464,7 @@ class NovaPoshtaApi {
         Ref: data.Ref
       };
     } else {
+      console.error('Nova Poshta invoice error details:', response);
       throw new Error(`Failed to create document: ${response.errors?.join(', ') || 'Unknown error'}`);
     }
   }
