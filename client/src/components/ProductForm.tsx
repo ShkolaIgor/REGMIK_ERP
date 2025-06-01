@@ -17,9 +17,10 @@ interface ProductFormProps {
   isOpen: boolean;
   onClose: () => void;
   product?: any; // For editing
+  isViewMode?: boolean; // For view-only mode
 }
 
-export function ProductForm({ isOpen, onClose, product }: ProductFormProps) {
+export function ProductForm({ isOpen, onClose, product, isViewMode = false }: ProductFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -138,7 +139,7 @@ export function ProductForm({ isOpen, onClose, product }: ProductFormProps) {
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {product ? "Редагувати товар" : "Додати новий товар"}
+            {isViewMode ? "Переглянути товар" : (product ? "Редагувати товар" : "Додати новий товар")}
           </DialogTitle>
         </DialogHeader>
 
@@ -277,18 +278,20 @@ export function ProductForm({ isOpen, onClose, product }: ProductFormProps) {
 
             <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
               <Button type="button" variant="outline" onClick={onClose}>
-                Скасувати
+                {isViewMode ? "Закрити" : "Скасувати"}
               </Button>
-              <Button
-                type="submit"
-                disabled={createProductMutation.isPending || updateProductMutation.isPending}
-              >
-                {createProductMutation.isPending || updateProductMutation.isPending
-                  ? "Збереження..."
-                  : product
-                  ? "Оновити товар"
-                  : "Зберегти товар"}
-              </Button>
+              {!isViewMode && (
+                <Button
+                  type="submit"
+                  disabled={createProductMutation.isPending || updateProductMutation.isPending}
+                >
+                  {createProductMutation.isPending || updateProductMutation.isPending
+                    ? "Збереження..."
+                    : product
+                    ? "Оновити товар"
+                    : "Зберегти товар"}
+                </Button>
+              )}
             </div>
           </form>
         </Form>

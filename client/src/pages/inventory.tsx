@@ -16,6 +16,7 @@ export default function Inventory() {
   const [showProductForm, setShowProductForm] = useState(false);
 
   const [editingProduct, setEditingProduct] = useState(null);
+  const [isViewMode, setIsViewMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -78,12 +79,14 @@ export default function Inventory() {
   const handleEditProduct = (product: any) => {
     console.log('Editing product:', product);
     setEditingProduct(product);
+    setIsViewMode(false);
     setShowProductForm(true);
   };
 
   const handleViewProduct = (product: any) => {
     console.log('Viewing product:', product);
     setEditingProduct(product);
+    setIsViewMode(true);
     setShowProductForm(true);
   };
 
