@@ -548,30 +548,7 @@ export function NovaPoshtaIntegration({
         </CardContent>
       </Card>
 
-      {/* Автоматично розрахована вартість доставки */}
-      {deliveryCost && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Вартість доставки
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="font-semibold text-green-800 text-lg">Вартість доставки: {deliveryCost.cost} грн</p>
-              <p className="text-sm text-green-600">Орієнтовний час доставки: {deliveryCost.estimatedDeliveryDate}</p>
-            </div>
-            {externalWeight && externalDeclaredValue && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600">Параметри відправлення:</p>
-                <p className="font-medium">Вага: {externalWeight} кг</p>
-                <p className="font-medium">Оголошена вартість: {externalDeclaredValue} грн</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+
 
       {/* Створення накладної */}
       {selectedCity && selectedWarehouse && deliveryCost && (

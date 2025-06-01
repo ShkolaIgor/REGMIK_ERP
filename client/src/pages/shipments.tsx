@@ -96,6 +96,7 @@ export default function Shipments() {
   const [editingShipment, setEditingShipment] = useState<Shipment | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<string>("");
   const [calculatedShippingCost, setCalculatedShippingCost] = useState<number | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -283,6 +284,24 @@ export default function Shipments() {
     }));
   };
 
+  // Функція валідації обов'язкових полів для Nova Poshta
+  const validateNovaPoshtaFields = () => {
+    const errors: Record<string, boolean> = {};
+    const selectedCarrier = (carriers as Carrier[])?.find((c: Carrier) => c.id.toString() === formData.carrierId);
+    const isNovaPoshta = selectedCarrier && (selectedCarrier.name.toLowerCase().includes('нова пошта') || selectedCarrier.name.toLowerCase().includes('nova poshta'));
+    
+    if (isNovaPoshta) {
+      if (!formData.weight) errors.weight = true;
+      if (!formData.declaredValue) errors.declaredValue = true;
+      if (!formData.length) errors.length = true;
+      if (!formData.width) errors.width = true;
+      if (!formData.height) errors.height = true;
+    }
+    
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -291,6 +310,16 @@ export default function Shipments() {
       toast({
         title: "Помилка",
         description: "Оберіть замовлення",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Валідація полів для Nova Poshta
+    if (!validateNovaPoshtaFields()) {
+      toast({
+        title: "Помилка",
+        description: "Для Nova Poshta обов'язково заповніть вагу, оголошену вартість та розміри",
         variant: "destructive",
       });
       return;
@@ -501,7 +530,11 @@ export default function Shipments() {
                     value={formData.weight}
                     onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
                     placeholder="1.5"
+                    className={fieldErrors.weight ? "border-red-500 bg-red-50" : ""}
                   />
+                  {fieldErrors.weight && (
+                    <p className="text-xs text-red-600 mt-1">Обов'язковий параметр</p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="length">Довжина (см)</Label>
