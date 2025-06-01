@@ -23,6 +23,7 @@ import {
   TrendingUp,
   Building2,
   Flame,
+  BarChart3,
   Ruler,
   DollarSign
 } from "lucide-react";
@@ -62,7 +63,8 @@ const navigationItems = [
       { name: "Збірка та розбірка", href: "/assembly", icon: PackageOpen },
       { name: "Калькуляція собівартості", href: "/costing", icon: Calculator },
       { name: "Дефіцит матеріалів", href: "/shortage", icon: AlertTriangle },
-      { name: "Прогнозування виробництва", href: "/production-forecasts", icon: TrendingUp }
+      { name: "Прогнозування виробництва", href: "/production-forecasts", icon: TrendingUp },
+      { name: "Аналіз завантаженості", href: "/production-analytics", icon: BarChart3 }
     ]
   },
   {

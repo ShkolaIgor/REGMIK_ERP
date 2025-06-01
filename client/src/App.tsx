@@ -87,6 +87,7 @@ function Router() {
           <Route path="/shipments" component={Shipments} />
           <Route path="/carriers" component={Carriers} />
           <Route path="/manufacturing" component={Manufacturing} />
+          <Route path="/production-analytics" component={ProductionAnalytics} />
           <Route path="/currencies" component={Currencies} />
           <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
         </Layout>
