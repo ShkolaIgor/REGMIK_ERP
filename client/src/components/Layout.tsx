@@ -12,6 +12,7 @@ import {
   Calculator,
   AlertTriangle,
   BarChart,
+  Factory,
   File,
   Users,
   Box,
@@ -52,6 +53,7 @@ const navigationItems = [
   {
     title: "Модуль Виробництво",
     items: [
+      { name: "Виготовлення товарів", href: "/manufacturing", icon: Factory },
       { name: "Рецепти виробництва", href: "/recipes", icon: FileText },
       { name: "Технологічні карти", href: "/tech-cards", icon: File },
       { name: "Склад виробів (BOM)", href: "/bom", icon: Layers },

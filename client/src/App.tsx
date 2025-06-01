@@ -38,6 +38,7 @@ import SolderingTypes from "@/pages/soldering-types";
 import Units from "@/pages/units";
 import Shipments from "@/pages/shipments";
 import Carriers from "@/pages/carriers";
+import Manufacturing from "@/pages/manufacturing";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -83,6 +84,7 @@ function Router() {
           <Route path="/units" component={Units} />
           <Route path="/shipments" component={Shipments} />
           <Route path="/carriers" component={Carriers} />
+          <Route path="/manufacturing" component={Manufacturing} />
           <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
         </Layout>
       <Route component={NotFound} />

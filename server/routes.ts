@@ -2464,6 +2464,156 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manufacturing Orders API
+  app.get("/api/manufacturing-orders", async (req, res) => {
+    try {
+      const orders = await storage.getManufacturingOrders();
+      res.json(orders);
+    } catch (error) {
+      console.error("Failed to get manufacturing orders:", error);
+      res.status(500).json({ error: "Failed to get manufacturing orders" });
+    }
+  });
+
+  app.get("/api/manufacturing-orders/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const order = await storage.getManufacturingOrder(id);
+      if (!order) {
+        return res.status(404).json({ error: "Manufacturing order not found" });
+      }
+      res.json(order);
+    } catch (error) {
+      console.error("Failed to get manufacturing order:", error);
+      res.status(500).json({ error: "Failed to get manufacturing order" });
+    }
+  });
+
+  app.post("/api/manufacturing-orders", async (req, res) => {
+    try {
+      const orderData = insertManufacturingOrderSchema.parse(req.body);
+      const order = await storage.createManufacturingOrder(orderData);
+      res.status(201).json(order);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid manufacturing order data", details: error.errors });
+      } else {
+        console.error("Failed to create manufacturing order:", error);
+        res.status(500).json({ error: "Failed to create manufacturing order" });
+      }
+    }
+  });
+
+  app.patch("/api/manufacturing-orders/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = insertManufacturingOrderSchema.partial().parse(req.body);
+      const order = await storage.updateManufacturingOrder(id, updateData);
+      if (!order) {
+        return res.status(404).json({ error: "Manufacturing order not found" });
+      }
+      res.json(order);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid manufacturing order data", details: error.errors });
+      } else {
+        console.error("Failed to update manufacturing order:", error);
+        res.status(500).json({ error: "Failed to update manufacturing order" });
+      }
+    }
+  });
+
+  app.delete("/api/manufacturing-orders/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteManufacturingOrder(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Manufacturing order not found" });
+      }
+      res.status(204).end();
+    } catch (error) {
+      console.error("Failed to delete manufacturing order:", error);
+      res.status(500).json({ error: "Failed to delete manufacturing order" });
+    }
+  });
+
+  // Запуск виробництва
+  app.post("/api/manufacturing-orders/:id/start", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const order = await storage.startManufacturing(id);
+      if (!order) {
+        return res.status(404).json({ error: "Manufacturing order not found" });
+      }
+      res.json(order);
+    } catch (error) {
+      console.error("Failed to start manufacturing:", error);
+      res.status(500).json({ error: "Failed to start manufacturing" });
+    }
+  });
+
+  // Завершення виробництва
+  app.post("/api/manufacturing-orders/:id/complete", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { producedQuantity, qualityRating, notes } = req.body;
+      const order = await storage.completeManufacturing(id, producedQuantity, qualityRating, notes);
+      if (!order) {
+        return res.status(404).json({ error: "Manufacturing order not found" });
+      }
+      res.json(order);
+    } catch (error) {
+      console.error("Failed to complete manufacturing:", error);
+      res.status(500).json({ error: "Failed to complete manufacturing" });
+    }
+  });
+
+  // Manufacturing Steps API
+  app.get("/api/manufacturing-orders/:id/steps", async (req, res) => {
+    try {
+      const manufacturingOrderId = parseInt(req.params.id);
+      const steps = await storage.getManufacturingSteps(manufacturingOrderId);
+      res.json(steps);
+    } catch (error) {
+      console.error("Failed to get manufacturing steps:", error);
+      res.status(500).json({ error: "Failed to get manufacturing steps" });
+    }
+  });
+
+  app.post("/api/manufacturing-steps", async (req, res) => {
+    try {
+      const stepData = insertManufacturingStepSchema.parse(req.body);
+      const step = await storage.createManufacturingStep(stepData);
+      res.status(201).json(step);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid manufacturing step data", details: error.errors });
+      } else {
+        console.error("Failed to create manufacturing step:", error);
+        res.status(500).json({ error: "Failed to create manufacturing step" });
+      }
+    }
+  });
+
+  app.patch("/api/manufacturing-steps/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = insertManufacturingStepSchema.partial().parse(req.body);
+      const step = await storage.updateManufacturingStep(id, updateData);
+      if (!step) {
+        return res.status(404).json({ error: "Manufacturing step not found" });
+      }
+      res.json(step);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid manufacturing step data", details: error.errors });
+      } else {
+        console.error("Failed to update manufacturing step:", error);
+        res.status(500).json({ error: "Failed to update manufacturing step" });
+      }
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
