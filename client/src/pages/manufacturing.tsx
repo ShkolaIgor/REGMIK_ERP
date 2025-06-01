@@ -353,7 +353,7 @@ export default function Manufacturing() {
                         <SelectValue placeholder="Оберіть рецепт" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Без рецепту</SelectItem>
+                        <SelectItem value="none">Без рецепту</SelectItem>
                         {recipes.map((recipe: any) => (
                           <SelectItem key={recipe.id} value={recipe.id.toString()}>
                             {recipe.name}
@@ -416,7 +416,7 @@ export default function Manufacturing() {
                         <SelectValue placeholder="Оберіть працівника" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Не призначено</SelectItem>
+                        <SelectItem value="unassigned">Не призначено</SelectItem>
                         {workers.map((worker: any) => (
                           <SelectItem key={worker.id} value={worker.id.toString()}>
                             {worker.firstName} {worker.lastName}
@@ -438,7 +438,7 @@ export default function Manufacturing() {
                         <SelectValue placeholder="Оберіть склад" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Не вказано</SelectItem>
+                        <SelectItem value="unspecified">Не вказано</SelectItem>
                         {warehouses.map((warehouse: any) => (
                           <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
                             {warehouse.name}

@@ -76,7 +76,7 @@ export function UnitSelect({
       </SelectTrigger>
       <SelectContent>
         {Object.keys(groupedUnits).length === 0 ? (
-          <SelectItem value="" disabled>
+          <SelectItem value="no-units" disabled>
             Одиниці не знайдено
           </SelectItem>
         ) : (
