@@ -101,6 +101,7 @@ export default function Shipments() {
     weight: "",
     dimensions: "",
     shippingCost: "",
+    declaredValue: "",
     estimatedDelivery: "",
     notes: "",
     trackingNumber: ""
@@ -249,6 +250,7 @@ export default function Shipments() {
       weight: "",
       dimensions: "",
       shippingCost: "",
+      declaredValue: "",
       estimatedDelivery: "",
       notes: "",
       trackingNumber: ""
@@ -375,7 +377,7 @@ export default function Shipments() {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="weight">Вага (кг)</Label>
                   <Input
@@ -387,6 +389,20 @@ export default function Shipments() {
                     placeholder="1.5"
                   />
                 </div>
+                <div>
+                  <Label htmlFor="declaredValue">Оголошена вартість (грн)</Label>
+                  <Input
+                    id="declaredValue"
+                    type="number"
+                    step="0.01"
+                    value={formData.declaredValue}
+                    onChange={(e) => setFormData(prev => ({ ...prev, declaredValue: e.target.value }))}
+                    placeholder="1000.00"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="dimensions">Розміри (см)</Label>
                   <Input
@@ -450,6 +466,8 @@ export default function Shipments() {
                         }));
                       }}
                       trackingNumber={formData.trackingNumber}
+                      weight={formData.weight}
+                      declaredValue={formData.declaredValue}
                     />
                   </div>
                 ) : null;
@@ -585,6 +603,7 @@ export default function Shipments() {
                               weight: shipment.weight || "",
                               dimensions: shipment.dimensions || "",
                               shippingCost: shipment.shippingCost || "",
+                              declaredValue: shipment.declaredValue || "",
                               estimatedDelivery: shipment.estimatedDelivery 
                                 ? new Date(shipment.estimatedDelivery).toISOString().split('T')[0] 
                                 : "",
