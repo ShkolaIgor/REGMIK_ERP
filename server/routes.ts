@@ -350,8 +350,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { order, items } = req.body;
       
+      console.log("=== UPDATE ORDER SERVER ===");
+      console.log("Order ID:", id);
+      console.log("Order data:", order);
+      console.log("Items data:", items);
+      
       const orderData = insertOrderSchema.parse(order);
       const updatedOrder = await storage.updateOrder(id, orderData, items || []);
+      
+      console.log("Updated order result:", updatedOrder);
       
       if (!updatedOrder) {
         return res.status(404).json({ error: "Order not found" });
