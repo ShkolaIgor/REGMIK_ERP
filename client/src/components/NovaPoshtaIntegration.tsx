@@ -210,27 +210,31 @@ export function NovaPoshtaIntegration({
     if (!selectedCity || !selectedWarehouse || !recipientName || !recipientPhone || !externalWeight || !externalDeclaredValue) return;
     
     try {
+      const requestData = {
+        cityRecipient: selectedCity.ref,
+        warehouseRecipient: selectedWarehouse.ref,
+        citySender: selectedSender?.cityRef,
+        warehouseSender: selectedSender?.warehouseRef,
+        senderName: selectedSender?.name,
+        senderPhone: selectedSender?.phone,
+        recipientName,
+        recipientPhone,
+        recipientType,
+        description,
+        weight: parseFloat(externalWeight),
+        cost: parseFloat(externalDeclaredValue),
+        seatsAmount: parseInt(seatsAmount),
+        paymentMethod,
+        payerType,
+        orderId
+      };
+      
+      console.log('Sending create invoice request:', JSON.stringify(requestData, null, 2));
+      
       const response = await fetch('/api/nova-poshta/create-invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cityRecipient: selectedCity.ref,
-          warehouseRecipient: selectedWarehouse.ref,
-          citySender: selectedSender?.cityRef,
-          warehouseSender: selectedSender?.warehouseRef,
-          senderName: selectedSender?.name,
-          senderPhone: selectedSender?.phone,
-          recipientName,
-          recipientPhone,
-          recipientType,
-          description,
-          weight: parseFloat(externalWeight),
-          cost: parseFloat(externalDeclaredValue),
-          seatsAmount: parseInt(seatsAmount),
-          paymentMethod,
-          payerType,
-          orderId
-        })
+        body: JSON.stringify(requestData)
       });
       
       if (response.ok) {
