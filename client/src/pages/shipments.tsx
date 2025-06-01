@@ -339,7 +339,12 @@ export default function Shipments() {
           <p className="text-gray-600">Управління відвантаженнями замовлень</p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) {
+            resetForm();
+          }
+        }}>
           <DialogTrigger asChild>
             <Button onClick={() => setIsDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
@@ -537,6 +542,7 @@ export default function Shipments() {
                           shippingCost: cost.Cost 
                         }));
                       }}
+                      orderId={formData.orderId}
                       trackingNumber={formData.trackingNumber}
                       weight={formData.weight}
                       length={formData.length}

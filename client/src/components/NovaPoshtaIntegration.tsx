@@ -72,6 +72,7 @@ interface CustomerAddress {
 interface NovaPoshtaIntegrationProps {
   onAddressSelect?: (address: string, cityRef: string, warehouseRef: string) => void;
   onCostCalculated?: (cost: DeliveryCost) => void;
+  orderId?: string;
   trackingNumber?: string;
   weight?: string;
   length?: string;
@@ -85,6 +86,7 @@ interface NovaPoshtaIntegrationProps {
 export function NovaPoshtaIntegration({
   onAddressSelect,
   onCostCalculated,
+  orderId,
   trackingNumber,
   weight: externalWeight,
   length: externalLength,
@@ -226,7 +228,8 @@ export function NovaPoshtaIntegration({
           cost: parseFloat(externalDeclaredValue),
           seatsAmount: parseInt(seatsAmount),
           paymentMethod,
-          payerType
+          payerType,
+          orderId
         })
       });
       
