@@ -2,7 +2,7 @@ import {
   users, categories, units, warehouses, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   components, productComponents, costCalculations, materialShortages, inventoryAudits, inventoryAuditItems, workers,
-  packageTypes, solderingTypes, componentCategories, shipments, shipmentItems,
+  packageTypes, solderingTypes, componentCategories, shipments, shipmentItems, carriers,
   type User, type UpsertUser, type Category, type InsertCategory,
   type Unit, type InsertUnit,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
@@ -13,6 +13,7 @@ import {
   type Supplier, type InsertSupplier,
   type TechCard, type InsertTechCard,
   type TechCardStep, type InsertTechCardStep,
+  type Carrier, type InsertCarrier,
   type TechCardMaterial, type InsertTechCardMaterial,
   type Component, type InsertComponent,
   type ComponentCategory, type InsertComponentCategory,
@@ -256,6 +257,13 @@ export interface IStorage {
   updateShipment(id: number, shipment: any): Promise<any>;
   updateShipmentStatus(id: number, status: string): Promise<any>;
   deleteShipment(id: number): Promise<boolean>;
+
+  // Carriers
+  getCarriers(): Promise<Carrier[]>;
+  getCarrier(id: number): Promise<Carrier | null>;
+  createCarrier(data: InsertCarrier): Promise<Carrier>;
+  updateCarrier(id: number, data: Partial<InsertCarrier>): Promise<Carrier | null>;
+  deleteCarrier(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -296,6 +304,8 @@ export class MemStorage implements IStorage {
   private currentComponentId = 1;
   private currentProductComponentId = 1;
   private currentShipmentId = 1;
+  private carriers: Map<number, Carrier> = new Map();
+  private nextCarrierId = 1;
 
   constructor() {
     this.initializeData();
@@ -322,6 +332,55 @@ export class MemStorage implements IStorage {
     const defaultWarehouse: Warehouse = { id: 1, name: "Головний склад", location: "Київ", description: "Основний склад" };
     this.warehouses.set(1, defaultWarehouse);
     this.currentWarehouseId = 2;
+
+    // Initialize default carriers
+    const defaultCarriers: Carrier[] = [
+      {
+        id: 1,
+        name: "Нова Пошта",
+        contactPerson: "Менеджер з корпоративних клієнтів",
+        email: "corporate@novaposhta.ua",
+        phone: "+380 800 500 609",
+        address: "Київ, вул. Космічна, 6",
+        description: "Провідна служба доставки України",
+        serviceType: "express",
+        rating: 4.8,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: 2,
+        name: "УкрПошта",
+        contactPerson: "Відділ корпоративного обслуговування",
+        email: "corporate@ukrposhta.ua",
+        phone: "+380 800 301 545",
+        address: "Київ, Майдан Незалежності, 22",
+        description: "Національний оператор поштового зв'язку",
+        serviceType: "standard",
+        rating: 4.2,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: 3,
+        name: "Meest Express",
+        contactPerson: "Корпоративні продажі",
+        email: "corporate@meest.com",
+        phone: "+380 800 502 206",
+        address: "Львів, вул. Під Дубом, 7л",
+        description: "Міжнародна служба експрес-доставки",
+        serviceType: "international",
+        rating: 4.5,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+    
+    defaultCarriers.forEach(carrier => this.carriers.set(carrier.id, carrier));
+    this.nextCarrierId = 4;
   }
 
   // Users (updated for Replit Auth)
@@ -1002,6 +1061,43 @@ export class MemStorage implements IStorage {
 
   async deleteShipment(id: number): Promise<boolean> {
     return this.shipments.delete(id);
+  }
+
+  // Carriers methods
+  async getCarriers(): Promise<Carrier[]> {
+    return Array.from(this.carriers.values());
+  }
+
+  async getCarrier(id: number): Promise<Carrier | null> {
+    return this.carriers.get(id) || null;
+  }
+
+  async createCarrier(data: InsertCarrier): Promise<Carrier> {
+    const carrier: Carrier = {
+      id: this.nextCarrierId++,
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.carriers.set(carrier.id, carrier);
+    return carrier;
+  }
+
+  async updateCarrier(id: number, data: Partial<InsertCarrier>): Promise<Carrier | null> {
+    const carrier = this.carriers.get(id);
+    if (!carrier) return null;
+    
+    const updatedCarrier = {
+      ...carrier,
+      ...data,
+      updatedAt: new Date(),
+    };
+    this.carriers.set(id, updatedCarrier);
+    return updatedCarrier;
+  }
+
+  async deleteCarrier(id: number): Promise<boolean> {
+    return this.carriers.delete(id);
   }
 }
 
