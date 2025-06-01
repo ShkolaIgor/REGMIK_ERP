@@ -559,7 +559,11 @@ export default function Shipments() {
                     value={formData.shippingCost}
                     onChange={(e) => setFormData(prev => ({ ...prev, shippingCost: e.target.value }))}
                     placeholder="150.00"
+                    className={calculatedShippingCost ? "bg-green-50 border-green-300 text-green-800" : ""}
                   />
+                  {calculatedShippingCost && (
+                    <p className="text-xs text-green-600 mt-1">Автоматично розраховано Nova Poshta</p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="estimatedDelivery">Очікувана дата доставки</Label>
@@ -596,12 +600,7 @@ export default function Shipments() {
                           shippingAddress: address 
                         }));
                       }}
-                      onCostCalculated={(cost) => {
-                        setFormData(prev => ({ 
-                          ...prev, 
-                          shippingCost: cost.Cost?.toString() || "" 
-                        }));
-                      }}
+                      onCostCalculated={handleCostCalculated}
                       orderId={formData.orderId}
                       trackingNumber={formData.trackingNumber}
                       weight={formData.weight}

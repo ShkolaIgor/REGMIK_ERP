@@ -218,7 +218,7 @@ export function NovaPoshtaIntegration({
           });
           if (onCostCalculated) {
             onCostCalculated({
-              cost: result.Cost || result.cost || 0,
+              Cost: result.Cost || result.cost || 0,
               estimatedDeliveryDate: result.EstimatedDeliveryDate || result.estimatedDeliveryDate || 'Не визначено'
             });
           }
