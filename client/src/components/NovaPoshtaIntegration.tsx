@@ -77,17 +77,17 @@ export function NovaPoshtaIntegration({
     if (!selectedCity || !selectedWarehouse || !weight || !cost) return;
     
     try {
-      const response = await fetch('/api/nova-poshta/delivery-cost', {
+      const response = await fetch('/api/nova-poshta/calculate-delivery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          citySender: 'db5c8978-391c-11dd-90d9-001a92567626', // Київ
-          cityRecipient: selectedCity.ref,
-          weight: parseFloat(weight),
-          serviceType: 'WarehouseWarehouse',
-          cost: parseFloat(cost),
-          cargoType: 'Parcel',
-          seatsAmount: 1
+          CitySender: 'db5c8978-391c-11dd-90d9-001a92567626', // Київ
+          CityRecipient: selectedCity.ref,
+          Weight: weight,
+          ServiceType: 'WarehouseWarehouse',
+          Cost: cost,
+          CargoType: 'Cargo',
+          SeatsAmount: '1'
         })
       });
       
