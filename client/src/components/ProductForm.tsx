@@ -43,7 +43,7 @@ export function ProductForm({ isOpen, onClose, product }: ProductFormProps) {
 
   const createProductMutation = useMutation({
     mutationFn: async (data: InsertProduct) => {
-      return await apiRequest("POST", "/api/products", data);
+      return await apiRequest("/api/products", { method: "POST", body: data });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
@@ -66,7 +66,7 @@ export function ProductForm({ isOpen, onClose, product }: ProductFormProps) {
 
   const updateProductMutation = useMutation({
     mutationFn: async (data: InsertProduct) => {
-      return await apiRequest("PUT", `/api/products/${product.id}`, data);
+      return await apiRequest(`/api/products/${product.id}`, { method: "PUT", body: data });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
