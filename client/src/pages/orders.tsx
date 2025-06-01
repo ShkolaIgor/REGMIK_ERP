@@ -174,13 +174,7 @@ export default function Orders() {
   // Мутація для оновлення замовлення
   const updateOrderMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest(`/api/orders/${data.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+      return await apiRequest(`/api/orders/${data.id}`, "PUT", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
