@@ -44,7 +44,6 @@ const navigationItems = [
     title: "Модуль Склад",
     items: [
       { name: "Каталог товарів", href: "/inventory", icon: Package },
-      { name: "Склади", href: "/warehouses", icon: Warehouse },
       { name: "Замовлення", href: "/orders", icon: ShoppingCart },
       { name: "Замовлені товари", href: "/ordered-products", icon: Package },
       { name: "Відвантаження", href: "/shipments", icon: Truck },
@@ -83,6 +82,7 @@ const navigationItems = [
       { name: "Робітники", href: "/workers", icon: Users },
       { name: "Посади", href: "/positions", icon: Users },
       { name: "Відділи", href: "/departments", icon: Building2 },
+      { name: "Склади", href: "/warehouses", icon: Warehouse },
       { name: "Перевізники", href: "/carriers", icon: Truck },
       { name: "Валюти", href: "/currencies", icon: DollarSign }
     ]
