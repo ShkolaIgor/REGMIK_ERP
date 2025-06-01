@@ -181,6 +181,7 @@ export default function Orders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      setIsDialogOpen(false);
       handleCloseEditDialog();
       toast({
         title: "Успіх",
