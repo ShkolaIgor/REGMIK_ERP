@@ -2164,18 +2164,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         formattedPhone = '38' + formattedPhone; // Додаємо 38 якщо відсутній
       }
 
+      const {
+        citySender,
+        warehouseSender,
+        senderName,
+        senderPhone
+      } = req.body;
+
       const invoiceData = {
         cityRecipient,
         warehouseRecipient,
+        citySender: citySender || 'db5c897c-391c-11dd-90d9-001a92567626', // Чернігів за замовчуванням
+        warehouseSender: warehouseSender || 'fe906167-4c37-11ec-80ed-b8830365bd14', // Відділення за замовчуванням
+        senderName: senderName || 'Ваша компанія',
+        senderPhone: senderPhone || '+380501234567',
         recipientName,
         recipientPhone: formattedPhone,
-        recipientType: recipientType || 'PrivatePerson',
+        recipientType: recipientType || 'Organization',
         description: description || 'Товар',
         weight: parseFloat(weight),
         cost: parseFloat(cost),
         seatsAmount: parseInt(seatsAmount) || 1,
-        paymentMethod: paymentMethod || 'Cash',
-        payerType: payerType || 'Sender'
+        paymentMethod: paymentMethod || 'NonCash',
+        payerType: payerType || 'Recipient'
       };
 
       const invoice = await novaPoshtaApi.createInternetDocument(invoiceData);

@@ -78,6 +78,8 @@ interface NovaPoshtaIntegrationProps {
   width?: string;
   height?: string;
   declaredValue?: string;
+  recipientName?: string;
+  recipientPhone?: string;
 }
 
 export function NovaPoshtaIntegration({
@@ -88,7 +90,9 @@ export function NovaPoshtaIntegration({
   length: externalLength,
   width: externalWidth,
   height: externalHeight,
-  declaredValue: externalDeclaredValue
+  declaredValue: externalDeclaredValue,
+  recipientName: externalRecipientName,
+  recipientPhone: externalRecipientPhone
 }: NovaPoshtaIntegrationProps) {
   const [cityQuery, setCityQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
@@ -117,6 +121,16 @@ export function NovaPoshtaIntegration({
     loadSenderSettings();
     loadCustomerAddresses();
   }, []);
+
+  // Автоматичне заповнення полів отримувача з пропсів
+  useEffect(() => {
+    if (externalRecipientName) {
+      setRecipientName(externalRecipientName);
+    }
+    if (externalRecipientPhone) {
+      setRecipientPhone(externalRecipientPhone);
+    }
+  }, [externalRecipientName, externalRecipientPhone]);
 
   const loadSenderSettings = async () => {
     try {

@@ -543,6 +543,8 @@ export default function Shipments() {
                       width={formData.width}
                       height={formData.height}
                       declaredValue={formData.declaredValue}
+                      recipientName={formData.recipientName}
+                      recipientPhone={formData.recipientPhone}
                     />
                   </div>
                 ) : null;
