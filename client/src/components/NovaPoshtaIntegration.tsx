@@ -150,10 +150,34 @@ export function NovaPoshtaIntegration({
       const response = await fetch(`/api/orders/${orderId}`);
       if (response.ok) {
         const order = await response.json();
+        console.log('Order details:', order);
+        
         if (order && order.items && order.items.length > 0) {
-          const itemNames = order.items.map((item: any) => item.product?.name || 'Товар').join(', ');
-          const orderDescription = itemNames.length > 100 ? itemNames.substring(0, 97) + '...' : itemNames;
-          setDescription(orderDescription);
+          // Отримуємо список категорій для знаходження назв
+          const categoriesResponse = await fetch('/api/categories');
+          const allCategories = await categoriesResponse.json();
+          console.log('All categories:', allCategories);
+          
+          const categories = new Set<string>();
+          
+          order.items.forEach((item: any) => {
+            console.log('Processing item:', item);
+            if (item.product && item.product.categoryId) {
+              // Знаходимо категорію за ID
+              const category = allCategories.find((cat: any) => cat.id === item.product.categoryId);
+              if (category) {
+                categories.add(category.name);
+                console.log('Added category:', category.name);
+              }
+            }
+          });
+          
+          const orderDescription = Array.from(categories).join(', ');
+          console.log('Generated description:', orderDescription);
+          
+          // Якщо немає категорій товарів, використовуємо номер замовлення
+          const finalDescription = orderDescription || order.orderNumber || 'Товар';
+          setDescription(finalDescription);
         }
       }
     } catch (error) {
