@@ -41,6 +41,7 @@ import Carriers from "@/pages/carriers";
 import Manufacturing from "@/pages/manufacturing";
 import Currencies from "@/pages/currencies";
 import ProductionAnalytics from "@/pages/production-analytics";
+import OrderedProducts from "@/pages/ordered-products";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -88,6 +89,7 @@ function Router() {
           <Route path="/carriers" component={Carriers} />
           <Route path="/manufacturing" component={Manufacturing} />
           <Route path="/production-analytics" component={ProductionAnalytics} />
+          <Route path="/ordered-products" component={OrderedProducts} />
           <Route path="/currencies" component={Currencies} />
           <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
         </Layout>

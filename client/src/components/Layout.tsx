@@ -45,6 +45,7 @@ const navigationItems = [
       { name: "Каталог товарів", href: "/inventory", icon: Package },
       { name: "Склади", href: "/warehouses", icon: Warehouse },
       { name: "Замовлення", href: "/orders", icon: ShoppingCart },
+      { name: "Замовлені товари", href: "/ordered-products", icon: Package },
       { name: "Відвантаження", href: "/shipments", icon: Truck },
       { name: "Замовлення постачальникам", href: "/supplier-orders", icon: Package },
       { name: "Переміщення між складами", href: "/warehouse-transfers", icon: PackageOpen },

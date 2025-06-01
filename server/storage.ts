@@ -94,6 +94,10 @@ export interface IStorage {
   createProductionTask(task: InsertProductionTask): Promise<ProductionTask>;
   updateProductionTask(id: number, task: Partial<InsertProductionTask>): Promise<ProductionTask | undefined>;
 
+  // Ordered Products Info
+  getOrderedProductsInfo(): Promise<any[]>;
+  createProductionTaskFromOrder(productId: number, quantity: number, notes?: string): Promise<ProductionTask>;
+
   // Suppliers
   getSuppliers(): Promise<Supplier[]>;
   createSupplier(supplier: InsertSupplier): Promise<Supplier>;

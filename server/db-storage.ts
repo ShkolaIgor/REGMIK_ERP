@@ -2953,6 +2953,116 @@ export class DatabaseStorage implements IStorage {
       };
     }
   }
+
+  // Ordered Products Info
+  async getOrderedProductsInfo(): Promise<any[]> {
+    try {
+      // Отримуємо всі замовлення з товарами
+      const ordersWithItems = await db.select({
+        orderId: orders.id,
+        orderStatus: orders.status,
+        orderDate: orders.createdAt,
+        productId: orderItems.productId,
+        orderedQuantity: orderItems.quantity,
+        product: products,
+      })
+      .from(orders)
+      .innerJoin(orderItems, eq(orders.id, orderItems.orderId))
+      .innerJoin(products, eq(orderItems.productId, products.id))
+      .where(eq(orders.status, 'pending'));
+
+      // Групуємо за товарами
+      const productGroups = new Map();
+      
+      for (const item of ordersWithItems) {
+        const productId = item.productId;
+        if (!productGroups.has(productId)) {
+          productGroups.set(productId, {
+            productId,
+            product: item.product,
+            totalOrdered: 0,
+            orders: []
+          });
+        }
+        
+        const group = productGroups.get(productId);
+        group.totalOrdered += parseFloat(item.orderedQuantity);
+        group.orders.push({
+          orderId: item.orderId,
+          orderStatus: item.orderStatus,
+          orderDate: item.orderDate,
+          quantity: item.orderedQuantity
+        });
+      }
+
+      // Отримуємо наявність на складі
+      const result = [];
+      for (const [productId, group] of productGroups) {
+        const inventoryData = await db.select({
+          warehouseId: inventory.warehouseId,
+          quantity: inventory.quantity,
+          warehouse: warehouses
+        })
+        .from(inventory)
+        .innerJoin(warehouses, eq(inventory.warehouseId, warehouses.id))
+        .where(eq(inventory.productId, productId));
+
+        const totalAvailable = inventoryData.reduce((sum, inv) => sum + parseFloat(inv.quantity), 0);
+
+        // Перевіряємо чи є товар у виробництві
+        const productionTasks = await db.select()
+          .from(productionTasks)
+          .innerJoin(recipes, eq(productionTasks.recipeId, recipes.id))
+          .where(eq(recipes.productId, productId));
+
+        const inProduction = productionTasks.reduce((sum, task) => sum + parseFloat(task.productionTasks.quantity), 0);
+
+        result.push({
+          ...group,
+          totalAvailable,
+          inProduction,
+          shortage: Math.max(0, group.totalOrdered - totalAvailable - inProduction),
+          inventoryDetails: inventoryData,
+          needsProduction: (group.totalOrdered - totalAvailable) > 0
+        });
+      }
+
+      return result;
+    } catch (error) {
+      console.error("Error getting ordered products info:", error);
+      return [];
+    }
+  }
+
+  async createProductionTaskFromOrder(productId: number, quantity: number, notes?: string): Promise<ProductionTask> {
+    try {
+      // Знаходимо рецепт для продукту
+      const recipe = await db.select()
+        .from(recipes)
+        .where(eq(recipes.productId, productId))
+        .limit(1);
+
+      if (recipe.length === 0) {
+        throw new Error(`Рецепт для продукту з ID ${productId} не знайдено`);
+      }
+
+      // Створюємо завдання на виробництво
+      const [newTask] = await db.insert(productionTasks).values({
+        recipeId: recipe[0].id,
+        quantity: quantity.toString(),
+        status: 'pending',
+        priority: 'high',
+        assignedTo: 'Система',
+        notes: notes || `Автоматично створено для замовлення. Потрібно виготовити: ${quantity} шт.`,
+        createdAt: new Date()
+      }).returning();
+
+      return newTask;
+    } catch (error) {
+      console.error("Error creating production task from order:", error);
+      throw error;
+    }
+  }
 }
 
 export const dbStorage = new DatabaseStorage();

@@ -2610,14 +2610,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Manufacturing Orders API
-  app.get("/api/manufacturing-orders", async (req, res) => {
+  // Ordered Products Info API
+  app.get("/api/ordered-products-info", async (req, res) => {
     try {
-      const orders = await storage.getManufacturingOrders();
-      res.json(orders);
+      const orderedProducts = await storage.getOrderedProductsInfo();
+      res.json(orderedProducts);
     } catch (error) {
-      console.error("Failed to get manufacturing orders:", error);
-      res.status(500).json({ error: "Failed to get manufacturing orders" });
+      console.error("Failed to get ordered products info:", error);
+      res.status(500).json({ error: "Failed to get ordered products info" });
+    }
+  });
+
+  app.post("/api/send-to-production", async (req, res) => {
+    try {
+      const { productId, quantity, notes } = req.body;
+      const task = await storage.createProductionTaskFromOrder(productId, quantity, notes);
+      res.json(task);
+    } catch (error) {
+      console.error("Failed to send to production:", error);
+      res.status(500).json({ error: "Failed to send to production" });
     }
   });
 
