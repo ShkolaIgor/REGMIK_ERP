@@ -99,7 +99,9 @@ export default function Shipments() {
     carrierId: "",
     shippingAddress: "",
     weight: "",
-    dimensions: "",
+    length: "",
+    width: "",
+    height: "",
     shippingCost: "",
     declaredValue: "",
     estimatedDelivery: "",
@@ -248,7 +250,9 @@ export default function Shipments() {
       carrierId: "",
       shippingAddress: "",
       weight: "",
-      dimensions: "",
+      length: "",
+      width: "",
+      height: "",
       shippingCost: "",
       declaredValue: "",
       estimatedDelivery: "",
@@ -280,7 +284,9 @@ export default function Shipments() {
     if (formData.carrierId) cleanData.carrierId = parseInt(formData.carrierId);
     if (formData.shippingAddress) cleanData.shippingAddress = formData.shippingAddress;
     if (formData.weight) cleanData.weight = formData.weight;
-    if (formData.dimensions) cleanData.dimensions = formData.dimensions;
+    if (formData.length) cleanData.length = formData.length;
+    if (formData.width) cleanData.width = formData.width;
+    if (formData.height) cleanData.height = formData.height;
     if (formData.shippingCost) cleanData.shippingCost = formData.shippingCost;
     if (formData.declaredValue) cleanData.declaredValue = formData.declaredValue;
     if (formData.estimatedDelivery) cleanData.estimatedDelivery = formData.estimatedDelivery;
@@ -421,16 +427,43 @@ export default function Shipments() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="dimensions">Розміри (см)</Label>
+                  <Label htmlFor="length">Довжина (см)</Label>
                   <Input
-                    id="dimensions"
-                    value={formData.dimensions}
-                    onChange={(e) => setFormData(prev => ({ ...prev, dimensions: e.target.value }))}
-                    placeholder="30x20x10"
+                    id="length"
+                    type="number"
+                    step="0.1"
+                    value={formData.length}
+                    onChange={(e) => setFormData(prev => ({ ...prev, length: e.target.value }))}
+                    placeholder="30"
                   />
                 </div>
+                <div>
+                  <Label htmlFor="width">Ширина (см)</Label>
+                  <Input
+                    id="width"
+                    type="number"
+                    step="0.1"
+                    value={formData.width}
+                    onChange={(e) => setFormData(prev => ({ ...prev, width: e.target.value }))}
+                    placeholder="20"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="height">Висота (см)</Label>
+                  <Input
+                    id="height"
+                    type="number"
+                    step="0.1"
+                    value={formData.height}
+                    onChange={(e) => setFormData(prev => ({ ...prev, height: e.target.value }))}
+                    placeholder="10"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="shippingCost">Вартість доставки</Label>
                   <Input
