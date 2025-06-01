@@ -95,7 +95,6 @@ export const shipments = pgTable("shipments", {
   shipmentNumber: text("shipment_number").notNull().unique(),
   trackingNumber: text("tracking_number"),
   carrierId: integer("carrier_id").references(() => carriers.id),
-  carrier: text("carrier"), // транспортна компанія (для зворотної сумісності)
   shippingAddress: text("shipping_address").notNull(),
   weight: decimal("weight", { precision: 8, scale: 3 }), // кг
   dimensions: text("dimensions"), // ДхШхВ в см
