@@ -947,6 +947,96 @@ export type InsertNovaPoshtaCity = z.infer<typeof insertNovaPoshtaCitySchema>;
 export type NovaPoshtaWarehouse = typeof novaPoshtaWarehouses.$inferSelect;
 export type InsertNovaPoshtaWarehouse = z.infer<typeof insertNovaPoshtaWarehouseSchema>;
 
+// Таблиця завдань на виготовлення товарів
+export const manufacturingOrders = pgTable("manufacturing_orders", {
+  id: serial("id").primaryKey(),
+  orderNumber: varchar("order_number", { length: 100 }).notNull().unique(),
+  productId: integer("product_id").notNull().references(() => products.id),
+  recipeId: integer("recipe_id").references(() => recipes.id),
+  plannedQuantity: decimal("planned_quantity", { precision: 12, scale: 4 }).notNull(),
+  producedQuantity: decimal("produced_quantity", { precision: 12, scale: 4 }).default("0"),
+  unit: varchar("unit", { length: 50 }).notNull().default("шт"),
+  status: varchar("status", { length: 50 }).notNull().default("pending"), // pending, in_progress, completed, cancelled, paused
+  priority: varchar("priority", { length: 20 }).default("medium"), // low, medium, high, urgent
+  assignedWorkerId: integer("assigned_worker_id").references(() => workers.id),
+  warehouseId: integer("warehouse_id").references(() => warehouses.id),
+  startDate: timestamp("start_date"),
+  plannedEndDate: timestamp("planned_end_date"),
+  actualEndDate: timestamp("actual_end_date"),
+  estimatedDuration: integer("estimated_duration"), // в хвилинах
+  actualDuration: integer("actual_duration"), // в хвилинах
+  materialCost: decimal("material_cost", { precision: 12, scale: 2 }).default("0"),
+  laborCost: decimal("labor_cost", { precision: 12, scale: 2 }).default("0"),
+  overheadCost: decimal("overhead_cost", { precision: 12, scale: 2 }).default("0"),
+  totalCost: decimal("total_cost", { precision: 12, scale: 2 }).default("0"),
+  qualityRating: varchar("quality_rating", { length: 20 }).default("good"), // excellent, good, acceptable, poor
+  notes: text("notes"),
+  batchNumber: varchar("batch_number", { length: 100 }),
+  createdBy: varchar("created_by", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Матеріали, використані у виготовленні
+export const manufacturingOrderMaterials = pgTable("manufacturing_order_materials", {
+  id: serial("id").primaryKey(),
+  manufacturingOrderId: integer("manufacturing_order_id").notNull().references(() => manufacturingOrders.id),
+  productId: integer("product_id").references(() => products.id),
+  componentId: integer("component_id").references(() => components.id),
+  plannedQuantity: decimal("planned_quantity", { precision: 12, scale: 4 }).notNull(),
+  actualQuantity: decimal("actual_quantity", { precision: 12, scale: 4 }).default("0"),
+  unit: varchar("unit", { length: 50 }).notNull(),
+  unitCost: decimal("unit_cost", { precision: 10, scale: 2 }).default("0"),
+  totalCost: decimal("total_cost", { precision: 12, scale: 2 }).default("0"),
+  wasteQuantity: decimal("waste_quantity", { precision: 12, scale: 4 }).default("0"), // відходи
+  batchNumber: varchar("batch_number", { length: 100 }),
+  consumedAt: timestamp("consumed_at").defaultNow(),
+});
+
+// Етапи виготовлення
+export const manufacturingSteps = pgTable("manufacturing_steps", {
+  id: serial("id").primaryKey(),
+  manufacturingOrderId: integer("manufacturing_order_id").notNull().references(() => manufacturingOrders.id),
+  stepNumber: integer("step_number").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  status: varchar("status", { length: 50 }).default("pending"), // pending, in_progress, completed, skipped
+  estimatedDuration: integer("estimated_duration"), // в хвилинах
+  actualDuration: integer("actual_duration"), // в хвилинах
+  assignedWorkerId: integer("assigned_worker_id").references(() => workers.id),
+  startTime: timestamp("start_time"),
+  endTime: timestamp("end_time"),
+  qualityCheckPassed: boolean("quality_check_passed").default(true),
+  notes: text("notes"),
+  equipment: varchar("equipment", { length: 255 }),
+  temperature: varchar("temperature", { length: 50 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertManufacturingOrderSchema = createInsertSchema(manufacturingOrders).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true,
+  orderNumber: true 
+});
+
+export const insertManufacturingOrderMaterialSchema = createInsertSchema(manufacturingOrderMaterials).omit({ 
+  id: true, 
+  consumedAt: true 
+});
+
+export const insertManufacturingStepSchema = createInsertSchema(manufacturingSteps).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export type ManufacturingOrder = typeof manufacturingOrders.$inferSelect;
+export type InsertManufacturingOrder = z.infer<typeof insertManufacturingOrderSchema>;
+export type ManufacturingOrderMaterial = typeof manufacturingOrderMaterials.$inferSelect;
+export type InsertManufacturingOrderMaterial = z.infer<typeof insertManufacturingOrderMaterialSchema>;
+export type ManufacturingStep = typeof manufacturingSteps.$inferSelect;
+export type InsertManufacturingStep = z.infer<typeof insertManufacturingStepSchema>;
+
 // User types for Replit Auth
 export type User = typeof users.$inferSelect;
 export type UpsertUser = typeof users.$inferInsert;
