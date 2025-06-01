@@ -94,7 +94,6 @@ function Router() {
           <Route path="/ordered-products" component={OrderedProducts} />
           <Route path="/serial-numbers" component={SerialNumbers} />
           <Route path="/currencies" component={Currencies} />
-          <Route path="/currencies" component={Currencies} />
           <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
         </Layout>
       <Route component={NotFound} />
