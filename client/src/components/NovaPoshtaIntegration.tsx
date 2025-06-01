@@ -158,21 +158,41 @@ export function NovaPoshtaIntegration({
         <CardContent className="space-y-4">
           <div>
             <label className="text-sm font-medium">Пошук міста</label>
-            <Input
-              placeholder="Введіть назву міста..."
-              value={cityQuery}
-              onChange={(e) => setCityQuery(e.target.value)}
-            />
-            {citiesLoading && (
-              <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Пошук міст...
+            {selectedCity ? (
+              <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md flex items-center justify-between">
+                <span className="text-green-800">Обрано: {selectedCity.name} ({selectedCity.area})</span>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setSelectedCity(null);
+                    setSelectedWarehouse(null);
+                    setCityQuery('');
+                  }}
+                >
+                  Змінити
+                </Button>
               </div>
+            ) : (
+              <>
+                <Input
+                  placeholder="Введіть назву міста..."
+                  value={cityQuery}
+                  onChange={(e) => setCityQuery(e.target.value)}
+                />
+                {citiesLoading && (
+                  <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Пошук міст...
+                  </div>
+                )}
+              </>
             )}
-            {cities.length > 0 && !selectedCity && (
+            {cities.length > 0 && cityQuery.length >= 2 && !selectedCity && (
               <Select onValueChange={(value) => {
                 const city = cities.find(c => c.ref === value);
                 setSelectedCity(city || null);
+                setCityQuery(city?.name || ''); // Встановлюємо назву міста в поле пошуку
               }}>
                 <SelectTrigger className="mt-2">
                   <SelectValue placeholder="Оберіть місто" />
