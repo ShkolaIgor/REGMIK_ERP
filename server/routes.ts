@@ -2134,8 +2134,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/nova-poshta/create-invoice", async (req, res) => {
+    console.log('=== Nova Poshta create invoice endpoint hit ===');
+    console.log('Request method:', req.method);
+    console.log('Request URL:', req.url);
+    console.log('Request headers:', req.headers);
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    
     try {
-      console.log('Nova Poshta create invoice request body:', JSON.stringify(req.body, null, 2));
 
       const {
         cityRecipient,
