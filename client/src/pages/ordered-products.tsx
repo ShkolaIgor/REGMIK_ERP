@@ -48,6 +48,7 @@ export default function OrderedProducts() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/ordered-products-info"] });
       queryClient.invalidateQueries({ queryKey: ["/api/production-tasks"] });
+      setIsProductionDialogOpen(false);
       setSelectedProduct(null);
       setProductionNotes("");
       setProductionQuantity(0);
@@ -299,7 +300,7 @@ export default function OrderedProducts() {
                         <div className="flex flex-col space-y-1">
                           {/* Кнопка укомплектування зі складу */}
                           {item.totalAvailable > 0 && (
-                            <Dialog>
+                            <Dialog open={isCompleteDialogOpen} onOpenChange={setIsCompleteDialogOpen}>
                               <DialogTrigger asChild>
                                 <Button
                                   variant="outline"
@@ -308,6 +309,7 @@ export default function OrderedProducts() {
                                     setSelectedProduct(item);
                                     setCompleteQuantity(Math.min(item.totalAvailable, item.totalOrdered));
                                     setSelectedWarehouse("");
+                                    setIsCompleteDialogOpen(true);
                                   }}
                                 >
                                   <CheckCircle className="h-4 w-4 mr-2" />
@@ -367,7 +369,7 @@ export default function OrderedProducts() {
 
                           {/* Кнопка передачі у виробництво */}
                           {item.needsProduction && (
-                            <Dialog>
+                            <Dialog open={isProductionDialogOpen} onOpenChange={setIsProductionDialogOpen}>
                               <DialogTrigger asChild>
                                 <Button
                                   variant="outline"
@@ -375,6 +377,7 @@ export default function OrderedProducts() {
                                   onClick={() => {
                                     setSelectedProduct(item);
                                     setProductionQuantity(Math.max(1, item.shortage || (item.totalOrdered - item.totalAvailable)));
+                                    setIsProductionDialogOpen(true);
                                   }}
                                 >
                                   <Factory className="h-4 w-4 mr-2" />
@@ -436,7 +439,7 @@ export default function OrderedProducts() {
 
                           {/* Кнопка створення замовлення при дефіциті */}
                           {item.shortage > 0 && (
-                            <Dialog>
+                            <Dialog open={isSupplierOrderDialogOpen} onOpenChange={setIsSupplierOrderDialogOpen}>
                               <DialogTrigger asChild>
                                 <Button
                                   variant="destructive"
@@ -445,6 +448,7 @@ export default function OrderedProducts() {
                                     setSelectedProduct(item);
                                     setOrderQuantity(item.shortage);
                                     setOrderNotes("");
+                                    setIsSupplierOrderDialogOpen(true);
                                   }}
                                 >
                                   <AlertTriangle className="h-4 w-4 mr-2" />
