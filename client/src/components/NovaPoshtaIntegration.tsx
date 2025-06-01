@@ -156,7 +156,7 @@ export function NovaPoshtaIntegration({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
+          <div className="relative">
             <label className="text-sm font-medium">Пошук міста</label>
             {selectedCity ? (
               <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md flex items-center justify-between">
@@ -179,6 +179,7 @@ export function NovaPoshtaIntegration({
                   placeholder="Введіть назву міста..."
                   value={cityQuery}
                   onChange={(e) => setCityQuery(e.target.value)}
+                  className="mt-2"
                 />
                 {citiesLoading && (
                   <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
@@ -186,25 +187,24 @@ export function NovaPoshtaIntegration({
                     Пошук міст...
                   </div>
                 )}
+                {cities.length > 0 && cityQuery.length >= 2 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {cities.map((city) => (
+                      <div
+                        key={city.ref}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        onClick={() => {
+                          setSelectedCity(city);
+                          setCityQuery(city.name);
+                        }}
+                      >
+                        <div className="font-medium">{city.name}</div>
+                        <div className="text-sm text-gray-500">{city.area}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </>
-            )}
-            {cities.length > 0 && cityQuery.length >= 2 && !selectedCity && (
-              <Select onValueChange={(value) => {
-                const city = cities.find(c => c.ref === value);
-                setSelectedCity(city || null);
-                setCityQuery(city?.name || ''); // Встановлюємо назву міста в поле пошуку
-              }}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="Оберіть місто" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cities.map((city) => (
-                    <SelectItem key={city.ref} value={city.ref}>
-                      {city.name} ({city.area})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             )}
           </div>
 
