@@ -318,6 +318,10 @@ export default function Orders() {
     
     if (isEditMode && editingOrder) {
       // Редагування існуючого замовлення
+      console.log("Updating order with data:", {
+        id: editingOrder.id,
+        ...orderData,
+      });
       updateOrderMutation.mutate({
         id: editingOrder.id,
         ...orderData,
