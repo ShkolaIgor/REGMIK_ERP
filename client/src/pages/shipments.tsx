@@ -307,11 +307,17 @@ export default function Shipments() {
     const selectedCarrier = (carriers as Carrier[])?.find((c: Carrier) => c.id.toString() === formData.carrierId);
     const isNovaPoshta = selectedCarrier && (selectedCarrier.name.toLowerCase().includes('нова пошта') || selectedCarrier.name.toLowerCase().includes('nova poshta'));
     
+    const errors: Record<string, boolean> = {};
+    
     if (isNovaPoshta) {
-      validateNovaPoshtaFields();
-    } else {
-      setFieldErrors({});
+      if (!formData.weight) errors.weight = true;
+      if (!formData.declaredValue) errors.declaredValue = true;
+      if (!formData.length) errors.length = true;
+      if (!formData.width) errors.width = true;
+      if (!formData.height) errors.height = true;
     }
+    
+    setFieldErrors(errors);
   }, [formData.carrierId, formData.weight, formData.declaredValue, formData.length, formData.width, formData.height, carriers]);
 
   const handleSubmit = (e: React.FormEvent) => {
