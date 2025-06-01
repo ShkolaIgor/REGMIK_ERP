@@ -3099,6 +3099,115 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Manufacturing Orders
+  async getManufacturingOrders(): Promise<any[]> {
+    try {
+      const orders = await db.select({
+        id: manufacturingOrders.id,
+        orderNumber: manufacturingOrders.orderNumber,
+        productId: manufacturingOrders.productId,
+        recipeId: manufacturingOrders.recipeId,
+        plannedQuantity: manufacturingOrders.plannedQuantity,
+        producedQuantity: manufacturingOrders.producedQuantity,
+        unit: manufacturingOrders.unit,
+        status: manufacturingOrders.status,
+        priority: manufacturingOrders.priority,
+        assignedWorkerId: manufacturingOrders.assignedWorkerId,
+        warehouseId: manufacturingOrders.warehouseId,
+        startDate: manufacturingOrders.startDate,
+        plannedEndDate: manufacturingOrders.plannedEndDate,
+        actualEndDate: manufacturingOrders.actualEndDate,
+        estimatedDuration: manufacturingOrders.estimatedDuration,
+        actualDuration: manufacturingOrders.actualDuration,
+        materialCost: manufacturingOrders.materialCost,
+        laborCost: manufacturingOrders.laborCost,
+        overheadCost: manufacturingOrders.overheadCost,
+        totalCost: manufacturingOrders.totalCost,
+        qualityStatus: manufacturingOrders.qualityStatus,
+        notes: manufacturingOrders.notes,
+        createdAt: manufacturingOrders.createdAt,
+        updatedAt: manufacturingOrders.updatedAt,
+        product: {
+          id: products.id,
+          name: products.name,
+          sku: products.sku,
+          unit: products.unit
+        },
+        recipe: {
+          id: recipes.id,
+          name: recipes.name
+        },
+        worker: {
+          id: workers.id,
+          firstName: workers.firstName,
+          lastName: workers.lastName
+        },
+        warehouse: {
+          id: warehouses.id,
+          name: warehouses.name
+        }
+      })
+      .from(manufacturingOrders)
+      .leftJoin(products, eq(manufacturingOrders.productId, products.id))
+      .leftJoin(recipes, eq(manufacturingOrders.recipeId, recipes.id))
+      .leftJoin(workers, eq(manufacturingOrders.assignedWorkerId, workers.id))
+      .leftJoin(warehouses, eq(manufacturingOrders.warehouseId, warehouses.id))
+      .orderBy(desc(manufacturingOrders.createdAt));
+
+      return orders;
+    } catch (error) {
+      console.error("Error getting manufacturing orders:", error);
+      throw error;
+    }
+  }
+
+  async getManufacturingOrder(id: number): Promise<any | null> {
+    try {
+      const [order] = await db.select()
+        .from(manufacturingOrders)
+        .where(eq(manufacturingOrders.id, id));
+      
+      return order || null;
+    } catch (error) {
+      console.error("Error getting manufacturing order:", error);
+      throw error;
+    }
+  }
+
+  async createManufacturingOrder(orderData: any): Promise<any> {
+    try {
+      const [newOrder] = await db.insert(manufacturingOrders).values(orderData).returning();
+      return newOrder;
+    } catch (error) {
+      console.error("Error creating manufacturing order:", error);
+      throw error;
+    }
+  }
+
+  async updateManufacturingOrder(id: number, orderData: any): Promise<any | null> {
+    try {
+      const [updatedOrder] = await db.update(manufacturingOrders)
+        .set(orderData)
+        .where(eq(manufacturingOrders.id, id))
+        .returning();
+      
+      return updatedOrder || null;
+    } catch (error) {
+      console.error("Error updating manufacturing order:", error);
+      throw error;
+    }
+  }
+
+  async deleteManufacturingOrder(id: number): Promise<boolean> {
+    try {
+      await db.delete(manufacturingOrders).where(eq(manufacturingOrders.id, id));
+      return true;
+    } catch (error) {
+      console.error("Error deleting manufacturing order:", error);
+      throw error;
+    }
+  }
+
   async completeProductOrder(productId: number, quantity: string, warehouseId: number): Promise<any> {
     try {
       // Зменшуємо кількість товару на складі
