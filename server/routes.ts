@@ -2189,6 +2189,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         payerType: payerType || 'Recipient'
       };
 
+      // Отримуємо Nova Poshta перевізника з бази даних
+      const carriers = await storage.getCarriers();
+      const novaPoshtaCarrier = carriers.find(c => 
+        c.name.toLowerCase().includes('nova poshta') || 
+        c.name.toLowerCase().includes('нова пошта')
+      );
+
+      if (!novaPoshtaCarrier?.apiKey) {
+        return res.status(400).json({ 
+          error: "Nova Poshta API ключ не налаштований в довіднику перевізників" 
+        });
+      }
+
+      // Оновлюємо API ключ в Nova Poshta API
+      const apiKey = process.env[novaPoshtaCarrier.apiKey] || novaPoshtaCarrier.apiKey;
+      novaPoshtaApi.updateApiKey(apiKey);
+
       const invoice = await novaPoshtaApi.createInternetDocument(invoiceData);
       res.json(invoice);
     } catch (error) {
