@@ -60,7 +60,9 @@ interface Shipment {
   carrier?: Carrier;
   shippingAddress: string;
   weight: string | null;
-  dimensions: string | null;
+  length: string | null;
+  width: string | null;
+  height: string | null;
   shippingCost: string | null;
   status: string;
   estimatedDelivery: Date | null;
@@ -519,6 +521,9 @@ export default function Shipments() {
                       }}
                       trackingNumber={formData.trackingNumber}
                       weight={formData.weight}
+                      length={formData.length}
+                      width={formData.width}
+                      height={formData.height}
                       declaredValue={formData.declaredValue}
                     />
                   </div>
@@ -653,7 +658,9 @@ export default function Shipments() {
                               carrierId: shipment.carrierId?.toString() || "",
                               shippingAddress: shipment.shippingAddress,
                               weight: shipment.weight || "",
-                              dimensions: shipment.dimensions || "",
+                              length: shipment.length || "",
+                              width: shipment.width || "",
+                              height: shipment.height || "",
                               shippingCost: shipment.shippingCost || "",
                               declaredValue: "",
                               estimatedDelivery: shipment.estimatedDelivery 

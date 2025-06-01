@@ -74,6 +74,9 @@ interface NovaPoshtaIntegrationProps {
   onCostCalculated?: (cost: DeliveryCost) => void;
   trackingNumber?: string;
   weight?: string;
+  length?: string;
+  width?: string;
+  height?: string;
   declaredValue?: string;
 }
 
@@ -82,6 +85,9 @@ export function NovaPoshtaIntegration({
   onCostCalculated,
   trackingNumber,
   weight: externalWeight,
+  length: externalLength,
+  width: externalWidth,
+  height: externalHeight,
   declaredValue: externalDeclaredValue
 }: NovaPoshtaIntegrationProps) {
   const [cityQuery, setCityQuery] = useState("");
