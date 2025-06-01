@@ -85,6 +85,9 @@ export const orders = pgTable("orders", {
   status: text("status").notNull().default("pending"), // pending, processing, shipped, delivered, cancelled
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   notes: text("notes"),
+  paymentDate: timestamp("payment_date"), // дата оплати
+  dueDate: timestamp("due_date"), // термін виконання
+  shippedDate: timestamp("shipped_date"), // дата відвантаження
   createdAt: timestamp("created_at").defaultNow(),
 });
 

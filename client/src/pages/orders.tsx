@@ -26,6 +26,9 @@ type Order = {
   status: string;
   totalAmount: string;
   notes: string | null;
+  paymentDate: Date | null;
+  dueDate: Date | null;
+  shippedDate: Date | null;
   createdAt: Date | null;
 };
 
@@ -71,6 +74,9 @@ const orderSchema = z.object({
   customerPhone: z.string().optional(),
   status: z.string().default("pending"),
   notes: z.string().optional(),
+  paymentDate: z.string().optional(),
+  dueDate: z.string().optional(),
+  shippedDate: z.string().optional(),
 });
 
 type OrderFormData = z.infer<typeof orderSchema>;
