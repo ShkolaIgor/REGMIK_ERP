@@ -490,35 +490,22 @@ export function NovaPoshtaIntegration({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium">Вага (кг)</label>
-              <Input
-                type="number"
-                placeholder="1.5"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-              />
+          {externalWeight && externalDeclaredValue && (
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600">Використовуються дані з основної форми:</p>
+              <p className="font-medium">Вага: {externalWeight} кг</p>
+              <p className="font-medium">Оголошена вартість: {externalDeclaredValue} грн</p>
             </div>
-            <div>
-              <label className="text-sm font-medium">Оголошена вартість (грн)</label>
-              <Input
-                type="number"
-                placeholder="1000"
-                value={cost}
-                onChange={(e) => setCost(e.target.value)}
-              />
-            </div>
-          </div>
+          )}
           <Button 
             type="button"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log('Button clicked:', { selectedCity, selectedWarehouse, weight, cost });
+              console.log('Button clicked:', { selectedCity, selectedWarehouse, externalWeight, externalDeclaredValue });
               calculateDeliveryCost();
             }}
-            disabled={!selectedCity || !selectedWarehouse || !weight || !cost}
+            disabled={!selectedCity || !selectedWarehouse || !externalWeight || !externalDeclaredValue}
             className="w-full"
           >
             Розрахувати вартість доставки
