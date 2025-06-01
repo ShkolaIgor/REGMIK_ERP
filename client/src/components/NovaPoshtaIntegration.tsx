@@ -187,7 +187,7 @@ export function NovaPoshtaIntegration({
                     Пошук міст...
                   </div>
                 )}
-                {cities.length > 0 && cityQuery.length >= 2 && (
+                {cities.length > 0 && cityQuery.length >= 2 && !selectedCity && (
                   <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
                     {cities.map((city) => (
                       <div
