@@ -59,11 +59,14 @@ interface Shipment {
   carrierId: number | null;
   carrier?: Carrier;
   shippingAddress: string;
+  recipientName: string | null;
+  recipientPhone: string | null;
   weight: string | null;
   length: string | null;
   width: string | null;
   height: string | null;
   shippingCost: string | null;
+  declaredValue: string | null;
   status: string;
   estimatedDelivery: Date | null;
   actualDelivery: Date | null;

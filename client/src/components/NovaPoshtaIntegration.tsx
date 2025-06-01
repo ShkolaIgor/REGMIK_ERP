@@ -99,7 +99,7 @@ export function NovaPoshtaIntegration({
   const [deliveryCost, setDeliveryCost] = useState<{ cost: string; estimatedDeliveryDate: string } | null>(null);
   const [recipientName, setRecipientName] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
-  const [recipientType, setRecipientType] = useState('PrivatePerson'); // PrivatePerson або Organization
+  const [recipientType, setRecipientType] = useState('Organization'); // PrivatePerson або Organization
   const [description, setDescription] = useState('');
   const [seatsAmount, setSeatsAmount] = useState('1');
   const [paymentMethod, setPaymentMethod] = useState('NonCash');
