@@ -42,6 +42,7 @@ import Manufacturing from "@/pages/manufacturing";
 import Currencies from "@/pages/currencies";
 import ProductionAnalytics from "@/pages/production-analytics";
 import OrderedProducts from "@/pages/ordered-products";
+import Scanner from "@/pages/scanner";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -65,7 +66,7 @@ function Router() {
           <Route path="/warehouses" component={Warehouses} />
           <Route path="/reports" component={Reports} />
           <Route path="/advanced-reports" component={AdvancedReports} />
-          <Route path="/scanner" component={() => <div className="p-6">Сканер штрих-кодів - В розробці</div>} />
+          <Route path="/scanner" component={Scanner} />
           <Route path="/costing" component={CostCalculations} />
           <Route path="/shortage" component={MaterialShortages} />
           <Route path="/supplier-orders" component={SupplierOrders} />

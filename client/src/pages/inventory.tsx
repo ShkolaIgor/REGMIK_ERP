@@ -11,6 +11,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, getStockStatus } from "@/lib/utils";
 import { Search, Plus, Edit, Eye, Copy, Trash2, Scan, Download, Printer, DollarSign, AlertTriangle, Package, Barcode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ScannerButton } from "@/components/BarcodeScanner";
 
 export default function Inventory() {
   const [showProductForm, setShowProductForm] = useState(false);
@@ -145,13 +146,24 @@ export default function Inventory() {
             </Badge>
           </div>
           <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Пошук товарів..."
-                className="w-80 pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+            <div className="flex gap-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Пошук товарів..."
+                  className="w-80 pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <ScannerButton
+                onScanResult={(barcode) => {
+                  setSearchQuery(barcode);
+                  toast({
+                    title: "Штрих-код відсканований",
+                    description: `Пошук за кодом: ${barcode}`,
+                  });
+                }}
               />
             </div>
             <Button onClick={() => setShowProductForm(true)}>
