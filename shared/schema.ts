@@ -94,7 +94,8 @@ export const shipments = pgTable("shipments", {
   orderId: integer("order_id").references(() => orders.id).notNull(),
   shipmentNumber: text("shipment_number").notNull().unique(),
   trackingNumber: text("tracking_number"),
-  carrier: text("carrier"), // транспортна компанія
+  carrierId: integer("carrier_id").references(() => carriers.id),
+  carrier: text("carrier"), // транспортна компанія (для зворотної сумісності)
   shippingAddress: text("shipping_address").notNull(),
   weight: decimal("weight", { precision: 8, scale: 3 }), // кг
   dimensions: text("dimensions"), // ДхШхВ в см
@@ -695,6 +696,30 @@ export const insertProductionOutputSchema = createInsertSchema(productionOutput)
   createdAt: true 
 });
 
+// Таблиця перевізників
+export const carriers = pgTable("carriers", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  contactPerson: varchar("contact_person", { length: 255 }),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 50 }),
+  address: text("address"),
+  description: text("description"),
+  serviceType: varchar("service_type", { length: 100 }), // express, standard, freight
+  rating: integer("rating").default(5), // 1-10
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertCarrierSchema = createInsertSchema(carriers).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+
+
 // User schema for auth (updated for Replit Auth)
 export const insertUserSchemaAuth = createInsertSchema(users);
 export type Category = typeof categories.$inferSelect;
@@ -801,6 +826,16 @@ export const insertComponentAlternativeSchema = createInsertSchema(componentAlte
 
 export type ComponentAlternative = typeof componentAlternatives.$inferSelect;
 export type InsertComponentAlternative = z.infer<typeof insertComponentAlternativeSchema>;
+
+// Carrier types
+export type Carrier = typeof carriers.$inferSelect;
+export type InsertCarrier = z.infer<typeof insertCarrierSchema>;
+
+// Shipment types
+export type Shipment = typeof shipments.$inferSelect;
+export type InsertShipment = z.infer<typeof insertShipmentSchema>;
+export type ShipmentItem = typeof shipmentItems.$inferSelect;
+export type InsertShipmentItem = z.infer<typeof insertShipmentItemSchema>;
 
 // User types for Replit Auth
 export type User = typeof users.$inferSelect;

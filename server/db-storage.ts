@@ -7,7 +7,7 @@ import {
   components, productComponents, costCalculations, materialShortages, supplierOrders, supplierOrderItems,
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes, solderingTypes,
-  componentCategories, componentAlternatives,
+  componentCategories, componentAlternatives, carriers, shipments,
   type User, type UpsertUser, type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
   type Product, type InsertProduct,
@@ -2345,6 +2345,126 @@ export class DatabaseStorage implements IStorage {
       return (result.rowCount ?? 0) > 0;
     } catch (error) {
       console.error("Error deleting component category:", error);
+      return false;
+    }
+  }
+
+  // Carriers
+  async getCarriers(): Promise<Carrier[]> {
+    return await db.select().from(carriers).where(eq(carriers.isActive, true)).orderBy(carriers.name);
+  }
+
+  async getCarrier(id: number): Promise<Carrier | undefined> {
+    const [carrier] = await db.select().from(carriers).where(eq(carriers.id, id));
+    return carrier;
+  }
+
+  async createCarrier(carrier: InsertCarrier): Promise<Carrier> {
+    const [created] = await db.insert(carriers).values(carrier).returning();
+    return created;
+  }
+
+  async updateCarrier(id: number, carrierData: Partial<InsertCarrier>): Promise<Carrier | undefined> {
+    const [updated] = await db
+      .update(carriers)
+      .set({ ...carrierData, updatedAt: new Date() })
+      .where(eq(carriers.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCarrier(id: number): Promise<boolean> {
+    try {
+      const [updated] = await db
+        .update(carriers)
+        .set({ isActive: false, updatedAt: new Date() })
+        .where(eq(carriers.id, id))
+        .returning();
+      return !!updated;
+    } catch (error) {
+      console.error("Error deleting carrier:", error);
+      return false;
+    }
+  }
+
+  // Shipments
+  async getShipments(): Promise<(Shipment & { order?: Order; carrier?: Carrier })[]> {
+    const result = await db
+      .select()
+      .from(shipments)
+      .leftJoin(orders, eq(shipments.orderId, orders.id))
+      .leftJoin(carriers, eq(shipments.carrierId, carriers.id))
+      .orderBy(desc(shipments.createdAt));
+
+    return result.map(row => ({
+      ...row.shipments,
+      order: row.orders || undefined,
+      carrier: row.carriers || undefined
+    }));
+  }
+
+  async getShipment(id: number): Promise<(Shipment & { order?: Order; carrier?: Carrier }) | undefined> {
+    const result = await db
+      .select()
+      .from(shipments)
+      .leftJoin(orders, eq(shipments.orderId, orders.id))
+      .leftJoin(carriers, eq(shipments.carrierId, carriers.id))
+      .where(eq(shipments.id, id));
+
+    if (result.length === 0) return undefined;
+
+    const row = result[0];
+    return {
+      ...row.shipments,
+      order: row.orders || undefined,
+      carrier: row.carriers || undefined
+    };
+  }
+
+  async createShipment(shipmentData: InsertShipment): Promise<Shipment> {
+    const shipmentNumber = `SH-${Date.now()}`;
+    const [created] = await db
+      .insert(shipments)
+      .values({
+        ...shipmentData,
+        shipmentNumber,
+      })
+      .returning();
+    return created;
+  }
+
+  async updateShipment(id: number, shipmentData: Partial<InsertShipment>): Promise<Shipment | undefined> {
+    const [updated] = await db
+      .update(shipments)
+      .set(shipmentData)
+      .where(eq(shipments.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateShipmentStatus(id: number, status: string): Promise<Shipment | undefined> {
+    const updateData: any = { status };
+    
+    if (status === 'shipped') {
+      updateData.shippedAt = new Date();
+    } else if (status === 'delivered') {
+      updateData.actualDelivery = new Date();
+    }
+
+    const [updated] = await db
+      .update(shipments)
+      .set(updateData)
+      .where(eq(shipments.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteShipment(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(shipments).where(eq(shipments.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error("Error deleting shipment:", error);
       return false;
     }
   }
