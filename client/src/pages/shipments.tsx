@@ -404,7 +404,7 @@ export default function Shipments() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-4 gap-4">
                 <div>
                   <Label htmlFor="weight">Вага (кг)</Label>
                   <Input
@@ -416,20 +416,6 @@ export default function Shipments() {
                     placeholder="1.5"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="declaredValue">Оголошена вартість (грн)</Label>
-                  <Input
-                    id="declaredValue"
-                    type="number"
-                    step="0.01"
-                    value={formData.declaredValue}
-                    onChange={(e) => setFormData(prev => ({ ...prev, declaredValue: e.target.value }))}
-                    placeholder="1000.00"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="length">Довжина (см)</Label>
                   <Input
@@ -466,6 +452,17 @@ export default function Shipments() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="declaredValue">Оголошена вартість (грн)</Label>
+                  <Input
+                    id="declaredValue"
+                    type="number"
+                    step="0.01"
+                    value={formData.declaredValue}
+                    onChange={(e) => setFormData(prev => ({ ...prev, declaredValue: e.target.value }))}
+                    placeholder="1000.00"
+                  />
+                </div>
                 <div>
                   <Label htmlFor="shippingCost">Вартість доставки</Label>
                   <Input
