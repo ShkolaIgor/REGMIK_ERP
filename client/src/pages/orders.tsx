@@ -304,7 +304,16 @@ export default function Orders() {
       })),
     };
     
-    createOrderMutation.mutate(orderData);
+    if (isEditMode && editingOrder) {
+      // Редагування існуючого замовлення
+      updateOrderMutation.mutate({
+        id: editingOrder.id,
+        ...orderData,
+      });
+    } else {
+      // Створення нового замовлення
+      createOrderMutation.mutate(orderData);
+    }
   };
 
   const getStatusText = (status: string) => {
