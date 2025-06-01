@@ -23,7 +23,8 @@ import {
   TrendingUp,
   Building2,
   Flame,
-  Ruler
+  Ruler,
+  DollarSign
 } from "lucide-react";
 
 interface LayoutProps {
@@ -77,7 +78,8 @@ const navigationItems = [
       { name: "Робітники", href: "/workers", icon: Users },
       { name: "Посади", href: "/positions", icon: Users },
       { name: "Відділи", href: "/departments", icon: Building2 },
-      { name: "Перевізники", href: "/carriers", icon: Truck }
+      { name: "Перевізники", href: "/carriers", icon: Truck },
+      { name: "Валюти", href: "/currencies", icon: DollarSign }
     ]
   },
   {

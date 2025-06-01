@@ -1037,6 +1037,68 @@ export type InsertManufacturingOrderMaterial = z.infer<typeof insertManufacturin
 export type ManufacturingStep = typeof manufacturingSteps.$inferSelect;
 export type InsertManufacturingStep = z.infer<typeof insertManufacturingStepSchema>;
 
+// Таблиця валют
+export const currencies = pgTable("currencies", {
+  id: serial("id").primaryKey(),
+  code: varchar("code", { length: 3 }).notNull().unique(), // USD, EUR, UAH, etc.
+  name: varchar("name", { length: 100 }).notNull(), // US Dollar, Euro, Ukrainian Hryvnia
+  symbol: varchar("symbol", { length: 10 }).notNull(), // $, €, ₴
+  isBaseCurrency: boolean("is_base_currency").default(false), // Базова валюта системи
+  isActive: boolean("is_active").default(true),
+  decimalPlaces: integer("decimal_places").default(2), // Кількість знаків після коми
+  exchangeRate: decimal("exchange_rate", { precision: 15, scale: 6 }).default("1.000000"), // Курс до базової валюти
+  lastUpdated: timestamp("last_updated").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Історія курсів валют
+export const exchangeRateHistory = pgTable("exchange_rate_history", {
+  id: serial("id").primaryKey(),
+  currencyId: integer("currency_id").notNull().references(() => currencies.id),
+  rate: decimal("rate", { precision: 15, scale: 6 }).notNull(),
+  effectiveDate: timestamp("effective_date").notNull().defaultNow(),
+  source: varchar("source", { length: 100 }), // manual, api, bank
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Курси валют для продуктів (можуть відрізнятися від загальних курсів)
+export const productPrices = pgTable("product_prices", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull().references(() => products.id),
+  currencyId: integer("currency_id").notNull().references(() => currencies.id),
+  costPrice: decimal("cost_price", { precision: 12, scale: 6 }).default("0"),
+  retailPrice: decimal("retail_price", { precision: 12, scale: 6 }).default("0"),
+  wholesalePrice: decimal("wholesale_price", { precision: 12, scale: 6 }).default("0"),
+  lastUpdated: timestamp("last_updated").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertCurrencySchema = createInsertSchema(currencies).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true,
+  lastUpdated: true 
+});
+
+export const insertExchangeRateHistorySchema = createInsertSchema(exchangeRateHistory).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertProductPriceSchema = createInsertSchema(productPrices).omit({ 
+  id: true, 
+  createdAt: true,
+  lastUpdated: true 
+});
+
+export type Currency = typeof currencies.$inferSelect;
+export type InsertCurrency = z.infer<typeof insertCurrencySchema>;
+export type ExchangeRateHistory = typeof exchangeRateHistory.$inferSelect;
+export type InsertExchangeRateHistory = z.infer<typeof insertExchangeRateHistorySchema>;
+export type ProductPrice = typeof productPrices.$inferSelect;
+export type InsertProductPrice = z.infer<typeof insertProductPriceSchema>;
+
 // User types for Replit Auth
 export type User = typeof users.$inferSelect;
 export type UpsertUser = typeof users.$inferInsert;
