@@ -436,7 +436,10 @@ export function NovaPoshtaIntegration({
             </div>
           </div>
           <Button 
-            onClick={calculateDeliveryCost}
+            onClick={() => {
+              console.log('Button clicked:', { selectedCity, selectedWarehouse, weight, cost });
+              calculateDeliveryCost();
+            }}
             disabled={!selectedCity || !selectedWarehouse || !weight || !cost}
             className="w-full"
           >
