@@ -2363,6 +2363,11 @@ export class DatabaseStorage implements IStorage {
     return carrier;
   }
 
+  async getCarrierByName(name: string): Promise<Carrier | undefined> {
+    const [carrier] = await db.select().from(carriers).where(eq(carriers.name, name));
+    return carrier;
+  }
+
   async createCarrier(carrier: InsertCarrier): Promise<Carrier> {
     const [created] = await db.insert(carriers).values(carrier).returning();
     return created;
