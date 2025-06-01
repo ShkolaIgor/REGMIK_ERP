@@ -72,6 +72,12 @@ export default function BOMPage() {
     enabled: true
   });
 
+  // Fetch all components for selection
+  const { data: availableComponents, isLoading: isLoadingAvailableComponents } = useQuery({
+    queryKey: ["/api/components"],
+    enabled: true
+  });
+
   // Fetch components for selected product
   const { data: components, isLoading: isLoadingComponents } = useQuery({
     queryKey: [`/api/products/${selectedProductId}/components`],
@@ -159,9 +165,8 @@ export default function BOMPage() {
     return isParentType && matchesSearch;
   });
 
-  const componentProducts = (products as Product[] || []).filter((p: Product) => 
-    p.id !== selectedProductId // Виключаємо сам продукт з списку компонентів
-  );
+  // Фільтруємо доступні компоненти
+  const filteredComponents = (availableComponents as any[] || []);
 
   // Розрахунок загальної вартості BOM
   const calculateTotalCost = () => {
@@ -391,9 +396,9 @@ export default function BOMPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {componentProducts.map((product: Product) => (
-                          <SelectItem key={product.id} value={product.id.toString()}>
-                            {product.name} ({product.sku})
+                        {filteredComponents.map((component: any) => (
+                          <SelectItem key={component.id} value={component.id.toString()}>
+                            {component.name} ({component.sku})
                           </SelectItem>
                         ))}
                       </SelectContent>
