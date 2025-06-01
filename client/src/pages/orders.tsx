@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
-import { Plus, Eye, Edit, Trash2, ShoppingCart } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -210,6 +210,38 @@ export default function Orders() {
     },
   });
 
+  // Мутація для відвантаження замовлення
+  const shipOrderMutation = useMutation({
+    mutationFn: async (orderId: number) => {
+      const now = new Date().toISOString();
+      return await apiRequest(`/api/orders/${orderId}`, {
+        method: "PATCH",
+        body: { shippedDate: now }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      toast({
+        title: "Успіх",
+        description: "Замовлення відвантажено",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Не вдалося відвантажити замовлення",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Функція для відвантаження замовлення
+  const handleShipOrder = (order: any) => {
+    if (confirm(`Підтвердити відвантаження замовлення ${order.orderNumber}?`)) {
+      shipOrderMutation.mutate(order.id);
+    }
+  };
+
   // Функція для закриття діалогу та очищення форми
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
@@ -233,6 +265,13 @@ export default function Orders() {
     setEditingOrder(order);
     setIsEditMode(true);
     
+    // Функція для конвертації дати в формат datetime-local
+    const formatDateForInput = (dateString: string | null) => {
+      if (!dateString) return "";
+      const date = new Date(dateString);
+      return date.toISOString().slice(0, 16);
+    };
+
     // Заповнюємо форму даними замовлення
     form.reset({
       customerName: order.customerName,
@@ -240,6 +279,9 @@ export default function Orders() {
       customerPhone: order.customerPhone || "",
       status: order.status,
       notes: order.notes || "",
+      paymentDate: formatDateForInput(order.paymentDate),
+      dueDate: formatDateForInput(order.dueDate),
+      shippedDate: formatDateForInput(order.shippedDate),
     });
 
     // Заповнюємо товари замовлення
@@ -542,6 +584,34 @@ export default function Orders() {
                   />
                 </div>
 
+                {/* Дати замовлення */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="paymentDate">Дата оплати</Label>
+                    <Input
+                      id="paymentDate"
+                      type="datetime-local"
+                      {...form.register("paymentDate")}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="dueDate">Термін виконання</Label>
+                    <Input
+                      id="dueDate"
+                      type="datetime-local"
+                      {...form.register("dueDate")}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="shippedDate">Дата відвантаження</Label>
+                    <Input
+                      id="shippedDate"
+                      type="datetime-local"
+                      {...form.register("shippedDate")}
+                    />
+                  </div>
+                </div>
+
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button 
                     type="button" 
@@ -761,6 +831,25 @@ export default function Orders() {
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
+                          {order.shippedDate ? (
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                              disabled
+                            >
+                              <Truck className="w-4 h-4" />
+                            </Button>
+                          ) : (
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              onClick={() => handleShipOrder(order)}
+                            >
+                              <Truck className="w-4 h-4" />
+                            </Button>
+                          )}
                           <Button 
                             size="sm" 
                             variant="ghost" 
