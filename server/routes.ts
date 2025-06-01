@@ -2036,9 +2036,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/nova-poshta/cities", async (req, res) => {
     try {
       const { q } = req.query;
-      console.log("Cities query parameter:", q);
       const cities = await novaPoshtaCache.getCities(q as string || "");
-      console.log(`Returned ${cities.length} cities for query: "${q}"`);
       res.json(cities);
     } catch (error) {
       console.error("Error fetching cities:", error);
