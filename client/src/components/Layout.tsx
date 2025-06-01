@@ -51,6 +51,7 @@ const navigationItems = [
       { name: "Замовлення постачальникам", href: "/supplier-orders", icon: Package },
       { name: "Переміщення між складами", href: "/warehouse-transfers", icon: PackageOpen },
       { name: "Інвентаризація", href: "/inventory-audits", icon: ClipboardList },
+      { name: "Серійні номери", href: "/serial-numbers", icon: QrCode },
       { name: "Сканер штрих-кодів", href: "/scanner", icon: Scan }
     ]
   },

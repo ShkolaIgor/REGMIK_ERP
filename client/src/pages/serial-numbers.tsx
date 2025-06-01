@@ -208,8 +208,8 @@ export default function SerialNumbers() {
     const matchesSearch = item.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.product?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.product?.sku.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesProduct = !filterProductId || item.productId.toString() === filterProductId;
-    const matchesStatus = !filterStatus || item.status === filterStatus;
+    const matchesProduct = filterProductId === "all" || !filterProductId || item.productId.toString() === filterProductId;
+    const matchesStatus = filterStatus === "all" || !filterStatus || item.status === filterStatus;
     
     return matchesSearch && matchesProduct && matchesStatus;
   });
@@ -319,7 +319,7 @@ export default function SerialNumbers() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">Не вибрано</SelectItem>
+                            <SelectItem value="none">Не вибрано</SelectItem>
                             {warehouses.map((warehouse: Warehouse) => (
                               <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
                                 {warehouse.name}
@@ -420,7 +420,7 @@ export default function SerialNumbers() {
                   <SelectValue placeholder="Всі продукти" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Всі продукти</SelectItem>
+                  <SelectItem value="all">Всі продукти</SelectItem>
                   {products.map((product: Product) => (
                     <SelectItem key={product.id} value={product.id.toString()}>
                       {product.name}
@@ -436,7 +436,7 @@ export default function SerialNumbers() {
                   <SelectValue placeholder="Всі статуси" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Всі статуси</SelectItem>
+                  <SelectItem value="all">Всі статуси</SelectItem>
                   <SelectItem value="available">Доступний</SelectItem>
                   <SelectItem value="reserved">Зарезервований</SelectItem>
                   <SelectItem value="sold">Проданий</SelectItem>
