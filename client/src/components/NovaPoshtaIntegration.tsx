@@ -92,7 +92,7 @@ export function NovaPoshtaIntegration({
     enabled: !!selectedCity?.ref,
   });
 
-  // Фільтрація відділень по номеру або адресі
+  // Фільтрація відділень по номеру або адресі з пріоритизацією точних співпадінь
   const filteredWarehouses = warehouses.filter(warehouse => {
     if (!warehouseQuery) return true;
     const query = warehouseQuery.toLowerCase();
@@ -101,6 +101,31 @@ export function NovaPoshtaIntegration({
       warehouse.shortAddress.toLowerCase().includes(query) ||
       warehouse.description.toLowerCase().includes(query)
     );
+  }).sort((a, b) => {
+    if (!warehouseQuery) return 0;
+    
+    const query = warehouseQuery.toLowerCase();
+    
+    // Точне співпадіння номера відділення має найвищий пріоритет
+    const aNumberExact = a.number.toLowerCase() === query;
+    const bNumberExact = b.number.toLowerCase() === query;
+    if (aNumberExact && !bNumberExact) return -1;
+    if (!aNumberExact && bNumberExact) return 1;
+    
+    // Номер відділення починається з запиту
+    const aNumberStarts = a.number.toLowerCase().startsWith(query);
+    const bNumberStarts = b.number.toLowerCase().startsWith(query);
+    if (aNumberStarts && !bNumberStarts) return -1;
+    if (!aNumberStarts && bNumberStarts) return 1;
+    
+    // Адреса починається з запиту
+    const aAddressStarts = a.shortAddress.toLowerCase().startsWith(query);
+    const bAddressStarts = b.shortAddress.toLowerCase().startsWith(query);
+    if (aAddressStarts && !bAddressStarts) return -1;
+    if (!aAddressStarts && bAddressStarts) return 1;
+    
+    // За замовчуванням сортуємо за номером відділення
+    return parseInt(a.number) - parseInt(b.number);
   });
 
   // Дебагінг
