@@ -366,6 +366,42 @@ class NovaPoshtaApi {
     }
   }
 
+  // Пошук існуючих контрагентів
+  async findCounterparty(params: {
+    phone?: string;
+    counterpartyType?: string;
+    firstName?: string;
+    lastName?: string;
+    middleName?: string;
+  }): Promise<any[]> {
+    const methodProperties: any = {
+      CounterpartyProperty: 'Recipient',
+      Page: '1'
+    };
+
+    if (params.phone) {
+      methodProperties.Phone = params.phone;
+    }
+    if (params.counterpartyType) {
+      methodProperties.CounterpartyType = params.counterpartyType;
+    }
+    if (params.firstName) {
+      methodProperties.FirstName = params.firstName;
+    }
+    if (params.lastName) {
+      methodProperties.LastName = params.lastName;
+    }
+
+    const response = await this.makeRequest('Counterparty', 'getCounterparties', methodProperties);
+    
+    if (response.success && response.data) {
+      return response.data;
+    } else {
+      console.log('No counterparties found:', response.errors);
+      return [];
+    }
+  }
+
   // Створення інтернет-документа (накладної)
   async createInternetDocument(params: {
     cityRecipient: string;
@@ -384,43 +420,86 @@ class NovaPoshtaApi {
     paymentMethod: string;
     payerType: string;
   }): Promise<any> {
-    // Спочатку створюємо контрагента відправника
+    // Шукаємо або створюємо контрагента відправника
     let senderRef;
     try {
-      const sender = await this.createCounterparty({
-        firstName: 'Менеджер',
-        middleName: '',
-        lastName: 'Компанії',
-        phone: params.senderPhone || '+380501234567',
-        email: 'manager@company.com',
+      // Форматуємо телефон відправника
+      const senderPhone = params.senderPhone || '+380501234567';
+      let formattedSenderPhone = senderPhone.replace(/\D/g, '');
+      if (formattedSenderPhone.startsWith('0')) {
+        formattedSenderPhone = '380' + formattedSenderPhone.substring(1);
+      }
+      if (!formattedSenderPhone.startsWith('380')) {
+        formattedSenderPhone = '380' + formattedSenderPhone;
+      }
+
+      // Спочатку шукаємо існуючого відправника
+      const existingSenders = await this.findCounterparty({
+        phone: formattedSenderPhone,
         counterpartyType: 'Organization'
       });
-      senderRef = sender.Ref;
+      
+      if (existingSenders && existingSenders.length > 0) {
+        senderRef = existingSenders[0].Ref;
+        console.log('Found existing sender:', existingSenders[0].Description);
+      } else {
+        console.log('Creating new sender with phone:', formattedSenderPhone);
+        const sender = await this.createCounterparty({
+          firstName: 'Менеджер',
+          middleName: '',
+          lastName: 'Компанії',
+          phone: formattedSenderPhone,
+          email: 'manager@company.com',
+          counterpartyType: 'Organization'
+        });
+        senderRef = sender.Ref;
+      }
     } catch (error) {
-      console.error('Error creating sender:', error);
-      throw new Error('Failed to create sender');
+      console.error('Error with sender:', error);
+      throw new Error('Failed to find or create sender');
     }
 
-    // Створюємо контрагента отримувача
+    // Шукаємо або створюємо контрагента отримувача
     let recipientRef;
     try {
-      const nameParts = params.recipientName.split(' ');
-      const firstName = nameParts[0] || 'Ім\'я';
-      const lastName = nameParts[1] || 'Прізвище';
-      const middleName = nameParts[2] || '';
+      // Форматуємо телефон отримувача
+      let formattedRecipientPhone = params.recipientPhone.replace(/\D/g, '');
+      if (formattedRecipientPhone.startsWith('0')) {
+        formattedRecipientPhone = '380' + formattedRecipientPhone.substring(1);
+      }
+      if (!formattedRecipientPhone.startsWith('380')) {
+        formattedRecipientPhone = '380' + formattedRecipientPhone;
+      }
 
-      const recipient = await this.createCounterparty({
-        firstName,
-        middleName,
-        lastName,
-        phone: params.recipientPhone,
-        email: 'noemail@example.com',
+      // Спочатку шукаємо існуючого отримувача
+      const existingRecipients = await this.findCounterparty({
+        phone: formattedRecipientPhone,
         counterpartyType: params.recipientType || 'Organization'
       });
-      recipientRef = recipient.Ref;
+      
+      if (existingRecipients && existingRecipients.length > 0) {
+        recipientRef = existingRecipients[0].Ref;
+        console.log('Found existing recipient:', existingRecipients[0].Description);
+      } else {
+        console.log('Creating new recipient with phone:', formattedRecipientPhone);
+        const nameParts = params.recipientName.split(' ');
+        const firstName = nameParts[0] || 'Ім\'я';
+        const lastName = nameParts[1] || 'Прізвище';
+        const middleName = nameParts[2] || '';
+
+        const recipient = await this.createCounterparty({
+          firstName,
+          middleName,
+          lastName,
+          phone: formattedRecipientPhone,
+          email: 'noemail@example.com',
+          counterpartyType: params.recipientType || 'Organization'
+        });
+        recipientRef = recipient.Ref;
+      }
     } catch (error) {
-      console.error('Error creating recipient:', error);
-      throw new Error('Failed to create recipient');
+      console.error('Error with recipient:', error);
+      throw new Error('Failed to find or create recipient');
     }
 
     const tomorrow = new Date();
