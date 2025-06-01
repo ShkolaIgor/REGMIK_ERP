@@ -3134,13 +3134,13 @@ export class DatabaseStorage implements IStorage {
       // Створюємо замовлення постачальнику
       const [supplierOrder] = await db.insert(supplierOrders)
         .values({
-          supplierName: supplier.name,
+          orderNumber: `SO-${Date.now()}`,
+          supplierId: supplier.id,
           orderDate: new Date(),
-          expectedDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // +7 днів
+          expectedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // +7 днів
           status: 'pending',
           totalAmount: (parseFloat(product.costPrice) * parseFloat(quantity)).toString(),
-          notes: notes || `Автоматичне замовлення через дефіцит товару ${product.name}`,
-          createdBy: 'Система'
+          notes: notes || `Автоматичне замовлення через дефіцит товару ${product.name}`
         })
         .returning();
 

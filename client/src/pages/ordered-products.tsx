@@ -16,11 +16,19 @@ export default function OrderedProducts() {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [productionNotes, setProductionNotes] = useState("");
   const [productionQuantity, setProductionQuantity] = useState<number>(0);
+  const [completeQuantity, setCompleteQuantity] = useState<number>(0);
+  const [selectedWarehouse, setSelectedWarehouse] = useState<string>("");
+  const [orderQuantity, setOrderQuantity] = useState<number>(0);
+  const [orderNotes, setOrderNotes] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: orderedProducts = [], isLoading } = useQuery({
     queryKey: ["/api/ordered-products-info"],
+  });
+
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ["/api/warehouses"],
   });
 
   const sendToProductionMutation = useMutation({
@@ -50,6 +58,53 @@ export default function OrderedProducts() {
     },
   });
 
+  const completeOrderMutation = useMutation({
+    mutationFn: async (data: { productId: number; quantity: string; warehouseId: number }) => {
+      return await apiRequest("/api/complete-order", {
+        method: "POST",
+        body: data,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Успішно",
+        description: "Товар укомплектовано зі складу",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/ordered-products-info"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Не вдалося укомплектувати товар",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createSupplierOrderMutation = useMutation({
+    mutationFn: async (data: { productId: number; quantity: string; notes?: string }) => {
+      return await apiRequest("/api/create-supplier-order-for-shortage", {
+        method: "POST",
+        body: data,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Успішно",
+        description: "Створено замовлення постачальнику",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/supplier-orders"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Не вдалося створити замовлення постачальнику",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSendToProduction = () => {
     if (!selectedProduct || productionQuantity <= 0) return;
 
@@ -57,6 +112,26 @@ export default function OrderedProducts() {
       productId: selectedProduct.productId,
       quantity: productionQuantity,
       notes: productionNotes,
+    });
+  };
+
+  const handleCompleteOrder = () => {
+    if (!selectedProduct || completeQuantity <= 0 || !selectedWarehouse) return;
+
+    completeOrderMutation.mutate({
+      productId: selectedProduct.productId,
+      quantity: completeQuantity.toString(),
+      warehouseId: parseInt(selectedWarehouse),
+    });
+  };
+
+  const handleCreateSupplierOrder = () => {
+    if (!selectedProduct || orderQuantity <= 0) return;
+
+    createSupplierOrderMutation.mutate({
+      productId: selectedProduct.productId,
+      quantity: orderQuantity.toString(),
+      notes: orderNotes,
     });
   };
 
@@ -209,21 +284,91 @@ export default function OrderedProducts() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {item.needsProduction && (
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedProduct(item);
-                                  setProductionQuantity(Math.max(1, item.shortage || (item.totalOrdered - item.totalAvailable)));
-                                }}
-                              >
-                                <Factory className="h-4 w-4 mr-2" />
-                                У виробництво
-                              </Button>
-                            </DialogTrigger>
+                        <div className="flex flex-col space-y-1">
+                          {/* Кнопка укомплектування зі складу */}
+                          {item.totalAvailable > 0 && (
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedProduct(item);
+                                    setCompleteQuantity(Math.min(item.totalAvailable, item.totalOrdered));
+                                    setSelectedWarehouse("");
+                                  }}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Укомплектувати
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Укомплектувати товар</DialogTitle>
+                                  <DialogDescription>
+                                    Списати товар зі складу для виконання замовлення
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div>
+                                    <Label htmlFor="complete-quantity">Кількість для укомплектування</Label>
+                                    <Input
+                                      id="complete-quantity"
+                                      type="number"
+                                      value={completeQuantity}
+                                      onChange={(e) => setCompleteQuantity(parseInt(e.target.value) || 0)}
+                                      min="1"
+                                      max={item.totalAvailable}
+                                    />
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                      Доступно на складі: {item.totalAvailable} {item.product.unit}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="warehouse">Склад</Label>
+                                    <select
+                                      id="warehouse"
+                                      value={selectedWarehouse}
+                                      onChange={(e) => setSelectedWarehouse(e.target.value)}
+                                      className="w-full p-2 border rounded-md"
+                                    >
+                                      <option value="">Виберіть склад</option>
+                                      {warehouses.map((warehouse: any) => (
+                                        <option key={warehouse.id} value={warehouse.id}>
+                                          {warehouse.name}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                </div>
+                                <DialogFooter>
+                                  <Button
+                                    onClick={handleCompleteOrder}
+                                    disabled={completeOrderMutation.isPending || !selectedWarehouse}
+                                  >
+                                    {completeOrderMutation.isPending ? "Обробка..." : "Укомплектувати"}
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                          )}
+
+                          {/* Кнопка передачі у виробництво */}
+                          {item.needsProduction && (
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedProduct(item);
+                                    setProductionQuantity(Math.max(1, item.shortage || (item.totalOrdered - item.totalAvailable)));
+                                  }}
+                                >
+                                  <Factory className="h-4 w-4 mr-2" />
+                                  У виробництво
+                                </Button>
+                              </DialogTrigger>
                             <DialogContent>
                               <DialogHeader>
                                 <DialogTitle>Передати у виробництво</DialogTitle>
@@ -276,6 +421,67 @@ export default function OrderedProducts() {
                             </DialogContent>
                           </Dialog>
                         )}
+
+                          {/* Кнопка створення замовлення при дефіциті */}
+                          {item.shortage > 0 && (
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedProduct(item);
+                                    setOrderQuantity(item.shortage);
+                                    setOrderNotes("");
+                                  }}
+                                >
+                                  <AlertTriangle className="h-4 w-4 mr-2" />
+                                  Замовити
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Створити замовлення постачальнику</DialogTitle>
+                                  <DialogDescription>
+                                    Автоматично створити замовлення постачальнику для покриття дефіциту товару
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div>
+                                    <Label htmlFor="order-quantity">Кількість для замовлення</Label>
+                                    <Input
+                                      id="order-quantity"
+                                      type="number"
+                                      value={orderQuantity}
+                                      onChange={(e) => setOrderQuantity(parseInt(e.target.value) || 0)}
+                                      min="1"
+                                    />
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                      Дефіцит: {item.shortage} {item.product.unit}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="order-notes">Примітки до замовлення</Label>
+                                    <Textarea
+                                      id="order-notes"
+                                      value={orderNotes}
+                                      onChange={(e) => setOrderNotes(e.target.value)}
+                                      placeholder="Опціональні примітки..."
+                                    />
+                                  </div>
+                                </div>
+                                <DialogFooter>
+                                  <Button
+                                    onClick={handleCreateSupplierOrder}
+                                    disabled={createSupplierOrderMutation.isPending || orderQuantity <= 0}
+                                  >
+                                    {createSupplierOrderMutation.isPending ? "Створення..." : "Створити замовлення"}
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
