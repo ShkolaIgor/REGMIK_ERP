@@ -127,6 +127,13 @@ export function NovaPoshtaIntegration({
     }
   }, [orderId]);
 
+  // Автоматичний розрахунок вартості доставки при зміні параметрів
+  useEffect(() => {
+    if (selectedCity && selectedWarehouse && externalWeight && externalDeclaredValue && selectedSender) {
+      calculateDeliveryCost();
+    }
+  }, [selectedCity, selectedWarehouse, externalWeight, externalDeclaredValue, selectedSender]);
+
   // Автоматичне заповнення полів отримувача з пропсів
   useEffect(() => {
     if (externalRecipientName) {
@@ -210,7 +217,10 @@ export function NovaPoshtaIntegration({
             estimatedDeliveryDate: result.EstimatedDeliveryDate || result.estimatedDeliveryDate || 'Не визначено'
           });
           if (onCostCalculated) {
-            onCostCalculated(result);
+            onCostCalculated({
+              cost: result.Cost || result.cost || 0,
+              estimatedDeliveryDate: result.EstimatedDeliveryDate || result.estimatedDeliveryDate || 'Не визначено'
+            });
           }
         } else {
           console.error('Неочікувана структура відповіді:', result);
@@ -538,44 +548,30 @@ export function NovaPoshtaIntegration({
         </CardContent>
       </Card>
 
-      {/* Розрахунок вартості доставки */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Розрахунок вартості доставки
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {externalWeight && externalDeclaredValue && (
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600">Використовуються дані з основної форми:</p>
-              <p className="font-medium">Вага: {externalWeight} кг</p>
-              <p className="font-medium">Оголошена вартість: {externalDeclaredValue} грн</p>
+      {/* Автоматично розрахована вартість доставки */}
+      {deliveryCost && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Вартість доставки
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <p className="font-semibold text-green-800 text-lg">Вартість доставки: {deliveryCost.cost} грн</p>
+              <p className="text-sm text-green-600">Орієнтовний час доставки: {deliveryCost.estimatedDeliveryDate}</p>
             </div>
-          )}
-          <Button 
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('Button clicked:', { selectedCity, selectedWarehouse, externalWeight, externalDeclaredValue });
-              calculateDeliveryCost();
-            }}
-            disabled={!selectedCity || !selectedWarehouse || !externalWeight || !externalDeclaredValue}
-            className="w-full"
-          >
-            Розрахувати вартість доставки
-          </Button>
-          
-          {deliveryCost && (
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <p className="font-medium">Вартість доставки: {deliveryCost.cost} грн</p>
-              <p className="text-sm text-gray-600">Орієнтовний час доставки: {deliveryCost.estimatedDeliveryDate}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            {externalWeight && externalDeclaredValue && (
+              <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">Параметри відправлення:</p>
+                <p className="font-medium">Вага: {externalWeight} кг</p>
+                <p className="font-medium">Оголошена вартість: {externalDeclaredValue} грн</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Створення накладної */}
       {selectedCity && selectedWarehouse && deliveryCost && (

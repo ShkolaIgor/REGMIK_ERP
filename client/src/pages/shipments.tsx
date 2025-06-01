@@ -95,6 +95,7 @@ export default function Shipments() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingShipment, setEditingShipment] = useState<Shipment | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<string>("");
+  const [calculatedShippingCost, setCalculatedShippingCost] = useState<number | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -269,6 +270,17 @@ export default function Shipments() {
       trackingNumber: ""
     });
     setEditingShipment(null);
+    setCalculatedShippingCost(null);
+  };
+
+  // Функція для обробки розрахованої вартості доставки
+  const handleCostCalculated = (costData: any) => {
+    const cost = typeof costData.Cost === 'number' ? costData.Cost : (typeof costData.cost === 'number' ? costData.cost : 0);
+    setCalculatedShippingCost(cost);
+    setFormData(prev => ({ 
+      ...prev, 
+      shippingCost: cost.toString() 
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
