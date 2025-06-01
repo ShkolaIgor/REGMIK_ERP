@@ -371,18 +371,23 @@ export default function Shipments() {
                       try {
                         const response = await fetch(`/api/orders/${value}`);
                         const orderDetails = await response.json();
+                        console.log('Order details:', orderDetails);
                         
                         // Збираємо унікальні категорії товарів
                         const categories = new Set<string>();
                         if (orderDetails.items && Array.isArray(orderDetails.items)) {
+                          console.log('Order items:', orderDetails.items);
                           orderDetails.items.forEach((item: any) => {
+                            console.log('Processing item:', item);
                             if (item.product && item.product.category) {
                               categories.add(item.product.category);
+                              console.log('Added category:', item.product.category);
                             }
                           });
                         }
                         
                         const description = Array.from(categories).join(', ');
+                        console.log('Generated description:', description);
                         
                         setFormData(prev => ({ 
                           ...prev, 
