@@ -145,7 +145,7 @@ export default function Orders() {
   // Мутація для оновлення статусу
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: string }) =>
-      apiRequest(`/api/orders/${id}/status`, "PUT", { status }),
+      apiRequest(`/api/orders/${id}/status`, { method: "PUT", body: { status } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       toast({
@@ -179,7 +179,7 @@ export default function Orders() {
     mutationFn: async (data: any) => {
       console.log("Sending PUT request to:", `/api/orders/${data.id}`);
       console.log("Request data:", data);
-      return await apiRequest(`/api/orders/${data.id}`, "PUT", data);
+      return await apiRequest(`/api/orders/${data.id}`, { method: "PUT", body: data });
     },
     onSuccess: (result) => {
       console.log("Order update success:", result);
