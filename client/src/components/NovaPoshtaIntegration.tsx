@@ -202,20 +202,11 @@ export function NovaPoshtaIntegration({
                   </div>
                 )}
                 {filteredCities.length > 0 && cityQuery.length >= 2 && !selectedCity && (
-                  <div 
-                    className="absolute z-[9999] w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg"
-                    style={{
-                      height: '192px',
-                      overflowY: 'scroll',
-                      overflowX: 'hidden',
-                      scrollBehavior: 'smooth',
-                      WebkitOverflowScrolling: 'touch'
-                    }}
-                  >
+                  <div className="mt-2 border border-gray-200 rounded-md bg-white max-h-48 overflow-y-auto">
                     {filteredCities.map((city) => (
                       <div
                         key={city.ref}
-                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors flex-shrink-0"
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
                         onClick={() => {
                           setSelectedCity(city);
                           setCityQuery(city.name);
