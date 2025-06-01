@@ -2823,6 +2823,137 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Serial Numbers API routes
+  app.get("/api/serial-numbers", async (req, res) => {
+    try {
+      const { productId, warehouseId } = req.query;
+      const serialNumbers = await storage.getSerialNumbers(
+        productId ? parseInt(productId as string) : undefined,
+        warehouseId ? parseInt(warehouseId as string) : undefined
+      );
+      res.json(serialNumbers);
+    } catch (error) {
+      console.error("Error fetching serial numbers:", error);
+      res.status(500).json({ error: "Failed to fetch serial numbers" });
+    }
+  });
+
+  app.get("/api/serial-numbers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const serialNumber = await storage.getSerialNumber(id);
+      if (!serialNumber) {
+        return res.status(404).json({ error: "Serial number not found" });
+      }
+      res.json(serialNumber);
+    } catch (error) {
+      console.error("Error fetching serial number:", error);
+      res.status(500).json({ error: "Failed to fetch serial number" });
+    }
+  });
+
+  app.post("/api/serial-numbers", async (req, res) => {
+    try {
+      const serialNumberData = insertSerialNumberSchema.parse(req.body);
+      const serialNumber = await storage.createSerialNumber(serialNumberData);
+      res.status(201).json(serialNumber);
+    } catch (error) {
+      console.error("Error creating serial number:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid serial number data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create serial number" });
+      }
+    }
+  });
+
+  app.put("/api/serial-numbers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const serialNumberData = insertSerialNumberSchema.partial().parse(req.body);
+      const serialNumber = await storage.updateSerialNumber(id, serialNumberData);
+      if (!serialNumber) {
+        return res.status(404).json({ error: "Serial number not found" });
+      }
+      res.json(serialNumber);
+    } catch (error) {
+      console.error("Error updating serial number:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid serial number data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update serial number" });
+      }
+    }
+  });
+
+  app.delete("/api/serial-numbers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteSerialNumber(id);
+      if (!success) {
+        return res.status(404).json({ error: "Serial number not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting serial number:", error);
+      res.status(500).json({ error: "Failed to delete serial number" });
+    }
+  });
+
+  app.get("/api/serial-numbers/available/:productId", async (req, res) => {
+    try {
+      const productId = parseInt(req.params.productId);
+      const serialNumbers = await storage.getAvailableSerialNumbers(productId);
+      res.json(serialNumbers);
+    } catch (error) {
+      console.error("Error fetching available serial numbers:", error);
+      res.status(500).json({ error: "Failed to fetch available serial numbers" });
+    }
+  });
+
+  app.patch("/api/serial-numbers/:id/reserve", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { orderId } = req.body;
+      const success = await storage.reserveSerialNumber(id, orderId);
+      if (!success) {
+        return res.status(404).json({ error: "Serial number not found or already reserved" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error reserving serial number:", error);
+      res.status(500).json({ error: "Failed to reserve serial number" });
+    }
+  });
+
+  app.patch("/api/serial-numbers/:id/release", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.releaseSerialNumber(id);
+      if (!success) {
+        return res.status(404).json({ error: "Serial number not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error releasing serial number:", error);
+      res.status(500).json({ error: "Failed to release serial number" });
+    }
+  });
+
+  app.patch("/api/serial-numbers/:id/mark-sold", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.markSerialNumberAsSold(id);
+      if (!success) {
+        return res.status(404).json({ error: "Serial number not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking serial number as sold:", error);
+      res.status(500).json({ error: "Failed to mark serial number as sold" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

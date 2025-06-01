@@ -25,7 +25,8 @@ import {
   Flame,
   BarChart3,
   Ruler,
-  DollarSign
+  DollarSign,
+  QrCode
 } from "lucide-react";
 
 interface LayoutProps {

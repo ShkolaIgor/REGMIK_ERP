@@ -306,6 +306,17 @@ export interface IStorage {
   // Order Completion and Supplier Order Creation
   completeOrderFromStock(productId: number, quantity: string, warehouseId: number): Promise<{ success: boolean; message: string }>;
   createSupplierOrderForShortage(productId: number, quantity: string, notes?: string): Promise<{ success: boolean; message: string; orderId?: number }>;
+
+  // Serial Numbers
+  getSerialNumbers(productId?: number, warehouseId?: number): Promise<SerialNumber[]>;
+  getSerialNumber(id: number): Promise<SerialNumber | null>;
+  createSerialNumber(serialNumber: InsertSerialNumber): Promise<SerialNumber>;
+  updateSerialNumber(id: number, serialNumber: Partial<InsertSerialNumber>): Promise<SerialNumber | null>;
+  deleteSerialNumber(id: number): Promise<boolean>;
+  getAvailableSerialNumbers(productId: number): Promise<SerialNumber[]>;
+  reserveSerialNumber(id: number, orderId: number): Promise<boolean>;
+  releaseSerialNumber(id: number): Promise<boolean>;
+  markSerialNumberAsSold(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {

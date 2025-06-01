@@ -43,6 +43,7 @@ import Currencies from "@/pages/currencies";
 import ProductionAnalytics from "@/pages/production-analytics";
 import OrderedProducts from "@/pages/ordered-products";
 import Scanner from "@/pages/scanner";
+import SerialNumbers from "@/pages/serial-numbers";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -91,6 +92,7 @@ function Router() {
           <Route path="/manufacturing" component={Manufacturing} />
           <Route path="/production-analytics" component={ProductionAnalytics} />
           <Route path="/ordered-products" component={OrderedProducts} />
+          <Route path="/serial-numbers" component={SerialNumbers} />
           <Route path="/currencies" component={Currencies} />
           <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
         </Layout>
