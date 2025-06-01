@@ -41,6 +41,10 @@ interface Carrier {
   serviceType: string | null;
   rating: number | null;
   isActive: boolean;
+  apiKey: string | null;
+  lastSyncAt: Date | null;
+  citiesCount: number;
+  warehousesCount: number;
   createdAt: Date | null;
   updatedAt: Date | null;
 }
@@ -57,6 +61,7 @@ export default function Carriers() {
     description: "",
     serviceType: "",
     rating: 5,
+    apiKey: "",
   });
 
   const { toast } = useToast();
@@ -134,6 +139,7 @@ export default function Carriers() {
       description: "",
       serviceType: "",
       rating: 5,
+      apiKey: "",
     });
     setEditingCarrier(null);
   };
