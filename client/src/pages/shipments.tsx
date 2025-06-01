@@ -581,7 +581,11 @@ export default function Shipments() {
                     value={formData.declaredValue}
                     onChange={(e) => setFormData(prev => ({ ...prev, declaredValue: e.target.value }))}
                     placeholder="1000.00"
+                    className={fieldErrors.declaredValue ? "border-red-500 bg-red-50" : ""}
                   />
+                  {fieldErrors.declaredValue && (
+                    <p className="text-xs text-red-600 mt-1">Обов'язковий параметр</p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="shippingCost">Вартість доставки</Label>
