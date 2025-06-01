@@ -177,21 +177,28 @@ export default function Orders() {
   // Мутація для оновлення замовлення
   const updateOrderMutation = useMutation({
     mutationFn: async (data: any) => {
+      console.log("Sending PUT request to:", `/api/orders/${data.id}`);
+      console.log("Request data:", data);
       return await apiRequest(`/api/orders/${data.id}`, "PUT", data);
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log("Order update success:", result);
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       setIsDialogOpen(false);
-      handleCloseEditDialog();
+      setIsEditMode(false);
+      setEditingOrder(null);
+      setOrderItems([]);
+      form.reset();
       toast({
         title: "Успіх",
         description: "Замовлення оновлено",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Order update error:", error);
       toast({
         title: "Помилка",
-        description: "Не вдалося оновити замовлення",
+        description: error.message || "Не вдалося оновити замовлення",
         variant: "destructive",
       });
     },
@@ -532,7 +539,7 @@ export default function Orders() {
                   <Button 
                     type="button" 
                     variant="outline" 
-                    onClick={isEditMode ? handleCloseEditDialog : handleCloseDialog}
+                    onClick={() => setIsDialogOpen(false)}
                   >
                     Скасувати
                   </Button>
