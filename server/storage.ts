@@ -3,7 +3,7 @@ import {
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   components, productComponents, costCalculations, materialShortages, inventoryAudits, inventoryAuditItems, workers,
   packageTypes, solderingTypes, componentCategories, shipments, shipmentItems, carriers,
-  customerAddresses, senderSettings, currencies, exchangeRateHistory,
+  customerAddresses, senderSettings, currencies, exchangeRateHistory, serialNumbers,
   type User, type UpsertUser, type Category, type InsertCategory,
   type Unit, type InsertUnit,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
@@ -38,6 +38,7 @@ import {
   type CustomerAddress, type InsertCustomerAddress,
   type SenderSettings, type InsertSenderSettings,
   type Currency, type InsertCurrency, type ExchangeRateHistory,
+  type SerialNumber, type InsertSerialNumber,
   departments
 } from "@shared/schema";
 

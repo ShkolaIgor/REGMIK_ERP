@@ -63,6 +63,7 @@ export const products = pgTable("products", {
   unit: text("unit").notNull().default("шт"), // одиниця виміру
   minStock: integer("min_stock").default(0),
   maxStock: integer("max_stock").default(1000),
+  hasSerialNumbers: boolean("has_serial_numbers").default(false), // чи використовує серійні номери
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -1097,6 +1098,30 @@ export type ExchangeRateHistory = typeof exchangeRateHistory.$inferSelect;
 export type InsertExchangeRateHistory = z.infer<typeof insertExchangeRateHistorySchema>;
 export type ProductPrice = typeof productPrices.$inferSelect;
 export type InsertProductPrice = z.infer<typeof insertProductPriceSchema>;
+
+// Serial Numbers table
+export const serialNumbers = pgTable("serial_numbers", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").references(() => products.id).notNull(),
+  serialNumber: text("serial_number").notNull().unique(),
+  status: text("status").notNull().default("available"), // available, reserved, sold, defective
+  warehouseId: integer("warehouse_id").references(() => warehouses.id),
+  orderId: integer("order_id").references(() => orders.id),
+  notes: text("notes"),
+  manufacturedDate: timestamp("manufactured_date"),
+  expiryDate: timestamp("expiry_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertSerialNumberSchema = createInsertSchema(serialNumbers).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export type SerialNumber = typeof serialNumbers.$inferSelect;
+export type InsertSerialNumber = z.infer<typeof insertSerialNumberSchema>;
 
 // User types for Replit Auth
 export type User = typeof users.$inferSelect;
