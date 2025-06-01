@@ -67,8 +67,17 @@ export function NovaPoshtaIntegration({
   // Пошук міст
   const { data: cities = [], isLoading: citiesLoading } = useQuery<City[]>({
     queryKey: ["/api/nova-poshta/cities", cityQuery],
+    queryFn: async () => {
+      const response = await fetch(`/api/nova-poshta/cities?q=${encodeURIComponent(cityQuery)}`);
+      if (!response.ok) throw new Error('Failed to fetch cities');
+      return response.json();
+    },
     enabled: cityQuery.length >= 2,
+    staleTime: 5 * 60 * 1000, // Кеш на 5 хвилин
   });
+
+  // Дебагінг
+  console.log('Cities data:', cities, 'Query:', cityQuery, 'Loading:', citiesLoading);
 
   // Отримання відділень для обраного міста
   const { data: warehouses = [], isLoading: warehousesLoading } = useQuery<Warehouse[]>({

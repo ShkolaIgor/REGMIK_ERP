@@ -57,9 +57,16 @@
     @apply border-border;
   }
 
+  html, body, #root {
+    height: 100%;
+    overflow: auto;
+  }
+
   body {
     @apply font-sans antialiased bg-background text-foreground;
     font-family: 'Segoe UI', 'system-ui', '-apple-system', sans-serif;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 }
 
