@@ -287,11 +287,11 @@ export default function Shipments() {
     }
   };
 
-  const filteredShipments = shipments.filter((shipment: Shipment) =>
-    shipment.shipmentNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    shipment.order?.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    shipment.carrier?.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredShipments = (shipments as Shipment[])?.filter((shipment: Shipment) =>
+    shipment.shipmentNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    shipment.order?.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    shipment.carrier?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   if (isLoading) {
     return <div className="p-6">Завантаження...</div>;
@@ -450,7 +450,7 @@ export default function Shipments() {
 
               {/* Інтеграція з Новою Поштою - показується тільки при виборі Нової Пошти */}
               {(() => {
-                const selectedCarrier = carriers.find((c: any) => c.id.toString() === formData.carrierId);
+                const selectedCarrier = (carriers as Carrier[])?.find((c: Carrier) => c.id.toString() === formData.carrierId);
                 return selectedCarrier && selectedCarrier.name.toLowerCase().includes('нова пошта') ? (
                   <div className="border-t pt-4">
                     <h3 className="text-lg font-medium mb-4">Інтеграція з Новою Поштою</h3>

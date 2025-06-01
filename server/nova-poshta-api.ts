@@ -338,12 +338,41 @@ class NovaPoshtaApi {
     }));
   }
 
+  // Створення контрагента (отримувача)
+  async createCounterparty(params: {
+    firstName: string;
+    middleName: string;
+    lastName: string;
+    phone: string;
+    email: string;
+    counterpartyType: string;
+  }): Promise<any> {
+    const methodProperties = {
+      FirstName: params.firstName,
+      MiddleName: params.middleName,
+      LastName: params.lastName,
+      Phone: params.phone,
+      Email: params.email,
+      CounterpartyType: params.counterpartyType,
+      CounterpartyProperty: params.counterpartyType === 'Organization' ? 'Recipient' : 'Recipient'
+    };
+
+    const response = await this.makeRequest('Counterparty', 'save', methodProperties);
+    
+    if (response.success && response.data && response.data.length > 0) {
+      return response.data[0];
+    } else {
+      throw new Error(`Failed to create counterparty: ${response.errors?.join(', ') || 'Unknown error'}`);
+    }
+  }
+
   // Створення інтернет-документа (накладної)
   async createInternetDocument(params: {
     cityRecipient: string;
     warehouseRecipient: string;
     recipientName: string;
     recipientPhone: string;
+    recipientType?: string;
     description: string;
     weight: number;
     cost: number;
@@ -354,35 +383,32 @@ class NovaPoshtaApi {
     const methodProperties = {
       PayerType: params.payerType,
       PaymentMethod: params.paymentMethod,
-      DateTime: new Date().toISOString().split('T')[0], // Поточна дата у форматі YYYY-MM-DD
-      CargoType: 'Cargo',
+      DateTime: new Date().toISOString().split('T')[0],
+      CargoType: 'Parcel',
       ServiceType: 'WarehouseWarehouse',
       SeatsAmount: params.seatsAmount.toString(),
       Description: params.description,
       Cost: params.cost.toString(),
-      CitySender: 'db5c8978-391c-11dd-90d9-001a92567626', // Київ за замовчуванням
+      CitySender: 'db5c8978-391c-11dd-90d9-001a92567626', // Київ
       CityRecipient: params.cityRecipient,
-      WarehouseSender: '1ec09d88-e1c2-11e3-8c4a-0050568002cf', // Відділення в Києві за замовчуванням
+      WarehouseSender: '1ec09d88-e1c2-11e3-8c4a-0050568002cf', // Відділення в Києві
       WarehouseRecipient: params.warehouseRecipient,
       Weight: params.weight.toString(),
       VolumeGeneral: '0.004',
-      Sender: 'db5c8978-391c-11dd-90d9-001a92567626',
-      SenderAddress: '1ec09d88-e1c2-11e3-8c4a-0050568002cf',
-      ContactSender: 'db5c8978-391c-11dd-90d9-001a92567626',
-      SendersPhone: '380501234567',
-      Recipient: params.cityRecipient,
-      RecipientAddress: params.warehouseRecipient,
-      ContactRecipient: params.cityRecipient,
-      RecipientsPhone: params.recipientPhone
+      // Використовуємо спрощену схему без створення контрагентів
+      RecipientsName: params.recipientName,
+      RecipientsPhone: params.recipientPhone,
+      RecipientType: params.recipientType || 'PrivatePerson'
     };
 
     const response = await this.makeRequest('InternetDocument', 'save', methodProperties);
     
     if (response.success && response.data && response.data.length > 0) {
+      const data = response.data[0] as any;
       return {
-        Number: response.data[0].IntDocNumber || response.data[0].Ref,
-        Cost: response.data[0].CostOnSite || params.cost,
-        Ref: response.data[0].Ref
+        Number: data.IntDocNumber || data.Ref,
+        Cost: data.CostOnSite || params.cost,
+        Ref: data.Ref
       };
     } else {
       throw new Error(`Failed to create document: ${response.errors?.join(', ') || 'Unknown error'}`);

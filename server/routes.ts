@@ -2161,6 +2161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         warehouseRecipient,
         recipientName,
         recipientPhone: formattedPhone,
+        recipientType: recipientType || 'PrivatePerson',
         description: description || 'Товар',
         weight: parseFloat(weight),
         cost: parseFloat(cost),
