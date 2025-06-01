@@ -108,8 +108,8 @@ export function NovaPoshtaIntegration({
   const [recipientType, setRecipientType] = useState('Organization'); // PrivatePerson або Organization
   const [description, setDescription] = useState('');
   const [seatsAmount, setSeatsAmount] = useState('1');
-  const [paymentMethod, setPaymentMethod] = useState('NonCash');
-  const [payerType, setPayerType] = useState('Recipient');
+  const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [payerType, setPayerType] = useState('Sender');
   const [createdInvoice, setCreatedInvoice] = useState<{ number: string; cost: string } | null>(null);
   
   // Нові стани для відправника та адрес клієнтів
@@ -122,7 +122,10 @@ export function NovaPoshtaIntegration({
   useEffect(() => {
     loadSenderSettings();
     loadCustomerAddresses();
-  }, []);
+    if (orderId) {
+      loadOrderDescription();
+    }
+  }, [orderId]);
 
   // Автоматичне заповнення полів отримувача з пропсів
   useEffect(() => {
@@ -133,6 +136,23 @@ export function NovaPoshtaIntegration({
       setRecipientPhone(externalRecipientPhone);
     }
   }, [externalRecipientName, externalRecipientPhone]);
+
+  // Функція для завантаження опису замовлення
+  const loadOrderDescription = async () => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}`);
+      if (response.ok) {
+        const order = await response.json();
+        if (order && order.items && order.items.length > 0) {
+          const itemNames = order.items.map((item: any) => item.product?.name || 'Товар').join(', ');
+          const orderDescription = itemNames.length > 100 ? itemNames.substring(0, 97) + '...' : itemNames;
+          setDescription(orderDescription);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load order description:', error);
+    }
+  };
 
   const loadSenderSettings = async () => {
     try {
