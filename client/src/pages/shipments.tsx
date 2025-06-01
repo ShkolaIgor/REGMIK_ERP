@@ -100,6 +100,7 @@ export default function Shipments() {
     orderId: "",
     carrierId: "",
     shippingAddress: "",
+    recipientPhone: "",
     weight: "",
     length: "",
     width: "",
@@ -251,6 +252,7 @@ export default function Shipments() {
       orderId: "",
       carrierId: "",
       shippingAddress: "",
+      recipientPhone: "",
       weight: "",
       length: "",
       width: "",
@@ -354,7 +356,8 @@ export default function Shipments() {
                     if (order) {
                       setFormData(prev => ({ 
                         ...prev, 
-                        shippingAddress: `${order.customerName}\n${order.customerEmail || ''}\n${order.customerPhone || ''}`,
+                        shippingAddress: `${order.customerName}\n${order.customerEmail || ''}`,
+                        recipientPhone: order.customerPhone || "",
                         declaredValue: order.totalAmount || ""
                       }));
                     }
@@ -392,16 +395,27 @@ export default function Shipments() {
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="shippingAddress">Адреса доставки</Label>
-                <Textarea
-                  id="shippingAddress"
-                  value={formData.shippingAddress}
-                  onChange={(e) => setFormData(prev => ({ ...prev, shippingAddress: e.target.value }))}
-                  placeholder="Повна адреса доставки"
-                  rows={3}
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="shippingAddress">Адреса доставки</Label>
+                  <Textarea
+                    id="shippingAddress"
+                    value={formData.shippingAddress}
+                    onChange={(e) => setFormData(prev => ({ ...prev, shippingAddress: e.target.value }))}
+                    placeholder="Повна адреса доставки"
+                    rows={3}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="recipientPhone">Телефон отримувача</Label>
+                  <Input
+                    id="recipientPhone"
+                    value={formData.recipientPhone}
+                    onChange={(e) => setFormData(prev => ({ ...prev, recipientPhone: e.target.value }))}
+                    placeholder="+380501234567"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-4 gap-4">
@@ -653,6 +667,7 @@ export default function Shipments() {
                               orderId: shipment.orderId.toString(),
                               carrierId: shipment.carrierId?.toString() || "",
                               shippingAddress: shipment.shippingAddress,
+                              recipientPhone: "",
                               weight: shipment.weight || "",
                               length: shipment.length || "",
                               width: shipment.width || "",
