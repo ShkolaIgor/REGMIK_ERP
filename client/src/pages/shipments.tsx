@@ -43,12 +43,20 @@ interface Order {
   createdAt: Date | null;
 }
 
+interface Carrier {
+  id: number;
+  name: string;
+  serviceType: string | null;
+  isActive: boolean;
+}
+
 interface Shipment {
   id: number;
   orderId: number;
   shipmentNumber: string;
   trackingNumber: string | null;
-  carrier: string | null;
+  carrierId: number | null;
+  carrier?: Carrier;
   shippingAddress: string;
   weight: string | null;
   dimensions: string | null;
@@ -204,7 +212,7 @@ export default function Shipments() {
   const filteredShipments = shipments.filter((shipment: Shipment) =>
     shipment.shipmentNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
     shipment.order?.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    shipment.carrier?.toLowerCase().includes(searchTerm.toLowerCase())
+    shipment.carrier?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (isLoading) {
@@ -421,7 +429,7 @@ export default function Shipments() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Truck className="h-4 w-4" />
-                        {shipment.carrier || '-'}
+                        {shipment.carrier?.name || '-'}
                       </div>
                     </TableCell>
                     <TableCell>
