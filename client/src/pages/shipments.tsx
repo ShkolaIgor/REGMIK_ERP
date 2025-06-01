@@ -539,7 +539,7 @@ export default function Shipments() {
                       onCostCalculated={(cost) => {
                         setFormData(prev => ({ 
                           ...prev, 
-                          shippingCost: cost.Cost 
+                          shippingCost: cost.Cost?.toString() || "" 
                         }));
                       }}
                       orderId={formData.orderId}
