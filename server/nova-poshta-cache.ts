@@ -42,10 +42,33 @@ class NovaPoshtaCache {
     }
 
     const lowerQuery = query.toLowerCase();
-    return allCities.filter(city => 
+    const filteredCities = allCities.filter(city => 
       city.name.toLowerCase().includes(lowerQuery) ||
       city.area.toLowerCase().includes(lowerQuery)
-    ).slice(0, 500); // Збільшуємо ліміт для більш повних результатів
+    );
+
+    // Сортуємо результати: точні співпадіння спочатку, потім за алфавітом
+    const sortedCities = filteredCities.sort((a, b) => {
+      const aNameLower = a.name.toLowerCase();
+      const bNameLower = b.name.toLowerCase();
+      
+      // Точне співпадіння з початком назви має найвищий пріоритет
+      const aStartsWith = aNameLower.startsWith(lowerQuery);
+      const bStartsWith = bNameLower.startsWith(lowerQuery);
+      
+      if (aStartsWith && !bStartsWith) return -1;
+      if (!aStartsWith && bStartsWith) return 1;
+      
+      // Серед тих, що починаються з запиту, сортуємо за довжиною (коротші зверху)
+      if (aStartsWith && bStartsWith) {
+        return a.name.length - b.name.length;
+      }
+      
+      // Інші сортуємо за алфавітом
+      return a.name.localeCompare(b.name, 'uk');
+    });
+
+    return sortedCities.slice(0, 500);
   }
 
   async getWarehouses(cityRef: string): Promise<CachedWarehouse[]> {
