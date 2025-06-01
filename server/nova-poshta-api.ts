@@ -434,16 +434,19 @@ class NovaPoshtaApi {
       }
 
       // Спочатку шукаємо існуючого відправника
+      console.log('Searching for existing sender with phone:', formattedSenderPhone);
       const existingSenders = await this.findCounterparty({
         phone: formattedSenderPhone,
         counterpartyType: 'Organization'
       });
       
+      console.log('Found senders:', existingSenders);
+      
       if (existingSenders && existingSenders.length > 0) {
         senderRef = existingSenders[0].Ref;
-        console.log('Found existing sender:', existingSenders[0].Description);
+        console.log('Using existing sender:', existingSenders[0].Description, 'Ref:', senderRef);
       } else {
-        console.log('Creating new sender with phone:', formattedSenderPhone);
+        console.log('No existing sender found. Creating new sender with phone:', formattedSenderPhone);
         const sender = await this.createCounterparty({
           firstName: 'Менеджер',
           middleName: '',
@@ -472,16 +475,19 @@ class NovaPoshtaApi {
       }
 
       // Спочатку шукаємо існуючого отримувача
+      console.log('Searching for existing recipient with phone:', formattedRecipientPhone);
       const existingRecipients = await this.findCounterparty({
         phone: formattedRecipientPhone,
         counterpartyType: params.recipientType || 'Organization'
       });
       
+      console.log('Found recipients:', existingRecipients);
+      
       if (existingRecipients && existingRecipients.length > 0) {
         recipientRef = existingRecipients[0].Ref;
-        console.log('Found existing recipient:', existingRecipients[0].Description);
+        console.log('Using existing recipient:', existingRecipients[0].Description, 'Ref:', recipientRef);
       } else {
-        console.log('Creating new recipient with phone:', formattedRecipientPhone);
+        console.log('No existing recipient found. Creating new recipient with phone:', formattedRecipientPhone);
         const nameParts = params.recipientName.split(' ');
         const firstName = nameParts[0] || 'Ім\'я';
         const lastName = nameParts[1] || 'Прізвище';
