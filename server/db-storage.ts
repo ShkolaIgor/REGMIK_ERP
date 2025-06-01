@@ -3010,12 +3010,12 @@ export class DatabaseStorage implements IStorage {
         const totalAvailable = inventoryData.reduce((sum, inv) => sum + parseFloat(inv.quantity), 0);
 
         // Перевіряємо чи є товар у виробництві
-        const productionTasks = await db.select()
+        const productionTasksData = await db.select()
           .from(productionTasks)
           .innerJoin(recipes, eq(productionTasks.recipeId, recipes.id))
           .where(eq(recipes.productId, productId));
 
-        const inProduction = productionTasks.reduce((sum, task) => sum + parseFloat(task.productionTasks.quantity), 0);
+        const inProduction = productionTasksData.reduce((sum, task) => sum + parseFloat(task.production_tasks.quantity), 0);
 
         result.push({
           ...group,
@@ -3049,7 +3049,7 @@ export class DatabaseStorage implements IStorage {
       // Створюємо завдання на виробництво
       const [newTask] = await db.insert(productionTasks).values({
         recipeId: recipe[0].id,
-        quantity: quantity.toString(),
+        quantity: quantity,
         status: 'pending',
         priority: 'high',
         assignedTo: 'Система',
@@ -3060,6 +3060,97 @@ export class DatabaseStorage implements IStorage {
       return newTask;
     } catch (error) {
       console.error("Error creating production task from order:", error);
+      throw error;
+    }
+  }
+
+  async completeProductOrder(productId: number, quantity: string, warehouseId: number): Promise<any> {
+    try {
+      // Зменшуємо кількість товару на складі
+      const [inventoryItem] = await db.select()
+        .from(inventory)
+        .where(
+          and(
+            eq(inventory.productId, productId),
+            eq(inventory.warehouseId, warehouseId)
+          )
+        )
+        .limit(1);
+
+      if (!inventoryItem) {
+        throw new Error(`Товар не знайдено на складі`);
+      }
+
+      const currentQuantity = parseFloat(inventoryItem.quantity);
+      const orderQuantity = parseFloat(quantity);
+
+      if (currentQuantity < orderQuantity) {
+        throw new Error(`Недостатньо товару на складі. Доступно: ${currentQuantity}, потрібно: ${orderQuantity}`);
+      }
+
+      const newQuantity = currentQuantity - orderQuantity;
+
+      // Оновлюємо кількість на складі
+      const [updatedInventory] = await db.update(inventory)
+        .set({ 
+          quantity: newQuantity.toString(),
+          updatedAt: new Date()
+        })
+        .where(eq(inventory.id, inventoryItem.id))
+        .returning();
+
+      return {
+        success: true,
+        message: `Товар укомплектовано. Залишок на складі: ${newQuantity}`,
+        updatedInventory
+      };
+    } catch (error) {
+      console.error('Error completing product order:', error);
+      throw error;
+    }
+  }
+
+  async createSupplierOrderForShortage(productId: number, quantity: string, notes?: string): Promise<any> {
+    try {
+      // Отримуємо інформацію про товар
+      const [product] = await db.select()
+        .from(products)
+        .where(eq(products.id, productId))
+        .limit(1);
+
+      if (!product) {
+        throw new Error(`Товар з ID ${productId} не знайдено`);
+      }
+
+      // Знаходимо першого доступного постачальника
+      const [supplier] = await db.select()
+        .from(suppliers)
+        .limit(1);
+
+      if (!supplier) {
+        throw new Error('Не знайдено жодного постачальника');
+      }
+
+      // Створюємо замовлення постачальнику
+      const [supplierOrder] = await db.insert(supplierOrders)
+        .values({
+          supplierName: supplier.name,
+          orderDate: new Date(),
+          expectedDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // +7 днів
+          status: 'pending',
+          totalAmount: (parseFloat(product.costPrice) * parseFloat(quantity)).toString(),
+          notes: notes || `Автоматичне замовлення через дефіцит товару ${product.name}`,
+          createdBy: 'Система'
+        })
+        .returning();
+
+      return {
+        success: true,
+        message: `Створено замовлення постачальнику на ${quantity} од. товару "${product.name}"`,
+        supplierOrder
+      };
+    } catch (error) {
+      console.error('Error creating supplier order for shortage:', error);
       throw error;
     }
   }
