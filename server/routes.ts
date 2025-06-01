@@ -845,10 +845,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/product-components", async (req, res) => {
     try {
+      console.log("POST /api/product-components - Request body:", req.body);
       const data = insertProductComponentSchema.parse(req.body);
+      console.log("POST /api/product-components - Parsed data:", data);
       const component = await storage.addProductComponent(data);
+      console.log("POST /api/product-components - Created component:", component);
       res.status(201).json(component);
     } catch (error) {
+      console.error("POST /api/product-components - Error:", error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: "Invalid component data", details: error.errors });
       } else {
@@ -877,13 +881,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/product-components/:id", async (req, res) => {
     try {
+      console.log("DELETE /api/product-components/:id - ID:", req.params.id);
       const id = parseInt(req.params.id);
+      console.log("DELETE /api/product-components/:id - Parsed ID:", id);
       const success = await storage.removeProductComponent(id);
+      console.log("DELETE /api/product-components/:id - Remove result:", success);
       if (!success) {
         return res.status(404).json({ error: "Component not found" });
       }
       res.status(204).send();
     } catch (error) {
+      console.error("DELETE /api/product-components/:id - Error:", error);
       res.status(500).json({ error: "Failed to delete component" });
     }
   });
