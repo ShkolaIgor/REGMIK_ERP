@@ -363,17 +363,46 @@ export default function Shipments() {
                 <Label htmlFor="orderId">Замовлення</Label>
                 <Select 
                   value={formData.orderId} 
-                  onValueChange={(value) => {
+                  onValueChange={async (value) => {
                     setFormData(prev => ({ ...prev, orderId: value }));
                     const order = availableOrders.find((o: Order) => o.id.toString() === value);
                     if (order) {
-                      setFormData(prev => ({ 
-                        ...prev, 
-                        shippingAddress: `${order.customerName}\n${order.customerEmail || ''}`,
-                        recipientPhone: order.customerPhone || "",
-                        recipientName: order.customerName,
-                        declaredValue: order.totalAmount || ""
-                      }));
+                      // Отримуємо товари замовлення для формування опису
+                      try {
+                        const response = await fetch(`/api/orders/${value}`);
+                        const orderDetails = await response.json();
+                        
+                        // Збираємо унікальні категорії товарів
+                        const categories = new Set<string>();
+                        if (orderDetails.items && Array.isArray(orderDetails.items)) {
+                          orderDetails.items.forEach((item: any) => {
+                            if (item.product && item.product.category) {
+                              categories.add(item.product.category);
+                            }
+                          });
+                        }
+                        
+                        const description = Array.from(categories).join(', ');
+                        
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          shippingAddress: `${order.customerName}\n${order.customerEmail || ''}`,
+                          recipientPhone: order.customerPhone || "",
+                          recipientName: order.customerName,
+                          declaredValue: order.totalAmount || "",
+                          description: description || "Товари"
+                        }));
+                      } catch (error) {
+                        console.error('Помилка завантаження деталей замовлення:', error);
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          shippingAddress: `${order.customerName}\n${order.customerEmail || ''}`,
+                          recipientPhone: order.customerPhone || "",
+                          recipientName: order.customerName,
+                          declaredValue: order.totalAmount || "",
+                          description: "Товари"
+                        }));
+                      }
                     }
                   }}
                 >
