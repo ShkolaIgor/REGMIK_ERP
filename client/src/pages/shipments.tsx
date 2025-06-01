@@ -451,7 +451,7 @@ export default function Shipments() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="declaredValue">Оголошена вартість (грн)</Label>
                   <Input
@@ -474,16 +474,15 @@ export default function Shipments() {
                     placeholder="150.00"
                   />
                 </div>
-              </div>
-
-              <div>
-                <Label htmlFor="estimatedDelivery">Очікувана дата доставки</Label>
-                <Input
-                  id="estimatedDelivery"
-                  type="datetime-local"
-                  value={formData.estimatedDelivery}
-                  onChange={(e) => setFormData(prev => ({ ...prev, estimatedDelivery: e.target.value }))}
-                />
+                <div>
+                  <Label htmlFor="estimatedDelivery">Очікувана дата доставки</Label>
+                  <Input
+                    id="estimatedDelivery"
+                    type="datetime-local"
+                    value={formData.estimatedDelivery}
+                    onChange={(e) => setFormData(prev => ({ ...prev, estimatedDelivery: e.target.value }))}
+                  />
+                </div>
               </div>
 
               <div>
