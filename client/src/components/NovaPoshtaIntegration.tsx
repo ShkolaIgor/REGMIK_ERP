@@ -81,7 +81,7 @@ export function NovaPoshtaIntegration({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          CitySender: 'db5c8978-391c-11dd-90d9-001a92567626', // Київ
+          CitySender: senderCityRef || 'db5c8978-391c-11dd-90d9-001a92567626', // Використовуємо вибраного відправника
           CityRecipient: selectedCity.ref,
           Weight: weight,
           ServiceType: 'WarehouseWarehouse',

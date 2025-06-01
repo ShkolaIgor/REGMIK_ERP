@@ -88,6 +88,34 @@ export const orders = pgTable("orders", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Адреси клієнтів для швидкого вибору
+export const customerAddresses = pgTable("customer_addresses", {
+  id: serial("id").primaryKey(),
+  customerName: varchar("customer_name", { length: 255 }).notNull(),
+  customerPhone: varchar("customer_phone", { length: 50 }).notNull(),
+  cityRef: varchar("city_ref", { length: 255 }).notNull(),
+  cityName: varchar("city_name", { length: 255 }).notNull(),
+  warehouseRef: varchar("warehouse_ref", { length: 255 }).notNull(),
+  warehouseAddress: text("warehouse_address").notNull(),
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Налаштування відправника
+export const senderSettings = pgTable("sender_settings", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 50 }).notNull(),
+  cityRef: varchar("city_ref", { length: 255 }).notNull(),
+  cityName: varchar("city_name", { length: 255 }).notNull(),
+  warehouseRef: varchar("warehouse_ref", { length: 255 }).notNull(),
+  warehouseAddress: text("warehouse_address").notNull(),
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Таблиця відвантажень
 export const shipments = pgTable("shipments", {
   id: serial("id").primaryKey(),
@@ -95,7 +123,23 @@ export const shipments = pgTable("shipments", {
   shipmentNumber: text("shipment_number").notNull().unique(),
   trackingNumber: text("tracking_number"),
   carrierId: integer("carrier_id").references(() => carriers.id),
-  shippingAddress: text("shipping_address").notNull(),
+  
+  // Відправник
+  senderName: varchar("sender_name", { length: 255 }),
+  senderPhone: varchar("sender_phone", { length: 50 }),
+  senderCityRef: varchar("sender_city_ref", { length: 255 }),
+  senderCityName: varchar("sender_city_name", { length: 255 }),
+  senderWarehouseRef: varchar("sender_warehouse_ref", { length: 255 }),
+  senderWarehouseAddress: text("sender_warehouse_address"),
+  
+  // Отримувач
+  recipientName: varchar("recipient_name", { length: 255 }),
+  recipientPhone: varchar("recipient_phone", { length: 50 }),
+  recipientCityRef: varchar("recipient_city_ref", { length: 255 }),
+  recipientCityName: varchar("recipient_city_name", { length: 255 }),
+  recipientWarehouseRef: varchar("recipient_warehouse_ref", { length: 255 }),
+  recipientWarehouseAddress: text("recipient_warehouse_address"),
+  
   weight: decimal("weight", { precision: 8, scale: 3 }), // кг
   dimensions: text("dimensions"), // ДхШхВ в см
   shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }),
@@ -280,6 +324,18 @@ export const insertSolderingTypeSchema = createInsertSchema(solderingTypes).omit
   createdAt: true 
 });
 
+export const insertCustomerAddressSchema = createInsertSchema(customerAddresses).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertSenderSettingsSchema = createInsertSchema(senderSettings).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
 export const insertShipmentSchema = createInsertSchema(shipments).omit({ 
   id: true, 
   createdAt: true,
@@ -289,6 +345,11 @@ export const insertShipmentSchema = createInsertSchema(shipments).omit({
 export const insertShipmentItemSchema = createInsertSchema(shipmentItems).omit({ 
   id: true 
 });
+
+export type CustomerAddress = typeof customerAddresses.$inferSelect;
+export type InsertCustomerAddress = z.infer<typeof insertCustomerAddressSchema>;
+export type SenderSettings = typeof senderSettings.$inferSelect;
+export type InsertSenderSettings = z.infer<typeof insertSenderSettingsSchema>;
 
 export const insertComponentCategorySchema = createInsertSchema(componentCategories).omit({ 
   id: true, 
