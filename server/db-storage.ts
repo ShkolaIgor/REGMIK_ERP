@@ -8,7 +8,7 @@ import {
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes, solderingTypes,
   componentCategories, componentAlternatives, carriers, shipments, customerAddresses, senderSettings,
-  manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, exchangeRateHistory,
+  manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, exchangeRateHistory, serialNumbers,
   type User, type UpsertUser, type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
   type Product, type InsertProduct,
@@ -29,6 +29,7 @@ import {
   type CustomerAddress, type InsertCustomerAddress,
   type SenderSettings, type InsertSenderSettings,
   type Currency, type InsertCurrency, type ExchangeRateHistory,
+  type SerialNumber, type InsertSerialNumber,
   type CostCalculation, type InsertCostCalculation,
   type MaterialShortage, type InsertMaterialShortage,
   type SupplierOrder, type InsertSupplierOrder,
@@ -3167,6 +3168,108 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error creating supplier order for shortage:', error);
       throw error;
+    }
+  }
+
+  // Serial Numbers
+  async getSerialNumbers(productId?: number, warehouseId?: number): Promise<SerialNumber[]> {
+    let query = db.select().from(serialNumbers);
+    
+    if (productId || warehouseId) {
+      const conditions = [];
+      if (productId) conditions.push(eq(serialNumbers.productId, productId));
+      if (warehouseId) conditions.push(eq(serialNumbers.warehouseId, warehouseId));
+      query = query.where(and(...conditions));
+    }
+    
+    return await query.orderBy(desc(serialNumbers.createdAt));
+  }
+
+  async getSerialNumber(id: number): Promise<SerialNumber | null> {
+    const [serialNumber] = await db.select().from(serialNumbers).where(eq(serialNumbers.id, id));
+    return serialNumber || null;
+  }
+
+  async createSerialNumber(data: InsertSerialNumber): Promise<SerialNumber> {
+    const [created] = await db
+      .insert(serialNumbers)
+      .values(data)
+      .returning();
+    return created;
+  }
+
+  async updateSerialNumber(id: number, data: Partial<InsertSerialNumber>): Promise<SerialNumber | null> {
+    const [updated] = await db
+      .update(serialNumbers)
+      .set(data)
+      .where(eq(serialNumbers.id, id))
+      .returning();
+    return updated || null;
+  }
+
+  async deleteSerialNumber(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(serialNumbers).where(eq(serialNumbers.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error("Error deleting serial number:", error);
+      return false;
+    }
+  }
+
+  async getAvailableSerialNumbers(productId: number): Promise<SerialNumber[]> {
+    return await db
+      .select()
+      .from(serialNumbers)
+      .where(and(
+        eq(serialNumbers.productId, productId),
+        eq(serialNumbers.status, 'available')
+      ))
+      .orderBy(desc(serialNumbers.createdAt));
+  }
+
+  async reserveSerialNumber(id: number, orderId: number): Promise<boolean> {
+    try {
+      const [updated] = await db
+        .update(serialNumbers)
+        .set({ status: 'reserved', orderId })
+        .where(and(
+          eq(serialNumbers.id, id),
+          eq(serialNumbers.status, 'available')
+        ))
+        .returning();
+      return !!updated;
+    } catch (error) {
+      console.error("Error reserving serial number:", error);
+      return false;
+    }
+  }
+
+  async releaseSerialNumber(id: number): Promise<boolean> {
+    try {
+      const [updated] = await db
+        .update(serialNumbers)
+        .set({ status: 'available', orderId: null })
+        .where(eq(serialNumbers.id, id))
+        .returning();
+      return !!updated;
+    } catch (error) {
+      console.error("Error releasing serial number:", error);
+      return false;
+    }
+  }
+
+  async markSerialNumberAsSold(id: number): Promise<boolean> {
+    try {
+      const [updated] = await db
+        .update(serialNumbers)
+        .set({ status: 'sold' })
+        .where(eq(serialNumbers.id, id))
+        .returning();
+      return !!updated;
+    } catch (error) {
+      console.error("Error marking serial number as sold:", error);
+      return false;
     }
   }
 }

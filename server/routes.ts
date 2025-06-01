@@ -15,7 +15,7 @@ import {
   insertWarehouseTransferSchema, insertPositionSchema, insertDepartmentSchema,
   insertPackageTypeSchema, insertSolderingTypeSchema, insertComponentAlternativeSchema, insertComponentCategorySchema,
   insertShipmentSchema, insertManufacturingOrderSchema, insertManufacturingOrderMaterialSchema, insertManufacturingStepSchema,
-  insertCurrencySchema
+  insertCurrencySchema, insertSerialNumberSchema
 } from "@shared/schema";
 import { z } from "zod";
 

@@ -1114,12 +1114,6 @@ export const serialNumbers = pgTable("serial_numbers", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const insertSerialNumberSchema = createInsertSchema(serialNumbers).omit({ 
-  id: true, 
-  createdAt: true, 
-  updatedAt: true 
-});
-
 export type SerialNumber = typeof serialNumbers.$inferSelect;
 export type InsertSerialNumber = z.infer<typeof insertSerialNumberSchema>;
 
