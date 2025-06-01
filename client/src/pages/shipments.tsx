@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { CarrierSelect } from "@/components/CarrierSelect";
 import {
   Dialog,
   DialogContent,
@@ -260,11 +261,9 @@ export default function Shipments() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="carrier">Перевізник</Label>
-                  <Input
-                    id="carrier"
+                  <CarrierSelect
                     value={formData.carrier}
-                    onChange={(e) => setFormData(prev => ({ ...prev, carrier: e.target.value }))}
-                    placeholder="Нова Пошта, УкрПошта..."
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, carrier: value }))}
                   />
                 </div>
                 <div>
