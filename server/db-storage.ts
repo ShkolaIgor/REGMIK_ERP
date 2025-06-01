@@ -8,7 +8,7 @@ import {
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes, solderingTypes,
   componentCategories, componentAlternatives, carriers, shipments, customerAddresses, senderSettings,
-  manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps,
+  manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, exchangeRateHistory,
   type User, type UpsertUser, type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
   type Product, type InsertProduct,
@@ -28,6 +28,7 @@ import {
   type Shipment, type InsertShipment,
   type CustomerAddress, type InsertCustomerAddress,
   type SenderSettings, type InsertSenderSettings,
+  type Currency, type InsertCurrency, type ExchangeRateHistory,
   type CostCalculation, type InsertCostCalculation,
   type MaterialShortage, type InsertMaterialShortage,
   type SupplierOrder, type InsertSupplierOrder,
@@ -2703,6 +2704,86 @@ export class DatabaseStorage implements IStorage {
       console.error("Error setting default sender setting:", error);
       return false;
     }
+  }
+
+  // Currency methods
+  async getCurrencies(): Promise<Currency[]> {
+    return await db.select().from(currencies).orderBy(currencies.code);
+  }
+
+  async getCurrency(id: number): Promise<Currency | null> {
+    const [currency] = await db.select().from(currencies).where(eq(currencies.id, id));
+    return currency || null;
+  }
+
+  async createCurrency(currency: InsertCurrency): Promise<Currency> {
+    const [created] = await db
+      .insert(currencies)
+      .values(currency)
+      .returning();
+    return created;
+  }
+
+  async updateCurrency(id: number, currency: Partial<InsertCurrency>): Promise<Currency | null> {
+    const [updated] = await db
+      .update(currencies)
+      .set({ ...currency, updatedAt: new Date() })
+      .where(eq(currencies.id, id))
+      .returning();
+    return updated || null;
+  }
+
+  async deleteCurrency(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(currencies).where(eq(currencies.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error("Error deleting currency:", error);
+      return false;
+    }
+  }
+
+  async setBaseCurrency(id: number): Promise<Currency | null> {
+    try {
+      // Знімаємо прапорець базової валюти з усіх валют
+      await db.update(currencies).set({ isBase: false });
+      
+      // Встановлюємо нову базову валюту
+      const [updated] = await db
+        .update(currencies)
+        .set({ isBase: true, updatedAt: new Date() })
+        .where(eq(currencies.id, id))
+        .returning();
+      
+      return updated || null;
+    } catch (error) {
+      console.error("Error setting base currency:", error);
+      return null;
+    }
+  }
+
+  async getLatestExchangeRates(): Promise<ExchangeRateHistory[]> {
+    // Отримуємо останні курси для кожної валюти
+    const rates = await db
+      .select()
+      .from(exchangeRateHistory)
+      .where(
+        eq(
+          exchangeRateHistory.createdAt,
+          db.select({ maxDate: sql`MAX(${exchangeRateHistory.createdAt})` })
+            .from(exchangeRateHistory)
+            .where(eq(exchangeRateHistory.currencyId, exchangeRateHistory.currencyId))
+        )
+      )
+      .orderBy(exchangeRateHistory.currencyId);
+    
+    return rates;
+  }
+
+  async updateExchangeRates(): Promise<ExchangeRateHistory[]> {
+    // У реальному додатку тут би було звернення до API для отримання актуальних курсів
+    // Наразі повертаємо поточні курси
+    return this.getLatestExchangeRates();
   }
 }
 
