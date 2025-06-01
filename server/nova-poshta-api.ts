@@ -370,6 +370,10 @@ class NovaPoshtaApi {
   async createInternetDocument(params: {
     cityRecipient: string;
     warehouseRecipient: string;
+    citySender?: string;
+    warehouseSender?: string;
+    senderName?: string;
+    senderPhone?: string;
     recipientName: string;
     recipientPhone: string;
     recipientType?: string;
@@ -389,14 +393,16 @@ class NovaPoshtaApi {
       SeatsAmount: params.seatsAmount.toString(),
       Description: params.description,
       Cost: params.cost.toString(),
-      CitySender: 'db5c897c-391c-11dd-90d9-001a92567626',
+      CitySender: params.citySender || 'db5c897c-391c-11dd-90d9-001a92567626',
       CityRecipient: params.cityRecipient,
-      WarehouseSender: 'fe906167-4c37-11ec-80ed-b8830365bd14',
+      WarehouseSender: params.warehouseSender || 'fe906167-4c37-11ec-80ed-b8830365bd14',
       WarehouseRecipient: params.warehouseRecipient,
       Weight: params.weight.toString(),
       VolumeGeneral: '0.004',
       RecipientsName: params.recipientName,
-      RecipientsPhone: params.recipientPhone
+      RecipientsPhone: params.recipientPhone,
+      SendersName: params.senderName || 'Ваша компанія',
+      SendersPhone: params.senderPhone || '+380501234567'
     };
 
     const response = await this.makeRequest('InternetDocument', 'save', methodProperties);

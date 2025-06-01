@@ -214,6 +214,10 @@ export function NovaPoshtaIntegration({
         body: JSON.stringify({
           cityRecipient: selectedCity.ref,
           warehouseRecipient: selectedWarehouse.ref,
+          citySender: selectedSender?.cityRef,
+          warehouseSender: selectedSender?.warehouseRef,
+          senderName: selectedSender?.name,
+          senderPhone: selectedSender?.phone,
           recipientName,
           recipientPhone,
           recipientType,
@@ -232,6 +236,9 @@ export function NovaPoshtaIntegration({
           number: result.Number,
           cost: result.Cost
         });
+      } else {
+        const errorData = await response.json();
+        console.error('Помилка API:', errorData);
       }
     } catch (error) {
       console.error('Помилка створення накладної:', error);
