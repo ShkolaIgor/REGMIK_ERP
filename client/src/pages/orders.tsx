@@ -200,6 +200,8 @@ export default function Orders() {
   // Функція для закриття діалогу та очищення форми
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
+    setIsEditMode(false);
+    setEditingOrder(null);
     setOrderItems([]);
     form.reset();
   };
