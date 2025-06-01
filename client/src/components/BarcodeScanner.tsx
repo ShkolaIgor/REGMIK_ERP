@@ -1,257 +1,212 @@
-import { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Camera, CameraOff, Scan, Search } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from "react";
+import { BrowserMultiFormatReader, NotFoundException } from "@zxing/library";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Camera, CameraOff, Search } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface BarcodeScannerProps {
-  onProductFound: (product: any) => void;
-  onClose: () => void;
-  isOpen: boolean;
+  onScanResult: (result: string) => void;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  title?: string;
+  description?: string;
 }
 
-export default function BarcodeScanner({ onProductFound, onClose, isOpen }: BarcodeScannerProps) {
-  const [isScanning, setIsScanning] = useState(false);
-  const [manualBarcode, setManualBarcode] = useState('');
-  const [lastScannedCode, setLastScannedCode] = useState('');
+export function BarcodeScanner({ 
+  onScanResult, 
+  isOpen, 
+  onOpenChange,
+  title = "Сканування штрих-коду",
+  description = "Наведіть камеру на штрих-код або QR-код товару"
+}: BarcodeScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [hasCamera, setHasCamera] = useState(false);
+  const [codeReader, setCodeReader] = useState<BrowserMultiFormatReader | null>(null);
   const { toast } = useToast();
 
-  const { data: products = [] } = useQuery({
-    queryKey: ['/api/products'],
-  });
+  useEffect(() => {
+    const reader = new BrowserMultiFormatReader();
+    setCodeReader(reader);
 
-  // Почати сканування
+    // Перевіряємо доступність камери
+    navigator.mediaDevices?.getUserMedia({ video: true })
+      .then(() => setHasCamera(true))
+      .catch(() => setHasCamera(false));
+
+    return () => {
+      reader.reset();
+    };
+  }, []);
+
   const startScanning = async () => {
+    if (!codeReader || !videoRef.current || !hasCamera) return;
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: 'environment', // Задня камера
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      });
+      setIsScanning(true);
       
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        streamRef.current = stream;
-        setIsScanning(true);
-      }
+      await codeReader.decodeFromVideoDevice(
+        null, // використати першу доступну камеру
+        videoRef.current,
+        (result, error) => {
+          if (result) {
+            const scannedText = result.getText();
+            toast({
+              title: "Успішно відскановане",
+              description: `Знайдено код: ${scannedText}`,
+            });
+            onScanResult(scannedText);
+            stopScanning();
+            onOpenChange?.(false);
+          }
+          
+          if (error && !(error instanceof NotFoundException)) {
+            console.error("Помилка сканування:", error);
+          }
+        }
+      );
     } catch (error) {
+      console.error("Помилка запуску сканера:", error);
       toast({
-        title: "Помилка камери",
-        description: "Не вдалося отримати доступ до камери. Перевірте дозволи.",
-        variant: "destructive"
+        title: "Помилка",
+        description: "Не вдалося запустити камеру",
+        variant: "destructive",
       });
+      setIsScanning(false);
     }
   };
 
-  // Зупинити сканування
   const stopScanning = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
+    if (codeReader) {
+      codeReader.reset();
     }
     setIsScanning(false);
   };
 
-  // Обробка штрих-коду
-  const handleBarcodeDetected = (barcode: string) => {
-    if (barcode === lastScannedCode) return; // Уникнути дублювання
-    
-    setLastScannedCode(barcode);
-    setManualBarcode(barcode);
-    
-    const product = products.find((p: any) => 
-      p.barcode === barcode || p.sku === barcode
-    );
-    
-    if (product) {
-      toast({
-        title: "Товар знайдено!",
-        description: `${product.name} (${product.sku})`,
-      });
-      onProductFound(product);
-      stopScanning();
-      onClose();
-    } else {
-      toast({
-        title: "Товар не знайдено",
-        description: `Штрих-код: ${barcode}`,
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Ручний пошук
-  const handleManualSearch = () => {
-    if (!manualBarcode.trim()) return;
-    
-    const product = products.find((p: any) => 
-      p.barcode === manualBarcode.trim() || 
-      p.sku === manualBarcode.trim() ||
-      p.name.toLowerCase().includes(manualBarcode.trim().toLowerCase())
-    );
-    
-    if (product) {
-      onProductFound(product);
-      onClose();
-    } else {
-      toast({
-        title: "Товар не знайдено",
-        description: `За кодом/назвою: ${manualBarcode}`,
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Симуляція сканування (для демонстрації)
   useEffect(() => {
-    if (isScanning && videoRef.current) {
-      const interval = setInterval(() => {
-        // В реальному додатку тут буде бібліотека сканування штрих-кодів
-        // Наприклад: QuaggaJS, ZXing, або інша
-        
-        // Демонстраційний код - автоматично знаходить перший товар з штрих-кодом
-        const productWithBarcode = products.find((p: any) => p.barcode);
-        if (productWithBarcode && Math.random() > 0.7) { // 30% шанс "сканування"
-          handleBarcodeDetected(productWithBarcode.barcode);
-        }
-      }, 2000);
-      
-      return () => clearInterval(interval);
-    }
-  }, [isScanning, products]);
-
-  // Очистити ресурси при закритті
-  useEffect(() => {
-    if (!isOpen) {
+    if (isOpen && hasCamera) {
+      startScanning();
+    } else {
       stopScanning();
-      setManualBarcode('');
-      setLastScannedCode('');
     }
-  }, [isOpen]);
 
-  if (!isOpen) return null;
+    return () => stopScanning();
+  }, [isOpen, hasCamera]);
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-full max-w-md mx-4">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Scan className="h-5 w-5" />
-            Сканер штрих-кодів
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Камера */}
-          <div className="relative bg-gray-100 rounded-lg overflow-hidden" style={{ aspectRatio: '4/3' }}>
-            {isScanning ? (
+  const ScannerContent = () => (
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Search className="h-5 w-5" />
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {!hasCamera ? (
+          <div className="text-center p-8 text-muted-foreground">
+            <CameraOff className="h-12 w-12 mx-auto mb-4" />
+            <p>Камера недоступна</p>
+            <p className="text-sm">Переконайтеся, що браузер має доступ до камери</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="relative">
               <video
                 ref={videoRef}
-                autoPlay
+                className="w-full h-64 bg-black rounded-lg"
                 playsInline
-                className="w-full h-full object-cover"
+                muted
               />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="text-center">
-                  <Camera className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                  <p className="text-sm text-gray-500">Натисніть "Почати сканування"</p>
+              {isScanning && (
+                <div className="absolute inset-0 border-2 border-blue-500 rounded-lg">
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-32 h-32 border-2 border-red-500 rounded-lg animate-pulse"></div>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
             
-            {/* Рамка сканування */}
-            {isScanning && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-48 h-32 border-2 border-blue-500 rounded-lg relative">
-                  <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-blue-500"></div>
-                  <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-blue-500"></div>
-                  <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-blue-500"></div>
-                  <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-blue-500"></div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Статус */}
-          {isScanning && (
-            <div className="text-center">
-              <Badge variant="default" className="bg-blue-500">
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                  Сканування активне
-                </div>
-              </Badge>
-            </div>
-          )}
-
-          {/* Кнопки управління камерою */}
-          <div className="flex gap-2">
-            {!isScanning ? (
-              <Button 
-                onClick={startScanning} 
-                className="flex-1"
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Почати сканування
-              </Button>
-            ) : (
-              <Button 
-                onClick={stopScanning} 
-                variant="outline" 
-                className="flex-1"
-              >
-                <CameraOff className="h-4 w-4 mr-2" />
-                Зупинити
-              </Button>
-            )}
-          </div>
-
-          {/* Ручне введення */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Або введіть код вручну:</label>
             <div className="flex gap-2">
-              <Input
-                placeholder="Штрих-код, SKU або назва товару"
-                value={manualBarcode}
-                onChange={(e) => setManualBarcode(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleManualSearch()}
-              />
-              <Button 
-                onClick={handleManualSearch}
-                disabled={!manualBarcode.trim()}
-              >
-                <Search className="h-4 w-4" />
-              </Button>
+              {!isScanning ? (
+                <Button onClick={startScanning} className="flex-1">
+                  <Camera className="h-4 w-4 mr-2" />
+                  Почати сканування
+                </Button>
+              ) : (
+                <Button onClick={stopScanning} variant="outline" className="flex-1">
+                  <CameraOff className="h-4 w-4 mr-2" />
+                  Зупинити
+                </Button>
+              )}
             </div>
           </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 
-          {/* Останній відсканований код */}
-          {lastScannedCode && (
-            <div className="text-sm text-gray-600">
-              Останній код: <code className="bg-gray-100 px-1 rounded">{lastScannedCode}</code>
-            </div>
-          )}
+  if (onOpenChange) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
+          </DialogHeader>
+          <ScannerContent />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
-          {/* Кнопки дій */}
-          <div className="flex gap-2 pt-2">
-            <Button variant="outline" onClick={onClose} className="flex-1">
-              Скасувати
-            </Button>
-          </div>
+  return <ScannerContent />;
+}
 
-          {/* Підказка */}
-          <div className="text-xs text-gray-500 text-center">
-            Наведіть камеру на штрих-код товару або введіть код вручну
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+// Компонент кнопки для відкриття сканера
+interface ScannerButtonProps {
+  onScanResult: (result: string) => void;
+  children?: React.ReactNode;
+  variant?: "default" | "outline" | "secondary" | "ghost" | "link" | "destructive";
+  size?: "default" | "sm" | "lg" | "icon";
+}
+
+export function ScannerButton({ 
+  onScanResult, 
+  children,
+  variant = "outline",
+  size = "sm"
+}: ScannerButtonProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          <Button variant={variant} size={size}>
+            {children || (
+              <>
+                <Camera className="h-4 w-4 mr-2" />
+                Сканувати
+              </>
+            )}
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Сканування штрих-коду</DialogTitle>
+            <DialogDescription>
+              Наведіть камеру на штрих-код або QR-код товару
+            </DialogDescription>
+          </DialogHeader>
+          <BarcodeScanner
+            onScanResult={onScanResult}
+            isOpen={isOpen}
+            onOpenChange={setIsOpen}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -32,6 +32,7 @@ import { UnitSelect } from "@/components/UnitSelect";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, Package, Search, GitFork } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { ScannerButton } from "@/components/BarcodeScanner";
 
 interface Component {
   id: number;
@@ -483,13 +484,24 @@ export default function Components() {
       {/* Search */}
       <Card>
         <CardContent className="p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Пошук компонентів..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Пошук компонентів..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <ScannerButton
+              onScanResult={(barcode) => {
+                setSearchTerm(barcode);
+                toast({
+                  title: "Штрих-код відсканований",
+                  description: `Пошук за кодом: ${barcode}`,
+                });
+              }}
             />
           </div>
         </CardContent>
