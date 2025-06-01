@@ -301,6 +301,10 @@ export interface IStorage {
   setBaseCurrency(id: number): Promise<Currency | null>;
   getLatestExchangeRates(): Promise<ExchangeRateHistory[]>;
   updateExchangeRates(): Promise<ExchangeRateHistory[]>;
+
+  // Order Completion and Supplier Order Creation
+  completeOrderFromStock(productId: number, quantity: string, warehouseId: number): Promise<{ success: boolean; message: string }>;
+  createSupplierOrderForShortage(productId: number, quantity: string, notes?: string): Promise<{ success: boolean; message: string; orderId?: number }>;
 }
 
 export class MemStorage implements IStorage {

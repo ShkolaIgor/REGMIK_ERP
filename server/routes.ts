@@ -2793,6 +2793,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Order completion and supplier order creation endpoints
+  app.post("/api/complete-order", async (req, res) => {
+    try {
+      const { productId, quantity, warehouseId } = req.body;
+      const result = await storage.completeOrderFromStock(productId, quantity, warehouseId);
+      res.json(result);
+    } catch (error) {
+      console.error("Failed to complete order:", error);
+      res.status(500).json({ error: "Failed to complete order from stock" });
+    }
+  });
+
+  app.post("/api/create-supplier-order-for-shortage", async (req, res) => {
+    try {
+      const { productId, quantity, notes } = req.body;
+      const result = await storage.createSupplierOrderForShortage(productId, quantity, notes);
+      res.json(result);
+    } catch (error) {
+      console.error("Failed to create supplier order:", error);
+      res.status(500).json({ error: "Failed to create supplier order" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
