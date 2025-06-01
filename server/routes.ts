@@ -347,10 +347,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/orders/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      console.log(`Attempting to delete order with ID: ${id}`);
+      
       const deleted = await storage.deleteOrder(id);
+      console.log(`Delete operation result: ${deleted}`);
+      
       if (!deleted) {
+        console.log(`Order with ID ${id} not found`);
         return res.status(404).json({ error: "Order not found" });
       }
+      
+      console.log(`Order with ID ${id} successfully deleted`);
       res.json({ success: true });
     } catch (error) {
       console.error("Failed to delete order:", error);
