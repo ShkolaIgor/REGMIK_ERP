@@ -1908,11 +1908,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/shipments", async (req, res) => {
     try {
+      console.log("Creating shipment with data:", JSON.stringify(req.body, null, 2));
       const shipmentData = insertShipmentSchema.parse(req.body);
       const shipment = await storage.createShipment(shipmentData);
       res.status(201).json(shipment);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Shipment validation errors:", JSON.stringify(error.errors, null, 2));
         res.status(400).json({ error: "Invalid shipment data", details: error.errors });
       } else {
         console.error("Failed to create shipment:", error);
@@ -2212,7 +2214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Using Nova Poshta API key exists:', !!apiKey);
       novaPoshtaApi.updateApiKey(apiKey);
 
-      console.log('Creating invoice with data:', invoiceData);
+      console.log('Creating invoice with data:', JSON.stringify(invoiceData, null, 2));
       const invoice = await novaPoshtaApi.createInternetDocument(invoiceData);
       res.json(invoice);
     } catch (error) {
