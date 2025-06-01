@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -302,6 +302,18 @@ export default function Shipments() {
     return Object.keys(errors).length === 0;
   };
 
+  // Ефект для автоматичної валідації при зміні перевізника або полів
+  useEffect(() => {
+    const selectedCarrier = (carriers as Carrier[])?.find((c: Carrier) => c.id.toString() === formData.carrierId);
+    const isNovaPoshta = selectedCarrier && (selectedCarrier.name.toLowerCase().includes('нова пошта') || selectedCarrier.name.toLowerCase().includes('nova poshta'));
+    
+    if (isNovaPoshta) {
+      validateNovaPoshtaFields();
+    } else {
+      setFieldErrors({});
+    }
+  }, [formData.carrierId, formData.weight, formData.declaredValue, formData.length, formData.width, formData.height, carriers]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -545,7 +557,11 @@ export default function Shipments() {
                     value={formData.length}
                     onChange={(e) => setFormData(prev => ({ ...prev, length: e.target.value }))}
                     placeholder="30"
+                    className={fieldErrors.length ? "border-red-500 bg-red-50" : ""}
                   />
+                  {fieldErrors.length && (
+                    <p className="text-xs text-red-600 mt-1">Обов'язковий параметр</p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="width">Ширина (см)</Label>
@@ -556,7 +572,11 @@ export default function Shipments() {
                     value={formData.width}
                     onChange={(e) => setFormData(prev => ({ ...prev, width: e.target.value }))}
                     placeholder="20"
+                    className={fieldErrors.width ? "border-red-500 bg-red-50" : ""}
                   />
+                  {fieldErrors.width && (
+                    <p className="text-xs text-red-600 mt-1">Обов'язковий параметр</p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="height">Висота (см)</Label>
@@ -567,7 +587,11 @@ export default function Shipments() {
                     value={formData.height}
                     onChange={(e) => setFormData(prev => ({ ...prev, height: e.target.value }))}
                     placeholder="10"
+                    className={fieldErrors.height ? "border-red-500 bg-red-50" : ""}
                   />
+                  {fieldErrors.height && (
+                    <p className="text-xs text-red-600 mt-1">Обов'язковий параметр</p>
+                  )}
                 </div>
               </div>
 
