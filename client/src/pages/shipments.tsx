@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CarrierSelect } from "@/components/CarrierSelect";
+import { NovaPoshtaIntegration } from "@/components/NovaPoshtaIntegration";
 import {
   Dialog,
   DialogContent,
@@ -392,12 +393,35 @@ export default function Shipments() {
                 />
               </div>
 
+              {/* Інтеграція з Новою Поштою */}
+              <div className="border-t pt-4">
+                <h3 className="text-lg font-medium mb-4">Інтеграція з Новою Поштою</h3>
+                <NovaPoshtaIntegration
+                  onAddressSelect={(address, cityRef, warehouseRef) => {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      shippingAddress: address 
+                    }));
+                  }}
+                  onCostCalculated={(cost) => {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      shippingCost: cost.Cost 
+                    }));
+                  }}
+                  trackingNumber={formData.trackingNumber}
+                />
+              </div>
+
               <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Скасувати
                 </Button>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Створення..." : "Створити"}
+                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                  {editingShipment 
+                    ? (updateMutation.isPending ? "Збереження..." : "Зберегти")
+                    : (createMutation.isPending ? "Створення..." : "Створити")
+                  }
                 </Button>
               </div>
             </form>
