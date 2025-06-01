@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Edit, Trash2, Star } from "lucide-react";
+import { Plus, Edit, Trash2, Star, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Carrier {
@@ -129,6 +129,30 @@ export default function Carriers() {
     },
   });
 
+  const syncMutation = useMutation({
+    mutationFn: async (carrierId: number) => {
+      const response = await fetch(`/api/carriers/${carrierId}/sync`, {
+        method: "POST",
+      });
+      if (!response.ok) throw new Error("Помилка синхронізації з Nova Poshta");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/carriers"] });
+      toast({ 
+        title: "Синхронізація завершена",
+        description: `Оновлено: ${data.citiesCount} міст, ${data.warehousesCount} відділень`
+      });
+    },
+    onError: () => {
+      toast({ 
+        title: "Помилка синхронізації", 
+        description: "Перевірте API ключ та спробуйте ще раз",
+        variant: "destructive" 
+      });
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       name: "",
@@ -177,6 +201,12 @@ export default function Carriers() {
   const handleDelete = (id: number) => {
     if (confirm("Ви впевнені, що хочете видалити цього перевізника?")) {
       deleteMutation.mutate(id);
+    }
+  };
+
+  const handleSync = (carrierId: number) => {
+    if (confirm("Розпочати синхронізацію з Nova Poshta? Це може зайняти кілька хвилин.")) {
+      syncMutation.mutate(carrierId);
     }
   };
 
@@ -384,6 +414,16 @@ export default function Carriers() {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
+                      {carrier.apiKey && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSync(carrier.id)}
+                          disabled={syncMutation.isPending}
+                        >
+                          <RefreshCw className={`h-4 w-4 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
