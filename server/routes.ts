@@ -2133,6 +2133,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/nova-poshta/create-invoice", async (req, res) => {
     try {
+      // Отримуємо API ключ Nova Poshta з довідника перевізників
+      const novaPoshtaCarrier = await storage.getCarrierByName('Nova Poshta');
+      if (!novaPoshtaCarrier || !novaPoshtaCarrier.apiKey) {
+        return res.status(400).json({ 
+          error: "Nova Poshta API ключ не налаштований в довіднику перевізників" 
+        });
+      }
+
       const {
         cityRecipient,
         warehouseRecipient,

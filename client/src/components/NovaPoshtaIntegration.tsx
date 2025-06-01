@@ -609,6 +609,7 @@ export function NovaPoshtaIntegration({
               </div>
             </div>
             <Button 
+              type="button"
               onClick={createInvoice}
               disabled={!recipientName || !recipientPhone || !description || !seatsAmount || !paymentMethod}
               className="w-full"

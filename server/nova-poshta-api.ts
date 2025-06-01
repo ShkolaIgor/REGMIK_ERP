@@ -389,16 +389,14 @@ class NovaPoshtaApi {
       SeatsAmount: params.seatsAmount.toString(),
       Description: params.description,
       Cost: params.cost.toString(),
-      CitySender: 'db5c8978-391c-11dd-90d9-001a92567626', // Київ
+      CitySender: 'db5c897c-391c-11dd-90d9-001a92567626',
       CityRecipient: params.cityRecipient,
-      WarehouseSender: '1ec09d88-e1c2-11e3-8c4a-0050568002cf', // Відділення в Києві
+      WarehouseSender: 'fe906167-4c37-11ec-80ed-b8830365bd14',
       WarehouseRecipient: params.warehouseRecipient,
       Weight: params.weight.toString(),
       VolumeGeneral: '0.004',
-      // Використовуємо спрощену схему без створення контрагентів
       RecipientsName: params.recipientName,
-      RecipientsPhone: params.recipientPhone,
-      RecipientType: params.recipientType || 'PrivatePerson'
+      RecipientsPhone: params.recipientPhone
     };
 
     const response = await this.makeRequest('InternetDocument', 'save', methodProperties);
