@@ -152,7 +152,7 @@ export default function Orders() {
 
   // Мутація для видалення замовлення
   const deleteOrderMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/orders/${id}`, "DELETE"),
+    mutationFn: (id: number) => apiRequest(`/api/orders/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       toast({
