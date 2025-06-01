@@ -79,7 +79,7 @@ export function NovaPoshtaIntegration({
   // Фільтрація міст за запитом
   const filteredCities = cities.filter(city => 
     city.name.toLowerCase().includes(cityQuery.toLowerCase())
-  ).slice(0, 10); // Показуємо тільки перші 10 результатів
+  ); // Показуємо всі результати
 
   // Дебагінг
   console.log('Filtered cities:', filteredCities, 'Query:', cityQuery, 'Loading:', citiesLoading);
