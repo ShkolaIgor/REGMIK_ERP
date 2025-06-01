@@ -351,14 +351,15 @@ export default function Shipments() {
               Створити відвантаження
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle>
                 {editingShipment ? "Редагувати відвантаження" : "Нове відвантаження"}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
+            <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
                 <Label htmlFor="orderId">Замовлення</Label>
                 <Select 
                   value={formData.orderId} 
@@ -568,6 +569,7 @@ export default function Shipments() {
                 </Button>
               </div>
             </form>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
