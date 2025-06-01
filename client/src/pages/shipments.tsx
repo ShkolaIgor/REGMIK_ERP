@@ -389,13 +389,16 @@ export default function Shipments() {
                         const description = Array.from(categories).join(', ');
                         console.log('Generated description:', description);
                         
+                        // Якщо немає категорій товарів, використовуємо номер замовлення
+                        const finalDescription = description || `Товари з замовлення ${order.orderNumber}`;
+                        
                         setFormData(prev => ({ 
                           ...prev, 
                           shippingAddress: `${order.customerName}\n${order.customerEmail || ''}`,
                           recipientPhone: order.customerPhone || "",
                           recipientName: order.customerName,
                           declaredValue: order.totalAmount || "",
-                          description: description || "Товари"
+                          description: finalDescription
                         }));
                       } catch (error) {
                         console.error('Помилка завантаження деталей замовлення:', error);
