@@ -2131,6 +2131,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/nova-poshta/create-invoice", async (req, res) => {
+    try {
+      const {
+        cityRecipient,
+        warehouseRecipient,
+        recipientName,
+        recipientPhone,
+        description,
+        weight,
+        cost,
+        seatsAmount,
+        paymentMethod,
+        payerType
+      } = req.body;
+
+      // Форматуємо номер телефону для Nova Poshta API (має бути у форматі +380XXXXXXXXX)
+      let formattedPhone = recipientPhone.replace(/\D/g, ''); // Видаляємо всі нецифрові символи
+      if (formattedPhone.startsWith('0')) {
+        formattedPhone = '38' + formattedPhone; // Замінюємо 0 на 38
+      }
+      if (!formattedPhone.startsWith('38')) {
+        formattedPhone = '38' + formattedPhone; // Додаємо 38 якщо відсутній
+      }
+
+      const invoiceData = {
+        cityRecipient,
+        warehouseRecipient,
+        recipientName,
+        recipientPhone: formattedPhone,
+        description: description || 'Товар',
+        weight: parseFloat(weight),
+        cost: parseFloat(cost),
+        seatsAmount: parseInt(seatsAmount) || 1,
+        paymentMethod: paymentMethod || 'Cash',
+        payerType: payerType || 'Sender'
+      };
+
+      const invoice = await novaPoshtaApi.createInternetDocument(invoiceData);
+      res.json(invoice);
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      res.status(500).json({ error: "Failed to create invoice" });
+    }
+  });
+
   // Customer Addresses routes
   app.get('/api/customer-addresses', async (req, res) => {
     try {

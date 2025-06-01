@@ -337,6 +337,57 @@ class NovaPoshtaApi {
       schedule: warehouse.Schedule
     }));
   }
+
+  // Створення інтернет-документа (накладної)
+  async createInternetDocument(params: {
+    cityRecipient: string;
+    warehouseRecipient: string;
+    recipientName: string;
+    recipientPhone: string;
+    description: string;
+    weight: number;
+    cost: number;
+    seatsAmount: number;
+    paymentMethod: string;
+    payerType: string;
+  }): Promise<any> {
+    const methodProperties = {
+      PayerType: params.payerType,
+      PaymentMethod: params.paymentMethod,
+      DateTime: new Date().toISOString().split('T')[0], // Поточна дата у форматі YYYY-MM-DD
+      CargoType: 'Cargo',
+      ServiceType: 'WarehouseWarehouse',
+      SeatsAmount: params.seatsAmount.toString(),
+      Description: params.description,
+      Cost: params.cost.toString(),
+      CitySender: 'db5c8978-391c-11dd-90d9-001a92567626', // Київ за замовчуванням
+      CityRecipient: params.cityRecipient,
+      WarehouseSender: '1ec09d88-e1c2-11e3-8c4a-0050568002cf', // Відділення в Києві за замовчуванням
+      WarehouseRecipient: params.warehouseRecipient,
+      Weight: params.weight.toString(),
+      VolumeGeneral: '0.004',
+      Sender: 'db5c8978-391c-11dd-90d9-001a92567626',
+      SenderAddress: '1ec09d88-e1c2-11e3-8c4a-0050568002cf',
+      ContactSender: 'db5c8978-391c-11dd-90d9-001a92567626',
+      SendersPhone: '380501234567',
+      Recipient: params.cityRecipient,
+      RecipientAddress: params.warehouseRecipient,
+      ContactRecipient: params.cityRecipient,
+      RecipientsPhone: params.recipientPhone
+    };
+
+    const response = await this.makeRequest('InternetDocument', 'save', methodProperties);
+    
+    if (response.success && response.data && response.data.length > 0) {
+      return {
+        Number: response.data[0].IntDocNumber || response.data[0].Ref,
+        Cost: response.data[0].CostOnSite || params.cost,
+        Ref: response.data[0].Ref
+      };
+    } else {
+      throw new Error(`Failed to create document: ${response.errors?.join(', ') || 'Unknown error'}`);
+    }
+  }
 }
 
 export const novaPoshtaApi = new NovaPoshtaApi();
