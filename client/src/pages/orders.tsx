@@ -536,7 +536,7 @@ export default function Orders() {
                   />
                 </div>
 
-                <DialogFooter>
+                <div className="flex justify-end space-x-2 pt-4">
                   <Button 
                     type="button" 
                     variant="outline" 
@@ -553,7 +553,7 @@ export default function Orders() {
                       : (createOrderMutation.isPending ? "Створення..." : "Створити замовлення")
                     }
                   </Button>
-                </DialogFooter>
+                </div>
               </form>
             </DialogContent>
           </Dialog>
