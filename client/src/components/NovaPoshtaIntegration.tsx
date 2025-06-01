@@ -47,6 +47,28 @@ interface DeliveryCost {
   CostRedelivery: string;
 }
 
+interface SenderSettings {
+  id: number;
+  name: string;
+  phone: string;
+  cityRef: string;
+  cityName: string;
+  warehouseRef: string;
+  warehouseAddress: string;
+  isDefault: boolean;
+}
+
+interface CustomerAddress {
+  id: number;
+  customerName: string;
+  customerPhone: string;
+  cityRef: string;
+  cityName: string;
+  warehouseRef: string;
+  warehouseAddress: string;
+  isDefault: boolean;
+}
+
 interface NovaPoshtaIntegrationProps {
   onAddressSelect?: (address: string, cityRef: string, warehouseRef: string) => void;
   onCostCalculated?: (cost: DeliveryCost) => void;
@@ -71,17 +93,55 @@ export function NovaPoshtaIntegration({
   const [seatsAmount, setSeatsAmount] = useState('1');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [createdInvoice, setCreatedInvoice] = useState<{ number: string; cost: string } | null>(null);
+  
+  // Нові стани для відправника та адрес клієнтів
+  const [selectedSender, setSelectedSender] = useState<SenderSettings | null>(null);
+  const [selectedCustomerAddress, setSelectedCustomerAddress] = useState<CustomerAddress | null>(null);
+  const [senderSettings, setSenderSettings] = useState<SenderSettings[]>([]);
+  const [customerAddresses, setCustomerAddresses] = useState<CustomerAddress[]>([]);
+
+  // Завантаження даних при ініціалізації
+  useEffect(() => {
+    loadSenderSettings();
+    loadCustomerAddresses();
+  }, []);
+
+  const loadSenderSettings = async () => {
+    try {
+      const response = await fetch('/api/sender-settings');
+      const settings = await response.json();
+      setSenderSettings(settings);
+      
+      // Автоматично вибираємо налаштування за замовчуванням
+      const defaultSetting = settings.find((s: SenderSettings) => s.isDefault);
+      if (defaultSetting) {
+        setSelectedSender(defaultSetting);
+      }
+    } catch (error) {
+      console.error('Failed to load sender settings:', error);
+    }
+  };
+
+  const loadCustomerAddresses = async () => {
+    try {
+      const response = await fetch('/api/customer-addresses');
+      const addresses = await response.json();
+      setCustomerAddresses(addresses);
+    } catch (error) {
+      console.error('Failed to load customer addresses:', error);
+    }
+  };
 
   // Функція розрахунку вартості доставки
   const calculateDeliveryCost = async () => {
-    if (!selectedCity || !selectedWarehouse || !weight || !cost) return;
+    if (!selectedCity || !selectedWarehouse || !weight || !cost || !selectedSender) return;
     
     try {
       const response = await fetch('/api/nova-poshta/calculate-delivery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          CitySender: senderCityRef || 'db5c8978-391c-11dd-90d9-001a92567626', // Використовуємо вибраного відправника
+          CitySender: selectedSender.cityRef,
           CityRecipient: selectedCity.ref,
           Weight: weight,
           ServiceType: 'WarehouseWarehouse',

@@ -7,7 +7,7 @@ import {
   components, productComponents, costCalculations, materialShortages, supplierOrders, supplierOrderItems,
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes, solderingTypes,
-  componentCategories, componentAlternatives, carriers, shipments,
+  componentCategories, componentAlternatives, carriers, shipments, customerAddresses, senderSettings,
   type User, type UpsertUser, type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
   type Product, type InsertProduct,
@@ -25,6 +25,8 @@ import {
   type ProductComponent, type InsertProductComponent,
   type Carrier, type InsertCarrier,
   type Shipment, type InsertShipment,
+  type CustomerAddress, type InsertCustomerAddress,
+  type SenderSettings, type InsertSenderSettings,
   type CostCalculation, type InsertCostCalculation,
   type MaterialShortage, type InsertMaterialShortage,
   type SupplierOrder, type InsertSupplierOrder,
@@ -2467,6 +2469,123 @@ export class DatabaseStorage implements IStorage {
       return (result.rowCount ?? 0) > 0;
     } catch (error) {
       console.error("Error deleting shipment:", error);
+      return false;
+    }
+  }
+
+  // Customer Addresses
+  async getCustomerAddresses(): Promise<CustomerAddress[]> {
+    return await db.select().from(customerAddresses).orderBy(desc(customerAddresses.createdAt));
+  }
+
+  async getCustomerAddress(id: number): Promise<CustomerAddress | null> {
+    const [address] = await db.select().from(customerAddresses).where(eq(customerAddresses.id, id));
+    return address || null;
+  }
+
+  async createCustomerAddress(address: InsertCustomerAddress): Promise<CustomerAddress> {
+    const [created] = await db
+      .insert(customerAddresses)
+      .values(address)
+      .returning();
+    return created;
+  }
+
+  async updateCustomerAddress(id: number, address: Partial<InsertCustomerAddress>): Promise<CustomerAddress | null> {
+    const [updated] = await db
+      .update(customerAddresses)
+      .set({ ...address, updatedAt: new Date() })
+      .where(eq(customerAddresses.id, id))
+      .returning();
+    return updated || null;
+  }
+
+  async deleteCustomerAddress(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(customerAddresses).where(eq(customerAddresses.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error("Error deleting customer address:", error);
+      return false;
+    }
+  }
+
+  async setDefaultCustomerAddress(id: number): Promise<boolean> {
+    try {
+      // Знімаємо прапорець за замовчуванням з усіх адрес
+      await db.update(customerAddresses).set({ isDefault: false });
+      
+      // Встановлюємо нову адресу за замовчуванням
+      const [updated] = await db
+        .update(customerAddresses)
+        .set({ isDefault: true, updatedAt: new Date() })
+        .where(eq(customerAddresses.id, id))
+        .returning();
+      
+      return !!updated;
+    } catch (error) {
+      console.error("Error setting default customer address:", error);
+      return false;
+    }
+  }
+
+  // Sender Settings
+  async getSenderSettings(): Promise<SenderSettings[]> {
+    return await db.select().from(senderSettings).orderBy(desc(senderSettings.createdAt));
+  }
+
+  async getSenderSetting(id: number): Promise<SenderSettings | null> {
+    const [setting] = await db.select().from(senderSettings).where(eq(senderSettings.id, id));
+    return setting || null;
+  }
+
+  async getDefaultSenderSetting(): Promise<SenderSettings | null> {
+    const [setting] = await db.select().from(senderSettings).where(eq(senderSettings.isDefault, true));
+    return setting || null;
+  }
+
+  async createSenderSetting(setting: InsertSenderSettings): Promise<SenderSettings> {
+    const [created] = await db
+      .insert(senderSettings)
+      .values(setting)
+      .returning();
+    return created;
+  }
+
+  async updateSenderSetting(id: number, setting: Partial<InsertSenderSettings>): Promise<SenderSettings | null> {
+    const [updated] = await db
+      .update(senderSettings)
+      .set({ ...setting, updatedAt: new Date() })
+      .where(eq(senderSettings.id, id))
+      .returning();
+    return updated || null;
+  }
+
+  async deleteSenderSetting(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(senderSettings).where(eq(senderSettings.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error("Error deleting sender setting:", error);
+      return false;
+    }
+  }
+
+  async setDefaultSenderSetting(id: number): Promise<boolean> {
+    try {
+      // Знімаємо прапорець за замовчуванням з усіх налаштувань
+      await db.update(senderSettings).set({ isDefault: false });
+      
+      // Встановлюємо нове налаштування за замовчуванням
+      const [updated] = await db
+        .update(senderSettings)
+        .set({ isDefault: true, updatedAt: new Date() })
+        .where(eq(senderSettings.id, id))
+        .returning();
+      
+      return !!updated;
+    } catch (error) {
+      console.error("Error setting default sender setting:", error);
       return false;
     }
   }
