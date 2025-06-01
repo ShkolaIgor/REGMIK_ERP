@@ -328,7 +328,8 @@ export default function Shipments() {
                     if (order) {
                       setFormData(prev => ({ 
                         ...prev, 
-                        shippingAddress: `${order.customerName}\n${order.customerEmail || ''}\n${order.customerPhone || ''}` 
+                        shippingAddress: `${order.customerName}\n${order.customerEmail || ''}\n${order.customerPhone || ''}`,
+                        declaredValue: order.totalAmount || ""
                       }));
                     }
                   }}

@@ -143,6 +143,7 @@ export const shipments = pgTable("shipments", {
   weight: decimal("weight", { precision: 8, scale: 3 }), // кг
   dimensions: text("dimensions"), // ДхШхВ в см
   shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }),
+  declaredValue: decimal("declared_value", { precision: 10, scale: 2 }), // оголошена вартість
   status: text("status").notNull().default("preparing"), // preparing, shipped, in_transit, delivered
   estimatedDelivery: timestamp("estimated_delivery"),
   actualDelivery: timestamp("actual_delivery"),

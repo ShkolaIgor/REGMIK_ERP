@@ -138,7 +138,7 @@ export function NovaPoshtaIntegration({
 
   // Функція розрахунку вартості доставки
   const calculateDeliveryCost = async () => {
-    if (!selectedCity || !selectedWarehouse || !weight || !cost || !selectedSender) return;
+    if (!selectedCity || !selectedWarehouse || !externalWeight || !externalDeclaredValue || !selectedSender) return;
     
     try {
       const response = await fetch('/api/nova-poshta/calculate-delivery', {
@@ -147,9 +147,9 @@ export function NovaPoshtaIntegration({
         body: JSON.stringify({
           CitySender: selectedSender.cityRef,
           CityRecipient: selectedCity.ref,
-          Weight: weight,
+          Weight: externalWeight,
           ServiceType: 'WarehouseWarehouse',
-          Cost: cost,
+          Cost: externalDeclaredValue,
           CargoType: 'Cargo',
           SeatsAmount: '1'
         })
