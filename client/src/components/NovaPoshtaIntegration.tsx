@@ -79,10 +79,6 @@ export function NovaPoshtaIntegration({
   // Використовуємо результати сервера без додаткової фільтрації
   const filteredCities = cities;
 
-  // Дебагінг
-  console.log('Cities from server:', filteredCities, 'Query:', cityQuery, 'Loading:', citiesLoading);
-  console.log('Warehouses:', warehouses, 'Selected city:', selectedCity, 'Loading warehouses:', warehousesLoading);
-
   // Отримання відділень для обраного міста
   const { data: warehouses = [], isLoading: warehousesLoading } = useQuery<Warehouse[]>({
     queryKey: ["/api/nova-poshta/warehouses", selectedCity?.ref],
@@ -94,6 +90,9 @@ export function NovaPoshtaIntegration({
     },
     enabled: !!selectedCity?.ref,
   });
+
+  // Дебагінг
+  console.log('Warehouses:', warehouses, 'Selected city:', selectedCity, 'Loading warehouses:', warehousesLoading);
 
   // Відстеження відвантаження
   const { data: trackingInfo, isLoading: trackingLoading } = useQuery<TrackingInfo>({
