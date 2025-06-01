@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { dbStorage as storage } from "./db-storage";
 import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./simple-auth";
+import { novaPoshtaApi } from "./nova-poshta-api";
 import { 
   insertProductSchema, insertOrderSchema, insertRecipeSchema,
   insertProductionTaskSchema, insertCategorySchema, insertUnitSchema, insertWarehouseSchema,
@@ -2027,6 +2028,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Failed to delete carrier:', error);
       res.status(500).json({ error: 'Failed to delete carrier' });
+    }
+  });
+
+  // Nova Poshta API integration routes
+  app.get("/api/nova-poshta/cities", async (req, res) => {
+    try {
+      const { query } = req.query;
+      const cities = await novaPoshtaApi.searchCities(query as string || "");
+      res.json(cities);
+    } catch (error) {
+      console.error("Error fetching cities:", error);
+      res.status(500).json({ error: "Failed to fetch cities" });
+    }
+  });
+
+  app.get("/api/nova-poshta/warehouses/:cityRef", async (req, res) => {
+    try {
+      const { cityRef } = req.params;
+      const warehouses = await novaPoshtaApi.getWarehousesByRef(cityRef);
+      res.json(warehouses);
+    } catch (error) {
+      console.error("Error fetching warehouses:", error);
+      res.status(500).json({ error: "Failed to fetch warehouses" });
+    }
+  });
+
+  app.post("/api/nova-poshta/calculate-delivery", async (req, res) => {
+    try {
+      const deliveryCost = await novaPoshtaApi.calculateDeliveryCost(req.body);
+      res.json(deliveryCost);
+    } catch (error) {
+      console.error("Error calculating delivery cost:", error);
+      res.status(500).json({ error: "Failed to calculate delivery cost" });
+    }
+  });
+
+  app.get("/api/nova-poshta/track/:trackingNumber", async (req, res) => {
+    try {
+      const { trackingNumber } = req.params;
+      const trackingInfo = await novaPoshtaApi.trackDocument(trackingNumber);
+      res.json(trackingInfo);
+    } catch (error) {
+      console.error("Error tracking document:", error);
+      res.status(500).json({ error: "Failed to track document" });
+    }
+  });
+
+  app.post("/api/nova-poshta/track-multiple", async (req, res) => {
+    try {
+      const { trackingNumbers } = req.body;
+      const trackingInfos = await novaPoshtaApi.trackMultipleDocuments(trackingNumbers);
+      res.json(trackingInfos);
+    } catch (error) {
+      console.error("Error tracking multiple documents:", error);
+      res.status(500).json({ error: "Failed to track documents" });
     }
   });
 

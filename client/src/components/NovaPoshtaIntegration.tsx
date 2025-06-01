@@ -1,0 +1,333 @@
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, MapPin, Package, Truck } from "lucide-react";
+
+interface City {
+  ref: string;
+  name: string;
+  area: string;
+}
+
+interface Warehouse {
+  ref: string;
+  number: string;
+  description: string;
+  shortAddress: string;
+  phone: string;
+  schedule: any;
+}
+
+interface TrackingInfo {
+  Number: string;
+  Status: string;
+  StatusCode: string;
+  RecipientFullName: string;
+  CityRecipient: string;
+  WarehouseRecipient: string;
+  DateCreated: string;
+  ActualDeliveryDate: string;
+  DocumentWeight: string;
+  DocumentCost: string;
+}
+
+interface DeliveryCost {
+  Cost: string;
+  AssessedCost: string;
+  CostRedelivery: string;
+}
+
+interface NovaPoshtaIntegrationProps {
+  onAddressSelect?: (address: string, cityRef: string, warehouseRef: string) => void;
+  onCostCalculated?: (cost: DeliveryCost) => void;
+  trackingNumber?: string;
+}
+
+export function NovaPoshtaIntegration({
+  onAddressSelect,
+  onCostCalculated,
+  trackingNumber
+}: NovaPoshtaIntegrationProps) {
+  const [cityQuery, setCityQuery] = useState("");
+  const [selectedCity, setSelectedCity] = useState<City | null>(null);
+  const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
+  const [weight, setWeight] = useState("");
+  const [cost, setCost] = useState("");
+
+  // Пошук міст
+  const { data: cities = [], isLoading: citiesLoading } = useQuery<City[]>({
+    queryKey: ["/api/nova-poshta/cities", cityQuery],
+    enabled: cityQuery.length >= 2,
+  });
+
+  // Отримання відділень для обраного міста
+  const { data: warehouses = [], isLoading: warehousesLoading } = useQuery<Warehouse[]>({
+    queryKey: ["/api/nova-poshta/warehouses", selectedCity?.ref],
+    enabled: !!selectedCity?.ref,
+  });
+
+  // Відстеження відвантаження
+  const { data: trackingInfo, isLoading: trackingLoading } = useQuery<TrackingInfo>({
+    queryKey: ["/api/nova-poshta/track", trackingNumber],
+    enabled: !!trackingNumber,
+  });
+
+  const calculateDeliveryCost = async () => {
+    if (!selectedCity || !weight || !cost) return;
+
+    try {
+      const response = await fetch("/api/nova-poshta/calculate-delivery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          CitySender: "8d5a980d-391c-11dd-90d9-001a92567626", // Київ
+          CityRecipient: selectedCity.ref,
+          Weight: weight,
+          ServiceType: "WarehouseWarehouse",
+          Cost: cost,
+          CargoType: "Cargo",
+          SeatsAmount: "1"
+        })
+      });
+
+      if (response.ok) {
+        const deliveryCost = await response.json();
+        onCostCalculated?.(deliveryCost);
+      }
+    } catch (error) {
+      console.error("Помилка розрахунку вартості:", error);
+    }
+  };
+
+  const handleWarehouseSelect = (warehouseRef: string) => {
+    const warehouse = warehouses.find(w => w.ref === warehouseRef);
+    if (warehouse && selectedCity) {
+      setSelectedWarehouse(warehouse);
+      const fullAddress = `${selectedCity.name}, ${warehouse.description}`;
+      onAddressSelect?.(fullAddress, selectedCity.ref, warehouse.ref);
+    }
+  };
+
+  const getStatusColor = (statusCode: string) => {
+    switch (statusCode) {
+      case "1": return "bg-yellow-500";
+      case "2": return "bg-blue-500";
+      case "3": return "bg-green-500";
+      case "4": return "bg-red-500";
+      default: return "bg-gray-500";
+    }
+  };
+
+  const getStatusText = (statusCode: string) => {
+    switch (statusCode) {
+      case "1": return "Нова пошта отримала";
+      case "2": return "Видалено";
+      case "3": return "У місті одержувача";
+      case "4": return "Отримано";
+      case "5": return "Не доставлено";
+      case "6": return "Повернуто відправнику";
+      case "7": return "Знищено";
+      case "8": return "Створено";
+      case "9": return "Готовий до доставки";
+      case "10": return "Повернено";
+      case "11": return "Очікує на складі";
+      default: return "Невідомий статус";
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Вибір адреси доставки */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MapPin className="h-5 w-5" />
+            Вибір адреси доставки
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="text-sm font-medium">Пошук міста</label>
+            <Input
+              placeholder="Введіть назву міста..."
+              value={cityQuery}
+              onChange={(e) => setCityQuery(e.target.value)}
+            />
+            {citiesLoading && (
+              <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Пошук міст...
+              </div>
+            )}
+            {cities.length > 0 && !selectedCity && (
+              <Select onValueChange={(value) => {
+                const city = cities.find(c => c.ref === value);
+                setSelectedCity(city || null);
+              }}>
+                <SelectTrigger className="mt-2">
+                  <SelectValue placeholder="Оберіть місто" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cities.map((city) => (
+                    <SelectItem key={city.ref} value={city.ref}>
+                      {city.name} ({city.area})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          {selectedCity && (
+            <div>
+              <label className="text-sm font-medium">
+                Відділення в місті {selectedCity.name}
+              </label>
+              {warehousesLoading ? (
+                <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Завантаження відділень...
+                </div>
+              ) : (
+                <Select onValueChange={handleWarehouseSelect}>
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Оберіть відділення" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {warehouses.map((warehouse) => (
+                      <SelectItem key={warehouse.ref} value={warehouse.ref}>
+                        №{warehouse.number} - {warehouse.shortAddress}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
+
+          {selectedWarehouse && (
+            <div className="p-3 bg-green-50 rounded-lg">
+              <p className="font-medium">Обрано відділення:</p>
+              <p className="text-sm">{selectedWarehouse.description}</p>
+              <p className="text-sm text-gray-600">{selectedWarehouse.shortAddress}</p>
+              {selectedWarehouse.phone && (
+                <p className="text-sm text-gray-600">Тел: {selectedWarehouse.phone}</p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Розрахунок вартості доставки */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Розрахунок вартості доставки
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium">Вага (кг)</label>
+              <Input
+                type="number"
+                placeholder="1.5"
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Оголошена вартість (грн)</label>
+              <Input
+                type="number"
+                placeholder="1000"
+                value={cost}
+                onChange={(e) => setCost(e.target.value)}
+              />
+            </div>
+          </div>
+          <Button 
+            onClick={calculateDeliveryCost}
+            disabled={!selectedCity || !weight || !cost}
+            className="w-full"
+          >
+            Розрахувати вартість доставки
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Відстеження відвантаження */}
+      {trackingNumber && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Truck className="h-5 w-5" />
+              Відстеження відвантаження
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {trackingLoading ? (
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Завантаження інформації про відстеження...
+              </div>
+            ) : trackingInfo ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Badge className={getStatusColor(trackingInfo.StatusCode)}>
+                    {getStatusText(trackingInfo.StatusCode)}
+                  </Badge>
+                  <span className="text-sm font-medium">№ {trackingInfo.Number}</span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Одержувач:</span>
+                    <p>{trackingInfo.RecipientFullName}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Місто доставки:</span>
+                    <p>{trackingInfo.CityRecipient}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Відділення:</span>
+                    <p>{trackingInfo.WarehouseRecipient}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Вага:</span>
+                    <p>{trackingInfo.DocumentWeight} кг</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Дата створення:</span>
+                    <p>{new Date(trackingInfo.DateCreated).toLocaleDateString()}</p>
+                  </div>
+                  {trackingInfo.ActualDeliveryDate && (
+                    <div>
+                      <span className="font-medium">Дата доставки:</span>
+                      <p>{new Date(trackingInfo.ActualDeliveryDate).toLocaleDateString()}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">
+                Інформація про відстеження недоступна
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
