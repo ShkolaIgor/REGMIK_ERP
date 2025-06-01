@@ -45,7 +45,7 @@ class NovaPoshtaCache {
     return allCities.filter(city => 
       city.name.toLowerCase().includes(lowerQuery) ||
       city.area.toLowerCase().includes(lowerQuery)
-    ).slice(0, 20);
+    ).slice(0, 100);
   }
 
   async getWarehouses(cityRef: string): Promise<CachedWarehouse[]> {
