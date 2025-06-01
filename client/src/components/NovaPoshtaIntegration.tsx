@@ -76,8 +76,13 @@ export function NovaPoshtaIntegration({
     staleTime: 5 * 60 * 1000, // Кеш на 5 хвилин
   });
 
+  // Фільтрація міст за запитом
+  const filteredCities = cities.filter(city => 
+    city.name.toLowerCase().includes(cityQuery.toLowerCase())
+  ).slice(0, 10); // Показуємо тільки перші 10 результатів
+
   // Дебагінг
-  console.log('Cities data:', cities, 'Query:', cityQuery, 'Loading:', citiesLoading);
+  console.log('Filtered cities:', filteredCities, 'Query:', cityQuery, 'Loading:', citiesLoading);
 
   // Отримання відділень для обраного міста
   const { data: warehouses = [], isLoading: warehousesLoading } = useQuery<Warehouse[]>({
@@ -196,9 +201,9 @@ export function NovaPoshtaIntegration({
                     Пошук міст...
                   </div>
                 )}
-                {cities.length > 0 && cityQuery.length >= 2 && !selectedCity && (
+                {filteredCities.length > 0 && cityQuery.length >= 2 && !selectedCity && (
                   <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
-                    {cities.map((city) => (
+                    {filteredCities.map((city) => (
                       <div
                         key={city.ref}
                         className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
@@ -216,7 +221,7 @@ export function NovaPoshtaIntegration({
                 {/* Дебагінг інформація */}
                 {cityQuery.length >= 2 && !citiesLoading && (
                   <div className="mt-2 text-xs text-gray-400">
-                    Знайдено: {cities.length} міст для "{cityQuery}"
+                    Знайдено: {filteredCities.length} міст для "{cityQuery}"
                   </div>
                 )}
               </div>
