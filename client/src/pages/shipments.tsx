@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Package, Truck, MapPin, Calendar, Search, Edit } from "lucide-react";
+import { Plus, Package, Truck, MapPin, Calendar, Search, Edit, Trash2 } from "lucide-react";
 
 interface Order {
   id: number;
@@ -205,6 +205,32 @@ export default function Shipments() {
       toast({
         title: "Помилка",
         description: "Не вдалося оновити відвантаження",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Мутація видалення відвантаження
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/shipments/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete shipment");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shipments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      toast({
+        title: "Успіх",
+        description: "Відвантаження видалено",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося видалити відвантаження",
         variant: "destructive",
       });
     },

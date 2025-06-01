@@ -507,7 +507,10 @@ export function NovaPoshtaIntegration({
             </div>
           </div>
           <Button 
-            onClick={() => {
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               console.log('Button clicked:', { selectedCity, selectedWarehouse, weight, cost });
               calculateDeliveryCost();
             }}
