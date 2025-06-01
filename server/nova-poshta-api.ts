@@ -384,10 +384,53 @@ class NovaPoshtaApi {
     paymentMethod: string;
     payerType: string;
   }): Promise<any> {
+    // Спочатку створюємо контрагента відправника
+    let senderRef;
+    try {
+      const sender = await this.createCounterparty({
+        firstName: 'Менеджер',
+        middleName: '',
+        lastName: 'Компанії',
+        phone: params.senderPhone || '+380501234567',
+        email: 'manager@company.com',
+        counterpartyType: 'Organization'
+      });
+      senderRef = sender.Ref;
+    } catch (error) {
+      console.error('Error creating sender:', error);
+      throw new Error('Failed to create sender');
+    }
+
+    // Створюємо контрагента отримувача
+    let recipientRef;
+    try {
+      const nameParts = params.recipientName.split(' ');
+      const firstName = nameParts[0] || 'Ім\'я';
+      const lastName = nameParts[1] || 'Прізвище';
+      const middleName = nameParts[2] || '';
+
+      const recipient = await this.createCounterparty({
+        firstName,
+        middleName,
+        lastName,
+        phone: params.recipientPhone,
+        email: 'noemail@example.com',
+        counterpartyType: params.recipientType || 'Organization'
+      });
+      recipientRef = recipient.Ref;
+    } catch (error) {
+      console.error('Error creating recipient:', error);
+      throw new Error('Failed to create recipient');
+    }
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dateTime = tomorrow.toISOString().split('T')[0];
+
     const methodProperties = {
       PayerType: params.payerType,
       PaymentMethod: params.paymentMethod,
-      DateTime: new Date().toISOString().split('T')[0],
+      DateTime: dateTime,
       CargoType: 'Parcel',
       ServiceType: 'WarehouseWarehouse',
       SeatsAmount: params.seatsAmount.toString(),
@@ -395,14 +438,16 @@ class NovaPoshtaApi {
       Cost: params.cost.toString(),
       CitySender: params.citySender || 'db5c897c-391c-11dd-90d9-001a92567626',
       CityRecipient: params.cityRecipient,
-      WarehouseSender: params.warehouseSender || 'fe906167-4c37-11ec-80ed-b8830365bd14',
-      WarehouseRecipient: params.warehouseRecipient,
+      SenderAddress: params.warehouseSender || 'fe906167-4c37-11ec-80ed-b8830365bd14',
+      RecipientAddress: params.warehouseRecipient,
       Weight: params.weight.toString(),
       VolumeGeneral: '0.004',
-      RecipientsName: params.recipientName,
-      RecipientsPhone: params.recipientPhone,
-      SendersName: params.senderName || 'Ваша компанія',
-      SendersPhone: params.senderPhone || '+380501234567'
+      Sender: senderRef,
+      ContactSender: senderRef,
+      SendersPhone: params.senderPhone || '+380501234567',
+      Recipient: recipientRef,
+      ContactRecipient: recipientRef,
+      RecipientsPhone: params.recipientPhone
     };
 
     const response = await this.makeRequest('InternetDocument', 'save', methodProperties);
