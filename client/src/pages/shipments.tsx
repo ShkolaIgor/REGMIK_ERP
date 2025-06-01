@@ -232,7 +232,7 @@ export default function Shipments() {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete shipment");
-      return response.json();
+      return response.status === 204 ? null : response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/shipments"] });
