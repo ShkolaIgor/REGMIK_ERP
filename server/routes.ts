@@ -2564,6 +2564,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Production analytics routes
+  app.get("/api/production/analytics", async (req, res) => {
+    try {
+      const { from, to, department, worker } = req.query;
+      const analytics = await storage.getProductionAnalytics({
+        from: from as string,
+        to: to as string,
+        department: department as string,
+        worker: worker as string,
+      });
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching production analytics:", error);
+      res.status(500).json({ error: "Failed to get production analytics" });
+    }
+  });
+
+  app.get("/api/production/workload", async (req, res) => {
+    try {
+      const { from, to } = req.query;
+      const workload = await storage.getProductionWorkload({
+        from: from as string,
+        to: to as string,
+      });
+      res.json(workload);
+    } catch (error) {
+      console.error("Error fetching production workload:", error);
+      res.status(500).json({ error: "Failed to get production workload" });
+    }
+  });
+
+  app.get("/api/production/efficiency", async (req, res) => {
+    try {
+      const { from, to, department } = req.query;
+      const efficiency = await storage.getProductionEfficiency({
+        from: from as string,
+        to: to as string,
+        department: department as string,
+      });
+      res.json(efficiency);
+    } catch (error) {
+      console.error("Error fetching production efficiency:", error);
+      res.status(500).json({ error: "Failed to get production efficiency" });
+    }
+  });
+
   // Manufacturing Orders API
   app.get("/api/manufacturing-orders", async (req, res) => {
     try {

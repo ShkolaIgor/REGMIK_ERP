@@ -40,6 +40,7 @@ import Shipments from "@/pages/shipments";
 import Carriers from "@/pages/carriers";
 import Manufacturing from "@/pages/manufacturing";
 import Currencies from "@/pages/currencies";
+import ProductionAnalytics from "@/pages/production-analytics";
 import NotFound from "@/pages/not-found";
 
 function Router() {

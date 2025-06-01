@@ -2785,6 +2785,174 @@ export class DatabaseStorage implements IStorage {
     // Наразі повертаємо поточні курси
     return this.getLatestExchangeRates();
   }
+
+  // Production analytics methods
+  async getProductionAnalytics(filters: {
+    from?: string;
+    to?: string;
+    department?: string;
+    worker?: string;
+  }): Promise<any> {
+    try {
+      const tasks = await this.getProductionTasks();
+      const workers = await this.getWorkers();
+      const departments = await this.getDepartments();
+      
+      // Фільтруємо завдання за критеріями
+      let filteredTasks = tasks;
+      
+      if (filters.from && filters.to) {
+        filteredTasks = filteredTasks.filter(task => {
+          const taskDate = task.createdAt ? new Date(task.createdAt) : new Date();
+          return taskDate >= new Date(filters.from!) && taskDate <= new Date(filters.to!);
+        });
+      }
+      
+      if (filters.worker && filters.worker !== 'all') {
+        const worker = workers.find(w => w.id === parseInt(filters.worker!));
+        if (worker) {
+          filteredTasks = filteredTasks.filter(task => 
+            task.assignedTo && task.assignedTo.includes(worker.firstName)
+          );
+        }
+      }
+      
+      // Розрахуємо аналітику
+      const totalTasks = filteredTasks.length;
+      const completedTasks = filteredTasks.filter(task => task.status === 'completed').length;
+      const inProgressTasks = filteredTasks.filter(task => task.status === 'in_progress').length;
+      const pendingTasks = filteredTasks.filter(task => task.status === 'pending').length;
+      
+      const completionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+      const workloadRate = totalTasks > 0 ? ((inProgressTasks + pendingTasks) / totalTasks) * 100 : 0;
+      
+      return {
+        totalTasks,
+        completedTasks,
+        inProgressTasks,
+        pendingTasks,
+        completionRate,
+        workloadRate,
+        tasks: filteredTasks,
+        workers,
+        departments,
+      };
+    } catch (error) {
+      console.error("Error getting production analytics:", error);
+      return {
+        totalTasks: 0,
+        completedTasks: 0,
+        inProgressTasks: 0,
+        pendingTasks: 0,
+        completionRate: 0,
+        workloadRate: 0,
+        tasks: [],
+        workers: [],
+        departments: [],
+      };
+    }
+  }
+
+  async getProductionWorkload(filters: {
+    from?: string;
+    to?: string;
+  }): Promise<any[]> {
+    try {
+      const tasks = await this.getProductionTasks();
+      const workers = await this.getWorkers();
+      
+      // Фільтруємо завдання за датами
+      let filteredTasks = tasks;
+      
+      if (filters.from && filters.to) {
+        filteredTasks = filteredTasks.filter(task => {
+          const taskDate = task.createdAt ? new Date(task.createdAt) : new Date();
+          return taskDate >= new Date(filters.from!) && taskDate <= new Date(filters.to!);
+        });
+      }
+      
+      // Групуємо завдання за працівниками
+      const workloadData = workers.map(worker => {
+        const workerTasks = filteredTasks.filter(task => 
+          task.assignedTo && task.assignedTo.includes(worker.firstName)
+        );
+        
+        const completed = workerTasks.filter(task => task.status === 'completed').length;
+        const inProgress = workerTasks.filter(task => task.status === 'in_progress').length;
+        const pending = workerTasks.filter(task => task.status === 'pending').length;
+        
+        return {
+          workerId: worker.id,
+          workerName: `${worker.firstName} ${worker.lastName}`,
+          department: worker.department,
+          position: worker.position,
+          totalTasks: workerTasks.length,
+          completed,
+          inProgress,
+          pending,
+          workload: workerTasks.length > 0 ? ((inProgress + pending) / workerTasks.length) * 100 : 0,
+          efficiency: workerTasks.length > 0 ? (completed / workerTasks.length) * 100 : 0,
+        };
+      });
+      
+      return workloadData;
+    } catch (error) {
+      console.error("Error getting production workload:", error);
+      return [];
+    }
+  }
+
+  async getProductionEfficiency(filters: {
+    from?: string;
+    to?: string;
+    department?: string;
+  }): Promise<any> {
+    try {
+      const tasks = await this.getProductionTasks();
+      const departments = await this.getDepartments();
+      
+      // Фільтруємо завдання за критеріями
+      let filteredTasks = tasks;
+      
+      if (filters.from && filters.to) {
+        filteredTasks = filteredTasks.filter(task => {
+          const taskDate = task.createdAt ? new Date(task.createdAt) : new Date();
+          return taskDate >= new Date(filters.from!) && taskDate <= new Date(filters.to!);
+        });
+      }
+      
+      // Розрахуємо ефективність по відділах
+      const efficiencyData = departments.map(dept => {
+        const deptTasks = filteredTasks;
+        const completed = deptTasks.filter(task => task.status === 'completed').length;
+        const total = deptTasks.length;
+        
+        return {
+          departmentId: dept.id,
+          departmentName: dept.name,
+          totalTasks: total,
+          completedTasks: completed,
+          efficiency: total > 0 ? (completed / total) * 100 : 0,
+        };
+      });
+      
+      return {
+        departments: efficiencyData,
+        overall: {
+          totalTasks: filteredTasks.length,
+          completedTasks: filteredTasks.filter(task => task.status === 'completed').length,
+          efficiency: filteredTasks.length > 0 ? 
+            (filteredTasks.filter(task => task.status === 'completed').length / filteredTasks.length) * 100 : 0,
+        },
+      };
+    } catch (error) {
+      console.error("Error getting production efficiency:", error);
+      return {
+        departments: [],
+        overall: { totalTasks: 0, completedTasks: 0, efficiency: 0 },
+      };
+    }
+  }
 }
 
 export const dbStorage = new DatabaseStorage();
