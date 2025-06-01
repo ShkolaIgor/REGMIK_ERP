@@ -2099,7 +2099,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/nova-poshta/calculate-delivery", async (req, res) => {
     try {
+      console.log("Calculate delivery request body:", req.body);
       const deliveryCost = await novaPoshtaApi.calculateDeliveryCost(req.body);
+      console.log("Nova Poshta API response:", deliveryCost);
       res.json(deliveryCost);
     } catch (error) {
       console.error("Error calculating delivery cost:", error);

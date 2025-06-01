@@ -282,7 +282,14 @@ class NovaPoshtaApi {
   }
 
   async calculateDeliveryCost(params: DeliveryCostRequest): Promise<DeliveryCost | null> {
+    console.log('Nova Poshta API request params:', params);
     const response = await this.makeRequest<DeliveryCost>('InternetDocument', 'getDocumentPrice', params);
+    console.log('Nova Poshta raw API response:', JSON.stringify(response, null, 2));
+    
+    if (response.success === false) {
+      console.log('API errors:', response.errors);
+    }
+    
     return response.data?.[0] || null;
   }
 
