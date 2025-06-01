@@ -1967,6 +1967,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Carriers routes
+  app.get('/api/carriers', async (req, res) => {
+    try {
+      const carriers = await storage.getCarriers();
+      res.json(carriers);
+    } catch (error) {
+      console.error('Failed to get carriers:', error);
+      res.status(500).json({ error: 'Failed to get carriers' });
+    }
+  });
+
+  app.get('/api/carriers/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const carrier = await storage.getCarrier(id);
+      if (!carrier) {
+        return res.status(404).json({ error: 'Carrier not found' });
+      }
+      res.json(carrier);
+    } catch (error) {
+      console.error('Failed to get carrier:', error);
+      res.status(500).json({ error: 'Failed to get carrier' });
+    }
+  });
+
+  app.post('/api/carriers', async (req, res) => {
+    try {
+      const carrier = await storage.createCarrier(req.body);
+      res.status(201).json(carrier);
+    } catch (error) {
+      console.error('Failed to create carrier:', error);
+      res.status(500).json({ error: 'Failed to create carrier' });
+    }
+  });
+
+  app.patch('/api/carriers/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const carrier = await storage.updateCarrier(id, req.body);
+      if (!carrier) {
+        return res.status(404).json({ error: 'Carrier not found' });
+      }
+      res.json(carrier);
+    } catch (error) {
+      console.error('Failed to update carrier:', error);
+      res.status(500).json({ error: 'Failed to update carrier' });
+    }
+  });
+
+  app.delete('/api/carriers/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteCarrier(id);
+      if (!success) {
+        return res.status(404).json({ error: 'Carrier not found' });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error('Failed to delete carrier:', error);
+      res.status(500).json({ error: 'Failed to delete carrier' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -23,6 +23,8 @@ import {
   type ComponentCategory, type InsertComponentCategory,
   type PackageType, type InsertPackageType,
   type ProductComponent, type InsertProductComponent,
+  type Carrier, type InsertCarrier,
+  type Shipment, type InsertShipment,
   type CostCalculation, type InsertCostCalculation,
   type MaterialShortage, type InsertMaterialShortage,
   type SupplierOrder, type InsertSupplierOrder,

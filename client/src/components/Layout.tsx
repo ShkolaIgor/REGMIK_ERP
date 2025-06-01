@@ -74,7 +74,8 @@ const navigationItems = [
       { name: "Постачальники", href: "/suppliers", icon: Users },
       { name: "Робітники", href: "/workers", icon: Users },
       { name: "Посади", href: "/positions", icon: Users },
-      { name: "Відділи", href: "/departments", icon: Building2 }
+      { name: "Відділи", href: "/departments", icon: Building2 },
+      { name: "Перевізники", href: "/carriers", icon: Truck }
     ]
   },
   {
