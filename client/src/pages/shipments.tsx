@@ -87,7 +87,7 @@ export default function Shipments() {
   // Форма для відвантаження
   const [formData, setFormData] = useState({
     orderId: "",
-    carrier: "",
+    carrierId: "",
     shippingAddress: "",
     weight: "",
     dimensions: "",
@@ -173,7 +173,7 @@ export default function Shipments() {
   const resetForm = () => {
     setFormData({
       orderId: "",
-      carrier: "",
+      carrierId: "",
       shippingAddress: "",
       weight: "",
       dimensions: "",
@@ -190,6 +190,7 @@ export default function Shipments() {
     createMutation.mutate({
       ...formData,
       orderId: parseInt(formData.orderId),
+      carrierId: formData.carrierId ? parseInt(formData.carrierId) : null,
       weight: formData.weight ? parseFloat(formData.weight) : null,
       shippingCost: formData.shippingCost ? parseFloat(formData.shippingCost) : null,
       estimatedDelivery: formData.estimatedDelivery ? new Date(formData.estimatedDelivery) : null,
@@ -262,8 +263,8 @@ export default function Shipments() {
                 <div>
                   <Label htmlFor="carrier">Перевізник</Label>
                   <CarrierSelect
-                    value={formData.carrier}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, carrier: value }))}
+                    value={formData.carrierId}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, carrierId: value }))}
                   />
                 </div>
                 <div>
