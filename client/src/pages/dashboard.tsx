@@ -16,7 +16,7 @@ import {
   Printer
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import BarcodeScanner from "@/components/BarcodeScanner";
+import { BarcodeScanner } from "@/components/BarcodeScanner";
 
 export default function Dashboard() {
   const [showScanner, setShowScanner] = useState(false);
