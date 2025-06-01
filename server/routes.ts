@@ -2032,11 +2032,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Nova Poshta API integration routes
+  // Nova Poshta API integration routes (з кешуванням)
   app.get("/api/nova-poshta/cities", async (req, res) => {
     try {
       const { query } = req.query;
-      const cities = await novaPoshtaApi.searchCities(query as string || "");
+      const cities = await novaPoshtaCache.getCities(query as string || "");
       res.json(cities);
     } catch (error) {
       console.error("Error fetching cities:", error);
@@ -2047,7 +2047,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/nova-poshta/warehouses/:cityRef", async (req, res) => {
     try {
       const { cityRef } = req.params;
-      const warehouses = await novaPoshtaApi.getWarehousesByRef(cityRef);
+      const warehouses = await novaPoshtaCache.getWarehouses(cityRef);
       res.json(warehouses);
     } catch (error) {
       console.error("Error fetching warehouses:", error);

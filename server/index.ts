@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { novaPoshtaCache } from "./nova-poshta-cache";
 
 const app = express();
 app.use(express.json());
@@ -64,7 +65,17 @@ app.use((req, res, next) => {
     port,
     host: "0.0.0.0",
     reusePort: true,
-  }, () => {
+  }, async () => {
     log(`serving on port ${port}`);
+    
+    // Ініціалізація кешу Нової Пошти при старті сервера
+    try {
+      log("Ініціалізація кешу Нової Пошти...");
+      await novaPoshtaCache.forceUpdate();
+      const stats = novaPoshtaCache.getCacheStats();
+      log(`Кеш Нової Пошти готовий: ${stats.citiesCount} міст, ${stats.warehousesCount} відділень`);
+    } catch (error) {
+      log("Помилка ініціалізації кешу Нової Пошти:", error);
+    }
   });
 })();
