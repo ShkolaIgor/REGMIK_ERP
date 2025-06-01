@@ -624,8 +624,12 @@ export default function Orders() {
                             variant="ghost" 
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             onClick={() => {
+                              console.log('Delete button clicked for order:', order.id);
                               if (confirm('Ви впевнені, що хочете видалити це замовлення?')) {
+                                console.log('User confirmed deletion, calling API...');
                                 deleteOrderMutation.mutate(order.id);
+                              } else {
+                                console.log('User cancelled deletion');
                               }
                             }}
                             disabled={deleteOrderMutation.isPending}
