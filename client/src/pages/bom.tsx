@@ -86,7 +86,7 @@ export default function BOMPage() {
 
   const addMutation = useMutation({
     mutationFn: (data: ComponentFormData) => 
-      apiRequest("POST", "/api/product-components", data),
+      apiRequest("/api/product-components", { method: "POST", body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/products/${selectedProductId}/components`] });
       setIsAddDialogOpen(false);
@@ -107,7 +107,7 @@ export default function BOMPage() {
 
   const deleteComponentMutation = useMutation({
     mutationFn: (id: number) => 
-      apiRequest("DELETE", `/api/product-components/${id}`),
+      apiRequest(`/api/product-components/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/products/${selectedProductId}/components`] });
       toast({
