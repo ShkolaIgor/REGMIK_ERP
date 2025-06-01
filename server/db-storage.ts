@@ -373,28 +373,19 @@ export class DatabaseStorage implements IStorage {
       const itemsWithPrices: InsertOrderItem[] = [];
       
       for (const item of items) {
-        // Отримуємо товар з бази даних для встановлення актуальної ціни
-        const product = await db.select().from(products).where(eq(products.id, item.productId)).limit(1);
+        // Використовуємо ціну з форми, а не з бази даних
+        const unitPrice = parseFloat(item.unitPrice || "0");
+        const quantity = parseFloat(item.quantity || "1");
+        const totalPrice = unitPrice * quantity;
         
-        if (product.length > 0) {
-          const unitPrice = parseFloat(product[0].retailPrice || "0");
-          const quantity = parseFloat(item.quantity || "1");
-          const totalPrice = unitPrice * quantity;
-          
-          const itemWithPrice = {
-            ...item,
-            unitPrice: unitPrice.toString(),
-            totalPrice: totalPrice.toString()
-          };
-          
-          itemsWithPrices.push(itemWithPrice);
-          totalAmount += totalPrice;
-        } else {
-          // Якщо товар не знайдено, використовуємо передану ціну
-          const itemPrice = parseFloat(item.totalPrice || "0");
-          itemsWithPrices.push(item);
-          totalAmount += itemPrice;
-        }
+        const itemWithPrice = {
+          ...item,
+          unitPrice: unitPrice.toString(),
+          totalPrice: totalPrice.toString()
+        };
+        
+        itemsWithPrices.push(itemWithPrice);
+        totalAmount += totalPrice;
       }
 
       // Оновлюємо замовлення
