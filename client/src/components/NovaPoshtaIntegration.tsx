@@ -93,6 +93,7 @@ export function NovaPoshtaIntegration({
   const [deliveryCost, setDeliveryCost] = useState<{ cost: string; estimatedDeliveryDate: string } | null>(null);
   const [recipientName, setRecipientName] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
+  const [recipientType, setRecipientType] = useState('PrivatePerson'); // PrivatePerson або Organization
   const [description, setDescription] = useState('');
   const [seatsAmount, setSeatsAmount] = useState('1');
   const [paymentMethod, setPaymentMethod] = useState('NonCash');
@@ -195,6 +196,7 @@ export function NovaPoshtaIntegration({
           warehouseRecipient: selectedWarehouse.ref,
           recipientName,
           recipientPhone,
+          recipientType,
           description,
           weight: parseFloat(externalWeight),
           cost: parseFloat(externalDeclaredValue),
@@ -531,11 +533,25 @@ export function NovaPoshtaIntegration({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Тип отримувача</label>
+              <Select value={recipientType} onValueChange={setRecipientType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Оберіть тип" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PrivatePerson">Фізична особа</SelectItem>
+                  <SelectItem value="Organization">Юридична особа</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium">ПІБ отримувача</label>
+                <label className="text-sm font-medium">
+                  {recipientType === 'Organization' ? 'Назва організації' : 'ПІБ отримувача'}
+                </label>
                 <Input
-                  placeholder="Іваненко Іван Іванович"
+                  placeholder={recipientType === 'Organization' ? 'ТОВ "Назва компанії"' : 'Іваненко Іван Іванович'}
                   value={recipientName}
                   onChange={(e) => setRecipientName(e.target.value)}
                 />
