@@ -423,7 +423,8 @@ export class DatabaseStorage implements IStorage {
         await db.insert(orderItems).values(itemsToInsert);
       }
 
-      return orderResult[0];
+      // Повертаємо оновлене замовлення з товарами
+      return await this.getOrder(id);
     } catch (error) {
       console.error('Error updating order:', error);
       throw error;
