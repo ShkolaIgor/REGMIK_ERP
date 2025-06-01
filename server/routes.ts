@@ -2133,13 +2133,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/nova-poshta/create-invoice", async (req, res) => {
     try {
-      // Отримуємо API ключ Nova Poshta з довідника перевізників
-      const novaPoshtaCarrier = await storage.getCarrierByName('Nova Poshta');
-      if (!novaPoshtaCarrier || !novaPoshtaCarrier.apiKey) {
-        return res.status(400).json({ 
-          error: "Nova Poshta API ключ не налаштований в довіднику перевізників" 
-        });
-      }
 
       const {
         cityRecipient,
@@ -2168,7 +2161,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         citySender,
         warehouseSender,
         senderName,
-        senderPhone
+        senderPhone,
+        orderId
       } = req.body;
 
       const invoiceData = {
@@ -2189,23 +2183,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         payerType: payerType || 'Recipient'
       };
 
-      // Отримуємо Nova Poshta перевізника з бази даних
-      const carriers = await storage.getCarriers();
-      const novaPoshtaCarrier = carriers.find(c => 
-        c.name.toLowerCase().includes('nova poshta') || 
-        c.name.toLowerCase().includes('нова пошта')
-      );
-
-      if (!novaPoshtaCarrier?.apiKey) {
+      // Використовуємо API ключ з environment variables
+      const apiKey = process.env.NOVA_POSHTA_API_KEY;
+      if (!apiKey) {
         return res.status(400).json({ 
-          error: "Nova Poshta API ключ не налаштований в довіднику перевізників" 
+          error: "Nova Poshta API ключ не налаштований" 
         });
       }
 
+      // Отримуємо деталі замовлення для опису відправлення
+      let orderDescription = 'Товар';
+      if (orderId) {
+        try {
+          const order = await storage.getOrder(parseInt(orderId));
+          if (order && order.items && order.items.length > 0) {
+            const itemNames = order.items.map(item => item.product?.name || 'Товар').join(', ');
+            orderDescription = itemNames.length > 100 ? itemNames.substring(0, 97) + '...' : itemNames;
+          }
+        } catch (error) {
+          console.error('Error getting order details for description:', error);
+        }
+      }
+
+      // Використовуємо опис з позицій замовлення
+      invoiceData.description = orderDescription;
+
       // Оновлюємо API ключ в Nova Poshta API
-      const apiKey = process.env[novaPoshtaCarrier.apiKey] || novaPoshtaCarrier.apiKey;
+      console.log('Using Nova Poshta API key exists:', !!apiKey);
       novaPoshtaApi.updateApiKey(apiKey);
 
+      console.log('Creating invoice with data:', invoiceData);
       const invoice = await novaPoshtaApi.createInternetDocument(invoiceData);
       res.json(invoice);
     } catch (error) {
