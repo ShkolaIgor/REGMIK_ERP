@@ -382,8 +382,10 @@ export default function Inventory() {
         onClose={() => {
           setShowProductForm(false);
           setEditingProduct(null);
+          setIsViewMode(false);
         }}
         product={editingProduct}
+        isViewMode={isViewMode}
       />
 
 

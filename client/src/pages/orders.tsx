@@ -80,6 +80,8 @@ export default function Orders() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [orderItems, setOrderItems] = useState<OrderItemFormData[]>([]);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -169,11 +171,73 @@ export default function Orders() {
     },
   });
 
+  // Мутація для оновлення замовлення
+  const updateOrderMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest(`/api/orders/${data.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      handleCloseEditDialog();
+      toast({
+        title: "Успіх",
+        description: "Замовлення оновлено",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося оновити замовлення",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Функція для закриття діалогу та очищення форми
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setOrderItems([]);
     form.reset();
+  };
+
+  // Функція для закриття діалогу редагування
+  const handleCloseEditDialog = () => {
+    setIsEditMode(false);
+    setEditingOrder(null);
+    setOrderItems([]);
+    form.reset();
+  };
+
+  // Функція для початку редагування замовлення
+  const handleEditOrder = (order: any) => {
+    setEditingOrder(order);
+    setIsEditMode(true);
+    
+    // Заповнюємо форму даними замовлення
+    form.reset({
+      customerName: order.customerName,
+      customerEmail: order.customerEmail || "",
+      customerPhone: order.customerPhone || "",
+      status: order.status,
+      notes: order.notes || "",
+    });
+
+    // Заповнюємо товари замовлення
+    if (order.items) {
+      setOrderItems(order.items.map((item: any) => ({
+        productId: item.productId,
+        quantity: item.quantity.toString(),
+        unitPrice: item.unitPrice.toString(),
+      })));
+    }
+    
+    setIsDialogOpen(true);
   };
 
   // Функції для управління товарами в замовленні
@@ -619,6 +683,13 @@ export default function Orders() {
                               )}
                             </DialogContent>
                           </Dialog>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => handleEditOrder(order)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
                           <Button 
                             size="sm" 
                             variant="ghost" 
