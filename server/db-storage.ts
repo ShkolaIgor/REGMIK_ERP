@@ -3102,57 +3102,9 @@ export class DatabaseStorage implements IStorage {
   // Manufacturing Orders
   async getManufacturingOrders(): Promise<any[]> {
     try {
-      const orders = await db.select({
-        id: manufacturingOrders.id,
-        orderNumber: manufacturingOrders.orderNumber,
-        productId: manufacturingOrders.productId,
-        recipeId: manufacturingOrders.recipeId,
-        plannedQuantity: manufacturingOrders.plannedQuantity,
-        producedQuantity: manufacturingOrders.producedQuantity,
-        unit: manufacturingOrders.unit,
-        status: manufacturingOrders.status,
-        priority: manufacturingOrders.priority,
-        assignedWorkerId: manufacturingOrders.assignedWorkerId,
-        warehouseId: manufacturingOrders.warehouseId,
-        startDate: manufacturingOrders.startDate,
-        plannedEndDate: manufacturingOrders.plannedEndDate,
-        actualEndDate: manufacturingOrders.actualEndDate,
-        estimatedDuration: manufacturingOrders.estimatedDuration,
-        actualDuration: manufacturingOrders.actualDuration,
-        materialCost: manufacturingOrders.materialCost,
-        laborCost: manufacturingOrders.laborCost,
-        overheadCost: manufacturingOrders.overheadCost,
-        totalCost: manufacturingOrders.totalCost,
-        qualityStatus: manufacturingOrders.qualityStatus,
-        notes: manufacturingOrders.notes,
-        createdAt: manufacturingOrders.createdAt,
-        updatedAt: manufacturingOrders.updatedAt,
-        product: {
-          id: products.id,
-          name: products.name,
-          sku: products.sku,
-          unit: products.unit
-        },
-        recipe: {
-          id: recipes.id,
-          name: recipes.name
-        },
-        worker: {
-          id: workers.id,
-          firstName: workers.firstName,
-          lastName: workers.lastName
-        },
-        warehouse: {
-          id: warehouses.id,
-          name: warehouses.name
-        }
-      })
-      .from(manufacturingOrders)
-      .leftJoin(products, eq(manufacturingOrders.productId, products.id))
-      .leftJoin(recipes, eq(manufacturingOrders.recipeId, recipes.id))
-      .leftJoin(workers, eq(manufacturingOrders.assignedWorkerId, workers.id))
-      .leftJoin(warehouses, eq(manufacturingOrders.warehouseId, warehouses.id))
-      .orderBy(desc(manufacturingOrders.createdAt));
+      const orders = await db.select()
+        .from(manufacturingOrders)
+        .orderBy(desc(manufacturingOrders.createdAt));
 
       return orders;
     } catch (error) {
@@ -3204,6 +3156,160 @@ export class DatabaseStorage implements IStorage {
       return true;
     } catch (error) {
       console.error("Error deleting manufacturing order:", error);
+      throw error;
+    }
+  }
+
+  // Currency management
+  async getCurrencies(): Promise<any[]> {
+    try {
+      const currenciesWithRates = await db.select({
+        id: currencies.id,
+        code: currencies.code,
+        name: currencies.name,
+        symbol: currencies.symbol,
+        decimalPlaces: currencies.decimalPlaces,
+        isBase: currencies.isBase,
+        isActive: currencies.isActive,
+        createdAt: currencies.createdAt,
+        updatedAt: currencies.updatedAt,
+        latestRate: exchangeRateHistory.rate,
+        rateDate: exchangeRateHistory.createdAt
+      })
+      .from(currencies)
+      .leftJoin(
+        exchangeRateHistory,
+        and(
+          eq(currencies.id, exchangeRateHistory.currencyId),
+          eq(exchangeRateHistory.id, 
+            db.select({ maxId: sql`MAX(${exchangeRateHistory.id})` })
+              .from(exchangeRateHistory)
+              .where(eq(exchangeRateHistory.currencyId, currencies.id))
+          )
+        )
+      )
+      .orderBy(desc(currencies.isBase), currencies.code);
+
+      return currenciesWithRates;
+    } catch (error) {
+      console.error("Error getting currencies:", error);
+      throw error;
+    }
+  }
+
+  async getCurrency(id: number): Promise<any | null> {
+    try {
+      const [currency] = await db.select()
+        .from(currencies)
+        .where(eq(currencies.id, id));
+      
+      return currency || null;
+    } catch (error) {
+      console.error("Error getting currency:", error);
+      throw error;
+    }
+  }
+
+  async createCurrency(currencyData: any): Promise<any> {
+    try {
+      // Якщо створюється базова валюта, спочатку змінимо всі інші на не базові
+      if (currencyData.isBase) {
+        await db.update(currencies)
+          .set({ isBase: false })
+          .where(eq(currencies.isBase, true));
+      }
+
+      const [newCurrency] = await db.insert(currencies).values(currencyData).returning();
+      return newCurrency;
+    } catch (error) {
+      console.error("Error creating currency:", error);
+      throw error;
+    }
+  }
+
+  async updateCurrency(id: number, currencyData: any): Promise<any | null> {
+    try {
+      // Якщо змінюється базова валюта, спочатку змінимо всі інші на не базові
+      if (currencyData.isBase) {
+        await db.update(currencies)
+          .set({ isBase: false })
+          .where(and(eq(currencies.isBase, true), ne(currencies.id, id)));
+      }
+
+      const [updatedCurrency] = await db.update(currencies)
+        .set({ ...currencyData, updatedAt: new Date() })
+        .where(eq(currencies.id, id))
+        .returning();
+      
+      return updatedCurrency || null;
+    } catch (error) {
+      console.error("Error updating currency:", error);
+      throw error;
+    }
+  }
+
+  async deleteCurrency(id: number): Promise<boolean> {
+    try {
+      await db.delete(currencies).where(eq(currencies.id, id));
+      return true;
+    } catch (error) {
+      console.error("Error deleting currency:", error);
+      throw error;
+    }
+  }
+
+  async setBaseCurrency(currencyId: number): Promise<any> {
+    try {
+      // Спочатку змінимо всі валюти на не базові
+      await db.update(currencies)
+        .set({ isBase: false })
+        .where(eq(currencies.isBase, true));
+
+      // Потім встановимо нову базову валюту
+      const [updatedCurrency] = await db.update(currencies)
+        .set({ isBase: true, updatedAt: new Date() })
+        .where(eq(currencies.id, currencyId))
+        .returning();
+
+      return updatedCurrency;
+    } catch (error) {
+      console.error("Error setting base currency:", error);
+      throw error;
+    }
+  }
+
+  // Exchange rates management
+  async getExchangeRates(): Promise<any[]> {
+    try {
+      const rates = await db.select({
+        id: exchangeRateHistory.id,
+        currencyId: exchangeRateHistory.currencyId,
+        rate: exchangeRateHistory.rate,
+        createdAt: exchangeRateHistory.createdAt,
+        currency: {
+          id: currencies.id,
+          code: currencies.code,
+          name: currencies.name,
+          symbol: currencies.symbol
+        }
+      })
+      .from(exchangeRateHistory)
+      .leftJoin(currencies, eq(exchangeRateHistory.currencyId, currencies.id))
+      .orderBy(desc(exchangeRateHistory.createdAt));
+
+      return rates;
+    } catch (error) {
+      console.error("Error getting exchange rates:", error);
+      throw error;
+    }
+  }
+
+  async createExchangeRate(rateData: any): Promise<any> {
+    try {
+      const [newRate] = await db.insert(exchangeRateHistory).values(rateData).returning();
+      return newRate;
+    } catch (error) {
+      console.error("Error creating exchange rate:", error);
       throw error;
     }
   }

@@ -2964,6 +2964,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Currency API
+  app.get("/api/currencies", async (req, res) => {
+    try {
+      const currencies = await storage.getCurrencies();
+      res.json(currencies);
+    } catch (error) {
+      console.error("Failed to get currencies:", error);
+      res.status(500).json({ error: "Failed to get currencies" });
+    }
+  });
+
+  app.get("/api/currencies/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const currency = await storage.getCurrency(id);
+      if (!currency) {
+        return res.status(404).json({ error: "Currency not found" });
+      }
+      res.json(currency);
+    } catch (error) {
+      console.error("Failed to get currency:", error);
+      res.status(500).json({ error: "Failed to get currency" });
+    }
+  });
+
+  app.post("/api/currencies", async (req, res) => {
+    try {
+      const currencyData = insertCurrencySchema.parse(req.body);
+      const currency = await storage.createCurrency(currencyData);
+      res.status(201).json(currency);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid currency data", details: error.errors });
+      } else {
+        console.error("Failed to create currency:", error);
+        res.status(500).json({ error: "Failed to create currency" });
+      }
+    }
+  });
+
+  app.patch("/api/currencies/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const currencyData = insertCurrencySchema.partial().parse(req.body);
+      const currency = await storage.updateCurrency(id, currencyData);
+      if (!currency) {
+        return res.status(404).json({ error: "Currency not found" });
+      }
+      res.json(currency);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid currency data", details: error.errors });
+      } else {
+        console.error("Failed to update currency:", error);
+        res.status(500).json({ error: "Failed to update currency" });
+      }
+    }
+  });
+
+  app.delete("/api/currencies/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteCurrency(id);
+      if (success) {
+        res.json({ message: "Currency deleted successfully" });
+      } else {
+        res.status(404).json({ error: "Currency not found" });
+      }
+    } catch (error) {
+      console.error("Failed to delete currency:", error);
+      res.status(500).json({ error: "Failed to delete currency" });
+    }
+  });
+
+  app.post("/api/currencies/:id/set-base", async (req, res) => {
+    try {
+      const currencyId = parseInt(req.params.id);
+      const currency = await storage.setBaseCurrency(currencyId);
+      res.json(currency);
+    } catch (error) {
+      console.error("Failed to set base currency:", error);
+      res.status(500).json({ error: "Failed to set base currency" });
+    }
+  });
+
+  // Exchange Rates API
+  app.get("/api/exchange-rates", async (req, res) => {
+    try {
+      const rates = await storage.getExchangeRates();
+      res.json(rates);
+    } catch (error) {
+      console.error("Failed to get exchange rates:", error);
+      res.status(500).json({ error: "Failed to get exchange rates" });
+    }
+  });
+
+  app.post("/api/exchange-rates", async (req, res) => {
+    try {
+      const rateData = insertExchangeRateHistorySchema.parse(req.body);
+      const rate = await storage.createExchangeRate(rateData);
+      res.status(201).json(rate);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid exchange rate data", details: error.errors });
+      } else {
+        console.error("Failed to create exchange rate:", error);
+        res.status(500).json({ error: "Failed to create exchange rate" });
+      }
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
