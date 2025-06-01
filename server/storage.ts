@@ -338,6 +338,7 @@ export class MemStorage implements IStorage {
   private components: Map<number, Component> = new Map();
   private productComponents: Map<number, ProductComponent[]> = new Map();
   private shipments: Map<number, any> = new Map();
+  private serialNumbers: Map<number, SerialNumber> = new Map();
 
   private currentUserId = 1;
   private currentCategoryId = 1;
@@ -357,6 +358,7 @@ export class MemStorage implements IStorage {
   private currentComponentId = 1;
   private currentProductComponentId = 1;
   private currentShipmentId = 1;
+  private currentSerialNumberId = 1;
   private carriers: Map<number, Carrier> = new Map();
   private nextCarrierId = 1;
 
@@ -1160,6 +1162,83 @@ export class MemStorage implements IStorage {
 
   async deleteCarrier(id: number): Promise<boolean> {
     return this.carriers.delete(id);
+  }
+
+  // Serial Numbers methods
+  async getSerialNumbers(productId?: number, warehouseId?: number): Promise<SerialNumber[]> {
+    const allSerialNumbers = Array.from(this.serialNumbers.values());
+    
+    return allSerialNumbers.filter(serialNumber => {
+      if (productId && serialNumber.productId !== productId) return false;
+      if (warehouseId && serialNumber.warehouseId !== warehouseId) return false;
+      return true;
+    });
+  }
+
+  async getSerialNumber(id: number): Promise<SerialNumber | null> {
+    return this.serialNumbers.get(id) || null;
+  }
+
+  async createSerialNumber(data: InsertSerialNumber): Promise<SerialNumber> {
+    const serialNumber: SerialNumber = {
+      id: this.currentSerialNumberId++,
+      ...data,
+      createdAt: new Date(),
+    };
+    this.serialNumbers.set(serialNumber.id, serialNumber);
+    return serialNumber;
+  }
+
+  async updateSerialNumber(id: number, data: Partial<InsertSerialNumber>): Promise<SerialNumber | null> {
+    const serialNumber = this.serialNumbers.get(id);
+    if (!serialNumber) return null;
+    
+    const updatedSerialNumber = {
+      ...serialNumber,
+      ...data,
+    };
+    this.serialNumbers.set(id, updatedSerialNumber);
+    return updatedSerialNumber;
+  }
+
+  async deleteSerialNumber(id: number): Promise<boolean> {
+    return this.serialNumbers.delete(id);
+  }
+
+  async getAvailableSerialNumbers(productId: number): Promise<SerialNumber[]> {
+    const allSerialNumbers = Array.from(this.serialNumbers.values());
+    return allSerialNumbers.filter(sn => 
+      sn.productId === productId && sn.status === 'available'
+    );
+  }
+
+  async reserveSerialNumber(id: number, orderId: number): Promise<boolean> {
+    const serialNumber = this.serialNumbers.get(id);
+    if (!serialNumber || serialNumber.status !== 'available') return false;
+    
+    serialNumber.status = 'reserved';
+    serialNumber.orderId = orderId;
+    this.serialNumbers.set(id, serialNumber);
+    return true;
+  }
+
+  async releaseSerialNumber(id: number): Promise<boolean> {
+    const serialNumber = this.serialNumbers.get(id);
+    if (!serialNumber) return false;
+    
+    serialNumber.status = 'available';
+    serialNumber.orderId = null;
+    this.serialNumbers.set(id, serialNumber);
+    return true;
+  }
+
+  async markSerialNumberAsSold(id: number): Promise<boolean> {
+    const serialNumber = this.serialNumbers.get(id);
+    if (!serialNumber) return false;
+    
+    serialNumber.status = 'sold';
+    this.serialNumbers.set(id, serialNumber);
+    return true;
   }
 }
 
