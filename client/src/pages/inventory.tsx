@@ -76,6 +76,13 @@ export default function Inventory() {
   });
 
   const handleEditProduct = (product: any) => {
+    console.log('Editing product:', product);
+    setEditingProduct(product);
+    setShowProductForm(true);
+  };
+
+  const handleViewProduct = (product: any) => {
+    console.log('Viewing product:', product);
     setEditingProduct(product);
     setShowProductForm(true);
   };
@@ -337,7 +344,11 @@ export default function Inventory() {
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button size="sm" variant="ghost">
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => handleViewProduct(product)}
+                            >
                               <Eye className="w-4 h-4" />
                             </Button>
                             <Button size="sm" variant="ghost">
