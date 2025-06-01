@@ -169,6 +169,7 @@ export default function Carriers() {
       description: carrier.description || "",
       serviceType: carrier.serviceType || "",
       rating: carrier.rating || 5,
+      apiKey: carrier.apiKey || "",
     });
     setIsDialogOpen(true);
   };
@@ -278,6 +279,16 @@ export default function Carriers() {
                     max="10"
                     value={formData.rating}
                     onChange={(e) => setFormData({ ...formData, rating: Number(e.target.value) })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="apiKey">API ключ</Label>
+                  <Input
+                    id="apiKey"
+                    type="password"
+                    placeholder="Введіть API ключ для інтеграції"
+                    value={formData.apiKey}
+                    onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
                   />
                 </div>
               </div>
