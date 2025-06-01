@@ -510,7 +510,10 @@ class NovaPoshtaApi {
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const dateTime = tomorrow.toISOString().slice(0, 10); // YYYY-MM-DD формат
+    const day = tomorrow.getDate().toString().padStart(2, '0');
+    const month = (tomorrow.getMonth() + 1).toString().padStart(2, '0');
+    const year = tomorrow.getFullYear();
+    const dateTime = `${day}.${month}.${year}`; // DD.MM.YYYY формат для Nova Poshta
 
     const methodProperties = {
       PayerType: params.payerType,

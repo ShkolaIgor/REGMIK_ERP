@@ -377,11 +377,21 @@ export default function Shipments() {
                         const categories = new Set<string>();
                         if (orderDetails.items && Array.isArray(orderDetails.items)) {
                           console.log('Order items:', orderDetails.items);
+                          
+                          // Отримуємо список категорій для знаходження назв
+                          const categoriesResponse = await fetch('/api/categories');
+                          const allCategories = await categoriesResponse.json();
+                          console.log('All categories:', allCategories);
+                          
                           orderDetails.items.forEach((item: any) => {
                             console.log('Processing item:', item);
-                            if (item.product && item.product.category) {
-                              categories.add(item.product.category);
-                              console.log('Added category:', item.product.category);
+                            if (item.product && item.product.categoryId) {
+                              // Знаходимо категорію за ID
+                              const category = allCategories.find((cat: any) => cat.id === item.product.categoryId);
+                              if (category) {
+                                categories.add(category.name);
+                                console.log('Added category:', category.name);
+                              }
                             }
                           });
                         }
