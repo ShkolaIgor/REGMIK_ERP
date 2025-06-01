@@ -93,6 +93,9 @@ export default function Orders() {
     queryKey: ["/api/products"],
   });
 
+  // Додаємо логування для діагностики
+  console.log("Products in orders dialog:", products);
+
   // Форма для замовлення
   const form = useForm<OrderFormData>({
     resolver: zodResolver(orderSchema),
@@ -449,11 +452,17 @@ export default function Orders() {
                               <SelectValue placeholder="Оберіть товар" />
                             </SelectTrigger>
                             <SelectContent>
-                              {products.map((product: any) => (
-                                <SelectItem key={product.id} value={product.id.toString()}>
-                                  {product.name} ({product.sku})
+                              {products.length > 0 ? (
+                                products.map((product: any) => (
+                                  <SelectItem key={product.id} value={product.id.toString()}>
+                                    {product.name} ({product.sku})
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="no-products" disabled>
+                                  Немає доступних товарів
                                 </SelectItem>
-                              ))}
+                              )}
                             </SelectContent>
                           </Select>
                           
