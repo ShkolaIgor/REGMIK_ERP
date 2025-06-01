@@ -95,7 +95,7 @@ export function NovaPoshtaIntegration({
   const [recipientPhone, setRecipientPhone] = useState('');
   const [description, setDescription] = useState('');
   const [seatsAmount, setSeatsAmount] = useState('1');
-  const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [paymentMethod, setPaymentMethod] = useState('NonCash');
   const [payerType, setPayerType] = useState('Recipient');
   const [createdInvoice, setCreatedInvoice] = useState<{ number: string; cost: string } | null>(null);
   
