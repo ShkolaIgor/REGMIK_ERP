@@ -287,10 +287,34 @@ export class DatabaseStorage implements IStorage {
     // Генеруємо номер замовлення
     const orderNumber = `ORD-${Date.now()}`;
     
-    // Розраховуємо загальну суму
-    const totalAmount = items.reduce((sum, item) => {
-      return sum + (parseFloat(item.totalPrice) || 0);
-    }, 0);
+    // Отримуємо ціни товарів з бази даних та розраховуємо загальну суму
+    let totalAmount = 0;
+    const itemsWithPrices: InsertOrderItem[] = [];
+    
+    for (const item of items) {
+      // Отримуємо товар з бази даних для встановлення актуальної ціни
+      const product = await db.select().from(products).where(eq(products.id, item.productId)).limit(1);
+      
+      if (product.length > 0) {
+        const unitPrice = parseFloat(product[0].retailPrice || "0");
+        const quantity = parseFloat(item.quantity || "1");
+        const totalPrice = unitPrice * quantity;
+        
+        const itemWithPrice = {
+          ...item,
+          unitPrice: unitPrice.toString(),
+          totalPrice: totalPrice.toString()
+        };
+        
+        itemsWithPrices.push(itemWithPrice);
+        totalAmount += totalPrice;
+      } else {
+        // Якщо товар не знайдено, використовуємо передану ціну
+        const itemPrice = parseFloat(item.totalPrice || "0");
+        itemsWithPrices.push(item);
+        totalAmount += itemPrice;
+      }
+    }
 
     const orderData = {
       ...insertOrder,
@@ -301,9 +325,9 @@ export class DatabaseStorage implements IStorage {
     const orderResult = await db.insert(orders).values(orderData).returning();
     const order = orderResult[0];
 
-    if (items.length > 0) {
-      const itemsToInsert = items.map(item => ({ ...item, orderId: order.id }));
-      console.log('Inserting order items:', itemsToInsert);
+    if (itemsWithPrices.length > 0) {
+      const itemsToInsert = itemsWithPrices.map(item => ({ ...item, orderId: order.id }));
+      console.log('Inserting order items with calculated prices:', itemsToInsert);
       
       try {
         const insertResult = await db.insert(orderItems).values(itemsToInsert).returning();
@@ -315,6 +339,70 @@ export class DatabaseStorage implements IStorage {
     }
 
     return order;
+  }
+
+  async updateOrder(id: number, insertOrder: InsertOrder, items: InsertOrderItem[]): Promise<Order | undefined> {
+    try {
+      // Отримуємо ціни товарів з бази даних та розраховуємо загальну суму
+      let totalAmount = 0;
+      const itemsWithPrices: InsertOrderItem[] = [];
+      
+      for (const item of items) {
+        // Отримуємо товар з бази даних для встановлення актуальної ціни
+        const product = await db.select().from(products).where(eq(products.id, item.productId)).limit(1);
+        
+        if (product.length > 0) {
+          const unitPrice = parseFloat(product[0].retailPrice || "0");
+          const quantity = parseFloat(item.quantity || "1");
+          const totalPrice = unitPrice * quantity;
+          
+          const itemWithPrice = {
+            ...item,
+            unitPrice: unitPrice.toString(),
+            totalPrice: totalPrice.toString()
+          };
+          
+          itemsWithPrices.push(itemWithPrice);
+          totalAmount += totalPrice;
+        } else {
+          // Якщо товар не знайдено, використовуємо передану ціну
+          const itemPrice = parseFloat(item.totalPrice || "0");
+          itemsWithPrices.push(item);
+          totalAmount += itemPrice;
+        }
+      }
+
+      // Оновлюємо замовлення
+      const orderData = {
+        ...insertOrder,
+        totalAmount: totalAmount.toString(),
+      };
+
+      const orderResult = await db.update(orders)
+        .set(orderData)
+        .where(eq(orders.id, id))
+        .returning();
+
+      if (orderResult.length === 0) {
+        return undefined;
+      }
+
+      // Видаляємо старі товари замовлення
+      await db.delete(orderItems).where(eq(orderItems.orderId, id));
+
+      // Додаємо нові товари
+      if (itemsWithPrices.length > 0) {
+        const itemsToInsert = itemsWithPrices.map(item => ({ ...item, orderId: id }));
+        console.log('Updating order items with calculated prices:', itemsToInsert);
+        
+        await db.insert(orderItems).values(itemsToInsert);
+      }
+
+      return orderResult[0];
+    } catch (error) {
+      console.error('Error updating order:', error);
+      throw error;
+    }
   }
 
   async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {

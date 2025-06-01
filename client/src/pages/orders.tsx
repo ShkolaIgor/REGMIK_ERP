@@ -252,6 +252,15 @@ export default function Orders() {
   const updateOrderItem = (index: number, field: keyof OrderItemFormData, value: any) => {
     const updated = [...orderItems];
     updated[index] = { ...updated[index], [field]: value };
+    
+    // Якщо обирається товар, автоматично встановлюємо його ціну
+    if (field === "productId" && value > 0 && products) {
+      const selectedProduct = products.find((p: any) => p.id === value);
+      if (selectedProduct) {
+        updated[index].unitPrice = selectedProduct.retailPrice;
+      }
+    }
+    
     setOrderItems(updated);
   };
 
