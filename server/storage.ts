@@ -3,6 +3,7 @@ import {
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   components, productComponents, costCalculations, materialShortages, inventoryAudits, inventoryAuditItems, workers,
   packageTypes, solderingTypes, componentCategories, shipments, shipmentItems, carriers,
+  customerAddresses, senderSettings,
   type User, type UpsertUser, type Category, type InsertCategory,
   type Unit, type InsertUnit,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
@@ -34,6 +35,8 @@ import {
   type SolderingType, type InsertSolderingType,
   type ComponentAlternative, type InsertComponentAlternative,
   type Shipment, type InsertShipment,
+  type CustomerAddress, type InsertCustomerAddress,
+  type SenderSettings, type InsertSenderSettings,
   departments
 } from "@shared/schema";
 
@@ -264,6 +267,23 @@ export interface IStorage {
   createCarrier(data: InsertCarrier): Promise<Carrier>;
   updateCarrier(id: number, data: Partial<InsertCarrier>): Promise<Carrier | null>;
   deleteCarrier(id: number): Promise<boolean>;
+
+  // Customer Addresses
+  getCustomerAddresses(): Promise<CustomerAddress[]>;
+  getCustomerAddress(id: number): Promise<CustomerAddress | null>;
+  createCustomerAddress(address: InsertCustomerAddress): Promise<CustomerAddress>;
+  updateCustomerAddress(id: number, address: Partial<InsertCustomerAddress>): Promise<CustomerAddress | null>;
+  deleteCustomerAddress(id: number): Promise<boolean>;
+  setDefaultCustomerAddress(id: number): Promise<boolean>;
+
+  // Sender Settings
+  getSenderSettings(): Promise<SenderSettings[]>;
+  getSenderSetting(id: number): Promise<SenderSettings | null>;
+  createSenderSetting(setting: InsertSenderSettings): Promise<SenderSettings>;
+  updateSenderSetting(id: number, setting: Partial<InsertSenderSettings>): Promise<SenderSettings | null>;
+  deleteSenderSetting(id: number): Promise<boolean>;
+  setDefaultSenderSetting(id: number): Promise<boolean>;
+  getDefaultSenderSetting(): Promise<SenderSettings | null>;
 }
 
 export class MemStorage implements IStorage {

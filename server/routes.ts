@@ -2131,6 +2131,170 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Customer Addresses routes
+  app.get('/api/customer-addresses', async (req, res) => {
+    try {
+      const addresses = await storage.getCustomerAddresses();
+      res.json(addresses);
+    } catch (error) {
+      console.error('Failed to get customer addresses:', error);
+      res.status(500).json({ error: 'Failed to get customer addresses' });
+    }
+  });
+
+  app.get('/api/customer-addresses/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const address = await storage.getCustomerAddress(id);
+      if (!address) {
+        return res.status(404).json({ error: 'Customer address not found' });
+      }
+      res.json(address);
+    } catch (error) {
+      console.error('Failed to get customer address:', error);
+      res.status(500).json({ error: 'Failed to get customer address' });
+    }
+  });
+
+  app.post('/api/customer-addresses', async (req, res) => {
+    try {
+      const address = await storage.createCustomerAddress(req.body);
+      res.status(201).json(address);
+    } catch (error) {
+      console.error('Failed to create customer address:', error);
+      res.status(500).json({ error: 'Failed to create customer address' });
+    }
+  });
+
+  app.patch('/api/customer-addresses/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const address = await storage.updateCustomerAddress(id, req.body);
+      if (!address) {
+        return res.status(404).json({ error: 'Customer address not found' });
+      }
+      res.json(address);
+    } catch (error) {
+      console.error('Failed to update customer address:', error);
+      res.status(500).json({ error: 'Failed to update customer address' });
+    }
+  });
+
+  app.delete('/api/customer-addresses/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteCustomerAddress(id);
+      if (!success) {
+        return res.status(404).json({ error: 'Customer address not found' });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error('Failed to delete customer address:', error);
+      res.status(500).json({ error: 'Failed to delete customer address' });
+    }
+  });
+
+  app.post('/api/customer-addresses/:id/set-default', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.setDefaultCustomerAddress(id);
+      if (!success) {
+        return res.status(404).json({ error: 'Customer address not found' });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Failed to set default customer address:', error);
+      res.status(500).json({ error: 'Failed to set default customer address' });
+    }
+  });
+
+  // Sender Settings routes
+  app.get('/api/sender-settings', async (req, res) => {
+    try {
+      const settings = await storage.getSenderSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error('Failed to get sender settings:', error);
+      res.status(500).json({ error: 'Failed to get sender settings' });
+    }
+  });
+
+  app.get('/api/sender-settings/default', async (req, res) => {
+    try {
+      const defaultSetting = await storage.getDefaultSenderSetting();
+      res.json(defaultSetting);
+    } catch (error) {
+      console.error('Failed to get default sender setting:', error);
+      res.status(500).json({ error: 'Failed to get default sender setting' });
+    }
+  });
+
+  app.get('/api/sender-settings/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const setting = await storage.getSenderSetting(id);
+      if (!setting) {
+        return res.status(404).json({ error: 'Sender setting not found' });
+      }
+      res.json(setting);
+    } catch (error) {
+      console.error('Failed to get sender setting:', error);
+      res.status(500).json({ error: 'Failed to get sender setting' });
+    }
+  });
+
+  app.post('/api/sender-settings', async (req, res) => {
+    try {
+      const setting = await storage.createSenderSetting(req.body);
+      res.status(201).json(setting);
+    } catch (error) {
+      console.error('Failed to create sender setting:', error);
+      res.status(500).json({ error: 'Failed to create sender setting' });
+    }
+  });
+
+  app.patch('/api/sender-settings/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const setting = await storage.updateSenderSetting(id, req.body);
+      if (!setting) {
+        return res.status(404).json({ error: 'Sender setting not found' });
+      }
+      res.json(setting);
+    } catch (error) {
+      console.error('Failed to update sender setting:', error);
+      res.status(500).json({ error: 'Failed to update sender setting' });
+    }
+  });
+
+  app.delete('/api/sender-settings/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteSenderSetting(id);
+      if (!success) {
+        return res.status(404).json({ error: 'Sender setting not found' });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error('Failed to delete sender setting:', error);
+      res.status(500).json({ error: 'Failed to delete sender setting' });
+    }
+  });
+
+  app.post('/api/sender-settings/:id/set-default', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.setDefaultSenderSetting(id);
+      if (!success) {
+        return res.status(404).json({ error: 'Sender setting not found' });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Failed to set default sender setting:', error);
+      res.status(500).json({ error: 'Failed to set default sender setting' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
