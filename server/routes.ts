@@ -305,12 +305,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/orders", async (req, res) => {
     try {
+      console.log("Creating order with data:", JSON.stringify(req.body, null, 2));
       const { order, items } = req.body;
+      console.log("Order data:", order);
+      console.log("Items data:", items);
+      console.log("Items count:", items ? items.length : 0);
+      
       const orderData = insertOrderSchema.parse(order);
-      const createdOrder = await storage.createOrder(orderData, items);
+      const createdOrder = await storage.createOrder(orderData, items || []);
+      console.log("Created order:", createdOrder);
       res.status(201).json(createdOrder);
     } catch (error) {
+      console.error("Error creating order:", error);
       if (error instanceof z.ZodError) {
+        console.error("Validation errors:", JSON.stringify(error.errors, null, 2));
         res.status(400).json({ error: "Invalid order data", details: error.errors });
       } else {
         res.status(500).json({ error: "Failed to create order" });
@@ -333,6 +341,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(order);
     } catch (error) {
       res.status(500).json({ error: "Failed to update order status" });
+    }
+  });
+
+  app.delete("/api/orders/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteOrder(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to delete order:", error);
+      res.status(500).json({ error: "Failed to delete order" });
     }
   });
 

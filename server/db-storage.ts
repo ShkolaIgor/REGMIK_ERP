@@ -318,6 +318,20 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async deleteOrder(id: number): Promise<boolean> {
+    try {
+      // Спочатку видаляємо всі товари з замовлення
+      await db.delete(orderItems).where(eq(orderItems.orderId, id));
+      
+      // Потім видаляємо саме замовлення
+      const result = await db.delete(orders).where(eq(orders.id, id));
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      return false;
+    }
+  }
+
   // Recipes
   async getRecipes(): Promise<Recipe[]> {
     return await db.select().from(recipes);
