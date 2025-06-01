@@ -61,6 +61,7 @@ export function NovaPoshtaIntegration({
   const [cityQuery, setCityQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
   const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
+  const [warehouseQuery, setWarehouseQuery] = useState("");
   const [weight, setWeight] = useState("");
   const [cost, setCost] = useState("");
 
@@ -91,8 +92,19 @@ export function NovaPoshtaIntegration({
     enabled: !!selectedCity?.ref,
   });
 
+  // Фільтрація відділень по номеру або адресі
+  const filteredWarehouses = warehouses.filter(warehouse => {
+    if (!warehouseQuery) return true;
+    const query = warehouseQuery.toLowerCase();
+    return (
+      warehouse.number.toLowerCase().includes(query) ||
+      warehouse.shortAddress.toLowerCase().includes(query) ||
+      warehouse.description.toLowerCase().includes(query)
+    );
+  });
+
   // Дебагінг
-  console.log('Warehouses:', warehouses, 'Selected city:', selectedCity, 'Loading warehouses:', warehousesLoading);
+  console.log('Warehouses:', warehouses, 'Filtered:', filteredWarehouses, 'Query:', warehouseQuery);
 
   // Відстеження відвантаження
   const { data: trackingInfo, isLoading: trackingLoading } = useQuery<TrackingInfo>({
@@ -243,32 +255,79 @@ export function NovaPoshtaIntegration({
                   Завантаження відділень...
                 </div>
               ) : (
-                <Select onValueChange={handleWarehouseSelect}>
-                  <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="Оберіть відділення" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {warehouses.map((warehouse) => (
-                      <SelectItem key={warehouse.ref} value={warehouse.ref}>
-                        №{warehouse.number} - {warehouse.shortAddress}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div>
+                  {selectedWarehouse ? (
+                    <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium">№{selectedWarehouse.number}</p>
+                          <p className="text-sm text-gray-600">{selectedWarehouse.shortAddress}</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedWarehouse(null);
+                            setWarehouseQuery('');
+                          }}
+                        >
+                          Змінити
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <Input
+                        placeholder="Пошук по номеру відділення або адресі..."
+                        value={warehouseQuery}
+                        onChange={(e) => setWarehouseQuery(e.target.value)}
+                        className="mt-2"
+                      />
+                      {filteredWarehouses.length > 0 && (
+                        <div className="mt-2 border border-gray-200 rounded-md bg-white max-h-64 overflow-y-auto">
+                          {filteredWarehouses.map((warehouse) => (
+                            <div
+                              key={warehouse.ref}
+                              className="px-3 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                              onClick={() => {
+                                setSelectedWarehouse(warehouse);
+                                setWarehouseQuery('');
+                                if (onAddressSelect) {
+                                  onAddressSelect(
+                                    warehouse.shortAddress,
+                                    selectedCity?.ref || '',
+                                    warehouse.ref
+                                  );
+                                }
+                              }}
+                            >
+                              <div className="font-medium text-sm">
+                                №{warehouse.number}
+                              </div>
+                              <div className="text-xs text-gray-600">
+                                {warehouse.shortAddress}
+                              </div>
+                              {warehouse.phone && (
+                                <div className="text-xs text-gray-500">
+                                  {warehouse.phone}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="mt-2 text-xs text-gray-400">
+                        Всього відділень: {warehouses.length}
+                        {warehouseQuery && ` | Знайдено: ${filteredWarehouses.length}`}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}
 
-          {selectedWarehouse && (
-            <div className="p-3 bg-green-50 rounded-lg">
-              <p className="font-medium">Обрано відділення:</p>
-              <p className="text-sm">{selectedWarehouse.description}</p>
-              <p className="text-sm text-gray-600">{selectedWarehouse.shortAddress}</p>
-              {selectedWarehouse.phone && (
-                <p className="text-sm text-gray-600">Тел: {selectedWarehouse.phone}</p>
-              )}
-            </div>
-          )}
+
         </CardContent>
       </Card>
 
