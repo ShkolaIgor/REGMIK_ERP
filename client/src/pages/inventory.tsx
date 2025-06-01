@@ -37,7 +37,7 @@ export default function Inventory() {
 
   const deleteProductMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/products/${id}`);
+      await apiRequest(`/api/products/${id}`, { method: "DELETE" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
