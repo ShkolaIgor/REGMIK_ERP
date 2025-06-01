@@ -368,6 +368,7 @@ export default function Carriers() {
                 <TableHead>Телефон</TableHead>
                 <TableHead>Тип послуг</TableHead>
                 <TableHead>Рейтинг</TableHead>
+                <TableHead>Синхронізація</TableHead>
                 <TableHead>Статус</TableHead>
                 <TableHead>Дії</TableHead>
               </TableRow>
@@ -392,6 +393,29 @@ export default function Carriers() {
                       <span className="text-sm text-gray-500 ml-1">
                         ({carrier.rating || 0})
                       </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {carrier.citiesCount && carrier.warehousesCount ? (
+                        <>
+                          <div className="text-green-600 font-medium">
+                            Міста: {carrier.citiesCount.toLocaleString()}
+                          </div>
+                          <div className="text-blue-600 font-medium">
+                            Відділення: {carrier.warehousesCount.toLocaleString()}
+                          </div>
+                          {carrier.lastSyncAt && (
+                            <div className="text-gray-500 text-xs">
+                              {new Date(carrier.lastSyncAt).toLocaleString('uk-UA')}
+                            </div>
+                          )}
+                        </>
+                      ) : carrier.apiKey ? (
+                        <span className="text-yellow-600">Потребує синхронізації</span>
+                      ) : (
+                        <span className="text-gray-400">API ключ не налаштований</span>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -437,7 +461,7 @@ export default function Carriers() {
               ))}
               {carriers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
+                  <TableCell colSpan={9} className="text-center py-8">
                     Немає перевізників для відображення
                   </TableCell>
                 </TableRow>
