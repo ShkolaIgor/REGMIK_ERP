@@ -539,11 +539,6 @@ export default function Orders() {
                   <Button 
                     type="submit" 
                     disabled={isEditMode ? updateOrderMutation.isPending : createOrderMutation.isPending}
-                    onClick={() => {
-                      console.log("Submit button clicked");
-                      console.log("Form errors:", form.formState.errors);
-                      console.log("Form values:", form.getValues());
-                    }}
                   >
                     {isEditMode 
                       ? (updateOrderMutation.isPending ? "Оновлення..." : "Оновити замовлення")
