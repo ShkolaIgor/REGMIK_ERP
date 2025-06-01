@@ -202,7 +202,7 @@ export function NovaPoshtaIntegration({
                   </div>
                 )}
                 {filteredCities.length > 0 && cityQuery.length >= 2 && !selectedCity && (
-                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto overflow-x-hidden autocomplete-dropdown">
+                  <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto overflow-x-hidden autocomplete-dropdown">
                     {filteredCities.map((city) => (
                       <div
                         key={city.ref}

@@ -123,23 +123,32 @@
   .autocomplete-dropdown {
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 #f8fafc;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
   }
 
   .autocomplete-dropdown::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
 
   .autocomplete-dropdown::-webkit-scrollbar-track {
-    background: #f8fafc;
-    border-radius: 3px;
+    background: #f1f5f9;
+    border-radius: 4px;
   }
 
   .autocomplete-dropdown::-webkit-scrollbar-thumb {
     background: #cbd5e1;
-    border-radius: 3px;
+    border-radius: 4px;
+    border: 1px solid #f1f5f9;
   }
 
   .autocomplete-dropdown::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
+  }
+
+  /* Забезпечуємо правильний скролінг в діалозі */
+  [data-radix-dialog-content] .autocomplete-dropdown {
+    position: relative !important;
+    z-index: 9999 !important;
   }
 }
