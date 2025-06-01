@@ -836,6 +836,46 @@ export type InsertShipment = z.infer<typeof insertShipmentSchema>;
 export type ShipmentItem = typeof shipmentItems.$inferSelect;
 export type InsertShipmentItem = z.infer<typeof insertShipmentItemSchema>;
 
+// Нова Пошта - Міста
+export const novaPoshtaCities = pgTable("nova_poshta_cities", {
+  id: serial("id").primaryKey(),
+  ref: varchar("ref").notNull().unique(), // UUID від Нової Пошти
+  name: varchar("name").notNull(),
+  area: varchar("area").notNull(),
+  region: varchar("region"),
+  lastUpdated: timestamp("last_updated").defaultNow(),
+});
+
+// Нова Пошта - Відділення
+export const novaPoshtaWarehouses = pgTable("nova_poshta_warehouses", {
+  id: serial("id").primaryKey(),
+  ref: varchar("ref").notNull().unique(), // UUID від Нової Пошти
+  cityRef: varchar("city_ref").notNull().references(() => novaPoshtaCities.ref),
+  description: text("description").notNull(),
+  descriptionRu: text("description_ru"),
+  shortAddress: varchar("short_address"),
+  phone: varchar("phone"),
+  schedule: text("schedule"),
+  number: varchar("number"),
+  placeMaxWeightAllowed: integer("place_max_weight_allowed"),
+  lastUpdated: timestamp("last_updated").defaultNow(),
+});
+
+export const insertNovaPoshtaCitySchema = createInsertSchema(novaPoshtaCities).omit({ 
+  id: true, 
+  lastUpdated: true 
+});
+
+export const insertNovaPoshtaWarehouseSchema = createInsertSchema(novaPoshtaWarehouses).omit({ 
+  id: true, 
+  lastUpdated: true 
+});
+
+export type NovaPoshtaCity = typeof novaPoshtaCities.$inferSelect;
+export type InsertNovaPoshtaCity = z.infer<typeof insertNovaPoshtaCitySchema>;
+export type NovaPoshtaWarehouse = typeof novaPoshtaWarehouses.$inferSelect;
+export type InsertNovaPoshtaWarehouse = z.infer<typeof insertNovaPoshtaWarehouseSchema>;
+
 // User types for Replit Auth
 export type User = typeof users.$inferSelect;
 export type UpsertUser = typeof users.$inferInsert;

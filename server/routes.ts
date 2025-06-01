@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { dbStorage as storage } from "./db-storage";
 import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./simple-auth";
 import { novaPoshtaApi } from "./nova-poshta-api";
+import { novaPoshtaCache } from "./nova-poshta-cache";
 import { 
   insertProductSchema, insertOrderSchema, insertRecipeSchema,
   insertProductionTaskSchema, insertCategorySchema, insertUnitSchema, insertWarehouseSchema,
