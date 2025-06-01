@@ -362,6 +362,12 @@ export default function Orders() {
       return;
     }
 
+    // Функція для конвертації дати з datetime-local у ISO формат
+    const parseDateForServer = (dateString: string) => {
+      if (!dateString) return null;
+      return new Date(dateString).toISOString();
+    };
+
     const orderData = {
       order: {
         customerName: data.customerName,
@@ -369,6 +375,9 @@ export default function Orders() {
         customerPhone: data.customerPhone || null,
         status: data.status,
         notes: data.notes || null,
+        paymentDate: parseDateForServer(data.paymentDate || ""),
+        dueDate: parseDateForServer(data.dueDate || ""),
+        shippedDate: parseDateForServer(data.shippedDate || ""),
       },
       items: orderItems.map(item => ({
         productId: item.productId,
