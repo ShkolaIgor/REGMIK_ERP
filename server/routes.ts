@@ -3095,6 +3095,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Production Planning API routes
+  app.get("/api/production-plans", async (req, res) => {
+    try {
+      const plans = await storage.getProductionPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error("Error fetching production plans:", error);
+      res.status(500).json({ error: "Failed to fetch production plans" });
+    }
+  });
+
+  app.post("/api/production-plans", async (req, res) => {
+    try {
+      const planData = req.body;
+      const plan = await storage.createProductionPlan(planData);
+      res.status(201).json(plan);
+    } catch (error) {
+      console.error("Error creating production plan:", error);
+      res.status(500).json({ error: "Failed to create production plan" });
+    }
+  });
+
+  // Supply Decision API routes
+  app.get("/api/supply-decisions", async (req, res) => {
+    try {
+      const decisions = await storage.getSupplyDecisions();
+      res.json(decisions);
+    } catch (error) {
+      console.error("Error fetching supply decisions:", error);
+      res.status(500).json({ error: "Failed to fetch supply decisions" });
+    }
+  });
+
+  app.post("/api/analyze-supply/:productId", async (req, res) => {
+    try {
+      const productId = parseInt(req.params.productId);
+      const { requiredQuantity } = req.body;
+      const decision = await storage.analyzeSupplyDecision(productId, requiredQuantity);
+      res.json(decision);
+    } catch (error) {
+      console.error("Error analyzing supply decision:", error);
+      res.status(500).json({ error: "Failed to analyze supply decision" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

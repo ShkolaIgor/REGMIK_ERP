@@ -20,6 +20,9 @@ import type { Category, InsertCategory } from "@shared/schema";
 interface ProductCategoryFormData {
   name: string;
   description: string;
+  categoryType: string;
+  isManufactureable: boolean;
+  defaultLeadTime: number;
 }
 
 export default function ProductCategories() {
