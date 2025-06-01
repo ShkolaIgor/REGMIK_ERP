@@ -100,6 +100,7 @@ export default function Shipments() {
     orderId: "",
     carrierId: "",
     shippingAddress: "",
+    recipientName: "",
     recipientPhone: "",
     weight: "",
     length: "",
@@ -252,6 +253,7 @@ export default function Shipments() {
       orderId: "",
       carrierId: "",
       shippingAddress: "",
+      recipientName: "",
       recipientPhone: "",
       weight: "",
       length: "",
@@ -287,6 +289,7 @@ export default function Shipments() {
 
     if (formData.carrierId) cleanData.carrierId = parseInt(formData.carrierId);
     if (formData.shippingAddress) cleanData.shippingAddress = formData.shippingAddress;
+    if (formData.recipientName) cleanData.recipientName = formData.recipientName;
     if (formData.recipientPhone) cleanData.recipientPhone = formData.recipientPhone;
     if (formData.weight) cleanData.weight = formData.weight;
     if (formData.length) cleanData.length = formData.length;
@@ -359,6 +362,7 @@ export default function Shipments() {
                         ...prev, 
                         shippingAddress: `${order.customerName}\n${order.customerEmail || ''}`,
                         recipientPhone: order.customerPhone || "",
+                        recipientName: order.customerName,
                         declaredValue: order.totalAmount || ""
                       }));
                     }
@@ -668,13 +672,14 @@ export default function Shipments() {
                               orderId: shipment.orderId.toString(),
                               carrierId: shipment.carrierId?.toString() || "",
                               shippingAddress: shipment.shippingAddress,
-                              recipientPhone: "",
+                              recipientName: shipment.recipientName || "",
+                              recipientPhone: shipment.recipientPhone || "",
                               weight: shipment.weight || "",
                               length: shipment.length || "",
                               width: shipment.width || "",
                               height: shipment.height || "",
                               shippingCost: shipment.shippingCost || "",
-                              declaredValue: "",
+                              declaredValue: shipment.declaredValue || "",
                               estimatedDelivery: shipment.estimatedDelivery 
                                 ? new Date(shipment.estimatedDelivery).toISOString().split('T')[0] 
                                 : "",
