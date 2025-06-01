@@ -72,10 +72,19 @@ export default function BOMPage() {
     enabled: true
   });
 
-  // Fetch all products for selection as components
+  // Fetch all components and semi-finished products for selection
   const { data: availableComponents, isLoading: isLoadingAvailableComponents } = useQuery({
     queryKey: ["/api/products"],
-    enabled: true
+    enabled: true,
+    select: (data: any[]) => {
+      // Фільтруємо тільки компоненти та полуфабрикати
+      return data?.filter((item: any) => 
+        item.productType === "компонент" || 
+        item.productType === "полуфабрикат" ||
+        item.productType === "component" ||
+        item.productType === "semi-finished"
+      ) || [];
+    }
   });
 
   // Fetch components for selected product
