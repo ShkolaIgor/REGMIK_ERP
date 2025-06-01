@@ -3050,9 +3050,18 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async createProductionTaskFromOrder(productId: number, quantity: number, notes?: string): Promise<ProductionTask> {
+  async createProductionTaskFromOrder(productId: number, quantity: number, notes?: string): Promise<any> {
     try {
-      // Знаходимо рецепт для продукту
+      // Знаходимо продукт та його рецепт
+      const product = await db.select()
+        .from(products)
+        .where(eq(products.id, productId))
+        .limit(1);
+
+      if (product.length === 0) {
+        throw new Error(`Продукт з ID ${productId} не знайдено`);
+      }
+
       const recipe = await db.select()
         .from(recipes)
         .where(eq(recipes.productId, productId))
@@ -3062,20 +3071,30 @@ export class DatabaseStorage implements IStorage {
         throw new Error(`Рецепт для продукту з ID ${productId} не знайдено`);
       }
 
-      // Створюємо завдання на виробництво
-      const [newTask] = await db.insert(productionTasks).values({
+      // Генеруємо номер замовлення
+      const orderNumber = `MFG-${Date.now()}`;
+
+      // Створюємо замовлення на виробництво
+      const [newOrder] = await db.insert(manufacturingOrders).values({
+        orderNumber: orderNumber,
+        productId: productId,
         recipeId: recipe[0].id,
-        quantity: quantity,
+        plannedQuantity: quantity.toString(),
+        producedQuantity: '0',
+        unit: product[0].unit,
         status: 'pending',
         priority: 'high',
-        assignedTo: 'Система',
+        materialCost: '0.00',
+        laborCost: '0.00',
+        overheadCost: '0.00',
+        totalCost: '0.00',
         notes: notes || `Автоматично створено для замовлення. Потрібно виготовити: ${quantity} шт.`,
         createdAt: new Date()
       }).returning();
 
-      return newTask;
+      return newOrder;
     } catch (error) {
-      console.error("Error creating production task from order:", error);
+      console.error("Error creating manufacturing order from production request:", error);
       throw error;
     }
   }

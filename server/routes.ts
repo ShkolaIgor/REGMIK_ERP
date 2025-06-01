@@ -2661,6 +2661,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/manufacturing-orders", async (req, res) => {
+    try {
+      const orders = await storage.getManufacturingOrders();
+      res.json(orders);
+    } catch (error) {
+      console.error("Failed to get manufacturing orders:", error);
+      res.status(500).json({ error: "Failed to get manufacturing orders" });
+    }
+  });
+
   app.get("/api/manufacturing-orders/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
