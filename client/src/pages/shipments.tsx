@@ -266,6 +266,7 @@ export default function Shipments() {
       carrierId: formData.carrierId ? parseInt(formData.carrierId) : null,
       weight: formData.weight ? parseFloat(formData.weight) : null,
       shippingCost: formData.shippingCost ? parseFloat(formData.shippingCost) : null,
+      declaredValue: formData.declaredValue ? parseFloat(formData.declaredValue) : null,
       estimatedDelivery: formData.estimatedDelivery ? new Date(formData.estimatedDelivery) : null,
     };
 
@@ -604,7 +605,7 @@ export default function Shipments() {
                               weight: shipment.weight || "",
                               dimensions: shipment.dimensions || "",
                               shippingCost: shipment.shippingCost || "",
-                              declaredValue: shipment.declaredValue || "",
+                              declaredValue: "",
                               estimatedDelivery: shipment.estimatedDelivery 
                                 ? new Date(shipment.estimatedDelivery).toISOString().split('T')[0] 
                                 : "",

@@ -183,7 +183,7 @@ export function NovaPoshtaIntegration({
 
   // Функція створення накладної
   const createInvoice = async () => {
-    if (!selectedCity || !selectedWarehouse || !recipientName || !recipientPhone) return;
+    if (!selectedCity || !selectedWarehouse || !recipientName || !recipientPhone || !externalWeight || !externalDeclaredValue) return;
     
     try {
       const response = await fetch('/api/nova-poshta/create-invoice', {
@@ -195,10 +195,10 @@ export function NovaPoshtaIntegration({
           recipientName,
           recipientPhone,
           description,
-          weight: parseFloat(weight),
-          cost: parseFloat(cost),
+          weight: parseFloat(externalWeight),
+          cost: parseFloat(externalDeclaredValue),
           seatsAmount: parseInt(seatsAmount),
-          paymentMethod,
+          paymentMethod: 'Cash',
           payerType: 'Sender'
         })
       });
