@@ -318,6 +318,14 @@ export interface IStorage {
   reserveSerialNumber(id: number, orderId: number): Promise<boolean>;
   releaseSerialNumber(id: number): Promise<boolean>;
   markSerialNumberAsSold(id: number): Promise<boolean>;
+
+  // Production Planning
+  getProductionPlans(): Promise<any[]>;
+  createProductionPlan(plan: any): Promise<any>;
+  
+  // Supply Decisions
+  getSupplyDecisions(): Promise<any[]>;
+  analyzeSupplyDecision(productId: number, requiredQuantity: number): Promise<any>;
 }
 
 export class MemStorage implements IStorage {
@@ -1240,6 +1248,66 @@ export class MemStorage implements IStorage {
     serialNumber.status = 'sold';
     this.serialNumbers.set(id, serialNumber);
     return true;
+  }
+
+  // Production Planning методи
+  async getProductionPlans(): Promise<any[]> {
+    // Повертаємо порожній масив для тестування
+    return [];
+  }
+
+  async createProductionPlan(plan: any): Promise<any> {
+    const newPlan = {
+      id: Date.now(),
+      ...plan,
+      createdAt: new Date(),
+      status: plan.status || 'planned'
+    };
+    return newPlan;
+  }
+
+  // Supply Decision методи
+  async getSupplyDecisions(): Promise<any[]> {
+    // Повертаємо порожній масив для тестування
+    return [];
+  }
+
+  async analyzeSupplyDecision(productId: number, requiredQuantity: number): Promise<any> {
+    // Простий аналіз для тестування
+    const product = this.products.get(productId);
+    if (!product) {
+      throw new Error(`Продукт з ID ${productId} не знайдено`);
+    }
+
+    // Перевіряємо запаси
+    const stockLevel = Array.from(this.inventory.values())
+      .filter(inv => inv.productId === productId)
+      .reduce((total, inv) => total + inv.quantity, 0);
+
+    let decision = {
+      id: Date.now(),
+      productId,
+      requiredQuantity,
+      stockLevel,
+      decisionType: 'manufacture',
+      manufactureQuantity: requiredQuantity,
+      purchaseQuantity: 0,
+      decisionReason: 'Стандартне рішення - виготовити',
+      status: 'approved'
+    };
+
+    if (stockLevel >= requiredQuantity) {
+      decision.decisionType = 'use_stock';
+      decision.manufactureQuantity = 0;
+      decision.decisionReason = 'Достатньо запасів на складі';
+    } else if (stockLevel > 0) {
+      const shortfall = requiredQuantity - stockLevel;
+      decision.decisionType = 'partial_manufacture';
+      decision.manufactureQuantity = shortfall;
+      decision.decisionReason = `Використати ${stockLevel} зі складу, виготовити ${shortfall}`;
+    }
+
+    return decision;
   }
 }
 
