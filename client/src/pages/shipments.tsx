@@ -260,20 +260,37 @@ export default function Shipments() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const data = {
-      ...formData,
+    
+    // Перевіряємо обов'язкові поля
+    if (!formData.orderId) {
+      toast({
+        title: "Помилка",
+        description: "Оберіть замовлення",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Очищуємо дані від пустих рядків та правильно типізуємо
+    const cleanData: any = {
       orderId: parseInt(formData.orderId),
-      carrierId: formData.carrierId ? parseInt(formData.carrierId) : null,
-      weight: formData.weight ? parseFloat(formData.weight) : null,
-      shippingCost: formData.shippingCost ? parseFloat(formData.shippingCost) : null,
-      declaredValue: formData.declaredValue ? parseFloat(formData.declaredValue) : null,
-      estimatedDelivery: formData.estimatedDelivery ? new Date(formData.estimatedDelivery) : null,
+      status: "preparing"
     };
 
+    if (formData.carrierId) cleanData.carrierId = parseInt(formData.carrierId);
+    if (formData.shippingAddress) cleanData.shippingAddress = formData.shippingAddress;
+    if (formData.weight) cleanData.weight = formData.weight;
+    if (formData.dimensions) cleanData.dimensions = formData.dimensions;
+    if (formData.shippingCost) cleanData.shippingCost = formData.shippingCost;
+    if (formData.declaredValue) cleanData.declaredValue = formData.declaredValue;
+    if (formData.estimatedDelivery) cleanData.estimatedDelivery = formData.estimatedDelivery;
+    if (formData.notes) cleanData.notes = formData.notes;
+    if (formData.trackingNumber) cleanData.trackingNumber = formData.trackingNumber;
+
     if (editingShipment) {
-      updateMutation.mutate(data);
+      updateMutation.mutate(cleanData);
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(cleanData);
     }
   };
 

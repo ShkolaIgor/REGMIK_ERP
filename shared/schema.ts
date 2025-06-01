@@ -341,18 +341,9 @@ export const insertShipmentSchema = createInsertSchema(shipments).omit({
   id: true, 
   createdAt: true,
   shipmentNumber: true 
-}).extend({
-  // Робимо всі поля опціональними, крім orderId
-  orderId: z.number().min(1),
-  carrierId: z.number().optional(),
-  senderName: z.string().optional(),
-  senderPhone: z.string().optional(),
-  recipientName: z.string().optional(),
-  recipientPhone: z.string().optional(),
-  weight: z.string().optional(),
-  shippingCost: z.string().optional(),
-  declaredValue: z.string().optional(),
-  status: z.string().optional()
+}).partial().extend({
+  // Обов'язкове поле
+  orderId: z.number().min(1, "Замовлення обов'язкове")
 });
 
 export const insertShipmentItemSchema = createInsertSchema(shipmentItems).omit({ 
