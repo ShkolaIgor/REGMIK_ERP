@@ -14,7 +14,8 @@ import {
   insertWorkerSchema, insertProductionForecastSchema,
   insertWarehouseTransferSchema, insertPositionSchema, insertDepartmentSchema,
   insertPackageTypeSchema, insertSolderingTypeSchema, insertComponentAlternativeSchema, insertComponentCategorySchema,
-  insertShipmentSchema, insertManufacturingOrderSchema, insertManufacturingOrderMaterialSchema, insertManufacturingStepSchema
+  insertShipmentSchema, insertManufacturingOrderSchema, insertManufacturingOrderMaterialSchema, insertManufacturingStepSchema,
+  insertCurrencySchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -2461,6 +2462,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Failed to set default sender setting:', error);
       res.status(500).json({ error: 'Failed to set default sender setting' });
+    }
+  });
+
+  // Currency routes
+  app.get("/api/currencies", async (req, res) => {
+    try {
+      const currencies = await storage.getCurrencies();
+      res.json(currencies);
+    } catch (error) {
+      console.error("Error fetching currencies:", error);
+      res.status(500).json({ error: "Failed to get currencies" });
+    }
+  });
+
+  app.get("/api/currencies/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const currency = await storage.getCurrency(id);
+      if (!currency) {
+        return res.status(404).json({ error: "Currency not found" });
+      }
+      res.json(currency);
+    } catch (error) {
+      console.error("Error fetching currency:", error);
+      res.status(500).json({ error: "Failed to get currency" });
+    }
+  });
+
+  app.post("/api/currencies", async (req, res) => {
+    try {
+      const currencyData = insertCurrencySchema.parse(req.body);
+      const currency = await storage.createCurrency(currencyData);
+      res.status(201).json(currency);
+    } catch (error) {
+      console.error("Error creating currency:", error);
+      res.status(500).json({ error: "Failed to create currency" });
+    }
+  });
+
+  app.patch("/api/currencies/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const currencyData = insertCurrencySchema.partial().parse(req.body);
+      const currency = await storage.updateCurrency(id, currencyData);
+      if (!currency) {
+        return res.status(404).json({ error: "Currency not found" });
+      }
+      res.json(currency);
+    } catch (error) {
+      console.error("Error updating currency:", error);
+      res.status(500).json({ error: "Failed to update currency" });
+    }
+  });
+
+  app.delete("/api/currencies/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteCurrency(id);
+      if (!success) {
+        return res.status(404).json({ error: "Currency not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting currency:", error);
+      res.status(500).json({ error: "Failed to delete currency" });
+    }
+  });
+
+  app.post("/api/currencies/:id/set-base", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const currency = await storage.setBaseCurrency(id);
+      if (!currency) {
+        return res.status(404).json({ error: "Currency not found" });
+      }
+      res.json(currency);
+    } catch (error) {
+      console.error("Error setting base currency:", error);
+      res.status(500).json({ error: "Failed to set base currency" });
+    }
+  });
+
+  app.get("/api/exchange-rates/latest", async (req, res) => {
+    try {
+      const rates = await storage.getLatestExchangeRates();
+      res.json(rates);
+    } catch (error) {
+      console.error("Error fetching exchange rates:", error);
+      res.status(500).json({ error: "Failed to get exchange rates" });
+    }
+  });
+
+  app.post("/api/exchange-rates/update", async (req, res) => {
+    try {
+      const rates = await storage.updateExchangeRates();
+      res.json(rates);
+    } catch (error) {
+      console.error("Error updating exchange rates:", error);
+      res.status(500).json({ error: "Failed to update exchange rates" });
     }
   });
 

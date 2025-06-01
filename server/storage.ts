@@ -3,7 +3,7 @@ import {
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   components, productComponents, costCalculations, materialShortages, inventoryAudits, inventoryAuditItems, workers,
   packageTypes, solderingTypes, componentCategories, shipments, shipmentItems, carriers,
-  customerAddresses, senderSettings,
+  customerAddresses, senderSettings, currencies, exchangeRateHistory,
   type User, type UpsertUser, type Category, type InsertCategory,
   type Unit, type InsertUnit,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
@@ -37,6 +37,7 @@ import {
   type Shipment, type InsertShipment,
   type CustomerAddress, type InsertCustomerAddress,
   type SenderSettings, type InsertSenderSettings,
+  type Currency, type InsertCurrency, type ExchangeRateHistory,
   departments
 } from "@shared/schema";
 
@@ -286,6 +287,16 @@ export interface IStorage {
   deleteSenderSetting(id: number): Promise<boolean>;
   setDefaultSenderSetting(id: number): Promise<boolean>;
   getDefaultSenderSetting(): Promise<SenderSettings | null>;
+
+  // Currencies
+  getCurrencies(): Promise<Currency[]>;
+  getCurrency(id: number): Promise<Currency | null>;
+  createCurrency(currency: InsertCurrency): Promise<Currency>;
+  updateCurrency(id: number, currency: Partial<InsertCurrency>): Promise<Currency | null>;
+  deleteCurrency(id: number): Promise<boolean>;
+  setBaseCurrency(id: number): Promise<Currency | null>;
+  getLatestExchangeRates(): Promise<ExchangeRateHistory[]>;
+  updateExchangeRates(): Promise<ExchangeRateHistory[]>;
 }
 
 export class MemStorage implements IStorage {
