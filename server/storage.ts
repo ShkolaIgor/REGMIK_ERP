@@ -77,7 +77,7 @@ export interface IStorage {
   updateInventory(productId: number, warehouseId: number, quantity: number): Promise<Inventory | undefined>;
 
   // Orders
-  getOrders(): Promise<Order[]>;
+  getOrders(): Promise<(Order & { items: (OrderItem & { product: Product })[] })[]>;
   getOrder(id: number): Promise<(Order & { items: (OrderItem & { product: Product })[] }) | undefined>;
   createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order>;
   updateOrder(id: number, order: InsertOrder, items: InsertOrderItem[]): Promise<Order | undefined>;

@@ -259,8 +259,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Orders
-  async getOrders(): Promise<Order[]> {
-    return await db.select().from(orders);
+  async getOrders(): Promise<(Order & { items: (OrderItem & { product: Product })[] })[]> {
+    const ordersResult = await db.select().from(orders);
+    
+    const ordersWithItems = await Promise.all(
+      ordersResult.map(async (order) => {
+        const itemsResult = await db.select({
+          id: orderItems.id,
+          orderId: orderItems.orderId,
+          productId: orderItems.productId,
+          quantity: orderItems.quantity,
+          unitPrice: orderItems.unitPrice,
+          totalPrice: orderItems.totalPrice,
+          product: products
+        })
+        .from(orderItems)
+        .leftJoin(products, eq(orderItems.productId, products.id))
+        .where(eq(orderItems.orderId, order.id));
+
+        const items = itemsResult.filter(item => item.product) as (OrderItem & { product: Product })[];
+        
+        return { ...order, items };
+      })
+    );
+    
+    return ordersWithItems;
   }
 
   async getOrder(id: number): Promise<(Order & { items: (OrderItem & { product: Product })[] }) | undefined> {

@@ -213,6 +213,7 @@ export default function Orders() {
 
   // Функція для початку редагування замовлення
   const handleEditOrder = (order: any) => {
+    console.log("Editing order:", order);
     setEditingOrder(order);
     setIsEditMode(true);
     
@@ -227,11 +228,15 @@ export default function Orders() {
 
     // Заповнюємо товари замовлення
     if (order.items) {
+      console.log("Order items:", order.items);
       setOrderItems(order.items.map((item: any) => ({
         productId: item.productId,
         quantity: item.quantity.toString(),
         unitPrice: item.unitPrice.toString(),
       })));
+    } else {
+      console.log("No items in order");
+      setOrderItems([]);
     }
     
     setIsDialogOpen(true);
@@ -444,22 +449,27 @@ export default function Orders() {
                     <div className="space-y-3">
                       {orderItems.map((item, index) => (
                         <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg">
-                          <select
+                          <Select
                             value={item.productId > 0 ? item.productId.toString() : ""}
-                            onChange={(e) => updateOrderItem(index, "productId", parseInt(e.target.value))}
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            onValueChange={(value) => updateOrderItem(index, "productId", parseInt(value))}
                           >
-                            <option value="">Оберіть товар</option>
-                            {products.length > 0 ? (
-                              products.map((product: any) => (
-                                <option key={product.id} value={product.id.toString()}>
-                                  {product.name} ({product.sku})
-                                </option>
-                              ))
-                            ) : (
-                              <option disabled>Немає доступних товарів</option>
-                            )}
-                          </select>
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="Оберіть товар" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {products.length > 0 ? (
+                                products.map((product: any) => (
+                                  <SelectItem key={product.id} value={product.id.toString()}>
+                                    {product.name} ({product.sku})
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="no-products" disabled>
+                                  Немає доступних товарів
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
                           
                           <Input
                             placeholder="Кількість"
