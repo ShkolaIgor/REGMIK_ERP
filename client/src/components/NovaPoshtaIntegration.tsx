@@ -76,13 +76,11 @@ export function NovaPoshtaIntegration({
     staleTime: 5 * 60 * 1000, // Кеш на 5 хвилин
   });
 
-  // Фільтрація міст за запитом
-  const filteredCities = cities.filter(city => 
-    city.name.toLowerCase().includes(cityQuery.toLowerCase())
-  ); // Показуємо всі результати
+  // Використовуємо результати сервера без додаткової фільтрації
+  const filteredCities = cities;
 
   // Дебагінг
-  console.log('Filtered cities:', filteredCities, 'Query:', cityQuery, 'Loading:', citiesLoading);
+  console.log('Cities from server:', filteredCities, 'Query:', cityQuery, 'Loading:', citiesLoading);
 
   // Отримання відділень для обраного міста
   const { data: warehouses = [], isLoading: warehousesLoading } = useQuery<Warehouse[]>({

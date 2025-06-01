@@ -45,7 +45,7 @@ class NovaPoshtaCache {
     return allCities.filter(city => 
       city.name.toLowerCase().includes(lowerQuery) ||
       city.area.toLowerCase().includes(lowerQuery)
-    ).slice(0, 100);
+    ).slice(0, 500); // Збільшуємо ліміт для більш повних результатів
   }
 
   async getWarehouses(cityRef: string): Promise<CachedWarehouse[]> {
