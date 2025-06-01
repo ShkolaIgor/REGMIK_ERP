@@ -2195,16 +2195,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Отримуємо деталі замовлення для опису відправлення
       let orderDescription = 'Товар';
+      console.log('Order ID for description:', orderId);
+      
       if (orderId) {
         try {
           const order = await storage.getOrder(parseInt(orderId));
+          console.log('Found order for description:', order);
+          
           if (order && order.items && order.items.length > 0) {
-            const itemNames = order.items.map(item => item.product?.name || 'Товар').join(', ');
+            const itemNames = order.items.map(item => {
+              console.log('Processing item:', item);
+              return item.product?.name || 'Товар';
+            }).join(', ');
             orderDescription = itemNames.length > 100 ? itemNames.substring(0, 97) + '...' : itemNames;
+            console.log('Generated order description:', orderDescription);
+          } else {
+            console.log('Order has no items or order not found');
           }
         } catch (error) {
           console.error('Error getting order details for description:', error);
         }
+      } else {
+        console.log('No order ID provided');
       }
 
       // Використовуємо опис з позицій замовлення
