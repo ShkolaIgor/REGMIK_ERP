@@ -273,6 +273,12 @@ export default function Shipments() {
     updateStatusMutation.mutate({ id: shipmentId, status: newStatus });
   };
 
+  const handleDelete = (id: number, shipmentNumber: string) => {
+    if (window.confirm(`Ви впевнені, що хочете видалити відвантаження ${shipmentNumber}?`)) {
+      deleteMutation.mutate(id);
+    }
+  };
+
   const filteredShipments = shipments.filter((shipment: Shipment) =>
     shipment.shipmentNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
     shipment.order?.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -556,29 +562,39 @@ export default function Shipments() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setEditingShipment(shipment);
-                          setFormData({
-                            orderId: shipment.orderId.toString(),
-                            carrierId: shipment.carrierId?.toString() || "",
-                            shippingAddress: shipment.shippingAddress,
-                            weight: shipment.weight || "",
-                            dimensions: shipment.dimensions || "",
-                            shippingCost: shipment.shippingCost || "",
-                            estimatedDelivery: shipment.estimatedDelivery 
-                              ? new Date(shipment.estimatedDelivery).toISOString().split('T')[0] 
-                              : "",
-                            trackingNumber: shipment.trackingNumber || "",
-                            notes: shipment.notes || ""
-                          });
-                          setIsDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingShipment(shipment);
+                            setFormData({
+                              orderId: shipment.orderId.toString(),
+                              carrierId: shipment.carrierId?.toString() || "",
+                              shippingAddress: shipment.shippingAddress,
+                              weight: shipment.weight || "",
+                              dimensions: shipment.dimensions || "",
+                              shippingCost: shipment.shippingCost || "",
+                              estimatedDelivery: shipment.estimatedDelivery 
+                                ? new Date(shipment.estimatedDelivery).toISOString().split('T')[0] 
+                                : "",
+                              trackingNumber: shipment.trackingNumber || "",
+                              notes: shipment.notes || ""
+                            });
+                            setIsDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(shipment.id, shipment.shipmentNumber)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
