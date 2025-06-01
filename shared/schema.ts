@@ -1042,12 +1042,10 @@ export const currencies = pgTable("currencies", {
   id: serial("id").primaryKey(),
   code: varchar("code", { length: 3 }).notNull().unique(), // USD, EUR, UAH, etc.
   name: varchar("name", { length: 100 }).notNull(), // US Dollar, Euro, Ukrainian Hryvnia
-  symbol: varchar("symbol", { length: 10 }).notNull(), // $, €, ₴
-  isBaseCurrency: boolean("is_base_currency").default(false), // Базова валюта системи
-  isActive: boolean("is_active").default(true),
+  symbol: varchar("symbol", { length: 10 }), // $, €, ₴
   decimalPlaces: integer("decimal_places").default(2), // Кількість знаків після коми
-  exchangeRate: decimal("exchange_rate", { precision: 15, scale: 6 }).default("1.000000"), // Курс до базової валюти
-  lastUpdated: timestamp("last_updated").defaultNow(),
+  isBase: boolean("is_base").default(false), // Базова валюта системи
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -1055,10 +1053,8 @@ export const currencies = pgTable("currencies", {
 // Історія курсів валют
 export const exchangeRateHistory = pgTable("exchange_rate_history", {
   id: serial("id").primaryKey(),
-  currencyId: integer("currency_id").notNull().references(() => currencies.id),
+  currencyId: integer("currency_id").notNull().references(() => currencies.id, { onDelete: "cascade" }),
   rate: decimal("rate", { precision: 15, scale: 6 }).notNull(),
-  effectiveDate: timestamp("effective_date").notNull().defaultNow(),
-  source: varchar("source", { length: 100 }), // manual, api, bank
   createdAt: timestamp("created_at").defaultNow(),
 });
 

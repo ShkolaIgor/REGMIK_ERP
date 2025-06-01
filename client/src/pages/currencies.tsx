@@ -20,10 +20,9 @@ import type { Currency, InsertCurrency } from "@shared/schema";
 const currencyFormSchema = z.object({
   code: z.string().min(3).max(3).toUpperCase(),
   name: z.string().min(1, "Назва валюти обов'язкова"),
-  symbol: z.string().min(1, "Символ валюти обов'язковий"),
-  exchangeRate: z.string().min(1, "Курс обміну обов'язковий"),
+  symbol: z.string().optional(),
   decimalPlaces: z.number().min(0).max(6).default(2),
-  isBaseCurrency: z.boolean().default(false),
+  isBase: z.boolean().default(false),
   isActive: z.boolean().default(true),
 });
 
@@ -48,9 +47,8 @@ export default function CurrenciesPage() {
       code: "",
       name: "",
       symbol: "",
-      exchangeRate: "1.000000",
       decimalPlaces: 2,
-      isBaseCurrency: false,
+      isBase: false,
       isActive: true,
     },
   });
@@ -401,10 +399,10 @@ export default function CurrenciesPage() {
                     <TableCell>{currency.name}</TableCell>
                     <TableCell>{currency.symbol}</TableCell>
                     <TableCell>
-                      {currency.isBaseCurrency ? (
-                        <Badge variant="outline">1.000000 (база)</Badge>
+                      {currency.isBase ? (
+                        <Badge variant="outline">Базова валюта</Badge>
                       ) : (
-                        currency.exchangeRate
+                        "—"
                       )}
                     </TableCell>
                     <TableCell>
