@@ -298,7 +298,6 @@ export const productComponents = pgTable("product_components", {
   id: serial("id").primaryKey(),
   parentProductId: integer("parent_product_id").references(() => products.id).notNull(),
   componentProductId: integer("component_product_id").references(() => products.id),
-  componentId: integer("component_id").references(() => components.id),
   quantity: decimal("quantity", { precision: 10, scale: 4 }).notNull(),
   unit: text("unit").notNull().default("шт"),
   isOptional: boolean("is_optional").default(false),

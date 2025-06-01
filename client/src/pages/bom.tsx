@@ -43,7 +43,7 @@ type ProductComponent = {
 const componentFormSchema = insertProductComponentSchema.extend({
   quantity: z.string().min(1, "Кількість обов'язкова"),
   unit: z.string().min(1, "Одиниця виміру обов'язкова")
-}).omit({ componentProductId: true });
+});
 
 type ComponentFormData = z.infer<typeof componentFormSchema>;
 
@@ -58,7 +58,7 @@ export default function BOMPage() {
     resolver: zodResolver(componentFormSchema),
     defaultValues: {
       parentProductId: 0,
-      componentId: 0,
+      componentProductId: 0,
       quantity: "",
       unit: "шт",
       isOptional: false,
@@ -72,9 +72,9 @@ export default function BOMPage() {
     enabled: true
   });
 
-  // Fetch all components for selection
+  // Fetch all products for selection as components
   const { data: availableComponents, isLoading: isLoadingAvailableComponents } = useQuery({
-    queryKey: ["/api/components"],
+    queryKey: ["/api/products"],
     enabled: true
   });
 
@@ -382,7 +382,7 @@ export default function BOMPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="componentId"
+                name="componentProductId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Компонент</FormLabel>
