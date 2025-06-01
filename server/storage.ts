@@ -89,6 +89,7 @@ export interface IStorage {
   getRecipes(): Promise<Recipe[]>;
   getRecipe(id: number): Promise<(Recipe & { ingredients: (RecipeIngredient & { product: Product })[] }) | undefined>;
   createRecipe(recipe: InsertRecipe, ingredients: InsertRecipeIngredient[]): Promise<Recipe>;
+  updateRecipe(id: number, recipe: Partial<InsertRecipe>, ingredients?: InsertRecipeIngredient[]): Promise<Recipe | undefined>;
 
   // Production Tasks
   getProductionTasks(): Promise<(ProductionTask & { recipe: Recipe })[]>;

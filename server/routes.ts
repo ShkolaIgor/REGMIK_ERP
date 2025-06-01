@@ -434,6 +434,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/recipes/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { recipe, ingredients } = req.body;
+      const recipeData = insertRecipeSchema.partial().parse(recipe);
+      const updatedRecipe = await storage.updateRecipe(id, recipeData, ingredients);
+      if (!updatedRecipe) {
+        return res.status(404).json({ error: "Recipe not found" });
+      }
+      res.json(updatedRecipe);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid recipe data", details: error.errors });
+      } else {
+        console.error("Failed to update recipe:", error);
+        res.status(500).json({ error: "Failed to update recipe" });
+      }
+    }
+  });
+
   // Production Tasks
   app.get("/api/production-tasks", async (req, res) => {
     try {

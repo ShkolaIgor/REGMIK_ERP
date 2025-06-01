@@ -46,10 +46,25 @@ export default function Recipes() {
   const createMutation = useMutation({
     mutationFn: async (data: { recipe: InsertRecipe; ingredients: RecipeIngredientForm[] }) => {
       try {
-        const result = await apiRequest('POST', '/api/recipes', data);
-        return result;
+        if (editingRecipe) {
+          // Оновлення існуючого рецепту
+          const result = await apiRequest({
+            url: `/api/recipes/${editingRecipe.id}`,
+            method: 'PATCH',
+            body: data
+          });
+          return result;
+        } else {
+          // Створення нового рецепту
+          const result = await apiRequest({
+            url: '/api/recipes',
+            method: 'POST',
+            body: data
+          });
+          return result;
+        }
       } catch (error) {
-        console.error("Recipe creation error:", error);
+        console.error("Recipe creation/update error:", error);
         throw error;
       }
     },
@@ -59,7 +74,7 @@ export default function Recipes() {
       resetForm();
       toast({
         title: "Успіх",
-        description: "Рецепт успішно створено",
+        description: editingRecipe ? "Рецепт успішно оновлено" : "Рецепт успішно створено",
       });
     },
     onError: (error) => {
@@ -384,10 +399,32 @@ export default function Recipes() {
                       <TableCell>{formatDate(recipe.createdAt)}</TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
-                          <Button size="sm" variant="ghost">
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => {
+                              setViewingRecipe(recipe);
+                              setIsViewOpen(true);
+                            }}
+                          >
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button size="sm" variant="ghost">
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => {
+                              setEditingRecipe(recipe);
+                              setFormData({
+                                name: recipe.name,
+                                description: recipe.description || "",
+                                instructions: recipe.instructions || "",
+                                productId: recipe.productId,
+                                estimatedTime: recipe.estimatedTime,
+                                laborCost: recipe.laborCost
+                              });
+                              setIsCreateOpen(true);
+                            }}
+                          >
                             <Edit className="w-4 h-4" />
                           </Button>
                         </div>

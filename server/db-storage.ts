@@ -484,6 +484,29 @@ export class DatabaseStorage implements IStorage {
     return recipe;
   }
 
+  async updateRecipe(id: number, updateData: Partial<InsertRecipe>, ingredients?: InsertRecipeIngredient[]): Promise<Recipe | undefined> {
+    const recipeResult = await db.update(recipes)
+      .set(updateData)
+      .where(eq(recipes.id, id))
+      .returning();
+
+    if (recipeResult.length === 0) return undefined;
+
+    if (ingredients) {
+      // Видаляємо існуючі інгредієнти
+      await db.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, id));
+      
+      // Додаємо нові інгредієнти
+      if (ingredients.length > 0) {
+        await db.insert(recipeIngredients).values(
+          ingredients.map(ingredient => ({ ...ingredient, recipeId: id }))
+        );
+      }
+    }
+
+    return recipeResult[0];
+  }
+
   // Production Tasks
   async getProductionTasks(): Promise<(ProductionTask & { recipe: Recipe })[]> {
     const result = await db.select({
