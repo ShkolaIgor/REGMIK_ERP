@@ -302,23 +302,39 @@ export default function Shipments() {
     return Object.keys(errors).length === 0;
   };
 
-  // Ефект для автоматичної валідації при зміні перевізника або полів
+  // Ефект для автоматичної валідації при зміні перевізника
   useEffect(() => {
+    if (!carriers || carriers.length === 0) return;
+    
     const selectedCarrier = (carriers as Carrier[])?.find((c: Carrier) => c.id.toString() === formData.carrierId);
     const isNovaPoshta = selectedCarrier && (selectedCarrier.name.toLowerCase().includes('нова пошта') || selectedCarrier.name.toLowerCase().includes('nova poshta'));
     
-    const errors: Record<string, boolean> = {};
-    
     if (isNovaPoshta) {
+      // Тільки встановлюємо помилки, не очищуємо їх автоматично
+      const errors: Record<string, boolean> = {};
       if (!formData.weight) errors.weight = true;
       if (!formData.declaredValue) errors.declaredValue = true;
       if (!formData.length) errors.length = true;
       if (!formData.width) errors.width = true;
       if (!formData.height) errors.height = true;
+      setFieldErrors(errors);
+    } else {
+      setFieldErrors({});
     }
-    
-    setFieldErrors(errors);
-  }, [formData.carrierId, formData.weight, formData.declaredValue, formData.length, formData.width, formData.height, carriers]);
+  }, [formData.carrierId, carriers]);
+
+  // Ефект для очищення помилок при заповненні полів
+  useEffect(() => {
+    if (Object.keys(fieldErrors).length > 0) {
+      const newErrors = { ...fieldErrors };
+      if (formData.weight && newErrors.weight) delete newErrors.weight;
+      if (formData.declaredValue && newErrors.declaredValue) delete newErrors.declaredValue;
+      if (formData.length && newErrors.length) delete newErrors.length;
+      if (formData.width && newErrors.width) delete newErrors.width;
+      if (formData.height && newErrors.height) delete newErrors.height;
+      setFieldErrors(newErrors);
+    }
+  }, [formData.weight, formData.declaredValue, formData.length, formData.width, formData.height]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -410,13 +426,13 @@ export default function Shipments() {
               Створити відвантаження
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden">
+          <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle>
                 {editingShipment ? "Редагувати відвантаження" : "Нове відвантаження"}
               </DialogTitle>
             </DialogHeader>
-            <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
+            <div className="max-h-[calc(95vh-120px)] overflow-y-auto pr-4">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                 <Label htmlFor="orderId">Замовлення</Label>
