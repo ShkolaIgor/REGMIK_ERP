@@ -287,6 +287,7 @@ export default function Shipments() {
 
     if (formData.carrierId) cleanData.carrierId = parseInt(formData.carrierId);
     if (formData.shippingAddress) cleanData.shippingAddress = formData.shippingAddress;
+    if (formData.recipientPhone) cleanData.recipientPhone = formData.recipientPhone;
     if (formData.weight) cleanData.weight = formData.weight;
     if (formData.length) cleanData.length = formData.length;
     if (formData.width) cleanData.width = formData.width;
