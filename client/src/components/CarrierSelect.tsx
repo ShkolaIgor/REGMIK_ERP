@@ -59,7 +59,7 @@ export function CarrierSelect({ value, onValueChange, placeholder = "Обері�
           </SelectItem>
         ))}
         {activeCarriers.length === 0 && (
-          <SelectItem value="" disabled>
+          <SelectItem value="no-carriers" disabled>
             Немає доступних перевізників
           </SelectItem>
         )}
