@@ -276,6 +276,10 @@ export default function Orders() {
   };
 
   const handleSubmit = (data: OrderFormData) => {
+    console.log("Handle submit called with data:", data);
+    console.log("Order items:", orderItems);
+    console.log("Is edit mode:", isEditMode);
+    
     // Перевіряємо, чи додані товари
     if (orderItems.length === 0) {
       toast({
