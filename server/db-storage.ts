@@ -302,9 +302,16 @@ export class DatabaseStorage implements IStorage {
     const order = orderResult[0];
 
     if (items.length > 0) {
-      await db.insert(orderItems).values(
-        items.map(item => ({ ...item, orderId: order.id }))
-      );
+      const itemsToInsert = items.map(item => ({ ...item, orderId: order.id }));
+      console.log('Inserting order items:', itemsToInsert);
+      
+      try {
+        const insertResult = await db.insert(orderItems).values(itemsToInsert).returning();
+        console.log('Order items inserted successfully:', insertResult);
+      } catch (error) {
+        console.error('Error inserting order items:', error);
+        throw error;
+      }
     }
 
     return order;
