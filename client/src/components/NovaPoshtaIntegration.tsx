@@ -156,7 +156,7 @@ export function NovaPoshtaIntegration({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="relative">
+          <div>
             <label className="text-sm font-medium">Пошук міста</label>
             {selectedCity ? (
               <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md flex items-center justify-between">
@@ -174,7 +174,7 @@ export function NovaPoshtaIntegration({
                 </Button>
               </div>
             ) : (
-              <>
+              <div className="relative">
                 <Input
                   placeholder="Введіть назву міста..."
                   value={cityQuery}
@@ -188,7 +188,7 @@ export function NovaPoshtaIntegration({
                   </div>
                 )}
                 {cities.length > 0 && cityQuery.length >= 2 && !selectedCity && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
                     {cities.map((city) => (
                       <div
                         key={city.ref}
@@ -204,7 +204,13 @@ export function NovaPoshtaIntegration({
                     ))}
                   </div>
                 )}
-              </>
+                {/* Дебагінг інформація */}
+                {cityQuery.length >= 2 && !citiesLoading && (
+                  <div className="mt-2 text-xs text-gray-400">
+                    Знайдено: {cities.length} міст для "{cityQuery}"
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
