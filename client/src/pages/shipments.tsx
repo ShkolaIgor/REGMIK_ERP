@@ -121,6 +121,11 @@ export default function Shipments() {
     }
   });
 
+  // Завантаження перевізників
+  const { data: carriers = [] } = useQuery({
+    queryKey: ["/api/carriers"],
+  });
+
   // Мутація створення відвантаження
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -425,25 +430,30 @@ export default function Shipments() {
                 />
               </div>
 
-              {/* Інтеграція з Новою Поштою */}
-              <div className="border-t pt-4">
-                <h3 className="text-lg font-medium mb-4">Інтеграція з Новою Поштою</h3>
-                <NovaPoshtaIntegration
-                  onAddressSelect={(address, cityRef, warehouseRef) => {
-                    setFormData(prev => ({ 
-                      ...prev, 
-                      shippingAddress: address 
-                    }));
-                  }}
-                  onCostCalculated={(cost) => {
-                    setFormData(prev => ({ 
-                      ...prev, 
-                      shippingCost: cost.Cost 
-                    }));
-                  }}
-                  trackingNumber={formData.trackingNumber}
-                />
-              </div>
+              {/* Інтеграція з Новою Поштою - показується тільки при виборі Нової Пошти */}
+              {(() => {
+                const selectedCarrier = carriers.find((c: any) => c.id.toString() === formData.carrierId);
+                return selectedCarrier && selectedCarrier.name.toLowerCase().includes('нова пошта') ? (
+                  <div className="border-t pt-4">
+                    <h3 className="text-lg font-medium mb-4">Інтеграція з Новою Поштою</h3>
+                    <NovaPoshtaIntegration
+                      onAddressSelect={(address, cityRef, warehouseRef) => {
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          shippingAddress: address 
+                        }));
+                      }}
+                      onCostCalculated={(cost) => {
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          shippingCost: cost.Cost 
+                        }));
+                      }}
+                      trackingNumber={formData.trackingNumber}
+                    />
+                  </div>
+                ) : null;
+              })()}
 
               <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
