@@ -285,6 +285,7 @@ export default function Orders() {
   };
 
   const handleSubmit = (data: OrderFormData) => {
+    console.log("=== FORM SUBMIT STARTED ===");
     console.log("Handle submit called with data:", data);
     console.log("Order items:", orderItems);
     console.log("Is edit mode:", isEditMode);
