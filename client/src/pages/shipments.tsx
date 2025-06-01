@@ -521,7 +521,7 @@ export default function Shipments() {
               {/* Інтеграція з Новою Поштою - показується тільки при виборі Нової Пошти */}
               {(() => {
                 const selectedCarrier = (carriers as Carrier[])?.find((c: Carrier) => c.id.toString() === formData.carrierId);
-                return selectedCarrier && selectedCarrier.name.toLowerCase().includes('нова пошта') ? (
+                return selectedCarrier && (selectedCarrier.name.toLowerCase().includes('нова пошта') || selectedCarrier.name.toLowerCase().includes('nova poshta')) ? (
                   <div className="border-t pt-4">
                     <h3 className="text-lg font-medium mb-4">Інтеграція з Новою Поштою</h3>
                     <NovaPoshtaIntegration
