@@ -26,7 +26,8 @@ import {
   BarChart3,
   Ruler,
   DollarSign,
-  QrCode
+  QrCode,
+  Mail
 } from "lucide-react";
 
 interface LayoutProps {
@@ -100,7 +101,8 @@ const navigationItems = [
   {
     title: "Адміністрування",
     items: [
-      { name: "Управління користувачами", href: "/users", icon: Users }
+      { name: "Управління користувачами", href: "/users", icon: Users },
+      { name: "Налаштування email", href: "/email-settings", icon: Mail }
     ]
   }
 ];
