@@ -66,6 +66,11 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
     duration: 0,
     equipment: "",
     notes: "",
+    departmentId: undefined,
+    positionId: undefined,
+    canRunParallel: false,
+    prerequisiteSteps: [],
+    executionOrder: 1,
   });
   const [newMaterial, setNewMaterial] = useState<MaterialFormData>({
     productId: 0,
@@ -410,6 +415,7 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                {/* Основні поля кроку */}
                 <div className="grid grid-cols-12 gap-2">
                   <Input
                     className="col-span-3"
@@ -441,6 +447,56 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                   </Button>
                 </div>
 
+                {/* Додаткові поля для паралельного виконання */}
+                <div className="grid grid-cols-12 gap-2">
+                  <div className="col-span-3">
+                    <select
+                      className="w-full h-9 px-3 py-1 text-sm border border-input bg-background rounded-md"
+                      value={newStep.departmentId || ""}
+                      onChange={(e) => setNewStep({...newStep, departmentId: e.target.value ? parseInt(e.target.value) : undefined})}
+                    >
+                      <option value="">Дільниця (опційно)</option>
+                      {departments.map((dept: any) => (
+                        <option key={dept.id} value={dept.id}>{dept.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-span-3">
+                    <select
+                      className="w-full h-9 px-3 py-1 text-sm border border-input bg-background rounded-md"
+                      value={newStep.positionId || ""}
+                      onChange={(e) => setNewStep({...newStep, positionId: e.target.value ? parseInt(e.target.value) : undefined})}
+                    >
+                      <option value="">Посада (опційно)</option>
+                      {positions.map((pos: any) => (
+                        <option key={pos.id} value={pos.id}>{pos.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-span-2 flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="canRunParallel"
+                      checked={newStep.canRunParallel}
+                      onChange={(e) => setNewStep({...newStep, canRunParallel: e.target.checked})}
+                    />
+                    <label htmlFor="canRunParallel" className="text-sm">Паралельно</label>
+                  </div>
+                  <Input
+                    className="col-span-2"
+                    type="number"
+                    placeholder="Порядок"
+                    value={newStep.executionOrder || ""}
+                    onChange={(e) => setNewStep({...newStep, executionOrder: parseInt(e.target.value) || 1})}
+                  />
+                  <Input
+                    className="col-span-2"
+                    placeholder="Нотатки"
+                    value={newStep.notes}
+                    onChange={(e) => setNewStep({...newStep, notes: e.target.value})}
+                  />
+                </div>
+
                 {steps.length > 0 && (
                   <Table>
                     <TableHeader>
@@ -449,19 +505,28 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                         <TableHead>Назва</TableHead>
                         <TableHead>Опис</TableHead>
                         <TableHead>Час</TableHead>
-                        <TableHead>Обладнання</TableHead>
+                        <TableHead>Дільниця</TableHead>
+                        <TableHead>Посада</TableHead>
+                        <TableHead>Паралельно</TableHead>
+                        <TableHead>Порядок</TableHead>
                         <TableHead>Дії</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {steps.map((step, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{step.stepNumber}</TableCell>
-                          <TableCell>{step.title}</TableCell>
-                          <TableCell className="max-w-[200px] truncate">{step.description}</TableCell>
-                          <TableCell>{step.duration} хв</TableCell>
-                          <TableCell>{step.equipment}</TableCell>
-                          <TableCell>
+                      {steps.map((step, index) => {
+                        const department = departments.find((d: any) => d.id === step.departmentId);
+                        const position = positions.find((p: any) => p.id === step.positionId);
+                        return (
+                          <TableRow key={index}>
+                            <TableCell>{step.stepNumber}</TableCell>
+                            <TableCell>{step.title}</TableCell>
+                            <TableCell className="max-w-[200px] truncate">{step.description}</TableCell>
+                            <TableCell>{step.duration} хв</TableCell>
+                            <TableCell>{department?.name || "-"}</TableCell>
+                            <TableCell>{position?.name || "-"}</TableCell>
+                            <TableCell>{step.canRunParallel ? "✓" : "-"}</TableCell>
+                            <TableCell>{step.executionOrder}</TableCell>
+                            <TableCell>
                             <div className="flex gap-1">
                               <Button
                                 type="button"
@@ -493,9 +558,10 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 )}
