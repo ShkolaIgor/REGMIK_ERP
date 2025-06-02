@@ -1062,12 +1062,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateMaterialShortage(id: number, shortageData: Partial<InsertMaterialShortage>): Promise<MaterialShortage | undefined> {
-    const result = await db.update(materialShortages)
-      .set({ ...shortageData, updatedAt: new Date() })
-      .where(eq(materialShortages.id, id))
-      .returning();
-    
-    return result[0];
+    try {
+      console.log('Updating material shortage:', { id, shortageData });
+      const result = await db.update(materialShortages)
+        .set({ ...shortageData, updatedAt: new Date() })
+        .where(eq(materialShortages.id, id))
+        .returning();
+      
+      console.log('Update result:', result[0]);
+      return result[0];
+    } catch (error) {
+      console.error('Error updating material shortage:', error);
+      throw error;
+    }
   }
 
   async deleteMaterialShortage(id: number): Promise<boolean> {
