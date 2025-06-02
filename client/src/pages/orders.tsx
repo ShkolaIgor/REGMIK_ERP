@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
-import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package } from "lucide-react";
+import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -88,6 +89,8 @@ export default function Orders() {
   const [orderItems, setOrderItems] = useState<OrderItemFormData[]>([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingOrder, setEditingOrder] = useState<any>(null);
+  const [isPartialShipmentOpen, setIsPartialShipmentOpen] = useState(false);
+  const [selectedOrderForShipment, setSelectedOrderForShipment] = useState<Order | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -409,8 +412,15 @@ export default function Orders() {
       case 'processing': return 'В обробці';
       case 'completed': return 'Завершено';
       case 'cancelled': return 'Скасовано';
+      case 'partially_shipped': return 'Частково відвантажено';
+      case 'shipped': return 'Відвантажено';
       default: return status;
     }
+  };
+
+  const handlePartialShipment = (order: Order) => {
+    setSelectedOrderForShipment(order);
+    setIsPartialShipmentOpen(true);
   };
 
   if (isLoading) {
@@ -850,14 +860,26 @@ export default function Orders() {
                               <Truck className="w-4 h-4" />
                             </Button>
                           ) : (
-                            <Button 
-                              size="sm" 
-                              variant="ghost"
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                              onClick={() => handleShipOrder(order)}
-                            >
-                              <Truck className="w-4 h-4" />
-                            </Button>
+                            <>
+                              <Button 
+                                size="sm" 
+                                variant="ghost"
+                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                onClick={() => handleShipOrder(order)}
+                                title="Повне відвантаження"
+                              >
+                                <Truck className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="ghost"
+                                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                onClick={() => handlePartialShipment(order)}
+                                title="Часткове відвантаження"
+                              >
+                                <Package className="w-4 h-4" />
+                              </Button>
+                            </>
                           )}
                           <Button 
                             size="sm" 
