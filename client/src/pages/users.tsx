@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit, Trash2, Eye, UserCheck, UserX, Shield, Key, Settings } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, UserCheck, UserX, Shield, Key, Settings, Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
@@ -26,6 +29,7 @@ export default function Users() {
   const [editingUser, setEditingUser] = useState<LocalUser | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [openWorkerCombobox, setOpenWorkerCombobox] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -315,31 +319,60 @@ export default function Users() {
                   control={createForm.control}
                   name="workerId"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="flex flex-col">
                       <FormLabel>Робітник</FormLabel>
-                      <Select onValueChange={(value) => {
-                        field.onChange(value ? parseInt(value) : undefined);
-                        const worker = availableWorkers?.find((w: any) => w.id === parseInt(value));
-                        if (worker) {
-                          createForm.setValue("email", worker.email || "");
-                          createForm.setValue("username", worker.firstName && worker.lastName 
-                            ? `${worker.firstName.toLowerCase()}.${worker.lastName.toLowerCase()}`
-                            : "");
-                        }
-                      }} value={field.value?.toString() || ""}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Виберіть робітника" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {availableWorkers?.map((worker: any) => (
-                            <SelectItem key={worker.id} value={worker.id.toString()}>
-                              {worker.firstName} {worker.lastName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Popover open={openWorkerCombobox} onOpenChange={setOpenWorkerCombobox}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={openWorkerCombobox}
+                              className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value
+                                ? availableWorkers?.find((worker: any) => worker.id === field.value)
+                                  ? `${availableWorkers.find((worker: any) => worker.id === field.value)?.firstName} ${availableWorkers.find((worker: any) => worker.id === field.value)?.lastName}`
+                                  : "Виберіть робітника"
+                                : "Виберіть робітника"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0">
+                          <Command>
+                            <CommandInput placeholder="Пошук робітника..." />
+                            <CommandEmpty>Робітника не знайдено.</CommandEmpty>
+                            <CommandGroup>
+                              {availableWorkers?.map((worker: any) => (
+                                <CommandItem
+                                  key={worker.id}
+                                  value={`${worker.firstName} ${worker.lastName}`}
+                                  onSelect={() => {
+                                    field.onChange(worker.id);
+                                    createForm.setValue("email", worker.email || "");
+                                    createForm.setValue("username", worker.firstName && worker.lastName 
+                                      ? `${worker.firstName.toLowerCase()}.${worker.lastName.toLowerCase()}`
+                                      : "");
+                                    setOpenWorkerCombobox(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      field.value === worker.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {worker.firstName} {worker.lastName}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
