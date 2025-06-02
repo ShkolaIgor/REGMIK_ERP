@@ -630,7 +630,7 @@ export default function Users() {
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <CardTitle className="text-base truncate">
-                    {user.firstName} {user.lastName}
+                    {user.worker?.firstName} {user.worker?.lastName}
                   </CardTitle>
                   <div className="text-sm text-muted-foreground truncate">
                     @{user.username}
