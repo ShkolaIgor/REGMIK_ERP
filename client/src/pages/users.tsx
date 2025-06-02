@@ -16,6 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertLocalUserSchema, changePasswordSchema, type LocalUser, type InsertLocalUser, type ChangePassword } from "@shared/schema";
+import { z } from "zod";
 
 export default function Users() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -175,7 +176,18 @@ export default function Users() {
   });
 
   const editForm = useForm<Partial<InsertLocalUser>>({
-    resolver: zodResolver(insertLocalUserSchema.omit({ password: true, confirmPassword: true })),
+    resolver: zodResolver(
+      z.object({
+        username: z.string().min(1, "Ім'я користувача обов'язкове"),
+        email: z.string().email("Невірний формат email").optional(),
+        firstName: z.string().optional(),
+        lastName: z.string().optional(),
+        phone: z.string().optional(),
+        role: z.string().default("user"),
+        isActive: z.boolean().default(true),
+        permissions: z.record(z.any()).optional(),
+      })
+    ),
     defaultValues: {
       username: "",
       email: "",

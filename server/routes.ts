@@ -15,8 +15,10 @@ import {
   insertWarehouseTransferSchema, insertPositionSchema, insertDepartmentSchema,
   insertPackageTypeSchema, insertSolderingTypeSchema, insertComponentAlternativeSchema, insertComponentCategorySchema,
   insertShipmentSchema, insertManufacturingOrderSchema, insertManufacturingOrderMaterialSchema, insertManufacturingStepSchema,
-  insertCurrencySchema, insertSerialNumberSchema, insertExchangeRateHistorySchema
+  insertCurrencySchema, insertSerialNumberSchema, insertExchangeRateHistorySchema,
+  insertLocalUserSchema, insertRoleSchema, insertSystemModuleSchema, changePasswordSchema
 } from "@shared/schema";
+import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -3226,6 +3228,189 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error analyzing supply decision:", error);
       res.status(500).json({ error: "Failed to analyze supply decision" });
+    }
+  });
+
+  // Local Users API
+  app.get("/api/users", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const users = await storage.getLocalUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  app.get("/api/users/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = await storage.getLocalUser(id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
+  });
+
+  app.post("/api/users", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const userData = insertLocalUserSchema.parse(req.body);
+      
+      // Hash password
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      userData.password = hashedPassword;
+      
+      const user = await storage.createLocalUser(userData);
+      res.status(201).json(user);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid user data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create user" });
+      }
+    }
+  });
+
+  app.patch("/api/users/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userData = req.body;
+      
+      // Remove password fields from update data
+      delete userData.password;
+      delete userData.confirmPassword;
+      
+      const user = await storage.updateLocalUser(id, userData);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
+  app.delete("/api/users/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteLocalUser(id);
+      if (!success) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ error: "Failed to delete user" });
+    }
+  });
+
+  app.patch("/api/users/:id/toggle-status", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { isActive } = req.body;
+      
+      const user = await storage.toggleUserStatus(id, isActive);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      console.error("Error toggling user status:", error);
+      res.status(500).json({ error: "Failed to toggle user status" });
+    }
+  });
+
+  app.post("/api/users/:id/change-password", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const passwordData = changePasswordSchema.parse(req.body);
+      
+      // Get current user to verify current password
+      const user = await storage.getLocalUser(id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Verify current password
+      const isCurrentPasswordValid = await bcrypt.compare(passwordData.currentPassword, user.password);
+      if (!isCurrentPasswordValid) {
+        return res.status(400).json({ error: "Current password is incorrect" });
+      }
+      
+      // Hash new password
+      const hashedNewPassword = await bcrypt.hash(passwordData.newPassword, 10);
+      
+      const success = await storage.changeUserPassword(id, hashedNewPassword);
+      if (!success) {
+        return res.status(500).json({ error: "Failed to change password" });
+      }
+      
+      res.json({ message: "Password changed successfully" });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid password data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to change password" });
+      }
+    }
+  });
+
+  // Roles API
+  app.get("/api/roles", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const roles = await storage.getRoles();
+      res.json(roles);
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+      res.status(500).json({ error: "Failed to fetch roles" });
+    }
+  });
+
+  app.post("/api/roles", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const roleData = insertRoleSchema.parse(req.body);
+      const role = await storage.createRole(roleData);
+      res.status(201).json(role);
+    } catch (error) {
+      console.error("Error creating role:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid role data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create role" });
+      }
+    }
+  });
+
+  // System Modules API
+  app.get("/api/system-modules", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const modules = await storage.getSystemModules();
+      res.json(modules);
+    } catch (error) {
+      console.error("Error fetching system modules:", error);
+      res.status(500).json({ error: "Failed to fetch system modules" });
+    }
+  });
+
+  app.post("/api/system-modules", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const moduleData = insertSystemModuleSchema.parse(req.body);
+      const module = await storage.createSystemModule(moduleData);
+      res.status(201).json(module);
+    } catch (error) {
+      console.error("Error creating system module:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid module data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create system module" });
+      }
     }
   });
 
