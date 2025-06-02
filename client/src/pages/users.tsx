@@ -298,6 +298,8 @@ export default function Users() {
   };
 
   const handlePermissions = (user: LocalUser) => {
+    console.log("Opening permissions dialog for user:", user.id);
+    console.log("User permissions from data:", user.permissions);
     setEditingUser(user);
     setUserPermissions(user.permissions || {});
     setShowPermissionsDialog(true);
