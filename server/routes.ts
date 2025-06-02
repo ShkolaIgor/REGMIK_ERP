@@ -3231,14 +3231,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Local Users API
+  // Local Users API with Worker Integration
   app.get("/api/users", isSimpleAuthenticated, async (req, res) => {
     try {
-      const users = await storage.getLocalUsers();
+      const users = await storage.getLocalUsersWithWorkers();
       res.json(users);
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  // Get workers available for user creation (not yet assigned to a user)
+  app.get("/api/workers/available-for-users", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const workers = await storage.getWorkersAvailableForUsers();
+      res.json(workers);
+    } catch (error) {
+      console.error("Error fetching available workers:", error);
+      res.status(500).json({ error: "Failed to fetch available workers" });
     }
   });
 
