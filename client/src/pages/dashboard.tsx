@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LineChart, DoughnutChart } from "@/components/Charts";
+import { useAuth } from "@/hooks/useAuth";
 
 import { useState } from "react";
 import { 
@@ -13,13 +14,15 @@ import {
   Scan, 
   Plus, 
   ShoppingCartIcon,
-  Printer
+  Printer,
+  User
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 
 export default function Dashboard() {
   const [showScanner, setShowScanner] = useState(false);
+  const { user } = useAuth();
 
   const handleBarcodeScanned = (product: any) => {
     console.log("Product found:", product);
@@ -88,8 +91,24 @@ export default function Dashboard() {
               <Plus className="w-4 h-4 mr-2" />
               Нове замовлення
             </Button>
-            <div className="flex items-center space-x-2">
-              <span className="text-gray-700">Олексій Петренко</span>
+            <div className="flex items-center space-x-3">
+              {user?.profileImageUrl ? (
+                <img
+                  src={user.profileImageUrl}
+                  alt={`${user.firstName || user.username}`}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                  <User className="w-4 h-4 text-blue-600" />
+                </div>
+              )}
+              <span className="text-gray-700 font-medium">
+                {user?.firstName && user?.lastName 
+                  ? `${user.firstName} ${user.lastName}`
+                  : user?.username || 'Користувач'
+                }
+              </span>
             </div>
           </div>
         </div>
