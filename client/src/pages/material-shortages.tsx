@@ -207,9 +207,14 @@ export default function MaterialShortagesPage() {
 
   // Обробники подій
   const handleSubmit = (data: FormData) => {
+    console.log('Form submitted with data:', data);
+    console.log('Editing shortage:', editingShortage);
+    
     if (editingShortage) {
+      console.log('Calling updateMutation with:', { id: editingShortage.id, data });
       updateMutation.mutate({ id: editingShortage.id, data });
     } else {
+      console.log('Calling createMutation with:', data);
       createMutation.mutate(data);
     }
   };
