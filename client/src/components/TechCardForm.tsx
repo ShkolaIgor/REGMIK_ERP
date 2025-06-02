@@ -128,7 +128,14 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
   });
 
   const onSubmit = (data: TechCardFormData) => {
+    console.log("Form submitted with data:", data);
+    console.log("Form validation errors:", form.formState.errors);
+    console.log("Steps:", steps);
+    console.log("Materials:", materials);
+    
     const fullData = { ...data, steps, materials };
+    console.log("Full data to be sent:", fullData);
+    
     if (techCard) {
       updateMutation.mutate(fullData);
     } else {
