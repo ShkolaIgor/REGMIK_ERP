@@ -185,8 +185,11 @@ export default function Users() {
       });
     },
     onSuccess: () => {
+      console.log("Permissions updated successfully, invalidating cache");
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       setShowPermissionsDialog(false);
+      setEditingUser(null);
+      setUserPermissions({});
       toast({
         title: "Успіх",
         description: "Дозволи користувача оновлено успішно",
