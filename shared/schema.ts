@@ -253,6 +253,8 @@ export const techCardMaterials = pgTable("tech_card_materials", {
   unit: text("unit").notNull(),
 });
 
+
+
 // Таблиця типів корпусів
 export const packageTypes = pgTable("package_types", {
   id: serial("id").primaryKey(),
@@ -1135,3 +1137,11 @@ export type InsertSerialNumber = z.infer<typeof insertSerialNumberSchema>;
 // User types for Replit Auth
 export type User = typeof users.$inferSelect;
 export type UpsertUser = typeof users.$inferInsert;
+
+// Tech card types
+export type TechCard = typeof techCards.$inferSelect;
+export type InsertTechCard = z.infer<typeof insertTechCardSchema>;
+export type TechCardStep = typeof techCardSteps.$inferSelect;
+export type InsertTechCardStep = z.infer<typeof insertTechCardStepSchema>;
+export type TechCardMaterial = typeof techCardMaterials.$inferSelect;
+export type InsertTechCardMaterial = z.infer<typeof insertTechCardMaterialSchema>;
