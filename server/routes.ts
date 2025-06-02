@@ -1772,6 +1772,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/positions", async (req, res) => {
+    console.log("=== POST /api/positions STARTED ===");
+    console.log("Raw request body:", req.body);
+    console.log("Request headers:", req.headers);
+    
     try {
       console.log("POST /api/positions - Received data:", req.body);
       
@@ -1787,7 +1791,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("POST /api/positions - Created position:", position);
       
       res.status(201).json(position);
+      console.log("=== POST /api/positions COMPLETED ===");
     } catch (error) {
+      console.log("=== POST /api/positions ERROR ===");
       if (error instanceof z.ZodError) {
         console.error("POST /api/positions - Validation error:", error.errors);
         res.status(400).json({ error: "Invalid position data", details: error.errors });
