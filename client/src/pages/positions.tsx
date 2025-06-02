@@ -306,13 +306,13 @@ export default function PositionsPage() {
       </div>
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 flex-1 max-w-2xl">
           <Search className="w-4 h-4 text-gray-400" />
           <Input
             placeholder="Пошук за назвою або відділом..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-sm"
+            className="w-full"
           />
         </div>
         <div className="flex items-center space-x-2">
