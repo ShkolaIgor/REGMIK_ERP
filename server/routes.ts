@@ -1741,7 +1741,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Positions API
   app.get("/api/positions", async (req, res) => {
     try {
+      // Запобігаємо кешуванню
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      
       const positions = await storage.getPositions();
+      console.log(`GET /api/positions - Found ${positions.length} positions`);
       res.json(positions);
     } catch (error) {
       console.error("Failed to get positions:", error);
@@ -1765,11 +1771,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/positions", async (req, res) => {
     try {
+      console.log("POST /api/positions - Received data:", req.body);
+      
+      // Запобігаємо кешуванню
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      
       const positionData = insertPositionSchema.parse(req.body);
+      console.log("POST /api/positions - Parsed data:", positionData);
+      
       const position = await storage.createPosition(positionData);
+      console.log("POST /api/positions - Created position:", position);
+      
       res.status(201).json(position);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("POST /api/positions - Validation error:", error.errors);
         res.status(400).json({ error: "Invalid position data", details: error.errors });
       } else {
         console.error("Failed to create position:", error);
@@ -1781,14 +1799,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/positions/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      console.log(`PATCH /api/positions/${id} - Received data:`, req.body);
+      
+      // Запобігаємо кешуванню
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      
       const updateData = insertPositionSchema.partial().parse(req.body);
+      console.log(`PATCH /api/positions/${id} - Parsed data:`, updateData);
+      
       const position = await storage.updatePosition(id, updateData);
       if (!position) {
         return res.status(404).json({ error: "Position not found" });
       }
+      
+      console.log(`PATCH /api/positions/${id} - Updated position:`, position);
       res.json(position);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error(`PATCH /api/positions/${req.params.id} - Validation error:`, error.errors);
         res.status(400).json({ error: "Invalid position data", details: error.errors });
       } else {
         console.error("Failed to update position:", error);
