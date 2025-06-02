@@ -116,7 +116,7 @@ export function ProductForm({ isOpen, onClose, product, isViewMode = false }: Pr
   });
 
   const onSubmit = (data: InsertProduct) => {
-    if (product) {
+    if (product && product.id) {
       updateProductMutation.mutate(data);
     } else {
       createProductMutation.mutate(data);
