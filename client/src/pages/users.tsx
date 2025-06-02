@@ -49,6 +49,15 @@ export default function Users() {
     queryKey: ["/api/users/available-workers"],
   });
 
+  // Function to generate username from worker name
+  const generateUsername = (firstName: string, lastName: string) => {
+    if (!firstName || !lastName) return "";
+    
+    // Take first letter of first name + full last name, all lowercase
+    const username = `${firstName.charAt(0).toLowerCase()}${lastName.toLowerCase()}`;
+    return `@${username}`;
+  };
+
   const createUserMutation = useMutation({
     mutationFn: async (userData: InsertLocalUser) => {
       await apiRequest("/api/users", {
@@ -354,9 +363,7 @@ export default function Users() {
                                   onSelect={() => {
                                     field.onChange(worker.id);
                                     createForm.setValue("email", worker.email || "");
-                                    createForm.setValue("username", worker.firstName && worker.lastName 
-                                      ? `${worker.firstName.toLowerCase()}.${worker.lastName.toLowerCase()}`
-                                      : "");
+                                    createForm.setValue("username", generateUsername(worker.firstName || "", worker.lastName || ""));
                                     setOpenWorkerCombobox(false);
                                   }}
                                 >
