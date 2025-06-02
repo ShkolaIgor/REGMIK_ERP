@@ -329,7 +329,7 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] max-w-5xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>
             {techCard ? "Редагувати технологічну карту" : "Створити технологічну карту"}
@@ -339,7 +339,7 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 w-full">
           {/* Основна інформація */}
           <Card>
             <CardHeader>
@@ -505,35 +505,36 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
             <CardContent>
               <div className="space-y-4">
                 {/* Основні поля кроку */}
-                <div className="grid grid-cols-12 gap-2">
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Input
+                      placeholder="Назва кроку"
+                      value={newStep.title}
+                      onChange={(e) => setNewStep({...newStep, title: e.target.value})}
+                    />
+                    <Input
+                      type="number"
+                      placeholder="Час (хв)"
+                      value={newStep.duration || ""}
+                      onChange={(e) => setNewStep({...newStep, duration: parseInt(e.target.value) || 0})}
+                    />
+                  </div>
                   <Input
-                    className="col-span-3"
-                    placeholder="Назва кроку"
-                    value={newStep.title}
-                    onChange={(e) => setNewStep({...newStep, title: e.target.value})}
-                  />
-                  <Input
-                    className="col-span-4"
-                    placeholder="Опис"
+                    placeholder="Опис кроку"
                     value={newStep.description}
                     onChange={(e) => setNewStep({...newStep, description: e.target.value})}
                   />
-                  <Input
-                    className="col-span-2"
-                    type="number"
-                    placeholder="Хв"
-                    value={newStep.duration || ""}
-                    onChange={(e) => setNewStep({...newStep, duration: parseInt(e.target.value) || 0})}
-                  />
-                  <Input
-                    className="col-span-2"
-                    placeholder="Обладнання"
-                    value={newStep.equipment}
-                    onChange={(e) => setNewStep({...newStep, equipment: e.target.value})}
-                  />
-                  <Button type="button" onClick={addStep}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Input
+                      placeholder="Обладнання (необов'язково)"
+                      value={newStep.equipment}
+                      onChange={(e) => setNewStep({...newStep, equipment: e.target.value})}
+                    />
+                    <Button type="button" onClick={addStep} className="w-full">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Додати крок
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Додаткові поля для паралельного виконання */}
