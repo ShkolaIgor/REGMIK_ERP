@@ -3411,6 +3411,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user permissions
+  app.patch("/api/users/:id/permissions", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { permissions } = req.body;
+      
+      const user = await storage.updateLocalUserPermissions(id, permissions);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user permissions:", error);
+      res.status(500).json({ error: "Failed to update user permissions" });
+    }
+  });
+
   // Roles API
   app.get("/api/roles", async (req, res) => {
     try {

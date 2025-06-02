@@ -289,7 +289,24 @@ export default function Users() {
 
   const handlePermissions = (user: LocalUser) => {
     setEditingUser(user);
+    setUserPermissions(user.permissions || {});
     setShowPermissionsDialog(true);
+  };
+
+  const handleSavePermissions = () => {
+    if (editingUser) {
+      updatePermissionsMutation.mutate({
+        id: editingUser.id,
+        permissions: userPermissions,
+      });
+    }
+  };
+
+  const handlePermissionChange = (moduleName: string, checked: boolean) => {
+    setUserPermissions(prev => ({
+      ...prev,
+      [moduleName]: checked,
+    }));
   };
 
   const onCreateSubmit = (data: InsertLocalUser) => {
@@ -873,7 +890,8 @@ export default function Users() {
                 <div key={module.id} className="flex items-center space-x-2 p-2 border rounded">
                   <Switch 
                     id={`module-${module.id}`}
-                    defaultChecked={editingUser?.permissions?.[module.name] || false}
+                    checked={userPermissions[module.name] || false}
+                    onCheckedChange={(checked) => handlePermissionChange(module.name, checked)}
                   />
                   <Label htmlFor={`module-${module.id}`} className="flex-1">
                     {module.displayName}
@@ -889,8 +907,11 @@ export default function Users() {
               <Button variant="outline" onClick={() => setShowPermissionsDialog(false)}>
                 Скасувати
               </Button>
-              <Button>
-                Зберегти дозволи
+              <Button 
+                onClick={handleSavePermissions}
+                disabled={updatePermissionsMutation.isPending}
+              >
+                {updatePermissionsMutation.isPending ? "Збереження..." : "Зберегти дозволи"}
               </Button>
             </div>
           </div>
