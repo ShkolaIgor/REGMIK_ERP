@@ -154,8 +154,10 @@ export default function PositionsPage() {
   };
 
   const filteredPositions = positions.filter((position: Position) => {
+    const department = departments.find(d => d.id === position.departmentId);
+    const departmentName = department?.name || '';
     const matchesSearch = position.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      position.department.toLowerCase().includes(searchTerm.toLowerCase());
+      departmentName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = showInactive || position.isActive;
     return matchesSearch && matchesStatus;
   });
