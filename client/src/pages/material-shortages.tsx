@@ -127,6 +127,13 @@ export default function MaterialShortagesPage() {
         description: "Запис оновлено успішно",
       });
     },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка",
+        description: error?.message || "Не вдалося оновити запис",
+        variant: "destructive",
+      });
+    },
   });
 
   const deleteMutation = useMutation({

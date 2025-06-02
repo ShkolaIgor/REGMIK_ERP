@@ -1078,8 +1078,10 @@ export class DatabaseStorage implements IStorage {
         .where(eq(supplierOrderItems.materialShortageId, id))
         .limit(1);
       
+      // Якщо є пов'язані замовлення, спочатку видаляємо їх
       if (relatedOrders.length > 0) {
-        throw new Error("Неможливо видалити дефіцит: існують пов'язані замовлення постачальникам");
+        await db.delete(supplierOrders)
+          .where(eq(supplierOrders.materialShortageId, id));
       }
       
       const result = await db.delete(materialShortages)
