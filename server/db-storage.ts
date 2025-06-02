@@ -3984,6 +3984,22 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getLocalUserByUsername(username: string) {
+    const [user] = await db
+      .select()
+      .from(localUsers)
+      .where(eq(localUsers.username, username))
+      .limit(1);
+    return user;
+  }
+
+  async updateUserLastLogin(id: number): Promise<void> {
+    await db
+      .update(localUsers)
+      .set({ lastLoginAt: new Date() })
+      .where(eq(localUsers.id, id));
+  }
+
   async createLocalUserWithWorker(userData: any) {
     const [user] = await db
       .insert(localUsers)

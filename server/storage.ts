@@ -53,6 +53,7 @@ export interface IStorage {
   getLocalUsers(): Promise<LocalUser[]>;
   getLocalUser(id: number): Promise<LocalUser | undefined>;
   getLocalUserByUsername(username: string): Promise<LocalUser | undefined>;
+  updateUserLastLogin(id: number): Promise<void>;
   createLocalUser(user: InsertLocalUser): Promise<LocalUser>;
   updateLocalUser(id: number, user: Partial<InsertLocalUser>): Promise<LocalUser | undefined>;
   updateLocalUserPermissions(id: number, permissions: Record<string, boolean>): Promise<LocalUser | undefined>;
