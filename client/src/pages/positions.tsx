@@ -21,6 +21,7 @@ export default function PositionsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingPosition, setEditingPosition] = useState<Position | null>(null);
+  const [showInactive, setShowInactive] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -152,10 +153,12 @@ export default function PositionsPage() {
     deleteMutation.mutate(id);
   };
 
-  const filteredPositions = positions.filter((position: Position) =>
-    position.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    position.department.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPositions = positions.filter((position: Position) => {
+    const matchesSearch = position.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      position.department.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = showInactive || position.isActive;
+    return matchesSearch && matchesStatus;
+  });
 
   if (isLoading) {
     return (
@@ -302,14 +305,26 @@ export default function PositionsPage() {
         </Dialog>
       </div>
 
-      <div className="flex items-center space-x-2">
-        <Search className="w-4 h-4 text-gray-400" />
-        <Input
-          placeholder="Пошук за назвою або відділом..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <Search className="w-4 h-4 text-gray-400" />
+          <Input
+            placeholder="Пошук за назвою або відділом..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
+        <div className="flex items-center space-x-2">
+          <label htmlFor="show-inactive" className="text-sm font-medium">
+            Показати неактивні
+          </label>
+          <Switch
+            id="show-inactive"
+            checked={showInactive}
+            onCheckedChange={setShowInactive}
+          />
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
