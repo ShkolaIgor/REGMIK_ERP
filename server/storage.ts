@@ -1323,5 +1323,6 @@ export class MemStorage implements IStorage {
   }
 }
 
-// Тимчасово використовуємо MemStorage для тестування
-export const storage = new MemStorage();
+// Використовуємо DatabaseStorage для роботи з базою даних
+import { DatabaseStorage } from "./db-storage";
+export const storage = new DatabaseStorage();

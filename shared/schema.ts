@@ -234,6 +234,12 @@ export const techCardSteps = pgTable("tech_card_steps", {
   duration: integer("duration").notNull(), // в хвилинах
   equipment: text("equipment"),
   notes: text("notes"),
+  // Поля для паралельного виконання
+  departmentId: integer("department_id").references(() => departments.id), // Дільниця виконання
+  positionId: integer("position_id").references(() => positions.id), // Посада робітника
+  canRunParallel: boolean("can_run_parallel").default(false), // Чи може виконуватись паралельно
+  prerequisiteSteps: text("prerequisite_steps"), // JSON масив номерів кроків-попередників
+  executionOrder: integer("execution_order").default(1), // Порядок виконання в паралельній групі
 });
 
 export const techCardMaterials = pgTable("tech_card_materials", {

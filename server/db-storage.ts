@@ -769,6 +769,22 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async deleteTechCard(id: number): Promise<boolean> {
+    try {
+      // Видаляємо пов'язані кроки та матеріали
+      await db.delete(techCardSteps).where(eq(techCardSteps.techCardId, id));
+      await db.delete(techCardMaterials).where(eq(techCardMaterials.techCardId, id));
+      
+      // Видаляємо саму технологічну карту
+      const result = await db.delete(techCards).where(eq(techCards.id, id));
+      
+      return (result.rowCount || 0) > 0;
+    } catch (error) {
+      console.error("Error deleting tech card:", error);
+      return false;
+    }
+  }
+
   // Analytics
   async getDashboardStats(): Promise<{
     totalProducts: number;

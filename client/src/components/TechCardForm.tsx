@@ -31,6 +31,12 @@ const stepSchema = z.object({
   duration: z.number().min(1, "Тривалість повинна бути більше 0"),
   equipment: z.string().optional(),
   notes: z.string().optional(),
+  // Нові поля для паралельного виконання
+  departmentId: z.number().optional(),
+  positionId: z.number().optional(),
+  canRunParallel: z.boolean().default(false),
+  prerequisiteSteps: z.array(z.number()).default([]),
+  executionOrder: z.number().default(1),
 });
 
 const materialSchema = z.object({
@@ -72,6 +78,14 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
 
   const { data: products = [] } = useQuery({
     queryKey: ["/api/products"],
+  });
+
+  const { data: departments = [] } = useQuery({
+    queryKey: ["/api/departments"],
+  });
+
+  const { data: positions = [] } = useQuery({
+    queryKey: ["/api/positions"],
   });
 
   const form = useForm<TechCardFormData>({
