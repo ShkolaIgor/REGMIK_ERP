@@ -21,8 +21,69 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  role: varchar("role", { length: 50 }).default("user"), // admin, manager, user, viewer
+  isActive: boolean("is_active").default(true),
+  permissions: jsonb("permissions"), // JSON з дозволами доступу до модулів
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Локальні користувачі для простої автентифікації (альтернатива Replit Auth)
+export const localUsers = pgTable("local_users", {
+  id: serial("id").primaryKey(),
+  username: varchar("username", { length: 100 }).notNull().unique(),
+  email: varchar("email", { length: 255 }).unique(),
+  password: varchar("password", { length: 255 }).notNull(), // хешований пароль
+  firstName: varchar("first_name", { length: 100 }),
+  lastName: varchar("last_name", { length: 100 }),
+  phone: varchar("phone", { length: 50 }),
+  role: varchar("role", { length: 50 }).default("user"), // admin, manager, user, viewer
+  isActive: boolean("is_active").default(true),
+  permissions: jsonb("permissions"), // JSON з дозволами доступу до модулів
+  lastLoginAt: timestamp("last_login_at"),
+  passwordResetToken: varchar("password_reset_token"),
+  passwordResetExpires: timestamp("password_reset_expires"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Ролі та дозволи
+export const roles = pgTable("roles", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+  displayName: varchar("display_name", { length: 255 }).notNull(),
+  description: text("description"),
+  permissions: jsonb("permissions").notNull(), // JSON з дозволами
+  isSystemRole: boolean("is_system_role").default(false), // системні ролі не можна видаляти
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Модулі системи для контролю доступу
+export const systemModules = pgTable("system_modules", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+  displayName: varchar("display_name", { length: 255 }).notNull(),
+  description: text("description"),
+  icon: varchar("icon", { length: 100 }), // назва іконки
+  route: varchar("route", { length: 255 }), // маршрут в додатку
+  parentModuleId: integer("parent_module_id"),
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Історія входів користувачів
+export const userLoginHistory = pgTable("user_login_history", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id"), // може бути як Replit user id, так і local user id
+  userType: varchar("user_type", { length: 20 }).notNull(), // 'replit' або 'local'
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  loginTime: timestamp("login_time").defaultNow(),
+  logoutTime: timestamp("logout_time"),
+  sessionDuration: integer("session_duration"), // в секундах
 });
 
 export const categories = pgTable("categories", {
@@ -1130,9 +1191,91 @@ export const insertSerialNumberSchema = createInsertSchema(serialNumbers).omit({
 export type SerialNumber = typeof serialNumbers.$inferSelect;
 export type InsertSerialNumber = z.infer<typeof insertSerialNumberSchema>;
 
-// User types for Replit Auth
+// Схеми для валідації нових таблиць користувачів
+export const insertLocalUserSchema = createInsertSchema(localUsers).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true,
+  lastLoginAt: true,
+  passwordResetToken: true,
+  passwordResetExpires: true 
+}).extend({
+  password: z.string().min(6, "Пароль повинен містити мінімум 6 символів"),
+  email: z.string().email("Невірний формат email"),
+  confirmPassword: z.string().optional()
+}).refine((data) => !data.confirmPassword || data.password === data.confirmPassword, {
+  message: "Паролі не співпадають",
+  path: ["confirmPassword"],
+});
+
+export const insertRoleSchema = createInsertSchema(roles).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertSystemModuleSchema = createInsertSchema(systemModules).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertUserLoginHistorySchema = createInsertSchema(userLoginHistory).omit({ 
+  id: true, 
+  loginTime: true,
+  logoutTime: true,
+  sessionDuration: true 
+});
+
+// Схема для зміни пароля
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Поточний пароль обов'язковий"),
+  newPassword: z.string().min(6, "Новий пароль повинен містити мінімум 6 символів"),
+  confirmPassword: z.string().min(1, "Підтвердження пароля обов'язкове"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Паролі не співпадають",
+  path: ["confirmPassword"],
+});
+
+// Схема для входу в систему
+export const loginSchema = z.object({
+  username: z.string().min(1, "Ім'я користувача обов'язкове"),
+  password: z.string().min(1, "Пароль обов'язковий"),
+});
+
+// Схема для скидання пароля
+export const resetPasswordSchema = z.object({
+  email: z.string().email("Невірний формат email"),
+});
+
+export const newPasswordSchema = z.object({
+  token: z.string().min(1, "Токен обов'язковий"),
+  password: z.string().min(6, "Пароль повинен містити мінімум 6 символів"),
+  confirmPassword: z.string().min(1, "Підтвердження пароля обов'язкове"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Паролі не співпадають",
+  path: ["confirmPassword"],
+});
+
+// Типи для всіх таблиць користувачів
 export type User = typeof users.$inferSelect;
 export type UpsertUser = typeof users.$inferInsert;
+
+export type LocalUser = typeof localUsers.$inferSelect;
+export type InsertLocalUser = z.infer<typeof insertLocalUserSchema>;
+
+export type Role = typeof roles.$inferSelect;
+export type InsertRole = z.infer<typeof insertRoleSchema>;
+
+export type SystemModule = typeof systemModules.$inferSelect;
+export type InsertSystemModule = z.infer<typeof insertSystemModuleSchema>;
+
+export type UserLoginHistory = typeof userLoginHistory.$inferSelect;
+export type InsertUserLoginHistory = z.infer<typeof insertUserLoginHistorySchema>;
+
+export type ChangePassword = z.infer<typeof changePasswordSchema>;
+export type Login = z.infer<typeof loginSchema>;
+export type ResetPassword = z.infer<typeof resetPasswordSchema>;
+export type NewPassword = z.infer<typeof newPasswordSchema>;
 
 // Tech card types
 export type TechCard = typeof techCards.$inferSelect;

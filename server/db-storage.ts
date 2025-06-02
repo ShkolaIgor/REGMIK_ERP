@@ -2,14 +2,16 @@ import { eq, sql, desc, and, gte, lte } from "drizzle-orm";
 import { db } from "./db";
 import { IStorage } from "./storage";
 import {
-  users, categories, warehouses, units, products, inventory, orders, orderItems,
+  users, localUsers, roles, systemModules, userLoginHistory, categories, warehouses, units, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   components, productComponents, costCalculations, materialShortages, supplierOrders, supplierOrderItems,
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes, solderingTypes,
   componentCategories, componentAlternatives, carriers, shipments, customerAddresses, senderSettings,
   manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, exchangeRateHistory, serialNumbers,
-  type User, type UpsertUser, type Category, type InsertCategory,
+  type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
+  type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
+  type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
   type Product, type InsertProduct,
   type Inventory, type InsertInventory, type Order, type InsertOrder,
