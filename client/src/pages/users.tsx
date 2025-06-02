@@ -716,20 +716,20 @@ export default function Users() {
                   )}
                 </div>
                 
-                <div className="flex gap-2 pt-2">
+                <div className="flex gap-1 pt-1">
                   <Button
                     variant="outline"
-                    size="default"
+                    size="sm"
                     onClick={() => handleEdit(user)}
-                    className="flex-1 h-10 text-sm px-4"
+                    className="flex-1 h-7 text-xs px-2"
                   >
-                    <Edit className="h-4 w-4 mr-2" />
+                    <Edit className="h-3 w-3 mr-1" />
                     Редагувати
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="default" className="h-10 px-3">
-                        <MoreHorizontal className="h-4 w-4" />
+                      <Button variant="outline" size="sm" className="h-7 px-2">
+                        <MoreHorizontal className="h-3 w-3" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
