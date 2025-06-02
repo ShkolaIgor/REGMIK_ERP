@@ -657,7 +657,7 @@ export default function Users() {
       </div>
 
       {/* Список користувачів */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredUsers.map((user: LocalUser) => (
           <Card key={user.id} className={`relative ${!user.isActive ? 'opacity-60' : ''} hover:shadow-md transition-shadow`}>
             <CardHeader className="pb-2 px-3 pt-3">
