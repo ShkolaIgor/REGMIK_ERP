@@ -628,15 +628,40 @@ export default function Users() {
           <Card key={user.id} className={`relative ${!user.isActive ? 'opacity-60' : ''}`}>
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <CardTitle className="text-base truncate">
-                    {user.worker?.firstName} {user.worker?.lastName}
-                  </CardTitle>
-                  <div className="text-sm text-muted-foreground truncate">
-                    @{user.username}
+                <div className="flex items-start space-x-3 flex-1 min-w-0">
+                  {/* Фото користувача */}
+                  <div className="flex-shrink-0">
+                    {user.worker?.photo ? (
+                      <img
+                        src={user.worker.photo}
+                        alt={`${user.worker.firstName} ${user.worker.lastName}`}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                        <span className="text-gray-600 font-medium text-sm">
+                          {user.worker?.firstName?.charAt(0)}{user.worker?.lastName?.charAt(0)}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {user.email}
+                  
+                  {/* Інформація користувача */}
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-base truncate">
+                      {user.worker?.firstName} {user.worker?.lastName}
+                    </CardTitle>
+                    <div className="text-sm text-muted-foreground truncate">
+                      @{user.username}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {user.email}
+                    </div>
+                    {user.position?.name && (
+                      <div className="text-xs text-blue-600 truncate">
+                        {user.position.name}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center space-x-1">
@@ -747,9 +772,11 @@ export default function Users() {
                   <FormItem>
                     <FormLabel>Ім'я користувача</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} disabled className="bg-gray-50" />
                     </FormControl>
-                    <FormMessage />
+                    <div className="text-xs text-muted-foreground">
+                      Логін неможливо змінити
+                    </div>
                   </FormItem>
                 )}
               />
