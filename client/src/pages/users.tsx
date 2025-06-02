@@ -660,20 +660,20 @@ export default function Users() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredUsers.map((user: LocalUser) => (
           <Card key={user.id} className={`relative ${!user.isActive ? 'opacity-60' : ''} hover:shadow-md transition-shadow`}>
-            <CardHeader className="pb-2 px-3 pt-3">
+            <CardHeader className="pb-4 px-6 pt-6">
               <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-2 flex-1 min-w-0">
+                <div className="flex items-start space-x-4 flex-1 min-w-0">
                   {/* Фото користувача */}
                   <div className="flex-shrink-0">
                     {user.worker?.photo ? (
                       <img
                         src={user.worker.photo}
                         alt={`${user.worker.firstName} ${user.worker.lastName}`}
-                        className="w-10 h-10 rounded-full object-cover"
+                        className="w-16 h-16 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                        <span className="text-gray-600 font-medium text-xs">
+                      <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
+                        <span className="text-gray-600 font-medium text-lg">
                           {user.worker?.firstName?.charAt(0)}{user.worker?.lastName?.charAt(0)}
                         </span>
                       </div>
@@ -682,67 +682,67 @@ export default function Users() {
                   
                   {/* Інформація користувача */}
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-sm truncate leading-tight">
+                    <CardTitle className="text-lg truncate leading-tight mb-1">
                       {user.worker?.firstName} {user.worker?.lastName}
                     </CardTitle>
-                    <div className="text-xs text-muted-foreground truncate">
+                    <div className="text-sm text-muted-foreground truncate mb-1">
                       @{user.username}
                     </div>
-                    <div className="text-xs text-muted-foreground truncate">
+                    <div className="text-sm text-muted-foreground truncate">
                       {user.email}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center">
                   {user.isActive ? (
-                    <UserCheck className="h-3 w-3 text-green-600" />
+                    <UserCheck className="h-6 w-6 text-green-600" />
                   ) : (
-                    <UserX className="h-3 w-3 text-red-600" />
+                    <UserX className="h-6 w-6 text-red-600" />
                   )}
                 </div>
               </div>
             </CardHeader>
             
-            <CardContent className="pt-2 px-3 pb-3">
-              <div className="space-y-2">
+            <CardContent className="pt-2 px-6 pb-6">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs">
+                  <Badge variant={getRoleBadgeVariant(user.role)} className="text-sm px-3 py-1">
                     {getRoleDisplayName(user.role)}
                   </Badge>
                   {user.lastLoginAt && (
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-sm text-muted-foreground">
                       {new Date(user.lastLoginAt).toLocaleDateString('uk-UA')}
                     </div>
                   )}
                 </div>
                 
-                <div className="flex gap-1 pt-1">
+                <div className="flex gap-2 pt-2">
                   <Button
                     variant="outline"
-                    size="sm"
+                    size="default"
                     onClick={() => handleEdit(user)}
-                    className="flex-1 h-7 text-xs px-2"
+                    className="flex-1 h-10 text-sm px-4"
                   >
-                    <Edit className="h-3 w-3 mr-1" />
+                    <Edit className="h-4 w-4 mr-2" />
                     Редагувати
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-7 px-2">
-                        <MoreHorizontal className="h-3 w-3" />
+                      <Button variant="outline" size="default" className="h-10 px-3">
+                        <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => handleChangePassword(user)}>
-                        <Key className="h-3 w-3 mr-2" />
+                        <Key className="h-4 w-4 mr-2" />
                         Скинути пароль
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleEmailPasswordReset(user)}>
-                        <Mail className="h-3 w-3 mr-2" />
+                        <Mail className="h-4 w-4 mr-2" />
                         Скинути через пошту
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handlePermissions(user)}>
-                        <Shield className="h-3 w-3 mr-2" />
+                        <Shield className="h-4 w-4 mr-2" />
                         Налаштувати дозволи
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
