@@ -88,9 +88,15 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
   const createMutation = useMutation({
     mutationFn: async (data: TechCardFormData & { steps: StepFormData[]; materials: MaterialFormData[] }) => {
       console.log("Creating tech card via API request with data:", data);
-      const result = await apiRequest("/api/tech-cards", "POST", data);
-      console.log("API response:", result);
-      return result;
+      console.log("Making POST request to /api/tech-cards");
+      try {
+        const result = await apiRequest("/api/tech-cards", { method: "POST", body: data });
+        console.log("API response:", result);
+        return result;
+      } catch (error) {
+        console.error("API request failed:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tech-cards"] });
@@ -111,7 +117,7 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
 
   const updateMutation = useMutation({
     mutationFn: async (data: TechCardFormData & { steps: StepFormData[]; materials: MaterialFormData[] }) => {
-      return await apiRequest(`/api/tech-cards/${techCard.id}`, "PATCH", data);
+      return await apiRequest(`/api/tech-cards/${techCard.id}`, { method: "PATCH", body: data });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tech-cards"] });
