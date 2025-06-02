@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,6 +91,7 @@ export default function Orders() {
   const [editingOrder, setEditingOrder] = useState<any>(null);
   const [isPartialShipmentOpen, setIsPartialShipmentOpen] = useState(false);
   const [selectedOrderForShipment, setSelectedOrderForShipment] = useState<Order | null>(null);
+  const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -423,6 +424,10 @@ export default function Orders() {
     setIsPartialShipmentOpen(true);
   };
 
+  const toggleOrderExpansion = (orderId: number) => {
+    setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
+  };
+
   if (isLoading) {
     return <div className="p-6">Завантаження...</div>;
   }
@@ -729,23 +734,27 @@ export default function Orders() {
                 </TableHeader>
                 <TableBody>
                   {orders.map((order: any) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-mono">{order.orderNumber}</TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{order.customerName}</div>
-                          <div className="text-sm text-gray-500">{order.customerEmail}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{formatDate(order.createdAt)}</TableCell>
-                      <TableCell>{formatCurrency(order.totalAmount)}</TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(order.status)}>
-                          {getStatusText(order.status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
+                    <React.Fragment key={order.id}>
+                      <TableRow 
+                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() => toggleOrderExpansion(order.id)}
+                      >
+                        <TableCell className="font-mono">{order.orderNumber}</TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{order.customerName}</div>
+                            <div className="text-sm text-gray-500">{order.customerEmail}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{formatDate(order.createdAt)}</TableCell>
+                        <TableCell>{formatCurrency(order.totalAmount)}</TableCell>
+                        <TableCell>
+                          <Badge className={getStatusColor(order.status)}>
+                            {getStatusText(order.status)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center space-x-2">
                           <Dialog>
                             <DialogTrigger asChild>
                               <Button size="sm" variant="ghost" onClick={() => setSelectedOrder(order)}>
@@ -898,9 +907,46 @@ export default function Orders() {
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      
+                      {/* Розкривний рядок з деталями замовлення */}
+                      {expandedOrderId === order.id && (
+                        <TableRow>
+                          <TableCell colSpan={6} className="bg-gray-50 p-0">
+                            <div className="p-4">
+                              <h4 className="font-medium mb-3">Склад замовлення:</h4>
+                              {order.items && order.items.length > 0 ? (
+                                <div className="space-y-2">
+                                  {order.items.map((item: any, index: number) => (
+                                    <div key={index} className="flex justify-between items-center py-2 px-3 bg-white rounded border">
+                                      <div className="flex-1">
+                                        <span className="font-medium">{item.product?.name || 'Товар не знайдено'}</span>
+                                        <span className="text-sm text-gray-500 ml-2">({item.product?.sku})</span>
+                                      </div>
+                                      <div className="flex items-center space-x-4">
+                                        <span className="text-sm text-gray-600">
+                                          Кількість: <span className="font-medium">{item.quantity}</span>
+                                        </span>
+                                        <span className="text-sm text-gray-600">
+                                          Ціна: <span className="font-medium">{formatCurrency(item.unitPrice)}</span>
+                                        </span>
+                                        <span className="text-sm font-medium">
+                                          Всього: {formatCurrency(item.totalPrice)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-gray-500 text-sm">Замовлення не містить товарів</p>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
                   ))}
                 </TableBody>
               </Table>
