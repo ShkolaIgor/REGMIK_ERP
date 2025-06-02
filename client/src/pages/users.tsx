@@ -321,9 +321,6 @@ export default function Users() {
                         field.onChange(value ? parseInt(value) : undefined);
                         const worker = availableWorkers?.find((w: any) => w.id === parseInt(value));
                         if (worker) {
-                          createForm.setValue("firstName", worker.firstName || "");
-                          createForm.setValue("lastName", worker.lastName || "");
-                          createForm.setValue("phone", worker.phone || "");
                           createForm.setValue("email", worker.email || "");
                           createForm.setValue("username", worker.firstName && worker.lastName 
                             ? `${worker.firstName.toLowerCase()}.${worker.lastName.toLowerCase()}`
@@ -338,7 +335,7 @@ export default function Users() {
                         <SelectContent>
                           {availableWorkers?.map((worker: any) => (
                             <SelectItem key={worker.id} value={worker.id.toString()}>
-                              {worker.firstName} {worker.lastName} - {worker.position}
+                              {worker.firstName} {worker.lastName}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -404,49 +401,7 @@ export default function Users() {
                   )}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={createForm.control}
-                    name="firstName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ім'я</FormLabel>
-                        <FormControl>
-                          <Input {...field} disabled className="bg-gray-50" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
 
-                  <FormField
-                    control={createForm.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Прізвище</FormLabel>
-                        <FormControl>
-                          <Input {...field} disabled className="bg-gray-50" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={createForm.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Телефон</FormLabel>
-                      <FormControl>
-                        <Input {...field} disabled className="bg-gray-50" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
 
                 <FormField
                   control={createForm.control}
