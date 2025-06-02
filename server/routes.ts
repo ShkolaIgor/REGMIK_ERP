@@ -3345,9 +3345,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/users/:id", async (req, res) => {
+  app.delete("/api/users/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      
+      // Перевіряємо чи це останній адміністратор
+      const userToDelete = await storage.getLocalUser(id);
+      if (!userToDelete) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      if (userToDelete.role === 'admin') {
+        const allUsers = await storage.getLocalUsersWithWorkers();
+        const adminCount = allUsers.filter(user => user.role === 'admin').length;
+        
+        if (adminCount <= 1) {
+          return res.status(400).json({ 
+            error: "Не можна видалити останнього адміністратора в системі" 
+          });
+        }
+      }
+      
       const success = await storage.deleteLocalUser(id);
       if (!success) {
         return res.status(404).json({ error: "User not found" });

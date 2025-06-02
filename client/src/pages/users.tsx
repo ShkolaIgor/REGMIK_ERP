@@ -89,6 +89,17 @@ export default function Users() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/available-workers"] });
+      // Очищуємо форму після успішного створення
+      createForm.reset({
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        workerId: undefined,
+        roleId: undefined,
+        isActive: true,
+      });
       setShowCreateDialog(false);
       toast({
         title: "Успіх",
@@ -174,9 +185,13 @@ export default function Users() {
       });
     },
     onError: (error) => {
+      const errorMessage = error.message.includes('останнього адміністратора') 
+        ? "Не можна видалити останнього адміністратора в системі"
+        : "Не вдалося видалити користувача";
+      
       toast({
         title: "Помилка",
-        description: "Не вдалося видалити користувача",
+        description: errorMessage,
         variant: "destructive",
       });
     },
