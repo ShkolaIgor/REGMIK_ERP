@@ -346,58 +346,61 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
               <CardTitle>Основна інформація</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Назва карти</Label>
-                  <Input
-                    id="name"
-                    {...form.register("name")}
-                    placeholder="Технологічна карта виробництва..."
-                  />
-                  {form.formState.errors.name && (
-                    <p className="text-sm text-red-500">{form.formState.errors.name.message}</p>
-                  )}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Назва карти</Label>
+                    <Input
+                      id="name"
+                      {...form.register("name")}
+                      placeholder="Технологічна карта виробництва..."
+                    />
+                    {form.formState.errors.name && (
+                      <p className="text-sm text-red-500">{form.formState.errors.name.message}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="productId">Продукт</Label>
+                    <Select
+                      value={form.watch("productId")?.toString() || ""}
+                      onValueChange={(value) => form.setValue("productId", parseInt(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Виберіть продукт" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {products.map((product: any) => (
+                          <SelectItem key={product.id} value={product.id.toString()}>
+                            {product.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="productId">Продукт</Label>
-                  <Select
-                    value={form.watch("productId")?.toString() || ""}
-                    onValueChange={(value) => form.setValue("productId", parseInt(value))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Виберіть продукт" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {products.map((product: any) => (
-                        <SelectItem key={product.id} value={product.id.toString()}>
-                          {product.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="estimatedTime">Час виконання (хв)</Label>
+                    <Input
+                      id="estimatedTime"
+                      type="number"
+                      {...form.register("estimatedTime", { valueAsNumber: true })}
+                      placeholder="60"
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="estimatedTime">Час виконання (хв)</Label>
-                  <Input
-                    id="estimatedTime"
-                    type="number"
-                    {...form.register("estimatedTime", { valueAsNumber: true })}
-                    placeholder="60"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="difficulty">Складність</Label>
-                  <Select
-                    value={form.watch("difficulty")}
-                    onValueChange={(value) => form.setValue("difficulty", value as "easy" | "medium" | "hard")}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <div className="space-y-2">
+                    <Label htmlFor="difficulty">Складність</Label>
+                    <Select
+                      value={form.watch("difficulty")}
+                      onValueChange={(value) => form.setValue("difficulty", value as "easy" | "medium" | "hard")}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
                       <SelectItem value="easy">Легка</SelectItem>
                       <SelectItem value="medium">Середня</SelectItem>
                       <SelectItem value="hard">Складна</SelectItem>
@@ -415,6 +418,7 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                   rows={3}
                 />
               </div>
+            </div>
             </CardContent>
           </Card>
 
