@@ -840,6 +840,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Steps:", steps);
       console.log("Materials:", materials);
       
+      // Додати інформацію про користувача-творця
+      if (req.session && req.session.user) {
+        techCardData.createdBy = req.session.user.username || `User ${req.session.user.id}`;
+      } else {
+        techCardData.createdBy = "System User";
+      }
+      
       const data = insertTechCardSchema.parse(techCardData);
       console.log("Validated tech card data:", data);
       
