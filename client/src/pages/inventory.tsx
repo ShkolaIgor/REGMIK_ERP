@@ -91,6 +91,20 @@ export default function Inventory() {
     setShowProductForm(true);
   };
 
+  const handleCopyProduct = (product: any) => {
+    const copiedProduct = {
+      ...product,
+      name: `${product.name} (копія)`,
+      sku: `${product.sku}_COPY`,
+      barcode: "", // Очищуємо штрих-код для копії
+      id: undefined // Прибираємо ID для створення нового товару
+    };
+    console.log('Copying product:', copiedProduct);
+    setEditingProduct(copiedProduct);
+    setIsViewMode(false);
+    setShowProductForm(true);
+  };
+
   const handleDeleteProduct = (id: number) => {
     if (confirm("Ви впевнені, що хочете видалити цей товар?")) {
       deleteProductMutation.mutate(id);
@@ -366,7 +380,12 @@ export default function Inventory() {
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
-                            <Button size="sm" variant="ghost">
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => handleCopyProduct(product)}
+                              title="Копіювати товар"
+                            >
                               <Copy className="w-4 h-4" />
                             </Button>
                             <Button
