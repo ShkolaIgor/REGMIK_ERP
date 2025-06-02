@@ -193,15 +193,17 @@ export default function Users() {
       })
     ),
     defaultValues: {
-      workerId: undefined,
       username: "",
       email: "",
+      password: "",
+      confirmPassword: "",
       firstName: "",
       lastName: "",
       phone: "",
       role: "user",
       isActive: true,
       permissions: {},
+      workerId: undefined,
     },
   });
 
