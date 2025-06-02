@@ -170,7 +170,8 @@ export default function BOMPage() {
   const parentProducts = (products as Product[] || []).filter((p: Product) => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          p.sku.toLowerCase().includes(searchQuery.toLowerCase());
-    const isParentType = p.productType === "товар" || p.productType === "комплект" || p.productType === "product";
+    const isParentType = p.productType === "товар" || p.productType === "комплект" || p.productType === "product" ||
+                        p.productType === "полуфабрикат" || p.productType === "semi-finished";
     return isParentType && matchesSearch;
   });
 
