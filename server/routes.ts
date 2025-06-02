@@ -48,7 +48,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Знайти користувача за email
-      const user = await storage.getLocalUserByEmail(email);
+      const user = await storage.getUserByEmail(email);
       if (!user) {
         // Не показуємо, що користувач не існує з міркувань безпеки
         return res.json({ message: "Якщо email існує в системі, лист буде відправлено" });

@@ -3993,6 +3993,15 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserByEmail(email: string): Promise<LocalUser | undefined> {
+    const [user] = await db
+      .select()
+      .from(localUsers)
+      .where(eq(localUsers.email, email))
+      .limit(1);
+    return user;
+  }
+
   async updateUserLastLogin(id: number): Promise<void> {
     await db
       .update(localUsers)
