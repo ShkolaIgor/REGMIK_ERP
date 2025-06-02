@@ -887,6 +887,31 @@ export default function Users() {
               Користувач: {editingUser?.firstName} {editingUser?.lastName} (@{editingUser?.username})
             </div>
             
+            {/* Групове керування */}
+            <div className="flex gap-2 pb-4 border-b">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  const allModules = systemModules || [];
+                  const newPermissions: Record<string, boolean> = {};
+                  allModules.forEach((module: any) => {
+                    newPermissions[module.name] = true;
+                  });
+                  setUserPermissions(newPermissions);
+                }}
+              >
+                Увімкнути всі
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setUserPermissions({})}
+              >
+                Вимкнути всі
+              </Button>
+            </div>
+            
             <div className="space-y-2">
               <Label>Доступ до модулів:</Label>
               {(systemModules || []).map((module: any) => (

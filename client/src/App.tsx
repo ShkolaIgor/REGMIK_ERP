@@ -49,15 +49,19 @@ import Users from "@/pages/users";
 import NotFound from "@/pages/not-found";
 
 function Router() {
-  // Тимчасово відключаємо аутентифікацію для тестування
-  // const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Завантаження...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <SimpleLogin />;
+  }
 
   return (
     <Switch>
-      {/* {isLoading || !isAuthenticated ? (
-        <Route path="/" component={SimpleLogin} />
-      ) : ( */}
-        <Layout>
+      <Layout>
           <Route path="/" component={Home} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/inventory" component={Inventory} />
@@ -99,11 +103,11 @@ function Router() {
           <Route path="/currencies" component={Currencies} />
           <Route path="/users" component={Users} />
           <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
+          <Route component={NotFound} />
         </Layout>
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
+      </Switch>
+    );
+  }
 
 function App() {
   return (
