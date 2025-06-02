@@ -908,6 +908,16 @@ export default function Orders() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Діалог часткового відвантаження */}
+      {selectedOrderForShipment && (
+        <PartialShipmentDialog
+          open={isPartialShipmentOpen}
+          onOpenChange={setIsPartialShipmentOpen}
+          orderId={selectedOrderForShipment.id}
+          orderNumber={selectedOrderForShipment.orderNumber}
+        />
+      )}
     </div>
   );
 }
