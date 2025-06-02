@@ -70,6 +70,7 @@ export function setupSimpleAuth(app: Express) {
   // Маршрут для простого входу
   app.post("/api/auth/simple-login", (req, res) => {
     console.log("Login attempt:", req.body);
+    console.log("Session ID before login:", req.sessionID);
     const { username, password } = req.body;
     
     const user = demoUsers.find(u => u.username === username && u.password === password);
@@ -91,7 +92,8 @@ export function setupSimpleAuth(app: Express) {
           console.error("Session save error:", err);
           return res.status(500).json({ message: "Помилка збереження сесії" });
         }
-        console.log("Session saved successfully");
+        console.log("Session saved successfully, ID:", req.sessionID);
+        console.log("User data in session:", (req.session as any).user);
         res.json({ success: true, user: user });
       });
     } else {
@@ -107,6 +109,17 @@ export function setupSimpleAuth(app: Express) {
   });
 
   // Маршрут для виходу
+  app.get("/api/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Logout error:", err);
+        return res.status(500).json({ message: "Помилка при виході" });
+      }
+      console.log("User logged out successfully");
+      res.redirect("/");
+    });
+  });
+
   app.post("/api/auth/logout", (req, res) => {
     req.session.destroy((err) => {
       if (err) {
