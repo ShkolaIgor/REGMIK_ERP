@@ -193,6 +193,7 @@ export default function Users() {
       })
     ),
     defaultValues: {
+      workerId: undefined,
       username: "",
       email: "",
       firstName: "",
@@ -304,10 +305,47 @@ export default function Users() {
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Створити нового користувача</DialogTitle>
+              <DialogTitle>Створити обліковий запис для робітника</DialogTitle>
             </DialogHeader>
             <Form {...createForm}>
               <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-4">
+                <FormField
+                  control={createForm.control}
+                  name="workerId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Робітник</FormLabel>
+                      <Select onValueChange={(value) => {
+                        field.onChange(value ? parseInt(value) : undefined);
+                        const worker = availableWorkers?.find((w: any) => w.id === parseInt(value));
+                        if (worker) {
+                          createForm.setValue("firstName", worker.firstName || "");
+                          createForm.setValue("lastName", worker.lastName || "");
+                          createForm.setValue("phone", worker.phone || "");
+                          createForm.setValue("email", worker.email || "");
+                          createForm.setValue("username", worker.firstName && worker.lastName 
+                            ? `${worker.firstName.toLowerCase()}.${worker.lastName.toLowerCase()}`
+                            : "");
+                        }
+                      }} value={field.value?.toString() || ""}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Виберіть робітника" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableWorkers?.map((worker: any) => (
+                            <SelectItem key={worker.id} value={worker.id.toString()}>
+                              {worker.firstName} {worker.lastName} - {worker.position}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
                 <FormField
                   control={createForm.control}
                   name="username"
@@ -372,7 +410,7 @@ export default function Users() {
                       <FormItem>
                         <FormLabel>Ім'я</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} disabled className="bg-gray-50" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -386,7 +424,7 @@ export default function Users() {
                       <FormItem>
                         <FormLabel>Прізвище</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} disabled className="bg-gray-50" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -401,7 +439,7 @@ export default function Users() {
                     <FormItem>
                       <FormLabel>Телефон</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} disabled className="bg-gray-50" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -413,7 +451,7 @@ export default function Users() {
                   name="role"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Роль</FormLabel>
+                      <FormLabel>Роль в системі</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
