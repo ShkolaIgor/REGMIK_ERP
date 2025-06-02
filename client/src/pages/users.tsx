@@ -179,17 +179,24 @@ export default function Users() {
 
   const updatePermissionsMutation = useMutation({
     mutationFn: async ({ id, permissions }: { id: number; permissions: Record<string, boolean> }) => {
-      await apiRequest(`/api/users/${id}/permissions`, {
+      return await apiRequest(`/api/users/${id}/permissions`, {
         method: "PATCH",
         body: { permissions },
       });
     },
-    onSuccess: () => {
+    onSuccess: (updatedUser) => {
       console.log("Permissions updated successfully, invalidating cache");
+      console.log("Updated user from server:", updatedUser);
+      
+      // Оновлюємо кеш
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      
+      // Закриваємо діалог та очищуємо стан
       setShowPermissionsDialog(false);
       setEditingUser(null);
       setUserPermissions({});
+      
+      // Показуємо успішне повідомлення
       toast({
         title: "Успіх",
         description: "Дозволи користувача оновлено успішно",
