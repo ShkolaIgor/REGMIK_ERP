@@ -34,7 +34,8 @@ export default function PositionsPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertPosition) => {
-      return await apiRequest("/api/positions", "POST", data);
+      console.log("Sending POST request with data:", data);
+      return await apiRequest("/api/positions", { method: "POST", body: data });
     },
     onSuccess: () => {
       // Примусово очищуємо кеш та перезавантажуємо дані
