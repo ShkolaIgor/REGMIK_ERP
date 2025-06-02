@@ -59,6 +59,7 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
   const [steps, setSteps] = useState<StepFormData[]>(techCard?.steps || []);
   const [materials, setMaterials] = useState<MaterialFormData[]>(techCard?.materials || []);
   const [editingStepIndex, setEditingStepIndex] = useState<number | null>(null);
+  const [draggedStepIndex, setDraggedStepIndex] = useState<number | null>(null);
   const [newStep, setNewStep] = useState<StepFormData>({
     stepNumber: steps.length + 1,
     title: "",
@@ -305,6 +306,41 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
       prerequisiteSteps: [],
       executionOrder: 1,
     });
+  };
+
+  const handleStepDoubleClick = (index: number) => {
+    setEditingStepIndex(index);
+    const step = steps[index];
+    setNewStep({ ...step });
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedStepIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedStepIndex === null) return;
+
+    const newSteps = [...steps];
+    const draggedStep = newSteps[draggedStepIndex];
+    
+    newSteps.splice(draggedStepIndex, 1);
+    newSteps.splice(dropIndex, 0, draggedStep);
+    
+    const renumberedSteps = newSteps.map((step, index) => ({
+      ...step,
+      stepNumber: index + 1
+    }));
+    
+    setSteps(renumberedSteps);
+    setDraggedStepIndex(null);
   };
 
   const addMaterial = () => {
@@ -677,32 +713,49 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                                 </div>
                               </div>
                             ) : (
-                              <div className="space-y-2">
+                              <div 
+                                className="space-y-2 cursor-pointer"
+                                onDoubleClick={() => handleStepDoubleClick(index)}
+                              >
                                 <div className="flex justify-between items-start">
-                                  <div>
-                                    <h4 className="font-medium">Крок {step.stepNumber}: {step.title}</h4>
-                                    <p className="text-sm text-muted-foreground">{step.description}</p>
-                                  </div>
-                                  <div className="flex gap-1">
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => editStep(index)}
-                                      title="Редагувати"
+                                  <div className="flex-grow">
+                                    <div className="flex items-center gap-2">
+                                      <span 
+                                        className="font-medium text-blue-600 cursor-move select-none"
+                                        draggable
+                                        onDragStart={(e) => handleDragStart(e, index)}
+                                        onDragOver={handleDragOver}
+                                        onDrop={(e) => handleDrop(e, index)}
+                                        title="Перетягніть для зміни порядку"
+                                      >
+                                        {step.stepNumber}
+                                      </span>
+                                      <h4 
+                                        className="font-medium flex-grow"
+                                        onDoubleClick={() => handleStepDoubleClick(index)}
+                                        title="Подвійне клацання для редагування"
+                                      >
+                                        {step.title}
+                                      </h4>
+                                    </div>
+                                    <p 
+                                      className="text-sm text-muted-foreground"
+                                      onDoubleClick={() => handleStepDoubleClick(index)}
+                                      title="Подвійне клацання для редагування"
                                     >
-                                      <Save className="h-3 w-3" />
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => removeStep(index)}
-                                      title="Видалити"
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
+                                      {step.description}
+                                    </p>
                                   </div>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => removeStep(index)}
+                                    title="Видалити крок"
+                                    className="ml-2"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
                                 </div>
                                 <div className="text-xs text-muted-foreground space-y-1">
                                   <div>Час: {step.duration} хв</div>
@@ -835,56 +888,49 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                         }
                         
                         return (
-                          <TableRow key={index}>
-                            <TableCell>{step.stepNumber}</TableCell>
-                            <TableCell>{step.title}</TableCell>
-                            <TableCell className="max-w-[200px] truncate">{step.description}</TableCell>
+                          <TableRow 
+                            key={index}
+                            className="cursor-pointer hover:bg-muted/50"
+                            onDoubleClick={() => handleStepDoubleClick(index)}
+                            onDragOver={handleDragOver}
+                            onDrop={(e) => handleDrop(e, index)}
+                          >
+                            <TableCell 
+                              className="font-medium text-blue-600 cursor-move select-none"
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, index)}
+                              title="Перетягніть для зміни порядку"
+                            >
+                              {step.stepNumber}
+                            </TableCell>
+                            <TableCell 
+                              onDoubleClick={() => handleStepDoubleClick(index)}
+                              title="Подвійне клацання для редагування"
+                            >
+                              {step.title}
+                            </TableCell>
+                            <TableCell 
+                              className="max-w-[200px] truncate"
+                              onDoubleClick={() => handleStepDoubleClick(index)}
+                              title="Подвійне клацання для редагування"
+                            >
+                              {step.description}
+                            </TableCell>
                             <TableCell>{step.duration} хв</TableCell>
                             <TableCell>{department?.name || "-"}</TableCell>
                             <TableCell>{position?.name || "-"}</TableCell>
                             <TableCell>{step.canRunParallel ? "✓" : "-"}</TableCell>
                             <TableCell>{step.executionOrder}</TableCell>
                             <TableCell>
-                              <div className="flex gap-1">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => editStep(index)}
-                                  title="Редагувати крок"
-                                >
-                                  <Save className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => moveStepUp(index)}
-                                  disabled={index === 0}
-                                  title="Перемістити вгору"
-                                >
-                                  <ArrowUp className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => moveStepDown(index)}
-                                  disabled={index === steps.length - 1}
-                                  title="Перемістити вниз"
-                                >
-                                  <ArrowDown className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => removeStep(index)}
-                                  title="Видалити крок"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => removeStep(index)}
+                                title="Видалити крок"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </TableCell>
                           </TableRow>
                         );
