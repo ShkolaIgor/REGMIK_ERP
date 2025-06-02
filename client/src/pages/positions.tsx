@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Plus, Search, Edit, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -25,6 +26,10 @@ export default function PositionsPage() {
 
   const { data: positions = [], isLoading } = useQuery({
     queryKey: ["/api/positions"],
+  });
+
+  const { data: departments = [] } = useQuery({
+    queryKey: ["/api/departments"],
   });
 
   const createMutation = useMutation({
@@ -207,13 +212,24 @@ export default function PositionsPage() {
                 />
                 <FormField
                   control={createForm.control}
-                  name="department"
+                  name="departmentId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Відділ</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Введіть назву відділу" {...field} />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Оберіть відділ" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {departments.map((department: any) => (
+                            <SelectItem key={department.id} value={department.id.toString()}>
+                              {department.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
