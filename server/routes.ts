@@ -877,6 +877,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/tech-cards/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteTechCard(id);
+      if (!success) {
+        return res.status(404).json({ error: "Tech card not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting tech card:", error);
+      res.status(500).json({ error: "Failed to delete tech card" });
+    }
+  });
+
   // Product Components (BOM) routes
   app.get("/api/products/:id/components", async (req, res) => {
     try {

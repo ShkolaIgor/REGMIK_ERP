@@ -137,6 +137,7 @@ export interface IStorage {
   getTechCard(id: number): Promise<(TechCard & { product: Product; steps: TechCardStep[]; materials: (TechCardMaterial & { product: Product })[] }) | undefined>;
   createTechCard(techCard: InsertTechCard, steps: InsertTechCardStep[], materials: InsertTechCardMaterial[]): Promise<TechCard>;
   updateTechCard(id: number, techCard: Partial<InsertTechCard>, steps?: InsertTechCardStep[], materials?: InsertTechCardMaterial[]): Promise<TechCard | undefined>;
+  deleteTechCard(id: number): Promise<boolean>;
 
   // Product Components (BOM)
   getProductComponents(productId: number): Promise<(ProductComponent & { component: Product })[]>;
@@ -1009,6 +1010,17 @@ export class MemStorage implements IStorage {
     }
 
     return updatedTechCard;
+  }
+
+  async deleteTechCard(id: number): Promise<boolean> {
+    const techCard = this.techCards.get(id);
+    if (!techCard) return false;
+
+    this.techCards.delete(id);
+    this.techCardSteps.delete(id);
+    this.techCardMaterials.delete(id);
+    
+    return true;
   }
 
   // Product Components (BOM)

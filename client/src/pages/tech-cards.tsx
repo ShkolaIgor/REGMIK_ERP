@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Plus, Eye, Edit, Clock, FileText, Search, ClipboardList, Wrench, Settings } from "lucide-react";
+import { Plus, Eye, Edit, Clock, FileText, Search, ClipboardList, Wrench, Settings, Trash2 } from "lucide-react";
 import { TechCardForm } from "@/components/TechCardForm";
 
 export default function TechCards() {
@@ -13,8 +13,24 @@ export default function TechCards() {
   const [selectedTechCard, setSelectedTechCard] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const queryClient = useQueryClient();
+  
   const { data: techCards = [], isLoading } = useQuery({
     queryKey: ["/api/tech-cards"],
+  });
+
+  const deleteTechCardMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/tech-cards/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Помилка видалення технологічної карти");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tech-cards"] });
+    },
   });
 
   // Фільтрація технологічних карт за пошуковим запитом
@@ -37,6 +53,12 @@ export default function TechCards() {
   const handleCloseForm = () => {
     setShowTechCardForm(false);
     setSelectedTechCard(null);
+  };
+
+  const handleDelete = (techCard: any) => {
+    if (confirm(`Ви впевнені, що хочете видалити технологічну карту "${techCard.name}"?`)) {
+      deleteTechCardMutation.mutate(techCard.id);
+    }
   };
 
   if (isLoading) {
