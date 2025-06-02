@@ -203,7 +203,7 @@ export default function TechCards() {
                       <Badge variant={techCard.isBaseCard !== false ? 'default' : 'secondary'} className="text-xs">
                         {techCard.isBaseCard !== false ? 'Базова карта' : 'Модифікація'}
                       </Badge>
-                      {techCard.modificationNote && (
+                      {techCard.isBaseCard === false && techCard.modificationNote && (
                         <span className="text-xs text-muted-foreground truncate" title={techCard.modificationNote}>
                           {techCard.modificationNote}
                         </span>
@@ -281,7 +281,11 @@ export default function TechCards() {
                   
                   <div className="flex justify-between items-center text-xs pt-2 border-t">
                     <div className="flex items-center space-x-1 text-muted-foreground">
-                      <span>Створено {formatDate(techCard.createdAt)}</span>
+                      {techCard.createdBy ? (
+                        <span>Створено: {techCard.createdBy} • {formatDate(techCard.createdAt)}</span>
+                      ) : (
+                        <span>Створено {formatDate(techCard.createdAt)}</span>
+                      )}
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge variant="outline" className="text-xs">
