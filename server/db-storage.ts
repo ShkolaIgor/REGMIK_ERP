@@ -1987,12 +1987,14 @@ export class DatabaseStorage implements IStorage {
 
   async createPosition(position: InsertPosition): Promise<Position> {
     try {
+      console.log('DB: Creating position with data:', position);
       const result = await this.db.insert(positions)
         .values(position)
         .returning();
+      console.log('DB: Position created successfully:', result[0]);
       return result[0];
     } catch (error) {
-      console.error('Error creating position:', error);
+      console.error('DB: Error creating position:', error);
       throw error;
     }
   }
