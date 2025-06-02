@@ -3895,6 +3895,163 @@ export class DatabaseStorage implements IStorage {
       console.error('Error updating inventory after manufacturing:', error);
     }
   }
+
+  // User management methods with worker integration
+  async getLocalUsersWithWorkers() {
+    const usersData = await db
+      .select({
+        id: localUsers.id,
+        workerId: localUsers.workerId,
+        username: localUsers.username,
+        email: localUsers.email,
+        firstName: localUsers.firstName,
+        lastName: localUsers.lastName,
+        phone: localUsers.phone,
+        roleId: localUsers.roleId,
+        role: localUsers.role,
+        isActive: localUsers.isActive,
+        systemModules: localUsers.systemModules,
+        lastLoginAt: localUsers.lastLoginAt,
+        createdAt: localUsers.createdAt,
+        updatedAt: localUsers.updatedAt,
+        worker: {
+          id: workers.id,
+          firstName: workers.firstName,
+          lastName: workers.lastName,
+          email: workers.email,
+          phone: workers.phone,
+          positionId: workers.positionId,
+          departmentId: workers.departmentId,
+        },
+        position: {
+          id: positions.id,
+          name: positions.name,
+        },
+        department: {
+          id: departments.id,
+          name: departments.name,
+        },
+        roleData: {
+          id: roles.id,
+          name: roles.name,
+          displayName: roles.displayName,
+        }
+      })
+      .from(localUsers)
+      .leftJoin(workers, eq(localUsers.workerId, workers.id))
+      .leftJoin(positions, eq(workers.positionId, positions.id))
+      .leftJoin(departments, eq(workers.departmentId, departments.id))
+      .leftJoin(roles, eq(localUsers.roleId, roles.id))
+      .orderBy(localUsers.createdAt);
+
+    return usersData;
+  }
+
+  async getWorkersAvailableForUsers() {
+    const availableWorkers = await db
+      .select({
+        id: workers.id,
+        firstName: workers.firstName,
+        lastName: workers.lastName,
+        email: workers.email,
+        phone: workers.phone,
+        positionId: workers.positionId,
+        departmentId: workers.departmentId,
+        position: {
+          id: positions.id,
+          name: positions.name,
+        },
+        department: {
+          id: departments.id,
+          name: departments.name,
+        }
+      })
+      .from(workers)
+      .leftJoin(positions, eq(workers.positionId, positions.id))
+      .leftJoin(departments, eq(workers.departmentId, departments.id))
+      .leftJoin(localUsers, eq(workers.id, localUsers.workerId))
+      .where(isNull(localUsers.workerId))
+      .orderBy(workers.firstName, workers.lastName);
+
+    return availableWorkers;
+  }
+
+  async getLocalUser(id: number) {
+    const [user] = await db
+      .select()
+      .from(localUsers)
+      .where(eq(localUsers.id, id))
+      .limit(1);
+    return user;
+  }
+
+  async createLocalUserWithWorker(userData: any) {
+    const [user] = await db
+      .insert(localUsers)
+      .values(userData)
+      .returning();
+    return user;
+  }
+
+  async updateLocalUser(id: number, userData: any) {
+    const [user] = await db
+      .update(localUsers)
+      .set({ ...userData, updatedAt: new Date() })
+      .where(eq(localUsers.id, id))
+      .returning();
+    return user;
+  }
+
+  async deleteLocalUser(id: number) {
+    const result = await db
+      .delete(localUsers)
+      .where(eq(localUsers.id, id));
+    return result.rowCount > 0;
+  }
+
+  async toggleUserStatus(id: number, isActive: boolean) {
+    const [user] = await db
+      .update(localUsers)
+      .set({ isActive, updatedAt: new Date() })
+      .where(eq(localUsers.id, id))
+      .returning();
+    return user;
+  }
+
+  async changeUserPassword(id: number, hashedPassword: string) {
+    const [user] = await db
+      .update(localUsers)
+      .set({ password: hashedPassword, updatedAt: new Date() })
+      .where(eq(localUsers.id, id))
+      .returning();
+    return user;
+  }
+
+  // Roles management
+  async getRoles() {
+    return await db.select().from(roles).orderBy(roles.name);
+  }
+
+  async createRole(roleData: any) {
+    const [role] = await db
+      .insert(roles)
+      .values(roleData)
+      .returning();
+    return role;
+  }
+
+  // System modules management
+  async getSystemModules() {
+    return await db.select().from(systemModules).orderBy(systemModules.sortOrder);
+  }
+
+  async createSystemModule(moduleData: any) {
+    const [module] = await db
+      .insert(systemModules)
+      .values(moduleData)
+      .returning();
+    return module;
+  }
 }
 
 export const dbStorage = new DatabaseStorage();

@@ -3275,7 +3275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       userData.password = hashedPassword;
       
-      const user = await storage.createLocalUser(userData);
+      const user = await storage.createLocalUserWithWorker(userData);
       res.status(201).json(user);
     } catch (error) {
       console.error("Error creating user:", error);
