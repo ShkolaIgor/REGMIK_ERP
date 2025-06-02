@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit, Trash2, Eye, UserCheck, UserX, Shield, Key, Settings, Check, ChevronsUpDown } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, UserCheck, UserX, Shield, Key, Settings, Check, ChevronsUpDown, Mail, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Switch } from "@/components/ui/switch";
@@ -386,6 +387,35 @@ export default function Users() {
     }
   };
 
+  const handleEmailPasswordReset = async (user: LocalUser) => {
+    if (!user.email) {
+      toast({
+        title: "Помилка",
+        description: "У користувача немає електронної пошти",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await apiRequest("/api/auth/send-password-reset", {
+        method: "POST",
+        body: { email: user.email, userId: user.id }
+      });
+
+      toast({
+        title: "Успіх",
+        description: `Лист для скидання паролю відправлено на ${user.email}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося відправити лист для скидання паролю",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case "admin": return "destructive";
@@ -627,23 +657,23 @@ export default function Users() {
       </div>
 
       {/* Список користувачів */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {filteredUsers.map((user: LocalUser) => (
-          <Card key={user.id} className={`relative ${!user.isActive ? 'opacity-60' : ''}`}>
-            <CardHeader className="pb-3">
+          <Card key={user.id} className={`relative ${!user.isActive ? 'opacity-60' : ''} hover:shadow-md transition-shadow`}>
+            <CardHeader className="pb-2 px-3 pt-3">
               <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-3 flex-1 min-w-0">
+                <div className="flex items-start space-x-2 flex-1 min-w-0">
                   {/* Фото користувача */}
                   <div className="flex-shrink-0">
                     {user.worker?.photo ? (
                       <img
                         src={user.worker.photo}
                         alt={`${user.worker.firstName} ${user.worker.lastName}`}
-                        className="w-12 h-12 rounded-full object-cover"
+                        className="w-10 h-10 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                        <span className="text-gray-600 font-medium text-sm">
+                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                        <span className="text-gray-600 font-medium text-xs">
                           {user.worker?.firstName?.charAt(0)}{user.worker?.lastName?.charAt(0)}
                         </span>
                       </div>
@@ -652,102 +682,92 @@ export default function Users() {
                   
                   {/* Інформація користувача */}
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base truncate">
+                    <CardTitle className="text-sm truncate leading-tight">
                       {user.worker?.firstName} {user.worker?.lastName}
                     </CardTitle>
-                    <div className="text-sm text-muted-foreground truncate">
+                    <div className="text-xs text-muted-foreground truncate">
                       @{user.username}
                     </div>
                     <div className="text-xs text-muted-foreground truncate">
                       {user.email}
                     </div>
-                    {user.position?.name && (
-                      <div className="text-xs text-blue-600 truncate">
-                        {user.position.name}
-                      </div>
-                    )}
                   </div>
                 </div>
-                <div className="flex items-center space-x-1">
+                <div className="flex items-center">
                   {user.isActive ? (
-                    <UserCheck className="h-4 w-4 text-green-600" />
+                    <UserCheck className="h-3 w-3 text-green-600" />
                   ) : (
-                    <UserX className="h-4 w-4 text-red-600" />
+                    <UserX className="h-3 w-3 text-red-600" />
                   )}
                 </div>
               </div>
             </CardHeader>
             
-            <CardContent className="pt-3">
-              <div className="space-y-3">
+            <CardContent className="pt-2 px-3 pb-3">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Badge variant={getRoleBadgeVariant(user.role)}>
+                  <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs">
                     {getRoleDisplayName(user.role)}
                   </Badge>
                   {user.lastLoginAt && (
                     <div className="text-xs text-muted-foreground">
-                      Останній вхід: {new Date(user.lastLoginAt).toLocaleDateString('uk-UA')}
+                      {new Date(user.lastLoginAt).toLocaleDateString('uk-UA')}
                     </div>
                   )}
                 </div>
                 
-                {user.phone && (
-                  <div className="text-xs text-muted-foreground">
-                    Телефон: {user.phone}
-                  </div>
-                )}
-                
-                <div className="flex justify-between items-center text-xs pt-2 border-t">
-                  <div className="text-muted-foreground">
-                    Створено: {new Date(user.createdAt || '').toLocaleDateString('uk-UA')}
-                  </div>
-                </div>
-                
-                <div className="flex space-x-1">
+                <div className="flex gap-1 pt-1">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={() => handleEdit(user)}
-                    title="Редагувати користувача"
+                    className="flex-1 h-7 text-xs px-2"
                   >
-                    <Edit className="h-4 w-4" />
+                    <Edit className="h-3 w-3 mr-1" />
+                    Редагувати
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleChangePassword(user)}
-                    title="Змінити пароль"
-                  >
-                    <Key className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handlePermissions(user)}
-                    title="Налаштувати дозволи"
-                  >
-                    <Shield className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleUserStatusMutation.mutate({ id: user.id, isActive: !user.isActive })}
-                    title={user.isActive ? "Деактивувати" : "Активувати"}
-                  >
-                    {user.isActive ? (
-                      <UserX className="h-4 w-4 text-red-500" />
-                    ) : (
-                      <UserCheck className="h-4 w-4 text-green-500" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => deleteUserMutation.mutate(user.id)}
-                    title="Видалити користувача"
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-7 px-2">
+                        <MoreHorizontal className="h-3 w-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleChangePassword(user)}>
+                        <Key className="h-3 w-3 mr-2" />
+                        Скинути пароль
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEmailPasswordReset(user)}>
+                        <Mail className="h-3 w-3 mr-2" />
+                        Скинути через пошту
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handlePermissions(user)}>
+                        <Shield className="h-3 w-3 mr-2" />
+                        Налаштувати дозволи
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => toggleUserStatusMutation.mutate({ id: user.id, isActive: !user.isActive })}>
+                        {user.isActive ? (
+                          <>
+                            <UserX className="h-3 w-3 mr-2" />
+                            Деактивувати
+                          </>
+                        ) : (
+                          <>
+                            <UserCheck className="h-3 w-3 mr-2" />
+                            Активувати
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => deleteUserMutation.mutate(user.id)}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="h-3 w-3 mr-2" />
+                        Видалити
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </CardContent>
