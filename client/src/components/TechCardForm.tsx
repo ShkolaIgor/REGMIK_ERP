@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Save } from "lucide-react";
+import { Plus, Trash2, Save, ArrowUp, ArrowDown } from "lucide-react";
 
 const techCardSchema = z.object({
   name: z.string().min(1, "Назва обов'язкова"),
@@ -87,11 +87,7 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
 
   const createMutation = useMutation({
     mutationFn: async (data: TechCardFormData & { steps: StepFormData[]; materials: MaterialFormData[] }) => {
-      const response = await apiRequest("/api/tech-cards", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
-      return response.json();
+      return await apiRequest("/api/tech-cards", "POST", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tech-cards"] });
@@ -112,11 +108,7 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
 
   const updateMutation = useMutation({
     mutationFn: async (data: TechCardFormData & { steps: StepFormData[]; materials: MaterialFormData[] }) => {
-      const response = await apiRequest(`/api/tech-cards/${techCard.id}`, {
-        method: "PATCH",
-        body: JSON.stringify(data),
-      });
-      return response.json();
+      return await apiRequest(`/api/tech-cards/${techCard.id}`, "PATCH", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tech-cards"] });
@@ -161,6 +153,22 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
   const removeStep = (index: number) => {
     const updatedSteps = steps.filter((_, i) => i !== index);
     setSteps(updatedSteps.map((step, i) => ({ ...step, stepNumber: i + 1 })));
+  };
+
+  const moveStepUp = (index: number) => {
+    if (index > 0) {
+      const newSteps = [...steps];
+      [newSteps[index - 1], newSteps[index]] = [newSteps[index], newSteps[index - 1]];
+      setSteps(newSteps.map((step, i) => ({ ...step, stepNumber: i + 1 })));
+    }
+  };
+
+  const moveStepDown = (index: number) => {
+    if (index < steps.length - 1) {
+      const newSteps = [...steps];
+      [newSteps[index], newSteps[index + 1]] = [newSteps[index + 1], newSteps[index]];
+      setSteps(newSteps.map((step, i) => ({ ...step, stepNumber: i + 1 })));
+    }
   };
 
   const addMaterial = () => {
@@ -405,14 +413,37 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                           <TableCell>{step.duration} хв</TableCell>
                           <TableCell>{step.equipment}</TableCell>
                           <TableCell>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => removeStep(index)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => moveStepUp(index)}
+                                disabled={index === 0}
+                                title="Перемістити вгору"
+                              >
+                                <ArrowUp className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => moveStepDown(index)}
+                                disabled={index === steps.length - 1}
+                                title="Перемістити вниз"
+                              >
+                                <ArrowDown className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => removeStep(index)}
+                                title="Видалити крок"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
