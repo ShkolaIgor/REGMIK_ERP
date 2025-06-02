@@ -228,7 +228,7 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
     const fullData = { ...data, steps, materials };
     console.log("Full data to be sent:", fullData);
     
-    if (techCard) {
+    if (techCard && techCard.id) {
       updateMutation.mutate(fullData);
     } else {
       createMutation.mutate(fullData);
