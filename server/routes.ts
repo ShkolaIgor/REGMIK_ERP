@@ -7,7 +7,7 @@ import { novaPoshtaCache } from "./nova-poshta-cache";
 import { 
   insertProductSchema, insertOrderSchema, insertRecipeSchema,
   insertProductionTaskSchema, insertCategorySchema, insertUnitSchema, insertWarehouseSchema,
-  insertSupplierSchema, insertInventorySchema, insertTechCardSchema,
+  insertSupplierSchema, insertInventorySchema, insertTechCardSchema, insertTechCardStepSchema, insertTechCardMaterialSchema,
   insertComponentSchema, insertProductComponentSchema, insertCostCalculationSchema, insertMaterialShortageSchema,
   insertAssemblyOperationSchema, insertAssemblyOperationItemSchema,
   insertInventoryAuditSchema, insertInventoryAuditItemSchema,
