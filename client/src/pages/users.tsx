@@ -27,6 +27,7 @@ export default function Users() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
+  const [showEmailResetDialog, setShowEmailResetDialog] = useState(false);
   const [editingUser, setEditingUser] = useState<LocalUser | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -397,24 +398,33 @@ export default function Users() {
       return;
     }
 
-    try {
+    setEditingUser(user);
+    setShowEmailResetDialog(true);
+  };
+
+  const sendEmailResetMutation = useMutation({
+    mutationFn: async (user: LocalUser) => {
       await apiRequest("/api/auth/send-password-reset", {
         method: "POST",
         body: { email: user.email, userId: user.id }
       });
-
+    },
+    onSuccess: () => {
+      setShowEmailResetDialog(false);
+      setEditingUser(null);
       toast({
         title: "Успіх",
-        description: `Лист для скидання паролю відправлено на ${user.email}`,
+        description: `Лист для скидання паролю відправлено`,
       });
-    } catch (error) {
+    },
+    onError: (error) => {
       toast({
         title: "Помилка",
         description: "Не вдалося відправити лист для скидання паролю",
         variant: "destructive",
       });
-    }
-  };
+    },
+  });
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
@@ -1033,6 +1043,32 @@ export default function Users() {
                 {updatePermissionsMutation.isPending ? "Збереження..." : "Зберегти дозволи"}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Password Reset Dialog */}
+      <Dialog open={showEmailResetDialog} onOpenChange={setShowEmailResetDialog}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Відправити лист для скидання паролю</DialogTitle>
+            <DialogDescription>
+              Підтвердіть відправку листа для скидання паролю користувачу {editingUser?.username}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowEmailResetDialog(false)}
+            >
+              Скасувати
+            </Button>
+            <Button
+              onClick={() => editingUser && sendEmailResetMutation.mutate(editingUser)}
+              disabled={sendEmailResetMutation.isPending}
+            >
+              {sendEmailResetMutation.isPending ? "Відправлення..." : "Відправити"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

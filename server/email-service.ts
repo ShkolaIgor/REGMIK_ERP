@@ -1,17 +1,11 @@
 import nodemailer from 'nodemailer';
 import { randomBytes } from 'crypto';
 
-// Конфігурація локального поштового клієнта
+// Конфігурація для тестування - не відправляє реальні листи
 const transporter = nodemailer.createTransport({
-  host: 'localhost',
-  port: 1025, // Для тестування з MailHog або подібним
-  secure: false,
-  auth: {
-    user: 'test@regmik.ua',
-    pass: 'test'
-  },
-  // Для продакшену можна налаштувати SMTP
-  // або використовувати Gmail SMTP
+  streamTransport: true,
+  newline: 'unix',
+  buffer: true
 });
 
 export interface EmailOptions {
