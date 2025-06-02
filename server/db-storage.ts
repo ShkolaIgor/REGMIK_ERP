@@ -3910,6 +3910,7 @@ export class DatabaseStorage implements IStorage {
         roleId: localUsers.roleId,
         role: localUsers.role,
         isActive: localUsers.isActive,
+        permissions: localUsers.permissions,
         systemModules: localUsers.systemModules,
         lastLoginAt: localUsers.lastLoginAt,
         createdAt: localUsers.createdAt,
