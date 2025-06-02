@@ -577,6 +577,21 @@ export const assemblyOperationItems = pgTable("assembly_operation_items", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Налаштування поштового сервісу
+export const emailSettings = pgTable("email_settings", {
+  id: serial("id").primaryKey(),
+  smtpHost: varchar("smtp_host", { length: 255 }),
+  smtpPort: integer("smtp_port").default(587),
+  smtpSecure: boolean("smtp_secure").default(false),
+  smtpUser: varchar("smtp_user", { length: 255 }),
+  smtpPassword: varchar("smtp_password", { length: 255 }),
+  fromEmail: varchar("from_email", { length: 255 }),
+  fromName: varchar("from_name", { length: 255 }).default("REGMIK ERP"),
+  isActive: boolean("is_active").default(false),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedBy: varchar("updated_by", { length: 50 })
+});
+
 // Insert schemas
 export const insertAssemblyOperationSchema = createInsertSchema(assemblyOperations).omit({ 
   id: true, 
@@ -865,7 +880,10 @@ export const insertCarrierSchema = createInsertSchema(carriers).omit({
   updatedAt: true 
 });
 
-
+export const insertEmailSettingsSchema = createInsertSchema(emailSettings).omit({ 
+  id: true, 
+  updatedAt: true 
+});
 
 // User schema for auth (updated for Replit Auth)
 export const insertUserSchemaAuth = createInsertSchema(users);
@@ -891,6 +909,8 @@ export type ProductionTask = typeof productionTasks.$inferSelect;
 export type InsertProductionTask = z.infer<typeof insertProductionTaskSchema>;
 export type Supplier = typeof suppliers.$inferSelect;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
+export type EmailSettings = typeof emailSettings.$inferSelect;
+export type InsertEmailSettings = z.infer<typeof insertEmailSettingsSchema>;
 
 export type PackageType = typeof packageTypes.$inferSelect;
 export type InsertPackageType = z.infer<typeof insertPackageTypeSchema>;
