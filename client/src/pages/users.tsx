@@ -56,7 +56,7 @@ export default function Users() {
     
     // Take first letter of first name + full last name, all lowercase
     const username = `${firstName.charAt(0).toLowerCase()}${lastName.toLowerCase()}`;
-    return `@${username}`;
+    return username;
   };
 
   const createUserMutation = useMutation({
