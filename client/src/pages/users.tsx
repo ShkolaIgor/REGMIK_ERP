@@ -45,7 +45,7 @@ export default function Users() {
     mutationFn: async (userData: InsertLocalUser) => {
       await apiRequest("/api/users", {
         method: "POST",
-        body: JSON.stringify(userData),
+        body: userData,
       });
     },
     onSuccess: () => {
@@ -69,7 +69,7 @@ export default function Users() {
     mutationFn: async ({ id, userData }: { id: number; userData: Partial<InsertLocalUser> }) => {
       await apiRequest(`/api/users/${id}`, {
         method: "PATCH",
-        body: JSON.stringify(userData),
+        body: userData,
       });
     },
     onSuccess: () => {
@@ -94,7 +94,7 @@ export default function Users() {
     mutationFn: async ({ id, passwordData }: { id: number; passwordData: ChangePassword }) => {
       await apiRequest(`/api/users/${id}/change-password`, {
         method: "POST",
-        body: JSON.stringify(passwordData),
+        body: passwordData,
       });
     },
     onSuccess: () => {
@@ -140,7 +140,7 @@ export default function Users() {
     mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
       await apiRequest(`/api/users/${id}/toggle-status`, {
         method: "PATCH",
-        body: JSON.stringify({ isActive }),
+        body: { isActive },
       });
     },
     onSuccess: () => {
