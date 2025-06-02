@@ -304,6 +304,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get order items with shipment information for partial shipment
+  app.get("/api/orders/:id/items", async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      const orderItems = await storage.getOrderItemsWithShipmentInfo(orderId);
+      res.json(orderItems);
+    } catch (error) {
+      console.error("Failed to get order items:", error);
+      res.status(500).json({ error: "Failed to fetch order items" });
+    }
+  });
+
+  // Create partial shipment
+  app.post("/api/orders/:id/partial-shipment", async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      const { items, shipmentData } = req.body;
+      
+      console.log("Creating partial shipment for order:", orderId);
+      console.log("Items to ship:", items);
+      console.log("Shipment data:", shipmentData);
+      
+      const shipment = await storage.createPartialShipment(orderId, items, shipmentData);
+      res.status(201).json(shipment);
+    } catch (error) {
+      console.error("Failed to create partial shipment:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid shipment data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create partial shipment" });
+      }
+    }
+  });
+
   app.post("/api/orders", async (req, res) => {
     try {
       console.log("Creating order with data:", JSON.stringify(req.body, null, 2));

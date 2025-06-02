@@ -3529,6 +3529,109 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
   }
+
+  // Partial Shipment Methods
+  async getOrderItemsWithShipmentInfo(orderId: number): Promise<any[]> {
+    try {
+      const result = await db
+        .select({
+          id: orderItems.id,
+          orderId: orderItems.orderId,
+          productId: orderItems.productId,
+          quantity: orderItems.quantity,
+          shippedQuantity: orderItems.shippedQuantity,
+          unitPrice: orderItems.unitPrice,
+          totalPrice: orderItems.totalPrice,
+          productName: products.name,
+          productSku: products.sku,
+          productUnit: products.unit,
+        })
+        .from(orderItems)
+        .leftJoin(products, eq(orderItems.productId, products.id))
+        .where(eq(orderItems.orderId, orderId));
+
+      return result.map(item => ({
+        ...item,
+        remainingQuantity: item.quantity - (item.shippedQuantity || 0),
+        canShip: (item.quantity - (item.shippedQuantity || 0)) > 0
+      }));
+    } catch (error) {
+      console.error('Error getting order items with shipment info:', error);
+      throw error;
+    }
+  }
+
+  async createPartialShipment(orderId: number, items: any[], shipmentData: any): Promise<any> {
+    try {
+      return await db.transaction(async (tx) => {
+        // Створюємо відвантаження
+        const shipmentNumber = `SH-${Date.now()}`;
+        const [shipment] = await tx
+          .insert(shipments)
+          .values({
+            ...shipmentData,
+            orderId,
+            shipmentNumber,
+            status: 'preparing',
+          })
+          .returning();
+
+        // Додаємо елементи відвантаження та оновлюємо кількість відвантажених товарів
+        for (const item of items) {
+          if (item.quantity > 0) {
+            // Створюємо елемент відвантаження
+            await tx.insert(shipmentItems).values({
+              shipmentId: shipment.id,
+              orderItemId: item.orderItemId,
+              productId: item.productId,
+              quantity: item.quantity,
+              serialNumbers: item.serialNumbers || []
+            });
+
+            // Оновлюємо кількість відвантажених товарів у замовленні
+            await tx
+              .update(orderItems)
+              .set({
+                shippedQuantity: sql`${orderItems.shippedQuantity} + ${item.quantity}`
+              })
+              .where(eq(orderItems.id, item.orderItemId));
+          }
+        }
+
+        // Перевіряємо чи замовлення повністю відвантажене
+        const updatedItems = await tx
+          .select({
+            quantity: orderItems.quantity,
+            shippedQuantity: orderItems.shippedQuantity
+          })
+          .from(orderItems)
+          .where(eq(orderItems.orderId, orderId));
+
+        const isFullyShipped = updatedItems.every(item => 
+          (item.shippedQuantity || 0) >= item.quantity
+        );
+
+        // Оновлюємо статус замовлення якщо воно повністю відвантажене
+        if (isFullyShipped) {
+          await tx
+            .update(orders)
+            .set({ status: 'shipped' })
+            .where(eq(orders.id, orderId));
+        } else {
+          // Встановлюємо статус часткового відвантаження
+          await tx
+            .update(orders)
+            .set({ status: 'partially_shipped' })
+            .where(eq(orders.id, orderId));
+        }
+
+        return shipment;
+      });
+    } catch (error) {
+      console.error('Error creating partial shipment:', error);
+      throw error;
+    }
+  }
 }
 
 export const dbStorage = new DatabaseStorage();

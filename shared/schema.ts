@@ -173,6 +173,7 @@ export const orderItems = pgTable("order_items", {
   orderId: integer("order_id").references(() => orders.id).notNull(),
   productId: integer("product_id").references(() => products.id).notNull(),
   quantity: integer("quantity").notNull(),
+  shippedQuantity: integer("shipped_quantity").notNull().default(0), // кількість вже відвантажена
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
 });
