@@ -58,7 +58,8 @@ export default function PositionsPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<InsertPosition> }) => {
-      return await apiRequest(`/api/positions/${id}`, "PATCH", data);
+      console.log("Sending PATCH request with data:", data);
+      return await apiRequest(`/api/positions/${id}`, { method: "PATCH", body: data });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/positions"] });
@@ -79,7 +80,7 @@ export default function PositionsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      return await apiRequest(`/api/positions/${id}`, "DELETE");
+      return await apiRequest(`/api/positions/${id}`, { method: "DELETE" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/positions"] });
