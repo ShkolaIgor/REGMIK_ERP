@@ -311,14 +311,16 @@ export default function PositionsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredPositions.map((position: Position) => (
-          <Card key={position.id} className="relative">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <CardTitle className="text-lg">{position.name}</CardTitle>
-                  <CardDescription>{position.department}</CardDescription>
-                </div>
+        {filteredPositions.map((position: Position) => {
+          const department = departments.find(d => d.id === position.departmentId);
+          return (
+            <Card key={position.id} className="relative">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg">{position.name}</CardTitle>
+                    <CardDescription>{department?.name || 'Без відділу'}</CardDescription>
+                  </div>
                 <div className="flex space-x-2">
                   <Button
                     variant="ghost"
@@ -375,7 +377,8 @@ export default function PositionsPage() {
               </div>
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       {filteredPositions.length === 0 && (
