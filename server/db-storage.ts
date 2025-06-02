@@ -1072,22 +1072,22 @@ export class DatabaseStorage implements IStorage {
 
   async deleteMaterialShortage(id: number): Promise<boolean> {
     try {
-      // Перевіряємо, чи є пов'язані замовлення постачальникам
-      const relatedOrders = await db.select()
+      // Перевіряємо, чи є пов'язані замовлення постачальникам через supplier_order_items
+      const relatedOrderItems = await db.select()
         .from(supplierOrderItems)
         .where(eq(supplierOrderItems.materialShortageId, id))
         .limit(1);
       
-      // Якщо є пов'язані замовлення, спочатку видаляємо їх
-      if (relatedOrders.length > 0) {
-        await db.delete(supplierOrders)
-          .where(eq(supplierOrders.materialShortageId, id));
+      // Якщо є пов'язані елементи замовлень, видаляємо їх
+      if (relatedOrderItems.length > 0) {
+        await db.delete(supplierOrderItems)
+          .where(eq(supplierOrderItems.materialShortageId, id));
       }
       
       const result = await db.delete(materialShortages)
         .where(eq(materialShortages.id, id));
       
-      return result.rowCount > 0;
+      return (result.rowCount || 0) > 0;
     } catch (error: any) {
       console.error('Error deleting material shortage:', error);
       throw new Error(error.message || "Помилка при видаленні дефіциту матеріалів");
