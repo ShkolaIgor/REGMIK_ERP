@@ -4,9 +4,16 @@ import connectPg from "connect-pg-simple";
 
 // Простий middleware для перевірки авторизації
 export const isSimpleAuthenticated: RequestHandler = (req, res, next) => {
+  console.log("Auth check - Session exists:", !!req.session);
+  console.log("Auth check - User in session:", !!(req.session as any)?.user);
+  console.log("Auth check - Session ID:", req.sessionID);
+  console.log("Auth check - Session data:", req.session);
+  
   if (req.session && (req.session as any).user) {
+    console.log("Auth check - User authenticated:", (req.session as any).user.username);
     return next();
   }
+  console.log("Auth check - User NOT authenticated");
   return res.status(401).json({ message: "Unauthorized" });
 };
 
