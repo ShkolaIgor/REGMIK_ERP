@@ -3467,6 +3467,140 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Email password reset routes
+  app.post("/api/auth/send-password-reset", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { email, userId } = req.body;
+      
+      if (!email || !userId) {
+        return res.status(400).json({ error: "Email and user ID are required" });
+      }
+      
+      // Get user to verify they exist
+      const user = await storage.getLocalUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      if (user.email !== email) {
+        return res.status(400).json({ error: "Email does not match user" });
+      }
+      
+      // Generate reset token and expiration
+      const { generatePasswordResetToken, sendEmail, generatePasswordResetEmail } = await import("./email-service");
+      const resetToken = generatePasswordResetToken();
+      const resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      
+      // Save reset token to database
+      const success = await storage.savePasswordResetToken(userId, resetToken, resetExpires);
+      if (!success) {
+        return res.status(500).json({ error: "Failed to save reset token" });
+      }
+      
+      // Generate reset URL
+      const resetUrl = `${req.protocol}://${req.get('host')}/reset-password?token=${resetToken}`;
+      
+      // Generate email content
+      const { html, text } = generatePasswordResetEmail(user.username, resetToken, resetUrl);
+      
+      // Send email
+      const emailSent = await sendEmail({
+        to: email,
+        subject: "Скидання паролю - REGMIK ERP",
+        html,
+        text
+      });
+      
+      if (!emailSent) {
+        return res.status(500).json({ error: "Failed to send email" });
+      }
+      
+      res.json({ message: "Password reset email sent successfully" });
+    } catch (error) {
+      console.error("Error sending password reset email:", error);
+      res.status(500).json({ error: "Failed to send password reset email" });
+    }
+  });
+
+  app.post("/api/auth/confirm-password-reset", async (req, res) => {
+    try {
+      const { token, newPassword } = req.body;
+      
+      if (!token || !newPassword) {
+        return res.status(400).json({ error: "Token and new password are required" });
+      }
+      
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters long" });
+      }
+      
+      // Verify reset token and get user
+      const user = await storage.getUserByResetToken(token);
+      if (!user) {
+        return res.status(400).json({ error: "Invalid or expired reset token" });
+      }
+      
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      
+      // Update password and clear reset token
+      const success = await storage.confirmPasswordReset(user.id, hashedPassword);
+      if (!success) {
+        return res.status(500).json({ error: "Failed to reset password" });
+      }
+      
+      res.json({ message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Error confirming password reset:", error);
+      res.status(500).json({ error: "Failed to reset password" });
+    }
+  });
+
+  // Registration confirmation routes
+  app.post("/api/auth/send-registration-confirmation", async (req, res) => {
+    try {
+      const { email, username } = req.body;
+      
+      if (!email || !username) {
+        return res.status(400).json({ error: "Email and username are required" });
+      }
+      
+      // Generate confirmation token
+      const { generatePasswordResetToken, sendEmail, generateRegistrationConfirmationEmail } = await import("./email-service");
+      const confirmationToken = generatePasswordResetToken();
+      const confirmationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      
+      // Save confirmation token (using same mechanism as password reset)
+      const tempUserId = Date.now(); // Temporary ID for unconfirmed users
+      
+      // Generate confirmation URL
+      const confirmationUrl = `${req.protocol}://${req.get('host')}/confirm-registration?token=${confirmationToken}`;
+      
+      // Generate email content
+      const { html, text } = generateRegistrationConfirmationEmail(username, confirmationToken, confirmationUrl);
+      
+      // Send email
+      const emailSent = await sendEmail({
+        to: email,
+        subject: "Підтвердження реєстрації - REGMIK ERP",
+        html,
+        text
+      });
+      
+      if (!emailSent) {
+        return res.status(500).json({ error: "Failed to send confirmation email" });
+      }
+      
+      res.json({ 
+        message: "Registration confirmation email sent successfully",
+        token: confirmationToken // For development/testing
+      });
+    } catch (error) {
+      console.error("Error sending registration confirmation email:", error);
+      res.status(500).json({ error: "Failed to send confirmation email" });
+    }
+  });
+
   // Update user permissions
   app.patch("/api/users/:id/permissions", isSimpleAuthenticated, async (req, res) => {
     try {

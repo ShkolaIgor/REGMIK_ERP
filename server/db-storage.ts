@@ -4051,6 +4051,62 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  // Password reset functionality
+  async savePasswordResetToken(userId: number, token: string, expires: Date) {
+    try {
+      const [user] = await db
+        .update(localUsers)
+        .set({ 
+          passwordResetToken: token, 
+          passwordResetExpires: expires,
+          updatedAt: new Date()
+        })
+        .where(eq(localUsers.id, userId))
+        .returning();
+      return !!user;
+    } catch (error) {
+      console.error("Error saving password reset token:", error);
+      return false;
+    }
+  }
+
+  async getUserByResetToken(token: string) {
+    try {
+      const [user] = await db
+        .select()
+        .from(localUsers)
+        .where(
+          and(
+            eq(localUsers.passwordResetToken, token),
+            gte(localUsers.passwordResetExpires, new Date())
+          )
+        );
+      return user || null;
+    } catch (error) {
+      console.error("Error getting user by reset token:", error);
+      return null;
+    }
+  }
+
+  async confirmPasswordReset(userId: number, hashedPassword: string) {
+    try {
+      const [user] = await db
+        .update(localUsers)
+        .set({ 
+          password: hashedPassword,
+          passwordResetToken: null,
+          passwordResetExpires: null,
+          updatedAt: new Date()
+        })
+        .where(eq(localUsers.id, userId))
+        .returning();
+      return !!user;
+    } catch (error) {
+      console.error("Error confirming password reset:", error);
+      return false;
+    }
+  }
+
   // Roles management
   async getRoles() {
     return await db.select().from(roles).orderBy(roles.name);

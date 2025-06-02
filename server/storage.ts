@@ -60,6 +60,11 @@ export interface IStorage {
   deleteLocalUser(id: number): Promise<boolean>;
   toggleUserStatus(id: number, isActive: boolean): Promise<LocalUser | undefined>;
   changeUserPassword(id: number, hashedPassword: string): Promise<boolean>;
+  
+  // Password reset functionality
+  savePasswordResetToken(userId: number, token: string, expires: Date): Promise<boolean>;
+  getUserByResetToken(token: string): Promise<LocalUser | null>;
+  confirmPasswordReset(userId: number, hashedPassword: string): Promise<boolean>;
 
   // Roles
   getRoles(): Promise<Role[]>;
