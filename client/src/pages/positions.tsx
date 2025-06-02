@@ -98,7 +98,7 @@ export default function PositionsPage() {
     resolver: zodResolver(insertPositionSchema),
     defaultValues: {
       name: "",
-      department: "",
+      departmentId: undefined,
       description: "",
       isActive: true,
     },
@@ -108,7 +108,7 @@ export default function PositionsPage() {
     resolver: zodResolver(insertPositionSchema),
     defaultValues: {
       name: "",
-      department: "",
+      departmentId: undefined,
       description: "",
       isActive: true,
     },
@@ -216,7 +216,7 @@ export default function PositionsPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Відділ</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
+                      <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Оберіть відділ" />
@@ -404,13 +404,24 @@ export default function PositionsPage() {
               />
               <FormField
                 control={editForm.control}
-                name="department"
+                name="departmentId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Відділ</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Введіть назву відділу" {...field} />
-                    </FormControl>
+                    <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Оберіть відділ" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {departments.map((department: any) => (
+                          <SelectItem key={department.id} value={department.id.toString()}>
+                            {department.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
