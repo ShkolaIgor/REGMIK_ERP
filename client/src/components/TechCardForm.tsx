@@ -267,6 +267,7 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
 
   const editStep = (index: number) => {
     setEditingStepIndex(index);
+    setNewStep({ ...steps[index] });
   };
 
   const saveStep = (index: number, updatedStep: StepFormData) => {
@@ -274,10 +275,36 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
     updatedSteps[index] = { ...updatedStep, stepNumber: index + 1 };
     setSteps(updatedSteps);
     setEditingStepIndex(null);
+    setNewStep({
+      stepNumber: steps.length + 1,
+      title: "",
+      description: "",
+      duration: 0,
+      equipment: "",
+      notes: "",
+      departmentId: undefined,
+      positionId: undefined,
+      canRunParallel: false,
+      prerequisiteSteps: [],
+      executionOrder: 1,
+    });
   };
 
   const cancelEditStep = () => {
     setEditingStepIndex(null);
+    setNewStep({
+      stepNumber: steps.length + 1,
+      title: "",
+      description: "",
+      duration: 0,
+      equipment: "",
+      notes: "",
+      departmentId: undefined,
+      positionId: undefined,
+      canRunParallel: false,
+      prerequisiteSteps: [],
+      executionOrder: 1,
+    });
   };
 
   const addMaterial = () => {
@@ -574,6 +601,100 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                       {steps.map((step, index) => {
                         const department = departments.find((d: any) => d.id === step.departmentId);
                         const position = positions.find((p: any) => p.id === step.positionId);
+                        const isEditing = editingStepIndex === index;
+                        
+                        if (isEditing) {
+                          return (
+                            <TableRow key={index} className="bg-muted/50">
+                              <TableCell>{step.stepNumber}</TableCell>
+                              <TableCell>
+                                <Input
+                                  value={newStep.title}
+                                  onChange={(e) => setNewStep({...newStep, title: e.target.value})}
+                                  placeholder="Назва кроку"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  value={newStep.description}
+                                  onChange={(e) => setNewStep({...newStep, description: e.target.value})}
+                                  placeholder="Опис"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  type="number"
+                                  value={newStep.duration || ""}
+                                  onChange={(e) => setNewStep({...newStep, duration: parseInt(e.target.value) || 0})}
+                                  placeholder="Час"
+                                  className="w-20"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <select
+                                  className="w-full h-9 px-3 py-1 text-sm border border-input bg-background rounded-md"
+                                  value={newStep.departmentId || ""}
+                                  onChange={(e) => setNewStep({...newStep, departmentId: e.target.value ? parseInt(e.target.value) : undefined})}
+                                >
+                                  <option value="">Дільниця</option>
+                                  {departments.map((dept: any) => (
+                                    <option key={dept.id} value={dept.id}>{dept.name}</option>
+                                  ))}
+                                </select>
+                              </TableCell>
+                              <TableCell>
+                                <select
+                                  className="w-full h-9 px-3 py-1 text-sm border border-input bg-background rounded-md"
+                                  value={newStep.positionId || ""}
+                                  onChange={(e) => setNewStep({...newStep, positionId: e.target.value ? parseInt(e.target.value) : undefined})}
+                                >
+                                  <option value="">Посада</option>
+                                  {positions.map((pos: any) => (
+                                    <option key={pos.id} value={pos.id}>{pos.name}</option>
+                                  ))}
+                                </select>
+                              </TableCell>
+                              <TableCell>
+                                <input
+                                  type="checkbox"
+                                  checked={newStep.canRunParallel}
+                                  onChange={(e) => setNewStep({...newStep, canRunParallel: e.target.checked})}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  type="number"
+                                  value={newStep.executionOrder || ""}
+                                  onChange={(e) => setNewStep({...newStep, executionOrder: parseInt(e.target.value) || 1})}
+                                  className="w-16"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex gap-1">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => saveStep(index, newStep)}
+                                    title="Зберегти"
+                                  >
+                                    <Save className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={cancelEditStep}
+                                    title="Скасувати"
+                                  >
+                                    ✕
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        }
+                        
                         return (
                           <TableRow key={index}>
                             <TableCell>{step.stepNumber}</TableCell>
@@ -585,37 +706,46 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                             <TableCell>{step.canRunParallel ? "✓" : "-"}</TableCell>
                             <TableCell>{step.executionOrder}</TableCell>
                             <TableCell>
-                            <div className="flex gap-1">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => moveStepUp(index)}
-                                disabled={index === 0}
-                                title="Перемістити вгору"
-                              >
-                                <ArrowUp className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => moveStepDown(index)}
-                                disabled={index === steps.length - 1}
-                                title="Перемістити вниз"
-                              >
-                                <ArrowDown className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => removeStep(index)}
-                                title="Видалити крок"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
+                              <div className="flex gap-1">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => editStep(index)}
+                                  title="Редагувати крок"
+                                >
+                                  <Save className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => moveStepUp(index)}
+                                  disabled={index === 0}
+                                  title="Перемістити вгору"
+                                >
+                                  <ArrowUp className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => moveStepDown(index)}
+                                  disabled={index === steps.length - 1}
+                                  title="Перемістити вниз"
+                                >
+                                  <ArrowDown className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => removeStep(index)}
+                                  title="Видалити крок"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         );
