@@ -4,7 +4,7 @@ import connectPg from "connect-pg-simple";
 
 // Простий middleware для перевірки авторизації
 export const isSimpleAuthenticated: RequestHandler = (req, res, next) => {
-  if (req.session && (req.session as any).userId) {
+  if (req.session && (req.session as any).user) {
     return next();
   }
   return res.status(401).json({ message: "Unauthorized" });
