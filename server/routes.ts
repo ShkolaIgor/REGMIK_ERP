@@ -3417,11 +3417,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { permissions } = req.body;
       
+      console.log("Updating permissions for user ID:", id);
+      console.log("New permissions data:", permissions);
+      
       const user = await storage.updateLocalUserPermissions(id, permissions);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
       
+      console.log("Updated user with permissions:", user);
       res.json(user);
     } catch (error) {
       console.error("Error updating user permissions:", error);

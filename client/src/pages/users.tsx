@@ -298,6 +298,8 @@ export default function Users() {
 
   const handleSavePermissions = () => {
     if (editingUser) {
+      console.log("Saving permissions for user:", editingUser.id);
+      console.log("Current permissions state:", userPermissions);
       updatePermissionsMutation.mutate({
         id: editingUser.id,
         permissions: userPermissions,
