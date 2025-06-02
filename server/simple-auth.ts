@@ -1,6 +1,8 @@
 import type { Express, RequestHandler } from "express";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
+import bcrypt from "bcryptjs";
+import { storage } from "./storage";
 
 // Простий middleware для перевірки авторизації
 export const isSimpleAuthenticated: RequestHandler = (req, res, next) => {
@@ -68,37 +70,92 @@ const demoUsers = [
 
 export function setupSimpleAuth(app: Express) {
   // Маршрут для простого входу
-  app.post("/api/auth/simple-login", (req, res) => {
+  app.post("/api/auth/simple-login", async (req, res) => {
     console.log("Login attempt:", req.body);
     console.log("Session ID before login:", req.sessionID);
     const { username, password } = req.body;
     
-    const user = demoUsers.find(u => u.username === username && u.password === password);
-    
-    if (user) {
-      console.log("User found, creating session");
-      // Створюємо сесію
-      (req.session as any).user = {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        profileImageUrl: user.profileImageUrl
-      };
+    try {
+      // Спочатку перевіряємо демо користувачів
+      const demoUser = demoUsers.find(u => u.username === username && u.password === password);
       
-      req.session.save((err) => {
-        if (err) {
-          console.error("Session save error:", err);
-          return res.status(500).json({ message: "Помилка збереження сесії" });
+      if (demoUser) {
+        console.log("Demo user found:", demoUser.username);
+        // Створюємо сесію для демо користувача
+        (req.session as any).user = {
+          id: demoUser.id,
+          username: demoUser.username,
+          email: demoUser.email,
+          firstName: demoUser.firstName,
+          lastName: demoUser.lastName,
+          profileImageUrl: demoUser.profileImageUrl
+        };
+        
+        return req.session.save((err) => {
+          if (err) {
+            console.error("Session save error:", err);
+            return res.status(500).json({ message: "Помилка збереження сесії" });
+          }
+          console.log("Session saved successfully for demo user, ID:", req.sessionID);
+          res.json({ success: true, user: demoUser });
+        });
+      }
+      
+      // Якщо не знайшли серед демо користувачів, перевіряємо базу даних
+      console.log("Checking database for user:", username);
+      const dbUser = await storage.getLocalUserByUsername(username);
+      
+      if (dbUser) {
+        console.log("Database user found:", dbUser.username);
+        console.log("User active status:", dbUser.isActive);
+        
+        // Перевіряємо, чи активний користувач
+        if (!dbUser.isActive) {
+          console.log("User is inactive");
+          return res.status(401).json({ message: "Обліковий запис деактивований" });
         }
-        console.log("Session saved successfully, ID:", req.sessionID);
-        console.log("User data in session:", (req.session as any).user);
-        res.json({ success: true, user: user });
-      });
-    } else {
-      console.log("Invalid credentials");
+        
+        // Перевіряємо пароль
+        const isPasswordValid = await bcrypt.compare(password, dbUser.password);
+        console.log("Password validation result:", isPasswordValid);
+        
+        if (isPasswordValid) {
+          console.log("Database user authenticated successfully");
+          
+          // Створюємо сесію для користувача з бази даних
+          (req.session as any).user = {
+            id: dbUser.id.toString(),
+            username: dbUser.username,
+            email: dbUser.email,
+            firstName: dbUser.username, // Використовуємо username як firstName
+            lastName: "",
+            profileImageUrl: null
+          };
+          
+          // Оновлюємо час останнього входу
+          await storage.updateUserLastLogin(dbUser.id);
+          
+          return req.session.save((err) => {
+            if (err) {
+              console.error("Session save error:", err);
+              return res.status(500).json({ message: "Помилка збереження сесії" });
+            }
+            console.log("Session saved successfully for database user, ID:", req.sessionID);
+            res.json({ success: true, user: { 
+              id: dbUser.id,
+              username: dbUser.username,
+              email: dbUser.email
+            }});
+          });
+        }
+      }
+      
+      console.log("Invalid credentials - no user found or password incorrect");
       res.status(401).json({ message: "Невірний логін або пароль" });
+      
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Помилка серверу під час входу" });
     }
   });
 

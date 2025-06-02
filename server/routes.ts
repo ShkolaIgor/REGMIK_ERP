@@ -3435,6 +3435,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { newPassword } = req.body;
       
+      console.log("Password reset attempt for user ID:", id, "New password:", newPassword);
+      
       if (!newPassword || newPassword.length < 6) {
         return res.status(400).json({ error: "Password must be at least 6 characters long" });
       }
@@ -3445,10 +3447,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
       
+      console.log("User found:", user.username);
+      
       // Hash new password
       const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+      console.log("Password hashed, length:", hashedNewPassword.length);
       
       const success = await storage.changeUserPassword(id, hashedNewPassword);
+      console.log("Password change result:", success);
+      
       if (!success) {
         return res.status(500).json({ error: "Failed to reset password" });
       }
