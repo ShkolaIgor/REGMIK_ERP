@@ -338,61 +338,61 @@ export default function PositionsPage() {
                     <CardTitle className="text-lg">{position.name}</CardTitle>
                     <CardDescription>{department?.name || 'Без відділу'}</CardDescription>
                   </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEdit(position)}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Видалити посаду</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Ви впевнені, що хочете видалити посаду "{position.name}"?
-                          Ця дія не може бути скасована.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Скасувати</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDelete(position.id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Видалити
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(position)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Видалити посаду</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Ви впевнені, що хочете видалити посаду "{position.name}"?
+                            Ця дія не може бути скасована.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Скасувати</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDelete(position.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Видалити
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {position.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-3">
-                    {position.description}
-                  </p>
-                )}
-                <div className="flex justify-between items-center">
-                  <Badge variant={position.isActive ? "default" : "secondary"}>
-                    {position.isActive ? "Активна" : "Неактивна"}
-                  </Badge>
-                  {position.createdAt && (
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(position.createdAt).toLocaleDateString("uk-UA")}
-                    </span>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {position.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-3">
+                      {position.description}
+                    </p>
                   )}
+                  <div className="flex justify-between items-center">
+                    <Badge variant={position.isActive ? "default" : "secondary"}>
+                      {position.isActive ? "Активна" : "Неактивна"}
+                    </Badge>
+                    {position.createdAt && (
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(position.createdAt).toLocaleDateString("uk-UA")}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
+              </CardContent>
           </Card>
           );
         })}
