@@ -550,7 +550,7 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                     />
                     <Input
                       type="number"
-                      placeholder="Час (хв)"
+                      placeholder="Час"
                       value={newStep.duration || ""}
                       onChange={(e) => setNewStep({...newStep, duration: parseInt(e.target.value) || 0})}
                     />
@@ -758,7 +758,7 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                                   </Button>
                                 </div>
                                 <div className="text-xs text-muted-foreground space-y-1">
-                                  <div>Час: {step.duration} хв</div>
+                                  <div>Час: {step.duration}</div>
                                   {department && <div>Дільниця: {department.name}</div>}
                                   {position && <div>Посада: {position.name}</div>}
                                   {step.canRunParallel && <div>Паралельне виконання</div>}
@@ -774,19 +774,19 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                 )}
                 
                 {steps.length > 0 && (
-                  <div className="hidden sm:block overflow-x-auto">
-                    <Table className="min-w-full">
+                  <div className="hidden sm:block w-full">
+                    <Table className="w-full table-fixed">
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-12">№</TableHead>
-                          <TableHead className="min-w-[120px]">Назва</TableHead>
-                          <TableHead className="min-w-[150px]">Опис</TableHead>
-                          <TableHead className="w-16">Час</TableHead>
-                          <TableHead className="min-w-[100px]">Дільниця</TableHead>
-                          <TableHead className="min-w-[100px]">Посада</TableHead>
+                          <TableHead className="w-16">№</TableHead>
+                          <TableHead className="w-1/4">Назва</TableHead>
+                          <TableHead className="w-1/3">Опис</TableHead>
+                          <TableHead className="w-20">Час</TableHead>
+                          <TableHead className="w-24">Дільниця</TableHead>
+                          <TableHead className="w-24">Посада</TableHead>
                           <TableHead className="w-16">Пар.</TableHead>
-                          <TableHead className="w-16">Пор.</TableHead>
-                          <TableHead className="w-32">Дії</TableHead>
+                          <TableHead className="w-20">Пор.</TableHead>
+                          <TableHead className="w-16">Дії</TableHead>
                         </TableRow>
                       </TableHeader>
                     <TableBody>
@@ -904,19 +904,20 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                               {step.stepNumber}
                             </TableCell>
                             <TableCell 
+                              className="whitespace-normal break-words p-3"
                               onDoubleClick={() => handleStepDoubleClick(index)}
                               title="Подвійне клацання для редагування"
                             >
                               {step.title}
                             </TableCell>
                             <TableCell 
-                              className="max-w-[200px] truncate"
+                              className="whitespace-normal break-words p-3"
                               onDoubleClick={() => handleStepDoubleClick(index)}
                               title="Подвійне клацання для редагування"
                             >
                               {step.description}
                             </TableCell>
-                            <TableCell>{step.duration} хв</TableCell>
+                            <TableCell className="text-center">{step.duration}</TableCell>
                             <TableCell>{department?.name || "-"}</TableCell>
                             <TableCell>{position?.name || "-"}</TableCell>
                             <TableCell>{step.canRunParallel ? "✓" : "-"}</TableCell>
