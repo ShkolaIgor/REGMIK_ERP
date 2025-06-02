@@ -1963,7 +1963,6 @@ export class DatabaseStorage implements IStorage {
     try {
       const result = await this.db.select()
         .from(positions)
-        .where(eq(positions.isActive, true))
         .orderBy(positions.name);
       return result;
     } catch (error) {
