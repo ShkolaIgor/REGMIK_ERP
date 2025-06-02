@@ -30,6 +30,7 @@ export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [openWorkerCombobox, setOpenWorkerCombobox] = useState(false);
+  const [userPermissions, setUserPermissions] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -171,6 +172,30 @@ export default function Users() {
       toast({
         title: "Помилка",
         description: "Не вдалося змінити статус користувача",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updatePermissionsMutation = useMutation({
+    mutationFn: async ({ id, permissions }: { id: number; permissions: Record<string, boolean> }) => {
+      await apiRequest(`/api/users/${id}/permissions`, {
+        method: "PATCH",
+        body: { permissions },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      setShowPermissionsDialog(false);
+      toast({
+        title: "Успіх",
+        description: "Дозволи користувача оновлено успішно",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося оновити дозволи користувача",
         variant: "destructive",
       });
     },
