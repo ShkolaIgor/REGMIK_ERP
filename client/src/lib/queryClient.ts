@@ -57,8 +57,17 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    let url = queryKey[0] as string;
+    
+    // Додаємо cache busting параметр для позицій, щоб обійти кеш браузера
+    if (url.includes('/api/positions')) {
+      const separator = url.includes('?') ? '&' : '?';
+      url += `${separator}_t=${Date.now()}`;
+    }
+    
+    const res = await fetch(url, {
       credentials: "include",
+      cache: "no-cache", // Примусово відключаємо кеш браузера
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

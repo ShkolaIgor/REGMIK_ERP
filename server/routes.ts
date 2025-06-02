@@ -1741,13 +1741,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Positions API
   app.get("/api/positions", async (req, res) => {
     try {
-      // Запобігаємо кешуванню
-      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      // Агресивні заголовки для запобігання кешуванню
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
       res.set('Pragma', 'no-cache');
       res.set('Expires', '0');
+      res.set('Last-Modified', new Date().toUTCString());
+      res.set('ETag', `"${Date.now()}"`);
       
       const positions = await storage.getPositions();
-      console.log(`GET /api/positions - Found ${positions.length} positions`);
+      console.log(`GET /api/positions - Found ${positions.length} positions at ${new Date().toISOString()}`);
       res.json(positions);
     } catch (error) {
       console.error("Failed to get positions:", error);
