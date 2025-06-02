@@ -187,14 +187,28 @@ export default function TechCards() {
         </div>
 
         {/* Карточки технологічних карт */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredTechCards.map((techCard: any) => (
-            <Card key={techCard.id} className="relative hover:shadow-md transition-shadow">
-              <CardHeader>
+            <Card key={techCard.id} className={`relative hover:shadow-md transition-shadow ${
+              techCard.isBaseCard !== false ? 'border-blue-200 bg-blue-50/30' : 'border-amber-200 bg-amber-50/30'
+            }`}>
+              <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-2">
-                    <ClipboardList className="h-5 w-5 text-blue-600" />
-                    <CardTitle className="text-lg">{techCard.name}</CardTitle>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <ClipboardList className={`h-4 w-4 ${techCard.isBaseCard !== false ? 'text-blue-600' : 'text-amber-600'}`} />
+                      <CardTitle className="text-base truncate">{techCard.name}</CardTitle>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant={techCard.isBaseCard !== false ? 'default' : 'secondary'} className="text-xs">
+                        {techCard.isBaseCard !== false ? 'Базова карта' : 'Модифікація'}
+                      </Badge>
+                      {techCard.modificationNote && (
+                        <span className="text-xs text-muted-foreground truncate" title={techCard.modificationNote}>
+                          {techCard.modificationNote}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex space-x-1">
                     <Button
@@ -241,60 +255,41 @@ export default function TechCards() {
                 )}
               </CardHeader>
               
-              <CardContent>
+              <CardContent className="pt-3">
                 {techCard.description && (
-                  <CardDescription className="mb-4">
+                  <CardDescription className="mb-3 text-xs line-clamp-2">
                     {techCard.description}
                   </CardDescription>
                 )}
                 
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Час виконання:</span>
-                    <Badge variant="outline">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {techCard.estimatedTime || 0} хв
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Складність:</span>
-                    <Badge variant={
-                      techCard.difficulty === 'high' ? 'destructive' :
-                      techCard.difficulty === 'medium' ? 'default' : 'secondary'
-                    }>
-                      {techCard.difficulty === 'high' ? 'Висока' :
-                       techCard.difficulty === 'medium' ? 'Середня' : 'Низька'}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Статус:</span>
-                    <Badge variant={techCard.status === 'active' ? 'default' : 'secondary'}>
-                      {techCard.status === 'active' ? 'Активна' : 'Неактивна'}
-                    </Badge>
-                  </div>
-                  
-                  {techCard.materialCost && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Вартість матеріалів:</span>
-                      <span className="font-semibold">
-                        {formatCurrency(parseFloat(techCard.materialCost) || 0)}
-                      </span>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="flex items-center space-x-1">
+                      <Clock className="h-3 w-3 text-muted-foreground" />
+                      <span>{techCard.estimatedTime || 0} хв</span>
                     </div>
-                  )}
-                  
-                  <div className="flex justify-between items-center pt-2 border-t">
-                    <span className="text-sm text-muted-foreground">Створено:</span>
-                    <span className="text-sm">{formatDate(techCard.createdAt)}</span>
+                    <div className="flex items-center justify-end">
+                      <Badge variant={
+                        techCard.difficulty === 'high' ? 'destructive' :
+                        techCard.difficulty === 'medium' ? 'default' : 'secondary'
+                      } className="text-xs px-1 py-0">
+                        {techCard.difficulty === 'high' ? 'Висока' :
+                         techCard.difficulty === 'medium' ? 'Середня' : 'Низька'}
+                      </Badge>
+                    </div>
                   </div>
                   
-                  <div className="flex justify-between items-center">
-                    <Badge variant="outline">
-                      ID: {techCard.id}
-                    </Badge>
-                    <div className="text-xs text-muted-foreground">
-                      Кроків: {techCard.steps?.length || 0}
+                  <div className="flex justify-between items-center text-xs pt-2 border-t">
+                    <div className="flex items-center space-x-1 text-muted-foreground">
+                      <span>Створено {formatDate(techCard.createdAt)}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="text-xs">
+                        Кроків: {techCard.steps?.length || 0}
+                      </Badge>
+                      {techCard.status === 'active' && (
+                        <div className="w-2 h-2 bg-green-500 rounded-full" title="Активна карта"></div>
+                      )}
                     </div>
                   </div>
                 </div>
