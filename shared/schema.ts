@@ -1248,6 +1248,15 @@ export const changePasswordSchema = z.object({
   path: ["confirmPassword"],
 });
 
+// Schema for admin password reset (without current password)
+export const adminResetPasswordSchema = z.object({
+  newPassword: z.string().min(6, "Новий пароль повинен містити мінімум 6 символів"),
+  confirmPassword: z.string().min(1, "Підтвердження пароля обов'язкове"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Паролі не співпадають",
+  path: ["confirmPassword"],
+});
+
 // Схема для входу в систему
 export const loginSchema = z.object({
   username: z.string().min(1, "Ім'я користувача обов'язкове"),
@@ -1285,6 +1294,7 @@ export type UserLoginHistory = typeof userLoginHistory.$inferSelect;
 export type InsertUserLoginHistory = z.infer<typeof insertUserLoginHistorySchema>;
 
 export type ChangePassword = z.infer<typeof changePasswordSchema>;
+export type AdminResetPassword = z.infer<typeof adminResetPasswordSchema>;
 export type Login = z.infer<typeof loginSchema>;
 export type ResetPassword = z.infer<typeof resetPasswordSchema>;
 export type NewPassword = z.infer<typeof newPasswordSchema>;

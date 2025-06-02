@@ -18,7 +18,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { insertLocalUserSchema, changePasswordSchema, type LocalUser, type InsertLocalUser, type ChangePassword } from "@shared/schema";
+import { insertLocalUserSchema, adminResetPasswordSchema, type LocalUser, type InsertLocalUser, type AdminResetPassword } from "@shared/schema";
 import { z } from "zod";
 
 export default function Users() {
@@ -300,10 +300,9 @@ export default function Users() {
     },
   });
 
-  const passwordForm = useForm<ChangePassword>({
-    resolver: zodResolver(changePasswordSchema),
+  const passwordForm = useForm<AdminResetPassword>({
+    resolver: zodResolver(adminResetPasswordSchema),
     defaultValues: {
-      currentPassword: "",
       newPassword: "",
       confirmPassword: "",
     },
@@ -903,7 +902,7 @@ export default function Users() {
       <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Змінити пароль</DialogTitle>
+            <DialogTitle>Скинути пароль</DialogTitle>
           </DialogHeader>
           <Form {...passwordForm}>
             <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
