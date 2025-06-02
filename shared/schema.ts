@@ -32,15 +32,18 @@ export const users = pgTable("users", {
 // Локальні користувачі для простої автентифікації (альтернатива Replit Auth)
 export const localUsers = pgTable("local_users", {
   id: serial("id").primaryKey(),
+  workerId: integer("worker_id").references(() => workers.id).unique(), // Зв'язок з робітниками
   username: varchar("username", { length: 100 }).notNull().unique(),
   email: varchar("email", { length: 255 }).unique(),
   password: varchar("password", { length: 255 }).notNull(), // хешований пароль
   firstName: varchar("first_name", { length: 100 }),
   lastName: varchar("last_name", { length: 100 }),
   phone: varchar("phone", { length: 50 }),
-  role: varchar("role", { length: 50 }).default("user"), // admin, manager, user, viewer
+  roleId: integer("role_id").references(() => roles.id), // Зв'язок з таблицею ролей
+  role: varchar("role", { length: 50 }).default("user"), // admin, manager, user, viewer (для сумісності)
   isActive: boolean("is_active").default(true),
   permissions: jsonb("permissions"), // JSON з дозволами доступу до модулів
+  systemModules: jsonb("system_modules").$type<number[]>().default([]), // Масив ID модулів
   lastLoginAt: timestamp("last_login_at"),
   passwordResetToken: varchar("password_reset_token"),
   passwordResetExpires: timestamp("password_reset_expires"),
