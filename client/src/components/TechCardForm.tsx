@@ -134,6 +134,10 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
           executionOrder: step.executionOrder || step.execution_order || 1,
         }));
         setSteps(formattedSteps);
+        
+        // Автоматично обчислюємо час виконання як суму часу кроків
+        const totalTime = formattedSteps.reduce((sum, step) => sum + (step.duration || 0), 0);
+        form.setValue("estimatedTime", totalTime);
       } else {
         setSteps([]);
       }
@@ -233,7 +237,13 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
 
   const addStep = () => {
     if (newStep.title && newStep.description && newStep.duration > 0) {
-      setSteps([...steps, { ...newStep, stepNumber: steps.length + 1 }]);
+      const updatedSteps = [...steps, { ...newStep, stepNumber: steps.length + 1 }];
+      setSteps(updatedSteps);
+      
+      // Автоматично оновлюємо загальний час виконання
+      const totalTime = updatedSteps.reduce((sum, step) => sum + step.duration, 0);
+      form.setValue("estimatedTime", totalTime);
+      
       setNewStep({
         stepNumber: steps.length + 2,
         title: "",
@@ -247,7 +257,12 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
 
   const removeStep = (index: number) => {
     const updatedSteps = steps.filter((_, i) => i !== index);
-    setSteps(updatedSteps.map((step, i) => ({ ...step, stepNumber: i + 1 })));
+    const renumberedSteps = updatedSteps.map((step, i) => ({ ...step, stepNumber: i + 1 }));
+    setSteps(renumberedSteps);
+    
+    // Автоматично оновлюємо загальний час виконання
+    const totalTime = renumberedSteps.reduce((sum, step) => sum + step.duration, 0);
+    form.setValue("estimatedTime", totalTime);
   };
 
   const moveStepUp = (index: number) => {
@@ -275,6 +290,11 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
     const updatedSteps = [...steps];
     updatedSteps[index] = { ...updatedStep, stepNumber: index + 1 };
     setSteps(updatedSteps);
+    
+    // Автоматично оновлюємо загальний час виконання
+    const totalTime = updatedSteps.reduce((sum, step) => sum + step.duration, 0);
+    form.setValue("estimatedTime", totalTime);
+    
     setEditingStepIndex(null);
     setNewStep({
       stepNumber: steps.length + 1,
@@ -340,6 +360,11 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
     }));
     
     setSteps(renumberedSteps);
+    
+    // Автоматично оновлюємо загальний час виконання
+    const totalTime = renumberedSteps.reduce((sum, step) => sum + step.duration, 0);
+    form.setValue("estimatedTime", totalTime);
+    
     setDraggedStepIndex(null);
   };
 
