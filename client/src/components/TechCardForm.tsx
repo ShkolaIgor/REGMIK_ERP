@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -198,6 +198,9 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
           <DialogTitle>
             {techCard ? "Редагувати технологічну карту" : "Створити технологічну карту"}
           </DialogTitle>
+          <DialogDescription>
+            {techCard ? "Внесіть зміни до технологічної карти" : "Створіть нову технологічну карту з кроками виконання та необхідними матеріалами"}
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

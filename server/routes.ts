@@ -834,12 +834,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/tech-cards", async (req, res) => {
     try {
+      console.log("Tech card creation request body:", req.body);
       const { steps, materials, ...techCardData } = req.body;
+      console.log("Tech card data:", techCardData);
+      console.log("Steps:", steps);
+      console.log("Materials:", materials);
+      
       const data = insertTechCardSchema.parse(techCardData);
+      console.log("Validated tech card data:", data);
+      
       const techCard = await storage.createTechCard(data, steps || [], materials || []);
+      console.log("Created tech card:", techCard);
+      
       res.status(201).json(techCard);
     } catch (error) {
+      console.error("Error creating tech card:", error);
       if (error instanceof z.ZodError) {
+        console.error("Validation errors:", error.errors);
         res.status(400).json({ error: "Invalid tech card data", details: error.errors });
       } else {
         res.status(500).json({ error: "Failed to create tech card" });
