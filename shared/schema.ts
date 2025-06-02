@@ -218,7 +218,7 @@ export const techCards = pgTable("tech_cards", {
   name: text("name").notNull(),
   description: text("description"),
   productId: integer("product_id").references(() => products.id),
-  baseTechCardId: integer("base_tech_card_id").references(() => techCards.id), // для модифікацій виробів
+  baseTechCardId: integer("base_tech_card_id"), // для модифікацій виробів - foreign key додамо пізніше
   isBaseCard: boolean("is_base_card").default(true), // чи це базова карта
   modificationNote: text("modification_note"), // примітка про модифікацію
   estimatedTime: integer("estimated_time").notNull(), // в хвилинах
@@ -829,12 +829,7 @@ export type ProductionTask = typeof productionTasks.$inferSelect;
 export type InsertProductionTask = z.infer<typeof insertProductionTaskSchema>;
 export type Supplier = typeof suppliers.$inferSelect;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
-export type TechCard = typeof techCards.$inferSelect;
-export type InsertTechCard = z.infer<typeof insertTechCardSchema>;
-export type TechCardStep = typeof techCardSteps.$inferSelect;
-export type InsertTechCardStep = z.infer<typeof insertTechCardStepSchema>;
-export type TechCardMaterial = typeof techCardMaterials.$inferSelect;
-export type InsertTechCardMaterial = z.infer<typeof insertTechCardMaterialSchema>;
+
 export type PackageType = typeof packageTypes.$inferSelect;
 export type InsertPackageType = z.infer<typeof insertPackageTypeSchema>;
 export type SolderingType = typeof solderingTypes.$inferSelect;
@@ -1145,3 +1140,5 @@ export type TechCardStep = typeof techCardSteps.$inferSelect;
 export type InsertTechCardStep = z.infer<typeof insertTechCardStepSchema>;
 export type TechCardMaterial = typeof techCardMaterials.$inferSelect;
 export type InsertTechCardMaterial = z.infer<typeof insertTechCardMaterialSchema>;
+
+
