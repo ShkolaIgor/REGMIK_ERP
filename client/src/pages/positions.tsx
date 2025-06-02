@@ -143,7 +143,7 @@ export default function PositionsPage() {
     setEditingPosition(position);
     editForm.reset({
       name: position.name,
-      department: position.department,
+      departmentId: position.departmentId,
       description: position.description || "",
       isActive: position.isActive,
     });
