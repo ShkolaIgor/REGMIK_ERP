@@ -73,7 +73,10 @@ export function setupSimpleAuth(app: Express) {
   app.post("/api/auth/simple-login", async (req, res) => {
     console.log("Login attempt:", req.body);
     console.log("Session ID before login:", req.sessionID);
-    const { username, password } = req.body;
+    const { username: rawUsername, password } = req.body;
+    const username = rawUsername?.trim(); // Обрізаємо пробіли
+    
+    console.log("Trimmed username:", username);
     
     try {
       // Спочатку перевіряємо демо користувачів
