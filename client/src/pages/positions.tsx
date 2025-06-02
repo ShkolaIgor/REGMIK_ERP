@@ -115,9 +115,15 @@ export default function PositionsPage() {
   });
 
   const onCreateSubmit = (data: InsertPosition) => {
+    console.log("Form submitted with data:", data);
     createMutation.mutate(data, {
       onSuccess: () => {
+        console.log("Position created successfully");
         createForm.reset();
+        setIsCreateDialogOpen(false);
+      },
+      onError: (error) => {
+        console.error("Error creating position:", error);
       }
     });
   };
