@@ -19,6 +19,7 @@ import { z } from "zod";
 // Розширена схема для форми
 const formSchema = insertMaterialShortageSchema.extend({
   productId: z.number().min(1, "Виберіть продукт"),
+  unit: z.string().min(1, "Одиниця вимірювання обов'язкова"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -66,6 +67,7 @@ export default function MaterialShortagesPage() {
       requiredQuantity: "0",
       availableQuantity: "0",
       shortageQuantity: "0",
+      unit: "шт",
       priority: "medium",
       status: "pending",
       estimatedCost: "0",
@@ -227,6 +229,7 @@ export default function MaterialShortagesPage() {
       requiredQuantity: shortage.requiredQuantity,
       availableQuantity: shortage.availableQuantity,
       shortageQuantity: shortage.shortageQuantity,
+      unit: shortage.unit || "шт",
       priority: shortage.priority,
       status: shortage.status,
       estimatedCost: shortage.estimatedCost || "0",
@@ -345,7 +348,7 @@ export default function MaterialShortagesPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-4 gap-4">
                     <FormField
                       control={form.control}
                       name="requiredQuantity"
@@ -380,6 +383,19 @@ export default function MaterialShortagesPage() {
                           <FormLabel>Дефіцит</FormLabel>
                           <FormControl>
                             <Input type="number" step="0.01" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="unit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Одиниця</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="шт, кг, м" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
