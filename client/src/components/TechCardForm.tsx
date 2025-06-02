@@ -329,7 +329,7 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {techCard ? "Редагувати технологічну карту" : "Створити технологічну карту"}
@@ -533,8 +533,8 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                 </div>
 
                 {/* Додаткові поля для паралельного виконання */}
-                <div className="grid grid-cols-12 gap-2">
-                  <div className="col-span-3">
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <select
                       className="w-full h-9 px-3 py-1 text-sm border border-input bg-background rounded-md"
                       value={newStep.departmentId || ""}
@@ -545,8 +545,6 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                         <option key={dept.id} value={dept.id}>{dept.name}</option>
                       ))}
                     </select>
-                  </div>
-                  <div className="col-span-3">
                     <select
                       className="w-full h-9 px-3 py-1 text-sm border border-input bg-background rounded-md"
                       value={newStep.positionId || ""}
@@ -558,45 +556,181 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                       ))}
                     </select>
                   </div>
-                  <div className="col-span-2 flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="canRunParallel"
-                      checked={newStep.canRunParallel}
-                      onChange={(e) => setNewStep({...newStep, canRunParallel: e.target.checked})}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="canRunParallel"
+                        checked={newStep.canRunParallel}
+                        onChange={(e) => setNewStep({...newStep, canRunParallel: e.target.checked})}
+                      />
+                      <label htmlFor="canRunParallel" className="text-sm">Паралельне виконання</label>
+                    </div>
+                    <Input
+                      type="number"
+                      placeholder="Порядок виконання"
+                      value={newStep.executionOrder || ""}
+                      onChange={(e) => setNewStep({...newStep, executionOrder: parseInt(e.target.value) || 1})}
                     />
-                    <label htmlFor="canRunParallel" className="text-sm">Паралельно</label>
+                    <Input
+                      placeholder="Нотатки"
+                      value={newStep.notes}
+                      onChange={(e) => setNewStep({...newStep, notes: e.target.value})}
+                    />
                   </div>
-                  <Input
-                    className="col-span-2"
-                    type="number"
-                    placeholder="Порядок"
-                    value={newStep.executionOrder || ""}
-                    onChange={(e) => setNewStep({...newStep, executionOrder: parseInt(e.target.value) || 1})}
-                  />
-                  <Input
-                    className="col-span-2"
-                    placeholder="Нотатки"
-                    value={newStep.notes}
-                    onChange={(e) => setNewStep({...newStep, notes: e.target.value})}
-                  />
                 </div>
 
                 {steps.length > 0 && (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>№</TableHead>
-                        <TableHead>Назва</TableHead>
-                        <TableHead>Опис</TableHead>
-                        <TableHead>Час</TableHead>
-                        <TableHead>Дільниця</TableHead>
-                        <TableHead>Посада</TableHead>
-                        <TableHead>Паралельно</TableHead>
-                        <TableHead>Порядок</TableHead>
-                        <TableHead>Дії</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                  <div className="space-y-2 sm:hidden">
+                    {/* Мобільний вигляд - картки */}
+                    {steps.map((step, index) => {
+                      const department = departments.find((d: any) => d.id === step.departmentId);
+                      const position = positions.find((p: any) => p.id === step.positionId);
+                      const isEditing = editingStepIndex === index;
+                      
+                      return (
+                        <Card key={index} className={isEditing ? "bg-muted/50" : ""}>
+                          <CardContent className="p-3">
+                            {isEditing ? (
+                              <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-medium">Крок {step.stepNumber}</span>
+                                  <div className="flex gap-1">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => saveStep(index, newStep)}
+                                      title="Зберегти"
+                                    >
+                                      <Save className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={cancelEditStep}
+                                      title="Скасувати"
+                                    >
+                                      ✕
+                                    </Button>
+                                  </div>
+                                </div>
+                                <Input
+                                  value={newStep.title}
+                                  onChange={(e) => setNewStep({...newStep, title: e.target.value})}
+                                  placeholder="Назва кроку"
+                                />
+                                <Input
+                                  value={newStep.description}
+                                  onChange={(e) => setNewStep({...newStep, description: e.target.value})}
+                                  placeholder="Опис"
+                                />
+                                <div className="grid grid-cols-2 gap-2">
+                                  <Input
+                                    type="number"
+                                    value={newStep.duration || ""}
+                                    onChange={(e) => setNewStep({...newStep, duration: parseInt(e.target.value) || 0})}
+                                    placeholder="Час (хв)"
+                                  />
+                                  <Input
+                                    type="number"
+                                    value={newStep.executionOrder || ""}
+                                    onChange={(e) => setNewStep({...newStep, executionOrder: parseInt(e.target.value) || 1})}
+                                    placeholder="Порядок"
+                                  />
+                                </div>
+                                <div className="grid grid-cols-1 gap-2">
+                                  <select
+                                    className="w-full h-9 px-3 py-1 text-sm border border-input bg-background rounded-md"
+                                    value={newStep.departmentId || ""}
+                                    onChange={(e) => setNewStep({...newStep, departmentId: e.target.value ? parseInt(e.target.value) : undefined})}
+                                  >
+                                    <option value="">Дільниця</option>
+                                    {departments.map((dept: any) => (
+                                      <option key={dept.id} value={dept.id}>{dept.name}</option>
+                                    ))}
+                                  </select>
+                                  <select
+                                    className="w-full h-9 px-3 py-1 text-sm border border-input bg-background rounded-md"
+                                    value={newStep.positionId || ""}
+                                    onChange={(e) => setNewStep({...newStep, positionId: e.target.value ? parseInt(e.target.value) : undefined})}
+                                  >
+                                    <option value="">Посада</option>
+                                    {positions.map((pos: any) => (
+                                      <option key={pos.id} value={pos.id}>{pos.name}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={newStep.canRunParallel}
+                                    onChange={(e) => setNewStep({...newStep, canRunParallel: e.target.checked})}
+                                  />
+                                  <label className="text-sm">Паралельне виконання</label>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <h4 className="font-medium">Крок {step.stepNumber}: {step.title}</h4>
+                                    <p className="text-sm text-muted-foreground">{step.description}</p>
+                                  </div>
+                                  <div className="flex gap-1">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => editStep(index)}
+                                      title="Редагувати"
+                                    >
+                                      <Save className="h-3 w-3" />
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => removeStep(index)}
+                                      title="Видалити"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="text-xs text-muted-foreground space-y-1">
+                                  <div>Час: {step.duration} хв</div>
+                                  {department && <div>Дільниця: {department.name}</div>}
+                                  {position && <div>Посада: {position.name}</div>}
+                                  {step.canRunParallel && <div>Паралельне виконання</div>}
+                                  <div>Порядок: {step.executionOrder}</div>
+                                </div>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+                
+                {steps.length > 0 && (
+                  <div className="hidden sm:block overflow-x-auto">
+                    <Table className="min-w-full">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">№</TableHead>
+                          <TableHead className="min-w-[120px]">Назва</TableHead>
+                          <TableHead className="min-w-[150px]">Опис</TableHead>
+                          <TableHead className="w-16">Час</TableHead>
+                          <TableHead className="min-w-[100px]">Дільниця</TableHead>
+                          <TableHead className="min-w-[100px]">Посада</TableHead>
+                          <TableHead className="w-16">Пар.</TableHead>
+                          <TableHead className="w-16">Пор.</TableHead>
+                          <TableHead className="w-32">Дії</TableHead>
+                        </TableRow>
+                      </TableHeader>
                     <TableBody>
                       {steps.map((step, index) => {
                         const department = departments.find((d: any) => d.id === step.departmentId);
@@ -751,7 +885,8 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                         );
                       })}
                     </TableBody>
-                  </Table>
+                    </Table>
+                  </div>
                 )}
               </div>
             </CardContent>
