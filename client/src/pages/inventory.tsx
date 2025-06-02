@@ -349,7 +349,19 @@ export default function Inventory() {
                       <TableRow key={product.id} className="hover:bg-gray-50">
                         <TableCell>
                           <div className="flex items-center space-x-4">
-                            <div className="w-10 h-10 bg-gray-200 rounded-lg" />
+                            <div className="w-10 h-10 bg-gray-200 rounded-lg overflow-hidden">
+                              {product.photo ? (
+                                <img 
+                                  src={product.photo} 
+                                  alt={product.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <Package className="w-5 h-5 text-gray-400" />
+                                </div>
+                              )}
+                            </div>
                             <div>
                               <div className="font-medium text-gray-900">{product.name}</div>
                               <div className="text-sm text-gray-500">{product.description}</div>

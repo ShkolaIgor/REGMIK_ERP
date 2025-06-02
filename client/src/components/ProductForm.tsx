@@ -276,6 +276,57 @@ export function ProductForm({ isOpen, onClose, product, isViewMode = false }: Pr
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="photo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Фото товару</FormLabel>
+                  <div className="space-y-4">
+                    {field.value && (
+                      <div className="relative w-32 h-32 border rounded-lg overflow-hidden bg-gray-50">
+                        <img 
+                          src={field.value} 
+                          alt="Фото товару" 
+                          className="w-full h-full object-cover"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-1 right-1"
+                          onClick={() => field.onChange(null)}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    )}
+                    <FormControl>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              field.onChange(event.target?.result as string);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        disabled={isViewMode}
+                      />
+                    </FormControl>
+                    <p className="text-xs text-gray-500">
+                      Оберіть файл зображення (JPG, PNG, GIF)
+                    </p>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
               <Button type="button" variant="outline" onClick={onClose}>
                 {isViewMode ? "Закрити" : "Скасувати"}
