@@ -3918,6 +3918,7 @@ export class DatabaseStorage implements IStorage {
           lastName: workers.lastName,
           email: workers.email,
           phone: workers.phone,
+          photo: workers.photo,
           positionId: workers.positionId,
           departmentId: workers.departmentId,
         },
