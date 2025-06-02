@@ -145,6 +145,18 @@ export default function SimpleLogin() {
               >
                 {isLoading ? "Входжу..." : "Увійти"}
               </Button>
+              
+              {/* Forgot Password Link */}
+              <div className="text-center">
+                <Button 
+                  type="button"
+                  variant="link" 
+                  className="text-sm text-blue-600 hover:text-blue-700 p-0"
+                  onClick={() => window.location.href = '/forgot-password'}
+                >
+                  Забув пароль?
+                </Button>
+              </div>
             </form>
 
             {/* Demo Access */}

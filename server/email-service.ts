@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 import { randomBytes } from 'crypto';
 
 // Конфігурація локального поштового клієнта
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
   host: 'localhost',
   port: 1025, // Для тестування з MailHog або подібним
   secure: false,

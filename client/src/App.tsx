@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
 import SimpleLogin from "@/pages/simple-login";
+import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
 import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import Inventory from "@/pages/inventory";
@@ -56,7 +58,13 @@ function Router() {
   }
 
   if (!isAuthenticated) {
-    return <SimpleLogin />;
+    return (
+      <Switch>
+        <Route path="/forgot-password" component={ForgotPassword} />
+        <Route path="/reset-password" component={ResetPassword} />
+        <Route component={SimpleLogin} />
+      </Switch>
+    );
   }
 
   return (

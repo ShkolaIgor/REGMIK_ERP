@@ -20,6 +20,8 @@ import {
 } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import crypto from "crypto";
+import { sendEmail } from "./email-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Simple auth setup
@@ -33,6 +35,155 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(stats);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch dashboard stats" });
+    }
+  });
+
+  // Password reset functionality
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email є обов'язковим" });
+      }
+
+      // Знайти користувача за email
+      const user = await storage.getLocalUserByEmail(email);
+      if (!user) {
+        // Не показуємо, що користувач не існує з міркувань безпеки
+        return res.json({ message: "Якщо email існує в системі, лист буде відправлено" });
+      }
+
+      // Генерувати токен скидання паролю
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetExpires = new Date(Date.now() + 3600000); // 1 година
+
+      // Зберегти токен в базі даних
+      const tokenSaved = await storage.savePasswordResetToken(user.id, resetToken, resetExpires);
+      
+      if (!tokenSaved) {
+        return res.status(500).json({ message: "Помилка збереження токену" });
+      }
+
+      // Отримати базову URL з заголовків
+      const protocol = req.get('x-forwarded-proto') || req.protocol;
+      const host = req.get('host');
+      const resetUrl = `${protocol}://${host}/reset-password?token=${resetToken}`;
+
+      // Відправити email
+      const emailSent = await sendEmail({
+        to: email,
+        from: "noreply@regmik-erp.com",
+        subject: "Відновлення паролю - REGMIK ERP",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+              <h1 style="color: #2563eb; margin: 0; text-align: center;">REGMIK: ERP</h1>
+              <p style="color: #6b7280; margin: 5px 0 0 0; text-align: center;">Система управління виробництвом</p>
+            </div>
+            
+            <h2 style="color: #374151;">Відновлення паролю</h2>
+            
+            <p style="color: #6b7280; line-height: 1.6;">
+              Ви отримали цей лист, оскільки для вашого облікового запису був запитаний скидання паролю.
+            </p>
+            
+            <p style="color: #6b7280; line-height: 1.6;">
+              Натисніть на кнопку нижче, щоб встановити новий пароль:
+            </p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                Відновити пароль
+              </a>
+            </div>
+            
+            <p style="color: #6b7280; line-height: 1.6; font-size: 14px;">
+              Якщо кнопка не працює, скопіюйте та вставте це посилання у ваш браузер:
+            </p>
+            <p style="color: #2563eb; word-break: break-all; font-size: 14px;">
+              ${resetUrl}
+            </p>
+            
+            <p style="color: #6b7280; line-height: 1.6; font-size: 14px;">
+              Це посилання дійсне протягом 1 години. Якщо ви не запитували скидання паролю, проігноруйте цей лист.
+            </p>
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+            
+            <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+              REGMIK ERP - Система управління виробництвом
+            </p>
+          </div>
+        `
+      });
+
+      if (!emailSent) {
+        return res.status(500).json({ message: "Помилка відправки email" });
+      }
+
+      res.json({ message: "Якщо email існує в системі, лист буде відправлено" });
+    } catch (error) {
+      console.error("Error in forgot password:", error);
+      res.status(500).json({ message: "Внутрішня помилка сервера" });
+    }
+  });
+
+  // Validate reset token
+  app.get("/api/auth/validate-reset-token", async (req, res) => {
+    try {
+      const { token } = req.query;
+      
+      if (!token) {
+        return res.status(400).json({ message: "Токен є обов'язковим" });
+      }
+
+      const user = await storage.getUserByResetToken(token as string);
+      
+      if (!user) {
+        return res.status(400).json({ message: "Недійсний або застарілий токен" });
+      }
+
+      res.json({ message: "Токен дійсний" });
+    } catch (error) {
+      console.error("Error validating reset token:", error);
+      res.status(500).json({ message: "Внутрішня помилка сервера" });
+    }
+  });
+
+  // Reset password with token
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { token, password } = req.body;
+      
+      if (!token || !password) {
+        return res.status(400).json({ message: "Токен та пароль є обов'язковими" });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Пароль повинен містити мінімум 6 символів" });
+      }
+
+      const user = await storage.getUserByResetToken(token);
+      
+      if (!user) {
+        return res.status(400).json({ message: "Недійсний або застарілий токен" });
+      }
+
+      // Хешувати новий пароль
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Оновити пароль та очистити токен скидання
+      const success = await storage.confirmPasswordReset(user.id, hashedPassword);
+      
+      if (!success) {
+        return res.status(500).json({ message: "Помилка оновлення паролю" });
+      }
+
+      res.json({ message: "Пароль успішно оновлено" });
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ message: "Внутрішня помилка сервера" });
     }
   });
 
