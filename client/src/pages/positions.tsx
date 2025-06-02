@@ -37,6 +37,8 @@ export default function PositionsPage() {
       return await apiRequest("/api/positions", "POST", data);
     },
     onSuccess: () => {
+      // Примусово очищуємо кеш та перезавантажуємо дані
+      queryClient.removeQueries({ queryKey: ["/api/positions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/positions"] });
       setIsCreateDialogOpen(false);
       toast({
