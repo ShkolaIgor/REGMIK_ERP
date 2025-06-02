@@ -111,6 +111,7 @@ function Router() {
         <Route path="/serial-numbers" component={SerialNumbers} />
         <Route path="/currencies" component={Currencies} />
         <Route path="/users" component={Users} />
+        <Route path="/email-settings" component={EmailSettings} />
         <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
         <Route component={NotFound} />
       </Switch>

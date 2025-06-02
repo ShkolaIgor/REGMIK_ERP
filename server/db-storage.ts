@@ -8,7 +8,7 @@ import {
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes, solderingTypes,
   componentCategories, componentAlternatives, carriers, shipments, customerAddresses, senderSettings,
-  manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, exchangeRateHistory, serialNumbers,
+  manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, exchangeRateHistory, serialNumbers, emailSettings,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
   type Category, type InsertCategory,
@@ -47,7 +47,8 @@ import {
   type Position, type InsertPosition,
   type Department, type InsertDepartment,
   type SolderingType, type InsertSolderingType,
-  type ComponentAlternative, type InsertComponentAlternative
+  type ComponentAlternative, type InsertComponentAlternative,
+  type EmailSettings, type InsertEmailSettings
 } from "@shared/schema";
 
 export class DatabaseStorage implements IStorage {
