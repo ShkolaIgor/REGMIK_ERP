@@ -3429,6 +3429,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin reset password (without current password)
+  app.post("/api/users/:id/reset-password", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { newPassword } = req.body;
+      
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters long" });
+      }
+      
+      // Get user to verify they exist
+      const user = await storage.getLocalUser(id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Hash new password
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+      
+      const success = await storage.changeUserPassword(id, hashedNewPassword);
+      if (!success) {
+        return res.status(500).json({ error: "Failed to reset password" });
+      }
+      
+      res.json({ message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ error: "Failed to reset password" });
+    }
+  });
+
   // Update user permissions
   app.patch("/api/users/:id/permissions", isSimpleAuthenticated, async (req, res) => {
     try {

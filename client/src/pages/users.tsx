@@ -147,25 +147,26 @@ export default function Users() {
     },
   });
 
-  const changePasswordMutation = useMutation({
-    mutationFn: async ({ id, passwordData }: { id: number; passwordData: ChangePassword }) => {
-      await apiRequest(`/api/users/${id}/change-password`, {
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ id, newPassword }: { id: number; newPassword: string }) => {
+      await apiRequest(`/api/users/${id}/reset-password`, {
         method: "POST",
-        body: passwordData,
+        body: { newPassword },
       });
     },
     onSuccess: () => {
       setShowPasswordDialog(false);
       setEditingUser(null);
+      passwordForm.reset();
       toast({
         title: "Успіх",
-        description: "Пароль змінено успішно",
+        description: "Пароль скинуто успішно",
       });
     },
     onError: (error) => {
       toast({
         title: "Помилка",
-        description: "Не вдалося змінити пароль",
+        description: "Не вдалося скинути пароль",
         variant: "destructive",
       });
     },
@@ -377,9 +378,12 @@ export default function Users() {
     }
   };
 
-  const onPasswordSubmit = (data: ChangePassword) => {
+  const onPasswordSubmit = (data: any) => {
     if (editingUser) {
-      changePasswordMutation.mutate({ id: editingUser.id, passwordData: data });
+      resetPasswordMutation.mutate({ 
+        id: editingUser.id, 
+        newPassword: data.newPassword 
+      });
     }
   };
 
@@ -905,20 +909,6 @@ export default function Users() {
             <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
               <FormField
                 control={passwordForm.control}
-                name="currentPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Поточний пароль</FormLabel>
-                    <FormControl>
-                      <Input type="password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={passwordForm.control}
                 name="newPassword"
                 render={({ field }) => (
                   <FormItem>
@@ -949,8 +939,8 @@ export default function Users() {
                 <Button type="button" variant="outline" onClick={() => setShowPasswordDialog(false)}>
                   Скасувати
                 </Button>
-                <Button type="submit" disabled={changePasswordMutation.isPending}>
-                  {changePasswordMutation.isPending ? "Збереження..." : "Змінити пароль"}
+                <Button type="submit" disabled={resetPasswordMutation.isPending}>
+                  {resetPasswordMutation.isPending ? "Збереження..." : "Скинути пароль"}
                 </Button>
               </div>
             </form>
