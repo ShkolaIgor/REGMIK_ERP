@@ -19,6 +19,9 @@ const techCardSchema = z.object({
   name: z.string().min(1, "Назва обов'язкова"),
   description: z.string().optional(),
   productId: z.number().min(1, "Виберіть продукт"),
+  baseTechCardId: z.number().optional(),
+  isBaseCard: z.boolean().default(true),
+  modificationNote: z.string().optional(),
   estimatedTime: z.number().min(1, "Час виконання повинен бути більше 0"),
   difficulty: z.enum(["easy", "medium", "hard"]),
   status: z.enum(["active", "inactive"]),
@@ -94,12 +97,20 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
     queryKey: ["/api/positions"],
   });
 
+  const { data: baseTechCards = [] } = useQuery({
+    queryKey: ["/api/tech-cards"],
+    select: (data: any[]) => data.filter(card => card.isBaseCard !== false),
+  });
+
   const form = useForm<TechCardFormData>({
     resolver: zodResolver(techCardSchema),
     defaultValues: {
       name: techCard?.name || "",
       description: techCard?.description || "",
       productId: techCard?.productId || 0,
+      baseTechCardId: techCard?.baseTechCardId || undefined,
+      isBaseCard: techCard?.isBaseCard !== false,
+      modificationNote: techCard?.modificationNote || "",
       estimatedTime: techCard?.estimatedTime || 0,
       difficulty: techCard?.difficulty || "medium",
       status: techCard?.status || "active",
@@ -113,6 +124,9 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
         name: techCard.name || "",
         description: techCard.description || "",
         productId: techCard.productId || 0,
+        baseTechCardId: techCard.baseTechCardId || undefined,
+        isBaseCard: techCard.isBaseCard !== false,
+        modificationNote: techCard.modificationNote || "",
         estimatedTime: techCard.estimatedTime || 0,
         difficulty: techCard.difficulty || "medium",
         status: techCard.status || "active",
@@ -478,6 +492,52 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                   placeholder="Детальний опис технологічного процесу..."
                   rows={3}
                 />
+              </div>
+
+              {/* Поля модифікацій */}
+              <div className="grid grid-cols-1 gap-4 border-t pt-4 mt-4">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isBaseCard"
+                    {...form.register("isBaseCard")}
+                    className="rounded"
+                  />
+                  <Label htmlFor="isBaseCard">Це базова технологічна карта</Label>
+                </div>
+
+                {!form.watch("isBaseCard") && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="baseTechCardId">Базова технологічна карта</Label>
+                      <Select
+                        value={form.watch("baseTechCardId")?.toString() || ""}
+                        onValueChange={(value) => form.setValue("baseTechCardId", parseInt(value))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Виберіть базову карту" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {baseTechCards.map((card: any) => (
+                            <SelectItem key={card.id} value={card.id.toString()}>
+                              {card.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="modificationNote">Примітка про модифікацію</Label>
+                      <Textarea
+                        id="modificationNote"
+                        {...form.register("modificationNote")}
+                        placeholder="Опишіть відмінності від базової карти..."
+                        rows={2}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
             </CardContent>
