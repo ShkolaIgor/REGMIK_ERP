@@ -162,7 +162,7 @@ export function Layout({ children }: LayoutProps) {
         <div className="p-4 border-t border-gray-200">
           <div className="flex items-center space-x-2 text-sm">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-gray-600">Bitrix24 Ready</span>
+            <span className="text-gray-600">ERP Ready</span>
           </div>
         </div>
       </aside>
