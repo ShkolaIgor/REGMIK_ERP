@@ -225,6 +225,7 @@ export const techCards = pgTable("tech_cards", {
   difficulty: text("difficulty").notNull(), // easy, medium, hard
   status: text("status").notNull().default("active"), // active, inactive
   materialCost: decimal("material_cost", { precision: 10, scale: 2 }).default("0"),
+  createdBy: text("created_by"), // інформація про користувача-творця
   createdAt: timestamp("created_at").defaultNow(),
 });
 

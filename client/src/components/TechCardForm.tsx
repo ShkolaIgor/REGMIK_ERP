@@ -22,9 +22,10 @@ const techCardSchema = z.object({
   baseTechCardId: z.number().optional(),
   isBaseCard: z.boolean().default(true),
   modificationNote: z.string().optional(),
-  estimatedTime: z.number().min(1, "Час виконання повинен бути більше 0"),
+  estimatedTime: z.number().min(0, "Час виконання не може бути від'ємним"),
   difficulty: z.enum(["easy", "medium", "hard"]),
   status: z.enum(["active", "inactive"]),
+  createdBy: z.string().optional(),
 });
 
 const stepSchema = z.object({
@@ -238,6 +239,21 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
     console.log("Form validation errors:", form.formState.errors);
     console.log("Steps:", steps);
     console.log("Materials:", materials);
+    
+    // Очистити поля модифікації якщо це базова карта
+    if (data.isBaseCard) {
+      data.baseTechCardId = undefined;
+      data.modificationNote = "";
+    }
+    
+    // Якщо немає кроків але є ручно введений час - зберегти його
+    if (steps.length === 0 && data.estimatedTime > 0) {
+      // Зберігаємо час як є
+    } else if (steps.length > 0) {
+      // Перерахувати час на основі кроків
+      const totalTime = steps.reduce((sum, step) => sum + step.duration, 0);
+      data.estimatedTime = totalTime;
+    }
     
     const fullData = { ...data, steps, materials };
     console.log("Full data to be sent:", fullData);
@@ -493,6 +509,22 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                   rows={3}
                 />
               </div>
+
+              {/* Інформація про створювача */}
+              {techCard && techCard.createdBy && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-3 rounded">
+                  <div className="space-y-1">
+                    <Label className="text-sm font-medium text-gray-600">Створено користувачем</Label>
+                    <p className="text-sm text-gray-800">{techCard.createdBy}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-sm font-medium text-gray-600">Дата створення</Label>
+                    <p className="text-sm text-gray-800">
+                      {techCard.createdAt ? new Date(techCard.createdAt).toLocaleDateString('uk-UA') : 'Не вказано'}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Поля модифікацій */}
               <div className="grid grid-cols-1 gap-4 border-t pt-4 mt-4">
