@@ -162,14 +162,14 @@ export default function PositionsPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="p-6 space-y-6">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Посади</h1>
             <p className="text-muted-foreground">Управління посадами співробітників</p>
           </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
           {[...Array(6)].map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardHeader>
@@ -188,7 +188,7 @@ export default function PositionsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
+    <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Посади</h1>
@@ -327,7 +327,7 @@ export default function PositionsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
         {filteredPositions.map((position: Position) => {
           const department = departments.find(d => d.id === position.departmentId);
           return (
