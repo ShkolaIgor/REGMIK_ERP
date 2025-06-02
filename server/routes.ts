@@ -3270,7 +3270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Local Users API with Worker Integration
-  app.get("/api/users", isSimpleAuthenticated, async (req, res) => {
+  app.get("/api/users", async (req, res) => {
     try {
       const users = await storage.getLocalUsersWithWorkers();
       res.json(users);
@@ -3281,7 +3281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get workers available for user creation (not yet assigned to a user)
-  app.get("/api/workers/available-for-users", isSimpleAuthenticated, async (req, res) => {
+  app.get("/api/users/available-workers", async (req, res) => {
     try {
       const workers = await storage.getWorkersAvailableForUsers();
       res.json(workers);
@@ -3412,7 +3412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Roles API
-  app.get("/api/roles", isSimpleAuthenticated, async (req, res) => {
+  app.get("/api/roles", async (req, res) => {
     try {
       const roles = await storage.getRoles();
       res.json(roles);
@@ -3422,7 +3422,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/roles", isSimpleAuthenticated, async (req, res) => {
+  app.post("/api/roles", async (req, res) => {
     try {
       const roleData = insertRoleSchema.parse(req.body);
       const role = await storage.createRole(roleData);
@@ -3438,7 +3438,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // System Modules API
-  app.get("/api/system-modules", isSimpleAuthenticated, async (req, res) => {
+  app.get("/api/system-modules", async (req, res) => {
     try {
       const modules = await storage.getSystemModules();
       res.json(modules);
@@ -3448,7 +3448,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/system-modules", isSimpleAuthenticated, async (req, res) => {
+  app.post("/api/system-modules", async (req, res) => {
     try {
       const moduleData = insertSystemModuleSchema.parse(req.body);
       const module = await storage.createSystemModule(moduleData);
