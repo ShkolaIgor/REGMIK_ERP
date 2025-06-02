@@ -4027,6 +4027,15 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async updateLocalUserPermissions(id: number, permissions: Record<string, boolean>) {
+    const [user] = await db
+      .update(localUsers)
+      .set({ permissions, updatedAt: new Date() })
+      .where(eq(localUsers.id, id))
+      .returning();
+    return user;
+  }
+
   // Roles management
   async getRoles() {
     return await db.select().from(roles).orderBy(roles.name);
