@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -104,6 +104,64 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
       status: techCard?.status || "active",
     },
   });
+
+  // Оновлюємо форму при зміні techCard
+  useEffect(() => {
+    if (techCard) {
+      form.reset({
+        name: techCard.name || "",
+        description: techCard.description || "",
+        productId: techCard.productId || 0,
+        estimatedTime: techCard.estimatedTime || 0,
+        difficulty: techCard.difficulty || "medium",
+        status: techCard.status || "active",
+      });
+      
+      // Ініціалізуємо кроки з перетворенням полів
+      if (techCard.steps && Array.isArray(techCard.steps)) {
+        const formattedSteps = techCard.steps.map((step: any) => ({
+          stepNumber: step.stepNumber || 1,
+          title: step.title || "",
+          description: step.description || "",
+          duration: step.duration || 0,
+          equipment: step.equipment || "",
+          notes: step.notes || "",
+          departmentId: step.departmentId || step.department_id,
+          positionId: step.positionId || step.position_id,
+          canRunParallel: step.canRunParallel || step.can_run_parallel || false,
+          prerequisiteSteps: step.prerequisiteSteps || (step.prerequisite_steps ? JSON.parse(step.prerequisite_steps) : []),
+          executionOrder: step.executionOrder || step.execution_order || 1,
+        }));
+        setSteps(formattedSteps);
+      } else {
+        setSteps([]);
+      }
+      
+      // Ініціалізуємо матеріали
+      if (techCard.materials && Array.isArray(techCard.materials)) {
+        const formattedMaterials = techCard.materials.map((material: any) => ({
+          productId: material.productId || 0,
+          quantity: parseFloat(material.quantity) || 0,
+          unit: material.unit || "",
+        }));
+        setMaterials(formattedMaterials);
+      } else {
+        setMaterials([]);
+      }
+    } else {
+      // Скидаємо форму для створення нової технологічної карти
+      form.reset({
+        name: "",
+        description: "",
+        productId: 0,
+        estimatedTime: 0,
+        difficulty: "medium",
+        status: "active",
+      });
+      setSteps([]);
+      setMaterials([]);
+    }
+  }, [techCard, form]);
 
   const createMutation = useMutation({
     mutationFn: async (data: TechCardFormData & { steps: StepFormData[]; materials: MaterialFormData[] }) => {
