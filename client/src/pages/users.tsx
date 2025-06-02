@@ -179,6 +179,7 @@ export default function Users() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/available-workers"] });
       toast({
         title: "Успіх",
         description: "Користувача видалено успішно",
