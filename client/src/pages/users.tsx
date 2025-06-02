@@ -75,11 +75,18 @@ export default function Users() {
       });
     },
     onError: (error) => {
+      console.log("Create user error:", error);
+      const errorMessage = error.message.includes('duplicate key') && error.message.includes('email')
+        ? "Користувач з таким email вже існує"
+        : "Не вдалося створити користувача";
+      
       toast({
         title: "Помилка",
-        description: "Не вдалося створити користувача",
+        description: errorMessage,
         variant: "destructive",
       });
+      
+      // Не закриваємо діалог при помилці, щоб користувач міг виправити дані
     },
   });
 
