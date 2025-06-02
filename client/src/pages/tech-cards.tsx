@@ -4,14 +4,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Plus, Eye, Edit, Clock, FileText, Search, ClipboardList, Wrench, Settings, Trash2 } from "lucide-react";
+import { Plus, Eye, Edit, Clock, FileText, Search, ClipboardList, Wrench, Settings, Trash2, Copy } from "lucide-react";
 import { TechCardForm } from "@/components/TechCardForm";
 
 export default function TechCards() {
   const [showTechCardForm, setShowTechCardForm] = useState(false);
   const [selectedTechCard, setSelectedTechCard] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showViewDialog, setShowViewDialog] = useState(false);
+  const [viewingTechCard, setViewingTechCard] = useState(null);
 
   const queryClient = useQueryClient();
   
@@ -59,6 +63,21 @@ export default function TechCards() {
     if (confirm(`Ви впевнені, що хочете видалити технологічну карту "${techCard.name}"?`)) {
       deleteTechCardMutation.mutate(techCard.id);
     }
+  };
+
+  const handleView = (techCard: any) => {
+    setViewingTechCard(techCard);
+    setShowViewDialog(true);
+  };
+
+  const handleCopy = (techCard: any) => {
+    const copiedCard = {
+      ...techCard,
+      name: `${techCard.name} (копія)`,
+      id: undefined // Прибираємо ID для створення нової карти
+    };
+    setSelectedTechCard(copiedCard);
+    setShowTechCardForm(true);
   };
 
   if (isLoading) {
@@ -181,18 +200,33 @@ export default function TechCards() {
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={() => handleView(techCard)}
+                      title="Переглянути карту"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleEdit(techCard)}
+                      title="Редагувати карту"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm">
-                      <Eye className="h-4 w-4" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleCopy(techCard)}
+                      title="Копіювати карту"
+                    >
+                      <Copy className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(techCard)}
                       disabled={deleteTechCardMutation.isPending}
+                      title="Видалити карту"
                     >
                       <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
@@ -298,6 +332,146 @@ export default function TechCards() {
         onClose={handleCloseForm}
         techCard={selectedTechCard}
       />
+
+      {/* Діалог перегляду технологічної карти */}
+      <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <ClipboardList className="h-5 w-5 text-blue-600" />
+              <span>Технологічна карта: {viewingTechCard?.name}</span>
+            </DialogTitle>
+            <DialogDescription>
+              Детальний перегляд технологічної карти виробництва
+            </DialogDescription>
+          </DialogHeader>
+
+          {viewingTechCard && (
+            <div className="space-y-6">
+              {/* Основна інформація */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Назва карти</label>
+                  <div className="mt-1 text-sm">{viewingTechCard.name}</div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Продукт</label>
+                  <div className="mt-1 text-sm">{viewingTechCard.product?.name || "Не вказано"}</div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Час виконання</label>
+                  <div className="mt-1 text-sm">
+                    <Badge variant="outline">
+                      <Clock className="h-3 w-3 mr-1" />
+                      {viewingTechCard.estimatedTime || 0} хв
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Складність</label>
+                  <div className="mt-1 text-sm">
+                    <Badge variant={
+                      viewingTechCard.difficulty === 'high' ? 'destructive' :
+                      viewingTechCard.difficulty === 'medium' ? 'default' : 'secondary'
+                    }>
+                      {viewingTechCard.difficulty === 'high' ? 'Висока' :
+                       viewingTechCard.difficulty === 'medium' ? 'Середня' : 'Низька'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {viewingTechCard.description && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Опис</label>
+                  <div className="mt-1 text-sm">{viewingTechCard.description}</div>
+                </div>
+              )}
+
+              <Separator />
+
+              {/* Кроки виробництва */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Кроки виробництва</h3>
+                {viewingTechCard.steps && viewingTechCard.steps.length > 0 ? (
+                  <div className="space-y-3">
+                    {viewingTechCard.steps.map((step: any, index: number) => (
+                      <Card key={index} className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <Badge variant="outline" className="text-xs">
+                                Крок {step.stepNumber || index + 1}
+                              </Badge>
+                              {step.duration > 0 && (
+                                <Badge variant="secondary" className="text-xs">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  {step.duration} хв
+                                </Badge>
+                              )}
+                            </div>
+                            <h4 className="font-medium">{step.title}</h4>
+                            {step.description && (
+                              <p className="text-sm text-muted-foreground mt-1">{step.description}</p>
+                            )}
+                            {step.equipment && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                <span className="font-medium">Обладнання:</span> {step.equipment}
+                              </p>
+                            )}
+                            {step.notes && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                <span className="font-medium">Примітки:</span> {step.notes}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Кроки виробництва не визначено</p>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Матеріали */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Необхідні матеріали</h3>
+                {viewingTechCard.materials && viewingTechCard.materials.length > 0 ? (
+                  <div className="space-y-2">
+                    {viewingTechCard.materials.map((material: any, index: number) => (
+                      <div key={index} className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                        <span className="font-medium">{material.product?.name || `Матеріал ${index + 1}`}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {material.quantity} {material.unit}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Матеріали не визначено</p>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button variant="outline" onClick={() => handleCopy(viewingTechCard)}>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Копіювати карту
+                </Button>
+                <Button onClick={() => {
+                  setShowViewDialog(false);
+                  handleEdit(viewingTechCard);
+                }}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Редагувати
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -218,6 +218,9 @@ export const techCards = pgTable("tech_cards", {
   name: text("name").notNull(),
   description: text("description"),
   productId: integer("product_id").references(() => products.id),
+  baseTechCardId: integer("base_tech_card_id").references(() => techCards.id), // для модифікацій виробів
+  isBaseCard: boolean("is_base_card").default(true), // чи це базова карта
+  modificationNote: text("modification_note"), // примітка про модифікацію
   estimatedTime: integer("estimated_time").notNull(), // в хвилинах
   difficulty: text("difficulty").notNull(), // easy, medium, hard
   status: text("status").notNull().default("active"), // active, inactive
