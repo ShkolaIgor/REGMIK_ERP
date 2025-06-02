@@ -2856,6 +2856,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Запуск конкретного кроку виробництва
+  app.post("/api/manufacturing-steps/:id/start", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const step = await storage.startManufacturingStep(id);
+      if (!step) {
+        return res.status(404).json({ error: "Manufacturing step not found" });
+      }
+      res.json(step);
+    } catch (error) {
+      console.error("Failed to start manufacturing step:", error);
+      res.status(500).json({ error: "Failed to start manufacturing step" });
+    }
+  });
+
+  // Завершення конкретного кроку виробництва
+  app.post("/api/manufacturing-steps/:id/complete", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { qualityCheckPassed, notes } = req.body;
+      const step = await storage.completeManufacturingStep(id, { qualityCheckPassed, notes });
+      if (!step) {
+        return res.status(404).json({ error: "Manufacturing step not found" });
+      }
+      res.json(step);
+    } catch (error) {
+      console.error("Failed to complete manufacturing step:", error);
+      res.status(500).json({ error: "Failed to complete manufacturing step" });
+    }
+  });
+
   // Order completion and supplier order creation endpoints
   app.post("/api/complete-order", async (req, res) => {
     try {

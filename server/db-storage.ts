@@ -3641,6 +3641,236 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+
+  // Manufacturing methods
+  async startManufacturing(id: number): Promise<any> {
+    try {
+      const [updated] = await db
+        .update(manufacturingOrders)
+        .set({ 
+          status: 'in_progress',
+          startDate: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(manufacturingOrders.id, id))
+        .returning();
+
+      if (updated) {
+        // Створюємо базові стадії виробництва якщо їх немає
+        await this.createDefaultManufacturingSteps(id);
+      }
+
+      return updated;
+    } catch (error) {
+      console.error('Error starting manufacturing:', error);
+      throw error;
+    }
+  }
+
+  async completeManufacturing(id: number, producedQuantity: string, qualityRating: string, notes?: string): Promise<any> {
+    try {
+      const [updated] = await db
+        .update(manufacturingOrders)
+        .set({ 
+          status: 'completed',
+          producedQuantity,
+          qualityRating,
+          notes,
+          actualEndDate: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(manufacturingOrders.id, id))
+        .returning();
+
+      // Оновити інвентар на складі
+      if (updated && updated.warehouseId && updated.productId) {
+        await this.updateInventoryAfterManufacturing(
+          updated.productId,
+          updated.warehouseId,
+          parseFloat(producedQuantity)
+        );
+      }
+
+      return updated;
+    } catch (error) {
+      console.error('Error completing manufacturing:', error);
+      throw error;
+    }
+  }
+
+  async getManufacturingSteps(manufacturingOrderId: number): Promise<any[]> {
+    try {
+      const steps = await db
+        .select({
+          id: manufacturingSteps.id,
+          stepNumber: manufacturingSteps.stepNumber,
+          name: manufacturingSteps.name,
+          description: manufacturingSteps.description,
+          status: manufacturingSteps.status,
+          estimatedDuration: manufacturingSteps.estimatedDuration,
+          actualDuration: manufacturingSteps.actualDuration,
+          startTime: manufacturingSteps.startTime,
+          endTime: manufacturingSteps.endTime,
+          qualityCheckPassed: manufacturingSteps.qualityCheckPassed,
+          notes: manufacturingSteps.notes,
+          equipment: manufacturingSteps.equipment,
+          temperature: manufacturingSteps.temperature,
+          worker: workers
+        })
+        .from(manufacturingSteps)
+        .leftJoin(workers, eq(manufacturingSteps.assignedWorkerId, workers.id))
+        .where(eq(manufacturingSteps.manufacturingOrderId, manufacturingOrderId))
+        .orderBy(manufacturingSteps.stepNumber);
+
+      return steps;
+    } catch (error) {
+      console.error('Error getting manufacturing steps:', error);
+      return [];
+    }
+  }
+
+  async createManufacturingStep(stepData: any): Promise<any> {
+    try {
+      const [created] = await db
+        .insert(manufacturingSteps)
+        .values(stepData)
+        .returning();
+
+      return created;
+    } catch (error) {
+      console.error('Error creating manufacturing step:', error);
+      throw error;
+    }
+  }
+
+  async updateManufacturingStep(id: number, stepData: any): Promise<any> {
+    try {
+      const [updated] = await db
+        .update(manufacturingSteps)
+        .set(stepData)
+        .where(eq(manufacturingSteps.id, id))
+        .returning();
+
+      return updated;
+    } catch (error) {
+      console.error('Error updating manufacturing step:', error);
+      throw error;
+    }
+  }
+
+  async startManufacturingStep(stepId: number): Promise<any> {
+    try {
+      const [updated] = await db
+        .update(manufacturingSteps)
+        .set({ 
+          status: 'in_progress',
+          startTime: new Date()
+        })
+        .where(eq(manufacturingSteps.id, stepId))
+        .returning();
+
+      return updated;
+    } catch (error) {
+      console.error('Error starting manufacturing step:', error);
+      throw error;
+    }
+  }
+
+  async completeManufacturingStep(stepId: number, data: { qualityCheckPassed?: boolean; notes?: string }): Promise<any> {
+    try {
+      const step = await db
+        .select()
+        .from(manufacturingSteps)
+        .where(eq(manufacturingSteps.id, stepId))
+        .limit(1);
+
+      if (!step[0]) {
+        throw new Error('Manufacturing step not found');
+      }
+
+      const startTime = step[0].startTime;
+      const endTime = new Date();
+      const actualDuration = startTime ? Math.floor((endTime.getTime() - startTime.getTime()) / (1000 * 60)) : null;
+
+      const [updated] = await db
+        .update(manufacturingSteps)
+        .set({ 
+          status: 'completed',
+          endTime,
+          actualDuration,
+          qualityCheckPassed: data.qualityCheckPassed ?? true,
+          notes: data.notes
+        })
+        .where(eq(manufacturingSteps.id, stepId))
+        .returning();
+
+      return updated;
+    } catch (error) {
+      console.error('Error completing manufacturing step:', error);
+      throw error;
+    }
+  }
+
+  private async createDefaultManufacturingSteps(manufacturingOrderId: number): Promise<void> {
+    const defaultSteps = [
+      { stepNumber: 1, name: 'Підготовка матеріалів', description: 'Перевірка та підготовка всіх необхідних матеріалів' },
+      { stepNumber: 2, name: 'Налаштування обладнання', description: 'Налаштування та калібрування виробничого обладнання' },
+      { stepNumber: 3, name: 'Виробництво', description: 'Основний процес виготовлення продукції' },
+      { stepNumber: 4, name: 'Контроль якості', description: 'Перевірка якості готової продукції' },
+      { stepNumber: 5, name: 'Пакування', description: 'Пакування готової продукції' }
+    ];
+
+    for (const step of defaultSteps) {
+      await db
+        .insert(manufacturingSteps)
+        .values({
+          manufacturingOrderId,
+          ...step,
+          status: 'pending',
+          estimatedDuration: 60 // 1 година за замовчуванням
+        });
+    }
+  }
+
+  private async updateInventoryAfterManufacturing(productId: number, warehouseId: number, quantity: number): Promise<void> {
+    try {
+      // Перевіряємо чи є вже запис в інвентарі
+      const existingInventory = await db
+        .select()
+        .from(inventory)
+        .where(
+          and(
+            eq(inventory.productId, productId),
+            eq(inventory.warehouseId, warehouseId)
+          )
+        )
+        .limit(1);
+
+      if (existingInventory.length > 0) {
+        // Оновлюємо існуючий запис
+        await db
+          .update(inventory)
+          .set({
+            quantity: sql`${inventory.quantity} + ${quantity}`,
+            updatedAt: new Date()
+          })
+          .where(eq(inventory.id, existingInventory[0].id));
+      } else {
+        // Створюємо новий запис
+        await db
+          .insert(inventory)
+          .values({
+            productId,
+            warehouseId,
+            quantity: quantity.toString(),
+            minStock: 0,
+            maxStock: 1000
+          });
+      }
+    } catch (error) {
+      console.error('Error updating inventory after manufacturing:', error);
+    }
+  }
 }
 
 export const dbStorage = new DatabaseStorage();

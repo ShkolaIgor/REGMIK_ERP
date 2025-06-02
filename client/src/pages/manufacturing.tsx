@@ -109,6 +109,12 @@ export default function Manufacturing() {
     queryKey: ["/api/warehouses"],
   });
 
+  // Запит для отримання кроків виробництва для вибраного завдання
+  const { data: manufacturingSteps = [], refetch: refetchSteps } = useQuery({
+    queryKey: ["/api/manufacturing-orders", selectedOrder?.id, "steps"],
+    enabled: !!selectedOrder?.id,
+  });
+
   const createMutation = useMutation({
     mutationFn: async (data: any) => apiRequest("/api/manufacturing-orders", "POST", data),
     onSuccess: () => {
@@ -184,9 +190,34 @@ export default function Manufacturing() {
       apiRequest(`/api/manufacturing-orders/${id}/complete`, "POST", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/manufacturing-orders"] });
+      setIsCompleteDialogOpen(false);
       toast({
         title: "Успіх",
         description: "Виробництво завершено",
+      });
+    },
+  });
+
+  const startStepMutation = useMutation({
+    mutationFn: async (stepId: number) => 
+      apiRequest(`/api/manufacturing-steps/${stepId}/start`, "POST"),
+    onSuccess: () => {
+      refetchSteps();
+      toast({
+        title: "Успіх",
+        description: "Крок виробництва розпочато",
+      });
+    },
+  });
+
+  const completeStepMutation = useMutation({
+    mutationFn: async ({ stepId, data }: { stepId: number; data: any }) => 
+      apiRequest(`/api/manufacturing-steps/${stepId}/complete`, "POST", data),
+    onSuccess: () => {
+      refetchSteps();
+      toast({
+        title: "Успіх",
+        description: "Крок виробництва завершено",
       });
     },
   });
@@ -859,6 +890,129 @@ export default function Manufacturing() {
                         </div>
                       </div>
                     )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Стадії виробництва */}
+              {manufacturingSteps.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Factory className="h-5 w-5" />
+                      Стадії виробництва
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {manufacturingSteps.map((step: any, index: number) => (
+                        <div key={step.id} className="border rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+                                step.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                step.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
+                                'bg-gray-100 text-gray-600'
+                              }`}>
+                                {step.stepNumber}
+                              </div>
+                              <div>
+                                <h4 className="font-medium">{step.name}</h4>
+                                {step.description && (
+                                  <p className="text-sm text-gray-600">{step.description}</p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge className={
+                                step.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                step.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
+                                'bg-gray-100 text-gray-600'
+                              }>
+                                {step.status === 'pending' && 'Очікує'}
+                                {step.status === 'in_progress' && 'В роботі'}
+                                {step.status === 'completed' && 'Завершено'}
+                                {step.status === 'skipped' && 'Пропущено'}
+                              </Badge>
+                              {step.status === 'pending' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => startStepMutation.mutate(step.id)}
+                                  disabled={startStepMutation.isPending}
+                                >
+                                  <Play className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {step.status === 'in_progress' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => completeStepMutation.mutate({ 
+                                    stepId: step.id, 
+                                    data: { qualityCheckPassed: true } 
+                                  })}
+                                  disabled={completeStepMutation.isPending}
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4 mt-3 text-sm">
+                            {step.estimatedDuration && (
+                              <div>
+                                <span className="text-gray-600">Планова тривалість:</span>
+                                <div>{Math.floor(step.estimatedDuration / 60)} год {step.estimatedDuration % 60} хв</div>
+                              </div>
+                            )}
+                            {step.actualDuration && (
+                              <div>
+                                <span className="text-gray-600">Фактична тривалість:</span>
+                                <div>{Math.floor(step.actualDuration / 60)} год {step.actualDuration % 60} хв</div>
+                              </div>
+                            )}
+                            {step.startTime && (
+                              <div>
+                                <span className="text-gray-600">Розпочато:</span>
+                                <div>{new Date(step.startTime).toLocaleString()}</div>
+                              </div>
+                            )}
+                            {step.endTime && (
+                              <div>
+                                <span className="text-gray-600">Завершено:</span>
+                                <div>{new Date(step.endTime).toLocaleString()}</div>
+                              </div>
+                            )}
+                            {step.worker && (
+                              <div>
+                                <span className="text-gray-600">Відповідальний:</span>
+                                <div className="flex items-center gap-1">
+                                  <User className="h-3 w-3" />
+                                  {step.worker.firstName} {step.worker.lastName}
+                                </div>
+                              </div>
+                            )}
+                            {step.qualityCheckPassed !== null && step.status === 'completed' && (
+                              <div>
+                                <span className="text-gray-600">Контроль якості:</span>
+                                <div className={step.qualityCheckPassed ? 'text-green-600' : 'text-red-600'}>
+                                  {step.qualityCheckPassed ? 'Пройдено' : 'Не пройдено'}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {step.notes && (
+                            <div className="mt-3 p-2 bg-gray-50 rounded text-sm">
+                              <span className="text-gray-600 font-medium">Примітки:</span>
+                              <div>{step.notes}</div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </CardContent>
                 </Card>
               )}
