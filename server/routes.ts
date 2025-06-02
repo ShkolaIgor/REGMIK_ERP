@@ -16,7 +16,8 @@ import {
   insertPackageTypeSchema, insertSolderingTypeSchema, insertComponentAlternativeSchema, insertComponentCategorySchema,
   insertShipmentSchema, insertManufacturingOrderSchema, insertManufacturingOrderMaterialSchema, insertManufacturingStepSchema,
   insertCurrencySchema, insertSerialNumberSchema, insertExchangeRateHistorySchema,
-  insertLocalUserSchema, insertRoleSchema, insertSystemModuleSchema, changePasswordSchema
+  insertLocalUserSchema, insertRoleSchema, insertSystemModuleSchema, changePasswordSchema,
+  insertEmailSettingsSchema
 } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -3823,6 +3824,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ error: "Failed to create system module" });
       }
+    }
+  });
+
+  // Email Settings API
+  app.get("/api/email-settings", async (req, res) => {
+    try {
+      const settings = await storage.getEmailSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching email settings:", error);
+      res.status(500).json({ error: "Failed to fetch email settings" });
+    }
+  });
+
+  app.post("/api/email-settings", async (req, res) => {
+    try {
+      const settingsData = insertEmailSettingsSchema.parse(req.body);
+      const settings = await storage.updateEmailSettings(settingsData);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error updating email settings:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid email settings data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update email settings" });
+      }
+    }
+  });
+
+  app.post("/api/email-settings/test", async (req, res) => {
+    try {
+      const settingsData = insertEmailSettingsSchema.parse(req.body);
+      
+      // Тестування підключення до SMTP
+      const nodemailer = require('nodemailer');
+      const transporter = nodemailer.createTransporter({
+        host: settingsData.smtpHost,
+        port: settingsData.smtpPort,
+        secure: settingsData.smtpSecure,
+        auth: {
+          user: settingsData.smtpUser,
+          pass: settingsData.smtpPassword,
+        },
+      });
+
+      await transporter.verify();
+      res.json({ success: true, message: "SMTP connection successful" });
+    } catch (error) {
+      console.error("SMTP connection test failed:", error);
+      res.status(400).json({ 
+        success: false, 
+        message: "SMTP connection failed", 
+        error: error.message 
+      });
     }
   });
 

@@ -363,6 +363,10 @@ export interface IStorage {
   // Supply Decisions
   getSupplyDecisions(): Promise<any[]>;
   analyzeSupplyDecision(productId: number, requiredQuantity: number): Promise<any>;
+
+  // Email Settings
+  getEmailSettings(): Promise<EmailSettings | null>;
+  updateEmailSettings(settings: InsertEmailSettings): Promise<EmailSettings>;
 }
 
 export class MemStorage implements IStorage {

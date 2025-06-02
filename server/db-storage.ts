@@ -4141,6 +4141,37 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return module;
   }
+
+  // Email Settings
+  async getEmailSettings(): Promise<EmailSettings | null> {
+    const [settings] = await db.select().from(emailSettings).limit(1);
+    return settings || null;
+  }
+
+  async updateEmailSettings(settingsData: InsertEmailSettings): Promise<EmailSettings> {
+    // Спочатку перевіримо, чи існують налаштування
+    const existing = await this.getEmailSettings();
+    
+    if (existing) {
+      // Оновлюємо існуючі налаштування
+      const [settings] = await db
+        .update(emailSettings)
+        .set({
+          ...settingsData,
+          updatedAt: new Date(),
+        })
+        .where(eq(emailSettings.id, existing.id))
+        .returning();
+      return settings;
+    } else {
+      // Створюємо нові налаштування
+      const [settings] = await db
+        .insert(emailSettings)
+        .values(settingsData)
+        .returning();
+      return settings;
+    }
+  }
 }
 
 export const dbStorage = new DatabaseStorage();

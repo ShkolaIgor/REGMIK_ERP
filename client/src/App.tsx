@@ -48,6 +48,7 @@ import OrderedProducts from "@/pages/ordered-products";
 import Scanner from "@/pages/scanner";
 import SerialNumbers from "@/pages/serial-numbers";
 import Users from "@/pages/users";
+import EmailSettings from "@/pages/email-settings";
 import NotFound from "@/pages/not-found";
 
 function Router() {
