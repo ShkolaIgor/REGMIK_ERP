@@ -64,6 +64,9 @@ export default function Manufacturing() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<ManufacturingOrder | null>(null);
   const [editingOrder, setEditingOrder] = useState<ManufacturingOrder | null>(null);
   const [formData, setFormData] = useState({
     productId: "",
@@ -75,6 +78,11 @@ export default function Manufacturing() {
     warehouseId: "",
     plannedEndDate: "",
     estimatedDuration: "",
+    notes: ""
+  });
+  const [completeData, setCompleteData] = useState({
+    producedQuantity: "",
+    qualityRating: "good",
     notes: ""
   });
 
@@ -615,19 +623,50 @@ export default function Manufacturing() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedOrder(order);
+                          setIsDetailsDialogOpen(true);
+                        }}
+                        title="Деталі"
+                      >
+                        <Package className="h-4 w-4" />
+                      </Button>
                       {order.status === "pending" && (
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => startMutation.mutate(order.id)}
+                          title="Розпочати виробництво"
                         >
                           <Play className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {order.status === "in_progress" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setCompleteData({
+                              producedQuantity: order.producedQuantity,
+                              qualityRating: "good",
+                              notes: ""
+                            });
+                            setIsCompleteDialogOpen(true);
+                          }}
+                          title="Завершити виробництво"
+                        >
+                          <CheckCircle className="h-4 w-4" />
                         </Button>
                       )}
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleEdit(order)}
+                        title="Редагувати"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -635,6 +674,7 @@ export default function Manufacturing() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleDelete(order.id, order.orderNumber)}
+                        title="Видалити"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -652,6 +692,278 @@ export default function Manufacturing() {
           )}
         </CardContent>
       </Card>
+
+      {/* Діалог деталей виробничого завдання */}
+      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>
+              Деталі виробничого завдання #{selectedOrder?.orderNumber}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedOrder && (
+            <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2 space-y-6">
+              {/* Основна інформація */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Factory className="h-5 w-5" />
+                    Основна інформація
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">Товар</Label>
+                    <div className="mt-1">
+                      <div className="font-medium">{selectedOrder.product?.name}</div>
+                      <div className="text-sm text-gray-500">{selectedOrder.product?.sku}</div>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">Статус</Label>
+                    <div className="mt-1">
+                      <Badge className={getStatusColor(selectedOrder.status)}>
+                        <span className="flex items-center gap-1">
+                          {getStatusIcon(selectedOrder.status)}
+                          {selectedOrder.status === "pending" && "Очікує"}
+                          {selectedOrder.status === "in_progress" && "В роботі"}
+                          {selectedOrder.status === "completed" && "Завершено"}
+                          {selectedOrder.status === "cancelled" && "Скасовано"}
+                          {selectedOrder.status === "paused" && "Пауза"}
+                        </span>
+                      </Badge>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">Кількість</Label>
+                    <div className="mt-1">
+                      <div className="text-lg font-semibold">
+                        {selectedOrder.producedQuantity} / {selectedOrder.plannedQuantity} {selectedOrder.unit}
+                      </div>
+                      <Progress 
+                        value={getProgress(selectedOrder.plannedQuantity, selectedOrder.producedQuantity)} 
+                        className="w-full h-2 mt-2"
+                      />
+                      <div className="text-sm text-gray-500 mt-1">
+                        {Math.round(getProgress(selectedOrder.plannedQuantity, selectedOrder.producedQuantity))}% завершено
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">Пріоритет</Label>
+                    <div className="mt-1">
+                      <Badge className={getPriorityColor(selectedOrder.priority)}>
+                        {selectedOrder.priority === "low" && "Низький"}
+                        {selectedOrder.priority === "medium" && "Середній"}
+                        {selectedOrder.priority === "high" && "Високий"}
+                        {selectedOrder.priority === "urgent" && "Терміновий"}
+                      </Badge>
+                    </div>
+                  </div>
+                  {selectedOrder.worker && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Відповідальний</Label>
+                      <div className="mt-1 flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        {selectedOrder.worker.firstName} {selectedOrder.worker.lastName}
+                      </div>
+                    </div>
+                  )}
+                  {selectedOrder.warehouse && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Склад</Label>
+                      <div className="mt-1">
+                        {selectedOrder.warehouse.name}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Витрати та вартість */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Витрати та вартість</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Вартість матеріалів</Label>
+                      <div className="mt-1 text-lg font-semibold">
+                        ₴{parseFloat(selectedOrder.materialCost).toFixed(2)}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Вартість праці</Label>
+                      <div className="mt-1 text-lg font-semibold">
+                        ₴{parseFloat(selectedOrder.laborCost).toFixed(2)}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Накладні витрати</Label>
+                      <div className="mt-1 text-lg font-semibold">
+                        ₴{parseFloat(selectedOrder.overheadCost).toFixed(2)}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Загальна вартість</Label>
+                      <div className="mt-1 text-lg font-semibold text-green-600">
+                        ₴{parseFloat(selectedOrder.totalCost).toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Часові показники */}
+              {(selectedOrder.startDate || selectedOrder.plannedEndDate || selectedOrder.estimatedDuration) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      Часові показники
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-2 gap-4">
+                    {selectedOrder.startDate && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Дата початку</Label>
+                        <div className="mt-1 flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          {new Date(selectedOrder.startDate).toLocaleString()}
+                        </div>
+                      </div>
+                    )}
+                    {selectedOrder.plannedEndDate && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Планова дата завершення</Label>
+                        <div className="mt-1 flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          {new Date(selectedOrder.plannedEndDate).toLocaleString()}
+                        </div>
+                      </div>
+                    )}
+                    {selectedOrder.estimatedDuration && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Планова тривалість</Label>
+                        <div className="mt-1">
+                          {Math.floor(selectedOrder.estimatedDuration / 60)} год {selectedOrder.estimatedDuration % 60} хв
+                        </div>
+                      </div>
+                    )}
+                    {selectedOrder.actualDuration && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Фактична тривалість</Label>
+                        <div className="mt-1">
+                          {Math.floor(selectedOrder.actualDuration / 60)} год {selectedOrder.actualDuration % 60} хв
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Примітки */}
+              {selectedOrder.notes && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Примітки</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      {selectedOrder.notes}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Діалог завершення виробництва */}
+      <Dialog open={isCompleteDialogOpen} onOpenChange={setIsCompleteDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              Завершити виробництво #{selectedOrder?.orderNumber}
+            </DialogTitle>
+          </DialogHeader>
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (selectedOrder) {
+                completeMutation.mutate({
+                  id: selectedOrder.id,
+                  data: completeData
+                });
+              }
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <Label htmlFor="producedQuantity">Фактично вироблено *</Label>
+              <Input
+                id="producedQuantity"
+                type="number"
+                step="0.01"
+                value={completeData.producedQuantity}
+                onChange={(e) => setCompleteData(prev => ({ ...prev, producedQuantity: e.target.value }))}
+                required
+              />
+              <div className="text-sm text-gray-500 mt-1">
+                Планувалось: {selectedOrder?.plannedQuantity} {selectedOrder?.unit}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="qualityRating">Оцінка якості</Label>
+              <Select 
+                value={completeData.qualityRating} 
+                onValueChange={(value) => setCompleteData(prev => ({ ...prev, qualityRating: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="excellent">Відмінно</SelectItem>
+                  <SelectItem value="good">Добре</SelectItem>
+                  <SelectItem value="acceptable">Задовільно</SelectItem>
+                  <SelectItem value="poor">Незадовільно</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="completeNotes">Примітки</Label>
+              <Textarea
+                id="completeNotes"
+                value={completeData.notes}
+                onChange={(e) => setCompleteData(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Додаткові примітки про завершення виробництва..."
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setIsCompleteDialogOpen(false)}
+              >
+                Скасувати
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={completeMutation.isPending}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {completeMutation.isPending ? "Завершення..." : "Завершити виробництво"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
