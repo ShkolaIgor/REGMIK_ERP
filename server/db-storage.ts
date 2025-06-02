@@ -2013,11 +2013,10 @@ export class DatabaseStorage implements IStorage {
 
   async deletePosition(id: number): Promise<boolean> {
     try {
-      // Soft delete by setting isActive to false
-      const result = await this.db.update(positions)
-        .set({ isActive: false, updatedAt: new Date() })
+      // Hard delete - permanently remove from database
+      const result = await this.db.delete(positions)
         .where(eq(positions.id, id));
-      return result.rowCount > 0;
+      return (result.rowCount || 0) > 0;
     } catch (error) {
       console.error('Error deleting position:', error);
       throw error;

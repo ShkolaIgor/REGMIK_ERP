@@ -157,18 +157,6 @@ export default function PositionsPage() {
     const matchesSearch = position.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       position.department.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = showInactive || position.isActive;
-    
-    // Логування для відладки
-    if (position.name === 'уукаук') {
-      console.log("Position уукаук:", {
-        isActive: position.isActive,
-        showInactive: showInactive,
-        matchesStatus: matchesStatus,
-        matchesSearch: matchesSearch,
-        willShow: matchesSearch && matchesStatus
-      });
-    }
-    
     return matchesSearch && matchesStatus;
   });
 
