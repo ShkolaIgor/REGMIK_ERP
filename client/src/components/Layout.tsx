@@ -96,6 +96,12 @@ const navigationItems = [
       { name: "Розширені звіти", href: "/advanced-reports", icon: FileText },
       { name: "Статистика виробництва", href: "/production-stats", icon: TrendingUp }
     ]
+  },
+  {
+    title: "Адміністрування",
+    items: [
+      { name: "Управління користувачами", href: "/users", icon: Users }
+    ]
   }
 ];
 

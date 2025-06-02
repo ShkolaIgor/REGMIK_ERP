@@ -45,6 +45,7 @@ import ProductionPlanning from "@/pages/production-planning";
 import OrderedProducts from "@/pages/ordered-products";
 import Scanner from "@/pages/scanner";
 import SerialNumbers from "@/pages/serial-numbers";
+import Users from "@/pages/users";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -96,6 +97,7 @@ function Router() {
           <Route path="/ordered-products" component={OrderedProducts} />
           <Route path="/serial-numbers" component={SerialNumbers} />
           <Route path="/currencies" component={Currencies} />
+          <Route path="/users" component={Users} />
           <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
         </Layout>
       <Route component={NotFound} />

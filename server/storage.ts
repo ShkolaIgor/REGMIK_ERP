@@ -1,10 +1,12 @@
 import {
-  users, categories, units, warehouses, products, inventory, orders, orderItems,
+  users, localUsers, roles, systemModules, userLoginHistory, categories, units, warehouses, products, inventory, orders, orderItems,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   components, productComponents, costCalculations, materialShortages, inventoryAudits, inventoryAuditItems, workers,
   packageTypes, solderingTypes, componentCategories, shipments, shipmentItems, carriers,
   customerAddresses, senderSettings, currencies, exchangeRateHistory, serialNumbers,
-  type User, type UpsertUser, type Category, type InsertCategory,
+  type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
+  type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
+  type Category, type InsertCategory,
   type Unit, type InsertUnit,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
   type Inventory, type InsertInventory, type Order, type InsertOrder,
@@ -46,6 +48,31 @@ export interface IStorage {
   // Users (updated for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+
+  // Local Users
+  getLocalUsers(): Promise<LocalUser[]>;
+  getLocalUser(id: number): Promise<LocalUser | undefined>;
+  getLocalUserByUsername(username: string): Promise<LocalUser | undefined>;
+  createLocalUser(user: InsertLocalUser): Promise<LocalUser>;
+  updateLocalUser(id: number, user: Partial<InsertLocalUser>): Promise<LocalUser | undefined>;
+  deleteLocalUser(id: number): Promise<boolean>;
+  toggleUserStatus(id: number, isActive: boolean): Promise<LocalUser | undefined>;
+  changeUserPassword(id: number, hashedPassword: string): Promise<boolean>;
+
+  // Roles
+  getRoles(): Promise<Role[]>;
+  createRole(role: InsertRole): Promise<Role>;
+  updateRole(id: number, role: Partial<InsertRole>): Promise<Role | undefined>;
+  deleteRole(id: number): Promise<boolean>;
+
+  // System Modules
+  getSystemModules(): Promise<SystemModule[]>;
+  createSystemModule(module: InsertSystemModule): Promise<SystemModule>;
+  updateSystemModule(id: number, module: Partial<InsertSystemModule>): Promise<SystemModule | undefined>;
+  deleteSystemModule(id: number): Promise<boolean>;
+
+  // User Login History
+  logUserLogin(login: InsertUserLoginHistory): Promise<UserLoginHistory>;
 
   // Categories
   getCategories(): Promise<Category[]>;
