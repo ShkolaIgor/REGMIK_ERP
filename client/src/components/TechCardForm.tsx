@@ -52,6 +52,7 @@ interface TechCardFormProps {
 export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
   const [steps, setSteps] = useState<StepFormData[]>(techCard?.steps || []);
   const [materials, setMaterials] = useState<MaterialFormData[]>(techCard?.materials || []);
+  const [editingStepIndex, setEditingStepIndex] = useState<number | null>(null);
   const [newStep, setNewStep] = useState<StepFormData>({
     stepNumber: steps.length + 1,
     title: "",
@@ -185,6 +186,21 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
       [newSteps[index], newSteps[index + 1]] = [newSteps[index + 1], newSteps[index]];
       setSteps(newSteps.map((step, i) => ({ ...step, stepNumber: i + 1 })));
     }
+  };
+
+  const editStep = (index: number) => {
+    setEditingStepIndex(index);
+  };
+
+  const saveStep = (index: number, updatedStep: StepFormData) => {
+    const updatedSteps = [...steps];
+    updatedSteps[index] = { ...updatedStep, stepNumber: index + 1 };
+    setSteps(updatedSteps);
+    setEditingStepIndex(null);
+  };
+
+  const cancelEditStep = () => {
+    setEditingStepIndex(null);
   };
 
   const addMaterial = () => {

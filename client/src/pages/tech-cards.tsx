@@ -188,6 +188,14 @@ export default function TechCards() {
                     <Button variant="ghost" size="sm">
                       <Eye className="h-4 w-4" />
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(techCard)}
+                      disabled={deleteTechCardMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
                   </div>
                 </div>
                 
