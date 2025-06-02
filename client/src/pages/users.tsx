@@ -902,7 +902,7 @@ export default function Users() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              Користувач: {editingUser?.firstName} {editingUser?.lastName} (@{editingUser?.username})
+              Користувач: {editingUser?.worker?.firstName} {editingUser?.worker?.lastName} (@{editingUser?.username})
             </div>
             
             {/* Групове керування */}
