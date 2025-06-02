@@ -87,7 +87,10 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
 
   const createMutation = useMutation({
     mutationFn: async (data: TechCardFormData & { steps: StepFormData[]; materials: MaterialFormData[] }) => {
-      return await apiRequest("/api/tech-cards", "POST", data);
+      console.log("Creating tech card via API request with data:", data);
+      const result = await apiRequest("/api/tech-cards", "POST", data);
+      console.log("API response:", result);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tech-cards"] });
