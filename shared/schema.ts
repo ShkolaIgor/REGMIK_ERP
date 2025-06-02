@@ -787,7 +787,7 @@ export const positions = pgTable("positions", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull().unique(),
   description: text("description"),
-  department: varchar("department", { length: 100 }),
+  departmentId: integer("department_id").references(() => departments.id),
   salaryRange: varchar("salary_range", { length: 50 }),
   responsibilities: text("responsibilities"),
   requirements: text("requirements"),
@@ -968,6 +968,18 @@ export const insertComponentAlternativeSchema = createInsertSchema(componentAlte
   id: true,
   createdAt: true,
 });
+
+// Relations for positions and departments
+export const positionsRelations = relations(positions, ({ one }) => ({
+  department: one(departments, {
+    fields: [positions.departmentId],
+    references: [departments.id],
+  }),
+}));
+
+export const departmentsRelations = relations(departments, ({ many }) => ({
+  positions: many(positions),
+}));
 
 export type ComponentAlternative = typeof componentAlternatives.$inferSelect;
 export type InsertComponentAlternative = z.infer<typeof insertComponentAlternativeSchema>;

@@ -41,6 +41,10 @@ export default function Users() {
     queryKey: ["/api/system-modules"],
   });
 
+  const { data: availableWorkers } = useQuery({
+    queryKey: ["/api/users/available-workers"],
+  });
+
   const createUserMutation = useMutation({
     mutationFn: async (userData: InsertLocalUser) => {
       await apiRequest("/api/users", {
