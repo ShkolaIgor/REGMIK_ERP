@@ -495,7 +495,11 @@ export default function MaterialShortagesPage() {
                     <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
                       Скасувати
                     </Button>
-                    <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                    <Button 
+                      type="submit" 
+                      disabled={createMutation.isPending || updateMutation.isPending}
+                      onClick={() => console.log('Submit button clicked, editingShortage:', editingShortage)}
+                    >
                       {editingShortage ? "Оновити" : "Створити"}
                     </Button>
                   </div>
