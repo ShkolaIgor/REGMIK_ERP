@@ -3170,13 +3170,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Генерація серійних номерів
-  app.post("/api/manufacturing-orders/:id/generate-serial-numbers", async (req, res) => {
+  app.get("/api/manufacturing-orders/:id/generate-serial-numbers", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      console.log("Generating serial numbers for order:", id);
       const serialNumbers = await storage.generateSerialNumbers(id);
       if (!serialNumbers) {
         return res.status(404).json({ error: "Manufacturing order not found" });
       }
+      console.log("Serial numbers generated successfully:", serialNumbers);
       res.json({ serialNumbers });
     } catch (error) {
       console.error("Failed to generate serial numbers:", error);
