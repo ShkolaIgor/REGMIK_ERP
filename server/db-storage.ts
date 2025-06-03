@@ -3479,47 +3479,63 @@ export class DatabaseStorage implements IStorage {
         .where(eq(manufacturingOrders.id, manufacturingOrderId));
 
       if (!order) {
+        console.log("Order not found:", manufacturingOrderId);
         return null;
       }
 
-      // Отримуємо товар та його категорію
-      const [product] = await db.select({
-        product: products,
-        category: categories
-      })
-      .from(products)
-      .leftJoin(categories, eq(products.categoryId, categories.id))
-      .where(eq(products.id, order.productId));
+      console.log("Order found:", order);
+
+      // Отримуємо товар
+      const [product] = await db.select()
+        .from(products)
+        .where(eq(products.id, order.productId));
 
       if (!product) {
+        console.log("Product not found:", order.productId);
         return null;
       }
+
+      console.log("Product found:", product);
+
+      // Отримуємо категорію товару
+      let category = null;
+      if (product.categoryId) {
+        const [cat] = await db.select()
+          .from(categories)
+          .where(eq(categories.id, product.categoryId));
+        category = cat;
+      }
+
+      console.log("Category found:", category);
 
       // Отримуємо налаштування серійних номерів
       const [settings] = await db.select()
         .from(serialNumberSettings)
         .limit(1);
 
+      console.log("Settings found:", settings);
+
       const quantity = parseInt(order.plannedQuantity);
       const serialNumbers: string[] = [];
+
+      console.log("Generating", quantity, "serial numbers");
 
       // Генеруємо серійні номери
       for (let i = 0; i < quantity; i++) {
         let serialNumber = '';
         
-        if (product.category?.useGlobalNumbering !== false && settings?.useCrossNumbering) {
+        if (category?.useGlobalNumbering !== false && settings?.useCrossNumbering) {
           // Використовуємо глобальну нумерацію
           const template = settings.globalTemplate || "{year}{month:2}{day:2}-{counter:6}";
           const prefix = settings.globalPrefix || "";
-          const startNumber = settings.globalStartNumber || 1;
           const currentCounter = (settings.currentGlobalCounter || 0) + i + 1;
           
           serialNumber = this.formatSerialNumber(template, prefix, currentCounter);
-        } else if (product.category?.hasSerialNumbers) {
+        } else if (category?.hasSerialNumbers) {
           // Використовуємо налаштування категорії
-          const template = product.category.serialNumberTemplate || "{year}{month:2}{day:2}-{counter:6}";
-          const prefix = product.category.serialNumberPrefix || "";
-          const startNumber = product.category.serialNumberStartNumber || 1;
+          const template = category.serialNumberTemplate || "{year}{month:2}{day:2}-{counter:6}";
+          const prefix = category.serialNumberPrefix || "";
+          const startNumber = category.serialNumberStartNumber || 1;
           
           serialNumber = this.formatSerialNumber(template, prefix, startNumber + i);
         } else {
@@ -3532,10 +3548,15 @@ export class DatabaseStorage implements IStorage {
         serialNumbers.push(serialNumber);
       }
 
+      console.log("Generated serial numbers:", serialNumbers);
+
       // Оновлюємо замовлення з серійними номерами
-      await db.update(manufacturingOrders)
+      const [updatedOrder] = await db.update(manufacturingOrders)
         .set({ serialNumbers })
-        .where(eq(manufacturingOrders.id, manufacturingOrderId));
+        .where(eq(manufacturingOrders.id, manufacturingOrderId))
+        .returning();
+
+      console.log("Updated order with serial numbers:", updatedOrder);
 
       // Оновлюємо глобальний лічильник
       if (settings?.useCrossNumbering) {
