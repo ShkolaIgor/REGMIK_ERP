@@ -396,13 +396,13 @@ export default function SerialNumberSettings() {
                           </Label>
                           <Switch
                             id={`category-${category.id}-use-serial`}
-                            checked={category.hasSerialNumbers === true}
+                            checked={category.useSerialNumbers === true}
                             onCheckedChange={(checked) => {
                               // Оновлюємо локальний стан негайно
                               setLocalCategories(prev => 
                                 prev.map(cat => 
                                   cat.id === category.id 
-                                    ? { ...cat, hasSerialNumbers: checked, useGlobalNumbering: checked ? cat.useGlobalNumbering : false }
+                                    ? { ...cat, useSerialNumbers: checked, useGlobalNumbering: checked ? cat.useGlobalNumbering : false }
                                     : cat
                                 )
                               );
@@ -410,7 +410,7 @@ export default function SerialNumberSettings() {
                               // Відправляємо запит на сервер
                               updateCategoryMutation.mutate({
                                 id: category.id,
-                                data: { hasSerialNumbers: checked, useGlobalNumbering: checked ? category.useGlobalNumbering : false }
+                                data: { useSerialNumbers: checked, useGlobalNumbering: checked ? category.useGlobalNumbering : false }
                               }, {
                                 onSuccess: () => {
                                   queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -420,7 +420,7 @@ export default function SerialNumberSettings() {
                                   setLocalCategories(prev => 
                                     prev.map(cat => 
                                       cat.id === category.id 
-                                        ? { ...cat, hasSerialNumbers: !checked }
+                                        ? { ...cat, useSerialNumbers: !checked }
                                         : cat
                                     )
                                   );
@@ -431,7 +431,7 @@ export default function SerialNumberSettings() {
                           />
                         </div>
                         
-                        {category.hasSerialNumbers && (
+                        {category.useSerialNumbers && (
                           <div className="space-y-2">
                             <Label htmlFor={`category-${category.id}-use-global`}>
                               Використовувати глобальну нумерацію
