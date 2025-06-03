@@ -49,6 +49,7 @@ import Scanner from "@/pages/scanner";
 import SerialNumbers from "@/pages/serial-numbers";
 import Users from "@/pages/users";
 import EmailSettings from "@/pages/email-settings";
+import Analytics from "@/pages/analytics";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -112,6 +113,7 @@ function Router() {
         <Route path="/currencies" component={Currencies} />
         <Route path="/users" component={Users} />
         <Route path="/email-settings" component={EmailSettings} />
+        <Route path="/analytics" component={Analytics} />
         <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
         <Route component={NotFound} />
       </Switch>

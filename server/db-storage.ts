@@ -9,6 +9,7 @@ import {
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes, solderingTypes,
   componentCategories, componentAlternatives, carriers, shipments, customerAddresses, senderSettings,
   manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, exchangeRateHistory, serialNumbers, emailSettings,
+  salesRecords, expenses, timeTracking, inventoryAlerts, tasks,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
   type Category, type InsertCategory,
@@ -4171,6 +4172,259 @@ export class DatabaseStorage implements IStorage {
         .values(settingsData)
         .returning();
       return settings;
+    }
+  }
+
+  // Analytics methods
+  async getSalesAnalytics(period: string): Promise<any[]> {
+    try {
+      const now = new Date();
+      let start: Date;
+      
+      switch (period) {
+        case 'week':
+          start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+          break;
+        case 'month':
+          start = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case 'year':
+          start = new Date(now.getFullYear(), 0, 1);
+          break;
+        default:
+          start = new Date(now.getFullYear(), now.getMonth(), 1);
+      }
+
+      const salesData = await db
+        .select({
+          id: salesRecords.id,
+          orderId: salesRecords.orderId,
+          productId: salesRecords.productId,
+          quantity: salesRecords.quantity,
+          unitPrice: salesRecords.unitPrice,
+          totalAmount: salesRecords.totalAmount,
+          saleDate: salesRecords.saleDate,
+          customerName: salesRecords.customerName,
+          notes: salesRecords.notes
+        })
+        .from(salesRecords)
+        .where(gte(salesRecords.saleDate, start))
+        .orderBy(desc(salesRecords.saleDate));
+
+      return salesData;
+    } catch (error) {
+      console.error('Error getting sales analytics:', error);
+      return [];
+    }
+  }
+
+  async getExpensesAnalytics(period: string): Promise<any[]> {
+    try {
+      const now = new Date();
+      let start: Date;
+      
+      switch (period) {
+        case 'week':
+          start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+          break;
+        case 'month':
+          start = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case 'year':
+          start = new Date(now.getFullYear(), 0, 1);
+          break;
+        default:
+          start = new Date(now.getFullYear(), now.getMonth(), 1);
+      }
+
+      const expensesData = await db
+        .select({
+          id: expenses.id,
+          category: expenses.category,
+          description: expenses.description,
+          amount: expenses.amount,
+          expenseDate: expenses.expenseDate,
+          createdBy: expenses.createdBy,
+          createdAt: expenses.createdAt
+        })
+        .from(expenses)
+        .where(gte(expenses.expenseDate, start))
+        .orderBy(desc(expenses.expenseDate));
+
+      return expensesData;
+    } catch (error) {
+      console.error('Error getting expenses analytics:', error);
+      return [];
+    }
+  }
+
+  async getProfitAnalytics(period: string): Promise<any[]> {
+    try {
+      const salesData = await this.getSalesAnalytics(period);
+      const expensesData = await this.getExpensesAnalytics(period);
+
+      // Групуємо дані по датах
+      const profitMap = new Map<string, { date: string; sales: number; expenses: number; profit: number }>();
+
+      // Обробляємо продажі
+      salesData.forEach(sale => {
+        const dateKey = sale.saleDate.toISOString().split('T')[0];
+        if (!profitMap.has(dateKey)) {
+          profitMap.set(dateKey, { date: dateKey, sales: 0, expenses: 0, profit: 0 });
+        }
+        const data = profitMap.get(dateKey)!;
+        data.sales += parseFloat(sale.totalAmount);
+      });
+
+      // Обробляємо витрати
+      expensesData.forEach(expense => {
+        const dateKey = expense.expenseDate.toISOString().split('T')[0];
+        if (!profitMap.has(dateKey)) {
+          profitMap.set(dateKey, { date: dateKey, sales: 0, expenses: 0, profit: 0 });
+        }
+        const data = profitMap.get(dateKey)!;
+        data.expenses += parseFloat(expense.amount);
+      });
+
+      // Розраховуємо прибуток
+      profitMap.forEach(data => {
+        data.profit = data.sales - data.expenses;
+      });
+
+      return Array.from(profitMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+    } catch (error) {
+      console.error('Error getting profit analytics:', error);
+      return [];
+    }
+  }
+
+  // Time tracking methods
+  async getTimeEntries(): Promise<any[]> {
+    try {
+      const timeEntriesData = await db
+        .select({
+          id: timeTracking.id,
+          taskId: timeTracking.taskId,
+          employeeName: timeTracking.employeeName,
+          description: timeTracking.description,
+          startTime: timeTracking.startTime,
+          endTime: timeTracking.endTime,
+          durationMinutes: timeTracking.durationMinutes,
+          notes: timeTracking.notes,
+          createdAt: timeTracking.createdAt
+        })
+        .from(timeTracking)
+        .orderBy(desc(timeTracking.startTime));
+
+      return timeEntriesData;
+    } catch (error) {
+      console.error('Error getting time entries:', error);
+      return [];
+    }
+  }
+
+  async createTimeEntry(timeEntryData: any): Promise<any> {
+    try {
+      const [timeEntry] = await db
+        .insert(timeTracking)
+        .values(timeEntryData)
+        .returning();
+      return timeEntry;
+    } catch (error) {
+      console.error('Error creating time entry:', error);
+      throw error;
+    }
+  }
+
+  async updateTimeEntry(id: number, timeEntryData: any): Promise<any> {
+    try {
+      const [timeEntry] = await db
+        .update(timeTracking)
+        .set(timeEntryData)
+        .where(eq(timeTracking.id, id))
+        .returning();
+      return timeEntry;
+    } catch (error) {
+      console.error('Error updating time entry:', error);
+      throw error;
+    }
+  }
+
+  // Inventory alerts methods
+  async getInventoryAlerts(): Promise<any[]> {
+    try {
+      const alertsData = await db
+        .select({
+          id: inventoryAlerts.id,
+          productId: inventoryAlerts.productId,
+          warehouseId: inventoryAlerts.warehouseId,
+          alertType: inventoryAlerts.alertType,
+          currentQuantity: inventoryAlerts.currentQuantity,
+          thresholdQuantity: inventoryAlerts.thresholdQuantity,
+          message: inventoryAlerts.message,
+          isResolved: inventoryAlerts.isResolved,
+          createdAt: inventoryAlerts.createdAt,
+          resolvedAt: inventoryAlerts.resolvedAt
+        })
+        .from(inventoryAlerts)
+        .where(eq(inventoryAlerts.isResolved, false))
+        .orderBy(desc(inventoryAlerts.createdAt));
+
+      return alertsData;
+    } catch (error) {
+      console.error('Error getting inventory alerts:', error);
+      return [];
+    }
+  }
+
+  async checkAndCreateInventoryAlerts(): Promise<void> {
+    try {
+      // Отримуємо всі товари з мінімальними запасами
+      const inventoryData = await db
+        .select({
+          id: inventory.id,
+          productId: inventory.productId,
+          warehouseId: inventory.warehouseId,
+          quantity: inventory.quantity,
+          minStock: inventory.minStock,
+          productName: products.name,
+          warehouseName: warehouses.name
+        })
+        .from(inventory)
+        .innerJoin(products, eq(inventory.productId, products.id))
+        .innerJoin(warehouses, eq(inventory.warehouseId, warehouses.id))
+        .where(sql`${inventory.quantity}::decimal < ${inventory.minStock}::decimal`);
+
+      // Створюємо алерти для товарів з низькими запасами
+      for (const item of inventoryData) {
+        // Перевіряємо чи вже існує алерт для цього товару
+        const [existingAlert] = await db
+          .select()
+          .from(inventoryAlerts)
+          .where(
+            and(
+              eq(inventoryAlerts.productId, item.productId),
+              eq(inventoryAlerts.warehouseId, item.warehouseId),
+              eq(inventoryAlerts.isResolved, false)
+            )
+          );
+
+        if (!existingAlert) {
+          await db.insert(inventoryAlerts).values({
+            productId: item.productId,
+            warehouseId: item.warehouseId,
+            alertType: 'low_stock',
+            currentQuantity: item.quantity,
+            thresholdQuantity: item.minStock,
+            message: `Низький рівень запасів для "${item.productName}" на складі "${item.warehouseName}". Поточна кількість: ${item.quantity}, мінімум: ${item.minStock}`,
+            isResolved: false,
+            createdAt: new Date()
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error checking and creating inventory alerts:', error);
+      throw error;
     }
   }
 }
