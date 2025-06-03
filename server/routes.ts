@@ -3494,6 +3494,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/serial-number-settings", async (req, res) => {
+    try {
+      console.log("PATCH serial-number-settings - Request body:", req.body);
+      const settingsData = insertSerialNumberSettingsSchema.parse(req.body);
+      console.log("PATCH serial-number-settings - Parsed data:", settingsData);
+      const settings = await storage.updateSerialNumberSettings(settingsData);
+      console.log("PATCH serial-number-settings - Updated settings:", settings);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error updating serial number settings:", error);
+      if (error instanceof z.ZodError) {
+        console.error("Validation errors:", error.errors);
+        res.status(400).json({ error: "Invalid settings data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update serial number settings" });
+      }
+    }
+  });
+
   app.patch("/api/serial-numbers/:id/mark-sold", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
