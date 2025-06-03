@@ -15,7 +15,7 @@ import {
   insertWarehouseTransferSchema, insertPositionSchema, insertDepartmentSchema,
   insertPackageTypeSchema, insertSolderingTypeSchema, insertComponentAlternativeSchema, insertComponentCategorySchema,
   insertShipmentSchema, insertManufacturingOrderSchema, insertManufacturingOrderMaterialSchema, insertManufacturingStepSchema,
-  insertCurrencySchema, insertSerialNumberSchema, insertExchangeRateHistorySchema,
+  insertCurrencySchema, insertSerialNumberSchema, insertSerialNumberSettingsSchema, insertExchangeRateHistorySchema,
   insertLocalUserSchema, insertRoleSchema, insertSystemModuleSchema, changePasswordSchema,
   insertEmailSettingsSchema
 } from "@shared/schema";
