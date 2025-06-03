@@ -421,14 +421,8 @@ export default function SerialNumberSettings() {
                             </Label>
                             <Input
                               id={`category-${category.id}-template`}
-                              value={category.serialNumberTemplate || ''}
+                              defaultValue={category.serialNumberTemplate || ''}
                               placeholder="{prefix}-{year}-{counter:4}"
-                              onChange={(e) => {
-                                updateCategoryMutation.mutate({
-                                  id: category.id,
-                                  data: { serialNumberTemplate: e.target.value }
-                                });
-                              }}
                             />
                           </div>
                           
@@ -438,14 +432,8 @@ export default function SerialNumberSettings() {
                             </Label>
                             <Input
                               id={`category-${category.id}-prefix`}
-                              value={category.serialNumberPrefix || ''}
+                              defaultValue={category.serialNumberPrefix || ''}
                               placeholder="CAT"
-                              onChange={(e) => {
-                                updateCategoryMutation.mutate({
-                                  id: category.id,
-                                  data: { serialNumberPrefix: e.target.value }
-                                });
-                              }}
                             />
                           </div>
                           
@@ -456,14 +444,8 @@ export default function SerialNumberSettings() {
                             <Input
                               id={`category-${category.id}-start`}
                               type="number"
-                              value={category.serialNumberStartNumber || 1}
+                              defaultValue={category.serialNumberStartNumber || 1}
                               min="1"
-                              onChange={(e) => {
-                                updateCategoryMutation.mutate({
-                                  id: category.id,
-                                  data: { serialNumberStartNumber: parseInt(e.target.value) || 1 }
-                                });
-                              }}
                             />
                           </div>
                         </div>
@@ -496,14 +478,39 @@ export default function SerialNumberSettings() {
                           type="button"
                           size="sm"
                           onClick={() => {
-                            // Показати повідомлення про збереження (оскільки зміни зберігаються автоматично)
-                            toast({
-                              title: "Налаштування збережено",
-                              description: `Налаштування серійних номерів для категорії "${category.name}" успішно оновлено`,
+                            // Зчитуємо значення з полів форми
+                            const templateInput = document.getElementById(`category-${category.id}-template`) as HTMLInputElement;
+                            const prefixInput = document.getElementById(`category-${category.id}-prefix`) as HTMLInputElement;
+                            const startInput = document.getElementById(`category-${category.id}-start`) as HTMLInputElement;
+                            
+                            const data: any = {};
+                            
+                            if (templateInput) {
+                              data.serialNumberTemplate = templateInput.value;
+                            }
+                            if (prefixInput) {
+                              data.serialNumberPrefix = prefixInput.value;
+                            }
+                            if (startInput) {
+                              data.serialNumberStartNumber = parseInt(startInput.value) || 1;
+                            }
+                            
+                            // Зберігаємо налаштування
+                            updateCategoryMutation.mutate({
+                              id: category.id,
+                              data
+                            }, {
+                              onSuccess: () => {
+                                toast({
+                                  title: "Налаштування збережено",
+                                  description: `Налаштування серійних номерів для категорії "${category.name}" успішно оновлено`,
+                                });
+                              }
                             });
                           }}
+                          disabled={updateCategoryMutation.isPending}
                         >
-                          Зберегти
+                          {updateCategoryMutation.isPending ? "Збереження..." : "Зберегти"}
                         </Button>
                       </div>
                     </div>
