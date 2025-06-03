@@ -486,6 +486,12 @@ export default function SerialNumberSettings() {
                               defaultValue={category.serialNumberTemplate || ''}
                               placeholder="{prefix}-{year}-{counter:4}"
                               className="h-8 text-sm"
+                              onBlur={(e) => {
+                                updateCategoryMutation.mutate({
+                                  id: category.id,
+                                  data: { serialNumberTemplate: e.target.value }
+                                });
+                              }}
                             />
                           </div>
                           
@@ -499,6 +505,12 @@ export default function SerialNumberSettings() {
                                 defaultValue={category.serialNumberPrefix || ''}
                                 placeholder="CAT"
                                 className="h-8 text-sm"
+                                onBlur={(e) => {
+                                  updateCategoryMutation.mutate({
+                                    id: category.id,
+                                    data: { serialNumberPrefix: e.target.value }
+                                  });
+                                }}
                               />
                             </div>
                             
@@ -518,68 +530,7 @@ export default function SerialNumberSettings() {
                         </div>
                       )}
 
-                      {/* Кнопки управління для категорії */}
-                      <div className="flex justify-end space-x-2 pt-4 border-t">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            // Скидання налаштувань категорії до значень за замовчуванням
-                            updateCategoryMutation.mutate({
-                              id: category.id,
-                              data: {
-                                useGlobalNumbering: true,
-                                hasSerialNumbers: false,
-                                serialNumberTemplate: "{year}{month:2}{day:2}-{counter:6}",
-                                serialNumberPrefix: "",
-                                serialNumberStartNumber: 1
-                              }
-                            });
-                          }}
-                          disabled={updateCategoryMutation.isPending}
-                        >
-                          Скинути
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => {
-                            // Зчитуємо значення з полів форми
-                            const templateInput = document.getElementById(`category-${category.id}-template`) as HTMLInputElement;
-                            const prefixInput = document.getElementById(`category-${category.id}-prefix`) as HTMLInputElement;
-                            const startInput = document.getElementById(`category-${category.id}-start`) as HTMLInputElement;
-                            
-                            const data: any = {};
-                            
-                            if (templateInput) {
-                              data.serialNumberTemplate = templateInput.value;
-                            }
-                            if (prefixInput) {
-                              data.serialNumberPrefix = prefixInput.value;
-                            }
-                            if (startInput) {
-                              data.serialNumberStartNumber = parseInt(startInput.value) || 1;
-                            }
-                            
-                            // Зберігаємо налаштування
-                            updateCategoryMutation.mutate({
-                              id: category.id,
-                              data
-                            }, {
-                              onSuccess: () => {
-                                toast({
-                                  title: "Налаштування збережено",
-                                  description: `Налаштування серійних номерів для категорії "${category.name}" успішно оновлено`,
-                                });
-                              }
-                            });
-                          }}
-                          disabled={updateCategoryMutation.isPending}
-                        >
-                          {updateCategoryMutation.isPending ? "Збереження..." : "Зберегти"}
-                        </Button>
-                      </div>
+
                     </div>
                   ))}
                 </div>
