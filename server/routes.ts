@@ -39,6 +39,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Analytics API
+  app.get("/api/analytics/sales", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { period = 'month' } = req.query;
+      const salesData = await storage.getSalesAnalytics(period as string);
+      res.json(salesData);
+    } catch (error) {
+      console.error("Error fetching sales analytics:", error);
+      res.status(500).json({ error: "Failed to fetch sales analytics" });
+    }
+  });
+
+  app.get("/api/analytics/expenses", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { period = 'month' } = req.query;
+      const expensesData = await storage.getExpensesAnalytics(period as string);
+      res.json(expensesData);
+    } catch (error) {
+      console.error("Error fetching expenses analytics:", error);
+      res.status(500).json({ error: "Failed to fetch expenses analytics" });
+    }
+  });
+
+  app.get("/api/analytics/profit", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { period = 'month' } = req.query;
+      const profitData = await storage.getProfitAnalytics(period as string);
+      res.json(profitData);
+    } catch (error) {
+      console.error("Error fetching profit analytics:", error);
+      res.status(500).json({ error: "Failed to fetch profit analytics" });
+    }
+  });
+
+  // Time tracking API
+  app.get("/api/time-entries", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const timeEntries = await storage.getTimeEntries();
+      res.json(timeEntries);
+    } catch (error) {
+      console.error("Error fetching time entries:", error);
+      res.status(500).json({ error: "Failed to fetch time entries" });
+    }
+  });
+
+  app.post("/api/time-entries", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const timeEntryData = req.body;
+      const timeEntry = await storage.createTimeEntry(timeEntryData);
+      res.status(201).json(timeEntry);
+    } catch (error) {
+      console.error("Error creating time entry:", error);
+      res.status(500).json({ error: "Failed to create time entry" });
+    }
+  });
+
+  app.patch("/api/time-entries/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = req.body;
+      const timeEntry = await storage.updateTimeEntry(id, updateData);
+      res.json(timeEntry);
+    } catch (error) {
+      console.error("Error updating time entry:", error);
+      res.status(500).json({ error: "Failed to update time entry" });
+    }
+  });
+
+  // Inventory alerts API
+  app.get("/api/inventory/alerts", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const alerts = await storage.getInventoryAlerts();
+      res.json(alerts);
+    } catch (error) {
+      console.error("Error fetching inventory alerts:", error);
+      res.status(500).json({ error: "Failed to fetch inventory alerts" });
+    }
+  });
+
+  app.post("/api/inventory/check-alerts", isSimpleAuthenticated, async (req, res) => {
+    try {
+      await storage.checkAndCreateInventoryAlerts();
+      res.json({ message: "Inventory alerts checked and updated" });
+    } catch (error) {
+      console.error("Error checking inventory alerts:", error);
+      res.status(500).json({ error: "Failed to check inventory alerts" });
+    }
+  });
+
   // Password reset functionality
   app.post("/api/auth/forgot-password", async (req, res) => {
     try {

@@ -367,6 +367,20 @@ export interface IStorage {
   // Email Settings
   getEmailSettings(): Promise<EmailSettings | null>;
   updateEmailSettings(settings: InsertEmailSettings): Promise<EmailSettings>;
+
+  // Analytics
+  getSalesAnalytics(period: string): Promise<any[]>;
+  getExpensesAnalytics(period: string): Promise<any[]>;
+  getProfitAnalytics(period: string): Promise<any[]>;
+
+  // Time tracking
+  getTimeEntries(): Promise<any[]>;
+  createTimeEntry(timeEntry: any): Promise<any>;
+  updateTimeEntry(id: number, timeEntry: any): Promise<any>;
+
+  // Inventory alerts
+  getInventoryAlerts(): Promise<any[]>;
+  checkAndCreateInventoryAlerts(): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
