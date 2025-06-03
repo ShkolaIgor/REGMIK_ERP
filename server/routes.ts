@@ -3158,10 +3158,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!order) {
         return res.status(404).json({ error: "Manufacturing order not found" });
       }
+      
+      // Автоматично генеруємо серійні номери при запуску виробництва
+      await storage.generateSerialNumbers(id);
+      
       res.json(order);
     } catch (error) {
       console.error("Failed to start manufacturing:", error);
       res.status(500).json({ error: "Failed to start manufacturing" });
+    }
+  });
+
+  // Генерація серійних номерів
+  app.post("/api/manufacturing-orders/:id/generate-serial-numbers", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const serialNumbers = await storage.generateSerialNumbers(id);
+      if (!serialNumbers) {
+        return res.status(404).json({ error: "Manufacturing order not found" });
+      }
+      res.json({ serialNumbers });
+    } catch (error) {
+      console.error("Failed to generate serial numbers:", error);
+      res.status(500).json({ error: "Failed to generate serial numbers" });
     }
   });
 

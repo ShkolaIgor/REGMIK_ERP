@@ -3419,6 +3419,104 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async generateSerialNumbers(manufacturingOrderId: number): Promise<string[] | null> {
+    try {
+      // Отримуємо замовлення на виробництво
+      const [order] = await db.select()
+        .from(manufacturingOrders)
+        .where(eq(manufacturingOrders.id, manufacturingOrderId));
+
+      if (!order) {
+        return null;
+      }
+
+      // Отримуємо товар та його категорію
+      const [product] = await db.select({
+        product: products,
+        category: categories
+      })
+      .from(products)
+      .leftJoin(categories, eq(products.categoryId, categories.id))
+      .where(eq(products.id, order.productId));
+
+      if (!product) {
+        return null;
+      }
+
+      // Отримуємо налаштування серійних номерів
+      const [settings] = await db.select()
+        .from(serialNumberSettings)
+        .limit(1);
+
+      const quantity = parseInt(order.plannedQuantity);
+      const serialNumbers: string[] = [];
+
+      // Генеруємо серійні номери
+      for (let i = 0; i < quantity; i++) {
+        let serialNumber = '';
+        
+        if (product.category?.useGlobalNumbering !== false && settings?.useCrossNumbering) {
+          // Використовуємо глобальну нумерацію
+          const template = settings.globalTemplate || "{year}{month:2}{day:2}-{counter:6}";
+          const prefix = settings.globalPrefix || "";
+          const startNumber = settings.globalStartNumber || 1;
+          const currentCounter = (settings.currentGlobalCounter || 0) + i + 1;
+          
+          serialNumber = this.formatSerialNumber(template, prefix, currentCounter);
+        } else if (product.category?.hasSerialNumbers) {
+          // Використовуємо налаштування категорії
+          const template = product.category.serialNumberTemplate || "{year}{month:2}{day:2}-{counter:6}";
+          const prefix = product.category.serialNumberPrefix || "";
+          const startNumber = product.category.serialNumberStartNumber || 1;
+          
+          serialNumber = this.formatSerialNumber(template, prefix, startNumber + i);
+        } else {
+          // Базовий формат
+          const currentYear = new Date().getFullYear();
+          const orderNumber = order.orderNumber.replace(/\D/g, '').slice(-4) || '0001';
+          serialNumber = `${currentYear}-${orderNumber}-${(i + 1).toString().padStart(4, '0')}`;
+        }
+        
+        serialNumbers.push(serialNumber);
+      }
+
+      // Оновлюємо замовлення з серійними номерами
+      await db.update(manufacturingOrders)
+        .set({ serialNumbers })
+        .where(eq(manufacturingOrders.id, manufacturingOrderId));
+
+      // Оновлюємо глобальний лічильник
+      if (settings?.useCrossNumbering) {
+        await db.update(serialNumberSettings)
+          .set({ currentGlobalCounter: (settings.currentGlobalCounter || 0) + quantity });
+      }
+
+      return serialNumbers;
+    } catch (error) {
+      console.error("Error generating serial numbers:", error);
+      throw error;
+    }
+  }
+
+  private formatSerialNumber(template: string, prefix: string, counter: number): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const day = now.getDate();
+    
+    let formatted = template
+      .replace('{year}', year.toString())
+      .replace('{month:2}', month.toString().padStart(2, '0'))
+      .replace('{month}', month.toString())
+      .replace('{day:2}', day.toString().padStart(2, '0'))
+      .replace('{day}', day.toString())
+      .replace('{counter:6}', counter.toString().padStart(6, '0'))
+      .replace('{counter:4}', counter.toString().padStart(4, '0'))
+      .replace('{counter}', counter.toString());
+
+    return prefix + formatted;
+  }
+
   // Currency management
   async getCurrencies(): Promise<any[]> {
     try {

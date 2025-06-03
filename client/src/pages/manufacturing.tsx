@@ -52,6 +52,7 @@ interface ManufacturingOrder {
   qualityRating: string;
   notes?: string;
   batchNumber?: string;
+  serialNumbers?: string[];
   createdAt: string;
   updatedAt: string;
   product?: any;
