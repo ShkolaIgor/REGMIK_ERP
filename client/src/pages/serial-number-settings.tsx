@@ -120,8 +120,20 @@ export default function SerialNumberSettings() {
                 <Switch
                   id="use-cross-numbering"
                   checked={localGlobalSettings?.useCrossNumbering || false}
-                  onCheckedChange={(checked) => {
+                  onCheckedChange={async (checked) => {
                     setLocalGlobalSettings({...localGlobalSettings, useCrossNumbering: checked});
+                    
+                    // If cross numbering is disabled, automatically disable global numbering for all categories
+                    if (!checked && categories) {
+                      for (const category of categories) {
+                        if (category.useGlobalNumbering) {
+                          await updateCategoryMutation.mutateAsync({
+                            id: category.id,
+                            data: { useGlobalNumbering: false }
+                          });
+                        }
+                      }
+                    }
                   }}
                   disabled={updateGlobalMutation.isPending}
                 />
