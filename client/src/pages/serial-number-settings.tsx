@@ -402,11 +402,11 @@ export default function SerialNumberSettings() {
                           </Label>
                           <Switch
                             id={`category-${category.id}-use-serial`}
-                            checked={category.useSerialNumbers === true}
+                            checked={category.hasSerialNumbers === true}
                             onCheckedChange={(checked) => {
                               updateCategoryMutation.mutate({
                                 id: category.id,
-                                data: { useSerialNumbers: checked }
+                                data: { hasSerialNumbers: checked }
                               });
                             }}
                           />
