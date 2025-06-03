@@ -17,7 +17,7 @@ export default function EmailSettings() {
   const queryClient = useQueryClient();
   const [isTestingConnection, setIsTestingConnection] = useState(false);
 
-  const { data: emailSettings, isLoading } = useQuery({
+  const { data: emailSettings, isLoading } = useQuery<any>({
     queryKey: ["/api/email-settings"],
     retry: false,
   });
@@ -40,14 +40,14 @@ export default function EmailSettings() {
   useEffect(() => {
     if (emailSettings) {
       form.reset({
-        smtpHost: emailSettings.smtpHost || "",
-        smtpPort: emailSettings.smtpPort || 587,
-        smtpSecure: emailSettings.smtpSecure || false,
-        smtpUser: emailSettings.smtpUser || "",
-        smtpPassword: emailSettings.smtpPassword || "",
-        fromEmail: emailSettings.fromEmail || "",
-        fromName: emailSettings.fromName || "REGMIK ERP",
-        isActive: emailSettings.isActive || false,
+        smtpHost: emailSettings?.smtpHost || "",
+        smtpPort: emailSettings?.smtpPort || 587,
+        smtpSecure: emailSettings?.smtpSecure || false,
+        smtpUser: emailSettings?.smtpUser || "",
+        smtpPassword: emailSettings?.smtpPassword || "",
+        fromEmail: emailSettings?.fromEmail || "",
+        fromName: emailSettings?.fromName || "REGMIK ERP",
+        isActive: emailSettings?.isActive || false,
       });
     }
   }, [emailSettings, form]);
@@ -122,18 +122,18 @@ export default function EmailSettings() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5" />
+        <CardHeader className="pb-4 lg:pb-6">
+          <CardTitle className="flex items-center gap-2 text-lg lg:text-xl">
+            <Mail className="h-4 w-4 lg:h-5 lg:w-5" />
             SMTP Налаштування
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm lg:text-base">
             Налаштуйте SMTP сервер для відправки email повідомлень
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardContent className="pt-0">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 lg:space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
               <div className="space-y-2">
                 <Label htmlFor="smtpHost">SMTP Хост</Label>
                 <Input
@@ -224,7 +224,7 @@ export default function EmailSettings() {
             <div className="flex items-center space-x-2">
               <Switch
                 id="smtpSecure"
-                checked={form.watch("smtpSecure")}
+                checked={Boolean(form.watch("smtpSecure"))}
                 onCheckedChange={(checked) => form.setValue("smtpSecure", checked)}
               />
               <Label htmlFor="smtpSecure">Використовувати SSL/TLS</Label>
@@ -233,18 +233,19 @@ export default function EmailSettings() {
             <div className="flex items-center space-x-2">
               <Switch
                 id="isActive"
-                checked={form.watch("isActive")}
+                checked={Boolean(form.watch("isActive"))}
                 onCheckedChange={(checked) => form.setValue("isActive", checked)}
               />
               <Label htmlFor="isActive">Активувати email розсилку</Label>
             </div>
 
-            <div className="flex gap-2 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleTestConnection}
                 disabled={isTestingConnection || testConnectionMutation.isPending}
+                className="w-full sm:w-auto"
               >
                 <TestTube className="h-4 w-4 mr-2" />
                 {isTestingConnection ? "Тестування..." : "Тестувати підключення"}
@@ -253,6 +254,7 @@ export default function EmailSettings() {
               <Button
                 type="submit"
                 disabled={saveSettingsMutation.isPending}
+                className="w-full sm:w-auto"
               >
                 {saveSettingsMutation.isPending ? "Збереження..." : "Зберегти налаштування"}
               </Button>
@@ -262,27 +264,29 @@ export default function EmailSettings() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Інструкції для налаштування</CardTitle>
+        <CardHeader className="pb-4 lg:pb-6">
+          <CardTitle className="text-lg lg:text-xl">Інструкції для налаштування</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-semibold">Gmail SMTP:</h4>
-            <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-              <li>Хост: smtp.gmail.com</li>
-              <li>Порт: 587 (TLS) або 465 (SSL)</li>
-              <li>Використовуйте App Password замість звичайного паролю</li>
-              <li>Увімкніть двофакторну автентифікацію в Gmail</li>
-            </ul>
-          </div>
+        <CardContent className="pt-0 space-y-4 lg:space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+            <div>
+              <h4 className="font-semibold text-base lg:text-lg mb-2">Gmail SMTP:</h4>
+              <ul className="list-disc list-inside text-sm lg:text-base text-gray-600 space-y-1">
+                <li>Хост: smtp.gmail.com</li>
+                <li>Порт: 587 (TLS) або 465 (SSL)</li>
+                <li>Використовуйте App Password замість звичайного паролю</li>
+                <li>Увімкніть двофакторну автентифікацію в Gmail</li>
+              </ul>
+            </div>
 
-          <div>
-            <h4 className="font-semibold">Outlook/Hotmail SMTP:</h4>
-            <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-              <li>Хост: smtp-mail.outlook.com</li>
-              <li>Порт: 587 (TLS)</li>
-              <li>Використовуйте ваш email та пароль Outlook</li>
-            </ul>
+            <div>
+              <h4 className="font-semibold text-base lg:text-lg mb-2">Outlook/Hotmail SMTP:</h4>
+              <ul className="list-disc list-inside text-sm lg:text-base text-gray-600 space-y-1">
+                <li>Хост: smtp-mail.outlook.com</li>
+                <li>Порт: 587 (TLS)</li>
+                <li>Використовуйте ваш email та пароль Outlook</li>
+              </ul>
+            </div>
           </div>
         </CardContent>
       </Card>
