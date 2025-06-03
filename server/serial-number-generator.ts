@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { categories, serialNumbers } from "@shared/schema";
+import { serialNumbers, products } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 
 interface SerialGenerationOptions {
@@ -8,6 +8,14 @@ interface SerialGenerationOptions {
   template?: string;
   useGlobalCounter?: boolean;
 }
+
+// Налаштування шаблонів для різних категорій (можна винести в конфіг)
+const CATEGORY_TEMPLATES = {
+  1: "ELE-{YYYY}-{####}", // Електроніка
+  2: "MEC-{YYYY}-{####}", // Механіка
+  3: "CHE-{YYYY}-{####}", // Хімія
+  // Додавайте інші категорії за потребою
+};
 
 export class SerialNumberGenerator {
   
@@ -19,22 +27,15 @@ export class SerialNumberGenerator {
 
     // Якщо вказано шаблон, використовуємо його
     if (template) {
-      return await this.generateFromTemplate(template, categoryId, useGlobalCounter);
+      return await this.generateFromTemplate(template, categoryId || 0);
     }
 
-    // Якщо є категорія, перевіряємо її налаштування
-    if (categoryId) {
-      const category = await db.query.categories.findFirst({
-        where: eq(categories.id, categoryId)
-      });
-
-      if (category?.autoGenerateSerials && category.serialTemplate) {
-        return await this.generateFromTemplate(
-          category.serialTemplate, 
-          categoryId, 
-          category.useGlobalCounter || false
-        );
-      }
+    // Якщо є категорія, перевіряємо чи є для неї шаблон
+    if (categoryId && CATEGORY_TEMPLATES[categoryId as keyof typeof CATEGORY_TEMPLATES]) {
+      return await this.generateFromTemplate(
+        CATEGORY_TEMPLATES[categoryId as keyof typeof CATEGORY_TEMPLATES], 
+        categoryId
+      );
     }
 
     // Базова генерація: простий послідовний номер
@@ -44,11 +45,7 @@ export class SerialNumberGenerator {
   /**
    * Генерує серійний номер за шаблоном
    */
-  private async generateFromTemplate(
-    template: string, 
-    categoryId?: number, 
-    useGlobalCounter: boolean = false
-  ): Promise<string> {
+  private async generateFromTemplate(template: string, categoryId: number): Promise<string> {
     const now = new Date();
     let result = template;
 
@@ -67,9 +64,7 @@ export class SerialNumberGenerator {
     if (matches) {
       for (const match of matches) {
         const digits = match.length - 2; // Віднімаємо { та }
-        const counter = useGlobalCounter 
-          ? await this.getGlobalCounter()
-          : await this.getCategoryCounter(categoryId);
+        const counter = await this.getNextCounter(categoryId);
         
         const paddedCounter = counter.toString().padStart(digits, '0');
         result = result.replace(match, paddedCounter);
@@ -80,71 +75,20 @@ export class SerialNumberGenerator {
   }
 
   /**
-   * Отримує глобальний лічильник
+   * Отримує наступний лічильник на основі існуючих серійних номерів
    */
-  private async getGlobalCounter(): Promise<number> {
+  private async getNextCounter(categoryId?: number): Promise<number> {
     try {
-      const [counter] = await db.select()
-        .from(globalSerialCounters)
-        .where(eq(globalSerialCounters.counterType, 'global'))
+      // Підраховуємо кількість існуючих серійних номерів
+      const existingSerials = await db.select()
+        .from(serialNumbers)
+        .orderBy(desc(serialNumbers.id))
         .limit(1);
 
-      if (!counter) {
-        // Створюємо новий глобальний лічильник
-        const [newCounter] = await db.insert(globalSerialCounters)
-          .values({
-            counterType: 'global',
-            currentValue: 1,
-          })
-          .returning();
-        return newCounter.currentValue;
-      }
-
-      // Інкрементуємо лічильник
-      const newValue = counter.currentValue + 1;
-      await db.update(globalSerialCounters)
-        .set({ 
-          currentValue: newValue,
-          updatedAt: new Date()
-        })
-        .where(eq(globalSerialCounters.id, counter.id));
-
-      return newValue;
+      return existingSerials.length + 1;
     } catch (error) {
-      console.error('Error getting global counter:', error);
-      // Fallback - використовуємо timestamp
-      return Date.now() % 100000;
-    }
-  }
-
-  /**
-   * Отримує лічильник категорії
-   */
-  private async getCategoryCounter(categoryId?: number): Promise<number> {
-    if (!categoryId) {
-      return await this.getGlobalCounter();
-    }
-
-    try {
-      const [category] = await db.select()
-        .from(categories)
-        .where(eq(categories.id, categoryId))
-        .limit(1);
-
-      if (!category) {
-        return await this.getGlobalCounter();
-      }
-
-      // Інкрементуємо лічильник категорії
-      const newValue = (category.serialCounter || 0) + 1;
-      await db.update(categories)
-        .set({ serialCounter: newValue })
-        .where(eq(categories.id, categoryId));
-
-      return newValue;
-    } catch (error) {
-      console.error('Error getting category counter:', error);
-      return await this.getGlobalCounter();
+      console.error('Error getting next counter:', error);
+      return Date.now() % 10000; // Fallback
     }
   }
 
