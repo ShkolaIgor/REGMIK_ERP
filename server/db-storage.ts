@@ -4348,6 +4348,150 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Product profitability analysis methods
+  async calculateProductProfitability(period: string = 'month'): Promise<any[]> {
+    try {
+      const now = new Date();
+      let startDate: Date;
+      let endDate: Date = now;
+      
+      switch (period) {
+        case 'week':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+          break;
+        case 'month':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case 'quarter':
+          startDate = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+          break;
+        case 'year':
+          startDate = new Date(now.getFullYear(), 0, 1);
+          break;
+        default:
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      }
+
+      // Отримуємо дані про продажі по продуктах з деталізацією
+      const profitabilityData = await db
+        .select({
+          productId: products.id,
+          productName: products.name,
+          productSku: products.sku,
+          costPrice: products.costPrice,
+          retailPrice: products.retailPrice,
+          totalRevenue: sql<number>`COALESCE(SUM(${saleItems.totalPrice}), 0)`.as('totalRevenue'),
+          unitsSold: sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`.as('unitsSold'),
+          averageSellingPrice: sql<number>`CASE WHEN SUM(${saleItems.quantity}) > 0 THEN SUM(${saleItems.totalPrice}) / SUM(${saleItems.quantity}) ELSE 0 END`.as('averageSellingPrice'),
+        })
+        .from(products)
+        .leftJoin(saleItems, eq(saleItems.productId, products.id))
+        .leftJoin(sales, and(
+          eq(sales.id, saleItems.saleId),
+          gte(sales.saleDate, startDate),
+          lte(sales.saleDate, endDate)
+        ))
+        .groupBy(products.id, products.name, products.sku, products.costPrice, products.retailPrice)
+        .having(sql`SUM(${saleItems.quantity}) > 0`);
+
+      // Обчислюємо рентабельність для кожного продукту
+      const results = profitabilityData.map(item => {
+        const revenue = parseFloat(item.totalRevenue?.toString() || '0');
+        const costPrice = parseFloat(item.costPrice || '0');
+        const unitsSold = parseInt(item.unitsSold?.toString() || '0');
+        const totalCost = costPrice * unitsSold;
+        const profit = revenue - totalCost;
+        const profitMargin = revenue > 0 ? (profit / revenue) * 100 : 0;
+
+        return {
+          productId: item.productId,
+          productName: item.productName,
+          productSku: item.productSku,
+          unitsSold,
+          totalRevenue: revenue,
+          totalCost,
+          totalProfit: profit,
+          profitMargin: Math.round(profitMargin * 100) / 100,
+          averageSellingPrice: parseFloat(item.averageSellingPrice?.toString() || '0'),
+          averageCostPrice: costPrice,
+          period: period,
+          periodStart: startDate,
+          periodEnd: endDate
+        };
+      });
+
+      // Сортуємо за прибутковістю (найприбутковіші першими)
+      return results.sort((a, b) => b.totalProfit - a.totalProfit);
+    } catch (error) {
+      console.error('Error calculating product profitability:', error);
+      return [];
+    }
+  }
+
+  async getTopProfitableProducts(limit: number = 10, period: string = 'month'): Promise<any[]> {
+    try {
+      const profitabilityData = await this.calculateProductProfitability(period);
+      return profitabilityData.slice(0, limit);
+    } catch (error) {
+      console.error('Error getting top profitable products:', error);
+      return [];
+    }
+  }
+
+  async getProductProfitabilityTrends(productId: number, months: number = 6): Promise<any[]> {
+    try {
+      const trends = [];
+      const currentDate = new Date();
+      
+      for (let i = months - 1; i >= 0; i--) {
+        const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+        const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i + 1, 0);
+        
+        const monthlyData = await db
+          .select({
+            totalRevenue: sql<number>`COALESCE(SUM(${saleItems.totalPrice}), 0)`.as('totalRevenue'),
+            unitsSold: sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`.as('unitsSold'),
+            productName: products.name,
+            costPrice: products.costPrice
+          })
+          .from(products)
+          .leftJoin(saleItems, eq(saleItems.productId, products.id))
+          .leftJoin(sales, and(
+            eq(sales.id, saleItems.saleId),
+            gte(sales.saleDate, startDate),
+            lte(sales.saleDate, endDate)
+          ))
+          .where(eq(products.id, productId))
+          .groupBy(products.id, products.name, products.costPrice);
+
+        if (monthlyData.length > 0) {
+          const data = monthlyData[0];
+          const revenue = parseFloat(data.totalRevenue?.toString() || '0');
+          const costPrice = parseFloat(data.costPrice || '0');
+          const unitsSold = parseInt(data.unitsSold?.toString() || '0');
+          const totalCost = costPrice * unitsSold;
+          const profit = revenue - totalCost;
+          const profitMargin = revenue > 0 ? (profit / revenue) * 100 : 0;
+
+          trends.push({
+            month: startDate.toISOString().substring(0, 7),
+            monthName: startDate.toLocaleDateString('uk-UA', { month: 'long', year: 'numeric' }),
+            revenue,
+            cost: totalCost,
+            profit,
+            profitMargin: Math.round(profitMargin * 100) / 100,
+            unitsSold
+          });
+        }
+      }
+      
+      return trends;
+    } catch (error) {
+      console.error('Error getting product profitability trends:', error);
+      return [];
+    }
+  }
+
   // Inventory alerts methods
   async getInventoryAlerts(): Promise<any[]> {
     try {

@@ -73,6 +73,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Product profitability analysis
+  app.get("/api/analytics/product-profitability", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { period = 'month' } = req.query;
+      const profitabilityData = await storage.calculateProductProfitability(period as string);
+      res.json(profitabilityData);
+    } catch (error) {
+      console.error("Error fetching product profitability:", error);
+      res.status(500).json({ error: "Failed to fetch product profitability" });
+    }
+  });
+
+  app.get("/api/analytics/top-profitable-products", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { limit = '10', period = 'month' } = req.query;
+      const topProducts = await storage.getTopProfitableProducts(parseInt(limit as string), period as string);
+      res.json(topProducts);
+    } catch (error) {
+      console.error("Error fetching top profitable products:", error);
+      res.status(500).json({ error: "Failed to fetch top profitable products" });
+    }
+  });
+
+  app.get("/api/analytics/product-trends/:productId", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { productId } = req.params;
+      const { months = '6' } = req.query;
+      const trends = await storage.getProductProfitabilityTrends(parseInt(productId), parseInt(months as string));
+      res.json(trends);
+    } catch (error) {
+      console.error("Error fetching product trends:", error);
+      res.status(500).json({ error: "Failed to fetch product trends" });
+    }
+  });
+
   // Time tracking API
   app.get("/api/time-entries", isSimpleAuthenticated, async (req, res) => {
     try {

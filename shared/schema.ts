@@ -1036,6 +1036,26 @@ export const saleItems = pgTable("sale_items", {
 export type SaleItem = typeof saleItems.$inferSelect;
 export type InsertSaleItem = typeof saleItems.$inferInsert;
 
+// Product profitability analysis
+export const productProfitability = pgTable("product_profitability", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").references(() => products.id, { onDelete: "cascade" }).notNull(),
+  productName: varchar("product_name", { length: 255 }).notNull(),
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  totalRevenue: decimal("total_revenue", { precision: 15, scale: 2 }).default("0"),
+  totalCost: decimal("total_cost", { precision: 15, scale: 2 }).default("0"),
+  totalProfit: decimal("total_profit", { precision: 15, scale: 2 }).default("0"),
+  profitMargin: decimal("profit_margin", { precision: 5, scale: 2 }).default("0"), // percentage
+  unitsSold: integer("units_sold").default(0),
+  averageSellingPrice: decimal("average_selling_price", { precision: 10, scale: 2 }).default("0"),
+  averageCostPrice: decimal("average_cost_price", { precision: 10, scale: 2 }).default("0"),
+  calculatedAt: timestamp("calculated_at").defaultNow(),
+});
+
+export type ProductProfitability = typeof productProfitability.$inferSelect;
+export type InsertProductProfitability = typeof productProfitability.$inferInsert;
+
 // Expenses
 export const expenses = pgTable("expenses", {
   id: serial("id").primaryKey(),
