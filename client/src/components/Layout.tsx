@@ -27,7 +27,9 @@ import {
   Ruler,
   DollarSign,
   QrCode,
-  Mail
+  Mail,
+  Menu,
+  X
 } from "lucide-react";
 
 interface LayoutProps {
@@ -109,11 +111,38 @@ const navigationItems = [
 
 export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <div className="flex h-screen bg-gray-50">
+      {/* Mobile menu button */}
+      <button
+        className="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-gray-200 lg:hidden"
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+      >
+        {isMobileMenuOpen ? (
+          <X className="w-6 h-6 text-gray-600" />
+        ) : (
+          <Menu className="w-6 h-6 text-gray-600" />
+        )}
+      </button>
+
+      {/* Mobile overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-72 bg-white shadow-lg border-r border-gray-200 flex flex-col">
+      <aside className={cn(
+        "w-72 bg-white shadow-lg border-r border-gray-200 flex flex-col transition-transform duration-300 ease-in-out",
+        "lg:translate-x-0 lg:static lg:z-auto",
+        isMobileMenuOpen 
+          ? "fixed inset-y-0 left-0 z-50 translate-x-0" 
+          : "fixed inset-y-0 left-0 z-50 -translate-x-full lg:translate-x-0"
+      )}>
         {/* Header */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
@@ -141,17 +170,18 @@ export function Layout({ children }: LayoutProps) {
                   
                   return (
                     <Link key={item.href} href={item.href}>
-                      <a
+                      <div
                         className={cn(
-                          "nav-item flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium",
+                          "nav-item flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors",
                           isActive
                             ? "bg-primary text-white"
                             : "text-gray-700 hover:bg-gray-100"
                         )}
+                        onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        <Icon className="w-5 h-5" />
-                        <span>{item.name}</span>
-                      </a>
+                        <Icon className="w-5 h-5 flex-shrink-0" />
+                        <span className="truncate">{item.name}</span>
+                      </div>
                     </Link>
                   );
                 })}
@@ -170,8 +200,10 @@ export function Layout({ children }: LayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {children}
+      <main className="flex-1 flex flex-col overflow-hidden lg:ml-0">
+        <div className="flex-1 overflow-auto p-4 lg:p-6 pt-16 lg:pt-6">
+          {children}
+        </div>
       </main>
     </div>
   );
