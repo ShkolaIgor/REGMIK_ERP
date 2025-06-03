@@ -1,12 +1,6 @@
 import nodemailer from 'nodemailer';
 import { randomBytes } from 'crypto';
-
-// Конфігурація для тестування - не відправляє реальні листи
-const transporter = nodemailer.createTransport({
-  streamTransport: true,
-  newline: 'unix',
-  buffer: true
-});
+import { storage } from './storage';
 
 export interface EmailOptions {
   to: string;
@@ -17,15 +11,34 @@ export interface EmailOptions {
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
+    // Отримуємо налаштування email з бази даних
+    const emailSettings = await storage.getEmailSettings();
+    
+    if (!emailSettings || !emailSettings.isActive) {
+      console.log('Email service not configured or inactive');
+      return false;
+    }
+
+    // Створюємо транспорт з реальними налаштуваннями
+    const transporter = nodemailer.createTransport({
+      host: emailSettings.smtpHost,
+      port: emailSettings.smtpPort,
+      secure: emailSettings.smtpSecure,
+      auth: {
+        user: emailSettings.smtpUser,
+        pass: emailSettings.smtpPassword,
+      },
+    });
+
     const info = await transporter.sendMail({
-      from: '"REGMIK ERP" <noreply@regmik.ua>',
+      from: `"${emailSettings.fromName}" <${emailSettings.fromEmail}>`,
       to: options.to,
       subject: options.subject,
       html: options.html,
       text: options.text,
     });
 
-    console.log('Email sent:', info.messageId);
+    console.log('Email sent successfully:', info.messageId);
     return true;
   } catch (error) {
     console.error('Email send error:', error);
