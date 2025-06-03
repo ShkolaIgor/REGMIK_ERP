@@ -368,7 +368,7 @@ export default function SerialNumberSettings() {
                   <Loader2 className="h-6 w-6 animate-spin" />
                   <span className="ml-2">Завантаження категорій...</span>
                 </div>
-              ) : categories && categories.length > 0 ? (
+              ) : categories && Array.isArray(categories) && categories.length > 0 ? (
                 <div className="space-y-6">
                   {categories.map((category: any) => (
                     <div key={category.id} className="p-4 border rounded-lg space-y-4">
@@ -386,7 +386,10 @@ export default function SerialNumberSettings() {
                             id={`category-${category.id}-use-global`}
                             checked={category.useGlobalNumbering !== false}
                             onCheckedChange={(checked) => {
-                              // Логіка оновлення категорії
+                              updateCategoryMutation.mutate({
+                                id: category.id,
+                                data: { useGlobalNumbering: checked }
+                              });
                             }}
                           />
                         </div>
@@ -399,7 +402,10 @@ export default function SerialNumberSettings() {
                             id={`category-${category.id}-use-serial`}
                             checked={category.useSerialNumbers === true}
                             onCheckedChange={(checked) => {
-                              // Логіка оновлення категорії
+                              updateCategoryMutation.mutate({
+                                id: category.id,
+                                data: { useSerialNumbers: checked }
+                              });
                             }}
                           />
                         </div>
@@ -416,7 +422,10 @@ export default function SerialNumberSettings() {
                               value={category.serialNumberTemplate || ''}
                               placeholder="{prefix}-{year}-{counter:4}"
                               onChange={(e) => {
-                                // Логіка оновлення шаблону
+                                updateCategoryMutation.mutate({
+                                  id: category.id,
+                                  data: { serialNumberTemplate: e.target.value }
+                                });
                               }}
                             />
                           </div>
@@ -430,7 +439,10 @@ export default function SerialNumberSettings() {
                               value={category.serialNumberPrefix || ''}
                               placeholder="CAT"
                               onChange={(e) => {
-                                // Логіка оновлення префіксу
+                                updateCategoryMutation.mutate({
+                                  id: category.id,
+                                  data: { serialNumberPrefix: e.target.value }
+                                });
                               }}
                             />
                           </div>
@@ -445,7 +457,10 @@ export default function SerialNumberSettings() {
                               value={category.serialNumberStartNumber || 1}
                               min="1"
                               onChange={(e) => {
-                                // Логіка оновлення початкового номера
+                                updateCategoryMutation.mutate({
+                                  id: category.id,
+                                  data: { serialNumberStartNumber: parseInt(e.target.value) || 1 }
+                                });
                               }}
                             />
                           </div>
