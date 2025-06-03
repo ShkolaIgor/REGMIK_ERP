@@ -257,6 +257,22 @@ export default function SerialNumberSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="flex justify-end mb-4">
+            <Button 
+              size="sm" 
+              disabled={updateCategoryMutation.isPending}
+              onClick={() => {
+                toast({
+                  title: "Успіх",
+                  description: "Налаштування категорій збережено",
+                });
+              }}
+            >
+              {updateCategoryMutation.isPending && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+              Зберегти налаштування категорій
+            </Button>
+          </div>
+          
           {categoriesLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin" />
@@ -386,29 +402,7 @@ export default function SerialNumberSettings() {
         </CardContent>
       </Card>
 
-      {/* Загальна кнопка збереження */}
-      {categories && Array.isArray(categories) && categories.length > 0 && (
-        <Card className="mt-6">
-          <CardContent className="p-6">
-            <div className="flex justify-center">
-              <Button 
-                size="lg" 
-                className="px-8"
-                disabled={updateCategoryMutation.isPending}
-                onClick={() => {
-                  toast({
-                    title: "Успіх",
-                    description: "Всі налаштування категорій збережено",
-                  });
-                }}
-              >
-                {updateCategoryMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Зберегти всі налаштування
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
     </div>
   );
 }
