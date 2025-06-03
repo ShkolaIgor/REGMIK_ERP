@@ -92,24 +92,24 @@ export default function SerialNumberSettings() {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Enable Serial Numbers */}
+              {/* Enable Cross Numbering */}
               <div className="flex items-center justify-between">
-                <Label htmlFor="enable-serial-numbers" className="text-base">
-                  Увімкнути серійні номери
+                <Label htmlFor="use-cross-numbering" className="text-base">
+                  Використовувати сквозну нумерацію
                 </Label>
                 <Switch
-                  id="enable-serial-numbers"
-                  checked={globalSettings?.enableSerialNumbers || false}
+                  id="use-cross-numbering"
+                  checked={globalSettings?.useCrossNumbering || false}
                   onCheckedChange={(checked) => {
                     updateGlobalMutation.mutate({
-                      enableSerialNumbers: checked
+                      useCrossNumbering: checked
                     });
                   }}
                   disabled={updateGlobalMutation.isPending}
                 />
               </div>
 
-              {globalSettings?.enableSerialNumbers && (
+              {globalSettings?.useCrossNumbering && (
                 <>
                   {/* Global Template */}
                   <div className="space-y-2">
@@ -167,10 +167,10 @@ export default function SerialNumberSettings() {
                     <Input
                       id="current-counter"
                       type="number"
-                      defaultValue={globalSettings?.currentCounter || 1}
+                      defaultValue={globalSettings?.currentGlobalCounter || 1}
                       onBlur={(e) => {
                         updateGlobalMutation.mutate({
-                          currentCounter: parseInt(e.target.value) || 1
+                          currentGlobalCounter: parseInt(e.target.value) || 1
                         });
                       }}
                     />
@@ -179,21 +179,27 @@ export default function SerialNumberSettings() {
                     </p>
                   </div>
 
-                  {/* Auto-increment */}
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="auto-increment" className="text-base">
-                      Автоматичне збільшення лічильника
-                    </Label>
-                    <Switch
-                      id="auto-increment"
-                      checked={globalSettings?.autoIncrement !== false}
-                      onCheckedChange={(checked) => {
+                  {/* Reset Counter Period */}
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-counter-period">Період скидання лічильника</Label>
+                    <Select
+                      value={globalSettings?.resetCounterPeriod || 'never'}
+                      onValueChange={(value) => {
                         updateGlobalMutation.mutate({
-                          autoIncrement: checked
+                          resetCounterPeriod: value
                         });
                       }}
-                      disabled={updateGlobalMutation.isPending}
-                    />
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Виберіть період" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="never">Ніколи</SelectItem>
+                        <SelectItem value="yearly">Щорічно</SelectItem>
+                        <SelectItem value="monthly">Щомісячно</SelectItem>
+                        <SelectItem value="daily">Щоденно</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </>
               )}
