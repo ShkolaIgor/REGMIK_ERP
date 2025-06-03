@@ -122,10 +122,11 @@ export default function SerialNumberSettings() {
                     <Label htmlFor="global-template">Глобальний шаблон серійного номера</Label>
                     <Input
                       id="global-template"
-                      defaultValue={globalSettings?.globalTemplate || ''}
+                      value={localGlobalSettings?.globalTemplate || ''}
                       placeholder="{prefix}-{year}-{counter:6}"
-                      onBlur={(e) => {
-                        updateGlobalMutation.mutate({
+                      onChange={(e) => {
+                        setLocalGlobalSettings({
+                          ...localGlobalSettings,
                           globalTemplate: e.target.value
                         });
                       }}
@@ -141,57 +142,58 @@ export default function SerialNumberSettings() {
                       <Label htmlFor="global-prefix">Глобальний префікс</Label>
                       <Input
                         id="global-prefix"
-                        defaultValue={globalSettings?.globalPrefix || ''}
+                        value={localGlobalSettings?.globalPrefix || ''}
                         placeholder="SN"
-                        onBlur={(e) => {
-                          updateGlobalMutation.mutate({
+                        onChange={(e) => {
+                          setLocalGlobalSettings({
+                            ...localGlobalSettings,
                             globalPrefix: e.target.value
                           });
                         }}
                       />
                     </div>
                     
+                  </div>
+
+                  {/* Counter Display and Next Number */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="global-start-number">Глобальний стартовий номер</Label>
+                      <Label htmlFor="current-counter">Поточний лічильник</Label>
                       <Input
-                        id="global-start-number"
+                        id="current-counter"
                         type="number"
-                        defaultValue={globalSettings?.globalStartNumber || 1}
-                        placeholder="1"
-                        onBlur={(e) => {
-                          updateGlobalMutation.mutate({
-                            globalStartNumber: parseInt(e.target.value) || 1
+                        value={localGlobalSettings?.currentGlobalCounter || 0}
+                        disabled
+                        className="bg-gray-50 dark:bg-gray-800"
+                      />
+                      <p className="text-xs text-gray-500">Останній використаний номер</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="next-serial">Наступний серійний номер</Label>
+                      <Input
+                        id="next-serial"
+                        type="number"
+                        value={localGlobalSettings?.nextSerialNumber || ((localGlobalSettings?.currentGlobalCounter || 0) + 1)}
+                        onChange={(e) => {
+                          setLocalGlobalSettings({
+                            ...localGlobalSettings, 
+                            nextSerialNumber: parseInt(e.target.value) || ((localGlobalSettings?.currentGlobalCounter || 0) + 1)
                           });
                         }}
                       />
+                      <p className="text-xs text-gray-500">Можна змінити наступний номер</p>
                     </div>
-                  </div>
-
-                  {/* Current Counter */}
-                  <div className="space-y-2">
-                    <Label htmlFor="current-counter">Поточний лічильник</Label>
-                    <Input
-                      id="current-counter"
-                      type="number"
-                      defaultValue={globalSettings?.currentGlobalCounter || 1}
-                      onBlur={(e) => {
-                        updateGlobalMutation.mutate({
-                          currentGlobalCounter: parseInt(e.target.value) || 1
-                        });
-                      }}
-                    />
-                    <p className="text-sm text-gray-500">
-                      Наступний серійний номер буде згенеровано з цього значення
-                    </p>
                   </div>
 
                   {/* Reset Counter Period */}
                   <div className="space-y-2">
                     <Label htmlFor="reset-counter-period">Період скидання лічильника</Label>
                     <Select
-                      value={globalSettings?.resetCounterPeriod || 'never'}
+                      value={localGlobalSettings?.resetCounterPeriod || 'never'}
                       onValueChange={(value) => {
-                        updateGlobalMutation.mutate({
+                        setLocalGlobalSettings({
+                          ...localGlobalSettings,
                           resetCounterPeriod: value
                         });
                       }}
