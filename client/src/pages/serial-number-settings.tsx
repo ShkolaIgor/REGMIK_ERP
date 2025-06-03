@@ -56,6 +56,7 @@ const periodLabels = {
 export default function SerialNumberSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [localCategories, setLocalCategories] = useState<any[]>([]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -78,6 +79,13 @@ export default function SerialNumberSettings() {
   const { data: settings, isLoading } = useQuery({
     queryKey: ["/api/serial-number-settings"],
   });
+
+  // Update local categories when data loads
+  useEffect(() => {
+    if (categories) {
+      setLocalCategories(categories);
+    }
+  }, [categories]);
 
   // Update form when settings are loaded
   useEffect(() => {
@@ -370,9 +378,9 @@ export default function SerialNumberSettings() {
                   <Loader2 className="h-6 w-6 animate-spin" />
                   <span className="ml-2">Завантаження категорій...</span>
                 </div>
-              ) : categories && Array.isArray(categories) && categories.length > 0 ? (
+              ) : localCategories && Array.isArray(localCategories) && localCategories.length > 0 ? (
                 <div className="space-y-6">
-                  {categories.map((category: any) => (
+                  {localCategories.map((category: any) => (
                     <div key={category.id} className="p-4 border rounded-lg space-y-4">
                       <h4 className="font-medium text-lg">{category.name}</h4>
                       {category.description && (
@@ -388,12 +396,32 @@ export default function SerialNumberSettings() {
                             id={`category-${category.id}-use-global`}
                             checked={category.useGlobalNumbering !== false}
                             onCheckedChange={(checked) => {
+                              // Оновлюємо локальний стан негайно
+                              setLocalCategories(prev => 
+                                prev.map(cat => 
+                                  cat.id === category.id 
+                                    ? { ...cat, useGlobalNumbering: checked }
+                                    : cat
+                                )
+                              );
+                              
+                              // Відправляємо запит на сервер
                               updateCategoryMutation.mutate({
                                 id: category.id,
                                 data: { useGlobalNumbering: checked }
                               }, {
                                 onSuccess: () => {
                                   queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+                                },
+                                onError: () => {
+                                  // Відкатуємо зміни при помилці
+                                  setLocalCategories(prev => 
+                                    prev.map(cat => 
+                                      cat.id === category.id 
+                                        ? { ...cat, useGlobalNumbering: !checked }
+                                        : cat
+                                    )
+                                  );
                                 }
                               });
                             }}
@@ -409,12 +437,32 @@ export default function SerialNumberSettings() {
                             id={`category-${category.id}-use-serial`}
                             checked={category.hasSerialNumbers === true}
                             onCheckedChange={(checked) => {
+                              // Оновлюємо локальний стан негайно
+                              setLocalCategories(prev => 
+                                prev.map(cat => 
+                                  cat.id === category.id 
+                                    ? { ...cat, hasSerialNumbers: checked }
+                                    : cat
+                                )
+                              );
+                              
+                              // Відправляємо запит на сервер
                               updateCategoryMutation.mutate({
                                 id: category.id,
                                 data: { hasSerialNumbers: checked }
                               }, {
                                 onSuccess: () => {
                                   queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+                                },
+                                onError: () => {
+                                  // Відкатуємо зміни при помилці
+                                  setLocalCategories(prev => 
+                                    prev.map(cat => 
+                                      cat.id === category.id 
+                                        ? { ...cat, hasSerialNumbers: !checked }
+                                        : cat
+                                    )
+                                  );
                                 }
                               });
                             }}
