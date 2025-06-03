@@ -1,3 +1,4 @@
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -59,16 +60,18 @@ export default function SerialNumberSettings() {
   });
 
   // Update form when settings are loaded
-  if (settings && !form.formState.isDirty) {
-    form.reset({
-      useCrossNumbering: (settings as any).useCrossNumbering,
-      globalTemplate: (settings as any).globalTemplate || "{year}{month:2}{day:2}-{counter:6}",
-      globalPrefix: (settings as any).globalPrefix || "",
-      globalStartNumber: (settings as any).globalStartNumber || 1,
-      currentGlobalCounter: (settings as any).currentGlobalCounter || 0,
-      resetCounterPeriod: (settings as any).resetCounterPeriod || "never",
-    });
-  }
+  React.useEffect(() => {
+    if (settings && !form.formState.isDirty) {
+      form.reset({
+        useCrossNumbering: (settings as any).useCrossNumbering,
+        globalTemplate: (settings as any).globalTemplate || "{year}{month:2}{day:2}-{counter:6}",
+        globalPrefix: (settings as any).globalPrefix || "",
+        globalStartNumber: (settings as any).globalStartNumber || 1,
+        currentGlobalCounter: (settings as any).currentGlobalCounter || 0,
+        resetCounterPeriod: (settings as any).resetCounterPeriod || "never",
+      });
+    }
+  }, [settings, form]);
 
   // Mutation for updating global settings
   const updateSettingsMutation = useMutation({
