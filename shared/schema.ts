@@ -1324,6 +1324,8 @@ export const insertSerialNumberSchema = createInsertSchema(serialNumbers).omit({
 export type SerialNumber = typeof serialNumbers.$inferSelect;
 export type InsertSerialNumber = z.infer<typeof insertSerialNumberSchema>;
 
+
+
 // Схеми для валідації нових таблиць користувачів
 export const insertLocalUserSchema = createInsertSchema(localUsers).omit({ 
   id: true, 
