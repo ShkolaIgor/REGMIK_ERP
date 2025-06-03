@@ -368,6 +368,23 @@ export default function SerialNumberSettings() {
                                 />
                               </div>
                             </div>
+                            
+                            <div className="pt-3">
+                              <Button 
+                                size="sm" 
+                                className="w-full"
+                                disabled={updateCategoryMutation.isPending}
+                                onClick={() => {
+                                  toast({
+                                    title: "Успіх",
+                                    description: `Налаштування категорії "${category.name}" збережено`,
+                                  });
+                                }}
+                              >
+                                {updateCategoryMutation.isPending && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+                                Зберегти налаштування
+                              </Button>
+                            </div>
                           </div>
                         )}
                       </div>
