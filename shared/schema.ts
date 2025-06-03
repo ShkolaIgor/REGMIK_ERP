@@ -1315,7 +1315,8 @@ export const serialNumberSettings = pgTable("serial_number_settings", {
   globalTemplate: text("global_template").default("{year}{month:2}{day:2}-{counter:6}"), // глобальний шаблон
   globalPrefix: text("global_prefix"), // глобальний префікс
   globalStartNumber: integer("global_start_number").default(1), // початковий номер для сквозної нумерації
-  currentGlobalCounter: integer("current_global_counter").default(0), // поточний лічильник
+  currentGlobalCounter: integer("current_global_counter").default(0), // поточний лічільник
+  nextSerialNumber: integer("next_serial_number").default(1), // наступний серійний номер
   resetCounterPeriod: text("reset_counter_period").default("never"), // never, yearly, monthly, daily
   lastResetDate: timestamp("last_reset_date"),
   createdAt: timestamp("created_at").defaultNow(),
