@@ -389,47 +389,6 @@ export default function SerialNumberSettings() {
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor={`category-${category.id}-use-global`}>
-                            Використовувати глобальну нумерацію
-                          </Label>
-                          <Switch
-                            id={`category-${category.id}-use-global`}
-                            checked={category.useGlobalNumbering !== false}
-                            onCheckedChange={(checked) => {
-                              // Оновлюємо локальний стан негайно
-                              setLocalCategories(prev => 
-                                prev.map(cat => 
-                                  cat.id === category.id 
-                                    ? { ...cat, useGlobalNumbering: checked }
-                                    : cat
-                                )
-                              );
-                              
-                              // Відправляємо запит на сервер
-                              updateCategoryMutation.mutate({
-                                id: category.id,
-                                data: { useGlobalNumbering: checked }
-                              }, {
-                                onSuccess: () => {
-                                  queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-                                },
-                                onError: () => {
-                                  // Відкатуємо зміни при помилці
-                                  setLocalCategories(prev => 
-                                    prev.map(cat => 
-                                      cat.id === category.id 
-                                        ? { ...cat, useGlobalNumbering: !checked }
-                                        : cat
-                                    )
-                                  );
-                                }
-                              });
-                            }}
-                            disabled={updateCategoryMutation.isPending}
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
                           <Label htmlFor={`category-${category.id}-use-serial`}>
                             Використовувати серійні номери
                           </Label>
@@ -441,7 +400,7 @@ export default function SerialNumberSettings() {
                               setLocalCategories(prev => 
                                 prev.map(cat => 
                                   cat.id === category.id 
-                                    ? { ...cat, hasSerialNumbers: checked }
+                                    ? { ...cat, hasSerialNumbers: checked, useGlobalNumbering: checked ? cat.useGlobalNumbering : false }
                                     : cat
                                 )
                               );
@@ -449,7 +408,7 @@ export default function SerialNumberSettings() {
                               // Відправляємо запит на сервер
                               updateCategoryMutation.mutate({
                                 id: category.id,
-                                data: { hasSerialNumbers: checked }
+                                data: { hasSerialNumbers: checked, useGlobalNumbering: checked ? category.useGlobalNumbering : false }
                               }, {
                                 onSuccess: () => {
                                   queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -469,6 +428,49 @@ export default function SerialNumberSettings() {
                             disabled={updateCategoryMutation.isPending}
                           />
                         </div>
+                        
+                        {category.hasSerialNumbers && (
+                          <div className="space-y-2">
+                            <Label htmlFor={`category-${category.id}-use-global`}>
+                              Використовувати глобальну нумерацію
+                            </Label>
+                            <Switch
+                              id={`category-${category.id}-use-global`}
+                              checked={category.useGlobalNumbering !== false}
+                              onCheckedChange={(checked) => {
+                                // Оновлюємо локальний стан негайно
+                                setLocalCategories(prev => 
+                                  prev.map(cat => 
+                                    cat.id === category.id 
+                                      ? { ...cat, useGlobalNumbering: checked }
+                                      : cat
+                                  )
+                                );
+                                
+                                // Відправляємо запит на сервер
+                                updateCategoryMutation.mutate({
+                                  id: category.id,
+                                  data: { useGlobalNumbering: checked }
+                                }, {
+                                  onSuccess: () => {
+                                    queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+                                  },
+                                  onError: () => {
+                                    // Відкатуємо зміни при помилці
+                                    setLocalCategories(prev => 
+                                      prev.map(cat => 
+                                        cat.id === category.id 
+                                          ? { ...cat, useGlobalNumbering: !checked }
+                                          : cat
+                                      )
+                                    );
+                                  }
+                                });
+                              }}
+                              disabled={updateCategoryMutation.isPending}
+                            />
+                          </div>
+                        )}
                       </div>
 
                       {!category.useGlobalNumbering && (
