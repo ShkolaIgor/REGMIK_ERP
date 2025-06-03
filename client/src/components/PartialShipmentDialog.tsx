@@ -35,7 +35,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Package, AlertCircle } from "lucide-react";
 
 const partialShipmentSchema = z.object({
-  carrierId: z.number().min(1, "Оберіть перевізника"),
+  carrierId: z.string().min(1, "Оберіть перевізника"),
   recipientName: z.string().min(1, "Введіть ім'я отримувача"),
   recipientPhone: z.string().min(1, "Введіть телефон отримувача"),
   recipientCityRef: z.string().optional(),
@@ -100,7 +100,7 @@ export function PartialShipmentDialog({
   const form = useForm<z.infer<typeof partialShipmentSchema>>({
     resolver: zodResolver(partialShipmentSchema),
     defaultValues: {
-      carrierId: 0,
+      carrierId: "",
       recipientName: "",
       recipientPhone: "",
       recipientCityName: "",
@@ -133,7 +133,10 @@ export function PartialShipmentDialog({
         method: "POST",
         body: {
           items,
-          shipmentData: data
+          shipmentData: {
+            ...data,
+            carrierId: parseInt(data.carrierId)
+          }
         }
       });
     },
