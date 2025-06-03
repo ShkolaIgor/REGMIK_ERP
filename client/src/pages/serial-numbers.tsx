@@ -94,6 +94,7 @@ export default function SerialNumbers() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/serial-numbers"] });
       setIsDialogOpen(false);
+      setEditingItem(null);
       form.reset();
       toast({
         title: "Успіх",

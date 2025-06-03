@@ -30,15 +30,17 @@ export default function ProductionAnalyticsPage() {
     queryKey: ["/api/departments"],
   });
 
-  const { data: workers } = useQuery({
+  const { data: workers, isLoading: workersLoading } = useQuery({
     queryKey: ["/api/workers"],
   });
 
-  const { data: productionTasks } = useQuery({
+  const { data: productionTasks, isLoading: tasksLoading } = useQuery({
     queryKey: ["/api/production-tasks"],
   });
 
-  if (isLoading) {
+  const isLoadingAll = isLoading || workersLoading || tasksLoading;
+
+  if (isLoadingAll) {
     return (
       <div className="space-y-6">
         <div>
