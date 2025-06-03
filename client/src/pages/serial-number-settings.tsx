@@ -1,398 +1,355 @@
-import React from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Settings, Hash, Package } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-
-const formSchema = z.object({
-  useCrossNumbering: z.boolean(),
-  globalTemplate: z.string().min(1, "Шаблон є обов'язковим"),
-  globalPrefix: z.string().optional(),
-  globalStartNumber: z.number().min(1, "Стартовий номер повинен бути більше 0"),
-  currentGlobalCounter: z.number().min(0),
-  resetCounterPeriod: z.enum(["never", "yearly", "monthly", "daily"]),
-});
-
-type FormData = z.infer<typeof formSchema>;
-
-const resetPeriodLabels = {
-  never: "Ніколи",
-  yearly: "Щорічно",
-  monthly: "Щомісяця",
-  daily: "Щодня"
-};
+import { useToast } from "@/hooks/use-toast";
 
 export default function SerialNumberSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      useCrossNumbering: false,
-      globalTemplate: "{year}{month:2}{day:2}-{counter:6}",
-      globalPrefix: "",
-      globalStartNumber: 1,
-      currentGlobalCounter: 0,
-      resetCounterPeriod: "never",
-    },
+  // Fetch global settings
+  const { data: globalSettings, isLoading: globalLoading } = useQuery({
+    queryKey: ['/api/serial-number-settings'],
   });
 
   // Fetch categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
-    queryKey: ["/api/categories"],
+    queryKey: ['/api/categories'],
   });
 
-  // Fetch settings
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ["/api/serial-number-settings"],
-  });
-
-  // Update form when settings are loaded
-  React.useEffect(() => {
-    if (settings && !form.formState.isDirty) {
-      form.reset({
-        useCrossNumbering: (settings as any).useCrossNumbering,
-        globalTemplate: (settings as any).globalTemplate || "{year}{month:2}{day:2}-{counter:6}",
-        globalPrefix: (settings as any).globalPrefix || "",
-        globalStartNumber: (settings as any).globalStartNumber || 1,
-        currentGlobalCounter: (settings as any).currentGlobalCounter || 0,
-        resetCounterPeriod: (settings as any).resetCounterPeriod || "never",
+  // Update global settings mutation
+  const updateGlobalMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest('/api/serial-number-settings', {
+        method: 'PATCH',
+        body: data,
       });
-    }
-  }, [settings, form]);
-
-  // Mutation for updating global settings
-  const updateSettingsMutation = useMutation({
-    mutationFn: async (data: FormData) => {
-      return apiRequest("/api/serial-number-settings", { method: "PUT", body: data });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/serial-number-settings"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/serial-number-settings'] });
       toast({
         title: "Успіх",
-        description: "Глобальні налаштування серійних номерів оновлено",
+        description: "Глобальні налаштування оновлено",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error updating global settings:', error);
       toast({
         title: "Помилка",
-        description: "Не вдалося оновити налаштування",
+        description: "Не вдалося оновити глобальні налаштування",
         variant: "destructive",
       });
     },
   });
 
-  // Mutation for updating category settings
+  // Update category mutation
   const updateCategoryMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return apiRequest(`/api/categories/${id}`, { method: "PUT", body: data });
+      return apiRequest(`/api/categories/${id}`, {
+        method: 'PATCH',
+        body: data,
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error updating category:', error);
       toast({
         title: "Помилка",
-        description: "Не вдалося оновити налаштування категорії",
+        description: "Не вдалося оновити категорію",
         variant: "destructive",
       });
     },
   });
 
-  const onSubmit = (data: FormData) => {
-    updateSettingsMutation.mutate(data);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin" />
-        <span className="ml-2">Завантаження...</span>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Налаштування серійних номерів</h1>
-      
+    <div className="space-y-8">
       {/* Global Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Глобальні налаштування</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Глобальні налаштування серійних номерів
+          </CardTitle>
           <CardDescription>
-            Налаштуйте глобальні параметри для системи серійних номерів
+            Налаштуйте загальні параметри для генерації серійних номерів
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="useCrossNumbering"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                      <FormLabel>Використовувати кросс-нумерацію</FormLabel>
-                      <CardDescription>
-                        Дозволити використання одного серійного номера для різних категорій товарів
-                      </CardDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
+          {globalLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span className="ml-2">Завантаження налаштувань...</span>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Enable Serial Numbers */}
+              <div className="flex items-center justify-between">
+                <Label htmlFor="enable-serial-numbers" className="text-base">
+                  Увімкнути серійні номери
+                </Label>
+                <Switch
+                  id="enable-serial-numbers"
+                  checked={globalSettings?.enableSerialNumbers || false}
+                  onCheckedChange={(checked) => {
+                    updateGlobalMutation.mutate({
+                      enableSerialNumbers: checked
+                    });
+                  }}
+                  disabled={updateGlobalMutation.isPending}
+                />
+              </div>
+
+              {globalSettings?.enableSerialNumbers && (
+                <>
+                  {/* Global Template */}
+                  <div className="space-y-2">
+                    <Label htmlFor="global-template">Глобальний шаблон серійного номера</Label>
+                    <Input
+                      id="global-template"
+                      defaultValue={globalSettings?.globalTemplate || ''}
+                      placeholder="{prefix}-{year}-{counter:6}"
+                      onBlur={(e) => {
+                        updateGlobalMutation.mutate({
+                          globalTemplate: e.target.value
+                        });
+                      }}
+                    />
+                    <p className="text-sm text-gray-500">
+                      Використовуйте: {"{prefix}"} - префікс, {"{year}"} - рік, {"{month}"} - місяць, {"{counter:N}"} - лічильник з N цифр
+                    </p>
+                  </div>
+
+                  {/* Global Prefix */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="global-prefix">Глобальний префікс</Label>
+                      <Input
+                        id="global-prefix"
+                        defaultValue={globalSettings?.globalPrefix || ''}
+                        placeholder="SN"
+                        onBlur={(e) => {
+                          updateGlobalMutation.mutate({
+                            globalPrefix: e.target.value
+                          });
+                        }}
                       />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="global-start-number">Глобальний стартовий номер</Label>
+                      <Input
+                        id="global-start-number"
+                        type="number"
+                        defaultValue={globalSettings?.globalStartNumber || 1}
+                        placeholder="1"
+                        onBlur={(e) => {
+                          updateGlobalMutation.mutate({
+                            globalStartNumber: parseInt(e.target.value) || 1
+                          });
+                        }}
+                      />
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="globalTemplate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Глобальний шаблон</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="{year}{month:2}{day:2}-{counter:6}" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  {/* Current Counter */}
+                  <div className="space-y-2">
+                    <Label htmlFor="current-counter">Поточний лічильник</Label>
+                    <Input
+                      id="current-counter"
+                      type="number"
+                      defaultValue={globalSettings?.currentCounter || 1}
+                      onBlur={(e) => {
+                        updateGlobalMutation.mutate({
+                          currentCounter: parseInt(e.target.value) || 1
+                        });
+                      }}
+                    />
+                    <p className="text-sm text-gray-500">
+                      Наступний серійний номер буде згенеровано з цього значення
+                    </p>
+                  </div>
 
-                <FormField
-                  control={form.control}
-                  name="globalPrefix"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Глобальний префікс</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="SN" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="globalStartNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Стартовий номер</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="resetCounterPeriod"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Період скидання лічильника</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Object.entries(resetPeriodLabels).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="pt-4">
-                <Button 
-                  type="submit" 
-                  disabled={updateSettingsMutation.isPending}
-                  className="w-full md:w-auto"
-                >
-                  {updateSettingsMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Зберегти глобальні налаштування
-                </Button>
-              </div>
-            </form>
-          </Form>
+                  {/* Auto-increment */}
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="auto-increment" className="text-base">
+                      Автоматичне збільшення лічильника
+                    </Label>
+                    <Switch
+                      id="auto-increment"
+                      checked={globalSettings?.autoIncrement !== false}
+                      onCheckedChange={(checked) => {
+                        updateGlobalMutation.mutate({
+                          autoIncrement: checked
+                        });
+                      }}
+                      disabled={updateGlobalMutation.isPending}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Category Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Налаштування для категорій</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Налаштування за категоріями
+          </CardTitle>
           <CardDescription>
             Налаштуйте індивідуальні шаблони серійних номерів для кожної категорії товарів
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-end mb-4">
-            <Button 
-              size="sm" 
-              disabled={updateCategoryMutation.isPending}
-              onClick={() => {
-                toast({
-                  title: "Успіх",
-                  description: "Налаштування категорій збережено",
-                });
-              }}
-            >
-              {updateCategoryMutation.isPending && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-              Зберегти налаштування категорій
-            </Button>
-          </div>
-          
           {categoriesLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin" />
               <span className="ml-2">Завантаження категорій...</span>
             </div>
           ) : categories && Array.isArray(categories) && categories.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              {categories.sort((a: any, b: any) => a.name.localeCompare(b.name)).map((category: any) => (
-                <div key={category.id} className="p-4 border rounded-lg space-y-4 bg-gray-50 dark:bg-gray-800">
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-base">{category.name}</h4>
-                    {category.description && (
-                      <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{category.description}</p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor={`category-${category.id}-use-serial`} className="text-sm">
-                        Використовувати серійні номери
-                      </Label>
-                      <Switch
-                        id={`category-${category.id}-use-serial`}
-                        checked={category.useSerialNumbers === true}
-                        onCheckedChange={(checked) => {
-                          updateCategoryMutation.mutate({
-                            id: category.id,
-                            data: { useSerialNumbers: checked }
-                          });
-                        }}
-                        disabled={updateCategoryMutation.isPending}
-                      />
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                {categories.sort((a: any, b: any) => a.name.localeCompare(b.name)).map((category: any) => (
+                  <div key={category.id} className="p-4 border rounded-lg space-y-4 bg-gray-50 dark:bg-gray-800">
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-base">{category.name}</h4>
+                      {category.description && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{category.description}</p>
+                      )}
                     </div>
                     
-                    {category.useSerialNumbers && (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor={`category-${category.id}-use-global`} className="text-sm">
-                            Використовувати глобальну нумерацію
-                          </Label>
-                          <Switch
-                            id={`category-${category.id}-use-global`}
-                            checked={category.useGlobalNumbering === true}
-                            onCheckedChange={(checked) => {
-                              updateCategoryMutation.mutate({
-                                id: category.id,
-                                data: { useGlobalNumbering: checked }
-                              });
-                            }}
-                            disabled={updateCategoryMutation.isPending}
-                          />
-                        </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor={`category-${category.id}-use-serial`} className="text-sm">
+                          Використовувати серійні номери
+                        </Label>
+                        <Switch
+                          id={`category-${category.id}-use-serial`}
+                          checked={category.useSerialNumbers === true}
+                          onCheckedChange={(checked) => {
+                            updateCategoryMutation.mutate({
+                              id: category.id,
+                              data: { useSerialNumbers: checked }
+                            });
+                          }}
+                          disabled={updateCategoryMutation.isPending}
+                        />
+                      </div>
+                      
+                      {category.useSerialNumbers && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor={`category-${category.id}-use-global`} className="text-sm">
+                              Використовувати глобальну нумерацію
+                            </Label>
+                            <Switch
+                              id={`category-${category.id}-use-global`}
+                              checked={category.useGlobalNumbering === true}
+                              onCheckedChange={(checked) => {
+                                updateCategoryMutation.mutate({
+                                  id: category.id,
+                                  data: { useGlobalNumbering: checked }
+                                });
+                              }}
+                              disabled={updateCategoryMutation.isPending}
+                            />
+                          </div>
 
-                        {!category.useGlobalNumbering && (
-                          <div className="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                            <div className="space-y-2">
-                              <Label htmlFor={`category-${category.id}-template`} className="text-xs">
-                                Шаблон серійного номера
-                              </Label>
-                              <Input
-                                id={`category-${category.id}-template`}
-                                defaultValue={category.serialNumberTemplate || ''}
-                                placeholder="{prefix}-{year}-{counter:4}"
-                                className="h-8 text-sm"
-                                onBlur={(e) => {
-                                  updateCategoryMutation.mutate({
-                                    id: category.id,
-                                    data: { serialNumberTemplate: e.target.value }
-                                  });
-                                }}
-                              />
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-2">
+                          {!category.useGlobalNumbering && (
+                            <div className="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                               <div className="space-y-2">
-                                <Label htmlFor={`category-${category.id}-prefix`} className="text-xs">
-                                  Префікс
+                                <Label htmlFor={`category-${category.id}-template`} className="text-xs">
+                                  Шаблон серійного номера
                                 </Label>
                                 <Input
-                                  id={`category-${category.id}-prefix`}
-                                  defaultValue={category.serialNumberPrefix || ''}
-                                  placeholder="CAT"
+                                  id={`category-${category.id}-template`}
+                                  defaultValue={category.serialNumberTemplate || ''}
+                                  placeholder="{prefix}-{year}-{counter:4}"
                                   className="h-8 text-sm"
                                   onBlur={(e) => {
                                     updateCategoryMutation.mutate({
                                       id: category.id,
-                                      data: { serialNumberPrefix: e.target.value }
+                                      data: { serialNumberTemplate: e.target.value }
                                     });
                                   }}
                                 />
                               </div>
                               
-                              <div className="space-y-2">
-                                <Label htmlFor={`category-${category.id}-start`} className="text-xs">
-                                  Стартовий номер
-                                </Label>
-                                <Input
-                                  id={`category-${category.id}-start`}
-                                  type="number"
-                                  defaultValue={category.serialNumberStartNumber || 1}
-                                  placeholder="1"
-                                  className="h-8 text-sm"
-                                  onBlur={(e) => {
-                                    updateCategoryMutation.mutate({
-                                      id: category.id,
-                                      data: { serialNumberStartNumber: parseInt(e.target.value) || 1 }
-                                    });
-                                  }}
-                                />
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-2">
+                                  <Label htmlFor={`category-${category.id}-prefix`} className="text-xs">
+                                    Префікс
+                                  </Label>
+                                  <Input
+                                    id={`category-${category.id}-prefix`}
+                                    defaultValue={category.serialNumberPrefix || ''}
+                                    placeholder="CAT"
+                                    className="h-8 text-sm"
+                                    onBlur={(e) => {
+                                      updateCategoryMutation.mutate({
+                                        id: category.id,
+                                        data: { serialNumberPrefix: e.target.value }
+                                      });
+                                    }}
+                                  />
+                                </div>
+                                
+                                <div className="space-y-2">
+                                  <Label htmlFor={`category-${category.id}-start`} className="text-xs">
+                                    Стартовий номер
+                                  </Label>
+                                  <Input
+                                    id={`category-${category.id}-start`}
+                                    type="number"
+                                    defaultValue={category.serialNumberStartNumber || 1}
+                                    placeholder="1"
+                                    className="h-8 text-sm"
+                                    onBlur={(e) => {
+                                      updateCategoryMutation.mutate({
+                                        id: category.id,
+                                        data: { serialNumberStartNumber: parseInt(e.target.value) || 1 }
+                                      });
+                                    }}
+                                  />
+                                </div>
                               </div>
                             </div>
-                            
-
-                          </div>
-                        )}
-                      </div>
-                    )}
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              
+              <div className="flex justify-start">
+                <Button 
+                  size="sm" 
+                  disabled={updateCategoryMutation.isPending}
+                  onClick={() => {
+                    toast({
+                      title: "Успіх",
+                      description: "Налаштування категорій збережено",
+                    });
+                  }}
+                >
+                  {updateCategoryMutation.isPending && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+                  Зберегти налаштування категорій
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500">
@@ -401,8 +358,6 @@ export default function SerialNumberSettings() {
           )}
         </CardContent>
       </Card>
-
-
     </div>
   );
 }
