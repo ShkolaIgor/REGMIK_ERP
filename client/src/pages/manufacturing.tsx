@@ -659,9 +659,14 @@ export default function Manufacturing() {
                         <div className="font-medium text-green-600">
                           {order.serialNumbers.length} номерів
                         </div>
-                        <div className="text-gray-500 truncate max-w-32" title={order.serialNumbers.join(', ')}>
-                          {order.serialNumbers[0]}
-                          {order.serialNumbers.length > 1 && ` ... ${order.serialNumbers[order.serialNumbers.length - 1]}`}
+                        <div className="text-gray-600 leading-tight">
+                          <div className="text-xs">{order.serialNumbers[0]}</div>
+                          {order.serialNumbers.length > 1 && (
+                            <div className="text-xs">-</div>
+                          )}
+                          {order.serialNumbers.length > 1 && (
+                            <div className="text-xs">{order.serialNumbers[order.serialNumbers.length - 1]}</div>
+                          )}
                         </div>
                       </div>
                     ) : (
