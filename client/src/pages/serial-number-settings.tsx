@@ -203,6 +203,22 @@ export default function SerialNumberSettings() {
                   </div>
                 </>
               )}
+              
+              <div className="flex justify-start pt-4">
+                <Button 
+                  size="sm" 
+                  disabled={updateGlobalMutation.isPending}
+                  onClick={() => {
+                    toast({
+                      title: "Успіх",
+                      description: "Глобальні налаштування збережено",
+                    });
+                  }}
+                >
+                  {updateGlobalMutation.isPending && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+                  Зберегти глобальні налаштування
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
