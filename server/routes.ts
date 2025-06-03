@@ -3423,6 +3423,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Serial number settings API
+  app.get("/api/serial-number-settings", async (req, res) => {
+    try {
+      const settings = await storage.getSerialNumberSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching serial number settings:", error);
+      res.status(500).json({ error: "Failed to fetch serial number settings" });
+    }
+  });
+
+  app.put("/api/serial-number-settings", async (req, res) => {
+    try {
+      const settingsData = insertSerialNumberSettingsSchema.parse(req.body);
+      const settings = await storage.updateSerialNumberSettings(settingsData);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error updating serial number settings:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid settings data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update serial number settings" });
+      }
+    }
+  });
+
   app.patch("/api/serial-numbers/:id/mark-sold", async (req, res) => {
     try {
       const id = parseInt(req.params.id);

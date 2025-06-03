@@ -4766,6 +4766,56 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+
+  // Serial Number Settings
+  async getSerialNumberSettings(): Promise<SerialNumberSettings | null> {
+    try {
+      const [settings] = await db.select().from(serialNumberSettings).limit(1);
+      if (!settings) {
+        // Створюємо налаштування за замовчуванням якщо їх немає
+        const [created] = await db
+          .insert(serialNumberSettings)
+          .values({
+            useCrossNumbering: false,
+            globalTemplate: "{year}{month:2}{day:2}-{counter:6}",
+            globalStartNumber: 1,
+            currentGlobalCounter: 0,
+            resetCounterPeriod: "never"
+          })
+          .returning();
+        return created;
+      }
+      return settings;
+    } catch (error) {
+      console.error('Error getting serial number settings:', error);
+      throw error;
+    }
+  }
+
+  async updateSerialNumberSettings(data: InsertSerialNumberSettings): Promise<SerialNumberSettings> {
+    try {
+      // Спочатку перевіряємо чи існують налаштування
+      const [existing] = await db.select().from(serialNumberSettings).limit(1);
+      
+      if (existing) {
+        const [updated] = await db
+          .update(serialNumberSettings)
+          .set({ ...data, updatedAt: new Date() })
+          .where(eq(serialNumberSettings.id, existing.id))
+          .returning();
+        return updated;
+      } else {
+        const [created] = await db
+          .insert(serialNumberSettings)
+          .values(data)
+          .returning();
+        return created;
+      }
+    } catch (error) {
+      console.error('Error updating serial number settings:', error);
+      throw error;
+    }
+  }
 }
 
 export const dbStorage = new DatabaseStorage();
