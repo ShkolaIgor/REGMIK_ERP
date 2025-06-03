@@ -28,11 +28,15 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     const transportConfig = {
       host: emailSettings.smtpHost,
       port: emailSettings.smtpPort,
-      secure: emailSettings.smtpSecure,
+      secure: emailSettings.smtpSecure, // false for 587, true for 465
+      requireTLS: true, // використовувати STARTTLS
       auth: {
         user: emailSettings.smtpUser,
         pass: emailSettings.smtpPassword,
       },
+      tls: {
+        rejectUnauthorized: false // дозволити самопідписані сертифікати
+      }
     };
     
     const transporter = nodemailer.createTransport(transportConfig as any);
