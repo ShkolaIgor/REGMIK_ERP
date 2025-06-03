@@ -633,7 +633,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/orders/:id/items", async (req, res) => {
     try {
       const orderId = parseInt(req.params.id);
+      console.log("Getting order items for orderId:", orderId);
       const orderItems = await storage.getOrderItemsWithShipmentInfo(orderId);
+      console.log("Order items result:", orderItems);
       res.json(orderItems);
     } catch (error) {
       console.error("Failed to get order items:", error);
