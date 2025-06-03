@@ -391,8 +391,13 @@ export default function SerialNumberSettings() {
                               updateCategoryMutation.mutate({
                                 id: category.id,
                                 data: { useGlobalNumbering: checked }
+                              }, {
+                                onSuccess: () => {
+                                  queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+                                }
                               });
                             }}
+                            disabled={updateCategoryMutation.isPending}
                           />
                         </div>
                         
@@ -407,8 +412,13 @@ export default function SerialNumberSettings() {
                               updateCategoryMutation.mutate({
                                 id: category.id,
                                 data: { hasSerialNumbers: checked }
+                              }, {
+                                onSuccess: () => {
+                                  queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+                                }
                               });
                             }}
+                            disabled={updateCategoryMutation.isPending}
                           />
                         </div>
                       </div>
