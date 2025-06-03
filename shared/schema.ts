@@ -1184,6 +1184,7 @@ export const manufacturingOrders = pgTable("manufacturing_orders", {
   qualityRating: varchar("quality_rating", { length: 20 }).default("good"), // excellent, good, acceptable, poor
   notes: text("notes"),
   batchNumber: varchar("batch_number", { length: 100 }),
+  serialNumbers: text("serial_numbers").array(), // масив серійних номерів
   createdBy: varchar("created_by", { length: 100 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

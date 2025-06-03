@@ -222,6 +222,25 @@ export default function Manufacturing() {
     },
   });
 
+  const generateSerialNumbersMutation = useMutation({
+    mutationFn: async (orderId: number) => 
+      apiRequest(`/api/manufacturing-orders/${orderId}/generate-serial-numbers`, "POST"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/manufacturing-orders"] });
+      toast({
+        title: "Успіх",
+        description: "Серійні номери згенеровано",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося згенерувати серійні номери",
+        variant: "destructive",
+      });
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       productId: "",
@@ -583,6 +602,7 @@ export default function Manufacturing() {
                 <TableHead>Прогрес</TableHead>
                 <TableHead>Статус</TableHead>
                 <TableHead>Пріоритет</TableHead>
+                <TableHead>Серійні номери</TableHead>
                 <TableHead>Відповідальний</TableHead>
                 <TableHead>Дата завершення</TableHead>
                 <TableHead>Дії</TableHead>
@@ -631,6 +651,29 @@ export default function Manufacturing() {
                       {order.priority === "high" && "Високий"}
                       {order.priority === "urgent" && "Терміновий"}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {order.serialNumbers && order.serialNumbers.length > 0 ? (
+                      <div className="text-sm">
+                        <div className="font-medium text-green-600">
+                          {order.serialNumbers.length} номерів
+                        </div>
+                        <div className="text-gray-500 truncate max-w-32" title={order.serialNumbers.join(', ')}>
+                          {order.serialNumbers[0]}
+                          {order.serialNumbers.length > 1 && ` ... ${order.serialNumbers[order.serialNumbers.length - 1]}`}
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => generateSerialNumbersMutation.mutate(order.id)}
+                        disabled={generateSerialNumbersMutation.isPending}
+                        className="h-8"
+                      >
+                        Згенерувати
+                      </Button>
+                    )}
                   </TableCell>
                   <TableCell>
                     {order.worker ? (
