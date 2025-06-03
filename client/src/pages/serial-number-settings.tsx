@@ -31,7 +31,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Settings, QrCode, Save, RefreshCw } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Settings, QrCode, Save, RefreshCw, Package, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
 const formSchema = z.object({
@@ -68,20 +69,49 @@ export default function SerialNumberSettings() {
     },
   });
 
+  // Fetch categories
+  const { data: categories, isLoading: categoriesLoading } = useQuery({
+    queryKey: ["/api/categories"],
+  });
+
   // Fetch settings
   const { data: settings, isLoading } = useQuery({
     queryKey: ["/api/serial-number-settings"],
-    onSuccess: (data) => {
-      if (data) {
-        form.reset({
-          useCrossNumbering: data.useCrossNumbering,
-          globalTemplate: data.globalTemplate || "{year}{month:2}{day:2}-{counter:6}",
-          globalPrefix: data.globalPrefix || "",
-          globalStartNumber: data.globalStartNumber || 1,
-          currentGlobalCounter: data.currentGlobalCounter || 0,
-          resetCounterPeriod: data.resetCounterPeriod || "never",
-        });
-      }
+  });
+
+  // Update form when settings are loaded
+  if (settings && !form.formState.isDirty) {
+    form.reset({
+      useCrossNumbering: (settings as any).useCrossNumbering,
+      globalTemplate: (settings as any).globalTemplate || "{year}{month:2}{day:2}-{counter:6}",
+      globalPrefix: (settings as any).globalPrefix || "",
+      globalStartNumber: (settings as any).globalStartNumber || 1,
+      currentGlobalCounter: (settings as any).currentGlobalCounter || 0,
+      resetCounterPeriod: (settings as any).resetCounterPeriod || "never",
+    });
+  }
+
+  // Update category mutation
+  const updateCategoryMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => {
+      return apiRequest(`/api/categories/${id}`, {
+        method: "PUT",
+        body: data,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      toast({
+        title: "Успіх",
+        description: "Налаштування категорії оновлено",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося оновити налаштування категорії",
+        variant: "destructive",
+      });
     },
   });
 
@@ -318,6 +348,117 @@ export default function SerialNumberSettings() {
                   </FormItem>
                 )}
               />
+            </CardContent>
+          </Card>
+
+          {/* Налаштування для категорій товарів */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Package className="mr-2 h-5 w-5" />
+                Налаштування серійних номерів для категорій товарів
+              </CardTitle>
+              <CardDescription>
+                Налаштуйте індивідуальні шаблони серійних номерів для кожної категорії товарів
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {categoriesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <span className="ml-2">Завантаження категорій...</span>
+                </div>
+              ) : categories && categories.length > 0 ? (
+                <div className="space-y-6">
+                  {categories.map((category: any) => (
+                    <div key={category.id} className="p-4 border rounded-lg space-y-4">
+                      <h4 className="font-medium text-lg">{category.name}</h4>
+                      {category.description && (
+                        <p className="text-sm text-gray-600">{category.description}</p>
+                      )}
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor={`category-${category.id}-use-global`}>
+                            Використовувати глобальну нумерацію
+                          </Label>
+                          <Switch
+                            id={`category-${category.id}-use-global`}
+                            checked={category.useGlobalNumbering !== false}
+                            onCheckedChange={(checked) => {
+                              // Логіка оновлення категорії
+                            }}
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor={`category-${category.id}-use-serial`}>
+                            Використовувати серійні номери
+                          </Label>
+                          <Switch
+                            id={`category-${category.id}-use-serial`}
+                            checked={category.useSerialNumbers === true}
+                            onCheckedChange={(checked) => {
+                              // Логіка оновлення категорії
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {!category.useGlobalNumbering && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t">
+                          <div className="space-y-2">
+                            <Label htmlFor={`category-${category.id}-template`}>
+                              Шаблон серійного номера
+                            </Label>
+                            <Input
+                              id={`category-${category.id}-template`}
+                              value={category.serialNumberTemplate || ''}
+                              placeholder="{prefix}-{year}-{counter:4}"
+                              onChange={(e) => {
+                                // Логіка оновлення шаблону
+                              }}
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor={`category-${category.id}-prefix`}>
+                              Префікс
+                            </Label>
+                            <Input
+                              id={`category-${category.id}-prefix`}
+                              value={category.serialNumberPrefix || ''}
+                              placeholder="CAT"
+                              onChange={(e) => {
+                                // Логіка оновлення префіксу
+                              }}
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor={`category-${category.id}-start`}>
+                              Початковий номер
+                            </Label>
+                            <Input
+                              id={`category-${category.id}-start`}
+                              type="number"
+                              value={category.serialNumberStartNumber || 1}
+                              min="1"
+                              onChange={(e) => {
+                                // Логіка оновлення початкового номера
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  Немає доступних категорій товарів
+                </div>
+              )}
             </CardContent>
           </Card>
 
