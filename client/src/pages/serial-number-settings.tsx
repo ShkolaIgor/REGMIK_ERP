@@ -369,22 +369,7 @@ export default function SerialNumberSettings() {
                               </div>
                             </div>
                             
-                            <div className="pt-3">
-                              <Button 
-                                size="sm" 
-                                className="w-full"
-                                disabled={updateCategoryMutation.isPending}
-                                onClick={() => {
-                                  toast({
-                                    title: "Успіх",
-                                    description: `Налаштування категорії "${category.name}" збережено`,
-                                  });
-                                }}
-                              >
-                                {updateCategoryMutation.isPending && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-                                Зберегти налаштування
-                              </Button>
-                            </div>
+
                           </div>
                         )}
                       </div>
@@ -400,6 +385,30 @@ export default function SerialNumberSettings() {
           )}
         </CardContent>
       </Card>
+
+      {/* Загальна кнопка збереження */}
+      {categories && Array.isArray(categories) && categories.length > 0 && (
+        <Card className="mt-6">
+          <CardContent className="p-6">
+            <div className="flex justify-center">
+              <Button 
+                size="lg" 
+                className="px-8"
+                disabled={updateCategoryMutation.isPending}
+                onClick={() => {
+                  toast({
+                    title: "Успіх",
+                    description: "Всі налаштування категорій збережено",
+                  });
+                }}
+              >
+                {updateCategoryMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Зберегти всі налаштування
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
