@@ -81,6 +81,13 @@ export function PartialShipmentDialog({
 
   const { data: orderItems = [], isLoading } = useQuery({
     queryKey: ["/api/orders", orderId, "items"],
+    queryFn: async () => {
+      const response = await fetch(`/api/orders/${orderId}/items`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch order items');
+      }
+      return response.json();
+    },
     enabled: open && orderId > 0,
   });
 
