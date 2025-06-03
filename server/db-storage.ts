@@ -3361,9 +3361,61 @@ export class DatabaseStorage implements IStorage {
   // Manufacturing Orders
   async getManufacturingOrders(): Promise<any[]> {
     try {
-      const orders = await db.select()
-        .from(manufacturingOrders)
-        .orderBy(desc(manufacturingOrders.createdAt));
+      const orders = await db.select({
+        id: manufacturingOrders.id,
+        orderNumber: manufacturingOrders.orderNumber,
+        productId: manufacturingOrders.productId,
+        recipeId: manufacturingOrders.recipeId,
+        plannedQuantity: manufacturingOrders.plannedQuantity,
+        producedQuantity: manufacturingOrders.producedQuantity,
+        unit: manufacturingOrders.unit,
+        status: manufacturingOrders.status,
+        priority: manufacturingOrders.priority,
+        assignedWorkerId: manufacturingOrders.assignedWorkerId,
+        warehouseId: manufacturingOrders.warehouseId,
+        startDate: manufacturingOrders.startDate,
+        plannedEndDate: manufacturingOrders.plannedEndDate,
+        actualEndDate: manufacturingOrders.actualEndDate,
+        estimatedDuration: manufacturingOrders.estimatedDuration,
+        actualDuration: manufacturingOrders.actualDuration,
+        materialCost: manufacturingOrders.materialCost,
+        laborCost: manufacturingOrders.laborCost,
+        overheadCost: manufacturingOrders.overheadCost,
+        totalCost: manufacturingOrders.totalCost,
+        qualityRating: manufacturingOrders.qualityRating,
+        notes: manufacturingOrders.notes,
+        batchNumber: manufacturingOrders.batchNumber,
+        serialNumbers: manufacturingOrders.serialNumbers,
+        createdBy: manufacturingOrders.createdBy,
+        createdAt: manufacturingOrders.createdAt,
+        updatedAt: manufacturingOrders.updatedAt,
+        product: {
+          id: products.id,
+          name: products.name,
+          sku: products.sku,
+          description: products.description
+        },
+        recipe: {
+          id: recipes.id,
+          name: recipes.name
+        },
+        worker: {
+          id: workers.id,
+          firstName: workers.firstName,
+          lastName: workers.lastName
+        },
+        warehouse: {
+          id: warehouses.id,
+          name: warehouses.name,
+          location: warehouses.location
+        }
+      })
+      .from(manufacturingOrders)
+      .leftJoin(products, eq(manufacturingOrders.productId, products.id))
+      .leftJoin(recipes, eq(manufacturingOrders.recipeId, recipes.id))
+      .leftJoin(workers, eq(manufacturingOrders.assignedWorkerId, workers.id))
+      .leftJoin(warehouses, eq(manufacturingOrders.warehouseId, warehouses.id))
+      .orderBy(desc(manufacturingOrders.createdAt));
 
       return orders;
     } catch (error) {
