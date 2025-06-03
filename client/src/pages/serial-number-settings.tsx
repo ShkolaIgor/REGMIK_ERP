@@ -14,7 +14,12 @@ import { useToast } from "@/hooks/use-toast";
 export default function SerialNumberSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [localGlobalSettings, setLocalGlobalSettings] = useState<any>(null);
+  const [localGlobalSettings, setLocalGlobalSettings] = useState<any>({
+    globalTemplate: "",
+    globalPrefix: "",
+    nextSerialNumber: 1,
+    resetCounterPeriod: "never"
+  });
 
   // Fetch global settings
   const { data: globalSettings, isLoading: globalLoading } = useQuery({
@@ -23,10 +28,15 @@ export default function SerialNumberSettings() {
 
   // Initialize local state when global settings are loaded
   useEffect(() => {
-    if (globalSettings && !localGlobalSettings) {
-      setLocalGlobalSettings(globalSettings);
+    if (globalSettings) {
+      setLocalGlobalSettings({
+        globalTemplate: globalSettings.globalTemplate || "",
+        globalPrefix: globalSettings.globalPrefix || "",
+        nextSerialNumber: globalSettings.nextSerialNumber || 1,
+        resetCounterPeriod: globalSettings.resetCounterPeriod || "never"
+      });
     }
-  }, [globalSettings, localGlobalSettings]);
+  }, [globalSettings]);
 
   // Fetch categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
