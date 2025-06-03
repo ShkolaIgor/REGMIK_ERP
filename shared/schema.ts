@@ -1005,6 +1005,87 @@ export type InsertComponentAlternative = z.infer<typeof insertComponentAlternati
 export type Carrier = typeof carriers.$inferSelect;
 export type InsertCarrier = z.infer<typeof insertCarrierSchema>;
 
+// Sales transactions
+export const sales = pgTable("sales", {
+  id: serial("id").primaryKey(),
+  orderNumber: varchar("order_number", { length: 100 }).notNull().unique(),
+  customerId: integer("customer_id"),
+  customerName: varchar("customer_name", { length: 255 }),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("UAH"),
+  saleDate: timestamp("sale_date").defaultNow(),
+  status: varchar("status", { length: 50 }).default("completed"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Sale = typeof sales.$inferSelect;
+export type InsertSale = typeof sales.$inferInsert;
+export const insertSaleSchema = createInsertSchema(sales);
+
+// Sale items
+export const saleItems = pgTable("sale_items", {
+  id: serial("id").primaryKey(),
+  saleId: integer("sale_id").references(() => sales.id, { onDelete: "cascade" }).notNull(),
+  productId: integer("product_id").references(() => products.id),
+  productName: varchar("product_name", { length: 255 }).notNull(),
+  quantity: integer("quantity").notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+});
+
+export type SaleItem = typeof saleItems.$inferSelect;
+export type InsertSaleItem = typeof saleItems.$inferInsert;
+
+// Expenses
+export const expenses = pgTable("expenses", {
+  id: serial("id").primaryKey(),
+  category: varchar("category", { length: 100 }).notNull(),
+  description: varchar("description", { length: 255 }),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("UAH"),
+  expenseDate: timestamp("expense_date").defaultNow(),
+  createdBy: varchar("created_by", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Expense = typeof expenses.$inferSelect;
+export type InsertExpense = typeof expenses.$inferInsert;
+export const insertExpenseSchema = createInsertSchema(expenses);
+
+// Time tracking
+export const timeEntries = pgTable("time_entries", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id", { length: 100 }).notNull(),
+  userName: varchar("user_name", { length: 255 }),
+  taskId: integer("task_id").references(() => productionTasks.id),
+  taskName: varchar("task_name", { length: 255 }),
+  description: text("description"),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time"),
+  duration: integer("duration"), // in minutes
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type TimeEntry = typeof timeEntries.$inferSelect;
+export type InsertTimeEntry = typeof timeEntries.$inferInsert;
+export const insertTimeEntrySchema = createInsertSchema(timeEntries);
+
+// Inventory alerts
+export const inventoryAlerts = pgTable("inventory_alerts", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").references(() => products.id, { onDelete: "cascade" }).notNull(),
+  productName: varchar("product_name", { length: 255 }).notNull(),
+  currentStock: integer("current_stock").notNull(),
+  minStock: integer("min_stock").notNull(),
+  alertType: varchar("alert_type", { length: 50 }).default("low_stock"),
+  isResolved: boolean("is_resolved").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
+export type InventoryAlert = typeof inventoryAlerts.$inferSelect;
+export type InsertInventoryAlert = typeof inventoryAlerts.$inferInsert;
+
 // Shipment types
 export type Shipment = typeof shipments.$inferSelect;
 export type InsertShipment = z.infer<typeof insertShipmentSchema>;
