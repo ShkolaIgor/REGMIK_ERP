@@ -319,6 +319,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/warehouses/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const warehouseData = insertWarehouseSchema.partial().parse(req.body);
+      console.log("PATCH warehouse request for ID:", id, "with data:", warehouseData);
+      const warehouse = await storage.updateWarehouse(id, warehouseData);
+      if (warehouse) {
+        console.log("Warehouse updated successfully:", warehouse);
+        res.json(warehouse);
+      } else {
+        console.log("Warehouse not found for ID:", id);
+        res.status(404).json({ error: "Warehouse not found" });
+      }
+    } catch (error) {
+      console.error("PATCH warehouse error:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid warehouse data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update warehouse" });
+      }
+    }
+  });
+
   app.delete("/api/warehouses/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
