@@ -96,6 +96,7 @@ const navigationItems = [
     items: [
       { name: "Документи", href: "/documents", icon: File },
       { name: "Аналітика", href: "/analytics", icon: BarChart3 },
+      { name: "Рентабельність продуктів", href: "/product-profitability", icon: DollarSign },
       { name: "Прибутковість", href: "/reports", icon: BarChart },
       { name: "Розширені звіти", href: "/advanced-reports", icon: FileText },
       { name: "Статистика виробництва", href: "/production-stats", icon: TrendingUp }

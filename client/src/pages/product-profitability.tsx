@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { TrendingUp, TrendingDown, DollarSign, Package, BarChart3, PieChart } from "lucide-react";
+import { TrendingUp, DollarSign, Package, BarChart3, PieChart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,31 +10,51 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#8DD1E1'];
 
+interface ProfitabilityData {
+  productId: number;
+  productName: string;
+  productSku: string;
+  unitsSold: number;
+  totalRevenue: number;
+  totalCost: number;
+  totalProfit: number;
+  profitMargin: number;
+}
+
+interface ProductTrend {
+  monthName: string;
+  profit: number;
+  revenue: number;
+  cost: number;
+  profitMargin: number;
+  unitsSold: number;
+}
+
 export default function ProductProfitability() {
   const [period, setPeriod] = useState("month");
   const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
 
-  const { data: profitabilityData = [], isLoading: profitabilityLoading } = useQuery({
+  const { data: profitabilityData = [], isLoading: profitabilityLoading } = useQuery<ProfitabilityData[]>({
     queryKey: ["/api/analytics/product-profitability", period],
   });
 
-  const { data: topProducts = [], isLoading: topProductsLoading } = useQuery({
+  const { data: topProducts = [], isLoading: topProductsLoading } = useQuery<ProfitabilityData[]>({
     queryKey: ["/api/analytics/top-profitable-products", period],
   });
 
-  const { data: productTrends = [], isLoading: trendsLoading } = useQuery({
+  const { data: productTrends = [], isLoading: trendsLoading } = useQuery<ProductTrend[]>({
     queryKey: ["/api/analytics/product-trends", selectedProduct],
     enabled: !!selectedProduct,
   });
 
   // Обчислюємо загальні показники
-  const totalRevenue = profitabilityData.reduce((sum: number, item: any) => sum + (item.totalRevenue || 0), 0);
-  const totalProfit = profitabilityData.reduce((sum: number, item: any) => sum + (item.totalProfit || 0), 0);
-  const totalCost = profitabilityData.reduce((sum: number, item: any) => sum + (item.totalCost || 0), 0);
+  const totalRevenue = profitabilityData.reduce((sum: number, item: ProfitabilityData) => sum + (item.totalRevenue || 0), 0);
+  const totalProfit = profitabilityData.reduce((sum: number, item: ProfitabilityData) => sum + (item.totalProfit || 0), 0);
+  const totalCost = profitabilityData.reduce((sum: number, item: ProfitabilityData) => sum + (item.totalCost || 0), 0);
   const averageMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
   // Підготовка даних для графіків
-  const profitabilityChartData = profitabilityData.slice(0, 10).map((item: any) => ({
+  const profitabilityChartData = profitabilityData.slice(0, 10).map((item: ProfitabilityData) => ({
     name: item.productName?.substring(0, 15) + (item.productName?.length > 15 ? '...' : ''),
     fullName: item.productName,
     profit: item.totalProfit,
@@ -43,7 +63,7 @@ export default function ProductProfitability() {
     units: item.unitsSold
   }));
 
-  const marginDistribution = profitabilityData.reduce((acc: any, item: any) => {
+  const marginDistribution = profitabilityData.reduce((acc: Record<string, number>, item: ProfitabilityData) => {
     const margin = item.profitMargin;
     let category;
     if (margin < 0) category = 'Збиткові (< 0%)';
@@ -208,7 +228,7 @@ export default function ProductProfitability() {
                   <Tooltip 
                     formatter={(value: any) => [`${value} товарів`, 'Кількість']}
                   />
-                  <RechartsPieChart data={marginPieData}>
+                  <RechartsPieChart data={marginPieData} cx="50%" cy="50%" outerRadius={80} fill="#8884d8" dataKey="value">
                     {marginPieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
