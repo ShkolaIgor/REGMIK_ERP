@@ -95,6 +95,8 @@ export const categories = pgTable("categories", {
   serialNumberPrefix: text("serial_number_prefix"), // префікс для серійних номерів
   serialNumberStartNumber: integer("serial_number_start_number").default(1), // початковий номер
   useSerialNumbers: boolean("use_serial_numbers").default(false), // чи використовувати серійні номери для цієї категорії
+  useGlobalNumbering: boolean("use_global_numbering").default(true), // використовувати глобальну нумерацію
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const units = pgTable("units", {
