@@ -2344,6 +2344,206 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Product profitability analytics
+  async getProductProfitability(period: string): Promise<Array<{
+    productId: number;
+    productName: string;
+    productSku: string;
+    unitsSold: number;
+    totalRevenue: number;
+    totalCost: number;
+    totalProfit: number;
+    profitMargin: number;
+  }>> {
+    try {
+      // Calculate date range based on period
+      const now = new Date();
+      let startDate: Date;
+      
+      switch (period) {
+        case 'week':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'month':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case 'quarter':
+          const quarterStart = Math.floor(now.getMonth() / 3) * 3;
+          startDate = new Date(now.getFullYear(), quarterStart, 1);
+          break;
+        case 'year':
+          startDate = new Date(now.getFullYear(), 0, 1);
+          break;
+        default:
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      }
+
+      // Get sales data with product information
+      const salesData = await db
+        .select({
+          productId: saleItems.productId,
+          productName: products.name,
+          productSku: products.sku,
+          quantity: saleItems.quantity,
+          unitPrice: saleItems.unitPrice,
+          totalPrice: saleItems.totalPrice,
+          costPrice: products.costPrice,
+        })
+        .from(saleItems)
+        .innerJoin(sales, eq(saleItems.saleId, sales.id))
+        .innerJoin(products, eq(saleItems.productId, products.id))
+        .where(gte(sales.createdAt, startDate));
+
+      // Group by product and calculate profitability
+      const productStats = new Map<number, {
+        productId: number;
+        productName: string;
+        productSku: string;
+        unitsSold: number;
+        totalRevenue: number;
+        totalCost: number;
+      }>();
+
+      for (const sale of salesData) {
+        const key = sale.productId;
+        const revenue = parseFloat(sale.totalPrice);
+        const cost = parseFloat(sale.costPrice) * sale.quantity;
+        
+        if (!productStats.has(key)) {
+          productStats.set(key, {
+            productId: sale.productId,
+            productName: sale.productName,
+            productSku: sale.productSku,
+            unitsSold: 0,
+            totalRevenue: 0,
+            totalCost: 0,
+          });
+        }
+        
+        const stats = productStats.get(key)!;
+        stats.unitsSold += sale.quantity;
+        stats.totalRevenue += revenue;
+        stats.totalCost += cost;
+      }
+
+      // Calculate profit and margin
+      const result = Array.from(productStats.values()).map(stats => {
+        const totalProfit = stats.totalRevenue - stats.totalCost;
+        const profitMargin = stats.totalRevenue > 0 ? (totalProfit / stats.totalRevenue) * 100 : 0;
+        
+        return {
+          ...stats,
+          totalProfit,
+          profitMargin,
+        };
+      });
+
+      // Sort by total profit descending
+      return result.sort((a, b) => b.totalProfit - a.totalProfit);
+
+    } catch (error) {
+      console.error('Error getting product profitability:', error);
+      throw error;
+    }
+  }
+
+  async getTopProfitableProducts(period: string, limit: number): Promise<Array<{
+    productId: number;
+    productName: string;
+    productSku: string;
+    unitsSold: number;
+    totalRevenue: number;
+    totalCost: number;
+    totalProfit: number;
+    profitMargin: number;
+  }>> {
+    const allData = await this.getProductProfitability(period);
+    return allData.slice(0, limit);
+  }
+
+  async getProductProfitabilityTrends(productId: number): Promise<Array<{
+    monthName: string;
+    profit: number;
+    revenue: number;
+    cost: number;
+    profitMargin: number;
+    unitsSold: number;
+  }>> {
+    try {
+      // Get last 12 months of data
+      const now = new Date();
+      const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+
+      const salesData = await db
+        .select({
+          month: sql<string>`TO_CHAR(${sales.createdAt}, 'YYYY-MM')`,
+          monthName: sql<string>`TO_CHAR(${sales.createdAt}, 'Mon YYYY')`,
+          quantity: saleItems.quantity,
+          unitPrice: saleItems.unitPrice,
+          totalPrice: saleItems.totalPrice,
+          costPrice: products.costPrice,
+        })
+        .from(saleItems)
+        .innerJoin(sales, eq(saleItems.saleId, sales.id))
+        .innerJoin(products, eq(saleItems.productId, products.id))
+        .where(
+          and(
+            eq(saleItems.productId, productId),
+            gte(sales.createdAt, startDate)
+          )
+        );
+
+      // Group by month
+      const monthlyStats = new Map<string, {
+        monthName: string;
+        unitsSold: number;
+        revenue: number;
+        cost: number;
+      }>();
+
+      for (const sale of salesData) {
+        const key = sale.month;
+        const revenue = parseFloat(sale.totalPrice);
+        const cost = parseFloat(sale.costPrice) * sale.quantity;
+        
+        if (!monthlyStats.has(key)) {
+          monthlyStats.set(key, {
+            monthName: sale.monthName,
+            unitsSold: 0,
+            revenue: 0,
+            cost: 0,
+          });
+        }
+        
+        const stats = monthlyStats.get(key)!;
+        stats.unitsSold += sale.quantity;
+        stats.revenue += revenue;
+        stats.cost += cost;
+      }
+
+      // Calculate profit and margin for each month
+      const result = Array.from(monthlyStats.values()).map(stats => {
+        const profit = stats.revenue - stats.cost;
+        const profitMargin = stats.revenue > 0 ? (profit / stats.revenue) * 100 : 0;
+        
+        return {
+          monthName: stats.monthName,
+          profit,
+          revenue: stats.revenue,
+          cost: stats.cost,
+          profitMargin,
+          unitsSold: stats.unitsSold,
+        };
+      });
+
+      return result.sort((a, b) => a.monthName.localeCompare(b.monthName));
+
+    } catch (error) {
+      console.error('Error getting product profitability trends:', error);
+      throw error;
+    }
+  }
+
   // Package Types
   async getPackageTypes(): Promise<PackageType[]> {
     return await db.select().from(packageTypes).orderBy(packageTypes.name);

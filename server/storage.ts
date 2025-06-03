@@ -276,6 +276,38 @@ export interface IStorage {
     criticalShortages: number;
   }>;
 
+  // Product profitability analytics
+  getProductProfitability(period: string): Promise<Array<{
+    productId: number;
+    productName: string;
+    productSku: string;
+    unitsSold: number;
+    totalRevenue: number;
+    totalCost: number;
+    totalProfit: number;
+    profitMargin: number;
+  }>>;
+
+  getTopProfitableProducts(period: string, limit: number): Promise<Array<{
+    productId: number;
+    productName: string;
+    productSku: string;
+    unitsSold: number;
+    totalRevenue: number;
+    totalCost: number;
+    totalProfit: number;
+    profitMargin: number;
+  }>>;
+
+  getProductProfitabilityTrends(productId: number): Promise<Array<{
+    monthName: string;
+    profit: number;
+    revenue: number;
+    cost: number;
+    profitMargin: number;
+    unitsSold: number;
+  }>>;
+
   // Production statistics
   getProductionStatsByCategory(period?: string, startDate?: string, endDate?: string): Promise<Array<{
     categoryId: number;
