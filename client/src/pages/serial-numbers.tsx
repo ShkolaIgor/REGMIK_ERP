@@ -204,6 +204,40 @@ export default function SerialNumbers() {
     setIsDialogOpen(true);
   };
 
+  // Auto-generate serial number mutation
+  const autoGenerateMutation = useMutation({
+    mutationFn: async () => {
+      const productId = form.getValues("productId");
+      const selectedProduct = products.find((p: Product) => p.id === productId);
+      
+      return apiRequest("/api/serial-numbers/generate", {
+        method: "POST",
+        body: {
+          productId,
+          categoryId: selectedProduct?.categoryId,
+        },
+      });
+    },
+    onSuccess: (data) => {
+      form.setValue("serialNumber", data.serialNumber);
+      toast({
+        title: "Успіх",
+        description: "Серійний номер згенеровано автоматично",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося згенерувати серійний номер",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAutoGenerate = () => {
+    autoGenerateMutation.mutate();
+  };
+
   // Filter serial numbers
   const filteredSerialNumbers = serialNumbers.filter((item: SerialNumber & { product?: Product }) => {
     const matchesSearch = item.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -272,9 +306,21 @@ export default function SerialNumbers() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Серійний номер</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Введіть серійний номер" />
-                        </FormControl>
+                        <div className="flex gap-2">
+                          <FormControl>
+                            <Input {...field} placeholder="Введіть серійний номер" />
+                          </FormControl>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleAutoGenerate}
+                            disabled={!form.watch("productId")}
+                          >
+                            <QrCode className="h-4 w-4 mr-1" />
+                            Авто
+                          </Button>
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}

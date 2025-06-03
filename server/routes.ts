@@ -3398,6 +3398,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Auto-generate serial number
+  app.post("/api/serial-numbers/generate", async (req, res) => {
+    try {
+      const { productId, categoryId, template } = req.body;
+      
+      if (!productId) {
+        return res.status(400).json({ error: "Product ID is required" });
+      }
+
+      // Динамічний імпорт для уникнення проблем з компіляцією
+      const { serialNumberGenerator } = await import("./serial-number-generator");
+      
+      const serialNumber = await serialNumberGenerator.generateUniqueSerialNumber({
+        productId: parseInt(productId),
+        categoryId: categoryId ? parseInt(categoryId) : undefined,
+        template
+      });
+
+      res.json({ serialNumber });
+    } catch (error) {
+      console.error("Error generating serial number:", error);
+      res.status(500).json({ error: "Failed to generate serial number" });
+    }
+  });
+
   app.patch("/api/serial-numbers/:id/mark-sold", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
