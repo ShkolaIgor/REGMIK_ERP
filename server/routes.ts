@@ -382,6 +382,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/categories/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      console.log(`PUT /api/categories/${id} received data:`, req.body);
+      const categoryData = insertCategorySchema.partial().parse(req.body);
+      console.log(`Parsed category data:`, categoryData);
+      const category = await storage.updateCategory(id, categoryData);
+      if (!category) {
+        console.log(`Category with ID ${id} not found`);
+        res.status(404).json({ error: "Category not found" });
+        return;
+      }
+      console.log(`Category updated successfully:`, category);
+      res.json(category);
+    } catch (error) {
+      console.error(`Error updating category ${id}:`, error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid category data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update category" });
+      }
+    }
+  });
+
   app.delete("/api/categories/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
