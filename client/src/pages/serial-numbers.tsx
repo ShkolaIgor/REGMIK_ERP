@@ -92,10 +92,12 @@ export default function SerialNumbers() {
       });
     },
     onSuccess: () => {
+      console.log("Serial number created successfully, closing dialog...");
       queryClient.invalidateQueries({ queryKey: ["/api/serial-numbers"] });
       setIsDialogOpen(false);
       setEditingItem(null);
       form.reset();
+      console.log("Dialog state set to closed");
       toast({
         title: "Успіх",
         description: "Серійний номер створено",
