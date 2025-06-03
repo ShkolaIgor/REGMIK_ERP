@@ -7,8 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 import { TrendingUp, TrendingDown, DollarSign, Target, AlertTriangle, Clock } from "lucide-react";
-import { LoadingState, DashboardLoadingState, ChartSkeleton, CardSkeleton } from "@/components/ui/loading-state";
+import { LoadingState, DashboardLoadingState } from "@/components/ui/loading-state";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { ChartSkeleton, CardSkeleton } from "@/components/ui/skeleton";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
@@ -181,18 +182,22 @@ export default function Analytics() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={profitData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => [`₴${Number(value).toLocaleString()}`, '']} />
-                  <Legend />
-                  <Line type="monotone" dataKey="sales" stroke="#10B981" name="Продажі" strokeWidth={2} />
-                  <Line type="monotone" dataKey="expenses" stroke="#EF4444" name="Витрати" strokeWidth={2} />
-                  <Line type="monotone" dataKey="profit" stroke="#3B82F6" name="Прибуток" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
+              {profitLoading ? (
+                <ChartSkeleton />
+              ) : (
+                <ResponsiveContainer width="100%" height={400}>
+                  <LineChart data={profitData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [`₴${Number(value).toLocaleString()}`, '']} />
+                    <Legend />
+                    <Line type="monotone" dataKey="sales" stroke="#10B981" name="Продажі" strokeWidth={2} />
+                    <Line type="monotone" dataKey="expenses" stroke="#EF4444" name="Витрати" strokeWidth={2} />
+                    <Line type="monotone" dataKey="profit" stroke="#3B82F6" name="Прибуток" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

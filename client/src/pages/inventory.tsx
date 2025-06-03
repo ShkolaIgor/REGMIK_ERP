@@ -12,6 +12,9 @@ import { formatCurrency, getStockStatus } from "@/lib/utils";
 import { Search, Plus, Edit, Eye, Copy, Trash2, Scan, Download, Printer, DollarSign, AlertTriangle, Package, Barcode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScannerButton } from "@/components/BarcodeScanner";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { TableLoadingState, CardSkeleton } from "@/components/ui/loading-state";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 export default function Inventory() {
   const [showProductForm, setShowProductForm] = useState(false);

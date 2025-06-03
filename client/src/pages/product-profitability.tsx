@@ -7,6 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart as RechartsPieChart, Cell } from "recharts";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { ChartSkeleton, CardSkeleton, TableLoadingState } from "@/components/ui/loading-state";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#8DD1E1'];
 
@@ -190,26 +193,30 @@ export default function ProductProfitability() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={profitabilityChartData} layout="horizontal">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis type="category" dataKey="name" width={100} />
-                  <Tooltip 
-                    formatter={(value: any, name: string) => [
-                      name === 'profit' ? formatCurrency(value) : value,
-                      name === 'profit' ? 'Прибуток' : name === 'revenue' ? 'Дохід' : 'Маржа'
-                    ]}
-                    labelFormatter={(label: string) => {
-                      const item = profitabilityChartData.find(d => d.name === label);
-                      return item?.fullName || label;
-                    }}
-                  />
-                  <Bar dataKey="profit" fill="#0088FE" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {isLoading ? (
+              <ChartSkeleton />
+            ) : (
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={profitabilityChartData} layout="horizontal">
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis type="category" dataKey="name" width={100} />
+                    <Tooltip 
+                      formatter={(value: any, name: string) => [
+                        name === 'profit' ? formatCurrency(value) : value,
+                        name === 'profit' ? 'Прибуток' : name === 'revenue' ? 'Дохід' : 'Маржа'
+                      ]}
+                      labelFormatter={(label: string) => {
+                        const item = profitabilityChartData.find(d => d.name === label);
+                        return item?.fullName || label;
+                      }}
+                    />
+                    <Bar dataKey="profit" fill="#0088FE" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
 
