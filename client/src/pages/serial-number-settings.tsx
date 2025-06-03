@@ -15,6 +15,7 @@ export default function SerialNumberSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [localGlobalSettings, setLocalGlobalSettings] = useState<any>({
+    useCrossNumbering: false,
     globalTemplate: "",
     globalPrefix: "",
     nextSerialNumber: 1,
@@ -30,6 +31,7 @@ export default function SerialNumberSettings() {
   useEffect(() => {
     if (globalSettings) {
       setLocalGlobalSettings({
+        useCrossNumbering: globalSettings.useCrossNumbering || false,
         globalTemplate: globalSettings.globalTemplate || "",
         globalPrefix: globalSettings.globalPrefix || "",
         nextSerialNumber: globalSettings.nextSerialNumber || 1,
