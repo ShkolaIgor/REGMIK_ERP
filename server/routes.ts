@@ -3876,6 +3876,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update email settings from environment variables
+  app.post("/api/email-settings/update-from-env", async (req, res) => {
+    try {
+      const settings = {
+        smtpHost: process.env.WORKING_SMTP_HOST || process.env.SMTP_HOST,
+        smtpPort: parseInt(process.env.WORKING_SMTP_PORT || process.env.SMTP_PORT || '587'),
+        smtpSecure: false,
+        smtpUser: process.env.WORKING_SMTP_USER || process.env.SMTP_USER,
+        smtpPassword: process.env.WORKING_SMTP_PASSWORD || process.env.SMTP_PASSWORD,
+        fromEmail: process.env.WORKING_SMTP_USER || process.env.SMTP_USER,
+        fromName: "REGMIK ERP",
+        isActive: true
+      };
+
+      console.log('Updating email settings from env:', { host: settings.smtpHost, port: settings.smtpPort, user: settings.smtpUser });
+      const updatedSettings = await storage.updateEmailSettings(settings);
+      res.json(updatedSettings);
+    } catch (error) {
+      console.error("Error updating email settings from env:", error);
+      res.status(500).json({ error: "Failed to update email settings" });
+    }
+  });
+
   app.post("/api/email-settings/test", async (req, res) => {
     try {
       const settingsData = insertEmailSettingsSchema.parse(req.body);
