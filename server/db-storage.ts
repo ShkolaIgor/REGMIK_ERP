@@ -4199,11 +4199,10 @@ export class DatabaseStorage implements IStorage {
         .select({
           id: sales.id,
           customerName: sales.customerName,
-          customerEmail: sales.customerEmail,
+          customerId: sales.customerId,
           totalAmount: sales.totalAmount,
           saleDate: sales.saleDate,
-          paymentStatus: sales.paymentStatus,
-          notes: sales.notes
+          currency: sales.currency
         })
         .from(sales)
         .where(gte(sales.saleDate, start))
@@ -4325,7 +4324,7 @@ export class DatabaseStorage implements IStorage {
   async createTimeEntry(timeEntryData: any): Promise<any> {
     try {
       const [timeEntry] = await db
-        .insert(timeTracking)
+        .insert(timeEntries)
         .values(timeEntryData)
         .returning();
       return timeEntry;
@@ -4338,9 +4337,9 @@ export class DatabaseStorage implements IStorage {
   async updateTimeEntry(id: number, timeEntryData: any): Promise<any> {
     try {
       const [timeEntry] = await db
-        .update(timeTracking)
+        .update(timeEntries)
         .set(timeEntryData)
-        .where(eq(timeTracking.id, id))
+        .where(eq(timeEntries.id, id))
         .returning();
       return timeEntry;
     } catch (error) {
