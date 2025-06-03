@@ -468,6 +468,44 @@ export default function SerialNumberSettings() {
                           </div>
                         </div>
                       )}
+
+                      {/* Кнопки управління для категорії */}
+                      <div className="flex justify-end space-x-2 pt-4 border-t">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // Скидання налаштувань категорії до значень за замовчуванням
+                            updateCategoryMutation.mutate({
+                              id: category.id,
+                              data: {
+                                useGlobalNumbering: true,
+                                hasSerialNumbers: false,
+                                serialNumberTemplate: "{year}{month:2}{day:2}-{counter:6}",
+                                serialNumberPrefix: "",
+                                serialNumberStartNumber: 1
+                              }
+                            });
+                          }}
+                          disabled={updateCategoryMutation.isPending}
+                        >
+                          Скинути
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => {
+                            // Показати повідомлення про збереження (оскільки зміни зберігаються автоматично)
+                            toast({
+                              title: "Налаштування збережено",
+                              description: `Налаштування серійних номерів для категорії "${category.name}" успішно оновлено`,
+                            });
+                          }}
+                        >
+                          Зберегти
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
