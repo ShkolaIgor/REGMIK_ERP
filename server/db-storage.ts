@@ -9,7 +9,7 @@ import {
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes, solderingTypes,
   componentCategories, componentAlternatives, carriers, shipments, customerAddresses, senderSettings,
   manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, exchangeRateHistory, serialNumbers, emailSettings,
-  salesRecords, expenses, timeTracking, inventoryAlerts, tasks,
+  sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
   type Category, type InsertCategory,
@@ -4197,19 +4197,17 @@ export class DatabaseStorage implements IStorage {
 
       const salesData = await db
         .select({
-          id: salesRecords.id,
-          orderId: salesRecords.orderId,
-          productId: salesRecords.productId,
-          quantity: salesRecords.quantity,
-          unitPrice: salesRecords.unitPrice,
-          totalAmount: salesRecords.totalAmount,
-          saleDate: salesRecords.saleDate,
-          customerName: salesRecords.customerName,
-          notes: salesRecords.notes
+          id: sales.id,
+          customerName: sales.customerName,
+          customerEmail: sales.customerEmail,
+          totalAmount: sales.totalAmount,
+          saleDate: sales.saleDate,
+          paymentStatus: sales.paymentStatus,
+          notes: sales.notes
         })
-        .from(salesRecords)
-        .where(gte(salesRecords.saleDate, start))
-        .orderBy(desc(salesRecords.saleDate));
+        .from(sales)
+        .where(gte(sales.saleDate, start))
+        .orderBy(desc(sales.saleDate));
 
       return salesData;
     } catch (error) {
@@ -4303,18 +4301,19 @@ export class DatabaseStorage implements IStorage {
     try {
       const timeEntriesData = await db
         .select({
-          id: timeTracking.id,
-          taskId: timeTracking.taskId,
-          employeeName: timeTracking.employeeName,
-          description: timeTracking.description,
-          startTime: timeTracking.startTime,
-          endTime: timeTracking.endTime,
-          durationMinutes: timeTracking.durationMinutes,
-          notes: timeTracking.notes,
-          createdAt: timeTracking.createdAt
+          id: timeEntries.id,
+          userId: timeEntries.userId,
+          userName: timeEntries.userName,
+          taskId: timeEntries.taskId,
+          taskName: timeEntries.taskName,
+          description: timeEntries.description,
+          startTime: timeEntries.startTime,
+          endTime: timeEntries.endTime,
+          duration: timeEntries.duration,
+          createdAt: timeEntries.createdAt
         })
-        .from(timeTracking)
-        .orderBy(desc(timeTracking.startTime));
+        .from(timeEntries)
+        .orderBy(desc(timeEntries.startTime));
 
       return timeEntriesData;
     } catch (error) {
@@ -4357,11 +4356,10 @@ export class DatabaseStorage implements IStorage {
         .select({
           id: inventoryAlerts.id,
           productId: inventoryAlerts.productId,
-          warehouseId: inventoryAlerts.warehouseId,
+          productName: inventoryAlerts.productName,
           alertType: inventoryAlerts.alertType,
-          currentQuantity: inventoryAlerts.currentQuantity,
-          thresholdQuantity: inventoryAlerts.thresholdQuantity,
-          message: inventoryAlerts.message,
+          currentStock: inventoryAlerts.currentStock,
+          minStock: inventoryAlerts.minStock,
           isResolved: inventoryAlerts.isResolved,
           createdAt: inventoryAlerts.createdAt,
           resolvedAt: inventoryAlerts.resolvedAt
@@ -4404,7 +4402,6 @@ export class DatabaseStorage implements IStorage {
           .where(
             and(
               eq(inventoryAlerts.productId, item.productId),
-              eq(inventoryAlerts.warehouseId, item.warehouseId),
               eq(inventoryAlerts.isResolved, false)
             )
           );
@@ -4412,11 +4409,10 @@ export class DatabaseStorage implements IStorage {
         if (!existingAlert) {
           await db.insert(inventoryAlerts).values({
             productId: item.productId,
-            warehouseId: item.warehouseId,
+            productName: item.productName,
             alertType: 'low_stock',
-            currentQuantity: item.quantity,
-            thresholdQuantity: item.minStock,
-            message: `Низький рівень запасів для "${item.productName}" на складі "${item.warehouseName}". Поточна кількість: ${item.quantity}, мінімум: ${item.minStock}`,
+            currentStock: parseInt(item.quantity.toString()),
+            minStock: parseInt(item.minStock?.toString() || '0'),
             isResolved: false,
             createdAt: new Date()
           });

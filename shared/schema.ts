@@ -1424,82 +1424,13 @@ export const tasks = pgTable("tasks", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Analytics tables
-export const salesRecords = pgTable("sales_records", {
-  id: serial("id").primaryKey(),
-  orderId: integer("order_id").references(() => orders.id),
-  productId: integer("product_id").references(() => products.id),
-  quantity: decimal("quantity", { precision: 12, scale: 3 }).notNull(),
-  unitPrice: decimal("unit_price", { precision: 12, scale: 2 }).notNull(),
-  totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
-  saleDate: timestamp("sale_date").notNull(),
-  customerName: varchar("customer_name", { length: 255 }),
-  notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const expenses = pgTable("expenses", {
-  id: serial("id").primaryKey(),
-  category: varchar("category", { length: 100 }).notNull(),
-  description: text("description").notNull(),
-  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
-  expenseDate: timestamp("expense_date").notNull(),
-  createdBy: varchar("created_by", { length: 100 }),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const timeTracking = pgTable("time_tracking", {
-  id: serial("id").primaryKey(),
-  taskId: integer("task_id").references(() => tasks.id),
-  employeeName: varchar("employee_name", { length: 255 }).notNull(),
-  description: text("description").notNull(),
-  startTime: timestamp("start_time").notNull(),
-  endTime: timestamp("end_time"),
-  durationMinutes: integer("duration_minutes"),
-  notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const inventoryAlerts = pgTable("inventory_alerts", {
-  id: serial("id").primaryKey(),
-  productId: integer("product_id").references(() => products.id),
-  minStock: decimal("min_stock", { precision: 12, scale: 3 }).notNull(),
-  currentStock: decimal("current_stock", { precision: 12, scale: 3 }).notNull(),
-  alertType: varchar("alert_type", { length: 50 }).notNull().default("low_stock"),
-  message: text("message").notNull(),
-  isResolved: boolean("is_resolved").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-  resolvedAt: timestamp("resolved_at"),
-});
-
-export const insertSalesRecordSchema = createInsertSchema(salesRecords).omit({ 
-  id: true, 
-  createdAt: true 
-});
-
-export const insertExpenseSchema = createInsertSchema(expenses).omit({ 
-  id: true, 
-  createdAt: true 
-});
-
-export const insertTimeTrackingSchema = createInsertSchema(timeTracking).omit({ 
-  id: true, 
-  createdAt: true 
-});
-
-export const insertInventoryAlertSchema = createInsertSchema(inventoryAlerts).omit({ 
+export const insertTaskSchema = createInsertSchema(tasks).omit({ 
   id: true, 
   createdAt: true,
-  resolvedAt: true 
+  updatedAt: true 
 });
 
-export type SalesRecord = typeof salesRecords.$inferSelect;
-export type InsertSalesRecord = z.infer<typeof insertSalesRecordSchema>;
-export type Expense = typeof expenses.$inferSelect;
-export type InsertExpense = z.infer<typeof insertExpenseSchema>;
-export type TimeTracking = typeof timeTracking.$inferSelect;
-export type InsertTimeTracking = z.infer<typeof insertTimeTrackingSchema>;
-export type InventoryAlert = typeof inventoryAlerts.$inferSelect;
-export type InsertInventoryAlert = z.infer<typeof insertInventoryAlertSchema>;
+export type Task = typeof tasks.$inferSelect;
+export type InsertTask = z.infer<typeof insertTaskSchema>;
 
 
