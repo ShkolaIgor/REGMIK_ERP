@@ -86,9 +86,10 @@ export default function SerialNumbers() {
         manufacturedDate: data.manufacturedDate ? new Date(data.manufacturedDate).toISOString() : null,
         expiryDate: data.expiryDate ? new Date(data.expiryDate).toISOString() : null,
       };
+      console.log("Sending payload:", payload);
       return apiRequest("/api/serial-numbers", {
         method: "POST",
-        body: JSON.stringify(payload),
+        body: payload,
       });
     },
     onSuccess: () => {
