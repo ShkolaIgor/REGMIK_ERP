@@ -86,19 +86,16 @@ export default function SerialNumbers() {
         manufacturedDate: data.manufacturedDate ? new Date(data.manufacturedDate).toISOString() : null,
         expiryDate: data.expiryDate ? new Date(data.expiryDate).toISOString() : null,
       };
-      console.log("Sending payload:", payload);
       return apiRequest("/api/serial-numbers", {
         method: "POST",
         body: payload,
       });
     },
     onSuccess: () => {
-      console.log("Serial number created successfully, closing dialog...");
       queryClient.invalidateQueries({ queryKey: ["/api/serial-numbers"] });
       setIsDialogOpen(false);
       setEditingItem(null);
       form.reset();
-      console.log("Dialog state set to closed");
       toast({
         title: "Успіх",
         description: "Серійний номер створено",
@@ -123,7 +120,7 @@ export default function SerialNumbers() {
       };
       return apiRequest(`/api/serial-numbers/${id}`, {
         method: "PUT",
-        body: JSON.stringify(payload),
+        body: payload,
       });
     },
     onSuccess: () => {
