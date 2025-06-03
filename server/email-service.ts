@@ -11,16 +11,21 @@ export interface EmailOptions {
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
+    console.log('Attempting to send email to:', options.to);
+    
     // Отримуємо налаштування email з бази даних
     const emailSettings = await storage.getEmailSettings();
+    console.log('Email settings loaded:', emailSettings ? 'Yes' : 'No');
     
     if (!emailSettings || !emailSettings.isActive) {
       console.log('Email service not configured or inactive');
       return false;
     }
 
+    console.log('Creating SMTP transport with host:', emailSettings.smtpHost, 'port:', emailSettings.smtpPort);
+
     // Створюємо транспорт з реальними налаштуваннями
-    const transporter = nodemailer.createTransport({
+    const transportConfig = {
       host: emailSettings.smtpHost,
       port: emailSettings.smtpPort,
       secure: emailSettings.smtpSecure,
@@ -28,8 +33,11 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
         user: emailSettings.smtpUser,
         pass: emailSettings.smtpPassword,
       },
-    });
+    };
+    
+    const transporter = nodemailer.createTransport(transportConfig as any);
 
+    console.log('Sending email...');
     const info = await transporter.sendMail({
       from: `"${emailSettings.fromName}" <${emailSettings.fromEmail}>`,
       to: options.to,
