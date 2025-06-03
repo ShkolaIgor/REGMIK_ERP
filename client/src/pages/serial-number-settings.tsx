@@ -264,7 +264,7 @@ export default function SerialNumberSettings() {
             </div>
           ) : categories && Array.isArray(categories) && categories.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              {categories.map((category: any) => (
+              {categories.sort((a: any, b: any) => a.name.localeCompare(b.name)).map((category: any) => (
                 <div key={category.id} className="p-4 border rounded-lg space-y-4 bg-gray-50 dark:bg-gray-800">
                   <div className="space-y-2">
                     <h4 className="font-medium text-base">{category.name}</h4>
@@ -292,7 +292,7 @@ export default function SerialNumberSettings() {
                     </div>
                     
                     {category.useSerialNumbers && (
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <Label htmlFor={`category-${category.id}-use-global`} className="text-sm">
                             Використовувати глобальну нумерацію
@@ -309,6 +309,67 @@ export default function SerialNumberSettings() {
                             disabled={updateCategoryMutation.isPending}
                           />
                         </div>
+
+                        {!category.useGlobalNumbering && (
+                          <div className="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                            <div className="space-y-2">
+                              <Label htmlFor={`category-${category.id}-template`} className="text-xs">
+                                Шаблон серійного номера
+                              </Label>
+                              <Input
+                                id={`category-${category.id}-template`}
+                                defaultValue={category.serialNumberTemplate || ''}
+                                placeholder="{prefix}-{year}-{counter:4}"
+                                className="h-8 text-sm"
+                                onBlur={(e) => {
+                                  updateCategoryMutation.mutate({
+                                    id: category.id,
+                                    data: { serialNumberTemplate: e.target.value }
+                                  });
+                                }}
+                              />
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="space-y-2">
+                                <Label htmlFor={`category-${category.id}-prefix`} className="text-xs">
+                                  Префікс
+                                </Label>
+                                <Input
+                                  id={`category-${category.id}-prefix`}
+                                  defaultValue={category.serialNumberPrefix || ''}
+                                  placeholder="CAT"
+                                  className="h-8 text-sm"
+                                  onBlur={(e) => {
+                                    updateCategoryMutation.mutate({
+                                      id: category.id,
+                                      data: { serialNumberPrefix: e.target.value }
+                                    });
+                                  }}
+                                />
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label htmlFor={`category-${category.id}-start`} className="text-xs">
+                                  Стартовий номер
+                                </Label>
+                                <Input
+                                  id={`category-${category.id}-start`}
+                                  type="number"
+                                  defaultValue={category.serialNumberStartNumber || 1}
+                                  placeholder="1"
+                                  className="h-8 text-sm"
+                                  onBlur={(e) => {
+                                    updateCategoryMutation.mutate({
+                                      id: category.id,
+                                      data: { serialNumberStartNumber: parseInt(e.target.value) || 1 }
+                                    });
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
