@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,11 +14,19 @@ import { useToast } from "@/hooks/use-toast";
 export default function SerialNumberSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [localGlobalSettings, setLocalGlobalSettings] = useState<any>(null);
 
   // Fetch global settings
   const { data: globalSettings, isLoading: globalLoading } = useQuery({
     queryKey: ['/api/serial-number-settings'],
   });
+
+  // Initialize local state when global settings are loaded
+  useEffect(() => {
+    if (globalSettings && !localGlobalSettings) {
+      setLocalGlobalSettings(globalSettings);
+    }
+  }, [globalSettings, localGlobalSettings]);
 
   // Fetch categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
@@ -99,17 +107,15 @@ export default function SerialNumberSettings() {
                 </Label>
                 <Switch
                   id="use-cross-numbering"
-                  checked={globalSettings?.useCrossNumbering || false}
+                  checked={localGlobalSettings?.useCrossNumbering || false}
                   onCheckedChange={(checked) => {
-                    updateGlobalMutation.mutate({
-                      useCrossNumbering: checked
-                    });
+                    setLocalGlobalSettings({...localGlobalSettings, useCrossNumbering: checked});
                   }}
                   disabled={updateGlobalMutation.isPending}
                 />
               </div>
 
-              {globalSettings?.useCrossNumbering && (
+              {localGlobalSettings?.useCrossNumbering && (
                 <>
                   {/* Global Template */}
                   <div className="space-y-2">
@@ -209,23 +215,9 @@ export default function SerialNumberSettings() {
                   size="sm" 
                   disabled={updateGlobalMutation.isPending}
                   onClick={() => {
-                    // Отримуємо поточні значення з форми
-                    const form = document.querySelector('form') || document;
-                    const useCrossNumbering = (form.querySelector('#use-cross-numbering') as HTMLInputElement)?.getAttribute('aria-checked') === 'true';
-                    const globalTemplate = (form.querySelector('#global-template') as HTMLInputElement)?.value;
-                    const globalPrefix = (form.querySelector('#global-prefix') as HTMLInputElement)?.value;
-                    const globalStartNumber = parseInt((form.querySelector('#global-start-number') as HTMLInputElement)?.value || '1');
-                    const currentGlobalCounter = parseInt((form.querySelector('#current-counter') as HTMLInputElement)?.value || '0');
-                    const resetCounterPeriod = (form.querySelector('[data-value]') as HTMLElement)?.getAttribute('data-value') || globalSettings?.resetCounterPeriod || 'never';
-
-                    updateGlobalMutation.mutate({
-                      useCrossNumbering,
-                      globalTemplate,
-                      globalPrefix,
-                      globalStartNumber,
-                      currentGlobalCounter,
-                      resetCounterPeriod
-                    });
+                    if (localGlobalSettings) {
+                      updateGlobalMutation.mutate(localGlobalSettings);
+                    }
                   }}
                 >
                   {updateGlobalMutation.isPending && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
