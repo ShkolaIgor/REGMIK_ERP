@@ -3857,26 +3857,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const settingsData = insertEmailSettingsSchema.parse(req.body);
       
-      // Тестування підключення до SMTP
-      const nodemailer = require('nodemailer');
-      const transporter = nodemailer.createTransport({
-        host: settingsData.smtpHost,
-        port: settingsData.smtpPort,
-        secure: settingsData.smtpSecure,
-        auth: {
-          user: settingsData.smtpUser,
-          pass: settingsData.smtpPassword,
-        },
-      });
+      // Базове тестування підключення до SMTP
+      const net = await import('net');
+      
+      const testConnection = () => {
+        return new Promise((resolve, reject) => {
+          const socket = new net.default.Socket();
+          const timeout = setTimeout(() => {
+            socket.destroy();
+            reject(new Error('Connection timeout'));
+          }, 5000);
 
-      await transporter.verify();
-      res.json({ success: true, message: "SMTP connection successful" });
+          socket.connect(settingsData.smtpPort || 587, settingsData.smtpHost, () => {
+            clearTimeout(timeout);
+            socket.destroy();
+            resolve(true);
+          });
+
+          socket.on('error', (err: any) => {
+            clearTimeout(timeout);
+            reject(err);
+          });
+        });
+      };
+
+      await testConnection();
+      res.json({ 
+        success: true, 
+        message: `SMTP server ${settingsData.smtpHost}:${settingsData.smtpPort} is reachable` 
+      });
     } catch (error) {
       console.error("SMTP connection test failed:", error);
       res.status(400).json({ 
         success: false, 
         message: "SMTP connection failed", 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   });
