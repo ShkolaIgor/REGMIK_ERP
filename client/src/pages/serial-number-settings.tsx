@@ -293,19 +293,28 @@ export default function SerialNumberSettings() {
                       {category.useSerialNumbers && (
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <Label htmlFor={`category-${category.id}-use-global`} className="text-sm">
-                              Використовувати глобальну нумерацію
-                            </Label>
+                            <div className="flex flex-col">
+                              <Label htmlFor={`category-${category.id}-use-global`} className="text-sm">
+                                Використовувати глобальну нумерацію
+                              </Label>
+                              {!localGlobalSettings?.useCrossNumbering && (
+                                <span className="text-xs text-gray-400">
+                                  Недоступно - увімкніть сквозну нумерацію
+                                </span>
+                              )}
+                            </div>
                             <Switch
                               id={`category-${category.id}-use-global`}
-                              checked={category.useGlobalNumbering === true}
+                              checked={category.useGlobalNumbering === true && localGlobalSettings?.useCrossNumbering}
                               onCheckedChange={(checked) => {
-                                updateCategoryMutation.mutate({
-                                  id: category.id,
-                                  data: { useGlobalNumbering: checked }
-                                });
+                                if (localGlobalSettings?.useCrossNumbering) {
+                                  updateCategoryMutation.mutate({
+                                    id: category.id,
+                                    data: { useGlobalNumbering: checked }
+                                  });
+                                }
                               }}
-                              disabled={updateCategoryMutation.isPending}
+                              disabled={updateCategoryMutation.isPending || !localGlobalSettings?.useCrossNumbering}
                             />
                           </div>
 
