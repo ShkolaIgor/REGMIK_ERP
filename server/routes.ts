@@ -3858,8 +3858,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const settingsData = insertEmailSettingsSchema.parse(req.body);
       
       // Тестування підключення до SMTP
-      const { createTransporter } = await import('nodemailer');
-      const transporter = createTransporter({
+      const nodemailer = require('nodemailer');
+      const transporter = nodemailer.createTransport({
         host: settingsData.smtpHost,
         port: settingsData.smtpPort,
         secure: settingsData.smtpSecure,
