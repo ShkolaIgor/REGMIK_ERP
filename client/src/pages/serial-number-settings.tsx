@@ -209,9 +209,22 @@ export default function SerialNumberSettings() {
                   size="sm" 
                   disabled={updateGlobalMutation.isPending}
                   onClick={() => {
-                    toast({
-                      title: "Успіх",
-                      description: "Глобальні налаштування збережено",
+                    // Отримуємо поточні значення з форми
+                    const form = document.querySelector('form') || document;
+                    const useCrossNumbering = (form.querySelector('#use-cross-numbering') as HTMLInputElement)?.getAttribute('aria-checked') === 'true';
+                    const globalTemplate = (form.querySelector('#global-template') as HTMLInputElement)?.value;
+                    const globalPrefix = (form.querySelector('#global-prefix') as HTMLInputElement)?.value;
+                    const globalStartNumber = parseInt((form.querySelector('#global-start-number') as HTMLInputElement)?.value || '1');
+                    const currentGlobalCounter = parseInt((form.querySelector('#current-counter') as HTMLInputElement)?.value || '0');
+                    const resetCounterPeriod = (form.querySelector('[data-value]') as HTMLElement)?.getAttribute('data-value') || globalSettings?.resetCounterPeriod || 'never';
+
+                    updateGlobalMutation.mutate({
+                      useCrossNumbering,
+                      globalTemplate,
+                      globalPrefix,
+                      globalStartNumber,
+                      currentGlobalCounter,
+                      resetCounterPeriod
                     });
                   }}
                 >
