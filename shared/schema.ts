@@ -90,6 +90,11 @@ export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
+  // Налаштування серійних номерів
+  serialNumberTemplate: text("serial_number_template"), // шаблон серійного номера, наприклад: "{prefix}-{year}-{counter:4}"
+  serialNumberPrefix: text("serial_number_prefix"), // префікс для серійних номерів
+  serialNumberStartNumber: integer("serial_number_start_number").default(1), // початковий номер
+  useSerialNumbers: boolean("use_serial_numbers").default(false), // чи використовувати серійні номери для цієї категорії
 });
 
 export const units = pgTable("units", {
@@ -1300,6 +1305,20 @@ export type InsertExchangeRateHistory = z.infer<typeof insertExchangeRateHistory
 export type ProductPrice = typeof productPrices.$inferSelect;
 export type InsertProductPrice = z.infer<typeof insertProductPriceSchema>;
 
+// Глобальні налаштування серійних номерів
+export const serialNumberSettings = pgTable("serial_number_settings", {
+  id: serial("id").primaryKey(),
+  useCrossNumbering: boolean("use_cross_numbering").default(false), // сквозна нумерація
+  globalTemplate: text("global_template").default("{year}{month:2}{day:2}-{counter:6}"), // глобальний шаблон
+  globalPrefix: text("global_prefix"), // глобальний префікс
+  globalStartNumber: integer("global_start_number").default(1), // початковий номер для сквозної нумерації
+  currentGlobalCounter: integer("current_global_counter").default(0), // поточний лічильник
+  resetCounterPeriod: text("reset_counter_period").default("never"), // never, yearly, monthly, daily
+  lastResetDate: timestamp("last_reset_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Serial Numbers table
 export const serialNumbers = pgTable("serial_numbers", {
   id: serial("id").primaryKey(),
@@ -1315,12 +1334,20 @@ export const serialNumbers = pgTable("serial_numbers", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const insertSerialNumberSettingsSchema = createInsertSchema(serialNumberSettings).omit({ 
+  id: true, 
+  createdAt: true,
+  updatedAt: true 
+});
+
 export const insertSerialNumberSchema = createInsertSchema(serialNumbers).omit({ 
   id: true, 
   createdAt: true,
   updatedAt: true 
 });
 
+export type SerialNumberSettings = typeof serialNumberSettings.$inferSelect;
+export type InsertSerialNumberSettings = z.infer<typeof insertSerialNumberSettingsSchema>;
 export type SerialNumber = typeof serialNumbers.$inferSelect;
 export type InsertSerialNumber = z.infer<typeof insertSerialNumberSchema>;
 

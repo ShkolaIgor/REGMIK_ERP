@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { serialNumbers, products } from "@shared/schema";
+import { serialNumbers, products, categories, serialNumberSettings } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 
 interface SerialGenerationOptions {
