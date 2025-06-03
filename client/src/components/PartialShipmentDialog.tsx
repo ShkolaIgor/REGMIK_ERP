@@ -84,6 +84,12 @@ export function PartialShipmentDialog({
     enabled: open && orderId > 0,
   });
 
+  // Додаємо логування для діагностики
+  console.log("PartialShipmentDialog - orderId:", orderId);
+  console.log("PartialShipmentDialog - open:", open);
+  console.log("PartialShipmentDialog - orderItems:", orderItems);
+  console.log("PartialShipmentDialog - isLoading:", isLoading);
+
   const form = useForm<z.infer<typeof partialShipmentSchema>>({
     resolver: zodResolver(partialShipmentSchema),
     defaultValues: {
