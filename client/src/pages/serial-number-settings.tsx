@@ -379,15 +379,17 @@ export default function SerialNumberSettings() {
                   <span className="ml-2">Завантаження категорій...</span>
                 </div>
               ) : localCategories && Array.isArray(localCategories) && localCategories.length > 0 ? (
-                <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                   {localCategories.map((category: any) => (
-                    <div key={category.id} className="p-4 border rounded-lg space-y-4">
-                      <h4 className="font-medium text-lg">{category.name}</h4>
-                      {category.description && (
-                        <p className="text-sm text-gray-600">{category.description}</p>
-                      )}
+                    <div key={category.id} className="p-4 border rounded-lg space-y-4 bg-gray-50 dark:bg-gray-800">
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-base">{category.name}</h4>
+                        {category.description && (
+                          <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{category.description}</p>
+                        )}
+                      </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-3">
                         <div className="space-y-2">
                           <Label htmlFor={`category-${category.id}-use-serial`}>
                             Використовувати серійні номери
@@ -473,40 +475,45 @@ export default function SerialNumberSettings() {
                         )}
                       </div>
 
-                      {!category.useGlobalNumbering && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t">
+                      {category.hasSerialNumbers && !category.useGlobalNumbering && (
+                        <div className="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                           <div className="space-y-2">
-                            <Label htmlFor={`category-${category.id}-template`}>
+                            <Label htmlFor={`category-${category.id}-template`} className="text-xs">
                               Шаблон серійного номера
                             </Label>
                             <Input
                               id={`category-${category.id}-template`}
                               defaultValue={category.serialNumberTemplate || ''}
                               placeholder="{prefix}-{year}-{counter:4}"
+                              className="h-8 text-sm"
                             />
                           </div>
                           
-                          <div className="space-y-2">
-                            <Label htmlFor={`category-${category.id}-prefix`}>
-                              Префікс
-                            </Label>
-                            <Input
-                              id={`category-${category.id}-prefix`}
-                              defaultValue={category.serialNumberPrefix || ''}
-                              placeholder="CAT"
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor={`category-${category.id}-start`}>
-                              Початковий номер
-                            </Label>
-                            <Input
-                              id={`category-${category.id}-start`}
-                              type="number"
-                              defaultValue={category.serialNumberStartNumber || 1}
-                              min="1"
-                            />
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-2">
+                              <Label htmlFor={`category-${category.id}-prefix`} className="text-xs">
+                                Префікс
+                              </Label>
+                              <Input
+                                id={`category-${category.id}-prefix`}
+                                defaultValue={category.serialNumberPrefix || ''}
+                                placeholder="CAT"
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label htmlFor={`category-${category.id}-start`} className="text-xs">
+                                Початк. номер
+                              </Label>
+                              <Input
+                                id={`category-${category.id}-start`}
+                                type="number"
+                                defaultValue={category.serialNumberStartNumber || 1}
+                                min="1"
+                                className="h-8 text-sm"
+                              />
+                            </div>
                           </div>
                         </div>
                       )}
