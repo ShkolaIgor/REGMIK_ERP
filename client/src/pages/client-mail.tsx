@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import EnvelopePrintDialog from "@/components/EnvelopePrintDialog";
 import type { ClientMail, InsertClientMail, Client, MailRegistry, EnvelopePrintSettings } from "@shared/schema";
 
 export default function ClientMailPage() {
@@ -108,6 +109,20 @@ export default function ClientMailPage() {
       case "official": return "Офіційний";
       case "marketing": return "Маркетинговий";
       case "notification": return "Повідомлення";
+      case "letter": return "Лист";
+      case "business": return "Діловий";
+      default: return type;
+    }
+  };
+
+  const getDocumentTypeLabel = (type: string) => {
+    switch (type) {
+      case "invoice": return "Рахунки";
+      case "waybill": return "Видаткові накладні";
+      case "contract": return "Договори";
+      case "notice": return "Повідомлення";
+      case "statement": return "Звіти/Довідки";
+      case "other": return "Інші документи";
       default: return type;
     }
   };
@@ -239,30 +254,24 @@ export default function ClientMailPage() {
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Груповий друк конвертів для клієнтів</DialogTitle>
+                <p className="text-sm text-gray-600 mt-2">
+                  Система надрукує адреси на конвертах та збереже інформацію про вміст для подальшого вкладення документів
+                </p>
               </DialogHeader>
               <div className="space-y-6">
                 <div>
-                  <Label htmlFor="batchName">Назва пакета</Label>
+                  <Label htmlFor="batchName">Назва пакета розсилки</Label>
                   <Input 
                     value={batchName}
                     onChange={(e) => setBatchName(e.target.value)}
-                    placeholder="Наприклад: Розсилка знижок березень 2024"
+                    placeholder="Наприклад: Рахунки за лютий 2024, Видаткові накладні №1001-1050"
                     required 
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="subject">Тема листа</Label>
-                    <Input 
-                      value={groupMailData.subject}
-                      onChange={(e) => setGroupMailData(prev => ({ ...prev, subject: e.target.value }))}
-                      placeholder="Тема для всіх листів"
-                      required 
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="mailType">Тип листа</Label>
+                    <Label htmlFor="subject">Тип документів у листах</Label>
                     <Select 
                       value={groupMailData.mailType} 
                       onValueChange={(value) => setGroupMailData(prev => ({ ...prev, mailType: value }))}
@@ -271,24 +280,45 @@ export default function ClientMailPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="letter">Лист</SelectItem>
-                        <SelectItem value="business">Діловий</SelectItem>
-                        <SelectItem value="marketing">Маркетинговий</SelectItem>
-                        <SelectItem value="notification">Повідомлення</SelectItem>
+                        <SelectItem value="invoice">Рахунки</SelectItem>
+                        <SelectItem value="waybill">Видаткові накладні</SelectItem>
+                        <SelectItem value="contract">Договори</SelectItem>
+                        <SelectItem value="notice">Повідомлення</SelectItem>
+                        <SelectItem value="statement">Звіти/Довідки</SelectItem>
+                        <SelectItem value="other">Інші документи</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="priority">Пріоритет доставки</Label>
+                    <Select 
+                      value={groupMailData.priority} 
+                      onValueChange={(value) => setGroupMailData(prev => ({ ...prev, priority: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="normal">Звичайна</SelectItem>
+                        <SelectItem value="urgent">Термінова</SelectItem>
+                        <SelectItem value="registered">Рекомендована</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="content">Зміст листа</Label>
+                  <Label htmlFor="content">Опис вмісту листів</Label>
                   <Textarea 
                     value={groupMailData.content}
                     onChange={(e) => setGroupMailData(prev => ({ ...prev, content: e.target.value }))}
-                    placeholder="Текст листа для всіх клієнтів"
-                    rows={4}
+                    placeholder="Детальний опис документів які будуть вкладені в конверти після друку адрес"
+                    rows={3}
                     required 
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Цей опис буде збережений для контролю вмісту, але не друкуватиметься на конвертах
+                  </p>
                 </div>
 
                 <div>
@@ -334,17 +364,22 @@ export default function ClientMailPage() {
                   </Button>
                   <Button
                     onClick={() => {
-                      if (selectedClients.length > 0 && batchName && groupMailData.subject && groupMailData.content) {
+                      if (selectedClients.length > 0 && batchName && groupMailData.mailType && groupMailData.content) {
                         groupCreateMutation.mutate({
                           clientIds: selectedClients,
-                          mailData: groupMailData,
+                          mailData: {
+                            subject: `${getDocumentTypeLabel(groupMailData.mailType)} для відправки`,
+                            content: groupMailData.content,
+                            mailType: groupMailData.mailType,
+                            priority: groupMailData.priority
+                          },
                           batchName
                         });
                       }
                     }}
-                    disabled={groupCreateMutation.isPending || selectedClients.length === 0 || !batchName || !groupMailData.subject || !groupMailData.content}
+                    disabled={groupCreateMutation.isPending || selectedClients.length === 0 || !batchName || !groupMailData.mailType || !groupMailData.content}
                   >
-                    {groupCreateMutation.isPending ? "Створення..." : `Створити ${selectedClients.length} листів`}
+                    {groupCreateMutation.isPending ? "Підготовка..." : `Підготувати ${selectedClients.length} конвертів`}
                   </Button>
                 </div>
               </div>
