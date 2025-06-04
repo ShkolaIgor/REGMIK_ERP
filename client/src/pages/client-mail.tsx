@@ -229,6 +229,128 @@ export default function ClientMailPage() {
             </DialogContent>
           </Dialog>
           
+          <Dialog open={isGroupPrintDialogOpen} onOpenChange={setIsGroupPrintDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Printer className="h-4 w-4 mr-2" />
+                Груповий друк конвертів
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Груповий друк конвертів для клієнтів</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-6">
+                <div>
+                  <Label htmlFor="batchName">Назва пакета</Label>
+                  <Input 
+                    value={batchName}
+                    onChange={(e) => setBatchName(e.target.value)}
+                    placeholder="Наприклад: Розсилка знижок березень 2024"
+                    required 
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="subject">Тема листа</Label>
+                    <Input 
+                      value={groupMailData.subject}
+                      onChange={(e) => setGroupMailData(prev => ({ ...prev, subject: e.target.value }))}
+                      placeholder="Тема для всіх листів"
+                      required 
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="mailType">Тип листа</Label>
+                    <Select 
+                      value={groupMailData.mailType} 
+                      onValueChange={(value) => setGroupMailData(prev => ({ ...prev, mailType: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="letter">Лист</SelectItem>
+                        <SelectItem value="business">Діловий</SelectItem>
+                        <SelectItem value="marketing">Маркетинговий</SelectItem>
+                        <SelectItem value="notification">Повідомлення</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="content">Зміст листа</Label>
+                  <Textarea 
+                    value={groupMailData.content}
+                    onChange={(e) => setGroupMailData(prev => ({ ...prev, content: e.target.value }))}
+                    placeholder="Текст листа для всіх клієнтів"
+                    rows={4}
+                    required 
+                  />
+                </div>
+
+                <div>
+                  <Label>Вибір клієнтів для розсилки</Label>
+                  <div className="border rounded-lg p-4 max-h-60 overflow-y-auto">
+                    <div className="space-y-2">
+                      {clients.map((client) => (
+                        <div key={client.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`client-${client.id}`}
+                            checked={selectedClients.includes(client.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedClients(prev => [...prev, client.id]);
+                              } else {
+                                setSelectedClients(prev => prev.filter(id => id !== client.id));
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`client-${client.id}`} className="flex-1 cursor-pointer">
+                            <div>
+                              <div className="font-medium">{client.name}</div>
+                              <div className="text-sm text-gray-500">
+                                {client.fullName} • {client.id}
+                              </div>
+                            </div>
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Вибрано клієнтів: {selectedClients.length}
+                  </p>
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsGroupPrintDialogOpen(false)}
+                  >
+                    Скасувати
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (selectedClients.length > 0 && batchName && groupMailData.subject && groupMailData.content) {
+                        groupCreateMutation.mutate({
+                          clientIds: selectedClients,
+                          mailData: groupMailData,
+                          batchName
+                        });
+                      }
+                    }}
+                    disabled={groupCreateMutation.isPending || selectedClients.length === 0 || !batchName || !groupMailData.subject || !groupMailData.content}
+                  >
+                    {groupCreateMutation.isPending ? "Створення..." : `Створити ${selectedClients.length} листів`}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button>

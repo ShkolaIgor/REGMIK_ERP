@@ -5231,6 +5231,46 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return created;
   }
+
+  // Group mail creation
+  async createGroupMails(clientIds: string[], mailData: any, batchName: string): Promise<{ created: number; batchId: string }> {
+    const batchId = `batch_${Date.now()}`;
+    const createdMails = [];
+
+    for (const clientId of clientIds) {
+      const mailToCreate = {
+        clientId,
+        subject: mailData.subject,
+        content: mailData.content,
+        mailType: mailData.mailType,
+        priority: mailData.priority,
+        status: 'draft' as const,
+        batchId,
+        senderName: 'ТОВ "РЕГМІК"',
+        senderAddress: 'м. Київ, вул. Промислова, 15',
+        senderPhone: '+38 (044) 123-45-67'
+      };
+
+      const [created] = await db
+        .insert(clientMail)
+        .values(mailToCreate)
+        .returning();
+      
+      createdMails.push(created);
+    }
+
+    // Створюємо запис у реєстрі
+    await db.insert(mailRegistry).values({
+      batchId,
+      batchName,
+      mailCount: createdMails.length,
+      registryDate: new Date(),
+      sentBy: 'Система',
+      status: 'created'
+    });
+
+    return { created: createdMails.length, batchId };
+  }
 }
 
 export const dbStorage = new DatabaseStorage();
