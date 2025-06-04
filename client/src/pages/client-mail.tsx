@@ -40,7 +40,63 @@ export default function ClientMailPage() {
   const [fontSize, setFontSize] = useState("12");
   const [envelopeSize, setEnvelopeSize] = useState("dl");
   const [centerLogo, setCenterLogo] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [draggedElement, setDraggedElement] = useState<string | null>(null);
+  const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
+  const [senderPosition, setSenderPosition] = useState({ x: 8, y: 8 });
+  const [recipientPosition, setRecipientPosition] = useState({ x: 60, y: 45 });
+  const [adPositionCoords, setAdPositionCoords] = useState({
+    'bottom-left': { x: 5, y: 80 },
+    'top-right': { x: 160, y: 8 }
+  });
   const { toast } = useToast();
+
+  // Функції для інтерактивного перетягування
+  const handleMouseDown = (elementType: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    setIsDragging(true);
+    setDraggedElement(elementType);
+    const rect = event.currentTarget.getBoundingClientRect();
+    setDragPosition({
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
+    });
+  };
+
+  const handleMouseMove = (event: React.MouseEvent) => {
+    if (!isDragging || !draggedElement) return;
+    
+    const rect = event.currentTarget.getBoundingClientRect();
+    const scale = 0.4; // Враховуємо масштаб попереднього перегляду
+    const newX = (event.clientX - rect.left - dragPosition.x) / scale;
+    const newY = (event.clientY - rect.top - dragPosition.y) / scale;
+    
+    if (draggedElement === 'sender') {
+      setSenderPosition({ x: Math.max(0, newX), y: Math.max(0, newY) });
+    } else if (draggedElement === 'recipient') {
+      setRecipientPosition({ x: Math.max(0, newX), y: Math.max(0, newY) });
+    } else if (draggedElement.startsWith('ad-')) {
+      const position = draggedElement.replace('ad-', '') as keyof typeof adPositionCoords;
+      setAdPositionCoords(prev => ({
+        ...prev,
+        [position]: { x: Math.max(0, newX), y: Math.max(0, newY) }
+      }));
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setDraggedElement(null);
+  };
+
+  const resetPositions = () => {
+    setSenderPosition({ x: 8, y: 8 });
+    setRecipientPosition({ x: 60, y: 45 });
+    setAdPositionCoords({
+      'bottom-left': { x: 5, y: 80 },
+      'top-right': { x: 160, y: 8 }
+    });
+  };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -470,15 +526,24 @@ export default function ClientMailPage() {
                   <div className="p-4 border rounded-lg bg-yellow-50">
                     <h3 className="text-lg font-semibold mb-4">Попередній перегляд конверта</h3>
                     <div className="mt-2 border rounded-lg p-4 bg-gray-50 overflow-hidden">
-                      <div className="bg-white border-2 border-black mx-auto" style={{
-                        width: envelopeSize === 'dl' ? '220mm' : envelopeSize === 'c4' ? '324mm' : '229mm',
-                        height: envelopeSize === 'dl' ? '110mm' : envelopeSize === 'c4' ? '229mm' : '162mm',
-                        position: 'relative',
-                        fontFamily: 'Times New Roman, serif',
-                        transform: 'scale(0.4)',
-                        transformOrigin: 'top left',
-                        marginBottom: envelopeSize === 'dl' ? '-50mm' : envelopeSize === 'c4' ? '-150mm' : '-100mm'
-                      }}>
+                      <div className="text-sm text-blue-600 mb-2 font-medium">
+                        💡 Натисніть та перетягніть елементи для переміщення по конверту
+                      </div>
+                      <div 
+                        className="bg-white border-2 border-black mx-auto cursor-crosshair" 
+                        style={{
+                          width: envelopeSize === 'dl' ? '220mm' : envelopeSize === 'c4' ? '324mm' : '229mm',
+                          height: envelopeSize === 'dl' ? '110mm' : envelopeSize === 'c4' ? '229mm' : '162mm',
+                          position: 'relative',
+                          fontFamily: 'Times New Roman, serif',
+                          transform: 'scale(0.4)',
+                          transformOrigin: 'top left',
+                          marginBottom: envelopeSize === 'dl' ? '-50mm' : envelopeSize === 'c4' ? '-150mm' : '-100mm'
+                        }}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
+                        onMouseLeave={handleMouseUp}
+                      >
                         <div style={{
                           position: 'absolute',
                           top: '8mm',
@@ -496,45 +561,70 @@ export default function ClientMailPage() {
                         }}>
                           МІСЦЕ<br/>ДЛЯ<br/>МАРКИ
                         </div>
-                        <div style={{
-                          position: 'absolute',
-                          top: '8mm',
-                          left: '8mm',
-                          fontSize: `${Math.round(parseInt(fontSize) * 0.7)}px`,
-                          lineHeight: '1.3',
-                          maxWidth: '70mm'
-                        }}>
+                        <div 
+                          style={{
+                            position: 'absolute',
+                            top: `${senderPosition.y}mm`,
+                            left: `${senderPosition.x}mm`,
+                            fontSize: `${Math.round(parseInt(fontSize) * 0.7)}px`,
+                            lineHeight: '1.3',
+                            maxWidth: '70mm',
+                            cursor: 'move',
+                            padding: '2mm',
+                            border: isDragging && draggedElement === 'sender' ? '2px dashed #3b82f6' : '2px dashed transparent',
+                            backgroundColor: isDragging && draggedElement === 'sender' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+                          }}
+                          onMouseDown={(e) => handleMouseDown('sender', e)}
+                          title="Натисніть та перетягніть для переміщення"
+                        >
                           <div style={{ fontWeight: 'bold', marginBottom: '2mm' }}>Від кого:</div>
                           <div>ТОВ "REGMIK"</div>
                           <div>04112, м. Київ</div>
                           <div>вул. Дегтярівська, 27-Т</div>
                         </div>
-                        <div style={{
-                          position: 'absolute',
-                          top: '45mm',
-                          left: '60mm',
-                          fontSize: `${fontSize}px`,
-                          lineHeight: '1.4',
-                          maxWidth: '120mm'
-                        }}>
+                        <div 
+                          style={{
+                            position: 'absolute',
+                            top: `${recipientPosition.y}mm`,
+                            left: `${recipientPosition.x}mm`,
+                            fontSize: `${fontSize}px`,
+                            lineHeight: '1.4',
+                            maxWidth: '120mm',
+                            cursor: 'move',
+                            padding: '2mm',
+                            border: isDragging && draggedElement === 'recipient' ? '2px dashed #3b82f6' : '2px dashed transparent',
+                            backgroundColor: isDragging && draggedElement === 'recipient' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+                          }}
+                          onMouseDown={(e) => handleMouseDown('recipient', e)}
+                          title="Натисніть та перетягніть для переміщення"
+                        >
                           <div style={{ fontWeight: 'bold', marginBottom: '3mm' }}>Кому:</div>
                           <div style={{ fontWeight: 'bold', marginBottom: '2mm' }}>Приклад клієнта</div>
                           <div>01001, м. Київ, вул. Прикладна, 1</div>
                         </div>
                         {(advertisementText || advertisementImage) && adPositions.map(position => (
-                          <div key={position} style={{
-                            position: 'absolute',
-                            ...(position === 'top-right' && { top: '8mm', right: '5mm' }),
-                            ...(position === 'bottom-left' && { bottom: '5mm', left: '5mm' }),
-                            fontSize: '8px',
-                            color: '#333',
-                            maxWidth: '50mm',
-                            display: 'flex',
-                            flexDirection: imageRelativePosition === 'above' || imageRelativePosition === 'below' ? 'column' : 'row',
-                            alignItems: centerLogo ? 'center' : (position.includes('right') ? 'flex-end' : 'flex-start'),
-                            justifyContent: centerLogo ? 'center' : 'flex-start',
-                            gap: '3px'
-                          }}>
+                          <div 
+                            key={position} 
+                            style={{
+                              position: 'absolute',
+                              top: `${adPositionCoords[position as keyof typeof adPositionCoords]?.y || 8}mm`,
+                              left: `${adPositionCoords[position as keyof typeof adPositionCoords]?.x || 8}mm`,
+                              fontSize: '8px',
+                              color: '#333',
+                              maxWidth: '50mm',
+                              display: 'flex',
+                              flexDirection: imageRelativePosition === 'above' || imageRelativePosition === 'below' ? 'column' : 'row',
+                              alignItems: centerLogo ? 'center' : (position.includes('right') ? 'flex-end' : 'flex-start'),
+                              justifyContent: centerLogo ? 'center' : 'flex-start',
+                              gap: '3px',
+                              cursor: 'move',
+                              padding: '2mm',
+                              border: isDragging && draggedElement === `ad-${position}` ? '2px dashed #3b82f6' : '2px dashed transparent',
+                              backgroundColor: isDragging && draggedElement === `ad-${position}` ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+                            }}
+                            onMouseDown={(e) => handleMouseDown(`ad-${position}`, e)}
+                            title="Натисніть та перетягніть для переміщення реклами"
+                          >
                             {imageRelativePosition === 'above' && advertisementImage && (
                               <img 
                                 src={advertisementImage} 
