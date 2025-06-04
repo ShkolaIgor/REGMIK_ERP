@@ -4250,6 +4250,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Clients API
+  app.get("/api/clients", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const clients = await storage.getClients();
+      res.json(clients);
+    } catch (error) {
+      console.error("Failed to get clients:", error);
+      res.status(500).json({ error: "Failed to get clients" });
+    }
+  });
+
+  app.post("/api/clients", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const client = await storage.createClient(req.body);
+      res.status(201).json(client);
+    } catch (error) {
+      console.error("Failed to create client:", error);
+      res.status(500).json({ error: "Failed to create client" });
+    }
+  });
+
+  app.get("/api/clients/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const client = await storage.getClient(id);
+      if (!client) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+      res.json(client);
+    } catch (error) {
+      console.error("Failed to get client:", error);
+      res.status(500).json({ error: "Failed to get client" });
+    }
+  });
+
+  app.patch("/api/clients/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const client = await storage.updateClient(id, req.body);
+      if (!client) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+      res.json(client);
+    } catch (error) {
+      console.error("Failed to update client:", error);
+      res.status(500).json({ error: "Failed to update client" });
+    }
+  });
+
+  app.delete("/api/clients/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteClient(id);
+      if (!success) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+      res.json({ message: "Client deleted successfully" });
+    } catch (error) {
+      console.error("Failed to delete client:", error);
+      res.status(500).json({ error: "Failed to delete client" });
+    }
+  });
+
+  // Third-party shipments API
+  app.post("/api/orders/:orderId/third-party-shipment", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.orderId);
+      const { useClientApi, ...shipmentData } = req.body;
+      
+      const result = await storage.createThirdPartyShipment(orderId, shipmentData, useClientApi);
+      res.status(201).json(result);
+    } catch (error) {
+      console.error("Failed to create third-party shipment:", error);
+      res.status(500).json({ error: error.message || "Failed to create third-party shipment" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -9,7 +9,7 @@ import {
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes, solderingTypes,
   componentCategories, componentAlternatives, carriers, shipments, shipmentItems, customerAddresses, senderSettings,
   manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, exchangeRateHistory, serialNumbers, serialNumberSettings, emailSettings,
-  sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks,
+  sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
   type Category, type InsertCategory,
@@ -28,6 +28,7 @@ import {
   type PackageType, type InsertPackageType,
   type ProductComponent, type InsertProductComponent,
   type Carrier, type InsertCarrier,
+  type Client, type InsertClient,
   type Shipment, type InsertShipment,
   type CustomerAddress, type InsertCustomerAddress,
   type SenderSettings, type InsertSenderSettings,
@@ -5041,6 +5042,137 @@ export class DatabaseStorage implements IStorage {
       }
     } catch (error) {
       console.error('Error updating serial number settings:', error);
+      throw error;
+    }
+  }
+
+  // Clients management
+  async getClients(): Promise<Client[]> {
+    try {
+      return await db.select().from(clients).orderBy(clients.name);
+    } catch (error) {
+      console.error('Error getting clients:', error);
+      throw error;
+    }
+  }
+
+  async getClient(id: number): Promise<Client | null> {
+    try {
+      const [client] = await db.select().from(clients).where(eq(clients.id, id));
+      return client || null;
+    } catch (error) {
+      console.error('Error getting client:', error);
+      throw error;
+    }
+  }
+
+  async createClient(clientData: InsertClient): Promise<Client> {
+    try {
+      const [client] = await db
+        .insert(clients)
+        .values(clientData)
+        .returning();
+      return client;
+    } catch (error) {
+      console.error('Error creating client:', error);
+      throw error;
+    }
+  }
+
+  async updateClient(id: number, clientData: Partial<InsertClient>): Promise<Client | null> {
+    try {
+      const [client] = await db
+        .update(clients)
+        .set({ ...clientData, updatedAt: new Date() })
+        .where(eq(clients.id, id))
+        .returning();
+      return client || null;
+    } catch (error) {
+      console.error('Error updating client:', error);
+      throw error;
+    }
+  }
+
+  async deleteClient(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(clients).where(eq(clients.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error('Error deleting client:', error);
+      return false;
+    }
+  }
+
+  // Third-party shipping with client API keys
+  async createThirdPartyShipment(
+    orderId: number, 
+    shipmentData: any,
+    useClientApi: boolean = false
+  ): Promise<any> {
+    try {
+      // Отримуємо замовлення з інформацією про клієнта
+      const [order] = await db
+        .select({
+          id: orders.id,
+          clientId: orders.clientId,
+          customerName: orders.customerName,
+          client: {
+            id: clients.id,
+            name: clients.name,
+            novaPoshtaApiKey: clients.novaPoshtaApiKey,
+            novaPoshtaSenderRef: clients.novaPoshtaSenderRef,
+            novaPoshtaContactRef: clients.novaPoshtaContactRef,
+            novaPoshtaAddressRef: clients.novaPoshtaAddressRef,
+            enableThirdPartyShipping: clients.enableThirdPartyShipping
+          }
+        })
+        .from(orders)
+        .leftJoin(clients, eq(orders.clientId, clients.id))
+        .where(eq(orders.id, orderId));
+
+      if (!order) {
+        throw new Error('Замовлення не знайдено');
+      }
+
+      let apiKey = process.env.NOVA_POSHTA_API_KEY;
+      let senderData = null;
+
+      // Якщо потрібно використовувати API клієнта
+      if (useClientApi && order.client && order.client.enableThirdPartyShipping) {
+        if (!order.client.novaPoshtaApiKey) {
+          throw new Error('У клієнта не налаштований API ключ Нової Пошти');
+        }
+        
+        apiKey = order.client.novaPoshtaApiKey;
+        senderData = {
+          senderRef: order.client.novaPoshtaSenderRef,
+          contactRef: order.client.novaPoshtaContactRef,
+          addressRef: order.client.novaPoshtaAddressRef
+        };
+      }
+
+      // Створюємо відвантаження з відповідним API ключем
+      const shipmentNumber = `SH-${Date.now()}`;
+      
+      const [shipment] = await db
+        .insert(shipments)
+        .values({
+          orderId,
+          shipmentNumber,
+          ...shipmentData,
+          status: 'created',
+          createdAt: new Date()
+        })
+        .returning();
+
+      return {
+        shipment,
+        apiKey,
+        senderData,
+        useClientApi
+      };
+    } catch (error) {
+      console.error('Error creating third-party shipment:', error);
       throw error;
     }
   }
