@@ -2799,10 +2799,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (existingAddress) {
         // Оновлюємо існуючу адресу (збільшуємо лічильник використань і оновлюємо дату)
-        const updatedAddress = await storage.updateCustomerAddressUsage(existingAddress.id);
+        // Також оновлюємо carrier_id якщо він переданий
+        let updatedAddress = await storage.updateCustomerAddressUsage(existingAddress.id);
+        if (addressData.carrierId && addressData.carrierId !== existingAddress.carrierId) {
+          updatedAddress = await storage.updateCustomerAddress(existingAddress.id, {
+            carrierId: addressData.carrierId
+          });
+        }
         res.json(updatedAddress);
       } else {
-        // Створюємо нову адресу
+        // Створюємо нову адресу з carrier_id
         const newAddress = await storage.createCustomerAddress(addressData);
         res.status(201).json(newAddress);
       }
