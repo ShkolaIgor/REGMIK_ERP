@@ -383,21 +383,17 @@ export const components = pgTable("components", {
 // Листування з клієнтами
 export const clientMail = pgTable("client_mail", {
   id: serial("id").primaryKey(),
-  clientId: varchar("client_id", { length: 20 }).references(() => clients.id).notNull(),
-  subject: text("subject").notNull(),
+  clientId: varchar("client_id").references(() => clients.id).notNull(),
+  subject: varchar("subject", { length: 255 }).notNull(),
   content: text("content").notNull(),
-  mailType: text("mail_type").notNull().default("official"), // official, marketing, notification
-  status: text("status").notNull().default("draft"), // draft, queued, sent, delivered, failed
-  senderName: text("sender_name").notNull(),
-  senderAddress: text("sender_address").notNull(),
-  recipientName: text("recipient_name").notNull(),
-  recipientAddress: text("recipient_address").notNull(),
+  mailType: varchar("mail_type", { length: 50 }).notNull().default("letter"),
+  priority: varchar("priority", { length: 20 }).notNull().default("normal"),
+  status: varchar("status", { length: 50 }).notNull().default("draft"),
   envelopePrinted: boolean("envelope_printed").default(false),
-  sentDate: timestamp("sent_date"),
-  deliveredDate: timestamp("delivered_date"),
-  advertisementText: text("advertisement_text"), // реклама в нижньому лівому куті
-  batchId: text("batch_id"), // для групового друку
-  notes: text("notes"),
+  batchId: varchar("batch_id", { length: 100 }),
+  senderName: varchar("sender_name", { length: 255 }),
+  senderAddress: text("sender_address"),
+  senderPhone: varchar("sender_phone", { length: 50 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -405,30 +401,27 @@ export const clientMail = pgTable("client_mail", {
 // Реєстр відправлених листів
 export const mailRegistry = pgTable("mail_registry", {
   id: serial("id").primaryKey(),
-  batchId: text("batch_id").notNull(),
-  batchName: text("batch_name").notNull(),
-  totalCount: integer("total_count").notNull(),
-  printedCount: integer("printed_count").default(0),
-  sentCount: integer("sent_count").default(0),
-  deliveredCount: integer("delivered_count").default(0),
-  status: text("status").notNull().default("preparing"), // preparing, printing, sending, completed
-  printDate: timestamp("print_date"),
-  completedDate: timestamp("completed_date"),
+  batchId: varchar("batch_id", { length: 100 }).notNull(),
+  batchName: varchar("batch_name", { length: 255 }).notNull(),
+  mailCount: integer("mail_count").notNull().default(0),
+  registryDate: timestamp("registry_date").notNull().defaultNow(),
+  sentBy: varchar("sent_by", { length: 255 }),
   notes: text("notes"),
+  status: varchar("status", { length: 50 }).notNull().default("created"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Налаштування друку конвертів
 export const envelopePrintSettings = pgTable("envelope_print_settings", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  envelopeSize: text("envelope_size").notNull().default("dl"), // dl, c4, c5
-  senderPosition: jsonb("sender_position").notNull(), // {x, y, width, height}
-  recipientPosition: jsonb("recipient_position").notNull(), // {x, y, width, height}
-  advertisementPosition: jsonb("advertisement_position"), // {x, y, width, height}
+  settingName: varchar("setting_name", { length: 255 }).notNull(),
+  senderName: varchar("sender_name", { length: 255 }),
+  senderAddress: text("sender_address"),
+  senderPhone: varchar("sender_phone", { length: 50 }),
+  advertisingText: text("advertising_text"),
+  envelopeFormat: varchar("envelope_format", { length: 50 }).notNull().default("C5"),
   fontSize: integer("font_size").default(12),
-  fontFamily: text("font_family").default("Arial"),
-  margins: jsonb("margins").notNull(), // {top, right, bottom, left}
+  fontFamily: varchar("font_family", { length: 100 }).default("Arial"),
   isDefault: boolean("is_default").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
