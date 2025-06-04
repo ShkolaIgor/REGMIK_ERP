@@ -30,6 +30,9 @@ import {
   type ProductComponent, type InsertProductComponent,
   type Carrier, type InsertCarrier,
   type Client, type InsertClient,
+  type ClientMail, type InsertClientMail,
+  type MailRegistry, type InsertMailRegistry,
+  type EnvelopePrintSettings, type InsertEnvelopePrintSettings,
   type Shipment, type InsertShipment,
   type CustomerAddress, type InsertCustomerAddress,
   type SenderSettings, type InsertSenderSettings,
@@ -5176,6 +5179,57 @@ export class DatabaseStorage implements IStorage {
       console.error('Error creating third-party shipment:', error);
       throw error;
     }
+  }
+
+  // Client Mail methods
+  async getClientMails(): Promise<ClientMail[]> {
+    return await db.select().from(clientMail).orderBy(desc(clientMail.createdAt));
+  }
+
+  async createClientMail(mailData: InsertClientMail): Promise<ClientMail> {
+    const [created] = await db
+      .insert(clientMail)
+      .values(mailData)
+      .returning();
+    return created;
+  }
+
+  async updateMailsForBatch(mailIds: number[], batchId: string): Promise<void> {
+    await db
+      .update(clientMail)
+      .set({ 
+        batchId, 
+        status: 'queued',
+        envelopePrinted: true,
+        updatedAt: new Date()
+      })
+      .where(sql`${clientMail.id} = ANY(${mailIds})`);
+  }
+
+  // Mail Registry methods
+  async getMailRegistry(): Promise<MailRegistry[]> {
+    return await db.select().from(mailRegistry).orderBy(desc(mailRegistry.createdAt));
+  }
+
+  async createMailRegistry(registryData: InsertMailRegistry): Promise<MailRegistry> {
+    const [created] = await db
+      .insert(mailRegistry)
+      .values(registryData)
+      .returning();
+    return created;
+  }
+
+  // Envelope Print Settings methods
+  async getEnvelopePrintSettings(): Promise<EnvelopePrintSettings[]> {
+    return await db.select().from(envelopePrintSettings).orderBy(desc(envelopePrintSettings.createdAt));
+  }
+
+  async createEnvelopePrintSettings(settingsData: InsertEnvelopePrintSettings): Promise<EnvelopePrintSettings> {
+    const [created] = await db
+      .insert(envelopePrintSettings)
+      .values(settingsData)
+      .returning();
+    return created;
   }
 }
 

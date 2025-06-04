@@ -46,6 +46,9 @@ import {
   type Client, type InsertClient,
   type ClientContact, type InsertClientContact,
   type ClientPhone, type InsertClientPhone,
+  type ClientMail, type InsertClientMail,
+  type MailRegistry, type InsertMailRegistry,
+  type EnvelopePrintSettings, type InsertEnvelopePrintSettings,
   departments
 } from "@shared/schema";
 
@@ -1413,6 +1416,19 @@ export class MemStorage implements IStorage {
 
     return decision;
   }
+
+  // Client Mail methods
+  getClientMails(): Promise<ClientMail[]>;
+  createClientMail(mailData: InsertClientMail): Promise<ClientMail>;
+  updateMailsForBatch(mailIds: number[], batchId: string): Promise<void>;
+
+  // Mail Registry methods
+  getMailRegistry(): Promise<MailRegistry[]>;
+  createMailRegistry(registryData: InsertMailRegistry): Promise<MailRegistry>;
+
+  // Envelope Print Settings methods
+  getEnvelopePrintSettings(): Promise<EnvelopePrintSettings[]>;
+  createEnvelopePrintSettings(settingsData: InsertEnvelopePrintSettings): Promise<EnvelopePrintSettings>;
 }
 
 // Використовуємо DatabaseStorage для роботи з базою даних
