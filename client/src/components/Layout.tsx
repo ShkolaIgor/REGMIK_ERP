@@ -44,13 +44,19 @@ const navigationItems = [
     ]
   },
   {
+    title: "Модуль Продажі",
+    items: [
+      { name: "Клієнти", href: "/clients", icon: Users },
+      { name: "Замовлення", href: "/orders", icon: ShoppingCart },
+      { name: "Контакти клієнтів", href: "/client-contacts", icon: Users },
+      { name: "Відвантаження", href: "/shipments", icon: Truck }
+    ]
+  },
+  {
     title: "Модуль Склад",
     items: [
       { name: "Каталог товарів", href: "/inventory", icon: Package },
-      { name: "Замовлення", href: "/orders", icon: ShoppingCart },
-      { name: "Клієнти", href: "/clients", icon: Users },
       { name: "Замовлені товари", href: "/ordered-products", icon: Package },
-      { name: "Відвантаження", href: "/shipments", icon: Truck },
       { name: "Замовлення постачальникам", href: "/supplier-orders", icon: Package },
       { name: "Переміщення між складами", href: "/warehouse-transfers", icon: PackageOpen },
       { name: "Інвентаризація", href: "/inventory-audits", icon: ClipboardList },
