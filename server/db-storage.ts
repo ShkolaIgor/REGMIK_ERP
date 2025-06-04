@@ -5056,7 +5056,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getClient(id: number): Promise<Client | null> {
+  async getClient(id: string): Promise<Client | null> {
     try {
       const [client] = await db.select().from(clients).where(eq(clients.id, id));
       return client || null;
@@ -5079,7 +5079,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async updateClient(id: number, clientData: Partial<InsertClient>): Promise<Client | null> {
+  async updateClient(id: string, clientData: Partial<InsertClient>): Promise<Client | null> {
     try {
       const [client] = await db
         .update(clients)
@@ -5093,7 +5093,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async deleteClient(id: number): Promise<boolean> {
+  async deleteClient(id: string): Promise<boolean> {
     try {
       const result = await db.delete(clients).where(eq(clients.id, id));
       return (result.rowCount ?? 0) > 0;
