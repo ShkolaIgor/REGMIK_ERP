@@ -49,6 +49,7 @@ const navigationItems = [
       { name: "Клієнти", href: "/clients", icon: Users },
       { name: "Замовлення", href: "/orders", icon: ShoppingCart },
       { name: "Контакти клієнтів", href: "/client-contacts", icon: Users },
+      { name: "Листування", href: "/client-mail", icon: Mail },
       { name: "Відвантаження", href: "/shipments", icon: Truck }
     ]
   },
