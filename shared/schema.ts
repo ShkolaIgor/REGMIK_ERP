@@ -380,6 +380,59 @@ export const components = pgTable("components", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Листування з клієнтами
+export const clientMail = pgTable("client_mail", {
+  id: serial("id").primaryKey(),
+  clientId: varchar("client_id", { length: 20 }).references(() => clients.id).notNull(),
+  subject: text("subject").notNull(),
+  content: text("content").notNull(),
+  mailType: text("mail_type").notNull().default("official"), // official, marketing, notification
+  status: text("status").notNull().default("draft"), // draft, queued, sent, delivered, failed
+  senderName: text("sender_name").notNull(),
+  senderAddress: text("sender_address").notNull(),
+  recipientName: text("recipient_name").notNull(),
+  recipientAddress: text("recipient_address").notNull(),
+  envelopePrinted: boolean("envelope_printed").default(false),
+  sentDate: timestamp("sent_date"),
+  deliveredDate: timestamp("delivered_date"),
+  advertisementText: text("advertisement_text"), // реклама в нижньому лівому куті
+  batchId: text("batch_id"), // для групового друку
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Реєстр відправлених листів
+export const mailRegistry = pgTable("mail_registry", {
+  id: serial("id").primaryKey(),
+  batchId: text("batch_id").notNull(),
+  batchName: text("batch_name").notNull(),
+  totalCount: integer("total_count").notNull(),
+  printedCount: integer("printed_count").default(0),
+  sentCount: integer("sent_count").default(0),
+  deliveredCount: integer("delivered_count").default(0),
+  status: text("status").notNull().default("preparing"), // preparing, printing, sending, completed
+  printDate: timestamp("print_date"),
+  completedDate: timestamp("completed_date"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Налаштування друку конвертів
+export const envelopePrintSettings = pgTable("envelope_print_settings", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  envelopeSize: text("envelope_size").notNull().default("dl"), // dl, c4, c5
+  senderPosition: jsonb("sender_position").notNull(), // {x, y, width, height}
+  recipientPosition: jsonb("recipient_position").notNull(), // {x, y, width, height}
+  advertisementPosition: jsonb("advertisement_position"), // {x, y, width, height}
+  fontSize: integer("font_size").default(12),
+  fontFamily: text("font_family").default("Arial"),
+  margins: jsonb("margins").notNull(), // {top, right, bottom, left}
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Таблиця для композиції продуктів (BOM - Bill of Materials)
 export const productComponents = pgTable("product_components", {
   id: serial("id").primaryKey(),
@@ -1434,6 +1487,30 @@ export type SerialNumberSettings = typeof serialNumberSettings.$inferSelect;
 export type InsertSerialNumberSettings = z.infer<typeof insertSerialNumberSettingsSchema>;
 export type SerialNumber = typeof serialNumbers.$inferSelect;
 export type InsertSerialNumber = z.infer<typeof insertSerialNumberSchema>;
+
+// Схеми валідації для листування
+export const insertClientMailSchema = createInsertSchema(clientMail).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertMailRegistrySchema = createInsertSchema(mailRegistry).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertEnvelopePrintSettingsSchema = createInsertSchema(envelopePrintSettings).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export type ClientMail = typeof clientMail.$inferSelect;
+export type InsertClientMail = z.infer<typeof insertClientMailSchema>;
+export type MailRegistry = typeof mailRegistry.$inferSelect;
+export type InsertMailRegistry = z.infer<typeof insertMailRegistrySchema>;
+export type EnvelopePrintSettings = typeof envelopePrintSettings.$inferSelect;
+export type InsertEnvelopePrintSettings = z.infer<typeof insertEnvelopePrintSettingsSchema>;
 
 
 

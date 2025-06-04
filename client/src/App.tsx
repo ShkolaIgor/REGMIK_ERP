@@ -15,6 +15,7 @@ import Production from "@/pages/production";
 import Orders from "@/pages/orders";
 import Clients from "@/pages/clients";
 import ClientContacts from "@/pages/client-contacts";
+import ClientMail from "@/pages/client-mail";
 import Recipes from "@/pages/recipes";
 import TechCards from "@/pages/tech-cards";
 import BOM from "@/pages/bom";
@@ -84,6 +85,7 @@ function Router() {
         <Route path="/orders" component={Orders} />
         <Route path="/clients" component={Clients} />
         <Route path="/client-contacts" component={ClientContacts} />
+        <Route path="/client-mail" component={ClientMail} />
         <Route path="/recipes" component={Recipes} />
         <Route path="/tech-cards" component={TechCards} />
         <Route path="/bom" component={BOM} />
