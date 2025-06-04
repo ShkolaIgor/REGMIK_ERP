@@ -104,7 +104,7 @@ export default function Clients() {
     mutationFn: async (data: FormData) => {
       const response = await apiRequest("/api/clients", {
         method: "POST",
-        body: JSON.stringify(data),
+        body: data,
       });
       return response;
     },
@@ -130,7 +130,7 @@ export default function Clients() {
     mutationFn: async (data: FormData) => {
       const response = await apiRequest(`/api/clients/${editingClient?.id}`, {
         method: "PATCH",
-        body: JSON.stringify(data),
+        body: data,
       });
       return response;
     },
