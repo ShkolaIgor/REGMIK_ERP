@@ -673,8 +673,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Items data:", items);
       console.log("Items count:", items ? items.length : 0);
       
-      const orderData = insertOrderSchema.parse(order);
-      const createdOrder = await storage.createOrder(orderData, items || []);
+      // Якщо є clientId, отримуємо дані клієнта та автоматично заповнюємо customerName
+      let orderData = { ...order };
+      if (order.clientId && !order.customerName) {
+        const client = await storage.getClient(order.clientId);
+        if (client) {
+          orderData.customerName = client.name;
+          console.log("Auto-filled customerName from client:", client.name);
+        }
+      }
+      
+      const validatedOrderData = insertOrderSchema.parse(orderData);
+      const createdOrder = await storage.createOrder(validatedOrderData, items || []);
       console.log("Created order:", createdOrder);
       res.status(201).json(createdOrder);
     } catch (error) {

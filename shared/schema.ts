@@ -148,10 +148,10 @@ export const inventory = pgTable("inventory", {
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   orderNumber: text("order_number").notNull().unique(),
-  customerName: text("customer_name").notNull(),
+  customerName: text("customer_name"),
   customerEmail: text("customer_email"),
   customerPhone: text("customer_phone"),
-  clientId: integer("client_id").references(() => clients.id), // зв'язок з клієнтом для використання його API ключів
+  clientId: varchar("client_id", { length: 20 }).references(() => clients.id), // зв'язок з клієнтом для використання його API ключів
   status: text("status").notNull().default("pending"), // pending, processing, shipped, delivered, cancelled
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   notes: text("notes"),
@@ -398,7 +398,12 @@ export const insertUnitSchema = createInsertSchema(units).omit({ id: true, creat
 export const insertWarehouseSchema = createInsertSchema(warehouses).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true });
 export const insertInventorySchema = createInsertSchema(inventory).omit({ id: true, updatedAt: true });
-export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, orderNumber: true, totalAmount: true });
+export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, orderNumber: true, totalAmount: true }).extend({
+  customerName: z.string().optional(), // робимо опціональним, якщо є clientId
+  clientId: z.string().optional(), // опціональний зв'язок з клієнтом
+}).refine(data => data.customerName || data.clientId, {
+  message: "Потрібно вказати або ім'я клієнта, або обрати клієнта зі списку"
+});
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
 export const insertRecipeSchema = createInsertSchema(recipes).omit({ id: true, createdAt: true });
 export const insertRecipeIngredientSchema = createInsertSchema(recipeIngredients).omit({ id: true });
