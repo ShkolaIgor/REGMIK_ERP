@@ -102,6 +102,7 @@ export function PartialShipmentDialog({
 
   // Функція для заповнення форми з обраної адреси
   const fillFormFromAddress = (address: any) => {
+    console.log("Заповнення форми з адреси:", address);
     form.setValue("recipientName", address.recipientName || "");
     form.setValue("recipientPhone", address.recipientPhone || "");
     form.setValue("recipientCityName", address.cityName || "");
@@ -111,7 +112,10 @@ export function PartialShipmentDialog({
     
     // Автоматично заповнюємо перевізника, якщо він збережений в адресі
     if (address.carrierId) {
+      console.log("Встановлюю перевізника:", address.carrierId, address.carrierName);
       form.setValue("carrierId", address.carrierId);
+    } else {
+      console.log("Перевізник не вказаний в адресі");
     }
     
     setShowSavedAddresses(false);
@@ -343,8 +347,13 @@ export function PartialShipmentDialog({
                             <div className="text-xs text-muted-foreground truncate">
                               {address.cityName} - {address.warehouseAddress}
                             </div>
-                            <div className="text-xs text-muted-foreground">
-                              Використано: {address.usageCount} раз
+                            <div className="text-xs text-muted-foreground flex justify-between">
+                              <span>Використано: {address.usageCount} раз</span>
+                              {address.carrierName && (
+                                <span className="text-blue-600 dark:text-blue-400">
+                                  {address.carrierName}
+                                </span>
+                              )}
                             </div>
                           </div>
                           <Button
