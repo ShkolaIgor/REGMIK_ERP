@@ -129,6 +129,21 @@ export function PartialShipmentDialog({
         throw new Error("Оберіть товари для відвантаження");
       }
 
+      // Зберігаємо або оновлюємо адресу клієнта
+      await apiRequest('/api/customer-addresses/save', {
+        method: 'POST',
+        body: {
+          customerName: orderNumber,
+          customerPhone: data.recipientPhone,
+          recipientName: data.recipientName,
+          recipientPhone: data.recipientPhone,
+          cityRef: data.recipientCityRef || '',
+          cityName: data.recipientCityName,
+          warehouseRef: data.recipientWarehouseRef || '',
+          warehouseAddress: data.recipientWarehouseAddress,
+        }
+      });
+
       return apiRequest(`/api/orders/${orderId}/partial-shipment`, {
         method: "POST",
         body: {

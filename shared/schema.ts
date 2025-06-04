@@ -165,11 +165,15 @@ export const customerAddresses = pgTable("customer_addresses", {
   id: serial("id").primaryKey(),
   customerName: varchar("customer_name", { length: 255 }).notNull(),
   customerPhone: varchar("customer_phone", { length: 50 }).notNull(),
+  recipientName: varchar("recipient_name", { length: 255 }),
+  recipientPhone: varchar("recipient_phone", { length: 50 }),
   cityRef: varchar("city_ref", { length: 255 }).notNull(),
   cityName: varchar("city_name", { length: 255 }).notNull(),
   warehouseRef: varchar("warehouse_ref", { length: 255 }).notNull(),
   warehouseAddress: text("warehouse_address").notNull(),
   isDefault: boolean("is_default").default(false),
+  lastUsed: timestamp("last_used").defaultNow(), // для сортування за останнім використанням
+  usageCount: integer("usage_count").default(1), // кількість використань
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
