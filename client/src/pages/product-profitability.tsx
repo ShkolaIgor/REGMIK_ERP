@@ -193,7 +193,7 @@ export default function ProductProfitability() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {profitabilityLoading ? (
               <ChartSkeleton />
             ) : (
               <div className="h-80">
