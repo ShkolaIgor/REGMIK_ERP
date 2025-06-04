@@ -37,6 +37,8 @@ export default function ClientMailPage() {
   const [adPositions, setAdPositions] = useState<string[]>(["bottom-left"]); // зліва знизу, справа зверху або і там і там
   const [imageRelativePosition, setImageRelativePosition] = useState("left"); // над, під, зліва, зправа від тексту
   const [imageSize, setImageSize] = useState("small");
+  const [fontSize, setFontSize] = useState("12");
+  const [envelopeSize, setEnvelopeSize] = useState("dl");
   const { toast } = useToast();
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -240,7 +242,7 @@ export default function ClientMailPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label>Розмір конверта</Label>
-                        <Select defaultValue="dl">
+                        <Select value={envelopeSize} onValueChange={setEnvelopeSize}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
@@ -253,7 +255,13 @@ export default function ClientMailPage() {
                       </div>
                       <div>
                         <Label>Розмір шрифту</Label>
-                        <Input type="number" defaultValue="12" min="8" max="20" />
+                        <Input 
+                          type="number" 
+                          value={fontSize} 
+                          onChange={(e) => setFontSize(e.target.value)}
+                          min="8" 
+                          max="20" 
+                        />
                       </div>
                     </div>
                   </div>
@@ -450,13 +458,13 @@ export default function ClientMailPage() {
                     <h3 className="text-lg font-semibold mb-4">Попередній перегляд конверта</h3>
                     <div className="mt-2 border rounded-lg p-4 bg-gray-50 overflow-hidden">
                       <div className="bg-white border-2 border-black mx-auto" style={{
-                        width: '220mm',
-                        height: '110mm',
+                        width: envelopeSize === 'dl' ? '220mm' : envelopeSize === 'c4' ? '324mm' : '229mm',
+                        height: envelopeSize === 'dl' ? '110mm' : envelopeSize === 'c4' ? '229mm' : '162mm',
                         position: 'relative',
                         fontFamily: 'Times New Roman, serif',
-                        transform: 'scale(0.6)',
+                        transform: 'scale(0.4)',
                         transformOrigin: 'top left',
-                        marginBottom: '-30mm'
+                        marginBottom: envelopeSize === 'dl' ? '-50mm' : envelopeSize === 'c4' ? '-150mm' : '-100mm'
                       }}>
                         <div style={{
                           position: 'absolute',
@@ -479,7 +487,7 @@ export default function ClientMailPage() {
                           position: 'absolute',
                           top: '8mm',
                           left: '8mm',
-                          fontSize: '9px',
+                          fontSize: `${Math.round(parseInt(fontSize) * 0.7)}px`,
                           lineHeight: '1.3',
                           maxWidth: '70mm'
                         }}>
@@ -492,7 +500,7 @@ export default function ClientMailPage() {
                           position: 'absolute',
                           top: '45mm',
                           left: '60mm',
-                          fontSize: '12px',
+                          fontSize: `${fontSize}px`,
                           lineHeight: '1.4',
                           maxWidth: '120mm'
                         }}>
