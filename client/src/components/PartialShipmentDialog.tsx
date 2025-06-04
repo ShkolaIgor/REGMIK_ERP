@@ -78,6 +78,7 @@ export function PartialShipmentDialog({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [shipmentItems, setShipmentItems] = useState<Record<number, number>>({});
+  const [showSavedAddresses, setShowSavedAddresses] = useState(false);
 
   const { data: orderItems = [], isLoading } = useQuery({
     queryKey: ["/api/orders", orderId, "items"],
@@ -90,6 +91,23 @@ export function PartialShipmentDialog({
     },
     enabled: open && orderId > 0,
   });
+
+  // Запит для отримання збережених адрес клієнтів
+  const { data: savedAddresses = [] } = useQuery({
+    queryKey: ["/api/customer-addresses"],
+    enabled: showSavedAddresses,
+  }) as { data: any[] };
+
+  // Функція для заповнення форми з обраної адреси
+  const fillFormFromAddress = (address: any) => {
+    form.setValue("recipientName", address.recipientName || "");
+    form.setValue("recipientPhone", address.recipientPhone || "");
+    form.setValue("recipientCityName", address.cityName || "");
+    form.setValue("recipientWarehouseAddress", address.warehouseAddress || "");
+    form.setValue("recipientCityRef", address.cityRef || "");
+    form.setValue("recipientWarehouseRef", address.warehouseRef || "");
+    setShowSavedAddresses(false);
+  };
 
   // Додаємо логування для діагностики
   console.log("PartialShipmentDialog - orderId:", orderId);
@@ -276,23 +294,87 @@ export function PartialShipmentDialog({
             </div>
 
             {/* Дані відвантаження */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="carrierId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Перевізник</FormLabel>
-                    <FormControl>
-                      <CarrierSelect
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+            <div className="space-y-4">
+              {/* Кнопка швидкого вибору адрес */}
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSavedAddresses(!showSavedAddresses)}
+                  className="h-7"
+                >
+                  <Clock className="h-4 w-4 mr-2" />
+                  {showSavedAddresses ? "Приховати адреси" : "Швидкий вибір адреси"}
+                </Button>
+                {savedAddresses.length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    ({savedAddresses.length} збережених)
+                  </span>
                 )}
-              />
+              </div>
+
+              {/* Панель збережених адрес */}
+              {showSavedAddresses && (
+                <div className="border rounded-lg p-3 bg-gray-50 dark:bg-gray-900">
+                  <h4 className="text-sm font-medium mb-2">Збережені адреси (за останнім використанням)</h4>
+                  {savedAddresses.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Немає збережених адрес</p>
+                  ) : (
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {savedAddresses.map((address: any) => (
+                        <div
+                          key={address.id}
+                          className="flex items-center justify-between p-2 border rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                          onClick={() => fillFormFromAddress(address)}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-medium truncate">
+                              {address.recipientName} ({address.recipientPhone})
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              {address.cityName} - {address.warehouseAddress}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Використано: {address.usageCount} раз
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              fillFormFromAddress(address);
+                            }}
+                          >
+                            <RotateCcw className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="carrierId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Перевізник</FormLabel>
+                      <FormControl>
+                        <CarrierSelect
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
               <FormField
                 control={form.control}
@@ -395,6 +477,7 @@ export function PartialShipmentDialog({
                   )}
                 />
               </div>
+            </div>
             </div>
 
             <div className="flex justify-end space-x-2">
