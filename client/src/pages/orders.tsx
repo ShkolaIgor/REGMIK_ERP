@@ -24,6 +24,7 @@ type Order = {
   customerName: string;
   customerEmail: string | null;
   customerPhone: string | null;
+  clientId: string | null;
   status: string;
   totalAmount: string;
   notes: string | null;
@@ -106,7 +107,7 @@ export default function Orders() {
   // Додаємо логування для діагностики
   console.log("Products in orders dialog:", products);
 
-  const { data: clients = [] } = useQuery({
+  const { data: clients = [] } = useQuery<any[]>({
     queryKey: ["/api/clients"],
   });
 
@@ -756,8 +757,20 @@ export default function Orders() {
                         <TableCell className="font-mono">{order.orderNumber}</TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{order.customerName}</div>
-                            <div className="text-sm text-gray-500">{order.customerEmail}</div>
+                            <div className="font-medium">
+                              {order.clientId 
+                                ? (clients.find((client: any) => client.id === order.clientId)?.name || order.customerName)
+                                : order.customerName
+                              }
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {order.clientId && (
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded mr-2">
+                                  {order.clientId}
+                                </span>
+                              )}
+                              {order.customerEmail}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>{formatDate(order.createdAt)}</TableCell>
