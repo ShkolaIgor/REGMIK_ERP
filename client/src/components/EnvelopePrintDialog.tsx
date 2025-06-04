@@ -44,6 +44,7 @@ export default function EnvelopePrintDialog({
   const [advertisementImage, setAdvertisementImage] = useState<string | null>(null);
   const [imagePosition, setImagePosition] = useState("bottom-left");
   const [imageSize, setImageSize] = useState("small");
+  const [showPreview, setShowPreview] = useState(false);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -283,19 +284,125 @@ export default function EnvelopePrintDialog({
             </div>
           </div>
 
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={onClose}>
-              Закрити
+          <div className="flex justify-between items-center">
+            <Button variant="outline" onClick={() => setShowPreview(!showPreview)}>
+              <Eye className="h-4 w-4 mr-2" />
+              {showPreview ? 'Сховати перегляд' : 'Попередній перегляд'}
             </Button>
-            <Button variant="outline" onClick={handleDownloadHTML}>
-              <Download className="h-4 w-4 mr-2" />
-              Завантажити HTML
-            </Button>
-            <Button onClick={handlePrint}>
-              <Printer className="h-4 w-4 mr-2" />
-              Друкувати конверти
-            </Button>
+            
+            <div className="flex space-x-2">
+              <Button variant="outline" onClick={onClose}>
+                Закрити
+              </Button>
+              <Button variant="outline" onClick={handleDownloadHTML}>
+                <Download className="h-4 w-4 mr-2" />
+                Завантажити HTML
+              </Button>
+              <Button onClick={handlePrint}>
+                <Printer className="h-4 w-4 mr-2" />
+                Друкувати конверти
+              </Button>
+            </div>
           </div>
+
+          {showPreview && (
+            <div className="mt-6 border rounded-lg p-4 bg-gray-50">
+              <h4 className="font-medium mb-3">Попередній перегляд конверта (зменшено):</h4>
+              <div className="bg-white border-2 border-black mx-auto" style={{
+                width: '220mm',
+                height: '110mm',
+                position: 'relative',
+                fontFamily: 'Times New Roman, serif',
+                transform: 'scale(0.4)',
+                transformOrigin: 'top left',
+                marginBottom: '-60mm'
+              }}>
+                {/* Місце для марки */}
+                <div style={{
+                  position: 'absolute',
+                  top: '8mm',
+                  right: '8mm',
+                  width: '30mm',
+                  height: '25mm',
+                  border: '1px dashed #999',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '8px',
+                  color: '#999',
+                  textAlign: 'center',
+                  lineHeight: '1.2'
+                }}>
+                  МІСЦЕ<br/>ДЛЯ<br/>МАРКИ
+                </div>
+
+                {/* Адреса відправника */}
+                <div style={{
+                  position: 'absolute',
+                  top: '8mm',
+                  left: '8mm',
+                  fontSize: '9px',
+                  lineHeight: '1.3',
+                  maxWidth: '70mm'
+                }}>
+                  <div style={{ fontWeight: 'bold', marginBottom: '2mm' }}>Від кого:</div>
+                  <div>ТОВ "REGMIK"</div>
+                  <div>04112, м. Київ</div>
+                  <div>вул. Дегтярівська, 27-Т</div>
+                </div>
+
+                {/* Адреса отримувача */}
+                <div style={{
+                  position: 'absolute',
+                  top: '45mm',
+                  left: '60mm',
+                  fontSize: '12px',
+                  lineHeight: '1.4',
+                  maxWidth: '120mm'
+                }}>
+                  <div style={{ fontWeight: 'bold', marginBottom: '3mm' }}>Кому:</div>
+                  <div style={{ fontWeight: 'bold', marginBottom: '2mm' }}>Приклад клієнта</div>
+                  <div>01001, м. Київ, вул. Прикладна, 1</div>
+                </div>
+
+                {/* Рекламний контент */}
+                {(advertisementText || advertisementImage) && (
+                  <div style={{
+                    position: 'absolute',
+                    [imagePosition === 'top-right' ? 'top' : 'bottom']: imagePosition === 'top-right' ? '30mm' : '5mm',
+                    [imagePosition === 'top-right' ? 'right' : 'left']: '5mm',
+                    fontSize: '8px',
+                    color: '#333',
+                    maxWidth: '50mm',
+                    display: 'flex',
+                    flexDirection: imagePosition === 'top-right' ? 'column' : 'row',
+                    alignItems: imagePosition === 'top-right' ? 'flex-end' : 'center',
+                    gap: '3px'
+                  }}>
+                    {advertisementImage && (
+                      <img 
+                        src={advertisementImage} 
+                        alt="Реклама" 
+                        style={{
+                          width: getImageSizeValue(),
+                          height: 'auto',
+                          maxHeight: getImageSizeValue()
+                        }}
+                      />
+                    )}
+                    {advertisementText && (
+                      <div style={{
+                        textAlign: imagePosition === 'top-right' ? 'right' : 'left',
+                        lineHeight: '1.2'
+                      }}>
+                        {advertisementText}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
