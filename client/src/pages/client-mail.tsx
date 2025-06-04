@@ -49,6 +49,7 @@ export default function ClientMailPage() {
     'bottom-left': { x: 5, y: 80 },
     'top-right': { x: 160, y: 8 }
   });
+  const [showPreview, setShowPreview] = useState(true);
   const { toast } = useToast();
 
   // Функції для інтерактивного перетягування
@@ -499,6 +500,32 @@ export default function ClientMailPage() {
                 </div>
 
                 <div className="space-y-6">
+                  <div className="p-4 border rounded-lg bg-blue-50">
+                    <h3 className="text-lg font-semibold mb-4">Інтерактивне керування макетом</h3>
+                    <div className="space-y-3">
+                      <p className="text-sm text-gray-600">
+                        Перетягуйте елементи на перегляді конверта для зміни їх позицій
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => setShowPreview(!showPreview)}
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          {showPreview ? 'Сховати перегляд' : 'Показати перегляд'}
+                        </Button>
+                        <Button
+                          onClick={resetPositions}
+                          variant="outline"
+                          className="flex-1"
+                          title="Скинути всі елементи до стандартних позицій"
+                        >
+                          Скинути позиції
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="p-4 border rounded-lg bg-green-50">
                     <h3 className="text-lg font-semibold mb-4">Позиції на конверті</h3>
                     <div className="space-y-4">
