@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Mail, Printer, Send, Eye, FileText, Settings } from "lucide-react";
+import { Plus, Mail, Printer, Send, Eye, FileText, Settings, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -225,79 +225,122 @@ export default function ClientMailPage() {
                 Налаштування друку
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Налаштування друку конвертів</DialogTitle>
+                <DialogDescription>
+                  Налаштуйте параметри друку конвертів згідно українських поштових стандартів
+                </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Розмір конверта</Label>
-                    <Select defaultValue="dl">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="dl">DL (110×220 мм)</SelectItem>
-                        <SelectItem value="c4">C4 (229×324 мм)</SelectItem>
-                        <SelectItem value="c5">C5 (162×229 мм)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Розмір шрифту</Label>
-                    <Input type="number" defaultValue="12" min="8" max="20" />
-                  </div>
-                </div>
-                <div>
-                  <Label>Позиція відправника (x, y, ширина, висота в мм)</Label>
-                  <div className="grid grid-cols-4 gap-2 mt-2">
-                    <Input placeholder="X" defaultValue="20" />
-                    <Input placeholder="Y" defaultValue="15" />
-                    <Input placeholder="Ширина" defaultValue="80" />
-                    <Input placeholder="Висота" defaultValue="30" />
-                  </div>
-                </div>
-                <div>
-                  <Label>Позиція отримувача (x, y, ширина, висота в мм)</Label>
-                  <div className="grid grid-cols-4 gap-2 mt-2">
-                    <Input placeholder="X" defaultValue="120" />
-                    <Input placeholder="Y" defaultValue="60" />
-                    <Input placeholder="Ширина" defaultValue="80" />
-                    <Input placeholder="Висота" defaultValue="40" />
-                  </div>
-                </div>
-                <div className="border-t pt-4">
-                  <h4 className="font-medium mb-3">Налаштування реклами</h4>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="advertisement-text">Рекламний текст</Label>
-                      <Textarea
-                        id="advertisement-text"
-                        placeholder="Введіть рекламний текст який буде відображатися на конвертах"
-                        rows={3}
-                        value={advertisementText}
-                        onChange={(e) => setAdvertisementText(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div className="p-4 border rounded-lg bg-gray-50">
+                    <h3 className="text-lg font-semibold mb-4">Основні налаштування</h3>
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="image-upload">Рекламне зображення</Label>
-                        <Input
-                          id="image-upload"
-                          type="file"
-                          accept="image/*"
-                          className="mt-1"
-                          onChange={handleImageUpload}
+                        <Label>Розмір конверта</Label>
+                        <Select defaultValue="dl">
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="dl">DL (110×220 мм)</SelectItem>
+                            <SelectItem value="c4">C4 (229×324 мм)</SelectItem>
+                            <SelectItem value="c5">C5 (162×229 мм)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Розмір шрифту</Label>
+                        <Input type="number" defaultValue="12" min="8" max="20" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 border rounded-lg bg-blue-50">
+                    <h3 className="text-lg font-semibold mb-4">Налаштування реклами</h3>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="advertisement-text">Рекламний текст</Label>
+                        <Textarea
+                          id="advertisement-text"
+                          placeholder="Введіть рекламний текст який буде відображатися на конвертах"
+                          rows={3}
+                          value={advertisementText}
+                          onChange={(e) => setAdvertisementText(e.target.value)}
+                          className="mt-2"
                         />
                       </div>
 
                       <div>
-                        <Label htmlFor="image-position">Позиція реклами</Label>
-                        <Select value={imagePosition} onValueChange={setImagePosition}>
-                          <SelectTrigger>
+                        <Label htmlFor="image-upload">Рекламне зображення</Label>
+                        <div className="flex items-center space-x-2 mt-2">
+                          <Input
+                            id="image-upload"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="flex-1"
+                          />
+                          {advertisementImage && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setAdvertisementImage(null)}
+                              type="button"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                        {advertisementImage && (
+                          <div className="mt-3 p-3 border rounded-lg bg-white">
+                            <img 
+                              src={advertisementImage} 
+                              alt="Попередній перегляд" 
+                              className="max-w-32 max-h-32 object-contain border rounded mx-auto block"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label>Позиція реклами</Label>
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              id="pos-bottom-left"
+                              name="position"
+                              value="bottom-left"
+                              checked={imagePosition === "bottom-left"}
+                              onChange={(e) => setImagePosition(e.target.value)}
+                            />
+                            <label htmlFor="pos-bottom-left" className="text-sm font-medium">
+                              Знизу зліва (під адресою отримувача)
+                            </label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              id="pos-top-right"
+                              name="position"
+                              value="top-right"
+                              checked={imagePosition === "top-right"}
+                              onChange={(e) => setImagePosition(e.target.value)}
+                            />
+                            <label htmlFor="pos-top-right" className="text-sm font-medium">
+                              Зверху зправа (біля зони для марки)
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="image-size">Розмір зображення</Label>
+                        <Select value={imageSize} onValueChange={setImageSize}>
+                          <SelectTrigger className="mt-2">
                             <SelectValue placeholder="Оберіть позицію" />
                           </SelectTrigger>
                           <SelectContent>
