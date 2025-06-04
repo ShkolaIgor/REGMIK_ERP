@@ -307,7 +307,7 @@ export default function ClientMailPage() {
 
                       <div className="space-y-3">
                         <Label>Позиція реклами</Label>
-                        <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
                           <div className="flex items-center space-x-2">
                             <input
                               type="radio"
@@ -318,7 +318,33 @@ export default function ClientMailPage() {
                               onChange={(e) => setImagePosition(e.target.value)}
                             />
                             <label htmlFor="pos-bottom-left" className="text-sm font-medium">
-                              Знизу зліва (під адресою отримувача)
+                              Знизу зліва
+                            </label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              id="pos-bottom-right"
+                              name="position"
+                              value="bottom-right"
+                              checked={imagePosition === "bottom-right"}
+                              onChange={(e) => setImagePosition(e.target.value)}
+                            />
+                            <label htmlFor="pos-bottom-right" className="text-sm font-medium">
+                              Знизу зправа
+                            </label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              id="pos-top-left"
+                              name="position"
+                              value="top-left"
+                              checked={imagePosition === "top-left"}
+                              onChange={(e) => setImagePosition(e.target.value)}
+                            />
+                            <label htmlFor="pos-top-left" className="text-sm font-medium">
+                              Зверху зліва
                             </label>
                           </div>
                           <div className="flex items-center space-x-2">
@@ -331,7 +357,7 @@ export default function ClientMailPage() {
                               onChange={(e) => setImagePosition(e.target.value)}
                             />
                             <label htmlFor="pos-top-right" className="text-sm font-medium">
-                              Зверху зправа (біля зони для марки)
+                              Зверху зправа
                             </label>
                           </div>
                         </div>
@@ -436,14 +462,16 @@ export default function ClientMailPage() {
                         {(advertisementText || advertisementImage) && (
                           <div style={{
                             position: 'absolute',
-                            [imagePosition === 'top-right' ? 'top' : 'bottom']: imagePosition === 'top-right' ? '30mm' : '5mm',
-                            [imagePosition === 'top-right' ? 'right' : 'left']: '5mm',
+                            ...(imagePosition === 'top-left' && { top: '8mm', left: '45mm' }),
+                            ...(imagePosition === 'top-right' && { top: '8mm', right: '5mm' }),
+                            ...(imagePosition === 'bottom-left' && { bottom: '5mm', left: '5mm' }),
+                            ...(imagePosition === 'bottom-right' && { bottom: '5mm', right: '5mm' }),
                             fontSize: '8px',
                             color: '#333',
                             maxWidth: '50mm',
                             display: 'flex',
-                            flexDirection: imagePosition === 'top-right' ? 'column' : 'row',
-                            alignItems: imagePosition === 'top-right' ? 'flex-end' : 'center',
+                            flexDirection: imagePosition.includes('top') ? 'column' : 'row',
+                            alignItems: imagePosition.includes('right') ? 'flex-end' : 'flex-start',
                             gap: '3px'
                           }}>
                             {advertisementImage && (
@@ -459,7 +487,7 @@ export default function ClientMailPage() {
                             )}
                             {advertisementText && (
                               <div style={{
-                                textAlign: imagePosition === 'top-right' ? 'right' : 'left',
+                                textAlign: imagePosition.includes('right') ? 'right' : 'left',
                                 lineHeight: '1.2'
                               }}>
                                 {advertisementText}
