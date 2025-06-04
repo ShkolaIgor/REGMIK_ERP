@@ -1,30 +1,69 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Edit2, Trash2, Building2, User, Eye, EyeOff } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { 
+  Plus, 
+  Building2, 
+  User, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Edit, 
+  Trash2, 
+  Truck,
+  Percent
+} from "lucide-react";
+import { insertClientSchema, type Client, type InsertClient } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Client, InsertClient } from "@shared/schema";
 
-const clientSchema = z.object({
-  name: z.string().min(1, "Назва обов'язкова"),
-  type: z.string().default("individual"),
-  contactPerson: z.string().optional(),
-  phone: z.string().optional(),
-  email: z.string().email("Невірний email").optional().or(z.literal("")),
-  address: z.string().optional(),
+// Розширена схема валідації для нової структури
+const formSchema = insertClientSchema.extend({
+  id: z.string().min(1, "ЄДРПОУ/ІПН обов'язковий").max(20, "Максимум 20 символів"),
+  type: z.enum(["individual", "organization"]),
+  name: z.string().min(1, "Скорочена назва обов'язкова"),
+  fullName: z.string().optional(),
+  legalAddress: z.string().optional(),
+  physicalAddress: z.string().optional(), 
+  addressesMatch: z.boolean().default(false),
+  discount: z.string().optional().transform(val => val || "0.00"),
   notes: z.string().optional(),
   novaPoshtaApiKey: z.string().optional(),
   novaPoshtaSenderRef: z.string().optional(),
@@ -34,51 +73,55 @@ const clientSchema = z.object({
   isActive: z.boolean().default(true)
 });
 
-type ClientFormData = z.infer<typeof clientSchema>;
+type FormData = z.infer<typeof formSchema>;
 
 export default function Clients() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
-  const [showApiKeys, setShowApiKeys] = useState<Record<number, boolean>>({});
-  const queryClient = useQueryClient();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const form = useForm<ClientFormData>({
-    resolver: zodResolver(clientSchema),
+  const { data: clients = [], isLoading } = useQuery<Client[]>({
+    queryKey: ["/api/clients"],
+  });
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
+      id: "",
+      type: "organization",
       name: "",
-      type: "individual",
-      contactPerson: "",
-      phone: "",
-      email: "",
-      address: "",
+      fullName: "",
+      legalAddress: "",
+      physicalAddress: "",
+      addressesMatch: false,
+      discount: "0.00",
       notes: "",
       novaPoshtaApiKey: "",
       novaPoshtaSenderRef: "",
       novaPoshtaContactRef: "",
       novaPoshtaAddressRef: "",
       enableThirdPartyShipping: false,
-      isActive: true
-    }
-  });
-
-  const { data: clients = [], isLoading } = useQuery({
-    queryKey: ["/api/clients"],
+      isActive: true,
+    },
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: InsertClient) => apiRequest("/api/clients", {
-      method: "POST",
-      body: data,
-    }),
+    mutationFn: async (data: FormData) => {
+      const response = await apiRequest("/api/clients", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      return response;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
-      setIsDialogOpen(false);
-      form.reset();
       toast({
         title: "Успіх",
         description: "Клієнта створено успішно",
       });
+      setIsDialogOpen(false);
+      form.reset();
     },
     onError: (error: any) => {
       toast({
@@ -90,20 +133,22 @@ export default function Clients() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<InsertClient> }) =>
-      apiRequest(`/api/clients/${id}`, {
+    mutationFn: async (data: FormData) => {
+      const response = await apiRequest(`/api/clients/${editingClient?.id}`, {
         method: "PATCH",
-        body: data,
-      }),
+        body: JSON.stringify(data),
+      });
+      return response;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
-      setIsDialogOpen(false);
-      setEditingClient(null);
-      form.reset();
       toast({
         title: "Успіх",
         description: "Клієнта оновлено успішно",
       });
+      setIsDialogOpen(false);
+      setEditingClient(null);
+      form.reset();
     },
     onError: (error: any) => {
       toast({
@@ -115,9 +160,11 @@ export default function Clients() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/clients/${id}`, {
-      method: "DELETE",
-    }),
+    mutationFn: async (id: string) => {
+      await apiRequest(`/api/clients/${id}`, {
+        method: "DELETE",
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
       toast({
@@ -134,9 +181,9 @@ export default function Clients() {
     },
   });
 
-  const handleSubmit = (data: ClientFormData) => {
+  const onSubmit = (data: FormData) => {
     if (editingClient) {
-      updateMutation.mutate({ id: editingClient.id, data });
+      updateMutation.mutate(data);
     } else {
       createMutation.mutate(data);
     }
@@ -145,40 +192,36 @@ export default function Clients() {
   const handleEdit = (client: Client) => {
     setEditingClient(client);
     form.reset({
+      id: client.id,
+      type: client.type as "individual" | "organization",
       name: client.name,
-      type: client.type,
-      contactPerson: client.contactPerson || "",
-      phone: client.phone || "",
-      email: client.email || "",
-      address: client.address || "",
+      fullName: client.fullName || "",
+      legalAddress: client.legalAddress || "",
+      physicalAddress: client.physicalAddress || "",
+      addressesMatch: client.addressesMatch || false,
+      discount: client.discount || "0.00",
       notes: client.notes || "",
       novaPoshtaApiKey: client.novaPoshtaApiKey || "",
       novaPoshtaSenderRef: client.novaPoshtaSenderRef || "",
       novaPoshtaContactRef: client.novaPoshtaContactRef || "",
       novaPoshtaAddressRef: client.novaPoshtaAddressRef || "",
       enableThirdPartyShipping: client.enableThirdPartyShipping || false,
-      isActive: client.isActive ?? true
+      isActive: client.isActive !== false,
     });
     setIsDialogOpen(true);
   };
 
-  const handleAdd = () => {
-    setEditingClient(null);
-    form.reset();
-    setIsDialogOpen(true);
+  const handleDelete = (id: string) => {
+    if (confirm("Ви впевнені, що хочете видалити цього клієнта?")) {
+      deleteMutation.mutate(id);
+    }
   };
 
-  const toggleApiKeyVisibility = (clientId: number) => {
-    setShowApiKeys(prev => ({
-      ...prev,
-      [clientId]: !prev[clientId]
-    }));
-  };
-
-  const maskApiKey = (apiKey: string | null | undefined): string => {
-    if (!apiKey) return "Не встановлено";
-    if (apiKey.length <= 8) return apiKey;
-    return apiKey.substring(0, 4) + "*".repeat(apiKey.length - 8) + apiKey.substring(apiKey.length - 4);
+  const handleAddressMatch = (checked: boolean) => {
+    if (checked) {
+      const legalAddress = form.getValues("legalAddress");
+      form.setValue("physicalAddress", legalAddress);
+    }
   };
 
   if (isLoading) {
@@ -188,10 +231,20 @@ export default function Clients() {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Управління клієнтами</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Клієнти</h1>
+          <p className="text-muted-foreground">
+            Управління клієнтами з налаштуваннями Нової Пошти
+          </p>
+        </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={handleAdd}>
+            <Button
+              onClick={() => {
+                setEditingClient(null);
+                form.reset();
+              }}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Додати клієнта
             </Button>
@@ -199,40 +252,52 @@ export default function Clients() {
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingClient ? "Редагувати клієнта" : "Додати нового клієнта"}
+                {editingClient ? "Редагувати клієнта" : "Новий клієнт"}
               </DialogTitle>
+              <DialogDescription>
+                {editingClient 
+                  ? "Оновіть інформацію про клієнта"
+                  : "Введіть дані нового клієнта з ЄДРПОУ/ІПН"
+                }
+              </DialogDescription>
             </DialogHeader>
+
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="name"
+                    name="id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Назва*</FormLabel>
+                        <FormLabel>ЄДРПОУ/ІПН *</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Назва клієнта" />
+                          <Input 
+                            placeholder="12345678 або 1234567890"
+                            {...field}
+                            disabled={!!editingClient}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="type"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Тип клієнта</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Оберіть тип" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="individual">Фізична особа</SelectItem>
                             <SelectItem value="organization">Організація</SelectItem>
+                            <SelectItem value="individual">Фізична особа</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -241,43 +306,14 @@ export default function Clients() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="contactPerson"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Контактна особа</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Ім'я контактної особи" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Телефон</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="+380XXXXXXXXX" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
                 <FormField
                   control={form.control}
-                  name="email"
+                  name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>Скорочена назва *</FormLabel>
                       <FormControl>
-                        <Input {...field} type="email" placeholder="email@example.com" />
+                        <Input placeholder="ТОВ АБВГД або Іванов І.І." {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -286,12 +322,91 @@ export default function Clients() {
 
                 <FormField
                   control={form.control}
-                  name="address"
+                  name="fullName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Адреса</FormLabel>
+                      <FormLabel>Повна назва</FormLabel>
                       <FormControl>
-                        <Textarea {...field} placeholder="Повна адреса клієнта" />
+                        <Input placeholder="Товариство з обмеженою відповідальністю..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="legalAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Юридична адреса</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="01001, м. Київ, вул. Хрещатик, 1"
+                          className="min-h-[60px]"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="addressesMatch"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked);
+                            handleAddressMatch(!!checked);
+                          }}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Фактична адреса співпадає з юридичною</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="physicalAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Фактична адреса для відвантаження</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Адреса для доставки товарів"
+                          className="min-h-[60px]"
+                          {...field}
+                          disabled={form.watch("addressesMatch")}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="discount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Знижка клієнта (%)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          step="0.01" 
+                          min="0" 
+                          max="100" 
+                          placeholder="0.00"
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -305,122 +420,123 @@ export default function Clients() {
                     <FormItem>
                       <FormLabel>Примітки</FormLabel>
                       <FormControl>
-                        <Textarea {...field} placeholder="Додаткова інформація про клієнта" />
+                        <Textarea 
+                          placeholder="Додаткова інформація про клієнта"
+                          className="min-h-[60px]"
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <div className="border rounded-lg p-4 space-y-4">
-                  <h3 className="font-medium text-lg">Налаштування Нової Пошти</h3>
+                <div className="border-t pt-4">
+                  <h3 className="text-lg font-semibold mb-4">Налаштування Нової Пошти</h3>
                   
                   <FormField
                     control={form.control}
                     name="enableThirdPartyShipping"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">
-                            Дозволити відправку від імені клієнта
-                          </FormLabel>
-                          <div className="text-sm text-muted-foreground">
-                            Використовувати API ключ клієнта для відправлення
-                          </div>
-                        </div>
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 mb-4">
                         <FormControl>
-                          <Switch
+                          <Checkbox
                             checked={field.value}
                             onCheckedChange={field.onChange}
                           />
                         </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Дозволити відправки від імені клієнта</FormLabel>
+                          <p className="text-sm text-muted-foreground">
+                            Використовувати API ключі клієнта для створення відправок
+                          </p>
+                        </div>
                       </FormItem>
                     )}
                   />
 
-                  {form.watch("enableThirdPartyShipping") && (
-                    <>
-                      <FormField
-                        control={form.control}
-                        name="novaPoshtaApiKey"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>API ключ Нової Пошти</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="API ключ клієнта" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="novaPoshtaApiKey"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>API ключ Нової Пошти</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                              type="password"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="novaPoshtaSenderRef"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Sender Ref</FormLabel>
-                              <FormControl>
-                                <Input {...field} placeholder="Ref відправника" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="novaPoshtaContactRef"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Contact Ref</FormLabel>
-                              <FormControl>
-                                <Input {...field} placeholder="Ref контакту" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="novaPoshtaAddressRef"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Address Ref</FormLabel>
-                              <FormControl>
-                                <Input {...field} placeholder="Ref адреси" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </>
-                  )}
+                    <FormField
+                      control={form.control}
+                      name="novaPoshtaSenderRef"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ref відправника</FormLabel>
+                          <FormControl>
+                            <Input placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="novaPoshtaContactRef"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ref контактної особи</FormLabel>
+                          <FormControl>
+                            <Input placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="novaPoshtaAddressRef"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ref адреси відправника</FormLabel>
+                          <FormControl>
+                            <Input placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
 
                 <FormField
                   control={form.control}
                   name="isActive"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Активний клієнт</FormLabel>
-                        <div className="text-sm text-muted-foreground">
-                          Чи доступний клієнт для нових замовлень
-                        </div>
-                      </div>
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
-                        <Switch
+                        <Checkbox
                           checked={field.value}
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Активний клієнт</FormLabel>
+                      </div>
                     </FormItem>
                   )}
                 />
 
-                <div className="flex justify-end space-x-2">
+                <div className="flex justify-end space-x-2 pt-4">
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                     Скасувати
                   </Button>
@@ -448,29 +564,39 @@ export default function Clients() {
                   ) : (
                     <User className="h-5 w-5 text-green-600" />
                   )}
-                  <CardTitle className="text-lg">{client.name}</CardTitle>
-                  <Badge variant={client.isActive ? "default" : "secondary"}>
-                    {client.isActive ? "Активний" : "Неактивний"}
-                  </Badge>
-                  {client.enableThirdPartyShipping && (
-                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                      Відправка НП
+                  <div>
+                    <CardTitle className="text-lg">{client.name}</CardTitle>
+                    <CardDescription className="text-sm">
+                      {client.type === "organization" ? "ЄДРПОУ" : "ІПН"}: {client.id}
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Badge variant={client.isActive ? "default" : "secondary"}>
+                      {client.isActive ? "Активний" : "Неактивний"}
                     </Badge>
-                  )}
+                    {client.enableThirdPartyShipping && (
+                      <Badge variant="outline" className="text-blue-600">
+                        <Truck className="h-3 w-3 mr-1" />
+                        Відправки клієнта
+                      </Badge>
+                    )}
+                    {client.discount && parseFloat(client.discount) > 0 && (
+                      <Badge variant="outline" className="text-green-600">
+                        <Percent className="h-3 w-3 mr-1" />
+                        -{client.discount}%
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(client)}
-                  >
-                    <Edit2 className="h-4 w-4" />
+                  <Button variant="outline" size="sm" onClick={() => handleEdit(client)}>
+                    <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => deleteMutation.mutate(client.id)}
-                    disabled={deleteMutation.isPending}
+                    onClick={() => handleDelete(client.id)}
+                    className="text-red-600 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -478,91 +604,60 @@ export default function Clients() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {client.contactPerson && (
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                {client.fullName && (
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      Контактна особа
-                    </Label>
-                    <p className="text-sm">{client.contactPerson}</p>
+                    <span className="font-medium">Повна назва:</span>
+                    <p className="text-muted-foreground">{client.fullName}</p>
                   </div>
                 )}
-                {client.phone && (
+                {client.legalAddress && (
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      Телефон
-                    </Label>
-                    <p className="text-sm">{client.phone}</p>
+                    <span className="font-medium">Юридична адреса:</span>
+                    <p className="text-muted-foreground">{client.legalAddress}</p>
                   </div>
                 )}
-                {client.email && (
+                {client.physicalAddress && !client.addressesMatch && (
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      Email
-                    </Label>
-                    <p className="text-sm">{client.email}</p>
-                  </div>
-                )}
-                {client.address && (
-                  <div className="md:col-span-2 lg:col-span-3">
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      Адреса
-                    </Label>
-                    <p className="text-sm">{client.address}</p>
-                  </div>
-                )}
-                {client.enableThirdPartyShipping && client.novaPoshtaApiKey && (
-                  <div className="md:col-span-2 lg:col-span-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium text-muted-foreground">
-                        API ключ Нової Пошти
-                      </Label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleApiKeyVisibility(client.id)}
-                      >
-                        {showApiKeys[client.id] ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                    <p className="text-sm font-mono">
-                      {showApiKeys[client.id] ? client.novaPoshtaApiKey : maskApiKey(client.novaPoshtaApiKey)}
-                    </p>
+                    <span className="font-medium">Фактична адреса:</span>
+                    <p className="text-muted-foreground">{client.physicalAddress}</p>
                   </div>
                 )}
                 {client.notes && (
-                  <div className="md:col-span-2 lg:col-span-3">
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      Примітки
-                    </Label>
-                    <p className="text-sm">{client.notes}</p>
+                  <div className="col-span-2">
+                    <span className="font-medium">Примітки:</span>
+                    <p className="text-muted-foreground">{client.notes}</p>
                   </div>
                 )}
               </div>
+              {client.createdAt && (
+                <div className="text-xs text-muted-foreground mt-4">
+                  Створено: {new Date(client.createdAt).toLocaleDateString("uk-UA")}
+                  {client.updatedAt && client.updatedAt !== client.createdAt && (
+                    <span> • Оновлено: {new Date(client.updatedAt).toLocaleDateString("uk-UA")}</span>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
-      </div>
 
-      {clients.length === 0 && (
-        <div className="text-center py-12">
-          <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-muted-foreground mb-2">
-            Немає клієнтів
-          </h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Почніть з додавання першого клієнта
-          </p>
-          <Button onClick={handleAdd}>
-            <Plus className="h-4 w-4 mr-2" />
-            Додати клієнта
-          </Button>
-        </div>
-      )}
+        {clients.length === 0 && (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Немає клієнтів</h3>
+              <p className="text-muted-foreground mb-4">
+                Додайте першого клієнта з ЄДРПОУ або ІПН
+              </p>
+              <Button onClick={() => setIsDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Додати клієнта
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
