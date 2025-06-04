@@ -96,7 +96,9 @@ export function PartialShipmentDialog({
   const { data: savedAddresses = [] } = useQuery({
     queryKey: ["/api/customer-addresses"],
     enabled: showSavedAddresses,
-  }) as { data: any[] };
+  });
+
+  const addresses = (savedAddresses as any[]) || [];
 
   // Функція для заповнення форми з обраної адреси
   const fillFormFromAddress = (address: any) => {
@@ -307,9 +309,9 @@ export function PartialShipmentDialog({
                   <Clock className="h-4 w-4 mr-2" />
                   {showSavedAddresses ? "Приховати адреси" : "Швидкий вибір адреси"}
                 </Button>
-                {savedAddresses.length > 0 && (
+                {addresses.length > 0 && (
                   <span className="text-xs text-muted-foreground">
-                    ({savedAddresses.length} збережених)
+                    ({addresses.length} збережених)
                   </span>
                 )}
               </div>
@@ -318,11 +320,11 @@ export function PartialShipmentDialog({
               {showSavedAddresses && (
                 <div className="border rounded-lg p-3 bg-gray-50 dark:bg-gray-900">
                   <h4 className="text-sm font-medium mb-2">Збережені адреси (за останнім використанням)</h4>
-                  {savedAddresses.length === 0 ? (
+                  {addresses.length === 0 ? (
                     <p className="text-xs text-muted-foreground">Немає збережених адрес</p>
                   ) : (
                     <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {savedAddresses.map((address: any) => (
+                      {addresses.map((address: any) => (
                         <div
                           key={address.id}
                           className="flex items-center justify-between p-2 border rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -477,7 +479,7 @@ export function PartialShipmentDialog({
                   )}
                 />
               </div>
-            </div>
+              </div>
             </div>
 
             <div className="flex justify-end space-x-2">
