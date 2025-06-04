@@ -4260,6 +4260,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Client Mail API
+  app.get("/api/client-mail", async (req, res) => {
+    try {
+      const mails = await storage.getClientMails();
+      res.json(mails);
+    } catch (error) {
+      console.error("Error fetching client mails:", error);
+      res.status(500).json({ error: "Failed to fetch client mails" });
+    }
+  });
+
+  app.post("/api/client-mail", async (req, res) => {
+    try {
+      const validatedData = insertClientMailSchema.parse(req.body);
+      const mail = await storage.createClientMail(validatedData);
+      res.status(201).json(mail);
+    } catch (error) {
+      console.error("Error creating client mail:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid mail data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create client mail" });
+      }
+    }
+  });
+
+  app.post("/api/client-mail/batch-print", async (req, res) => {
+    try {
+      const { mailIds, batchName } = req.body;
+      
+      if (!Array.isArray(mailIds) || mailIds.length === 0) {
+        return res.status(400).json({ error: "Mail IDs are required" });
+      }
+      
+      if (!batchName || typeof batchName !== 'string') {
+        return res.status(400).json({ error: "Batch name is required" });
+      }
+
+      const batchId = `batch_${Date.now()}`;
+      
+      // Створюємо запис у реєстрі
+      const registryData = {
+        batchId,
+        batchName,
+        totalCount: mailIds.length,
+        status: "printing" as const,
+        printDate: new Date(),
+        notes: null,
+      };
+      
+      const registry = await storage.createMailRegistry(registryData);
+      
+      // Оновлюємо статус листів
+      await storage.updateMailsForBatch(mailIds, batchId);
+      
+      res.json({ registry, batchId, processedCount: mailIds.length });
+    } catch (error) {
+      console.error("Error creating batch print:", error);
+      res.status(500).json({ error: "Failed to create batch print" });
+    }
+  });
+
+  app.get("/api/mail-registry", async (req, res) => {
+    try {
+      const registry = await storage.getMailRegistry();
+      res.json(registry);
+    } catch (error) {
+      console.error("Error fetching mail registry:", error);
+      res.status(500).json({ error: "Failed to fetch mail registry" });
+    }
+  });
+
+  app.get("/api/envelope-print-settings", async (req, res) => {
+    try {
+      const settings = await storage.getEnvelopePrintSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching envelope print settings:", error);
+      res.status(500).json({ error: "Failed to fetch envelope print settings" });
+    }
+  });
+
+  app.post("/api/envelope-print-settings", async (req, res) => {
+    try {
+      const validatedData = insertEnvelopePrintSettingsSchema.parse(req.body);
+      const settings = await storage.createEnvelopePrintSettings(validatedData);
+      res.status(201).json(settings);
+    } catch (error) {
+      console.error("Error creating envelope print settings:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid settings data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create envelope print settings" });
+      }
+    }
+  });
+
   // Clients API
   app.get("/api/clients", async (req, res) => {
     try {

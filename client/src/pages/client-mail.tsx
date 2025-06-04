@@ -87,7 +87,7 @@ export default function ClientMailPage() {
     }
   };
 
-  const formatDate = (date: string | null) => {
+  const formatDate = (date: string | Date | null) => {
     if (!date) return "—";
     return new Date(date).toLocaleDateString("uk-UA");
   };
@@ -215,7 +215,11 @@ export default function ClientMailPage() {
               <DialogHeader>
                 <DialogTitle>Новий лист клієнту</DialogTitle>
               </DialogHeader>
-              <form action={handleCreateMail} className="space-y-4">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target as HTMLFormElement);
+                handleCreateMail(formData);
+              }} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="clientId">Клієнт</Label>
