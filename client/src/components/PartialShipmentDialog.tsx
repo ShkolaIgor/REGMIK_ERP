@@ -108,6 +108,12 @@ export function PartialShipmentDialog({
     form.setValue("recipientWarehouseAddress", address.warehouseAddress || "");
     form.setValue("recipientCityRef", address.cityRef || "");
     form.setValue("recipientWarehouseRef", address.warehouseRef || "");
+    
+    // Автоматично заповнюємо перевізника, якщо він збережений в адресі
+    if (address.carrierId) {
+      form.setValue("carrierId", address.carrierId);
+    }
+    
     setShowSavedAddresses(false);
   };
 

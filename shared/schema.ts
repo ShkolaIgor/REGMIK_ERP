@@ -171,6 +171,7 @@ export const customerAddresses = pgTable("customer_addresses", {
   cityName: varchar("city_name", { length: 255 }).notNull(),
   warehouseRef: varchar("warehouse_ref", { length: 255 }).notNull(),
   warehouseAddress: text("warehouse_address").notNull(),
+  carrierId: integer("carrier_id").references(() => carriers.id), // збережений перевізник
   isDefault: boolean("is_default").default(false),
   lastUsed: timestamp("last_used").defaultNow(), // для сортування за останнім використанням
   usageCount: integer("usage_count").default(1), // кількість використань

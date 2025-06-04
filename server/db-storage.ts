@@ -2865,10 +2865,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Customer Addresses
-  async getCustomerAddresses(): Promise<CustomerAddress[]> {
+  async getCustomerAddresses(): Promise<any[]> {
     return await db
-      .select()
+      .select({
+        id: customerAddresses.id,
+        customerName: customerAddresses.customerName,
+        customerPhone: customerAddresses.customerPhone,
+        recipientName: customerAddresses.recipientName,
+        recipientPhone: customerAddresses.recipientPhone,
+        cityRef: customerAddresses.cityRef,
+        cityName: customerAddresses.cityName,
+        warehouseRef: customerAddresses.warehouseRef,
+        warehouseAddress: customerAddresses.warehouseAddress,
+        carrierId: customerAddresses.carrierId,
+        carrierName: carriers.name,
+        isDefault: customerAddresses.isDefault,
+        lastUsed: customerAddresses.lastUsed,
+        usageCount: customerAddresses.usageCount,
+        createdAt: customerAddresses.createdAt,
+        updatedAt: customerAddresses.updatedAt,
+      })
       .from(customerAddresses)
+      .leftJoin(carriers, eq(customerAddresses.carrierId, carriers.id))
       .orderBy(desc(customerAddresses.lastUsed), desc(customerAddresses.usageCount));
   }
 
