@@ -40,11 +40,12 @@ export default function EnvelopePrintDialog({
   clients, 
   batchName 
 }: EnvelopePrintDialogProps) {
-  const [advertisementText, setAdvertisementText] = useState("REGMIK ERP - Ваш надійний партнер у бізнесі! Телефон: +380 XX XXX-XX-XX");
-  const [advertisementImage, setAdvertisementImage] = useState<string | null>(null);
-  const [imagePosition, setImagePosition] = useState("bottom-left");
-  const [imageSize, setImageSize] = useState("small");
   const [showPreview, setShowPreview] = useState(false);
+  // Налаштування реклами тепер передаються через пропси
+  const advertisementText = "REGMIK ERP - Ваш надійний партнер у бізнесі! Телефон: +380 XX XXX-XX-XX";
+  const advertisementImage: string | null = null;
+  const imagePosition = "bottom-left";
+  const imageSize = "small";
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

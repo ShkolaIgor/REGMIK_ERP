@@ -277,7 +277,8 @@ export default function ClientMailPage() {
                         id="advertisement-text"
                         placeholder="Введіть рекламний текст який буде відображатися на конвертах"
                         rows={3}
-                        defaultValue="REGMIK ERP - Ваш надійний партнер у бізнесі! Телефон: +380 XX XXX-XX-XX"
+                        value={advertisementText}
+                        onChange={(e) => setAdvertisementText(e.target.value)}
                       />
                     </div>
 
@@ -289,12 +290,13 @@ export default function ClientMailPage() {
                           type="file"
                           accept="image/*"
                           className="mt-1"
+                          onChange={handleImageUpload}
                         />
                       </div>
 
                       <div>
                         <Label htmlFor="image-position">Позиція реклами</Label>
-                        <Select defaultValue="bottom-left">
+                        <Select value={imagePosition} onValueChange={setImagePosition}>
                           <SelectTrigger>
                             <SelectValue placeholder="Оберіть позицію" />
                           </SelectTrigger>
@@ -307,7 +309,7 @@ export default function ClientMailPage() {
 
                       <div>
                         <Label htmlFor="image-size">Розмір зображення</Label>
-                        <Select defaultValue="small">
+                        <Select value={imageSize} onValueChange={setImageSize}>
                           <SelectTrigger>
                             <SelectValue placeholder="Оберіть розмір" />
                           </SelectTrigger>
@@ -374,17 +376,40 @@ export default function ClientMailPage() {
                             <div style={{ fontWeight: 'bold', marginBottom: '2mm' }}>Приклад клієнта</div>
                             <div>01001, м. Київ, вул. Прикладна, 1</div>
                           </div>
-                          <div style={{
-                            position: 'absolute',
-                            bottom: '5mm',
-                            left: '5mm',
-                            fontSize: '8px',
-                            color: '#333',
-                            maxWidth: '50mm',
-                            lineHeight: '1.2'
-                          }}>
-                            REGMIK ERP - Ваш надійний партнер у бізнесі!
-                          </div>
+                          {(advertisementText || advertisementImage) && (
+                            <div style={{
+                              position: 'absolute',
+                              [imagePosition === 'top-right' ? 'top' : 'bottom']: imagePosition === 'top-right' ? '30mm' : '5mm',
+                              [imagePosition === 'top-right' ? 'right' : 'left']: '5mm',
+                              fontSize: '8px',
+                              color: '#333',
+                              maxWidth: '50mm',
+                              display: 'flex',
+                              flexDirection: imagePosition === 'top-right' ? 'column' : 'row',
+                              alignItems: imagePosition === 'top-right' ? 'flex-end' : 'center',
+                              gap: '3px'
+                            }}>
+                              {advertisementImage && (
+                                <img 
+                                  src={advertisementImage} 
+                                  alt="Реклама" 
+                                  style={{
+                                    width: getImageSizeValue(),
+                                    height: 'auto',
+                                    maxHeight: getImageSizeValue()
+                                  }}
+                                />
+                              )}
+                              {advertisementText && (
+                                <div style={{
+                                  textAlign: imagePosition === 'top-right' ? 'right' : 'left',
+                                  lineHeight: '1.2'
+                                }}>
+                                  {advertisementText}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
