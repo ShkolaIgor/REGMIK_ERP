@@ -17,7 +17,7 @@ import {
   insertShipmentSchema, insertManufacturingOrderSchema, insertManufacturingOrderMaterialSchema, insertManufacturingStepSchema,
   insertCurrencySchema, insertSerialNumberSchema, insertSerialNumberSettingsSchema, insertExchangeRateHistorySchema,
   insertLocalUserSchema, insertRoleSchema, insertSystemModuleSchema, changePasswordSchema,
-  insertEmailSettingsSchema
+  insertEmailSettingsSchema, insertClientSchema
 } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
