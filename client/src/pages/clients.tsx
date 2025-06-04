@@ -66,9 +66,6 @@ const formSchema = insertClientSchema.extend({
   discount: z.string().optional().transform(val => val || "0.00"),
   notes: z.string().optional(),
   novaPoshtaApiKey: z.string().optional(),
-  novaPoshtaSenderRef: z.string().optional(),
-  novaPoshtaContactRef: z.string().optional(),
-  novaPoshtaAddressRef: z.string().optional(),
   enableThirdPartyShipping: z.boolean().default(false),
   isActive: z.boolean().default(true)
 });
@@ -98,9 +95,6 @@ export default function Clients() {
       discount: "0.00",
       notes: "",
       novaPoshtaApiKey: "",
-      novaPoshtaSenderRef: "",
-      novaPoshtaContactRef: "",
-      novaPoshtaAddressRef: "",
       enableThirdPartyShipping: false,
       isActive: true,
     },
@@ -202,9 +196,6 @@ export default function Clients() {
       discount: client.discount || "0.00",
       notes: client.notes || "",
       novaPoshtaApiKey: client.novaPoshtaApiKey || "",
-      novaPoshtaSenderRef: client.novaPoshtaSenderRef || "",
-      novaPoshtaContactRef: client.novaPoshtaContactRef || "",
-      novaPoshtaAddressRef: client.novaPoshtaAddressRef || "",
       enableThirdPartyShipping: client.enableThirdPartyShipping || false,
       isActive: client.isActive !== false,
     });
@@ -455,67 +446,23 @@ export default function Clients() {
                     )}
                   />
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="novaPoshtaApiKey"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>API ключ Нової Пошти</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                              type="password"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="novaPoshtaSenderRef"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Ref відправника</FormLabel>
-                          <FormControl>
-                            <Input placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="novaPoshtaContactRef"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Ref контактної особи</FormLabel>
-                          <FormControl>
-                            <Input placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="novaPoshtaAddressRef"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Ref адреси відправника</FormLabel>
-                          <FormControl>
-                            <Input placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="novaPoshtaApiKey"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>API ключ Нової Пошти</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                            type="password"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <FormField
