@@ -39,6 +39,7 @@ export default function ClientMailPage() {
   const [imageSize, setImageSize] = useState("small");
   const [fontSize, setFontSize] = useState("12");
   const [envelopeSize, setEnvelopeSize] = useState("dl");
+  const [centerLogo, setCenterLogo] = useState(false);
   const { toast } = useToast();
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -425,6 +426,18 @@ export default function ClientMailPage() {
                           </SelectContent>
                         </Select>
                       </div>
+
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="center-logo"
+                          checked={centerLogo}
+                          onChange={(e) => setCenterLogo(e.target.checked)}
+                        />
+                        <Label htmlFor="center-logo" className="text-sm font-medium">
+                          Центрувати логотип/зображення
+                        </Label>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -518,7 +531,8 @@ export default function ClientMailPage() {
                             maxWidth: '50mm',
                             display: 'flex',
                             flexDirection: imageRelativePosition === 'above' || imageRelativePosition === 'below' ? 'column' : 'row',
-                            alignItems: position.includes('right') ? 'flex-end' : 'flex-start',
+                            alignItems: centerLogo ? 'center' : (position.includes('right') ? 'flex-end' : 'flex-start'),
+                            justifyContent: centerLogo ? 'center' : 'flex-start',
                             gap: '3px'
                           }}>
                             {imageRelativePosition === 'above' && advertisementImage && (
@@ -528,7 +542,8 @@ export default function ClientMailPage() {
                                 style={{
                                   width: getImageSizeValue(),
                                   height: 'auto',
-                                  maxHeight: getImageSizeValue()
+                                  maxHeight: getImageSizeValue(),
+                                  alignSelf: centerLogo ? 'center' : 'flex-start'
                                 }}
                               />
                             )}
@@ -540,14 +555,16 @@ export default function ClientMailPage() {
                                   width: getImageSizeValue(),
                                   height: 'auto',
                                   maxHeight: getImageSizeValue(),
-                                  marginRight: '3px'
+                                  marginRight: '3px',
+                                  alignSelf: centerLogo ? 'center' : 'flex-start'
                                 }}
                               />
                             )}
                             {advertisementText && (
                               <div style={{
-                                textAlign: position.includes('right') ? 'right' : 'left',
-                                lineHeight: '1.2'
+                                textAlign: centerLogo ? 'center' : (position.includes('right') ? 'right' : 'left'),
+                                lineHeight: '1.2',
+                                alignSelf: centerLogo ? 'center' : 'flex-start'
                               }}>
                                 {advertisementText}
                               </div>
@@ -560,7 +577,8 @@ export default function ClientMailPage() {
                                   width: getImageSizeValue(),
                                   height: 'auto',
                                   maxHeight: getImageSizeValue(),
-                                  marginLeft: '3px'
+                                  marginLeft: '3px',
+                                  alignSelf: centerLogo ? 'center' : 'flex-start'
                                 }}
                               />
                             )}
@@ -571,7 +589,8 @@ export default function ClientMailPage() {
                                 style={{
                                   width: getImageSizeValue(),
                                   height: 'auto',
-                                  maxHeight: getImageSizeValue()
+                                  maxHeight: getImageSizeValue(),
+                                  alignSelf: centerLogo ? 'center' : 'flex-start'
                                 }}
                               />
                             )}
