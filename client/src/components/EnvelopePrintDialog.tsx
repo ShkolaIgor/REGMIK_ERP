@@ -45,8 +45,38 @@ export default function EnvelopePrintDialog({
   const [imagePosition, setImagePosition] = useState("bottom-left");
   const [imageSize, setImageSize] = useState("small");
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAdvertisementImage(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const getClientById = (clientId: string) => {
     return clients.find(c => c.id === clientId);
+  };
+
+  const getAdvertisementPosition = () => {
+    switch (imagePosition) {
+      case "bottom-left": return "bottom: 10mm; left: 10mm;";
+      case "bottom-right": return "bottom: 10mm; right: 10mm;";
+      case "top-left": return "top: 10mm; left: 10mm;";
+      case "top-right": return "top: 10mm; right: 10mm;";
+      default: return "bottom: 10mm; left: 10mm;";
+    }
+  };
+
+  const getImageSizeValue = () => {
+    switch (imageSize) {
+      case "small": return "15mm";
+      case "medium": return "25mm";
+      case "large": return "35mm";
+      default: return "15mm";
+    }
   };
 
   const generateEnvelopePrintContent = () => {
@@ -70,9 +100,10 @@ export default function EnvelopePrintDialog({
             <div>м. Київ, 01001</div>
           </div>
           
-          <!-- Рекламний текст (лівий нижній кут) -->
-          <div style="position: absolute; bottom: 10mm; left: 10mm; font-size: 8px; color: #666; max-width: 60mm;">
-            ${advertisementText}
+          <!-- Рекламний контент -->
+          <div style="position: absolute; ${getAdvertisementPosition()}; font-size: 8px; color: #666; max-width: 60mm; display: flex; align-items: center; gap: 5px;">
+            ${advertisementImage ? `<img src="${advertisementImage}" style="width: ${getImageSizeValue()}; height: auto; max-height: 15mm;" alt="Реклама" />` : ''}
+            <div>${advertisementText}</div>
           </div>
           
           <!-- Номер у пакеті (правий верхній кут) -->
@@ -147,7 +178,7 @@ export default function EnvelopePrintDialog({
         
         <div className="space-y-6">
           <div>
-            <Label htmlFor="advertisement">Рекламний текст (лівий нижній кут конверта)</Label>
+            <Label htmlFor="advertisement">Рекламний текст</Label>
             <Textarea
               id="advertisement"
               value={advertisementText}
@@ -156,6 +187,70 @@ export default function EnvelopePrintDialog({
               rows={3}
             />
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="imageUpload">Рекламне зображення</Label>
+              <div className="flex items-center space-x-2 mt-1">
+                <Input
+                  id="imageUpload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="flex-1"
+                />
+                {advertisementImage && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setAdvertisementImage(null)}
+                  >
+                    <Image className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="imagePosition">Позиція зображення</Label>
+              <Select value={imagePosition} onValueChange={setImagePosition}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Оберіть позицію" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bottom-left">Лівий нижній кут</SelectItem>
+                  <SelectItem value="bottom-right">Правий нижній кут</SelectItem>
+                  <SelectItem value="top-left">Лівий верхній кут</SelectItem>
+                  <SelectItem value="top-right">Правий верхній кут</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="imageSize">Розмір зображення</Label>
+              <Select value={imageSize} onValueChange={setImageSize}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Оберіть розмір" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="small">Малий (15мм)</SelectItem>
+                  <SelectItem value="medium">Середній (25мм)</SelectItem>
+                  <SelectItem value="large">Великий (35мм)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {advertisementImage && (
+            <div className="border rounded-lg p-4 bg-gray-50">
+              <h4 className="font-medium mb-2">Перегляд зображення:</h4>
+              <img 
+                src={advertisementImage} 
+                alt="Рекламне зображення" 
+                className="max-w-32 max-h-32 object-contain border rounded"
+              />
+            </div>
+          )}
 
           <div className="border rounded-lg p-4 bg-gray-50">
             <h4 className="font-medium mb-3">Перегляд адрес для друку:</h4>
