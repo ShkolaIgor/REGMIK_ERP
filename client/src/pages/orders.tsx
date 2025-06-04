@@ -70,7 +70,7 @@ const orderItemSchema = z.object({
 });
 
 const orderSchema = z.object({
-  customerName: z.string().min(1, "Введіть ім'я клієнта"),
+  clientId: z.string().min(1, "Оберіть клієнта"),
   customerEmail: z.string().email("Введіть правильний email").optional().or(z.literal("")),
   customerPhone: z.string().optional(),
   status: z.string().default("pending"),
@@ -106,11 +106,15 @@ export default function Orders() {
   // Додаємо логування для діагностики
   console.log("Products in orders dialog:", products);
 
+  const { data: clients = [] } = useQuery({
+    queryKey: ["/api/clients"],
+  });
+
   // Форма для замовлення
   const form = useForm<OrderFormData>({
     resolver: zodResolver(orderSchema),
     defaultValues: {
-      customerName: "",
+      clientId: "",
       customerEmail: "",
       customerPhone: "",
       status: "pending",
@@ -278,7 +282,7 @@ export default function Orders() {
 
     // Заповнюємо форму даними замовлення
     form.reset({
-      customerName: order.customerName,
+      clientId: order.clientId || "",
       customerEmail: order.customerEmail || "",
       customerPhone: order.customerPhone || "",
       status: order.status,
@@ -374,7 +378,7 @@ export default function Orders() {
 
     const orderData = {
       order: {
-        customerName: data.customerName,
+        clientId: data.clientId,
         customerEmail: data.customerEmail || null,
         customerPhone: data.customerPhone || null,
         status: data.status,
@@ -458,15 +462,25 @@ export default function Orders() {
                 {/* Інформація про клієнта */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="customerName">Ім'я клієнта *</Label>
-                    <Input
-                      id="customerName"
-                      {...form.register("customerName")}
-                      className={form.formState.errors.customerName ? "border-red-500" : ""}
-                    />
-                    {form.formState.errors.customerName && (
+                    <Label htmlFor="clientId">Клієнт *</Label>
+                    <Select
+                      value={form.watch("clientId")}
+                      onValueChange={(value) => form.setValue("clientId", value)}
+                    >
+                      <SelectTrigger className={form.formState.errors.clientId ? "border-red-500" : ""}>
+                        <SelectValue placeholder="Оберіть клієнта" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients.map((client: any) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.name} ({client.id})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {form.formState.errors.clientId && (
                       <p className="text-sm text-red-500 mt-1">
-                        {form.formState.errors.customerName.message}
+                        {form.formState.errors.clientId.message}
                       </p>
                     )}
                   </div>
