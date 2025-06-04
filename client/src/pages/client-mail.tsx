@@ -341,19 +341,6 @@ export default function ClientMailPage() {
                         <Label htmlFor="image-size">Розмір зображення</Label>
                         <Select value={imageSize} onValueChange={setImageSize}>
                           <SelectTrigger className="mt-2">
-                            <SelectValue placeholder="Оберіть позицію" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="bottom-left">Знизу зліва</SelectItem>
-                            <SelectItem value="top-right">Зверху зправа</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="image-size">Розмір зображення</Label>
-                        <Select value={imageSize} onValueChange={setImageSize}>
-                          <SelectTrigger>
                             <SelectValue placeholder="Оберіть розмір" />
                           </SelectTrigger>
                           <SelectContent>
@@ -364,100 +351,128 @@ export default function ClientMailPage() {
                         </Select>
                       </div>
                     </div>
+                  </div>
+                </div>
 
-                    <div>
-                      <Label>Попередній перегляд конверта</Label>
-                      <div className="mt-2 border rounded-lg p-4 bg-gray-50">
-                        <div className="bg-white border-2 border-black mx-auto" style={{
-                          width: '220mm',
-                          height: '110mm',
-                          position: 'relative',
-                          fontFamily: 'Times New Roman, serif',
-                          transform: 'scale(0.3)',
-                          transformOrigin: 'top left',
-                          marginBottom: '-70mm'
-                        }}>
-                          <div style={{
-                            position: 'absolute',
-                            top: '8mm',
-                            right: '8mm',
-                            width: '30mm',
-                            height: '25mm',
-                            border: '1px dashed #999',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '8px',
-                            color: '#999',
-                            textAlign: 'center',
-                            lineHeight: '1.2'
-                          }}>
-                            МІСЦЕ<br/>ДЛЯ<br/>МАРКИ
-                          </div>
-                          <div style={{
-                            position: 'absolute',
-                            top: '8mm',
-                            left: '8mm',
-                            fontSize: '9px',
-                            lineHeight: '1.3',
-                            maxWidth: '70mm'
-                          }}>
-                            <div style={{ fontWeight: 'bold', marginBottom: '2mm' }}>Від кого:</div>
-                            <div>ТОВ "REGMIK"</div>
-                            <div>04112, м. Київ</div>
-                            <div>вул. Дегтярівська, 27-Т</div>
-                          </div>
-                          <div style={{
-                            position: 'absolute',
-                            top: '45mm',
-                            left: '60mm',
-                            fontSize: '12px',
-                            lineHeight: '1.4',
-                            maxWidth: '120mm'
-                          }}>
-                            <div style={{ fontWeight: 'bold', marginBottom: '3mm' }}>Кому:</div>
-                            <div style={{ fontWeight: 'bold', marginBottom: '2mm' }}>Приклад клієнта</div>
-                            <div>01001, м. Київ, вул. Прикладна, 1</div>
-                          </div>
-                          {(advertisementText || advertisementImage) && (
-                            <div style={{
-                              position: 'absolute',
-                              [imagePosition === 'top-right' ? 'top' : 'bottom']: imagePosition === 'top-right' ? '30mm' : '5mm',
-                              [imagePosition === 'top-right' ? 'right' : 'left']: '5mm',
-                              fontSize: '8px',
-                              color: '#333',
-                              maxWidth: '50mm',
-                              display: 'flex',
-                              flexDirection: imagePosition === 'top-right' ? 'column' : 'row',
-                              alignItems: imagePosition === 'top-right' ? 'flex-end' : 'center',
-                              gap: '3px'
-                            }}>
-                              {advertisementImage && (
-                                <img 
-                                  src={advertisementImage} 
-                                  alt="Реклама" 
-                                  style={{
-                                    width: getImageSizeValue(),
-                                    height: 'auto',
-                                    maxHeight: getImageSizeValue()
-                                  }}
-                                />
-                              )}
-                              {advertisementText && (
-                                <div style={{
-                                  textAlign: imagePosition === 'top-right' ? 'right' : 'left',
-                                  lineHeight: '1.2'
-                                }}>
-                                  {advertisementText}
-                                </div>
-                              )}
-                            </div>
-                          )}
+                <div className="space-y-6">
+                  <div className="p-4 border rounded-lg bg-green-50">
+                    <h3 className="text-lg font-semibold mb-4">Позиції на конверті</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Позиція відправника (x, y, ширина, висота в мм)</Label>
+                        <div className="grid grid-cols-4 gap-2 mt-2">
+                          <Input placeholder="X" defaultValue="20" />
+                          <Input placeholder="Y" defaultValue="15" />
+                          <Input placeholder="Ширина" defaultValue="80" />
+                          <Input placeholder="Висота" defaultValue="30" />
+                        </div>
+                      </div>
+                      <div>
+                        <Label>Позиція отримувача (x, y, ширина, висота в мм)</Label>
+                        <div className="grid grid-cols-4 gap-2 mt-2">
+                          <Input placeholder="X" defaultValue="120" />
+                          <Input placeholder="Y" defaultValue="60" />
+                          <Input placeholder="Ширина" defaultValue="80" />
+                          <Input placeholder="Висота" defaultValue="40" />
                         </div>
                       </div>
                     </div>
                   </div>
+
+                  <div className="p-4 border rounded-lg bg-yellow-50">
+                    <h3 className="text-lg font-semibold mb-4">Попередній перегляд конверта</h3>
+                    <div className="mt-2 border rounded-lg p-4 bg-gray-50 overflow-hidden">
+                      <div className="bg-white border-2 border-black mx-auto" style={{
+                        width: '220mm',
+                        height: '110mm',
+                        position: 'relative',
+                        fontFamily: 'Times New Roman, serif',
+                        transform: 'scale(0.6)',
+                        transformOrigin: 'top left',
+                        marginBottom: '-30mm'
+                      }}>
+                        <div style={{
+                          position: 'absolute',
+                          top: '8mm',
+                          right: '8mm',
+                          width: '30mm',
+                          height: '25mm',
+                          border: '1px dashed #999',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '8px',
+                          color: '#999',
+                          textAlign: 'center',
+                          lineHeight: '1.2'
+                        }}>
+                          МІСЦЕ<br/>ДЛЯ<br/>МАРКИ
+                        </div>
+                        <div style={{
+                          position: 'absolute',
+                          top: '8mm',
+                          left: '8mm',
+                          fontSize: '9px',
+                          lineHeight: '1.3',
+                          maxWidth: '70mm'
+                        }}>
+                          <div style={{ fontWeight: 'bold', marginBottom: '2mm' }}>Від кого:</div>
+                          <div>ТОВ "REGMIK"</div>
+                          <div>04112, м. Київ</div>
+                          <div>вул. Дегтярівська, 27-Т</div>
+                        </div>
+                        <div style={{
+                          position: 'absolute',
+                          top: '45mm',
+                          left: '60mm',
+                          fontSize: '12px',
+                          lineHeight: '1.4',
+                          maxWidth: '120mm'
+                        }}>
+                          <div style={{ fontWeight: 'bold', marginBottom: '3mm' }}>Кому:</div>
+                          <div style={{ fontWeight: 'bold', marginBottom: '2mm' }}>Приклад клієнта</div>
+                          <div>01001, м. Київ, вул. Прикладна, 1</div>
+                        </div>
+                        {(advertisementText || advertisementImage) && (
+                          <div style={{
+                            position: 'absolute',
+                            [imagePosition === 'top-right' ? 'top' : 'bottom']: imagePosition === 'top-right' ? '30mm' : '5mm',
+                            [imagePosition === 'top-right' ? 'right' : 'left']: '5mm',
+                            fontSize: '8px',
+                            color: '#333',
+                            maxWidth: '50mm',
+                            display: 'flex',
+                            flexDirection: imagePosition === 'top-right' ? 'column' : 'row',
+                            alignItems: imagePosition === 'top-right' ? 'flex-end' : 'center',
+                            gap: '3px'
+                          }}>
+                            {advertisementImage && (
+                              <img 
+                                src={advertisementImage} 
+                                alt="Реклама" 
+                                style={{
+                                  width: getImageSizeValue(),
+                                  height: 'auto',
+                                  maxHeight: getImageSizeValue()
+                                }}
+                              />
+                            )}
+                            {advertisementText && (
+                              <div style={{
+                                textAlign: imagePosition === 'top-right' ? 'right' : 'left',
+                                lineHeight: '1.2'
+                              }}>
+                                {advertisementText}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              </div>
+              <div className="flex justify-end pt-4">
                 <Button className="w-full">Зберегти налаштування</Button>
               </div>
             </DialogContent>
