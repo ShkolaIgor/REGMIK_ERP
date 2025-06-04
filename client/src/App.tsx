@@ -13,6 +13,7 @@ import Dashboard from "@/pages/dashboard";
 import Inventory from "@/pages/inventory";
 import Production from "@/pages/production";
 import Orders from "@/pages/orders";
+import Clients from "@/pages/clients";
 import Recipes from "@/pages/recipes";
 import TechCards from "@/pages/tech-cards";
 import BOM from "@/pages/bom";
@@ -80,6 +81,7 @@ function Router() {
         <Route path="/inventory" component={Inventory} />
         <Route path="/production" component={Production} />
         <Route path="/orders" component={Orders} />
+        <Route path="/clients" component={Clients} />
         <Route path="/recipes" component={Recipes} />
         <Route path="/tech-cards" component={TechCards} />
         <Route path="/bom" component={BOM} />
