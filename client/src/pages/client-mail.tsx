@@ -21,13 +21,15 @@ export default function ClientMailPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
   const [isGroupPrintDialogOpen, setIsGroupPrintDialogOpen] = useState(false);
+  const [isEnvelopePrintDialogOpen, setIsEnvelopePrintDialogOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [batchName, setBatchName] = useState("");
+  const [currentBatchMails, setCurrentBatchMails] = useState<ClientMail[]>([]);
   const [groupMailData, setGroupMailData] = useState({
     subject: "",
     content: "",
-    mailType: "letter",
+    mailType: "invoice",
     priority: "normal"
   });
   const { toast } = useToast();
@@ -677,6 +679,15 @@ export default function ClientMailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Діалог друку конвертів */}
+      <EnvelopePrintDialog
+        isOpen={isEnvelopePrintDialogOpen}
+        onClose={() => setIsEnvelopePrintDialogOpen(false)}
+        mails={currentBatchMails}
+        clients={clients}
+        batchName={batchName}
+      />
     </div>
   );
 }
