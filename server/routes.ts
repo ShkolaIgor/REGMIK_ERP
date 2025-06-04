@@ -2786,6 +2786,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/customer-addresses/save', async (req, res) => {
+    try {
+      const addressData = req.body;
+      
+      // Перевіряємо чи існує подібна адреса
+      const existingAddress = await storage.findCustomerAddressByDetails(
+        addressData.customerName,
+        addressData.cityName,
+        addressData.warehouseAddress
+      );
+
+      if (existingAddress) {
+        // Оновлюємо існуючу адресу (збільшуємо лічильник використань і оновлюємо дату)
+        const updatedAddress = await storage.updateCustomerAddressUsage(existingAddress.id);
+        res.json(updatedAddress);
+      } else {
+        // Створюємо нову адресу
+        const newAddress = await storage.createCustomerAddress(addressData);
+        res.status(201).json(newAddress);
+      }
+    } catch (error) {
+      console.error('Failed to save customer address:', error);
+      res.status(500).json({ error: 'Failed to save customer address' });
+    }
+  });
+
   app.patch('/api/customer-addresses/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id);

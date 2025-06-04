@@ -32,7 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { CarrierSelect } from "@/components/CarrierSelect";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Package, AlertCircle } from "lucide-react";
+import { Package, AlertCircle, Clock, RotateCcw } from "lucide-react";
 
 const partialShipmentSchema = z.object({
   carrierId: z.string().min(1, "Оберіть перевізника"),

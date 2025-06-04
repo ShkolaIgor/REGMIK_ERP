@@ -353,6 +353,8 @@ export interface IStorage {
   updateCustomerAddress(id: number, address: Partial<InsertCustomerAddress>): Promise<CustomerAddress | null>;
   deleteCustomerAddress(id: number): Promise<boolean>;
   setDefaultCustomerAddress(id: number): Promise<boolean>;
+  findCustomerAddressByDetails(customerName: string, cityName: string, warehouseAddress: string): Promise<CustomerAddress | null>;
+  updateCustomerAddressUsage(id: number): Promise<CustomerAddress>;
 
   // Sender Settings
   getSenderSettings(): Promise<SenderSettings[]>;

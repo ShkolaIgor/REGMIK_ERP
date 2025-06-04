@@ -2866,7 +2866,10 @@ export class DatabaseStorage implements IStorage {
 
   // Customer Addresses
   async getCustomerAddresses(): Promise<CustomerAddress[]> {
-    return await db.select().from(customerAddresses).orderBy(desc(customerAddresses.createdAt));
+    return await db
+      .select()
+      .from(customerAddresses)
+      .orderBy(desc(customerAddresses.lastUsed), desc(customerAddresses.usageCount));
   }
 
   async getCustomerAddress(id: number): Promise<CustomerAddress | null> {
@@ -2877,9 +2880,40 @@ export class DatabaseStorage implements IStorage {
   async createCustomerAddress(address: InsertCustomerAddress): Promise<CustomerAddress> {
     const [created] = await db
       .insert(customerAddresses)
-      .values(address)
+      .values({
+        ...address,
+        lastUsed: new Date(),
+        usageCount: 1
+      })
       .returning();
     return created;
+  }
+
+  async findCustomerAddressByDetails(customerName: string, cityName: string, warehouseAddress: string): Promise<CustomerAddress | null> {
+    const [address] = await db
+      .select()
+      .from(customerAddresses)
+      .where(
+        and(
+          eq(customerAddresses.customerName, customerName),
+          eq(customerAddresses.cityName, cityName),
+          eq(customerAddresses.warehouseAddress, warehouseAddress)
+        )
+      );
+    return address || null;
+  }
+
+  async updateCustomerAddressUsage(id: number): Promise<CustomerAddress> {
+    const [address] = await db
+      .update(customerAddresses)
+      .set({
+        lastUsed: new Date(),
+        usageCount: sql`${customerAddresses.usageCount} + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(customerAddresses.id, id))
+      .returning();
+    return address;
   }
 
   async updateCustomerAddress(id: number, address: Partial<InsertCustomerAddress>): Promise<CustomerAddress | null> {
