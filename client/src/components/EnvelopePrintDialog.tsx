@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Printer, Download, Upload, Image } from "lucide-react";
+import { Printer, Download, Upload, Image, Eye } from "lucide-react";
 
 interface Client {
   id: string;
@@ -62,11 +62,9 @@ export default function EnvelopePrintDialog({
 
   const getAdvertisementPosition = () => {
     switch (imagePosition) {
-      case "bottom-left": return "bottom: 10mm; left: 10mm;";
-      case "bottom-right": return "bottom: 10mm; right: 10mm;";
-      case "top-left": return "top: 10mm; left: 10mm;";
-      case "top-right": return "top: 10mm; right: 10mm;";
-      default: return "bottom: 10mm; left: 10mm;";
+      case "bottom-left": return "bottom: 5mm; left: 5mm;";
+      case "top-right": return "top: 30mm; right: 5mm;";
+      default: return "bottom: 5mm; left: 5mm;";
     }
   };
 
@@ -85,31 +83,46 @@ export default function EnvelopePrintDialog({
       const address = client?.sameAddress ? client.legalAddress : (client?.actualAddress || client?.legalAddress);
       
       return `
-        <div style="page-break-after: always; width: 220mm; height: 110mm; padding: 20mm; font-family: Arial, sans-serif; position: relative; border: 1px solid #ddd; margin-bottom: 10mm;">
-          <!-- Адреса отримувача (центр конверта) -->
-          <div style="position: absolute; top: 40mm; left: 80mm; font-size: 14px; line-height: 1.6;">
-            <div style="font-weight: bold; margin-bottom: 5px;">${client?.fullName || client?.name || 'Невідомий клієнт'}</div>
-            <div>${address || 'Адреса не вказана'}</div>
+        <div style="page-break-after: always; width: 220mm; height: 110mm; font-family: 'Times New Roman', serif; position: relative; border: 2px solid #000; margin: 10mm auto; box-sizing: border-box;">
+          
+          <!-- Місце для марки (правий верхній кут) -->
+          <div style="position: absolute; top: 8mm; right: 8mm; width: 30mm; height: 25mm; border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #999; text-align: center; line-height: 1.2;">
+            МІСЦЕ<br/>ДЛЯ<br/>МАРКИ
           </div>
           
           <!-- Адреса відправника (лівий верхній кут) -->
-          <div style="position: absolute; top: 10mm; left: 10mm; font-size: 10px; line-height: 1.4;">
-            <div style="font-weight: bold;">Відправник:</div>
-            <div>REGMIK</div>
-            <div>вул. Прикладна, 1</div>
-            <div>м. Київ, 01001</div>
+          <div style="position: absolute; top: 8mm; left: 8mm; font-size: 9px; line-height: 1.3; max-width: 70mm;">
+            <div style="font-weight: bold; margin-bottom: 2mm;">Від кого:</div>
+            <div>ТОВ "REGMIK"</div>
+            <div>04112, м. Київ</div>
+            <div>вул. Дегтярівська, 27-Т</div>
           </div>
           
-          <!-- Рекламний контент -->
-          <div style="position: absolute; ${getAdvertisementPosition()}; font-size: 8px; color: #666; max-width: 60mm; display: flex; align-items: center; gap: 5px;">
-            ${advertisementImage ? `<img src="${advertisementImage}" style="width: ${getImageSizeValue()}; height: auto; max-height: 15mm;" alt="Реклама" />` : ''}
-            <div>${advertisementText}</div>
+          <!-- Адреса отримувача (центр конверта) -->
+          <div style="position: absolute; top: 45mm; left: 60mm; font-size: 12px; line-height: 1.4; max-width: 120mm;">
+            <div style="font-weight: bold; margin-bottom: 3mm;">Кому:</div>
+            <div style="font-weight: bold; margin-bottom: 2mm;">${client?.fullName || client?.name || 'Невідомий клієнт'}</div>
+            <div>${address || 'Адреса не вказана'}</div>
           </div>
           
-          <!-- Номер у пакеті (правий верхній кут) -->
-          <div style="position: absolute; top: 10mm; right: 10mm; font-size: 10px; background: #f0f0f0; padding: 2px 5px; border-radius: 3px;">
+          <!-- Рекламний контент (згідно вибраної позиції) -->
+          ${(advertisementText || advertisementImage) ? `
+          <div style="position: absolute; ${getAdvertisementPosition()}; font-size: 8px; color: #333; max-width: 50mm; display: flex; ${imagePosition === 'top-right' ? 'flex-column' : 'flex-row'}; align-items: ${imagePosition === 'top-right' ? 'flex-end' : 'center'}; gap: 3px;">
+            ${advertisementImage ? `<img src="${advertisementImage}" style="width: ${getImageSizeValue()}; height: auto; max-height: ${getImageSizeValue()};" alt="Реклама" />` : ''}
+            ${advertisementText ? `<div style="text-align: ${imagePosition === 'top-right' ? 'right' : 'left'}; line-height: 1.2;">${advertisementText}</div>` : ''}
+          </div>
+          ` : ''}
+          
+          <!-- Номер у пакеті (для внутрішнього використання) -->
+          <div style="position: absolute; bottom: 3mm; right: 3mm; font-size: 7px; color: #ccc;">
             ${batchName} - №${index + 1}/${mails.length}
           </div>
+          
+          <!-- Індекс отримувача (якщо є) -->
+          <div style="position: absolute; top: 35mm; right: 45mm; font-size: 14px; font-weight: bold; letter-spacing: 2px;">
+            <!-- Тут може бути поштовий індекс -->
+          </div>
+          
         </div>
       `;
     }).join('');
@@ -212,16 +225,14 @@ export default function EnvelopePrintDialog({
             </div>
 
             <div>
-              <Label htmlFor="imagePosition">Позиція зображення</Label>
+              <Label htmlFor="imagePosition">Позиція реклами</Label>
               <Select value={imagePosition} onValueChange={setImagePosition}>
                 <SelectTrigger>
                   <SelectValue placeholder="Оберіть позицію" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="bottom-left">Лівий нижній кут</SelectItem>
-                  <SelectItem value="bottom-right">Правий нижній кут</SelectItem>
-                  <SelectItem value="top-left">Лівий верхній кут</SelectItem>
-                  <SelectItem value="top-right">Правий верхній кут</SelectItem>
+                  <SelectItem value="bottom-left">Знизу зліва</SelectItem>
+                  <SelectItem value="top-right">Зверху зправа</SelectItem>
                 </SelectContent>
               </Select>
             </div>
