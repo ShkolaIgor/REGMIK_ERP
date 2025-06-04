@@ -69,7 +69,7 @@ export default function Clients() {
   const createMutation = useMutation({
     mutationFn: (data: InsertClient) => apiRequest("/api/clients", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: data,
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
@@ -93,7 +93,7 @@ export default function Clients() {
     mutationFn: ({ id, data }: { id: number; data: Partial<InsertClient> }) =>
       apiRequest(`/api/clients/${id}`, {
         method: "PATCH",
-        body: JSON.stringify(data),
+        body: data,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });

@@ -4251,7 +4251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Clients API
-  app.get("/api/clients", isSimpleAuthenticated, async (req, res) => {
+  app.get("/api/clients", async (req, res) => {
     try {
       const clients = await storage.getClients();
       res.json(clients);
@@ -4261,7 +4261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/clients", isSimpleAuthenticated, async (req, res) => {
+  app.post("/api/clients", async (req, res) => {
     try {
       const client = await storage.createClient(req.body);
       res.status(201).json(client);
@@ -4271,7 +4271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/clients/:id", isSimpleAuthenticated, async (req, res) => {
+  app.get("/api/clients/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const client = await storage.getClient(id);
@@ -4285,7 +4285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/clients/:id", isSimpleAuthenticated, async (req, res) => {
+  app.patch("/api/clients/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const client = await storage.updateClient(id, req.body);
@@ -4299,7 +4299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/clients/:id", isSimpleAuthenticated, async (req, res) => {
+  app.delete("/api/clients/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteClient(id);
@@ -4314,7 +4314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Third-party shipments API
-  app.post("/api/orders/:orderId/third-party-shipment", isSimpleAuthenticated, async (req, res) => {
+  app.post("/api/orders/:orderId/third-party-shipment", async (req, res) => {
     try {
       const orderId = parseInt(req.params.orderId);
       const { useClientApi, ...shipmentData } = req.body;
