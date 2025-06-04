@@ -34,7 +34,8 @@ export default function ClientMailPage() {
   });
   const [advertisementText, setAdvertisementText] = useState("REGMIK ERP - Ваш надійний партнер у бізнесі! Телефон: +380 XX XXX-XX-XX");
   const [advertisementImage, setAdvertisementImage] = useState<string | null>(null);
-  const [imagePosition, setImagePosition] = useState("bottom-left");
+  const [adPositions, setAdPositions] = useState<string[]>(["bottom-left"]); // зліва знизу, справа зверху або і там і там
+  const [imageRelativePosition, setImageRelativePosition] = useState("left"); // над, під, зліва, зправа від тексту
   const [imageSize, setImageSize] = useState("small");
   const { toast } = useToast();
 
@@ -306,58 +307,98 @@ export default function ClientMailPage() {
                       </div>
 
                       <div className="space-y-3">
-                        <Label>Позиція реклами</Label>
+                        <Label>Позиція реклами на конверті</Label>
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id="pos-bottom-left"
+                              checked={adPositions.includes("bottom-left")}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setAdPositions([...adPositions, "bottom-left"]);
+                                } else {
+                                  setAdPositions(adPositions.filter(pos => pos !== "bottom-left"));
+                                }
+                              }}
+                            />
+                            <label htmlFor="pos-bottom-left" className="text-sm font-medium">
+                              Знизу зліва (під адресою отримувача)
+                            </label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id="pos-top-right"
+                              checked={adPositions.includes("top-right")}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setAdPositions([...adPositions, "top-right"]);
+                                } else {
+                                  setAdPositions(adPositions.filter(pos => pos !== "top-right"));
+                                }
+                              }}
+                            />
+                            <label htmlFor="pos-top-right" className="text-sm font-medium">
+                              Зверху зправа (біля зони для марки)
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label>Розташування зображення відносно тексту</Label>
                         <div className="grid grid-cols-2 gap-2">
                           <div className="flex items-center space-x-2">
                             <input
                               type="radio"
-                              id="pos-bottom-left"
-                              name="position"
-                              value="bottom-left"
-                              checked={imagePosition === "bottom-left"}
-                              onChange={(e) => setImagePosition(e.target.value)}
+                              id="img-above"
+                              name="imageRelative"
+                              value="above"
+                              checked={imageRelativePosition === "above"}
+                              onChange={(e) => setImageRelativePosition(e.target.value)}
                             />
-                            <label htmlFor="pos-bottom-left" className="text-sm font-medium">
-                              Знизу зліва
+                            <label htmlFor="img-above" className="text-sm font-medium">
+                              Над текстом
                             </label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <input
                               type="radio"
-                              id="pos-bottom-right"
-                              name="position"
-                              value="bottom-right"
-                              checked={imagePosition === "bottom-right"}
-                              onChange={(e) => setImagePosition(e.target.value)}
+                              id="img-below"
+                              name="imageRelative"
+                              value="below"
+                              checked={imageRelativePosition === "below"}
+                              onChange={(e) => setImageRelativePosition(e.target.value)}
                             />
-                            <label htmlFor="pos-bottom-right" className="text-sm font-medium">
-                              Знизу зправа
+                            <label htmlFor="img-below" className="text-sm font-medium">
+                              Під текстом
                             </label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <input
                               type="radio"
-                              id="pos-top-left"
-                              name="position"
-                              value="top-left"
-                              checked={imagePosition === "top-left"}
-                              onChange={(e) => setImagePosition(e.target.value)}
+                              id="img-left"
+                              name="imageRelative"
+                              value="left"
+                              checked={imageRelativePosition === "left"}
+                              onChange={(e) => setImageRelativePosition(e.target.value)}
                             />
-                            <label htmlFor="pos-top-left" className="text-sm font-medium">
-                              Зверху зліва
+                            <label htmlFor="img-left" className="text-sm font-medium">
+                              Зліва від тексту
                             </label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <input
                               type="radio"
-                              id="pos-top-right"
-                              name="position"
-                              value="top-right"
-                              checked={imagePosition === "top-right"}
-                              onChange={(e) => setImagePosition(e.target.value)}
+                              id="img-right"
+                              name="imageRelative"
+                              value="right"
+                              checked={imageRelativePosition === "right"}
+                              onChange={(e) => setImageRelativePosition(e.target.value)}
                             />
-                            <label htmlFor="pos-top-right" className="text-sm font-medium">
-                              Зверху зправа
+                            <label htmlFor="img-right" className="text-sm font-medium">
+                              Зправа від тексту
                             </label>
                           </div>
                         </div>
@@ -459,22 +500,20 @@ export default function ClientMailPage() {
                           <div style={{ fontWeight: 'bold', marginBottom: '2mm' }}>Приклад клієнта</div>
                           <div>01001, м. Київ, вул. Прикладна, 1</div>
                         </div>
-                        {(advertisementText || advertisementImage) && (
-                          <div style={{
+                        {(advertisementText || advertisementImage) && adPositions.map(position => (
+                          <div key={position} style={{
                             position: 'absolute',
-                            ...(imagePosition === 'top-left' && { top: '8mm', left: '45mm' }),
-                            ...(imagePosition === 'top-right' && { top: '8mm', right: '5mm' }),
-                            ...(imagePosition === 'bottom-left' && { bottom: '5mm', left: '5mm' }),
-                            ...(imagePosition === 'bottom-right' && { bottom: '5mm', right: '5mm' }),
+                            ...(position === 'top-right' && { top: '8mm', right: '5mm' }),
+                            ...(position === 'bottom-left' && { bottom: '5mm', left: '5mm' }),
                             fontSize: '8px',
                             color: '#333',
                             maxWidth: '50mm',
                             display: 'flex',
-                            flexDirection: imagePosition.includes('top') ? 'column' : 'row',
-                            alignItems: imagePosition.includes('right') ? 'flex-end' : 'flex-start',
+                            flexDirection: imageRelativePosition === 'above' || imageRelativePosition === 'below' ? 'column' : 'row',
+                            alignItems: position.includes('right') ? 'flex-end' : 'flex-start',
                             gap: '3px'
                           }}>
-                            {advertisementImage && (
+                            {imageRelativePosition === 'above' && advertisementImage && (
                               <img 
                                 src={advertisementImage} 
                                 alt="Реклама" 
@@ -485,16 +524,51 @@ export default function ClientMailPage() {
                                 }}
                               />
                             )}
+                            {imageRelativePosition === 'left' && advertisementImage && (
+                              <img 
+                                src={advertisementImage} 
+                                alt="Реклама" 
+                                style={{
+                                  width: getImageSizeValue(),
+                                  height: 'auto',
+                                  maxHeight: getImageSizeValue(),
+                                  marginRight: '3px'
+                                }}
+                              />
+                            )}
                             {advertisementText && (
                               <div style={{
-                                textAlign: imagePosition.includes('right') ? 'right' : 'left',
+                                textAlign: position.includes('right') ? 'right' : 'left',
                                 lineHeight: '1.2'
                               }}>
                                 {advertisementText}
                               </div>
                             )}
+                            {imageRelativePosition === 'right' && advertisementImage && (
+                              <img 
+                                src={advertisementImage} 
+                                alt="Реклама" 
+                                style={{
+                                  width: getImageSizeValue(),
+                                  height: 'auto',
+                                  maxHeight: getImageSizeValue(),
+                                  marginLeft: '3px'
+                                }}
+                              />
+                            )}
+                            {imageRelativePosition === 'below' && advertisementImage && (
+                              <img 
+                                src={advertisementImage} 
+                                alt="Реклама" 
+                                style={{
+                                  width: getImageSizeValue(),
+                                  height: 'auto',
+                                  maxHeight: getImageSizeValue()
+                                }}
+                              />
+                            )}
                           </div>
-                        )}
+                        ))}
                       </div>
                     </div>
                   </div>
