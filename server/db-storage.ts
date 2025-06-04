@@ -5233,7 +5233,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Group mail creation
-  async createGroupMails(clientIds: string[], mailData: any, batchName: string): Promise<{ created: number; batchId: string }> {
+  async createGroupMails(clientIds: string[], mailData: any, batchName: string): Promise<{ count: number; mails: any[]; batchId: string }> {
     const batchId = `batch_${Date.now()}`;
     const createdMails = [];
 
@@ -5269,7 +5269,11 @@ export class DatabaseStorage implements IStorage {
       status: 'created'
     });
 
-    return { created: createdMails.length, batchId };
+    return { 
+      count: createdMails.length, 
+      mails: createdMails,
+      batchId 
+    };
   }
 }
 

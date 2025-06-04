@@ -81,17 +81,28 @@ export default function ClientMailPage() {
   const groupCreateMutation = useMutation({
     mutationFn: (data: { clientIds: string[], mailData: any, batchName: string }) => 
       apiRequest("/api/client-mail/group-create", "POST", data),
-    onSuccess: () => {
+    onSuccess: (result: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/client-mail"] });
       queryClient.invalidateQueries({ queryKey: ["/api/mail-registry"] });
-      setIsGroupPrintDialogOpen(false);
+      
+      // Отримуємо створені листи для друку конвертів
+      if (result.mails && result.mails.length > 0) {
+        setCurrentBatchMails(result.mails);
+        setIsGroupPrintDialogOpen(false);
+        setIsEnvelopePrintDialogOpen(true);
+      }
+      
       setSelectedClients([]);
       setBatchName("");
-      setGroupMailData({ subject: "", content: "", mailType: "letter", priority: "normal" });
-      toast({ title: "Листи створено та готові до друку" });
+      setGroupMailData({ subject: "", content: "", mailType: "invoice", priority: "normal" });
+      
+      toast({ 
+        title: "Пакет підготовлено", 
+        description: `Створено ${result.count} записів для друку конвертів` 
+      });
     },
     onError: () => {
-      toast({ title: "Помилка", description: "Не вдалося створити листи", variant: "destructive" });
+      toast({ title: "Помилка", description: "Не вдалося створити пакет", variant: "destructive" });
     },
   });
 
