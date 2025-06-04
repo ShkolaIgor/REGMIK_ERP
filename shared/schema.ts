@@ -419,6 +419,9 @@ export const envelopePrintSettings = pgTable("envelope_print_settings", {
   senderAddress: text("sender_address"),
   senderPhone: varchar("sender_phone", { length: 50 }),
   advertisingText: text("advertising_text"),
+  advertisingImageUrl: text("advertising_image_url"), // URL зображення для реклами
+  advertisingImagePosition: varchar("advertising_image_position", { length: 50 }).default("bottom-left"), // позиція: bottom-left, bottom-right, top-left, top-right
+  advertisingImageSize: varchar("advertising_image_size", { length: 50 }).default("small"), // розмір: small, medium, large
   envelopeFormat: varchar("envelope_format", { length: 50 }).notNull().default("C5"),
   fontSize: integer("font_size").default(12),
   fontFamily: varchar("font_family", { length: 100 }).default("Arial"),

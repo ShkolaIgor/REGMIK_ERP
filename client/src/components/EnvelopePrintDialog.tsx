@@ -3,7 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Printer, Download } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Printer, Download, Upload, Image } from "lucide-react";
 
 interface Client {
   id: string;
@@ -39,6 +41,9 @@ export default function EnvelopePrintDialog({
   batchName 
 }: EnvelopePrintDialogProps) {
   const [advertisementText, setAdvertisementText] = useState("REGMIK ERP - Ваш надійний партнер у бізнесі! Телефон: +380 XX XXX-XX-XX");
+  const [advertisementImage, setAdvertisementImage] = useState<string | null>(null);
+  const [imagePosition, setImagePosition] = useState("bottom-left");
+  const [imageSize, setImageSize] = useState("small");
 
   const getClientById = (clientId: string) => {
     return clients.find(c => c.id === clientId);
