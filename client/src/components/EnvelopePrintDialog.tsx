@@ -47,16 +47,7 @@ export default function EnvelopePrintDialog({
   const imagePosition = "bottom-left";
   const imageSize = "small";
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setAdvertisementImage(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  // Функції для роботи з рекламою видалені - тепер в основній формі
 
   const getClientById = (clientId: string) => {
     return clients.find(c => c.id === clientId);
@@ -192,78 +183,7 @@ export default function EnvelopePrintDialog({
         </DialogHeader>
         
         <div className="space-y-6">
-          <div>
-            <Label htmlFor="advertisement">Рекламний текст</Label>
-            <Textarea
-              id="advertisement"
-              value={advertisementText}
-              onChange={(e) => setAdvertisementText(e.target.value)}
-              placeholder="Введіть рекламний текст який буде відображатися на конвертах"
-              rows={3}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="imageUpload">Рекламне зображення</Label>
-              <div className="flex items-center space-x-2 mt-1">
-                <Input
-                  id="imageUpload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="flex-1"
-                />
-                {advertisementImage && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setAdvertisementImage(null)}
-                  >
-                    <Image className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="imagePosition">Позиція реклами</Label>
-              <Select value={imagePosition} onValueChange={setImagePosition}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Оберіть позицію" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bottom-left">Знизу зліва</SelectItem>
-                  <SelectItem value="top-right">Зверху зправа</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="imageSize">Розмір зображення</Label>
-              <Select value={imageSize} onValueChange={setImageSize}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Оберіть розмір" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="small">Малий (15мм)</SelectItem>
-                  <SelectItem value="medium">Середній (25мм)</SelectItem>
-                  <SelectItem value="large">Великий (35мм)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {advertisementImage && (
-            <div className="border rounded-lg p-4 bg-gray-50">
-              <h4 className="font-medium mb-2">Перегляд зображення:</h4>
-              <img 
-                src={advertisementImage} 
-                alt="Рекламне зображення" 
-                className="max-w-32 max-h-32 object-contain border rounded"
-              />
-            </div>
-          )}
+          {/* Налаштування реклами видалені - тепер в основній формі */}
 
           <div className="border rounded-lg p-4 bg-gray-50">
             <h4 className="font-medium mb-3">Перегляд адрес для друку:</h4>
