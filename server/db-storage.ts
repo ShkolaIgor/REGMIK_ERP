@@ -2856,6 +2856,10 @@ export class DatabaseStorage implements IStorage {
 
   async deleteShipment(id: number): Promise<boolean> {
     try {
+      // Спочатку видаляємо всі елементи відвантаження
+      await db.delete(shipmentItems).where(eq(shipmentItems.shipmentId, id));
+      
+      // Потім видаляємо саме відвантаження
       const result = await db.delete(shipments).where(eq(shipments.id, id));
       return (result.rowCount ?? 0) > 0;
     } catch (error) {
