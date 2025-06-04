@@ -151,6 +151,7 @@ export const orders = pgTable("orders", {
   customerName: text("customer_name").notNull(),
   customerEmail: text("customer_email"),
   customerPhone: text("customer_phone"),
+  clientId: integer("client_id").references(() => clients.id), // зв'язок з клієнтом для використання його API ключів
   status: text("status").notNull().default("pending"), // pending, processing, shipped, delivered, cancelled
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   notes: text("notes"),
@@ -604,6 +605,29 @@ export const emailSettings = pgTable("email_settings", {
   updatedBy: varchar("updated_by", { length: 50 })
 });
 
+// Таблиця клієнтів з налаштуваннями Нової Пошти
+export const clients = pgTable("clients", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: varchar("type", { length: 50 }).notNull().default("individual"), // individual, organization
+  contactPerson: varchar("contact_person", { length: 255 }),
+  phone: varchar("phone", { length: 50 }),
+  email: varchar("email", { length: 255 }),
+  address: text("address"),
+  notes: text("notes"),
+  
+  // Налаштування Нової Пошти
+  novaPoshtaApiKey: varchar("nova_poshta_api_key", { length: 255 }),
+  novaPoshtaSenderRef: varchar("nova_poshta_sender_ref", { length: 255 }),
+  novaPoshtaContactRef: varchar("nova_poshta_contact_ref", { length: 255 }),
+  novaPoshtaAddressRef: varchar("nova_poshta_address_ref", { length: 255 }),
+  enableThirdPartyShipping: boolean("enable_third_party_shipping").default(false),
+  
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertAssemblyOperationSchema = createInsertSchema(assemblyOperations).omit({ 
   id: true, 
@@ -614,6 +638,12 @@ export const insertAssemblyOperationSchema = createInsertSchema(assemblyOperatio
 export const insertAssemblyOperationItemSchema = createInsertSchema(assemblyOperationItems).omit({ 
   id: true, 
   createdAt: true 
+});
+
+export const insertClientSchema = createInsertSchema(clients).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
 });
 
 // Inventory Audits
@@ -1465,6 +1495,10 @@ export type TechCardStep = typeof techCardSteps.$inferSelect;
 export type InsertTechCardStep = z.infer<typeof insertTechCardStepSchema>;
 export type TechCardMaterial = typeof techCardMaterials.$inferSelect;
 export type InsertTechCardMaterial = z.infer<typeof insertTechCardMaterialSchema>;
+
+// Client types
+export type Client = typeof clients.$inferSelect;
+export type InsertClient = z.infer<typeof insertClientSchema>;
 
 // Tasks table for general task management
 export const tasks = pgTable("tasks", {
