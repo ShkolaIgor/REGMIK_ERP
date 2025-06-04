@@ -607,13 +607,19 @@ export const emailSettings = pgTable("email_settings", {
 
 // Таблиця клієнтів з налаштуваннями Нової Пошти
 export const clients = pgTable("clients", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
+  id: varchar("id", { length: 20 }).primaryKey(), // ЄДРПОУ або ІПН
+  name: varchar("name", { length: 255 }).notNull(), // Скорочена назва
+  fullName: varchar("full_name", { length: 500 }),  // Повна назва
   type: varchar("type", { length: 50 }).notNull().default("individual"), // individual, organization
-  contactPerson: varchar("contact_person", { length: 255 }),
-  phone: varchar("phone", { length: 50 }),
-  email: varchar("email", { length: 255 }),
-  address: text("address"),
+  
+  // Адреси
+  legalAddress: text("legal_address"), // Юридична адреса
+  physicalAddress: text("physical_address"), // Фактична адреса для відвантаження
+  addressesMatch: boolean("addresses_match").default(false), // Адреси співпадають
+  
+  // Фінансова інформація
+  discount: decimal("discount", { precision: 5, scale: 2 }).default("0.00"), // Знижка клієнта в %
+  
   notes: text("notes"),
   
   // Налаштування Нової Пошти
@@ -626,6 +632,30 @@ export const clients = pgTable("clients", {
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Контактні особи клієнтів
+export const clientContacts = pgTable("client_contacts", {
+  id: serial("id").primaryKey(),
+  clientId: varchar("client_id", { length: 20 }).notNull().references(() => clients.id, { onDelete: "cascade" }),
+  fullName: varchar("full_name", { length: 255 }).notNull(),
+  position: varchar("position", { length: 255 }),
+  mobilePhone: varchar("mobile_phone", { length: 50 }),
+  email: varchar("email", { length: 255 }),
+  isPrimary: boolean("is_primary").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+// Телефони клієнтів
+export const clientPhones = pgTable("client_phones", {
+  id: serial("id").primaryKey(),
+  clientId: varchar("client_id", { length: 20 }).notNull().references(() => clients.id, { onDelete: "cascade" }),
+  phoneNumber: varchar("phone_number", { length: 50 }).notNull(),
+  phoneType: varchar("phone_type", { length: 50 }).default("office"), // office, mobile, fax
+  description: varchar("description", { length: 255 }),
+  isPrimary: boolean("is_primary").default(false),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 // Insert schemas
@@ -641,9 +671,19 @@ export const insertAssemblyOperationItemSchema = createInsertSchema(assemblyOper
 });
 
 export const insertClientSchema = createInsertSchema(clients).omit({
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertClientContactSchema = createInsertSchema(clientContacts).omit({
   id: true,
   createdAt: true,
   updatedAt: true
+});
+
+export const insertClientPhoneSchema = createInsertSchema(clientPhones).omit({
+  id: true,
+  createdAt: true
 });
 
 // Inventory Audits
@@ -1499,6 +1539,10 @@ export type InsertTechCardMaterial = z.infer<typeof insertTechCardMaterialSchema
 // Client types
 export type Client = typeof clients.$inferSelect;
 export type InsertClient = z.infer<typeof insertClientSchema>;
+export type ClientContact = typeof clientContacts.$inferSelect;
+export type InsertClientContact = z.infer<typeof insertClientContactSchema>;
+export type ClientPhone = typeof clientPhones.$inferSelect;
+export type InsertClientPhone = z.infer<typeof insertClientPhoneSchema>;
 
 // Tasks table for general task management
 export const tasks = pgTable("tasks", {
