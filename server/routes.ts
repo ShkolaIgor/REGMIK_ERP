@@ -4427,6 +4427,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Group mail creation API
+  app.post("/api/client-mail/group-create", async (req, res) => {
+    try {
+      const { clientIds, mailData, batchName } = req.body;
+      const result = await storage.createGroupMails(clientIds, mailData, batchName);
+      res.status(201).json(result);
+    } catch (error) {
+      console.error("Failed to create group mails:", error);
+      res.status(500).json({ error: "Failed to create group mails" });
+    }
+  });
+
   // Third-party shipments API
   app.post("/api/orders/:orderId/third-party-shipment", async (req, res) => {
     try {

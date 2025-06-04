@@ -19,8 +19,16 @@ import type { ClientMail, InsertClientMail, Client, MailRegistry, EnvelopePrintS
 export default function ClientMailPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
+  const [isGroupPrintDialogOpen, setIsGroupPrintDialogOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
+  const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [batchName, setBatchName] = useState("");
+  const [groupMailData, setGroupMailData] = useState({
+    subject: "",
+    content: "",
+    mailType: "letter",
+    priority: "normal"
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -64,6 +72,23 @@ export default function ClientMailPage() {
     },
     onError: () => {
       toast({ title: "Помилка", description: "Не вдалося надрукувати конверти", variant: "destructive" });
+    },
+  });
+
+  const groupCreateMutation = useMutation({
+    mutationFn: (data: { clientIds: string[], mailData: any, batchName: string }) => 
+      apiRequest("/api/client-mail/group-create", "POST", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/client-mail"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/mail-registry"] });
+      setIsGroupPrintDialogOpen(false);
+      setSelectedClients([]);
+      setBatchName("");
+      setGroupMailData({ subject: "", content: "", mailType: "letter", priority: "normal" });
+      toast({ title: "Листи створено та готові до друку" });
+    },
+    onError: () => {
+      toast({ title: "Помилка", description: "Не вдалося створити листи", variant: "destructive" });
     },
   });
 
