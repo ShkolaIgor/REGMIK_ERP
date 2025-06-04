@@ -32,7 +32,31 @@ export default function ClientMailPage() {
     mailType: "invoice",
     priority: "normal"
   });
+  const [advertisementText, setAdvertisementText] = useState("REGMIK ERP - Ваш надійний партнер у бізнесі! Телефон: +380 XX XXX-XX-XX");
+  const [advertisementImage, setAdvertisementImage] = useState<string | null>(null);
+  const [imagePosition, setImagePosition] = useState("bottom-left");
+  const [imageSize, setImageSize] = useState("small");
   const { toast } = useToast();
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAdvertisementImage(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const getImageSizeValue = () => {
+    switch (imageSize) {
+      case "small": return "15mm";
+      case "medium": return "25mm";
+      case "large": return "35mm";
+      default: return "15mm";
+    }
+  };
   const queryClient = useQueryClient();
 
   const { data: mails = [], isLoading: isLoadingMails } = useQuery<ClientMail[]>({
@@ -243,13 +267,127 @@ export default function ClientMailPage() {
                     <Input placeholder="Висота" defaultValue="40" />
                   </div>
                 </div>
-                <div>
-                  <Label>Позиція реклами (x, y, ширина, висота в мм)</Label>
-                  <div className="grid grid-cols-4 gap-2 mt-2">
-                    <Input placeholder="X" defaultValue="10" />
-                    <Input placeholder="Y" defaultValue="100" />
-                    <Input placeholder="Ширина" defaultValue="60" />
-                    <Input placeholder="Висота" defaultValue="20" />
+                <div className="border-t pt-4">
+                  <h4 className="font-medium mb-3">Налаштування реклами</h4>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="advertisement-text">Рекламний текст</Label>
+                      <Textarea
+                        id="advertisement-text"
+                        placeholder="Введіть рекламний текст який буде відображатися на конвертах"
+                        rows={3}
+                        defaultValue="REGMIK ERP - Ваш надійний партнер у бізнесі! Телефон: +380 XX XXX-XX-XX"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="image-upload">Рекламне зображення</Label>
+                        <Input
+                          id="image-upload"
+                          type="file"
+                          accept="image/*"
+                          className="mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="image-position">Позиція реклами</Label>
+                        <Select defaultValue="bottom-left">
+                          <SelectTrigger>
+                            <SelectValue placeholder="Оберіть позицію" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="bottom-left">Знизу зліва</SelectItem>
+                            <SelectItem value="top-right">Зверху зправа</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="image-size">Розмір зображення</Label>
+                        <Select defaultValue="small">
+                          <SelectTrigger>
+                            <SelectValue placeholder="Оберіть розмір" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="small">Малий (15мм)</SelectItem>
+                            <SelectItem value="medium">Середній (25мм)</SelectItem>
+                            <SelectItem value="large">Великий (35мм)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Попередній перегляд конверта</Label>
+                      <div className="mt-2 border rounded-lg p-4 bg-gray-50">
+                        <div className="bg-white border-2 border-black mx-auto" style={{
+                          width: '220mm',
+                          height: '110mm',
+                          position: 'relative',
+                          fontFamily: 'Times New Roman, serif',
+                          transform: 'scale(0.3)',
+                          transformOrigin: 'top left',
+                          marginBottom: '-70mm'
+                        }}>
+                          <div style={{
+                            position: 'absolute',
+                            top: '8mm',
+                            right: '8mm',
+                            width: '30mm',
+                            height: '25mm',
+                            border: '1px dashed #999',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '8px',
+                            color: '#999',
+                            textAlign: 'center',
+                            lineHeight: '1.2'
+                          }}>
+                            МІСЦЕ<br/>ДЛЯ<br/>МАРКИ
+                          </div>
+                          <div style={{
+                            position: 'absolute',
+                            top: '8mm',
+                            left: '8mm',
+                            fontSize: '9px',
+                            lineHeight: '1.3',
+                            maxWidth: '70mm'
+                          }}>
+                            <div style={{ fontWeight: 'bold', marginBottom: '2mm' }}>Від кого:</div>
+                            <div>ТОВ "REGMIK"</div>
+                            <div>04112, м. Київ</div>
+                            <div>вул. Дегтярівська, 27-Т</div>
+                          </div>
+                          <div style={{
+                            position: 'absolute',
+                            top: '45mm',
+                            left: '60mm',
+                            fontSize: '12px',
+                            lineHeight: '1.4',
+                            maxWidth: '120mm'
+                          }}>
+                            <div style={{ fontWeight: 'bold', marginBottom: '3mm' }}>Кому:</div>
+                            <div style={{ fontWeight: 'bold', marginBottom: '2mm' }}>Приклад клієнта</div>
+                            <div>01001, м. Київ, вул. Прикладна, 1</div>
+                          </div>
+                          <div style={{
+                            position: 'absolute',
+                            bottom: '5mm',
+                            left: '5mm',
+                            fontSize: '8px',
+                            color: '#333',
+                            maxWidth: '50mm',
+                            lineHeight: '1.2'
+                          }}>
+                            REGMIK ERP - Ваш надійний партнер у бізнесі!
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <Button className="w-full">Зберегти налаштування</Button>
