@@ -349,7 +349,7 @@ export default function ClientMailPage() {
                 Налаштування друку
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden">
               <DialogHeader>
                 <DialogTitle>Налаштування друку конвертів</DialogTitle>
                 <DialogDescription>
@@ -357,9 +357,9 @@ export default function ClientMailPage() {
                 </DialogDescription>
               </DialogHeader>
               
-              <div className="space-y-8">
-                {/* Верхні налаштування в три колонки */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 gap-6 h-[80vh]">
+                {/* Ліва колонка - Налаштування */}
+                <div className="space-y-4 overflow-y-auto pr-2">
                   {/* Основні налаштування */}
                   <div className="p-4 border rounded-lg bg-gray-50">
                     <h3 className="text-lg font-semibold mb-4">Основні налаштування</h3>
@@ -496,84 +496,13 @@ export default function ClientMailPage() {
                     </div>
                   </div>
 
-                  {/* Позиції на конверті */}
-                  <div className="p-4 border rounded-lg bg-green-50">
-                    <h3 className="text-lg font-semibold mb-4">Позиції на конверті</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Позиція відправника (x, y в мм)</Label>
-                        <div className="grid grid-cols-2 gap-2 mt-2">
-                          <Input 
-                            placeholder="X" 
-                            value={Math.round(senderPosition.x)} 
-                            onChange={(e) => setSenderPosition(prev => ({ ...prev, x: parseInt(e.target.value) || 0 }))}
-                          />
-                          <Input 
-                            placeholder="Y" 
-                            value={Math.round(senderPosition.y)} 
-                            onChange={(e) => setSenderPosition(prev => ({ ...prev, y: parseInt(e.target.value) || 0 }))}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label>Позиція отримувача (x, y в мм)</Label>
-                        <div className="grid grid-cols-2 gap-2 mt-2">
-                          <Input 
-                            placeholder="X" 
-                            value={Math.round(recipientPosition.x)} 
-                            onChange={(e) => setRecipientPosition(prev => ({ ...prev, x: parseInt(e.target.value) || 0 }))}
-                          />
-                          <Input 
-                            placeholder="Y" 
-                            value={Math.round(recipientPosition.y)} 
-                            onChange={(e) => setRecipientPosition(prev => ({ ...prev, y: parseInt(e.target.value) || 0 }))}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label>Позиції реклами</Label>
-                        <div className="text-xs text-gray-600 mt-1 mb-2">
-                          Показані тільки активні позиції
-                        </div>
-                        <div className="space-y-2">
-                          {Object.entries(adPositionCoords)
-                            .filter(([position]) => adPositions.includes(position))
-                            .map(([position, coords]) => (
-                            <div key={position} className="grid grid-cols-3 gap-2 items-center">
-                              <Label className="text-sm">{position === 'bottom-left' ? 'Знизу зліва' : 'Зверху зправа'}:</Label>
-                              <Input 
-                                placeholder="X" 
-                                value={Math.round(coords.x)} 
-                                onChange={(e) => setAdPositionCoords(prev => ({ 
-                                  ...prev, 
-                                  [position]: { ...prev[position as keyof typeof prev], x: parseInt(e.target.value) || 0 }
-                                }))}
-                              />
-                              <Input 
-                                placeholder="Y" 
-                                value={Math.round(coords.y)} 
-                                onChange={(e) => setAdPositionCoords(prev => ({ 
-                                  ...prev, 
-                                  [position]: { ...prev[position as keyof typeof prev], y: parseInt(e.target.value) || 0 }
-                                }))}
-                              />
-                            </div>
-                          ))}
-                          {!adPositions.length && (
-                            <div className="text-sm text-gray-500 italic">
-                              Немає активних позицій реклами
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
-                {/* Інтерактивний попередній перегляд конверта на всю ширину */}
-                <div className="p-6 border rounded-lg bg-yellow-50">
-                  <h3 className="text-xl font-semibold mb-4">Інтерактивний попередній перегляд конверта</h3>
-                  <div className="mt-2 border rounded-lg p-6 bg-gray-50 overflow-auto min-h-[500px]">
+                {/* Права колонка - Попередній перегляд */}
+                <div className="space-y-4">
+                  <div className="p-4 border rounded-lg bg-yellow-50">
+                    <h3 className="text-lg font-semibold mb-4">Попередній перегляд конверта</h3>
+                    <div className="border rounded-lg p-4 bg-gray-50 overflow-auto" style={{ height: '60vh' }}>
                     <div className="text-sm text-blue-600 mb-4 font-medium text-center">
                       💡 Натисніть та перетягніть елементи для переміщення по конверту
                     </div>
