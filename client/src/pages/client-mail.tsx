@@ -132,31 +132,7 @@ export default function ClientMailPage() {
     }
   }, [envelopeSettings, envelopeSize]);
 
-  // Додаємо глобальні обробники подій для зміни розмірів
-  useEffect(() => {
-    const handleGlobalMouseMove = (e: MouseEvent) => {
-      if (isResizing) {
-        handleResizeMove(e);
-      }
-    };
 
-    const handleGlobalMouseUp = () => {
-      if (isResizing) {
-        setIsResizing(false);
-        setResizingElement(null);
-      }
-    };
-
-    if (isResizing) {
-      document.addEventListener('mousemove', handleGlobalMouseMove);
-      document.addEventListener('mouseup', handleGlobalMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleGlobalMouseMove);
-      document.removeEventListener('mouseup', handleGlobalMouseUp);
-    };
-  }, [isResizing, handleResizeMove]);
 
   // Обробники перетягування
   const handleMouseDown = (elementType: string, event: React.MouseEvent) => {
@@ -823,6 +799,9 @@ export default function ClientMailPage() {
                       imageRelativePosition,
                       imageSize,
                       fontSize,
+                      senderRecipientFontSize,
+                      postalIndexFontSize,
+                      advertisementFontSize,
                       centerImage,
                       senderPosition: JSON.stringify(senderPosition),
                       recipientPosition: JSON.stringify(recipientPosition),
