@@ -721,6 +721,10 @@ export default function ClientMailPage() {
                     console.log("Викликаємо мутацію...");
                     
                     try {
+                      console.log("Стан мутації перед викликом - isPending:", saveSettingsMutation.isPending);
+                      console.log("Стан мутації перед викликом - isError:", saveSettingsMutation.isError);
+                      console.log("Помилка мутації:", saveSettingsMutation.error);
+                      
                       saveSettingsMutation.mutate(settingsData);
                       console.log("Мутація викликана успішно");
                     } catch (error) {
