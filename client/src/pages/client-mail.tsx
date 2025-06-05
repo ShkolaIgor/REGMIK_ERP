@@ -502,14 +502,16 @@ export default function ClientMailPage() {
           <div className="flex gap-6 h-[600px]">
             {/* Preview Section - Left */}
             <div className="flex-1 flex flex-col">
-              <h3 className="text-lg font-semibold mb-3">Попередній перегляд</h3>
               <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg p-4">
                 <div 
                   className="envelope-preview bg-white shadow-lg relative border"
                   style={{
                     width: `${envelopeSizes[envelopeSettings.envelopeSize].width}mm`,
                     height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
-                    transform: 'scale(0.85)',
+                    transform: `scale(${Math.min(
+                      450 / envelopeSizes[envelopeSettings.envelopeSize].width,
+                      500 / envelopeSizes[envelopeSettings.envelopeSize].height
+                    )})`,
                     transformOrigin: 'center'
                   }}
                 >
