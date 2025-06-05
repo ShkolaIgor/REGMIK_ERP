@@ -982,50 +982,9 @@ export default function ClientMailPage() {
       ) : (
         <MailList mails={mails as Client[]} />
       )}
-                        top: '8mm',
-                        right: '8mm',
-                        width: '30mm',
-                        height: '25mm',
-                        border: '2px dashed #3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '12px',
-                        color: '#3b82f6',
-                        textAlign: 'center',
-                        fontWeight: 'bold',
-                        lineHeight: '1.2'
-                      }}>
-                        МІСЦЕ<br/>ДЛЯ<br/>МАРКИ
-                      </div>
-
-                      {/* Відправник */}
-                      <div 
-                        style={{
-                          position: 'absolute',
-                          top: `${senderPosition.y}mm`,
-                          left: `${senderPosition.x}mm`,
-                          fontSize: `${senderRecipientFontSize}px`,
-                          lineHeight: '1.3',
-                          maxWidth: '70mm',
-                          cursor: 'move',
-                          padding: '2mm',
-                          border: isDragging && draggedElement === 'sender' ? '2px dashed #3b82f6' : '2px dashed transparent',
-                          backgroundColor: isDragging && draggedElement === 'sender' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
-                        }}
-                        onMouseDown={(e) => handleMouseDown('sender', e)}
-                        title="Натисніть та перетягніть для переміщення"
-                      >
-                        <div style={{ fontWeight: 'bold', fontSize: '8px', marginBottom: '1mm', color: '#666' }}>Адреса відправника, індекс</div>
-                        <div style={{ fontWeight: 'bold' }}>НВФ "РЕГМІК"</div>
-                        <div>вул.Гагаріна, 25</div>
-                        <div>с.Рівнопілля, Чернігівський район</div>
-                        <div>Чернігівська обл.</div>
-                        <div>Україна</div>
-                        <div style={{ fontSize: `${postalIndexFontSize}px`, fontWeight: 'bold', marginTop: '2mm', letterSpacing: '2px' }}>
-                          15582
-                        </div>
+    </div>
+  );
+}
                       </div>
 
                       {/* Отримувач */}
