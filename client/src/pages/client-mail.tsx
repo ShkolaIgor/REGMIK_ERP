@@ -68,19 +68,33 @@ export default function ClientMailPage() {
     if (!isDragging || !draggedElement) return;
     
     const rect = event.currentTarget.getBoundingClientRect();
-    const scale = 0.4; // Враховуємо масштаб попереднього перегляду
-    const newX = (event.clientX - rect.left - dragPosition.x) / scale;
-    const newY = (event.clientY - rect.top - dragPosition.y) / scale;
+    const scale = 0.7; // Оновлений масштаб перегляду
+    const pixelsToMm = 3.7795; // Конвертація пікселів у мм
+    const newX = (event.clientX - rect.left) / scale / pixelsToMm;
+    const newY = (event.clientY - rect.top) / scale / pixelsToMm;
+    
+    // Межі конверта
+    const maxWidth = envelopeSize === 'dl' ? 220 : envelopeSize === 'c4' ? 324 : 229;
+    const maxHeight = envelopeSize === 'dl' ? 110 : envelopeSize === 'c4' ? 229 : 162;
     
     if (draggedElement === 'sender') {
-      setSenderPosition({ x: Math.max(0, newX), y: Math.max(0, newY) });
+      setSenderPosition({ 
+        x: Math.max(0, Math.min(maxWidth - 80, newX - 20)), 
+        y: Math.max(0, Math.min(maxHeight - 30, newY - 10)) 
+      });
     } else if (draggedElement === 'recipient') {
-      setRecipientPosition({ x: Math.max(0, newX), y: Math.max(0, newY) });
+      setRecipientPosition({ 
+        x: Math.max(0, Math.min(maxWidth - 120, newX - 40)), 
+        y: Math.max(0, Math.min(maxHeight - 40, newY - 20)) 
+      });
     } else if (draggedElement.startsWith('ad-')) {
       const position = draggedElement.replace('ad-', '') as keyof typeof adPositionCoords;
       setAdPositionCoords(prev => ({
         ...prev,
-        [position]: { x: Math.max(0, newX), y: Math.max(0, newY) }
+        [position]: { 
+          x: Math.max(0, Math.min(maxWidth - 50, newX - 25)), 
+          y: Math.max(0, Math.min(maxHeight - 20, newY - 15)) 
+        }
       }));
     }
   };
@@ -563,9 +577,9 @@ export default function ClientMailPage() {
                           height: envelopeSize === 'dl' ? '110mm' : envelopeSize === 'c4' ? '229mm' : '162mm',
                           position: 'relative',
                           fontFamily: 'Times New Roman, serif',
-                          transform: 'scale(0.4)',
+                          transform: 'scale(0.7)',
                           transformOrigin: 'top left',
-                          marginBottom: envelopeSize === 'dl' ? '-50mm' : envelopeSize === 'c4' ? '-150mm' : '-100mm'
+                          marginBottom: envelopeSize === 'dl' ? '-30mm' : envelopeSize === 'c4' ? '-100mm' : '-60mm'
                         }}
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
