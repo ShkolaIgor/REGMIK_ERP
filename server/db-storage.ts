@@ -5225,7 +5225,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createEnvelopePrintSettings(settingsData: InsertEnvelopePrintSettings): Promise<EnvelopePrintSettings> {
-    console.log("Отримані дані для збереження:", settingsData);
+    console.log("Отримані дані для збереження:", JSON.stringify(settingsData, null, 2));
+    console.log("advertisementText:", settingsData.advertisementText);
+    console.log("advertisementImage:", settingsData.advertisementImage ? "Зображення присутнє" : "Зображення відсутнє");
     
     // Перевіряємо чи існують налаштування для цього типу конверта
     const existing = await db
@@ -5236,13 +5238,17 @@ export class DatabaseStorage implements IStorage {
 
     if (existing.length > 0) {
       console.log("Оновлюємо існуючі налаштування для:", settingsData.envelopeSize);
+      console.log("Існуючі налаштування ID:", existing[0].id);
+      
       // Оновлюємо існуючі налаштування
       const [updated] = await db
         .update(envelopePrintSettings)
         .set(settingsData)
         .where(eq(envelopePrintSettings.id, existing[0].id))
         .returning();
-      console.log("Оновлені налаштування:", updated);
+      console.log("Оновлені налаштування:", JSON.stringify(updated, null, 2));
+      console.log("advertisementText після оновлення:", updated.advertisementText);
+      console.log("advertisementImage після оновлення:", updated.advertisementImage ? "Зображення збережено" : "Зображення НЕ збережено");
       return updated;
     } else {
       console.log("Створюємо нові налаштування для:", settingsData.envelopeSize);
@@ -5251,7 +5257,9 @@ export class DatabaseStorage implements IStorage {
         .insert(envelopePrintSettings)
         .values(settingsData)
         .returning();
-      console.log("Створені налаштування:", created);
+      console.log("Створені налаштування:", JSON.stringify(created, null, 2));
+      console.log("advertisementText після створення:", created.advertisementText);
+      console.log("advertisementImage після створення:", created.advertisementImage ? "Зображення збережено" : "Зображення НЕ збережено");
       return created;
     }
   }
