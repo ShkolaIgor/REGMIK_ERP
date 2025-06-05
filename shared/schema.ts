@@ -415,16 +415,20 @@ export const mailRegistry = pgTable("mail_registry", {
 export const envelopePrintSettings = pgTable("envelope_print_settings", {
   id: serial("id").primaryKey(),
   settingName: varchar("setting_name", { length: 255 }).notNull(),
+  envelopeSize: varchar("envelope_size", { length: 50 }).notNull().default("dl"), // dl, c4, c5
   senderName: varchar("sender_name", { length: 255 }),
   senderAddress: text("sender_address"),
   senderPhone: varchar("sender_phone", { length: 50 }),
-  advertisingText: text("advertising_text"),
-  advertisingImageUrl: text("advertising_image_url"), // URL зображення для реклами
-  advertisingImagePosition: varchar("advertising_image_position", { length: 50 }).default("bottom-left"), // позиція: bottom-left, bottom-right, top-left, top-right
-  advertisingImageSize: varchar("advertising_image_size", { length: 50 }).default("small"), // розмір: small, medium, large
-  envelopeFormat: varchar("envelope_format", { length: 50 }).notNull().default("C5"),
-  fontSize: integer("font_size").default(12),
-  fontFamily: varchar("font_family", { length: 100 }).default("Arial"),
+  advertisementText: text("advertisement_text"),
+  advertisementImage: text("advertisement_image"), // base64 зображення
+  adPositions: text("ad_positions").default('["bottom-left"]'), // JSON масив позицій
+  imageRelativePosition: varchar("image_relative_position", { length: 50 }).default("below"), // above, below, left, right
+  imageSize: varchar("image_size", { length: 50 }).default("small"), // small, medium, large
+  fontSize: varchar("font_size", { length: 10 }).default("12"),
+  centerLogo: boolean("center_logo").default(false),
+  senderPosition: text("sender_position").default('{"x": 20, "y": 15}'), // JSON позиція відправника
+  recipientPosition: text("recipient_position").default('{"x": 120, "y": 60}'), // JSON позиція отримувача
+  adPositionCoords: text("ad_position_coords").default('{"bottom-left": {"x": 8, "y": 85}, "top-right": {"x": 160, "y": 8}}'), // JSON координати реклами
   isDefault: boolean("is_default").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });

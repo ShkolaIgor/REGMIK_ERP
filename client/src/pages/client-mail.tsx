@@ -69,6 +69,26 @@ export default function ClientMailPage() {
     queryKey: ["/api/envelope-print-settings"]
   });
 
+  // Завантаження налаштувань для поточного типу конверта
+  const loadSettingsForEnvelopeSize = (size: string) => {
+    const settings = envelopeSettings.find((s: any) => s.envelopeSize === size);
+    if (settings) {
+      setAdvertisementText(settings.advertisementText || "REGMIK ERP - Ваш надійний партнер у бізнесі!");
+      setAdvertisementImage(settings.advertisementImage || null);
+      setAdPositions(settings.adPositions ? JSON.parse(settings.adPositions) : ["bottom-left"]);
+      setImageRelativePosition(settings.imageRelativePosition || "below");
+      setImageSize(settings.imageSize || "small");
+      setFontSize(settings.fontSize || "12");
+      setCenterLogo(settings.centerLogo || false);
+      setSenderPosition(settings.senderPosition ? JSON.parse(settings.senderPosition) : { x: 20, y: 15 });
+      setRecipientPosition(settings.recipientPosition ? JSON.parse(settings.recipientPosition) : { x: 120, y: 60 });
+      setAdPositionCoords(settings.adPositionCoords ? JSON.parse(settings.adPositionCoords) : {
+        'bottom-left': { x: 8, y: 85 },
+        'top-right': { x: 160, y: 8 }
+      });
+    }
+  };
+
   // Обробники перетягування
   const handleMouseDown = (elementType: string, event: React.MouseEvent) => {
     setIsDragging(true);
@@ -153,8 +173,7 @@ export default function ClientMailPage() {
     mutationFn: (data: any) => apiRequest("/api/envelope-print-settings", "POST", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/envelope-print-settings"] });
-      setIsSettingsDialogOpen(false);
-      toast({ title: "Налаштування збережено" });
+      toast({ title: `Налаштування для ${envelopeSize.toUpperCase()} збережено` });
     },
     onError: () => {
       toast({ title: "Помилка", description: "Не вдалося зберегти налаштування", variant: "destructive" });
@@ -249,7 +268,10 @@ export default function ClientMailPage() {
                     <div className="space-y-4">
                       <div>
                         <Label>Розмір конверта</Label>
-                        <Select value={envelopeSize} onValueChange={setEnvelopeSize}>
+                        <Select value={envelopeSize} onValueChange={(size) => {
+                          setEnvelopeSize(size);
+                          loadSettingsForEnvelopeSize(size);
+                        }}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
@@ -666,14 +688,14 @@ export default function ClientMailPage() {
                   className="w-full" 
                   onClick={() => {
                     const settingsData = {
-                      settingName: "Користувацькі налаштування",
+                      settingName: `Налаштування для ${envelopeSize.toUpperCase()}`,
+                      envelopeSize,
                       advertisementText,
                       advertisementImage,
                       adPositions: JSON.stringify(adPositions),
                       imageRelativePosition,
                       imageSize,
                       fontSize,
-                      envelopeSize,
                       centerLogo,
                       senderPosition: JSON.stringify(senderPosition),
                       recipientPosition: JSON.stringify(recipientPosition),
