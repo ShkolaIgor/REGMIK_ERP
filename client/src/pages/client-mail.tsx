@@ -508,9 +508,11 @@ export default function ClientMailPage() {
                   width: `${envelopeSizes[envelopeSettings.envelopeSize].width}mm`,
                   height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
                   transform: `scale(${Math.min(
-                    500 / envelopeSizes[envelopeSettings.envelopeSize].width,
-                    450 / envelopeSizes[envelopeSettings.envelopeSize].height
+                    Math.min(400, 550) / envelopeSizes[envelopeSettings.envelopeSize].width,
+                    Math.min(350, 500) / envelopeSizes[envelopeSettings.envelopeSize].height
                   )})`,
+                  maxWidth: '550px',
+                  maxHeight: '500px',
                   transformOrigin: 'center'
                 }}
               >
