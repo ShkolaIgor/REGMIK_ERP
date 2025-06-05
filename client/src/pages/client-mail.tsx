@@ -201,8 +201,30 @@ export default function ClientMailPage() {
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: any) => {
       console.log("🔄 МУТАЦІЯ ПОЧАТОК: Надсилаємо POST запит:", data);
+      console.log("🔍 Тип даних:", typeof data);
+      console.log("🔍 JSON stringify:", JSON.stringify(data, null, 2));
+      
       try {
-        const result = await apiRequest("/api/envelope-print-settings", "POST", data);
+        // Перевіряємо fetch API безпосередньо
+        console.log("🌐 Пряма перевірка fetch до сервера...");
+        const response = await fetch("/api/envelope-print-settings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+        
+        console.log("📡 Response status:", response.status);
+        console.log("📡 Response headers:", Object.fromEntries(response.headers.entries()));
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("❌ Response error text:", errorText);
+          throw new Error(`HTTP error! status: ${response.status}, text: ${errorText}`);
+        }
+        
+        const result = await response.json();
         console.log("✅ МУТАЦІЯ УСПІХ: Отримали відповідь:", result);
         return result;
       } catch (error) {
