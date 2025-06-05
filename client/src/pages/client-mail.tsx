@@ -474,7 +474,7 @@ export default function ClientMailPage() {
                         width: envelopeSize === 'dl' ? '220mm' : envelopeSize === 'c4' ? '324mm' : '229mm',
                         height: envelopeSize === 'dl' ? '110mm' : envelopeSize === 'c4' ? '229mm' : '162mm',
                         position: 'relative',
-                        fontFamily: 'Times New Roman, serif',
+                        fontFamily: 'Arial, sans-serif',
                         fontSize: `${fontSize}px`,
                         transform: 'scale(0.9)',
                         transformOrigin: 'center top',
