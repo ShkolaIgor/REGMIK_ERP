@@ -493,7 +493,7 @@ export default function ClientMailPage() {
 
       {/* Envelope Print Dialog with Horizontal Layout */}
       <Dialog open={isEnvelopePrintDialogOpen} onOpenChange={setIsEnvelopePrintDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+        <DialogContent className="w-[900px] max-w-none max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>Налаштування друку конвертів - {batchName}</DialogTitle>
           </DialogHeader>
@@ -501,15 +501,15 @@ export default function ClientMailPage() {
           {/* Horizontal Layout: Preview Left, Settings Right */}
           <div className="flex gap-4 h-[650px]">
             {/* Preview Section - Left */}
-            <div className="flex-1 min-w-0 flex items-center justify-center bg-gray-50 rounded-lg p-4 overflow-hidden">
+            <div className="w-[650px] flex items-center justify-center bg-gray-50 rounded-lg p-4">
               <div 
                 className="envelope-preview bg-white shadow-lg relative border"
                 style={{
                   width: `${envelopeSizes[envelopeSettings.envelopeSize].width}mm`,
                   height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
                   transform: `scale(${Math.min(
-                    300 / envelopeSizes[envelopeSettings.envelopeSize].width,
-                    400 / envelopeSizes[envelopeSettings.envelopeSize].height,
+                    500 / envelopeSizes[envelopeSettings.envelopeSize].width,
+                    450 / envelopeSizes[envelopeSettings.envelopeSize].height,
                     1
                   )})`,
                   transformOrigin: 'center'
@@ -637,7 +637,7 @@ export default function ClientMailPage() {
             </div>
 
             {/* Settings Section - Right */}
-            <div className="w-1/5 min-w-[200px] flex-shrink-0 flex flex-col">
+            <div className="w-[230px] flex-shrink-0 flex flex-col">
               <h3 className="text-lg font-semibold mb-3">Налаштування</h3>
               <div className="flex-1 overflow-auto space-y-4">
                 <Tabs defaultValue="envelope" className="h-full">
