@@ -4349,7 +4349,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Валідовані дані:", validatedData);
       const settings = await storage.createEnvelopePrintSettings(validatedData);
       console.log("Збережені налаштування:", settings);
-      res.status(201).json(settings);
+      
+      // Повертаємо всі налаштування для оновлення кешу
+      const allSettings = await storage.getEnvelopePrintSettings();
+      res.status(201).json(allSettings);
     } catch (error) {
       console.error("Error creating envelope print settings:", error);
       if (error instanceof z.ZodError) {
