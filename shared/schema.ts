@@ -425,6 +425,9 @@ export const envelopePrintSettings = pgTable("envelope_print_settings", {
   imageRelativePosition: varchar("image_relative_position", { length: 50 }).default("below"), // above, below, left, right
   imageSize: varchar("image_size", { length: 50 }).default("small"), // small, medium, large
   fontSize: varchar("font_size", { length: 10 }).default("12"),
+  senderRecipientFontSize: varchar("sender_recipient_font_size", { length: 10 }).default("14"), // fontSize * 1.2
+  postalIndexFontSize: varchar("postal_index_font_size", { length: 10 }).default("18"), // fontSize * 1.5
+  advertisementFontSize: varchar("advertisement_font_size", { length: 10 }).default("11"), // fontSize * 0.9
   centerImage: boolean("center_image").default(false),
   senderPosition: text("sender_position").default('{"x": 20, "y": 15}'), // JSON позиція відправника
   recipientPosition: text("recipient_position").default('{"x": 120, "y": 60}'), // JSON позиція отримувача

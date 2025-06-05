@@ -33,6 +33,9 @@ export default function ClientMailPage() {
   // Налаштування конверта
   const [envelopeSize, setEnvelopeSize] = useState("dl");
   const [fontSize, setFontSize] = useState("12");
+  const [senderRecipientFontSize, setSenderRecipientFontSize] = useState("14");
+  const [postalIndexFontSize, setPostalIndexFontSize] = useState("18");
+  const [advertisementFontSize, setAdvertisementFontSize] = useState("11");
   const [centerImage, setCenterImage] = useState(false);
   const [advertisementText, setAdvertisementText] = useState("REGMIK ERP - Ваш надійний партнер у бізнесі!");
   const [advertisementImage, setAdvertisementImage] = useState<string | null>(null);
@@ -85,6 +88,9 @@ export default function ClientMailPage() {
       setImageRelativePosition(settings.imageRelativePosition || "below");
       setImageSize(settings.imageSize || "small");
       setFontSize(settings.fontSize?.toString() || "12");
+      setSenderRecipientFontSize(settings.senderRecipientFontSize?.toString() || "14");
+      setPostalIndexFontSize(settings.postalIndexFontSize?.toString() || "18");
+      setAdvertisementFontSize(settings.advertisementFontSize?.toString() || "11");
       setCenterImage(settings.centerImage || false);
       setSenderPosition(settings.senderPosition ? JSON.parse(settings.senderPosition) : { x: 20, y: 15 });
       setRecipientPosition(settings.recipientPosition ? JSON.parse(settings.recipientPosition) : { x: 120, y: 60 });
