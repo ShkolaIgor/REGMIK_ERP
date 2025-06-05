@@ -66,8 +66,18 @@ export default function ClientMailPage() {
   const [isEnvelopePrintDialogOpen, setIsEnvelopePrintDialogOpen] = useState(false);
   const [currentBatchMails, setCurrentBatchMails] = useState<Client[]>([]);
   
-  // Envelope settings state
-  const [envelopeSettings, setEnvelopeSettings] = useState<EnvelopeSettings>(getDefaultSettings('dl'));
+  // Envelope settings state with localStorage initialization
+  const [envelopeSettings, setEnvelopeSettings] = useState<EnvelopeSettings>(() => {
+    const saved = localStorage.getItem('envelopeSettings');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Error parsing saved envelope settings:', e);
+      }
+    }
+    return getDefaultSettings('dl');
+  });
   const [isDragging, setIsDragging] = useState(false);
   const [draggedElement, setDraggedElement] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -91,8 +101,21 @@ export default function ClientMailPage() {
     queryKey: ['/api/mail-registry'],
   });
 
-  // Load settings from server and localStorage
+  // Load settings from server only once, prioritize localStorage
   useEffect(() => {
+    // Check if we have saved settings in localStorage first
+    const savedSettings = localStorage.getItem('envelopeSettings');
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        setEnvelopeSettings(parsed);
+        return; // Don't override with server settings if we have local ones
+      } catch (e) {
+        console.error('Error parsing saved envelope settings:', e);
+      }
+    }
+
+    // Only use server settings if no localStorage data exists
     if (envelopeSettingsData && Array.isArray(envelopeSettingsData) && envelopeSettingsData.length > 0) {
       const serverSettings = envelopeSettingsData[0];
       const parsedSettings = {
@@ -114,7 +137,7 @@ export default function ClientMailPage() {
         advertisementFontSize: Number(serverSettings.advertisementFontSize) || 11,
         imageSize: Number(serverSettings.imageSize) || 100
       };
-      setEnvelopeSettings(prev => ({ ...prev, ...parsedSettings }));
+      setEnvelopeSettings(parsedSettings);
     }
   }, [envelopeSettingsData]);
 
