@@ -71,18 +71,40 @@ export default function ClientMailPage() {
 
   // Завантаження налаштувань для поточного типу конверта
   const loadSettingsForEnvelopeSize = (size: string) => {
+    console.log("Шукаємо налаштування для розміру:", size);
+    console.log("Доступні налаштування:", envelopeSettings);
+    
     const settings = envelopeSettings.find((s: any) => s.envelopeSize === size);
+    console.log("Знайдені налаштування:", settings);
+    
     if (settings) {
+      console.log("Завантажуємо налаштування:", settings);
       setAdvertisementText(settings.advertisementText || "REGMIK ERP - Ваш надійний партнер у бізнесі!");
       setAdvertisementImage(settings.advertisementImage || null);
-      setAdPositions(settings.adPositions ? JSON.parse(settings.adPositions) : ["bottom-left"]);
+      setAdPositions(settings.adPositions ? JSON.parse(settings.adPositions) : []);
       setImageRelativePosition(settings.imageRelativePosition || "below");
       setImageSize(settings.imageSize || "small");
-      setFontSize(settings.fontSize || "12");
+      setFontSize(settings.fontSize?.toString() || "12");
       setCenterImage(settings.centerImage || false);
       setSenderPosition(settings.senderPosition ? JSON.parse(settings.senderPosition) : { x: 20, y: 15 });
       setRecipientPosition(settings.recipientPosition ? JSON.parse(settings.recipientPosition) : { x: 120, y: 60 });
       setAdPositionCoords(settings.adPositionCoords ? JSON.parse(settings.adPositionCoords) : {
+        'bottom-left': { x: 8, y: 85 },
+        'top-right': { x: 160, y: 8 }
+      });
+    } else {
+      console.log("Налаштування не знайдені, використовуємо значення за замовчуванням");
+      // Встановлюємо значення за замовчуванням
+      setAdvertisementText("REGMIK ERP - Ваш надійний партнер у бізнесі!");
+      setAdvertisementImage(null);
+      setAdPositions([]);
+      setImageRelativePosition("below");
+      setImageSize("small");
+      setFontSize("12");
+      setCenterImage(false);
+      setSenderPosition({ x: 20, y: 15 });
+      setRecipientPosition({ x: 120, y: 60 });
+      setAdPositionCoords({
         'bottom-left': { x: 8, y: 85 },
         'top-right': { x: 160, y: 8 }
       });
