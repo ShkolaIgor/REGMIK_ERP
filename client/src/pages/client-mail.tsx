@@ -638,7 +638,7 @@ export default function ClientMailPage() {
                             position: 'absolute',
                             top: `${adPositionCoords[position as keyof typeof adPositionCoords].y}mm`,
                             left: `${adPositionCoords[position as keyof typeof adPositionCoords].x}mm`,
-                            fontSize: `${Math.round(parseInt(fontSize) * 0.6)}px`, // fontSize: ${fontSize}, calculated: ${Math.round(parseInt(fontSize) * 0.6)}px
+                            fontSize: `${Math.round(parseInt(fontSize) * 0.9)}px`,
                             maxWidth: position === 'bottom-left' ? '80mm' : '60mm',
                             cursor: 'move',
                             padding: '1mm',
