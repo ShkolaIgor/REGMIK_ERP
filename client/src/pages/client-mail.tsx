@@ -349,15 +349,205 @@ export default function ClientMailPage() {
                 Налаштування друку
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Налаштування друку конвертів</DialogTitle>
               </DialogHeader>
               
-              <div className="space-y-6">
-                  {/* Основні налаштування */}
+              <div className="grid grid-cols-[2fr_1fr] gap-6">
+                {/* Ліва колонка - Попередній перегляд */}
+                <div className="p-4 border rounded-lg bg-yellow-50">
+                  <h3 className="text-lg font-semibold mb-4">Попередній перегляд</h3>
+                  <div className="border rounded-lg p-4 bg-gray-50 overflow-auto">
+                    <div className="text-sm text-blue-600 mb-4 font-medium text-center">
+                      Перетягуйте елементи для зміни розташування
+                    </div>
+                    <div 
+                      className="bg-white border-2 border-black mx-auto cursor-crosshair shadow-lg" 
+                      style={{
+                        width: envelopeSize === 'dl' ? '220mm' : envelopeSize === 'c4' ? '324mm' : '229mm',
+                        height: envelopeSize === 'dl' ? '110mm' : envelopeSize === 'c4' ? '229mm' : '162mm',
+                        position: 'relative',
+                        fontFamily: 'Arial, sans-serif',
+                        transform: 'scale(0.6)',
+                        transformOrigin: 'center top',
+                        margin: '10px auto',
+                        minHeight: '200px'
+                      }}
+                      onMouseMove={handleMouseMove}
+                      onMouseUp={handleMouseUp}
+                      onMouseLeave={handleMouseUp}
+                    >
+                      {/* Область для марки */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '8mm',
+                        right: '8mm',
+                        width: '30mm',
+                        height: '20mm',
+                        border: '1px dashed #999',
+                        fontSize: '8px',
+                        textAlign: 'center',
+                        padding: '2mm'
+                      }}>
+                        МАРКА
+                      </div>
+
+                      {/* Відправник */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: `${senderPosition.y}mm`,
+                          left: `${senderPosition.x}mm`,
+                          fontSize: `${senderRecipientFontSize}px`,
+                          lineHeight: '1.4',
+                          maxWidth: '80mm',
+                          cursor: 'move',
+                          padding: '2mm',
+                          border: isDragging && draggedElement === 'sender' ? '2px dashed #3b82f6' : '2px dashed transparent',
+                          backgroundColor: isDragging && draggedElement === 'sender' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+                        }}
+                        onMouseDown={(e) => handleMouseDown('sender', e)}
+                        title="Натисніть та перетягніть для переміщення"
+                      >
+                        <div style={{ fontSize: '8px', marginBottom: '1mm', color: '#666' }}>Адреса відправника</div>
+                        <div style={{ fontWeight: 'bold' }}>ТОВ "РЕГМІК"</div>
+                        <div>м. Київ, вул. Промислова, 15</div>
+                        <div>+38 (044) 123-45-67</div>
+                        <div style={{ fontSize: `${postalIndexFontSize}px`, fontWeight: 'bold', marginTop: '3mm', letterSpacing: '3px' }}>
+                          01001
+                        </div>
+                      </div>
+
+                      {/* Отримувач */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: `${recipientPosition.y}mm`,
+                          left: `${recipientPosition.x}mm`,
+                          fontSize: `${senderRecipientFontSize}px`,
+                          lineHeight: '1.4',
+                          maxWidth: '90mm',
+                          cursor: 'move',
+                          padding: '2mm',
+                          border: isDragging && draggedElement === 'recipient' ? '2px dashed #3b82f6' : '2px dashed transparent',
+                          backgroundColor: isDragging && draggedElement === 'recipient' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+                        }}
+                        onMouseDown={(e) => handleMouseDown('recipient', e)}
+                        title="Натисніть та перетягніть для переміщення"
+                      >
+                        <div style={{ fontSize: '8px', marginBottom: '1mm', color: '#666' }}>Адреса одержувача, індекс</div>
+                        <div style={{ fontWeight: 'bold' }}>ФОП Таранов Руслан Сергійович</div>
+                        <div>вул. Промислова, буд. 18, кв. 33, м.</div>
+                        <div>Павлоград</div>
+                        <div style={{ fontSize: `${postalIndexFontSize}px`, fontWeight: 'bold', marginTop: '3mm', letterSpacing: '3px' }}>
+                          51400
+                        </div>
+                      </div>
+
+                      {/* Реклама */}
+                      {adPositions.map(position => (
+                        <div
+                          key={position}
+                          style={{
+                            position: 'absolute',
+                            top: `${adPositionCoords[position as keyof typeof adPositionCoords].y}mm`,
+                            left: `${adPositionCoords[position as keyof typeof adPositionCoords].x}mm`,
+                            fontSize: `${advertisementFontSize}px`,
+                            maxWidth: position === 'bottom-left' ? '80mm' : '60mm',
+                            cursor: 'move',
+                            padding: '1mm',
+                            border: isDragging && draggedElement === `ad-${position}` ? '2px dashed #3b82f6' : '2px dashed transparent',
+                            backgroundColor: isDragging && draggedElement === `ad-${position}` ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+                          }}
+                          onMouseDown={(e) => handleMouseDown(`ad-${position}`, e)}
+                          title="Натисніть та перетягніть для переміщення"
+                        >
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            flexDirection: imageRelativePosition === 'above' || imageRelativePosition === 'below' ? 'column' : 'row',
+                            gap: '3mm'
+                          }}>
+                            {imageRelativePosition === 'above' && advertisementImage && (
+                              <img 
+                                src={advertisementImage} 
+                                alt="Реклама" 
+                                style={{
+                                  width: getImageSizeValue(),
+                                  height: 'auto',
+                                  maxHeight: getImageSizeValue(),
+                                  alignSelf: centerImage ? 'center' : 'flex-start'
+                                }}
+                              />
+                            )}
+                            {imageRelativePosition === 'left' && advertisementImage && (
+                              <img 
+                                src={advertisementImage} 
+                                alt="Реклама" 
+                                style={{
+                                  width: getImageSizeValue(),
+                                  height: 'auto',
+                                  maxHeight: getImageSizeValue(),
+                                  marginRight: '3px',
+                                  alignSelf: centerImage ? 'center' : 'flex-start'
+                                }}
+                              />
+                            )}
+                            <div 
+                              style={{ 
+                                flex: 1,
+                                whiteSpace: 'pre-wrap',
+                                wordWrap: 'break-word',
+                                hyphens: 'auto',
+                                lineHeight: '1.3'
+                              }}
+                              dangerouslySetInnerHTML={{
+                                __html: advertisementText
+                                  .replace(/\n/g, '<br/>')
+                                  .replace(/(\w{6,})/g, (match) => {
+                                    return match.length > 8 ? 
+                                      match.replace(/(.{4})/g, '$1&shy;') : 
+                                      match;
+                                  })
+                              }}
+                            />
+                            {imageRelativePosition === 'right' && advertisementImage && (
+                              <img 
+                                src={advertisementImage} 
+                                alt="Реклама" 
+                                style={{
+                                  width: getImageSizeValue(),
+                                  height: 'auto',
+                                  maxHeight: getImageSizeValue(),
+                                  marginLeft: '3px',
+                                  alignSelf: centerImage ? 'center' : 'flex-start'
+                                }}
+                              />
+                            )}
+                            {imageRelativePosition === 'below' && advertisementImage && (
+                              <img 
+                                src={advertisementImage} 
+                                alt="Реклама" 
+                                style={{
+                                  width: getImageSizeValue(),
+                                  height: 'auto',
+                                  maxHeight: getImageSizeValue(),
+                                  alignSelf: centerImage ? 'center' : 'flex-start'
+                                }}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Права колонка - Налаштування */}
+                <div className="space-y-4">
                   <div className="p-4 border rounded-lg bg-gray-50">
-                    <h3 className="text-lg font-semibold mb-4">Основні налаштування</h3>
+                    <h3 className="text-lg font-semibold mb-4">Налаштування</h3>
                     <div className="space-y-4">
                       <div>
                         <Label>Розмір конверта</Label>
@@ -492,35 +682,306 @@ export default function ClientMailPage() {
                   </div>
 
                 </div>
+              </div>
 
-                {/* Права колонка - Попередній перегляд */}
-                <div className="space-y-4">
-                  <div className="p-4 border rounded-lg bg-yellow-50">
-                    <h3 className="text-lg font-semibold mb-4">Попередній перегляд конверта</h3>
-                    <div className="border rounded-lg p-4 bg-gray-50 overflow-auto" style={{ height: '60vh' }}>
-                    <div className="text-sm text-blue-600 mb-4 font-medium text-center">
-                      💡 Натисніть та перетягніть елементи для переміщення по конверту
+              <div className="flex justify-end pt-4">
+                <Button 
+                  className="w-full" 
+                  onClick={() => {
+                    const settingsData = {
+                      settingName: `Налаштування для ${envelopeSize.toUpperCase()}`,
+                      envelopeSize,
+                      senderName: "ТОВ \"РЕГМІК\"",
+                      senderAddress: "м. Київ, вул. Промислова, 15",
+                      senderPhone: "+38 (044) 123-45-67",
+                      advertisementText,
+                      advertisementImage,
+                      adPositions: JSON.stringify(adPositions),
+                      imageRelativePosition,
+                      imageSize,
+                      fontSize,
+                      senderRecipientFontSize,
+                      postalIndexFontSize,
+                      advertisementFontSize,
+                      centerImage,
+                      senderPosition: JSON.stringify(senderPosition),
+                      recipientPosition: JSON.stringify(recipientPosition),
+                      adPositionCoords: JSON.stringify(adPositionCoords)
+                    };
+                    saveSettingsMutation.mutate(settingsData);
+                  }}
+                  disabled={saveSettingsMutation.isPending}
+                >
+                  {saveSettingsMutation.isPending ? "Збереження..." : "Зберегти налаштування"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Створити повідомлення
+          </Button>
+        </div>
+
+        {isCreateDialogOpen && (
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Створити повідомлення</DialogTitle>
+              </DialogHeader>
+              
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="recipientType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Тип отримувача</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="all">Всі клієнти</SelectItem>
+                          <SelectItem value="selected">Обрані клієнти</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+
+                {form.watch('recipientType') === 'selected' && (
+                  <FormField
+                    control={form.control}
+                    name="selectedClients"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Обрані клієнти</FormLabel>
+                        <div className="space-y-2 max-h-40 overflow-y-auto border rounded p-2">
+                          {clients?.map((client: any) => (
+                            <div key={client.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                checked={field.value?.includes(client.id) || false}
+                                onCheckedChange={(checked) => {
+                                  const currentIds = field.value || [];
+                                  if (checked && checked !== 'indeterminate') {
+                                    field.onChange([...currentIds, client.id]);
+                                  } else {
+                                    field.onChange(currentIds.filter((id: number) => id !== client.id));
+                                  }
+                                }}
+                              />
+                              <span className="text-sm">{client.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                <FormField
+                  control={form.control}
+                  name="subject"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Тема</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="content"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Зміст повідомлення</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} rows={5} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Пріоритет</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="low">Низький</SelectItem>
+                          <SelectItem value="medium">Середній</SelectItem>
+                          <SelectItem value="high">Високий</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-end space-x-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setIsCreateDialogOpen(false)}
+                  >
+                    Скасувати
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={createMutation.isPending}
+                  >
+                    {createMutation.isPending ? "Створення..." : "Створити"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        <div className="grid grid-cols-1 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="h-5 w-5" />
+                Поштові повідомлення
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {(mails as any[])?.filter((m: any) => !m.deleted).map((mail: any) => (
+                  <div key={mail.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="font-semibold">{mail.subject}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {mail.recipientType === 'all' ? 'Всі клієнти' : `${mail.recipientCount} клієнтів`}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={
+                          mail.priority === 'high' ? 'destructive' : 
+                          mail.priority === 'medium' ? 'default' : 
+                          'secondary'
+                        }>
+                          {mail.priority === 'high' ? 'Високий' : 
+                           mail.priority === 'medium' ? 'Середній' : 'Низький'}
+                        </Badge>
+                        <Badge variant={
+                          mail.status === 'sent' ? 'default' : 
+                          mail.status === 'draft' ? 'secondary' : 
+                          'destructive'
+                        }>
+                          {mail.status === 'sent' ? 'Відправлено' : 
+                           mail.status === 'draft' ? 'Чернетка' : 'Помилка'}
+                        </Badge>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteMutation.mutate(mail.id)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div 
-                      className="bg-white border-2 border-black mx-auto cursor-crosshair shadow-lg" 
-                      style={{
-                        width: envelopeSize === 'dl' ? '220mm' : envelopeSize === 'c4' ? '324mm' : '229mm',
-                        height: envelopeSize === 'dl' ? '110mm' : envelopeSize === 'c4' ? '229mm' : '162mm',
-                        position: 'relative',
-                        fontFamily: 'Arial, sans-serif',
-                        fontSize: `${fontSize}px`,
-                        transform: 'scale(0.9)',
-                        transformOrigin: 'center top',
-                        margin: '20px auto',
-                        minHeight: '300px'
-                      }}
-                      onMouseMove={handleMouseMove}
-                      onMouseUp={handleMouseUp}
-                      onMouseLeave={handleMouseUp}
-                    >
-                      {/* Область для марки */}
-                      <div style={{
-                        position: 'absolute',
+                    <p className="text-sm mb-2">{mail.content}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Створено: {new Date(mail.createdAt).toLocaleDateString('uk-UA')}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Клієнти для розсилки
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {(clients as any[])?.map((c: any) => (
+                  <div key={c.id} className="flex justify-between items-center p-2 border rounded">
+                    <div>
+                      <span className="font-medium">{c.name}</span>
+                      <span className="text-sm text-muted-foreground ml-2">{c.email}</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {c.address}, {c.city}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Реєстр поштових відправлень
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {(mailRegistry as any[])?.map((entry: any) => (
+                  <div key={entry.id} className="flex justify-between items-center p-2 border rounded">
+                    <div>
+                      <span className="font-medium">{entry.recipientName}</span>
+                      <span className="text-sm text-muted-foreground ml-2">
+                        {entry.mailType} - {entry.trackingNumber}
+                      </span>
+                    </div>
+                    <div className="text-sm">
+                      <Badge variant={entry.status === 'delivered' ? 'default' : 'secondary'}>
+                        {entry.status === 'delivered' ? 'Доставлено' : 'В дорозі'}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Поштові повідомлення</h1>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setSelectedMails([])}>
+            Очистити вибір
+          </Button>
+          <Button variant="outline" disabled={selectedMails.length === 0}>
+            Груповий друк ({selectedMails.length})
+          </Button>
+        </div>
+      </div>
+
+      {mailsQuery.isLoading ? (
+        <div>Завантаження...</div>
+      ) : (
+        <MailList mails={mails as Client[]} />
+      )}
                         top: '8mm',
                         right: '8mm',
                         width: '30mm',
