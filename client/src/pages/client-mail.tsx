@@ -200,17 +200,23 @@ export default function ClientMailPage() {
 
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log("Надсилаємо POST запит:", data);
-      const result = await apiRequest("/api/envelope-print-settings", "POST", data);
-      console.log("Отримали відповідь:", result);
-      return result;
+      console.log("🔄 МУТАЦІЯ ПОЧАТОК: Надсилаємо POST запит:", data);
+      try {
+        const result = await apiRequest("/api/envelope-print-settings", "POST", data);
+        console.log("✅ МУТАЦІЯ УСПІХ: Отримали відповідь:", result);
+        return result;
+      } catch (error) {
+        console.error("❌ МУТАЦІЯ ПОМИЛКА:", error);
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("🎉 onSuccess викликано з даними:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/envelope-print-settings"] });
       toast({ title: `Налаштування для ${envelopeSize.toUpperCase()} збережено` });
     },
     onError: (error) => {
-      console.error("Помилка збереження:", error);
+      console.error("💥 onError викликано з помилкою:", error);
       toast({ title: "Помилка", description: "Не вдалося зберегти налаштування", variant: "destructive" });
     },
   });
