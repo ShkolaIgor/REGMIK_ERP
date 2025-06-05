@@ -155,14 +155,14 @@ export default function ClientMailPage() {
   // Drag and drop handlers
   const handleMouseDown = (elementType: string, e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
     setDraggedElement(elementType);
     
     const rect = e.currentTarget.getBoundingClientRect();
-    const scale = 0.85; // Preview scale factor
     setDragOffset({
-      x: (e.clientX - rect.left) / scale,
-      y: (e.clientY - rect.top) / scale
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
     });
   };
 
@@ -174,30 +174,36 @@ export default function ClientMailPage() {
       if (!previewContainer) return;
 
       const rect = previewContainer.getBoundingClientRect();
-      const scale = 0.85;
       
-      const x = ((e.clientX - rect.left) / scale - dragOffset.x) * (210 / envelopeSizes[envelopeSettings.envelopeSize].width);
-      const y = ((e.clientY - rect.top) / scale - dragOffset.y) * (297 / envelopeSizes[envelopeSettings.envelopeSize].height);
+      // Calculate position relative to envelope container
+      const x = e.clientX - rect.left - dragOffset.x;
+      const y = e.clientY - rect.top - dragOffset.y;
+
+      // Convert to mm considering the scale factor (0.85) and CSS pixel to mm conversion
+      const scale = 0.85;
+      const pixelToMm = 1 / 3.78; // 1mm ≈ 3.78px
+      const xMm = (x / scale) * pixelToMm;
+      const yMm = (y / scale) * pixelToMm;
 
       if (draggedElement === 'sender') {
         setEnvelopeSettings(prev => ({
           ...prev,
-          senderPosition: { x: Math.max(0, x), y: Math.max(0, y) }
+          senderPosition: { x: Math.max(0, xMm), y: Math.max(0, yMm) }
         }));
       } else if (draggedElement === 'recipient') {
         setEnvelopeSettings(prev => ({
           ...prev,
-          recipientPosition: { x: Math.max(0, x), y: Math.max(0, y) }
+          recipientPosition: { x: Math.max(0, xMm), y: Math.max(0, yMm) }
         }));
       } else if (draggedElement === 'advertisement') {
         setEnvelopeSettings(prev => ({
           ...prev,
-          advertisementPosition: { x: Math.max(0, x), y: Math.max(0, y) }
+          advertisementPosition: { x: Math.max(0, xMm), y: Math.max(0, yMm) }
         }));
       } else if (draggedElement === 'image') {
         setEnvelopeSettings(prev => ({
           ...prev,
-          imagePosition: { x: Math.max(0, x), y: Math.max(0, y) }
+          imagePosition: { x: Math.max(0, xMm), y: Math.max(0, yMm) }
         }));
       }
     };
