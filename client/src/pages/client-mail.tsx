@@ -493,24 +493,24 @@ export default function ClientMailPage() {
 
       {/* Envelope Print Dialog with Horizontal Layout */}
       <Dialog open={isEnvelopePrintDialogOpen} onOpenChange={setIsEnvelopePrintDialogOpen}>
-        <DialogContent className="w-[900px] max-w-none max-h-[90vh] overflow-hidden p-6">
+        <DialogContent className="w-[1100px] max-w-none max-h-[95vh] overflow-hidden p-6">
           <DialogHeader>
             <DialogTitle>Налаштування друку конвертів - {batchName}</DialogTitle>
           </DialogHeader>
           
           {/* Horizontal Layout: Preview Left, Settings Right */}
-          <div className="flex gap-6 h-[650px]">
+          <div className="flex gap-6 h-[750px]">
             {/* Preview Section - Left */}
-            <div className="w-[630px] flex items-center justify-center bg-gray-50 rounded-lg p-6">
+            <div className="w-[800px] flex items-center justify-center bg-gray-50 rounded-lg p-6">
               <div 
                 className="envelope-preview bg-white shadow-lg relative border"
                 style={{
                   width: `${envelopeSizes[envelopeSettings.envelopeSize].width}mm`,
                   height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
                   transform: `scale(${Math.min(
-                    600 / envelopeSizes[envelopeSettings.envelopeSize].width,
-                    550 / envelopeSizes[envelopeSettings.envelopeSize].height,
-                    1.2
+                    750 / envelopeSizes[envelopeSettings.envelopeSize].width,
+                    650 / envelopeSizes[envelopeSettings.envelopeSize].height,
+                    1.5
                   )})`,
                   transformOrigin: 'center'
                 }}
@@ -637,7 +637,7 @@ export default function ClientMailPage() {
             </div>
 
             {/* Settings Section - Right */}
-            <div className="w-[240px] flex-shrink-0 flex flex-col pl-2 pr-6">
+            <div className="w-[270px] flex-shrink-0 flex flex-col pl-2 pr-6">
               <h3 className="text-lg font-semibold mb-3">Налаштування</h3>
               <div className="flex-1 overflow-auto space-y-4">
                 <Tabs defaultValue="envelope" className="h-full">
