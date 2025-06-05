@@ -50,10 +50,10 @@ const getDefaultSettings = (size: EnvelopeSize): EnvelopeSettings => ({
   senderRecipientFontSize: 10,
   postalIndexFontSize: 12,
   advertisementFontSize: 8,
-  senderPosition: { x: 5, y: 5 },
-  recipientPosition: { x: 60, y: 80 },
-  advertisementPosition: { x: 5, y: 150 },
-  imagePosition: { x: 100, y: 150 }
+  senderPosition: { x: 15, y: 10 },
+  recipientPosition: { x: 120, y: 50 },
+  advertisementPosition: { x: 15, y: 80 },
+  imagePosition: { x: 30, y: 25 }
 });
 
 export default function ClientMailPage() {
@@ -91,8 +91,28 @@ export default function ClientMailPage() {
 
   // Load settings from server
   useEffect(() => {
-    if (envelopeSettingsData) {
-      setEnvelopeSettings(prev => ({ ...prev, ...envelopeSettingsData }));
+    if (envelopeSettingsData && envelopeSettingsData.length > 0) {
+      const serverSettings = envelopeSettingsData[0];
+      const parsedSettings = {
+        ...serverSettings,
+        senderPosition: typeof serverSettings.senderPosition === 'string' 
+          ? JSON.parse(serverSettings.senderPosition) 
+          : serverSettings.senderPosition || { x: 15, y: 10 },
+        recipientPosition: typeof serverSettings.recipientPosition === 'string' 
+          ? JSON.parse(serverSettings.recipientPosition) 
+          : serverSettings.recipientPosition || { x: 120, y: 50 },
+        advertisementPosition: typeof serverSettings.advertisementPosition === 'string' 
+          ? JSON.parse(serverSettings.advertisementPosition) 
+          : serverSettings.advertisementPosition || { x: 15, y: 80 },
+        imagePosition: typeof serverSettings.imagePosition === 'string' 
+          ? JSON.parse(serverSettings.imagePosition) 
+          : serverSettings.imagePosition || { x: 30, y: 25 },
+        senderRecipientFontSize: Number(serverSettings.senderRecipientFontSize) || 14,
+        postalIndexFontSize: Number(serverSettings.postalIndexFontSize) || 18,
+        advertisementFontSize: Number(serverSettings.advertisementFontSize) || 11,
+        imageSize: Number(serverSettings.imageSize) || 20
+      };
+      setEnvelopeSettings(prev => ({ ...prev, ...parsedSettings }));
     }
   }, [envelopeSettingsData]);
 
@@ -112,9 +132,22 @@ export default function ClientMailPage() {
   const saveSettingsMutation = useMutation({
     mutationFn: (settings: EnvelopeSettings) => {
       const { id, ...settingsData } = settings;
+      // Convert position objects to JSON strings for database storage
+      const dataToSend = {
+        ...settingsData,
+        senderPosition: JSON.stringify(settingsData.senderPosition),
+        recipientPosition: JSON.stringify(settingsData.recipientPosition),
+        advertisementPosition: JSON.stringify(settingsData.advertisementPosition),
+        imagePosition: JSON.stringify(settingsData.imagePosition),
+        senderRecipientFontSize: String(settingsData.senderRecipientFontSize),
+        postalIndexFontSize: String(settingsData.postalIndexFontSize),
+        advertisementFontSize: String(settingsData.advertisementFontSize),
+        imageSize: String(settingsData.imageSize)
+      };
+      
       return apiRequest("/api/envelope-print-settings", { 
         method: id ? "PATCH" : "POST", 
-        body: settingsData 
+        body: dataToSend 
       });
     },
     onSuccess: () => {
@@ -122,6 +155,7 @@ export default function ClientMailPage() {
       toast({ title: "Налаштування збережено" });
     },
     onError: (error) => {
+      console.error('Save settings error:', error);
       toast({ title: "Помилка", description: error.message, variant: "destructive" });
     }
   });
@@ -185,25 +219,41 @@ export default function ClientMailPage() {
       const xMm = (x / scale) * pixelToMm;
       const yMm = (y / scale) * pixelToMm;
 
+      // Get envelope boundaries
+      const maxX = envelopeSizes[envelopeSettings.envelopeSize].width;
+      const maxY = envelopeSizes[envelopeSettings.envelopeSize].height;
+
       if (draggedElement === 'sender') {
         setEnvelopeSettings(prev => ({
           ...prev,
-          senderPosition: { x: Math.max(0, xMm), y: Math.max(0, yMm) }
+          senderPosition: { 
+            x: Math.max(5, Math.min(xMm, maxX - 60)), 
+            y: Math.max(5, Math.min(yMm, maxY - 30)) 
+          }
         }));
       } else if (draggedElement === 'recipient') {
         setEnvelopeSettings(prev => ({
           ...prev,
-          recipientPosition: { x: Math.max(0, xMm), y: Math.max(0, yMm) }
+          recipientPosition: { 
+            x: Math.max(5, Math.min(xMm, maxX - 90)), 
+            y: Math.max(5, Math.min(yMm, maxY - 40)) 
+          }
         }));
       } else if (draggedElement === 'advertisement') {
         setEnvelopeSettings(prev => ({
           ...prev,
-          advertisementPosition: { x: Math.max(0, xMm), y: Math.max(0, yMm) }
+          advertisementPosition: { 
+            x: Math.max(5, Math.min(xMm, maxX - 80)), 
+            y: Math.max(5, Math.min(yMm, maxY - 20)) 
+          }
         }));
       } else if (draggedElement === 'image') {
         setEnvelopeSettings(prev => ({
           ...prev,
-          imagePosition: { x: Math.max(0, xMm), y: Math.max(0, yMm) }
+          imagePosition: { 
+            x: Math.max(5, Math.min(xMm, maxX - 30)), 
+            y: Math.max(5, Math.min(yMm, maxY - 30)) 
+          }
         }));
       }
     };
@@ -646,8 +696,8 @@ export default function ClientMailPage() {
                       <Label>Шрифт відправник/отримувач: {senderRecipientFontSize}px</Label>
                       <Input
                         type="range"
-                        min="6"
-                        max="16"
+                        min="10"
+                        max="18"
                         value={senderRecipientFontSize}
                         onChange={(e) => setEnvelopeSettings(prev => ({ ...prev, senderRecipientFontSize: Number(e.target.value) }))}
                       />
