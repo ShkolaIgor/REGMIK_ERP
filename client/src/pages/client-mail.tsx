@@ -501,17 +501,15 @@ export default function ClientMailPage() {
           {/* Horizontal Layout: Preview Left, Settings Right */}
           <div className="flex gap-6 h-[600px]">
             {/* Preview Section - Left */}
-            <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg p-4 max-w-[600px]">
+            <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg p-4">
               <div 
-                className="envelope-preview bg-white shadow-lg relative border"
+                className="envelope-preview bg-white shadow-lg relative border-2 border-black"
                 style={{
                   width: `${envelopeSizes[envelopeSettings.envelopeSize].width}mm`,
                   height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
-                  transform: `scale(${Math.min(
-                    500 / envelopeSizes[envelopeSettings.envelopeSize].width,
-                    450 / envelopeSizes[envelopeSettings.envelopeSize].height
-                  )})`,
-                  transformOrigin: 'center'
+                  transform: `scale(0.8)`,
+                  transformOrigin: 'center',
+                  fontFamily: 'Times New Roman, serif'
                 }}
               >
                   {/* Stamp area */}
