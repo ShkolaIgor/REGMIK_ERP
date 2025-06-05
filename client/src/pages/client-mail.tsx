@@ -20,6 +20,7 @@ type ImageRelativePosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-
 
 interface EnvelopeSettings {
   id?: number;
+  settingName?: string;
   envelopeSize: EnvelopeSize;
   advertisementText: string;
   advertisementImage: string | null;
@@ -43,6 +44,7 @@ const envelopeSizes: Record<EnvelopeSize, { width: number; height: number; name:
 
 const getDefaultSettings = (size: EnvelopeSize): EnvelopeSettings => ({
   envelopeSize: size,
+  settingName: `Налаштування ${envelopeSizes[size].name}`,
   advertisementText: '',
   advertisementImage: null,
   imageSize: 100, // у відсотках
@@ -89,7 +91,7 @@ export default function ClientMailPage() {
     queryKey: ['/api/mail-registry'],
   });
 
-  // Load settings from server
+  // Load settings from server and localStorage
   useEffect(() => {
     if (envelopeSettingsData && Array.isArray(envelopeSettingsData) && envelopeSettingsData.length > 0) {
       const serverSettings = envelopeSettingsData[0];
@@ -115,6 +117,11 @@ export default function ClientMailPage() {
       setEnvelopeSettings(prev => ({ ...prev, ...parsedSettings }));
     }
   }, [envelopeSettingsData]);
+
+  // Auto-save to localStorage when settings change
+  useEffect(() => {
+    localStorage.setItem('envelopeSettings', JSON.stringify(envelopeSettings));
+  }, [envelopeSettings]);
 
   // Mutations
   const createMutation = useMutation({
@@ -513,7 +520,7 @@ export default function ClientMailPage() {
                     onMouseDown={(e) => handleMouseDown('sender', e)}
                     title="Натисніть та перетягніть для переміщення"
                   >
-                    <div style={{ fontWeight: 'bold', fontSize: '8px', marginBottom: '1mm', color: '#666' }}>Адреса відправника, індекс</div>
+
                     <div style={{ fontWeight: 'bold' }}>НВФ "РЕГМІК"</div>
                     <div>вул.Гагаріна, 25</div>
                     <div>с.Рівнопілля, Чернігівський район</div>
@@ -541,7 +548,7 @@ export default function ClientMailPage() {
                     onMouseDown={(e) => handleMouseDown('recipient', e)}
                     title="Натисніть та перетягніть для переміщення"
                   >
-                    <div style={{ fontSize: '8px', marginBottom: '1mm', color: '#666' }}>Адреса одержувача, індекс</div>
+
                     <div style={{ fontWeight: 'bold' }}>ФОП Таранов Руслан Сергійович</div>
                     <div>вул. Промислова, буд. 18, кв. 33, м.</div>
                     <div>Павлоград</div>
