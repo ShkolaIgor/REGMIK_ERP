@@ -135,6 +135,7 @@ export default function ClientMailPage() {
       // Convert position objects to JSON strings for database storage
       const dataToSend = {
         ...settingsData,
+        settingName: settingsData.settingName || `Налаштування ${envelopeSizes[settings.envelopeSize].name}`,
         senderPosition: JSON.stringify(settingsData.senderPosition),
         recipientPosition: JSON.stringify(settingsData.recipientPosition),
         advertisementPosition: JSON.stringify(settingsData.advertisementPosition),
@@ -144,6 +145,8 @@ export default function ClientMailPage() {
         advertisementFontSize: String(settingsData.advertisementFontSize),
         imageSize: String(settingsData.imageSize)
       };
+      
+      console.log('Saving settings:', dataToSend);
       
       return apiRequest("/api/envelope-print-settings", { 
         method: id ? "PATCH" : "POST", 
@@ -556,6 +559,8 @@ export default function ClientMailPage() {
                         left: `${envelopeSettings.advertisementPosition.x}mm`,
                         fontSize: `${advertisementFontSize}px`,
                         maxWidth: '80mm',
+                        whiteSpace: 'pre-wrap',
+                        wordWrap: 'break-word',
                         cursor: 'move',
                         padding: '1mm',
                         border: isDragging && draggedElement === 'advertisement' ? '2px dashed #3b82f6' : '2px dashed transparent',
