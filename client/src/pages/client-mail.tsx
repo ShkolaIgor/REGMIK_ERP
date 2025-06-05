@@ -23,17 +23,15 @@ interface EnvelopeSettings {
   envelopeSize: EnvelopeSize;
   advertisementText: string;
   advertisementImage: string | null;
-  adPositions: string[];
-  imageRelativePosition: ImageRelativePosition;
   imageSize: number;
   fontSize: number;
   senderRecipientFontSize: number;
   postalIndexFontSize: number;
   advertisementFontSize: number;
-  centerImage: boolean;
   senderPosition: { x: number; y: number };
   recipientPosition: { x: number; y: number };
-  adPositionCoords: Record<string, { x: number; y: number }>;
+  advertisementPosition: { x: number; y: number };
+  imagePosition: { x: number; y: number };
 }
 
 const envelopeSizes: Record<EnvelopeSize, { width: number; height: number; name: string }> = {
@@ -43,40 +41,19 @@ const envelopeSizes: Record<EnvelopeSize, { width: number; height: number; name:
   'c6': { width: 114, height: 162, name: 'C6 (114×162мм)' }
 };
 
-const adPositionOptions = [
-  { value: 'top-left', label: 'Ліворуч зверху' },
-  { value: 'top-right', label: 'Праворуч зверху' },
-  { value: 'bottom-left', label: 'Ліворуч знизу' },
-  { value: 'bottom-right', label: 'Праворуч знизу' }
-];
-
-const imageRelativePositionOptions = [
-  { value: 'top-left', label: 'Ліворуч зверху' },
-  { value: 'top-right', label: 'Праворуч зверху' },
-  { value: 'bottom-left', label: 'Ліворуч знизу' },
-  { value: 'bottom-right', label: 'Праворуч знизу' }
-];
-
 const getDefaultSettings = (size: EnvelopeSize): EnvelopeSettings => ({
   envelopeSize: size,
   advertisementText: '',
   advertisementImage: null,
-  adPositions: [],
-  imageRelativePosition: 'top-left' as ImageRelativePosition,
   imageSize: 20,
   fontSize: 12,
   senderRecipientFontSize: 10,
   postalIndexFontSize: 12,
   advertisementFontSize: 8,
-  centerImage: false,
   senderPosition: { x: 5, y: 5 },
   recipientPosition: { x: 60, y: 80 },
-  adPositionCoords: {
-    'top-left': { x: 5, y: 30 },
-    'top-right': { x: 100, y: 30 },
-    'bottom-left': { x: 5, y: 150 },
-    'bottom-right': { x: 100, y: 150 }
-  }
+  advertisementPosition: { x: 5, y: 150 },
+  imagePosition: { x: 100, y: 150 }
 });
 
 export default function ClientMailPage() {
@@ -212,14 +189,15 @@ export default function ClientMailPage() {
           ...prev,
           recipientPosition: { x: Math.max(0, x), y: Math.max(0, y) }
         }));
-      } else if (draggedElement.startsWith('ad-')) {
-        const position = draggedElement.replace('ad-', '');
+      } else if (draggedElement === 'advertisement') {
         setEnvelopeSettings(prev => ({
           ...prev,
-          adPositionCoords: {
-            ...prev.adPositionCoords,
-            [position]: { x: Math.max(0, x), y: Math.max(0, y) }
-          }
+          advertisementPosition: { x: Math.max(0, x), y: Math.max(0, y) }
+        }));
+      } else if (draggedElement === 'image') {
+        setEnvelopeSettings(prev => ({
+          ...prev,
+          imagePosition: { x: Math.max(0, x), y: Math.max(0, y) }
         }));
       }
     };
@@ -283,7 +261,7 @@ export default function ClientMailPage() {
     }
   };
 
-  const { senderRecipientFontSize, postalIndexFontSize, advertisementFontSize, adPositions, adPositionCoords } = envelopeSettings;
+  const { senderRecipientFontSize, postalIndexFontSize, advertisementFontSize } = envelopeSettings;
 
   // Mail list component
   const MailList = ({ mails }: { mails: Client[] }) => (
@@ -440,8 +418,8 @@ export default function ClientMailPage() {
                 <div 
                   className="envelope-preview bg-white shadow-lg relative border"
                   style={{
-                    width: `${envelopeSizes[envelopeSettings.envelopeSize].width * 0.85}px`,
-                    height: `${envelopeSizes[envelopeSettings.envelopeSize].height * 0.85}px`,
+                    width: `${envelopeSizes[envelopeSettings.envelopeSize].width}mm`,
+                    height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
                     transform: 'scale(0.85)',
                     transformOrigin: 'center'
                   }}
@@ -513,46 +491,53 @@ export default function ClientMailPage() {
                     </div>
                   </div>
 
-                  {/* Advertisement positions */}
-                  {adPositions.map(position => (
+                  {/* Advertisement text */}
+                  {envelopeSettings.advertisementText && (
                     <div
-                      key={position}
                       style={{
                         position: 'absolute',
-                        top: `${adPositionCoords[position as keyof typeof adPositionCoords].y}mm`,
-                        left: `${adPositionCoords[position as keyof typeof adPositionCoords].x}mm`,
+                        top: `${envelopeSettings.advertisementPosition.y}mm`,
+                        left: `${envelopeSettings.advertisementPosition.x}mm`,
                         fontSize: `${advertisementFontSize}px`,
-                        maxWidth: position === 'bottom-left' ? '80mm' : '60mm',
+                        maxWidth: '80mm',
                         cursor: 'move',
                         padding: '1mm',
-                        border: isDragging && draggedElement === `ad-${position}` ? '2px dashed #3b82f6' : '2px dashed transparent',
-                        backgroundColor: isDragging && draggedElement === `ad-${position}` ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+                        border: isDragging && draggedElement === 'advertisement' ? '2px dashed #3b82f6' : '2px dashed transparent',
+                        backgroundColor: isDragging && draggedElement === 'advertisement' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
                       }}
-                      onMouseDown={(e) => handleMouseDown(`ad-${position}`, e)}
+                      onMouseDown={(e) => handleMouseDown('advertisement', e)}
                       title="Натисніть та перетягніть для переміщення"
                     >
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '2mm'
-                      }}>
-                        {envelopeSettings.advertisementImage && (
-                          <img 
-                            src={envelopeSettings.advertisementImage} 
-                            alt="Реклама"
-                            style={{
-                              width: `${envelopeSettings.imageSize}px`,
-                              height: `${envelopeSettings.imageSize}px`,
-                              objectFit: 'cover'
-                            }}
-                          />
-                        )}
-                        <div style={{ fontSize: `${advertisementFontSize}px` }}>
-                          {envelopeSettings.advertisementText}
-                        </div>
-                      </div>
+                      {envelopeSettings.advertisementText}
                     </div>
-                  ))}
+                  )}
+
+                  {/* Advertisement image */}
+                  {envelopeSettings.advertisementImage && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: `${envelopeSettings.imagePosition.y}mm`,
+                        left: `${envelopeSettings.imagePosition.x}mm`,
+                        cursor: 'move',
+                        padding: '1mm',
+                        border: isDragging && draggedElement === 'image' ? '2px dashed #3b82f6' : '2px dashed transparent',
+                        backgroundColor: isDragging && draggedElement === 'image' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+                      }}
+                      onMouseDown={(e) => handleMouseDown('image', e)}
+                      title="Натисніть та перетягніть для переміщення"
+                    >
+                      <img 
+                        src={envelopeSettings.advertisementImage} 
+                        alt="Реклама"
+                        style={{
+                          width: `${envelopeSettings.imageSize}px`,
+                          height: `${envelopeSettings.imageSize}px`,
+                          objectFit: 'cover'
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -599,32 +584,7 @@ export default function ClientMailPage() {
                       />
                     </div>
                     
-                    <div>
-                      <Label>Позиції реклами</Label>
-                      <div className="space-y-2">
-                        {adPositionOptions.map(option => (
-                          <div key={option.value} className="flex items-center space-x-2">
-                            <Checkbox
-                              checked={envelopeSettings.adPositions.includes(option.value)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setEnvelopeSettings(prev => ({
-                                    ...prev,
-                                    adPositions: [...prev.adPositions, option.value]
-                                  }));
-                                } else {
-                                  setEnvelopeSettings(prev => ({
-                                    ...prev,
-                                    adPositions: prev.adPositions.filter(pos => pos !== option.value)
-                                  }));
-                                }
-                              }}
-                            />
-                            <Label>{option.label}</Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+
                     
                     <div>
                       <Label>Зображення реклами</Label>
