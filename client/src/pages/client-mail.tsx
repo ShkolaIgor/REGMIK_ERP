@@ -599,7 +599,7 @@ export default function ClientMailPage() {
                         <div>с.Рівнопілля, Чернігівський район</div>
                         <div>Чернігівська обл.</div>
                         <div>Україна</div>
-                        <div style={{ fontSize: `${Math.round(parseInt(fontSize) * 1.2)}px`, fontWeight: 'bold', marginTop: '2mm', letterSpacing: '2px' }}>
+                        <div style={{ fontSize: `${fontSize}px`, fontWeight: 'bold', marginTop: '2mm', letterSpacing: '2px' }}>
                           15582
                         </div>
                       </div>
