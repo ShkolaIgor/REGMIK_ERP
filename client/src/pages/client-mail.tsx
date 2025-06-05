@@ -501,7 +501,7 @@ export default function ClientMailPage() {
           {/* Horizontal Layout: Preview Left, Settings Right */}
           <div className="flex gap-4 h-[650px]">
             {/* Preview Section - Left */}
-            <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg p-4">
+            <div className="flex-1 max-w-[calc(100%-300px)] flex items-center justify-center bg-gray-50 rounded-lg p-4">
               <div 
                 className="envelope-preview bg-white shadow-lg relative border"
                 style={{
