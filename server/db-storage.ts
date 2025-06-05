@@ -5225,6 +5225,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createEnvelopePrintSettings(settingsData: InsertEnvelopePrintSettings): Promise<EnvelopePrintSettings> {
+    console.log("Отримані дані для збереження:", settingsData);
+    
     // Перевіряємо чи існують налаштування для цього типу конверта
     const existing = await db
       .select()
@@ -5233,19 +5235,23 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
 
     if (existing.length > 0) {
+      console.log("Оновлюємо існуючі налаштування для:", settingsData.envelopeSize);
       // Оновлюємо існуючі налаштування
       const [updated] = await db
         .update(envelopePrintSettings)
         .set(settingsData)
         .where(eq(envelopePrintSettings.id, existing[0].id))
         .returning();
+      console.log("Оновлені налаштування:", updated);
       return updated;
     } else {
+      console.log("Створюємо нові налаштування для:", settingsData.envelopeSize);
       // Створюємо нові налаштування
       const [created] = await db
         .insert(envelopePrintSettings)
         .values(settingsData)
         .returning();
+      console.log("Створені налаштування:", created);
       return created;
     }
   }
