@@ -693,6 +693,9 @@ export default function ClientMailPage() {
                     const settingsData = {
                       settingName: `Налаштування для ${envelopeSize.toUpperCase()}`,
                       envelopeSize,
+                      senderName: "ТОВ \"РЕГМІК\"",
+                      senderAddress: "м. Київ, вул. Промислова, 15",
+                      senderPhone: "+38 (044) 123-45-67",
                       advertisementText,
                       advertisementImage,
                       adPositions: JSON.stringify(adPositions),
