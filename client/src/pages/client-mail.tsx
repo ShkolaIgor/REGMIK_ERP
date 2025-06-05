@@ -35,10 +35,10 @@ interface EnvelopeSettings {
 }
 
 const envelopeSizes: Record<EnvelopeSize, { width: number; height: number; name: string }> = {
-  'c5': { width: 162, height: 229, name: 'C5 (162×229мм)' },
-  'c4': { width: 229, height: 324, name: 'C4 (229×324мм)' },
-  'dl': { width: 110, height: 220, name: 'DL (110×220мм)' },
-  'c6': { width: 114, height: 162, name: 'C6 (114×162мм)' }
+  'c5': { width: 229, height: 162, name: 'C5 (229×162мм)' },
+  'c4': { width: 324, height: 229, name: 'C4 (324×229мм)' },
+  'dl': { width: 220, height: 110, name: 'DL (220×110мм)' },
+  'c6': { width: 162, height: 114, name: 'C6 (162×114мм)' }
 };
 
 const getDefaultSettings = (size: EnvelopeSize): EnvelopeSettings => ({
