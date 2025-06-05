@@ -501,7 +501,7 @@ export default function ClientMailPage() {
           {/* Horizontal Layout: Preview Left, Settings Right */}
           <div className="flex gap-4 h-[650px]">
             {/* Preview Section - Left */}
-            <div className="w-[400px] flex-shrink-0 flex items-center justify-center bg-gray-50 rounded-lg p-4">
+            <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg p-4">
               <div 
                 className="envelope-preview bg-white shadow-lg relative border"
                 style={{
@@ -633,7 +633,7 @@ export default function ClientMailPage() {
             </div>
 
             {/* Settings Section - Right */}
-            <div className="w-60 flex-shrink-0 flex flex-col">
+            <div className="w-1/5 min-w-[200px] flex-shrink-0 flex flex-col">
               <h3 className="text-lg font-semibold mb-3">Налаштування</h3>
               <div className="flex-1 overflow-auto space-y-4">
                 <Tabs defaultValue="envelope" className="h-full">
