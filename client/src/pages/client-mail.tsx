@@ -349,17 +349,12 @@ export default function ClientMailPage() {
                 Налаштування друку
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden">
+            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Налаштування друку конвертів</DialogTitle>
-                <DialogDescription>
-                  Налаштуйте параметри друку конвертів згідно українських поштових стандартів
-                </DialogDescription>
               </DialogHeader>
               
-              <div className="grid grid-cols-2 gap-6 h-[80vh]">
-                {/* Ліва колонка - Налаштування */}
-                <div className="space-y-4 overflow-y-auto pr-2">
+              <div className="space-y-6">
                   {/* Основні налаштування */}
                   <div className="p-4 border rounded-lg bg-gray-50">
                     <h3 className="text-lg font-semibold mb-4">Основні налаштування</h3>
@@ -703,10 +698,6 @@ export default function ClientMailPage() {
                 <Button 
                   className="w-full" 
                   onClick={() => {
-                    console.log("Кнопка збереження натиснута");
-                    console.log("advertisementText:", advertisementText);
-                    console.log("advertisementImage:", advertisementImage ? "Зображення є" : "Зображення відсутнє");
-                    
                     const settingsData = {
                       settingName: `Налаштування для ${envelopeSize.toUpperCase()}`,
                       envelopeSize,
@@ -727,19 +718,7 @@ export default function ClientMailPage() {
                       recipientPosition: JSON.stringify(recipientPosition),
                       adPositionCoords: JSON.stringify(adPositionCoords)
                     };
-                    console.log("Збереження налаштувань:", settingsData);
-                    console.log("Викликаємо мутацію...");
-                    
-                    try {
-                      console.log("Стан мутації перед викликом - isPending:", saveSettingsMutation.isPending);
-                      console.log("Стан мутації перед викликом - isError:", saveSettingsMutation.isError);
-                      console.log("Помилка мутації:", saveSettingsMutation.error);
-                      
-                      saveSettingsMutation.mutate(settingsData);
-                      console.log("Мутація викликана успішно");
-                    } catch (error) {
-                      console.error("Помилка виклику мутації:", error);
-                    }
+                    saveSettingsMutation.mutate(settingsData);
                   }}
                   disabled={saveSettingsMutation.isPending}
                 >
