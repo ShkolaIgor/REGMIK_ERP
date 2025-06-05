@@ -68,32 +68,32 @@ export default function ClientMailPage() {
     if (!isDragging || !draggedElement) return;
     
     const rect = event.currentTarget.getBoundingClientRect();
-    const scale = 0.7; // Оновлений масштаб перегляду
+    const scale = 0.85; // Оновлений масштаб перегляду
     const pixelsToMm = 3.7795; // Конвертація пікселів у мм
     const newX = (event.clientX - rect.left) / scale / pixelsToMm;
     const newY = (event.clientY - rect.top) / scale / pixelsToMm;
     
-    // Межі конверта
-    const maxWidth = envelopeSize === 'dl' ? 220 : envelopeSize === 'c4' ? 324 : 229;
-    const maxHeight = envelopeSize === 'dl' ? 110 : envelopeSize === 'c4' ? 229 : 162;
+    // Більші межі конверта для кращого перетягування
+    const maxWidth = envelopeSize === 'dl' ? 200 : envelopeSize === 'c4' ? 304 : 209;
+    const maxHeight = envelopeSize === 'dl' ? 90 : envelopeSize === 'c4' ? 209 : 142;
     
     if (draggedElement === 'sender') {
       setSenderPosition({ 
-        x: Math.max(0, Math.min(maxWidth - 80, newX - 20)), 
-        y: Math.max(0, Math.min(maxHeight - 30, newY - 10)) 
+        x: Math.max(0, Math.min(maxWidth, newX - 10)), 
+        y: Math.max(0, Math.min(maxHeight, newY - 5)) 
       });
     } else if (draggedElement === 'recipient') {
       setRecipientPosition({ 
-        x: Math.max(0, Math.min(maxWidth - 120, newX - 40)), 
-        y: Math.max(0, Math.min(maxHeight - 40, newY - 20)) 
+        x: Math.max(0, Math.min(maxWidth, newX - 20)), 
+        y: Math.max(0, Math.min(maxHeight, newY - 10)) 
       });
     } else if (draggedElement.startsWith('ad-')) {
       const position = draggedElement.replace('ad-', '') as keyof typeof adPositionCoords;
       setAdPositionCoords(prev => ({
         ...prev,
         [position]: { 
-          x: Math.max(0, Math.min(maxWidth - 50, newX - 25)), 
-          y: Math.max(0, Math.min(maxHeight - 20, newY - 15)) 
+          x: Math.max(0, Math.min(maxWidth, newX - 15)), 
+          y: Math.max(0, Math.min(maxHeight, newY - 10)) 
         }
       }));
     }
@@ -580,19 +580,74 @@ export default function ClientMailPage() {
                       <div>
                         <Label>Позиція відправника (x, y, ширина, висота в мм)</Label>
                         <div className="grid grid-cols-4 gap-2 mt-2">
-                          <Input placeholder="X" defaultValue="20" />
-                          <Input placeholder="Y" defaultValue="15" />
-                          <Input placeholder="Ширина" defaultValue="80" />
-                          <Input placeholder="Висота" defaultValue="30" />
+                          <Input 
+                            placeholder="X" 
+                            value={Math.round(senderPosition.x)} 
+                            onChange={(e) => setSenderPosition(prev => ({ ...prev, x: parseInt(e.target.value) || 0 }))}
+                          />
+                          <Input 
+                            placeholder="Y" 
+                            value={Math.round(senderPosition.y)} 
+                            onChange={(e) => setSenderPosition(prev => ({ ...prev, y: parseInt(e.target.value) || 0 }))}
+                          />
+                          <Input placeholder="Ширина" defaultValue="80" readOnly />
+                          <Input placeholder="Висота" defaultValue="30" readOnly />
                         </div>
                       </div>
                       <div>
                         <Label>Позиція отримувача (x, y, ширина, висота в мм)</Label>
                         <div className="grid grid-cols-4 gap-2 mt-2">
-                          <Input placeholder="X" defaultValue="120" />
-                          <Input placeholder="Y" defaultValue="60" />
-                          <Input placeholder="Ширина" defaultValue="80" />
-                          <Input placeholder="Висота" defaultValue="40" />
+                          <Input 
+                            placeholder="X" 
+                            value={Math.round(recipientPosition.x)} 
+                            onChange={(e) => setRecipientPosition(prev => ({ ...prev, x: parseInt(e.target.value) || 0 }))}
+                          />
+                          <Input 
+                            placeholder="Y" 
+                            value={Math.round(recipientPosition.y)} 
+                            onChange={(e) => setRecipientPosition(prev => ({ ...prev, y: parseInt(e.target.value) || 0 }))}
+                          />
+                          <Input placeholder="Ширина" defaultValue="120" readOnly />
+                          <Input placeholder="Висота" defaultValue="40" readOnly />
+                        </div>
+                      </div>
+                      <div>
+                        <Label>Позиції реклами</Label>
+                        <div className="text-xs text-gray-600 mt-1 mb-2">
+                          Показані тільки активні позиції згідно налаштувань реклами
+                        </div>
+                        <div className="space-y-2">
+                          {Object.entries(adPositionCoords)
+                            .filter(([position]) => {
+                              return (position === 'bottom-left' && adPositions.includes('bottom-left')) ||
+                                     (position === 'top-right' && adPositions.includes('top-right'));
+                            })
+                            .map(([position, coords]) => (
+                            <div key={position} className="grid grid-cols-3 gap-2 items-center">
+                              <Label className="text-sm">{position === 'bottom-left' ? 'Знизу зліва' : 'Зверху зправа'}:</Label>
+                              <Input 
+                                placeholder="X" 
+                                value={Math.round(coords.x)} 
+                                onChange={(e) => setAdPositionCoords(prev => ({ 
+                                  ...prev, 
+                                  [position]: { ...prev[position as keyof typeof prev], x: parseInt(e.target.value) || 0 }
+                                }))}
+                              />
+                              <Input 
+                                placeholder="Y" 
+                                value={Math.round(coords.y)} 
+                                onChange={(e) => setAdPositionCoords(prev => ({ 
+                                  ...prev, 
+                                  [position]: { ...prev[position as keyof typeof prev], y: parseInt(e.target.value) || 0 }
+                                }))}
+                              />
+                            </div>
+                          ))}
+                          {!adPositions.some(p => ['bottom-left', 'top-right'].includes(p)) && (
+                            <div className="text-sm text-gray-500 italic">
+                              Немає активних позицій реклами
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -600,7 +655,7 @@ export default function ClientMailPage() {
 
                   <div className="p-4 border rounded-lg bg-yellow-50">
                     <h3 className="text-lg font-semibold mb-4">Попередній перегляд конверта</h3>
-                    <div className="mt-2 border rounded-lg p-4 bg-gray-50 overflow-hidden">
+                    <div className="mt-2 border rounded-lg p-4 bg-gray-50 overflow-auto min-h-[400px]">
                       <div className="text-sm text-blue-600 mb-2 font-medium">
                         💡 Натисніть та перетягніть елементи для переміщення по конверту
                       </div>
@@ -611,9 +666,10 @@ export default function ClientMailPage() {
                           height: envelopeSize === 'dl' ? '110mm' : envelopeSize === 'c4' ? '229mm' : '162mm',
                           position: 'relative',
                           fontFamily: 'Times New Roman, serif',
-                          transform: 'scale(0.7)',
-                          transformOrigin: 'top left',
-                          marginBottom: envelopeSize === 'dl' ? '-30mm' : envelopeSize === 'c4' ? '-100mm' : '-60mm'
+                          transform: 'scale(0.85)',
+                          transformOrigin: 'center top',
+                          margin: '20px auto',
+                          minHeight: '300px'
                         }}
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
@@ -625,13 +681,15 @@ export default function ClientMailPage() {
                           right: '8mm',
                           width: '30mm',
                           height: '25mm',
-                          border: '1px dashed #999',
+                          border: '2px dashed #3b82f6',
+                          backgroundColor: 'rgba(59, 130, 246, 0.1)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '8px',
-                          color: '#999',
+                          fontSize: '10px',
+                          color: '#3b82f6',
                           textAlign: 'center',
+                          fontWeight: 'bold',
                           lineHeight: '1.2'
                         }}>
                           МІСЦЕ<br/>ДЛЯ<br/>МАРКИ
