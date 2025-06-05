@@ -636,7 +636,7 @@ export default function ClientMailPage() {
             </div>
 
             {/* Settings Section - Right */}
-            <div className="w-80 flex flex-col">
+            <div className="w-96 flex flex-col ml-auto">
               <h3 className="text-lg font-semibold mb-3">Налаштування</h3>
               <div className="flex-1 overflow-auto space-y-4">
                 <Tabs defaultValue="envelope" className="h-full">
