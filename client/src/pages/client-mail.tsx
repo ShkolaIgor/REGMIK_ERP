@@ -369,13 +369,43 @@ export default function ClientMailPage() {
                         </Select>
                       </div>
                       <div>
-                        <Label>Розмір шрифту (px)</Label>
+                        <Label>Базовий розмір шрифту (px)</Label>
                         <Input 
                           type="number" 
                           value={fontSize} 
                           onChange={(e) => setFontSize(e.target.value)}
                           min="8" 
                           max="20" 
+                        />
+                      </div>
+                      <div>
+                        <Label>Відправник/Отримувач (px)</Label>
+                        <Input 
+                          type="number" 
+                          value={senderRecipientFontSize} 
+                          onChange={(e) => setSenderRecipientFontSize(e.target.value)}
+                          min="8" 
+                          max="24" 
+                        />
+                      </div>
+                      <div>
+                        <Label>Поштові індекси (px)</Label>
+                        <Input 
+                          type="number" 
+                          value={postalIndexFontSize} 
+                          onChange={(e) => setPostalIndexFontSize(e.target.value)}
+                          min="8" 
+                          max="28" 
+                        />
+                      </div>
+                      <div>
+                        <Label>Розмір шрифту реклами (px)</Label>
+                        <Input 
+                          type="number" 
+                          value={advertisementFontSize} 
+                          onChange={(e) => setAdvertisementFontSize(e.target.value)}
+                          min="6" 
+                          max="18" 
                         />
                       </div>
 
