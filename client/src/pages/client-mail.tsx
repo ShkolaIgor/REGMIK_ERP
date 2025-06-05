@@ -497,7 +497,7 @@ export default function ClientMailPage() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '10px',
+                        fontSize: '12px',
                         color: '#3b82f6',
                         textAlign: 'center',
                         fontWeight: 'bold',
@@ -609,7 +609,25 @@ export default function ClientMailPage() {
                                 }}
                               />
                             )}
-                            <div style={{ flex: 1 }}>{advertisementText}</div>
+                            <div 
+                              style={{ 
+                                flex: 1,
+                                whiteSpace: 'pre-wrap',
+                                wordWrap: 'break-word',
+                                hyphens: 'auto',
+                                lineHeight: '1.3'
+                              }}
+                              dangerouslySetInnerHTML={{
+                                __html: advertisementText
+                                  .replace(/\n/g, '<br/>')
+                                  .replace(/(\w{6,})/g, (match) => {
+                                    // Додаємо м'які переноси для довгих слів
+                                    return match.length > 8 ? 
+                                      match.replace(/(.{4})/g, '$1&shy;') : 
+                                      match;
+                                  })
+                              }}
+                            />
                             {imageRelativePosition === 'right' && advertisementImage && (
                               <img 
                                 src={advertisementImage} 
