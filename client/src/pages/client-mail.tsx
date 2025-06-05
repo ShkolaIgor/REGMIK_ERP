@@ -235,6 +235,12 @@ export default function ClientMailPage() {
     onSuccess: (data) => {
       console.log("🎉 onSuccess викликано з даними:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/envelope-print-settings"] });
+      
+      // Оновлюємо локальний стан після успішного збереження
+      setTimeout(() => {
+        loadSettingsForEnvelopeSize(envelopeSize);
+      }, 100);
+      
       toast({ title: `Налаштування для ${envelopeSize.toUpperCase()} збережено` });
     },
     onError: (error) => {
