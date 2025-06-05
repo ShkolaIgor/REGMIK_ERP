@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Mail, Printer, Send, Eye, FileText, Settings, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -708,6 +708,7 @@ export default function ClientMailPage() {
                       recipientPosition: JSON.stringify(recipientPosition),
                       adPositionCoords: JSON.stringify(adPositionCoords)
                     };
+                    console.log("Збереження налаштувань:", settingsData);
                     saveSettingsMutation.mutate(settingsData);
                   }}
                   disabled={saveSettingsMutation.isPending}
