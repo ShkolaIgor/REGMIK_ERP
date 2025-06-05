@@ -45,7 +45,7 @@ const getDefaultSettings = (size: EnvelopeSize): EnvelopeSettings => ({
   envelopeSize: size,
   advertisementText: '',
   advertisementImage: null,
-  imageSize: 20,
+  imageSize: 100, // у відсотках
   fontSize: 12,
   senderRecipientFontSize: 10,
   postalIndexFontSize: 12,
@@ -91,7 +91,7 @@ export default function ClientMailPage() {
 
   // Load settings from server
   useEffect(() => {
-    if (envelopeSettingsData && envelopeSettingsData.length > 0) {
+    if (envelopeSettingsData && Array.isArray(envelopeSettingsData) && envelopeSettingsData.length > 0) {
       const serverSettings = envelopeSettingsData[0];
       const parsedSettings = {
         ...serverSettings,
@@ -110,7 +110,7 @@ export default function ClientMailPage() {
         senderRecipientFontSize: Number(serverSettings.senderRecipientFontSize) || 14,
         postalIndexFontSize: Number(serverSettings.postalIndexFontSize) || 18,
         advertisementFontSize: Number(serverSettings.advertisementFontSize) || 11,
-        imageSize: Number(serverSettings.imageSize) || 20
+        imageSize: Number(serverSettings.imageSize) || 100
       };
       setEnvelopeSettings(prev => ({ ...prev, ...parsedSettings }));
     }
@@ -587,9 +587,11 @@ export default function ClientMailPage() {
                         src={envelopeSettings.advertisementImage} 
                         alt="Реклама"
                         style={{
-                          width: `${envelopeSettings.imageSize}px`,
-                          height: `${envelopeSettings.imageSize}px`,
-                          objectFit: 'cover'
+                          width: `${envelopeSettings.imageSize}%`,
+                          height: 'auto',
+                          maxWidth: '50mm',
+                          maxHeight: '50mm',
+                          objectFit: 'contain'
                         }}
                       />
                     </div>
