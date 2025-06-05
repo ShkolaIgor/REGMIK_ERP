@@ -89,6 +89,13 @@ export default function ClientMailPage() {
     }
   };
 
+  // Завантаження налаштувань при ініціалізації
+  useEffect(() => {
+    if (envelopeSettings.length > 0) {
+      loadSettingsForEnvelopeSize(envelopeSize);
+    }
+  }, [envelopeSettings, envelopeSize]);
+
   // Обробники перетягування
   const handleMouseDown = (elementType: string, event: React.MouseEvent) => {
     setIsDragging(true);

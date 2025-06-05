@@ -5225,11 +5225,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createEnvelopePrintSettings(settingsData: InsertEnvelopePrintSettings): Promise<EnvelopePrintSettings> {
-    const [created] = await db
-      .insert(envelopePrintSettings)
-      .values(settingsData)
-      .returning();
-    return created;
+    // Перевіряємо чи існують налаштування для цього типу конверта
+    const existing = await db
+      .select()
+      .from(envelopePrintSettings)
+      .where(eq(envelopePrintSettings.envelopeSize, settingsData.envelopeSize || 'dl'))
+      .limit(1);
+
+    if (existing.length > 0) {
+      // Оновлюємо існуючі налаштування
+      const [updated] = await db
+        .update(envelopePrintSettings)
+        .set(settingsData)
+        .where(eq(envelopePrintSettings.id, existing[0].id))
+        .returning();
+      return updated;
+    } else {
+      // Створюємо нові налаштування
+      const [created] = await db
+        .insert(envelopePrintSettings)
+        .values(settingsData)
+        .returning();
+      return created;
+    }
   }
 
   // Group mail creation
