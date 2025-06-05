@@ -501,13 +501,17 @@ export default function ClientMailPage() {
           {/* Horizontal Layout: Preview Left, Settings Right */}
           <div className="flex gap-4 h-[650px]">
             {/* Preview Section - Left */}
-            <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg p-4">
+            <div className="flex-1 min-w-0 flex items-center justify-center bg-gray-50 rounded-lg p-4 overflow-hidden">
               <div 
                 className="envelope-preview bg-white shadow-lg relative border"
                 style={{
                   width: `${envelopeSizes[envelopeSettings.envelopeSize].width}mm`,
                   height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
-                  transform: `scale(0.7)`,
+                  transform: `scale(${Math.min(
+                    300 / envelopeSizes[envelopeSettings.envelopeSize].width,
+                    400 / envelopeSizes[envelopeSettings.envelopeSize].height,
+                    1
+                  )})`,
                   transformOrigin: 'center'
                 }}
               >
