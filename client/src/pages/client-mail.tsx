@@ -493,24 +493,23 @@ export default function ClientMailPage() {
 
       {/* Envelope Print Dialog with Horizontal Layout */}
       <Dialog open={isEnvelopePrintDialogOpen} onOpenChange={setIsEnvelopePrintDialogOpen}>
-        <DialogContent className="w-[1200px] max-w-[95vw] h-[85vh] p-6">
-          <DialogHeader className="pb-4">
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
             <DialogTitle>Налаштування друку конвертів - {batchName}</DialogTitle>
           </DialogHeader>
           
           {/* Horizontal Layout: Preview Left, Settings Right */}
-          <div className="flex gap-6 h-full">
+          <div className="flex gap-6 h-[600px]">
             {/* Preview Section - Left */}
-            <div className="w-[700px] flex-shrink-0 flex items-center justify-center bg-gray-50 rounded-lg p-6">
+            <div className="w-[500px] flex items-center justify-center bg-gray-50 rounded-lg p-4">
               <div 
                 className="envelope-preview bg-white shadow-lg relative border"
                 style={{
                   width: `${envelopeSizes[envelopeSettings.envelopeSize].width}mm`,
                   height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
                   transform: `scale(${Math.min(
-                    650 / envelopeSizes[envelopeSettings.envelopeSize].width,
-                    600 / envelopeSizes[envelopeSettings.envelopeSize].height,
-                    1.8
+                    300 / envelopeSizes[envelopeSettings.envelopeSize].width,
+                    350 / envelopeSizes[envelopeSettings.envelopeSize].height
                   )})`,
                   transformOrigin: 'center'
                 }}
@@ -637,11 +636,11 @@ export default function ClientMailPage() {
             </div>
 
             {/* Settings Section - Right */}
-            <div className="w-[450px] flex-shrink-0 bg-white rounded-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">Налаштування</h3>
-              <div className="h-full overflow-auto">
+            <div className="w-80 flex flex-col">
+              <h3 className="text-lg font-semibold mb-3">Налаштування</h3>
+              <div className="flex-1 overflow-auto space-y-4">
                 <Tabs defaultValue="envelope" className="h-full">
-                  <TabsList className="grid w-full grid-cols-3 mb-4">
+                  <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="envelope">Конверт</TabsTrigger>
                     <TabsTrigger value="advertisement">Реклама</TabsTrigger>
                     <TabsTrigger value="fonts">Шрифти</TabsTrigger>
@@ -764,32 +763,31 @@ export default function ClientMailPage() {
                     </div>
                   </TabsContent>
                 </Tabs>
+              </div>
+              
+              {/* Action buttons */}
+              <div className="pt-4 border-t space-y-2">
+                <Button 
+                  onClick={() => saveSettingsMutation.mutate(envelopeSettings)}
+                  disabled={saveSettingsMutation.isPending}
+                  className="w-full"
+                >
+                  <Settings2 className="h-4 w-4 mr-2" />
+                  Зберегти налаштування
+                </Button>
                 
-                {/* Action Buttons */}
-                <div className="mt-6 space-y-3 pt-4 border-t">
-                  <Button 
-                    onClick={() => saveSettingsMutation.mutate(envelopeSettings)}
-                    disabled={saveSettingsMutation.isPending}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    <Settings2 className="h-4 w-4 mr-2" />
-                    Зберегти налаштування
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => batchPrintMutation.mutate({ 
-                      batchName, 
-                      clientIds: currentBatchMails.map(c => parseInt(c.id.toString())), 
-                      settings: envelopeSettings 
-                    })}
-                    disabled={batchPrintMutation.isPending}
-                    className="w-full"
-                  >
-                    <Printer className="h-4 w-4 mr-2" />
-                    Друкувати конверти
-                  </Button>
-                </div>
+                <Button 
+                  onClick={() => batchPrintMutation.mutate({ 
+                    batchName, 
+                    clientIds: currentBatchMails.map(c => parseInt(c.id.toString())), 
+                    settings: envelopeSettings 
+                  })}
+                  disabled={batchPrintMutation.isPending}
+                  className="w-full"
+                >
+                  <Printer className="h-4 w-4 mr-2" />
+                  Друкувати конверти
+                </Button>
               </div>
             </div>
           </div>
