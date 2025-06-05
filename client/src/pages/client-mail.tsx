@@ -582,7 +582,7 @@ export default function ClientMailPage() {
                           position: 'absolute',
                           top: `${senderPosition.y}mm`,
                           left: `${senderPosition.x}mm`,
-                          fontSize: `${fontSize}px`,
+                          fontSize: `${Math.round(parseInt(fontSize) * 1.2)}px`,
                           lineHeight: '1.3',
                           maxWidth: '70mm',
                           cursor: 'move',
@@ -599,7 +599,7 @@ export default function ClientMailPage() {
                         <div>с.Рівнопілля, Чернігівський район</div>
                         <div>Чернігівська обл.</div>
                         <div>Україна</div>
-                        <div style={{ fontSize: `${fontSize}px`, fontWeight: 'bold', marginTop: '2mm', letterSpacing: '2px' }}>
+                        <div style={{ fontSize: `${Math.round(parseInt(fontSize) * 1.2)}px`, fontWeight: 'bold', marginTop: '2mm', letterSpacing: '2px' }}>
                           15582
                         </div>
                       </div>
@@ -610,7 +610,7 @@ export default function ClientMailPage() {
                           position: 'absolute',
                           top: `${recipientPosition.y}mm`,
                           left: `${recipientPosition.x}mm`,
-                          fontSize: `${fontSize}px`,
+                          fontSize: `${Math.round(parseInt(fontSize) * 1.2)}px`,
                           lineHeight: '1.4',
                           maxWidth: '90mm',
                           cursor: 'move',
