@@ -4343,13 +4343,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/envelope-print-settings", async (req, res) => {
+    console.log("POST /api/envelope-print-settings отримано запит:", req.body);
     try {
       const validatedData = insertEnvelopePrintSettingsSchema.parse(req.body);
+      console.log("Валідовані дані:", validatedData);
       const settings = await storage.createEnvelopePrintSettings(validatedData);
+      console.log("Збережені налаштування:", settings);
       res.status(201).json(settings);
     } catch (error) {
       console.error("Error creating envelope print settings:", error);
       if (error instanceof z.ZodError) {
+        console.error("Zod validation errors:", error.errors);
         res.status(400).json({ error: "Invalid settings data", details: error.errors });
       } else {
         res.status(500).json({ error: "Failed to create envelope print settings" });
