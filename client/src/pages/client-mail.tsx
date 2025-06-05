@@ -113,6 +113,8 @@ export default function ClientMailPage() {
     });
   };
 
+
+
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -204,6 +206,38 @@ export default function ClientMailPage() {
       toast({ title: "Помилка", description: "Не вдалося створити пакет", variant: "destructive" });
     },
   });
+
+  const saveSettingsMutation = useMutation({
+    mutationFn: (data: any) => 
+      apiRequest("/api/envelope-print-settings", "POST", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/envelope-print-settings"] });
+      setIsSettingsDialogOpen(false);
+      toast({ title: "Налаштування збережено" });
+    },
+    onError: () => {
+      toast({ title: "Помилка", description: "Не вдалося зберегти налаштування", variant: "destructive" });
+    },
+  });
+
+  const handleSaveSettings = () => {
+    const settingsData = {
+      settingName: "Користувацькі налаштування",
+      advertisementText,
+      advertisementImage,
+      adPositions: JSON.stringify(adPositions),
+      imageRelativePosition,
+      imageSize,
+      fontSize,
+      envelopeSize,
+      centerLogo,
+      senderPosition: JSON.stringify(senderPosition),
+      recipientPosition: JSON.stringify(recipientPosition),
+      adPositionCoords: JSON.stringify(adPositionCoords)
+    };
+    
+    saveSettingsMutation.mutate(settingsData);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -733,7 +767,29 @@ export default function ClientMailPage() {
                 </div>
               </div>
               <div className="flex justify-end pt-4">
-                <Button className="w-full">Зберегти налаштування</Button>
+                <Button 
+                  className="w-full" 
+                  onClick={() => {
+                    const settingsData = {
+                      settingName: "Користувацькі налаштування",
+                      advertisementText,
+                      advertisementImage,
+                      adPositions: JSON.stringify(adPositions),
+                      imageRelativePosition,
+                      imageSize,
+                      fontSize,
+                      envelopeSize,
+                      centerLogo,
+                      senderPosition: JSON.stringify(senderPosition),
+                      recipientPosition: JSON.stringify(recipientPosition),
+                      adPositionCoords: JSON.stringify(adPositionCoords)
+                    };
+                    saveSettingsMutation.mutate(settingsData);
+                  }}
+                  disabled={saveSettingsMutation.isPending}
+                >
+                  {saveSettingsMutation.isPending ? "Збереження..." : "Зберегти налаштування"}
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
