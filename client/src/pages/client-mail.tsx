@@ -380,16 +380,7 @@ export default function ClientMailPage() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div>
-                        <Label>Базовий розмір шрифту (px)</Label>
-                        <Input 
-                          type="number" 
-                          value={fontSize} 
-                          onChange={(e) => setFontSize(e.target.value)}
-                          min="8" 
-                          max="20" 
-                        />
-                      </div>
+
                       <div>
                         <Label>Відправник/Отримувач (px)</Label>
                         <Input 
