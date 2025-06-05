@@ -341,8 +341,8 @@ export default function ClientMailPage() {
                   Налаштуйте параметри друку конвертів згідно українських поштових стандартів
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                <div className="space-y-6">
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                   <div className="p-4 border rounded-lg bg-gray-50">
                     <h3 className="text-lg font-semibold mb-4">Основні налаштування</h3>
                     <div className="grid grid-cols-2 gap-4">
@@ -653,28 +653,32 @@ export default function ClientMailPage() {
                     </div>
                   </div>
 
-                  <div className="p-4 border rounded-lg bg-yellow-50">
-                    <h3 className="text-lg font-semibold mb-4">Попередній перегляд конверта</h3>
-                    <div className="mt-2 border rounded-lg p-4 bg-gray-50 overflow-auto min-h-[400px]">
-                      <div className="text-sm text-blue-600 mb-2 font-medium">
-                        💡 Натисніть та перетягніть елементи для переміщення по конверту
-                      </div>
-                      <div 
-                        className="bg-white border-2 border-black mx-auto cursor-crosshair" 
-                        style={{
-                          width: envelopeSize === 'dl' ? '220mm' : envelopeSize === 'c4' ? '324mm' : '229mm',
-                          height: envelopeSize === 'dl' ? '110mm' : envelopeSize === 'c4' ? '229mm' : '162mm',
-                          position: 'relative',
-                          fontFamily: 'Times New Roman, serif',
-                          transform: 'scale(0.85)',
-                          transformOrigin: 'center top',
-                          margin: '20px auto',
-                          minHeight: '300px'
-                        }}
-                        onMouseMove={handleMouseMove}
-                        onMouseUp={handleMouseUp}
-                        onMouseLeave={handleMouseUp}
-                      >
+                </div>
+
+                {/* Попередній перегляд конверта на всю ширину внизу */}
+                <div className="p-6 border rounded-lg bg-yellow-50">
+                  <h3 className="text-xl font-semibold mb-4">Інтерактивний попередній перегляд конверта</h3>
+                  <div className="mt-2 border rounded-lg p-6 bg-gray-50 overflow-auto min-h-[500px]">
+                    <div className="text-sm text-blue-600 mb-4 font-medium text-center">
+                      💡 Натисніть та перетягніть елементи для переміщення по конверту
+                    </div>
+                    <div 
+                      className="bg-white border-2 border-black mx-auto cursor-crosshair shadow-lg" 
+                      style={{
+                        width: envelopeSize === 'dl' ? '220mm' : envelopeSize === 'c4' ? '324mm' : '229mm',
+                        height: envelopeSize === 'dl' ? '110mm' : envelopeSize === 'c4' ? '229mm' : '162mm',
+                        position: 'relative',
+                        fontFamily: 'Times New Roman, serif',
+                        fontSize: `${fontSize}px`,
+                        transform: 'scale(0.9)',
+                        transformOrigin: 'center top',
+                        margin: '20px auto',
+                        minHeight: '300px'
+                      }}
+                      onMouseMove={handleMouseMove}
+                      onMouseUp={handleMouseUp}
+                      onMouseLeave={handleMouseUp}
+                    >
                         <div style={{
                           position: 'absolute',
                           top: '8mm',
@@ -824,6 +828,33 @@ export default function ClientMailPage() {
                   </div>
                 </div>
               </div>
+              <div className="flex justify-end pt-4">
+                <Button 
+                  className="w-full" 
+                  onClick={() => {
+                    const settingsData = {
+                      settingName: "Користувацькі налаштування",
+                      advertisementText,
+                      advertisementImage,
+                      adPositions: JSON.stringify(adPositions),
+                      imageRelativePosition,
+                      imageSize,
+                      fontSize,
+                      envelopeSize,
+                      centerLogo,
+                      senderPosition: JSON.stringify(senderPosition),
+                      recipientPosition: JSON.stringify(recipientPosition),
+                      adPositionCoords: JSON.stringify(adPositionCoords)
+                    };
+                    saveSettingsMutation.mutate(settingsData);
+                  }}
+                  disabled={saveSettingsMutation.isPending}
+                >
+                  {saveSettingsMutation.isPending ? "Збереження..." : "Зберегти налаштування"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
               <div className="flex justify-end pt-4">
                 <Button 
                   className="w-full" 
