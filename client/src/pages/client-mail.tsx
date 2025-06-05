@@ -322,38 +322,13 @@ export default function ClientMailPage() {
                           rows={3}
                         />
                       </div>
-                      <div>
-                        <Label>Позиції реклами</Label>
-                        <div className="space-y-2">
-                          <div className="flex items-center space-x-2">
-                            <Checkbox 
-                              id="bottom-left"
-                              checked={adPositions.includes("bottom-left")}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setAdPositions(prev => [...prev, "bottom-left"]);
-                                } else {
-                                  setAdPositions(prev => prev.filter(pos => pos !== "bottom-left"));
-                                }
-                              }}
-                            />
-                            <Label htmlFor="bottom-left">Знизу зліва</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Checkbox 
-                              id="top-right"
-                              checked={adPositions.includes("top-right")}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setAdPositions(prev => [...prev, "top-right"]);
-                                } else {
-                                  setAdPositions(prev => prev.filter(pos => pos !== "top-right"));
-                                }
-                              }}
-                            />
-                            <Label htmlFor="top-right">Зверху зправа</Label>
-                          </div>
-                        </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="centerImage" 
+                          checked={centerImage} 
+                          onCheckedChange={setCenterImage}
+                        />
+                        <Label htmlFor="centerImage">Центрувати зображення</Label>
                       </div>
                       <div>
                         <Label>Зображення реклами</Label>
@@ -620,7 +595,7 @@ export default function ClientMailPage() {
                                   width: getImageSizeValue(),
                                   height: 'auto',
                                   maxHeight: getImageSizeValue(),
-                                  alignSelf: centerLogo ? 'center' : 'flex-start'
+                                  alignSelf: centerImage ? 'center' : 'flex-start'
                                 }}
                               />
                             )}
@@ -633,7 +608,7 @@ export default function ClientMailPage() {
                                   height: 'auto',
                                   maxHeight: getImageSizeValue(),
                                   marginRight: '3px',
-                                  alignSelf: centerLogo ? 'center' : 'flex-start'
+                                  alignSelf: centerImage ? 'center' : 'flex-start'
                                 }}
                               />
                             )}
@@ -665,7 +640,7 @@ export default function ClientMailPage() {
                                   height: 'auto',
                                   maxHeight: getImageSizeValue(),
                                   marginLeft: '3px',
-                                  alignSelf: centerLogo ? 'center' : 'flex-start'
+                                  alignSelf: centerImage ? 'center' : 'flex-start'
                                 }}
                               />
                             )}
@@ -677,7 +652,7 @@ export default function ClientMailPage() {
                                   width: getImageSizeValue(),
                                   height: 'auto',
                                   maxHeight: getImageSizeValue(),
-                                  alignSelf: centerLogo ? 'center' : 'flex-start'
+                                  alignSelf: centerImage ? 'center' : 'flex-start'
                                 }}
                               />
                             )}
@@ -702,7 +677,7 @@ export default function ClientMailPage() {
                       imageRelativePosition,
                       imageSize,
                       fontSize,
-                      centerLogo,
+                      centerImage,
                       senderPosition: JSON.stringify(senderPosition),
                       recipientPosition: JSON.stringify(recipientPosition),
                       adPositionCoords: JSON.stringify(adPositionCoords)

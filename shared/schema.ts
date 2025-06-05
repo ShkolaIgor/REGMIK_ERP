@@ -425,7 +425,7 @@ export const envelopePrintSettings = pgTable("envelope_print_settings", {
   imageRelativePosition: varchar("image_relative_position", { length: 50 }).default("below"), // above, below, left, right
   imageSize: varchar("image_size", { length: 50 }).default("small"), // small, medium, large
   fontSize: varchar("font_size", { length: 10 }).default("12"),
-  centerLogo: boolean("center_logo").default(false),
+  centerImage: boolean("center_image").default(false),
   senderPosition: text("sender_position").default('{"x": 20, "y": 15}'), // JSON позиція відправника
   recipientPosition: text("recipient_position").default('{"x": 120, "y": 60}'), // JSON позиція отримувача
   adPositionCoords: text("ad_position_coords").default('{"bottom-left": {"x": 8, "y": 85}, "top-right": {"x": 160, "y": 8}}'), // JSON координати реклами
