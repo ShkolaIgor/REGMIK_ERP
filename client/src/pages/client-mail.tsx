@@ -54,6 +54,12 @@ export default function ClientMailPage() {
   // Стани для перетягування
   const [isDragging, setIsDragging] = useState(false);
   const [draggedElement, setDraggedElement] = useState<string | null>(null);
+  
+  // Стани для зміни розмірів шрифтів
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizingElement, setResizingElement] = useState<string | null>(null);
+  const [initialMouseY, setInitialMouseY] = useState(0);
+  const [initialFontSize, setInitialFontSize] = useState(0);
 
   // Дані
   const { data: mails = [] } = useQuery({
@@ -117,12 +123,40 @@ export default function ClientMailPage() {
     }
   };
 
+
+
   // Завантаження налаштувань при ініціалізації
   useEffect(() => {
     if (envelopeSettings.length > 0) {
       loadSettingsForEnvelopeSize(envelopeSize);
     }
   }, [envelopeSettings, envelopeSize]);
+
+  // Додаємо глобальні обробники подій для зміни розмірів
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (isResizing) {
+        handleResizeMove(e);
+      }
+    };
+
+    const handleGlobalMouseUp = () => {
+      if (isResizing) {
+        setIsResizing(false);
+        setResizingElement(null);
+      }
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isResizing, handleResizeMove]);
 
   // Обробники перетягування
   const handleMouseDown = (elementType: string, event: React.MouseEvent) => {
@@ -168,6 +202,8 @@ export default function ClientMailPage() {
   const handleMouseUp = () => {
     setIsDragging(false);
     setDraggedElement(null);
+    setIsResizing(false);
+    setResizingElement(null);
   };
 
   // Функції для роботи з зображеннями
@@ -618,7 +654,7 @@ export default function ClientMailPage() {
                           position: 'absolute',
                           top: `${senderPosition.y}mm`,
                           left: `${senderPosition.x}mm`,
-                          fontSize: `${Math.round(parseInt(fontSize) * 1.2)}px`,
+                          fontSize: `${senderRecipientFontSize}px`,
                           lineHeight: '1.3',
                           maxWidth: '70mm',
                           cursor: 'move',
@@ -635,7 +671,7 @@ export default function ClientMailPage() {
                         <div>с.Рівнопілля, Чернігівський район</div>
                         <div>Чернігівська обл.</div>
                         <div>Україна</div>
-                        <div style={{ fontSize: `${Math.round(parseInt(fontSize) * 1.5)}px`, fontWeight: 'bold', marginTop: '2mm', letterSpacing: '2px' }}>
+                        <div style={{ fontSize: `${postalIndexFontSize}px`, fontWeight: 'bold', marginTop: '2mm', letterSpacing: '2px' }}>
                           15582
                         </div>
                       </div>
@@ -646,7 +682,7 @@ export default function ClientMailPage() {
                           position: 'absolute',
                           top: `${recipientPosition.y}mm`,
                           left: `${recipientPosition.x}mm`,
-                          fontSize: `${Math.round(parseInt(fontSize) * 1.2)}px`,
+                          fontSize: `${senderRecipientFontSize}px`,
                           lineHeight: '1.4',
                           maxWidth: '90mm',
                           cursor: 'move',
@@ -674,7 +710,7 @@ export default function ClientMailPage() {
                             position: 'absolute',
                             top: `${adPositionCoords[position as keyof typeof adPositionCoords].y}mm`,
                             left: `${adPositionCoords[position as keyof typeof adPositionCoords].x}mm`,
-                            fontSize: `${Math.round(parseInt(fontSize) * 0.9)}px`,
+                            fontSize: `${advertisementFontSize}px`,
                             maxWidth: position === 'bottom-left' ? '80mm' : '60mm',
                             cursor: 'move',
                             padding: '1mm',
