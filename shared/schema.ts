@@ -1503,6 +1503,8 @@ export const insertMailRegistrySchema = createInsertSchema(mailRegistry).omit({
 export const insertEnvelopePrintSettingsSchema = createInsertSchema(envelopePrintSettings).omit({ 
   id: true, 
   createdAt: true 
+}).extend({
+  fontSize: z.union([z.string(), z.number()]).transform(val => String(val))
 });
 
 export type ClientMail = typeof clientMail.$inferSelect;
