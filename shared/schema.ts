@@ -1504,7 +1504,9 @@ export const insertEnvelopePrintSettingsSchema = createInsertSchema(envelopePrin
   id: true, 
   createdAt: true 
 }).extend({
-  fontSize: z.union([z.string(), z.number()]).transform(val => String(val))
+  fontSize: z.union([z.string(), z.number()]).transform(val => String(val)),
+  centerImage: z.boolean().optional().default(false),
+  isDefault: z.boolean().optional().default(false)
 });
 
 export type ClientMail = typeof clientMail.$inferSelect;
