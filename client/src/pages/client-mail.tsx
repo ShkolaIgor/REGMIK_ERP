@@ -241,6 +241,17 @@ export default function ClientMailPage() {
         loadSettingsForEnvelopeSize(envelopeSize);
       }, 100);
       
+      // Примусово оновлюємо стан з нових даних
+      if (data && data.length > 0) {
+        const latestSettings = data.find((s: any) => s.envelopeSize === envelopeSize);
+        if (latestSettings) {
+          setFontSize(latestSettings.fontSize?.toString() || "12");
+          setImageSize(latestSettings.imageSize || "small");
+          setImageRelativePosition(latestSettings.imageRelativePosition || "below");
+          setCenterImage(latestSettings.centerImage || false);
+        }
+      }
+      
       toast({ title: `Налаштування для ${envelopeSize.toUpperCase()} збережено` });
     },
     onError: (error) => {
