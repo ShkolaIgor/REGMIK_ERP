@@ -508,8 +508,7 @@ export default function ClientMailPage() {
                   width: `${envelopeSizes[envelopeSettings.envelopeSize].width}mm`,
                   height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
                   transform: `scale(0.8)`,
-                  transformOrigin: 'center',
-                  fontFamily: 'Times New Roman, serif'
+                  transformOrigin: 'center'
                 }}
               >
                   {/* Stamp area */}
@@ -634,7 +633,7 @@ export default function ClientMailPage() {
             </div>
 
             {/* Settings Section - Right */}
-            <div className="w-64 flex flex-col">
+            <div className="w-80 flex flex-col">
               <h3 className="text-lg font-semibold mb-3">Налаштування</h3>
               <div className="flex-1 overflow-auto space-y-4">
                 <Tabs defaultValue="envelope" className="h-full">
