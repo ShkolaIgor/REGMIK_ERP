@@ -657,8 +657,8 @@ export default function ClientMailPage() {
                       <Label>Шрифт поштових індексів: {postalIndexFontSize}px</Label>
                       <Input
                         type="range"
-                        min="8"
-                        max="18"
+                        min="16"
+                        max="36"
                         value={postalIndexFontSize}
                         onChange={(e) => setEnvelopeSettings(prev => ({ ...prev, postalIndexFontSize: Number(e.target.value) }))}
                       />
@@ -668,8 +668,8 @@ export default function ClientMailPage() {
                       <Label>Шрифт тексту реклами: {advertisementFontSize}px</Label>
                       <Input
                         type="range"
-                        min="6"
-                        max="14"
+                        min="8"
+                        max="18"
                         value={advertisementFontSize}
                         onChange={(e) => setEnvelopeSettings(prev => ({ ...prev, advertisementFontSize: Number(e.target.value) }))}
                       />

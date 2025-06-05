@@ -1507,9 +1507,22 @@ export const insertEnvelopePrintSettingsSchema = createInsertSchema(envelopePrin
   id: true, 
   createdAt: true 
 }).extend({
-  fontSize: z.union([z.string(), z.number()]).transform(val => String(val)),
+  fontSize: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  senderRecipientFontSize: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  postalIndexFontSize: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  advertisementFontSize: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  imageSize: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
   centerImage: z.boolean().optional().default(false),
-  isDefault: z.boolean().optional().default(false)
+  isDefault: z.boolean().optional().default(false),
+  senderPosition: z.union([z.string(), z.object({ x: z.number(), y: z.number() })]).transform(val => 
+    typeof val === 'string' ? val : JSON.stringify(val)
+  ).optional(),
+  recipientPosition: z.union([z.string(), z.object({ x: z.number(), y: z.number() })]).transform(val => 
+    typeof val === 'string' ? val : JSON.stringify(val)
+  ).optional(),
+  adPositionCoords: z.union([z.string(), z.object({})]).transform(val => 
+    typeof val === 'string' ? val : JSON.stringify(val)
+  ).optional()
 });
 
 export type ClientMail = typeof clientMail.$inferSelect;
