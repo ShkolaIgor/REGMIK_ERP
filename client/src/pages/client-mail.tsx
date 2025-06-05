@@ -33,7 +33,7 @@ export default function ClientMailPage() {
   // Налаштування конверта
   const [envelopeSize, setEnvelopeSize] = useState("dl");
   const [fontSize, setFontSize] = useState("12");
-  const [centerLogo, setCenterLogo] = useState(false);
+  const [centerImage, setCenterImage] = useState(false);
   const [advertisementText, setAdvertisementText] = useState("REGMIK ERP - Ваш надійний партнер у бізнесі!");
   const [advertisementImage, setAdvertisementImage] = useState<string | null>(null);
   const [adPositions, setAdPositions] = useState<string[]>(["bottom-left"]);
@@ -79,7 +79,7 @@ export default function ClientMailPage() {
       setImageRelativePosition(settings.imageRelativePosition || "below");
       setImageSize(settings.imageSize || "small");
       setFontSize(settings.fontSize || "12");
-      setCenterLogo(settings.centerLogo || false);
+      setCenterImage(settings.centerImage || false);
       setSenderPosition(settings.senderPosition ? JSON.parse(settings.senderPosition) : { x: 20, y: 15 });
       setRecipientPosition(settings.recipientPosition ? JSON.parse(settings.recipientPosition) : { x: 120, y: 60 });
       setAdPositionCoords(settings.adPositionCoords ? JSON.parse(settings.adPositionCoords) : {
@@ -177,12 +177,18 @@ export default function ClientMailPage() {
   });
 
   const saveSettingsMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("/api/envelope-print-settings", "POST", data),
+    mutationFn: async (data: any) => {
+      console.log("Надсилаємо POST запит:", data);
+      const result = await apiRequest("/api/envelope-print-settings", "POST", data);
+      console.log("Отримали відповідь:", result);
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/envelope-print-settings"] });
       toast({ title: `Налаштування для ${envelopeSize.toUpperCase()} збережено` });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Помилка збереження:", error);
       toast({ title: "Помилка", description: "Не вдалося зберегти налаштування", variant: "destructive" });
     },
   });
@@ -299,14 +305,7 @@ export default function ClientMailPage() {
                           max="20" 
                         />
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="centerLogo" 
-                          checked={centerLogo} 
-                          onCheckedChange={setCenterLogo}
-                        />
-                        <Label htmlFor="centerLogo">Центрувати логотип</Label>
-                      </div>
+
                     </div>
                   </div>
 
@@ -610,7 +609,7 @@ export default function ClientMailPage() {
                           <div style={{
                             display: 'flex',
                             flexDirection: imageRelativePosition === 'above' || imageRelativePosition === 'below' ? 'column' : 'row',
-                            alignItems: centerLogo ? 'center' : 'flex-start',
+                            alignItems: centerImage ? 'center' : 'flex-start',
                             gap: '2mm'
                           }}>
                             {imageRelativePosition === 'above' && advertisementImage && (
