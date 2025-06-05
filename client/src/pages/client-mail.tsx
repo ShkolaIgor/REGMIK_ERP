@@ -1,1312 +1,735 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Mail, Printer, Send, Eye, FileText, Settings, X } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import EnvelopePrintDialog from "@/components/EnvelopePrintDialog";
-import type { ClientMail, InsertClientMail, Client, MailRegistry, EnvelopePrintSettings } from "@shared/schema";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Client, InsertClientMail, ClientMail } from "@shared/schema";
+import { Plus, Printer, Users, Trash2, Download, Upload, FileText, Settings2, Move, Image as ImageIcon } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+
+type EnvelopeSize = 'c5' | 'c4' | 'dl' | 'c6';
+type ImageRelativePosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+
+interface EnvelopeSettings {
+  id?: number;
+  envelopeSize: EnvelopeSize;
+  advertisementText: string;
+  advertisementImage: string | null;
+  adPositions: string[];
+  imageRelativePosition: ImageRelativePosition;
+  imageSize: number;
+  fontSize: number;
+  senderRecipientFontSize: number;
+  postalIndexFontSize: number;
+  advertisementFontSize: number;
+  centerImage: boolean;
+  senderPosition: { x: number; y: number };
+  recipientPosition: { x: number; y: number };
+  adPositionCoords: Record<string, { x: number; y: number }>;
+}
+
+const envelopeSizes: Record<EnvelopeSize, { width: number; height: number; name: string }> = {
+  'c5': { width: 162, height: 229, name: 'C5 (162×229мм)' },
+  'c4': { width: 229, height: 324, name: 'C4 (229×324мм)' },
+  'dl': { width: 110, height: 220, name: 'DL (110×220мм)' },
+  'c6': { width: 114, height: 162, name: 'C6 (114×162мм)' }
+};
+
+const adPositionOptions = [
+  { value: 'top-left', label: 'Ліворуч зверху' },
+  { value: 'top-right', label: 'Праворуч зверху' },
+  { value: 'bottom-left', label: 'Ліворуч знизу' },
+  { value: 'bottom-right', label: 'Праворуч знизу' }
+];
+
+const imageRelativePositionOptions = [
+  { value: 'top-left', label: 'Ліворуч зверху' },
+  { value: 'top-right', label: 'Праворуч зверху' },
+  { value: 'bottom-left', label: 'Ліворуч знизу' },
+  { value: 'bottom-right', label: 'Праворуч знизу' }
+];
+
+const getDefaultSettings = (size: EnvelopeSize): EnvelopeSettings => ({
+  envelopeSize: size,
+  advertisementText: '',
+  advertisementImage: null,
+  adPositions: [],
+  imageRelativePosition: 'top-left' as ImageRelativePosition,
+  imageSize: 20,
+  fontSize: 12,
+  senderRecipientFontSize: 10,
+  postalIndexFontSize: 12,
+  advertisementFontSize: 8,
+  centerImage: false,
+  senderPosition: { x: 5, y: 5 },
+  recipientPosition: { x: 60, y: 80 },
+  adPositionCoords: {
+    'top-left': { x: 5, y: 30 },
+    'top-right': { x: 100, y: 30 },
+    'bottom-left': { x: 5, y: 150 },
+    'bottom-right': { x: 100, y: 150 }
+  }
+});
 
 export default function ClientMailPage() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  // Стани для UI
+  // State management
+  const [selectedMails, setSelectedMails] = useState<number[]>([]);
+  const [batchName, setBatchName] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
-  const [isGroupPrintDialogOpen, setIsGroupPrintDialogOpen] = useState(false);
   const [isEnvelopePrintDialogOpen, setIsEnvelopePrintDialogOpen] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<number[]>([]);
-  const [batchName, setBatchName] = useState("");
-  const [currentBatchMails, setCurrentBatchMails] = useState<ClientMail[]>([]);
-
-  // Налаштування конверта
-  const [envelopeSize, setEnvelopeSize] = useState("dl");
-  const [fontSize, setFontSize] = useState("12");
-  const [senderRecipientFontSize, setSenderRecipientFontSize] = useState("14");
-  const [postalIndexFontSize, setPostalIndexFontSize] = useState("18");
-  const [advertisementFontSize, setAdvertisementFontSize] = useState("11");
-  const [centerImage, setCenterImage] = useState(false);
-  const [advertisementText, setAdvertisementText] = useState("REGMIK ERP - Ваш надійний партнер у бізнесі!");
-  const [advertisementImage, setAdvertisementImage] = useState<string | null>(null);
-  const [adPositions, setAdPositions] = useState<string[]>(["bottom-left"]);
-  const [imageRelativePosition, setImageRelativePosition] = useState("below");
-  const [imageSize, setImageSize] = useState("small");
-
-  // Інтерактивні позиції елементів
-  const [senderPosition, setSenderPosition] = useState({ x: 20, y: 15 });
-  const [recipientPosition, setRecipientPosition] = useState({ x: 120, y: 60 });
-  const [adPositionCoords, setAdPositionCoords] = useState({
-    'bottom-left': { x: 8, y: 85 },
-    'top-right': { x: 160, y: 8 }
-  });
-
-  // Стани для перетягування
+  const [currentBatchMails, setCurrentBatchMails] = useState<Client[]>([]);
+  
+  // Envelope settings state
+  const [envelopeSettings, setEnvelopeSettings] = useState<EnvelopeSettings>(getDefaultSettings('dl'));
   const [isDragging, setIsDragging] = useState(false);
   const [draggedElement, setDraggedElement] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   
-  // Стани для зміни розмірів шрифтів
-  const [isResizing, setIsResizing] = useState(false);
-  const [resizingElement, setResizingElement] = useState<string | null>(null);
-  const [initialMouseY, setInitialMouseY] = useState(0);
-  const [initialFontSize, setInitialFontSize] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Дані
-  const { data: mails = [] } = useQuery({
-    queryKey: ["/api/client-mail"]
+  // Queries
+  const { data: envelopeSettingsData } = useQuery({
+    queryKey: ['/api/envelope-print-settings'],
   });
 
-  const { data: clients = [] } = useQuery({
-    queryKey: ["/api/clients"]
+  const mailsQuery = useQuery({
+    queryKey: ['/api/client-mail'],
   });
 
-  const { data: mailRegistry = [] } = useQuery({
-    queryKey: ["/api/mail-registry"]
+  const { data: clients } = useQuery({
+    queryKey: ['/api/clients'],
   });
 
-  const { data: envelopeSettings = [] } = useQuery({
-    queryKey: ["/api/envelope-print-settings"]
+  const { data: mailRegistry } = useQuery({
+    queryKey: ['/api/mail-registry'],
   });
 
-  // Завантаження налаштувань для поточного типу конверта
-  const loadSettingsForEnvelopeSize = (size: string) => {
-    console.log("Шукаємо налаштування для розміру:", size);
-    console.log("Доступні налаштування:", envelopeSettings);
-    
-    const settings = envelopeSettings.find((s: any) => s.envelopeSize === size);
-    console.log("Знайдені налаштування:", settings);
-    
-    if (settings) {
-      console.log("Завантажуємо налаштування:", settings);
-      setAdvertisementText(settings.advertisementText || "REGMIK ERP - Ваш надійний партнер у бізнесі!");
-      setAdvertisementImage(settings.advertisementImage || null);
-      setAdPositions(settings.adPositions ? JSON.parse(settings.adPositions) : []);
-      setImageRelativePosition(settings.imageRelativePosition || "below");
-      setImageSize(settings.imageSize || "small");
-      setFontSize(settings.fontSize?.toString() || "12");
-      setSenderRecipientFontSize(settings.senderRecipientFontSize?.toString() || "14");
-      setPostalIndexFontSize(settings.postalIndexFontSize?.toString() || "18");
-      setAdvertisementFontSize(settings.advertisementFontSize?.toString() || "11");
-      setCenterImage(settings.centerImage || false);
-      setSenderPosition(settings.senderPosition ? JSON.parse(settings.senderPosition) : { x: 20, y: 15 });
-      setRecipientPosition(settings.recipientPosition ? JSON.parse(settings.recipientPosition) : { x: 120, y: 60 });
-      setAdPositionCoords(settings.adPositionCoords ? JSON.parse(settings.adPositionCoords) : {
-        'bottom-left': { x: 8, y: 85 },
-        'top-right': { x: 160, y: 8 }
-      });
-    } else {
-      console.log("Налаштування не знайдені, використовуємо значення за замовчуванням");
-      // Встановлюємо значення за замовчуванням
-      setAdvertisementText("REGMIK ERP - Ваш надійний партнер у бізнесі!");
-      setAdvertisementImage(null);
-      setAdPositions([]);
-      setImageRelativePosition("below");
-      setImageSize("small");
-      setFontSize("12");
-      setCenterImage(false);
-      setSenderPosition({ x: 20, y: 15 });
-      setRecipientPosition({ x: 120, y: 60 });
-      setAdPositionCoords({
-        'bottom-left': { x: 8, y: 85 },
-        'top-right': { x: 160, y: 8 }
-      });
-    }
-  };
-
-
-
-  // Завантаження налаштувань при ініціалізації
+  // Load settings from server
   useEffect(() => {
-    if (envelopeSettings.length > 0) {
-      loadSettingsForEnvelopeSize(envelopeSize);
+    if (envelopeSettingsData) {
+      setEnvelopeSettings(prev => ({ ...prev, ...envelopeSettingsData }));
     }
-  }, [envelopeSettings, envelopeSize]);
+  }, [envelopeSettingsData]);
 
+  // Mutations
+  const createMutation = useMutation({
+    mutationFn: (data: InsertClientMail) => apiRequest("/api/client-mail", "POST", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/client-mail"] });
+      toast({ title: "Кореспонденція додана" });
+      setIsCreateDialogOpen(false);
+    },
+    onError: (error) => {
+      toast({ title: "Помилка", description: error.message, variant: "destructive" });
+    }
+  });
 
+  const saveSettingsMutation = useMutation({
+    mutationFn: (settings: EnvelopeSettings) => {
+      const { id, ...settingsData } = settings;
+      return apiRequest("/api/envelope-print-settings", id ? "PATCH" : "POST", settingsData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/envelope-print-settings"] });
+      toast({ title: "Налаштування збережено" });
+    },
+    onError: (error) => {
+      toast({ title: "Помилка", description: error.message, variant: "destructive" });
+    }
+  });
 
-  // Обробники перетягування
-  const handleMouseDown = (elementType: string, event: React.MouseEvent) => {
+  const batchPrintMutation = useMutation({
+    mutationFn: async (data: { batchName: string; clientIds: number[]; settings: EnvelopeSettings }) => {
+      return apiRequest("/api/envelope-print", "POST", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/mail-registry"] });
+      toast({ title: "Пакетний друк розпочато" });
+      setIsEnvelopePrintDialogOpen(false);
+      setSelectedMails([]);
+    },
+    onError: (error) => {
+      toast({ title: "Помилка", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/client-mail/${id}`, "DELETE"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/client-mail"] });
+      toast({ title: "Кореспонденція видалена" });
+    },
+    onError: (error) => {
+      toast({ title: "Помилка", description: error.message, variant: "destructive" });
+    }
+  });
+
+  // Drag and drop handlers
+  const handleMouseDown = (elementType: string, e: React.MouseEvent) => {
+    e.preventDefault();
     setIsDragging(true);
     setDraggedElement(elementType);
-    event.preventDefault();
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const scale = 0.85; // Preview scale factor
+    setDragOffset({
+      x: (e.clientX - rect.left) / scale,
+      y: (e.clientY - rect.top) / scale
+    });
   };
 
-  const handleMouseMove = (event: React.MouseEvent) => {
-    if (!isDragging || !draggedElement) return;
-    
-    const rect = event.currentTarget.getBoundingClientRect();
-    const scale = 0.9;
-    const pixelsToMm = 3.7795;
-    const newX = (event.clientX - rect.left) / scale / pixelsToMm;
-    const newY = (event.clientY - rect.top) / scale / pixelsToMm;
-    
-    const maxWidth = envelopeSize === 'dl' ? 200 : envelopeSize === 'c4' ? 304 : 209;
-    const maxHeight = envelopeSize === 'dl' ? 90 : envelopeSize === 'c4' ? 209 : 142;
-    
-    if (draggedElement === 'sender') {
-      setSenderPosition({ 
-        x: Math.max(0, Math.min(maxWidth, newX - 10)), 
-        y: Math.max(0, Math.min(maxHeight, newY - 5)) 
-      });
-    } else if (draggedElement === 'recipient') {
-      setRecipientPosition({ 
-        x: Math.max(0, Math.min(maxWidth, newX - 20)), 
-        y: Math.max(0, Math.min(maxHeight, newY - 10)) 
-      });
-    } else if (draggedElement.startsWith('ad-')) {
-      const position = draggedElement.replace('ad-', '') as keyof typeof adPositionCoords;
-      setAdPositionCoords(prev => ({
-        ...prev,
-        [position]: { 
-          x: Math.max(0, Math.min(maxWidth, newX - 15)), 
-          y: Math.max(0, Math.min(maxHeight, newY - 10)) 
-        }
-      }));
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !draggedElement) return;
+
+      const previewContainer = document.querySelector('.envelope-preview');
+      if (!previewContainer) return;
+
+      const rect = previewContainer.getBoundingClientRect();
+      const scale = 0.85;
+      
+      const x = ((e.clientX - rect.left) / scale - dragOffset.x) * (210 / envelopeSizes[envelopeSettings.envelopeSize].width);
+      const y = ((e.clientY - rect.top) / scale - dragOffset.y) * (297 / envelopeSizes[envelopeSettings.envelopeSize].height);
+
+      if (draggedElement === 'sender') {
+        setEnvelopeSettings(prev => ({
+          ...prev,
+          senderPosition: { x: Math.max(0, x), y: Math.max(0, y) }
+        }));
+      } else if (draggedElement === 'recipient') {
+        setEnvelopeSettings(prev => ({
+          ...prev,
+          recipientPosition: { x: Math.max(0, x), y: Math.max(0, y) }
+        }));
+      } else if (draggedElement.startsWith('ad-')) {
+        const position = draggedElement.replace('ad-', '');
+        setEnvelopeSettings(prev => ({
+          ...prev,
+          adPositionCoords: {
+            ...prev.adPositionCoords,
+            [position]: { x: Math.max(0, x), y: Math.max(0, y) }
+          }
+        }));
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      setDraggedElement(null);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, draggedElement, dragOffset, envelopeSettings.envelopeSize]);
+
+  // Helper functions
+  const mails = mailsQuery.data || [];
+  const toggleSelectItem = (id: number) => {
+    setSelectedMails(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllItems = () => {
+    const allIds = (mails as any[]).map((m: any) => m.id);
+    setSelectedMails(selectedMails.length === allIds.length ? [] : allIds);
+  };
+
+  const handleBatchPrint = () => {
+    const selectedClients = (clients as any[] || []).filter((c: any) => 
+      selectedMails.some(mailId => (mails as any[]).find((m: any) => m.id === mailId)?.clientId === c.id)
+    );
+    setCurrentBatchMails(selectedClients);
+    setIsEnvelopePrintDialogOpen(true);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'printed': return 'bg-blue-100 text-blue-800';
+      case 'sent': return 'bg-green-100 text-green-800';
+      case 'delivered': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    setDraggedElement(null);
-    setIsResizing(false);
-    setResizingElement(null);
-  };
-
-  // Функції для роботи з зображеннями
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setAdvertisementImage(e.target?.result as string);
+      reader.onload = (event) => {
+        const imageData = event.target?.result as string;
+        setEnvelopeSettings(prev => ({ ...prev, advertisementImage: imageData }));
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const getImageSizeValue = () => {
-    switch (imageSize) {
-      case "small": return "15mm";
-      case "medium": return "25mm";
-      case "large": return "35mm";
-      default: return "15mm";
-    }
-  };
+  const { senderRecipientFontSize, postalIndexFontSize, advertisementFontSize, adPositions, adPositionCoords } = envelopeSettings;
 
-  // Мутації
-  const createMailMutation = useMutation({
-    mutationFn: (data: InsertClientMail) => apiRequest("/api/client-mail", "POST", data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/client-mail"] });
-      setIsCreateDialogOpen(false);
-      toast({ title: "Лист створено" });
-    },
-    onError: () => {
-      toast({ title: "Помилка", description: "Не вдалося створити лист", variant: "destructive" });
-    },
-  });
-
-  const saveSettingsMutation = useMutation({
-    mutationFn: async (data: any) => {
-      console.log("🔄 МУТАЦІЯ ПОЧАТОК: Надсилаємо POST запит:", data);
-      console.log("🔍 Тип даних:", typeof data);
-      console.log("🔍 JSON stringify:", JSON.stringify(data, null, 2));
-      
-      try {
-        // Перевіряємо fetch API безпосередньо
-        console.log("🌐 Пряма перевірка fetch до сервера...");
-        const response = await fetch("/api/envelope-print-settings", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        });
-        
-        console.log("📡 Response status:", response.status);
-        console.log("📡 Response headers:", Object.fromEntries(response.headers.entries()));
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("❌ Response error text:", errorText);
-          throw new Error(`HTTP error! status: ${response.status}, text: ${errorText}`);
-        }
-        
-        const result = await response.json();
-        console.log("✅ МУТАЦІЯ УСПІХ: Отримали відповідь:", result);
-        return result;
-      } catch (error) {
-        console.error("❌ МУТАЦІЯ ПОМИЛКА:", error);
-        throw error;
-      }
-    },
-    onSuccess: (data) => {
-      console.log("🎉 onSuccess викликано з даними:", data);
-      queryClient.invalidateQueries({ queryKey: ["/api/envelope-print-settings"] });
-      
-      // Оновлюємо локальний стан після успішного збереження
-      setTimeout(() => {
-        loadSettingsForEnvelopeSize(envelopeSize);
-      }, 100);
-      
-      // Примусово оновлюємо стан з нових даних
-      if (data && data.length > 0) {
-        const latestSettings = data.find((s: any) => s.envelopeSize === envelopeSize);
-        if (latestSettings) {
-          setFontSize(latestSettings.fontSize?.toString() || "12");
-          setImageSize(latestSettings.imageSize || "small");
-          setImageRelativePosition(latestSettings.imageRelativePosition || "below");
-          setCenterImage(latestSettings.centerImage || false);
-        }
-      }
-      
-      toast({ title: `Налаштування для ${envelopeSize.toUpperCase()} збережено` });
-    },
-    onError: (error) => {
-      console.error("💥 onError викликано з помилкою:", error);
-      toast({ title: "Помилка", description: "Не вдалося зберегти налаштування", variant: "destructive" });
-    },
-  });
-
-  const batchPrintMutation = useMutation({
-    mutationFn: (data: { mailIds: number[], batchName: string }) =>
-      apiRequest("/api/client-mail/batch-print", "POST", data),
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/client-mail"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/mail-registry"] });
-      setIsGroupPrintDialogOpen(false);
-      setSelectedItems([]);
-      setBatchName("");
-      toast({
-        title: "Пакет підготовлено",
-        description: `Створено ${result.count} записів для друку конвертів`
-      });
-    },
-    onError: () => {
-      toast({ title: "Помилка", description: "Не вдалося створити пакет", variant: "destructive" });
-    },
-  });
-
-  // Допоміжні функції
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "draft": return "bg-gray-100 text-gray-800";
-      case "queued": return "bg-blue-100 text-blue-800";
-      case "sent": return "bg-green-100 text-green-800";
-      case "delivered": return "bg-green-100 text-green-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const toggleSelectItem = (id: number) => {
-    setSelectedItems(prev => 
-      prev.includes(id) 
-        ? prev.filter(item => item !== id)
-        : [...prev, id]
-    );
-  };
-
-  const selectAllItems = () => {
-    const draftMails = mails.filter(mail => mail.status === "draft");
-    setSelectedItems(draftMails.map(mail => mail.id));
-  };
-
-  const handleBatchPrint = () => {
-    if (selectedItems.length === 0) {
-      toast({ title: "Помилка", description: "Оберіть листи для друку", variant: "destructive" });
-      return;
-    }
-    if (!batchName.trim()) {
-      toast({ title: "Помилка", description: "Введіть назву партії", variant: "destructive" });
-      return;
-    }
-    batchPrintMutation.mutate({ mailIds: selectedItems, batchName: batchName.trim() });
-  };
+  // Mail list component
+  const MailList = ({ mails }: { mails: Client[] }) => (
+    <div className="space-y-2">
+      {(mails as any[]).map((mail: any) => (
+        <div key={mail.id} className="flex items-center space-x-2 p-2 bg-gray-50 rounded">
+          <Checkbox
+            checked={selectedMails.includes(mail.id)}
+            onCheckedChange={() => toggleSelectItem(mail.id)}
+          />
+          <div className="flex-1">
+            <div className="font-medium">{mail.subject}</div>
+            <div className="text-sm text-gray-600">{mail.description}</div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => deleteMutation.mutate(mail.id)}
+            disabled={deleteMutation.isPending}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Листування з клієнтами</h1>
-          <p className="text-gray-600">Управління паперовою поштою та друк конвертів</p>
-        </div>
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <Users className="h-8 w-8" />
+          Кореспонденція клієнтів
+        </h1>
         <div className="flex gap-2">
-          {/* Діалог налаштувань друку */}
-          <Dialog open={isSettingsDialogOpen} onOpenChange={setIsSettingsDialogOpen}>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">
-                <Settings className="h-4 w-4 mr-2" />
-                Налаштування друку
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Додати кореспонденцію
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+            <DialogContent>
               <DialogHeader>
-                <DialogTitle>Налаштування друку конвертів</DialogTitle>
+                <DialogTitle>Додати нову кореспонденцію</DialogTitle>
               </DialogHeader>
-              
-              <div className="grid grid-cols-[2fr_1fr] gap-6">
-                {/* Ліва колонка - Попередній перегляд */}
-                <div className="p-4 border rounded-lg bg-yellow-50">
-                  <h3 className="text-lg font-semibold mb-4">Попередній перегляд</h3>
-                  <div className="border rounded-lg p-4 bg-gray-50 overflow-auto">
-                    <div className="text-sm text-blue-600 mb-4 font-medium text-center">
-                      Перетягуйте елементи для зміни розташування
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="subject">Тема</Label>
+                  <Input id="subject" placeholder="Введіть тему" />
+                </div>
+                <div>
+                  <Label htmlFor="description">Опис</Label>
+                  <Textarea id="description" placeholder="Введіть опис" />
+                </div>
+                <Button onClick={() => createMutation.mutate({ subject: '', description: '', clientId: 1 })}>
+                  Додати
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <Button 
+            variant="outline" 
+            onClick={handleBatchPrint}
+            disabled={selectedMails.length === 0}
+          >
+            <Printer className="h-4 w-4 mr-2" />
+            Друк конвертів ({selectedMails.length})
+          </Button>
+        </div>
+      </div>
+
+      {/* Batch selection controls */}
+      <div className="mb-4 flex items-center gap-4">
+        <Button variant="outline" onClick={selectAllItems}>
+          {selectedMails.length === (mails as any[]).length ? 'Скасувати вибір' : 'Вибрати все'}
+        </Button>
+        {selectedMails.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Назва пакету"
+              value={batchName}
+              onChange={(e) => setBatchName(e.target.value)}
+              className="w-48"
+            />
+            <Button 
+              onClick={handleBatchPrint}
+              disabled={!batchName || batchPrintMutation.isPending}
+            >
+              Створити пакет
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Mail list */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Список кореспонденції</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {mailsQuery.isLoading ? (
+              <div>Завантаження...</div>
+            ) : (
+              <MailList mails={mails as Client[]} />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Mail registry */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Реєстр відправлень</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {(mailRegistry as any[] || []).map((entry: any) => (
+                <div key={entry.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div>
+                    <div className="font-medium">{entry.batchName}</div>
+                    <div className="text-sm text-gray-600">{entry.createdAt}</div>
+                  </div>
+                  <Badge className={getStatusColor(entry.status)}>
+                    {entry.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Envelope Print Dialog with Horizontal Layout */}
+      <Dialog open={isEnvelopePrintDialogOpen} onOpenChange={setIsEnvelopePrintDialogOpen}>
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Налаштування друку конвертів - {batchName}</DialogTitle>
+          </DialogHeader>
+          
+          {/* Horizontal Layout: Preview Left, Settings Right */}
+          <div className="flex gap-6 h-[600px]">
+            {/* Preview Section - Left */}
+            <div className="flex-1 flex flex-col">
+              <h3 className="text-lg font-semibold mb-3">Попередній перегляд</h3>
+              <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg p-4">
+                <div 
+                  className="envelope-preview bg-white shadow-lg relative border"
+                  style={{
+                    width: `${envelopeSizes[envelopeSettings.envelopeSize].width * 0.85}px`,
+                    height: `${envelopeSizes[envelopeSettings.envelopeSize].height * 0.85}px`,
+                    transform: 'scale(0.85)',
+                    transformOrigin: 'center'
+                  }}
+                >
+                  {/* Stamp area */}
+                  <div 
+                    className="absolute border-2 border-dashed border-gray-300"
+                    style={{
+                      top: '5mm',
+                      right: '5mm',
+                      width: '25mm',
+                      height: '15mm'
+                    }}
+                  >
+                    <div className="text-xs text-gray-400 p-1">Марка</div>
+                  </div>
+
+                  {/* Sender */}
+                  <div 
+                    style={{
+                      position: 'absolute',
+                      top: `${envelopeSettings.senderPosition.y}mm`,
+                      left: `${envelopeSettings.senderPosition.x}mm`,
+                      fontSize: `${senderRecipientFontSize}px`,
+                      lineHeight: '1.4',
+                      maxWidth: '90mm',
+                      cursor: 'move',
+                      padding: '2mm',
+                      border: isDragging && draggedElement === 'sender' ? '2px dashed #3b82f6' : '2px dashed transparent',
+                      backgroundColor: isDragging && draggedElement === 'sender' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+                    }}
+                    onMouseDown={(e) => handleMouseDown('sender', e)}
+                    title="Натисніть та перетягніть для переміщення"
+                  >
+                    <div style={{ fontWeight: 'bold', fontSize: '8px', marginBottom: '1mm', color: '#666' }}>Адреса відправника, індекс</div>
+                    <div style={{ fontWeight: 'bold' }}>НВФ "РЕГМІК"</div>
+                    <div>вул.Гагаріна, 25</div>
+                    <div>с.Рівнопілля, Чернігівський район</div>
+                    <div>Чернігівська обл.</div>
+                    <div>Україна</div>
+                    <div style={{ fontSize: `${postalIndexFontSize}px`, fontWeight: 'bold', marginTop: '2mm', letterSpacing: '2px' }}>
+                      15582
                     </div>
-                    <div 
-                      className="bg-white border-2 border-black mx-auto cursor-crosshair shadow-lg" 
+                  </div>
+
+                  {/* Recipient */}
+                  <div 
+                    style={{
+                      position: 'absolute',
+                      top: `${envelopeSettings.recipientPosition.y}mm`,
+                      left: `${envelopeSettings.recipientPosition.x}mm`,
+                      fontSize: `${senderRecipientFontSize}px`,
+                      lineHeight: '1.4',
+                      maxWidth: '90mm',
+                      cursor: 'move',
+                      padding: '2mm',
+                      border: isDragging && draggedElement === 'recipient' ? '2px dashed #3b82f6' : '2px dashed transparent',
+                      backgroundColor: isDragging && draggedElement === 'recipient' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+                    }}
+                    onMouseDown={(e) => handleMouseDown('recipient', e)}
+                    title="Натисніть та перетягніть для переміщення"
+                  >
+                    <div style={{ fontSize: '8px', marginBottom: '1mm', color: '#666' }}>Адреса одержувача, індекс</div>
+                    <div style={{ fontWeight: 'bold' }}>ФОП Таранов Руслан Сергійович</div>
+                    <div>вул. Промислова, буд. 18, кв. 33, м.</div>
+                    <div>Павлоград</div>
+                    <div style={{ fontSize: `${postalIndexFontSize}px`, fontWeight: 'bold', marginTop: '3mm', letterSpacing: '3px' }}>
+                      51400
+                    </div>
+                  </div>
+
+                  {/* Advertisement positions */}
+                  {adPositions.map(position => (
+                    <div
+                      key={position}
                       style={{
-                        width: envelopeSize === 'dl' ? '220mm' : envelopeSize === 'c4' ? '324mm' : '229mm',
-                        height: envelopeSize === 'dl' ? '110mm' : envelopeSize === 'c4' ? '229mm' : '162mm',
-                        position: 'relative',
-                        fontFamily: 'Arial, sans-serif',
-                        transform: 'scale(0.6)',
-                        transformOrigin: 'center top',
-                        margin: '10px auto',
-                        minHeight: '200px'
-                      }}
-                      onMouseMove={handleMouseMove}
-                      onMouseUp={handleMouseUp}
-                      onMouseLeave={handleMouseUp}
-                    >
-                      {/* Область для марки */}
-                      <div style={{
                         position: 'absolute',
-                        top: '8mm',
-                        right: '8mm',
-                        width: '30mm',
-                        height: '20mm',
-                        border: '1px dashed #999',
-                        fontSize: '8px',
-                        textAlign: 'center',
-                        padding: '2mm'
+                        top: `${adPositionCoords[position as keyof typeof adPositionCoords].y}mm`,
+                        left: `${adPositionCoords[position as keyof typeof adPositionCoords].x}mm`,
+                        fontSize: `${advertisementFontSize}px`,
+                        maxWidth: position === 'bottom-left' ? '80mm' : '60mm',
+                        cursor: 'move',
+                        padding: '1mm',
+                        border: isDragging && draggedElement === `ad-${position}` ? '2px dashed #3b82f6' : '2px dashed transparent',
+                        backgroundColor: isDragging && draggedElement === `ad-${position}` ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+                      }}
+                      onMouseDown={(e) => handleMouseDown(`ad-${position}`, e)}
+                      title="Натисніть та перетягніть для переміщення"
+                    >
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '2mm'
                       }}>
-                        МАРКА
-                      </div>
-
-                      {/* Відправник */}
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: `${senderPosition.y}mm`,
-                          left: `${senderPosition.x}mm`,
-                          fontSize: `${senderRecipientFontSize}px`,
-                          lineHeight: '1.4',
-                          maxWidth: '80mm',
-                          cursor: 'move',
-                          padding: '2mm',
-                          border: isDragging && draggedElement === 'sender' ? '2px dashed #3b82f6' : '2px dashed transparent',
-                          backgroundColor: isDragging && draggedElement === 'sender' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
-                        }}
-                        onMouseDown={(e) => handleMouseDown('sender', e)}
-                        title="Натисніть та перетягніть для переміщення"
-                      >
-                        <div style={{ fontSize: '8px', marginBottom: '1mm', color: '#666' }}>Адреса відправника</div>
-                        <div style={{ fontWeight: 'bold' }}>ТОВ "РЕГМІК"</div>
-                        <div>м. Київ, вул. Промислова, 15</div>
-                        <div>+38 (044) 123-45-67</div>
-                        <div style={{ fontSize: `${postalIndexFontSize}px`, fontWeight: 'bold', marginTop: '3mm', letterSpacing: '3px' }}>
-                          01001
+                        {envelopeSettings.advertisementImage && (
+                          <img 
+                            src={envelopeSettings.advertisementImage} 
+                            alt="Реклама"
+                            style={{
+                              width: `${envelopeSettings.imageSize}px`,
+                              height: `${envelopeSettings.imageSize}px`,
+                              objectFit: 'cover'
+                            }}
+                          />
+                        )}
+                        <div style={{ fontSize: `${advertisementFontSize}px` }}>
+                          {envelopeSettings.advertisementText}
                         </div>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
 
-                      {/* Отримувач */}
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: `${recipientPosition.y}mm`,
-                          left: `${recipientPosition.x}mm`,
-                          fontSize: `${senderRecipientFontSize}px`,
-                          lineHeight: '1.4',
-                          maxWidth: '90mm',
-                          cursor: 'move',
-                          padding: '2mm',
-                          border: isDragging && draggedElement === 'recipient' ? '2px dashed #3b82f6' : '2px dashed transparent',
-                          backgroundColor: isDragging && draggedElement === 'recipient' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
-                        }}
-                        onMouseDown={(e) => handleMouseDown('recipient', e)}
-                        title="Натисніть та перетягніть для переміщення"
+            {/* Settings Section - Right */}
+            <div className="w-80 flex flex-col">
+              <h3 className="text-lg font-semibold mb-3">Налаштування</h3>
+              <div className="flex-1 overflow-auto space-y-4">
+                <Tabs defaultValue="envelope" className="h-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="envelope">Конверт</TabsTrigger>
+                    <TabsTrigger value="advertisement">Реклама</TabsTrigger>
+                    <TabsTrigger value="fonts">Шрифти</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="envelope" className="space-y-4">
+                    <div>
+                      <Label>Розмір конверта</Label>
+                      <Select
+                        value={envelopeSettings.envelopeSize}
+                        onValueChange={(value: EnvelopeSize) => 
+                          setEnvelopeSettings(prev => ({ ...prev, envelopeSize: value }))
+                        }
                       >
-                        <div style={{ fontSize: '8px', marginBottom: '1mm', color: '#666' }}>Адреса одержувача, індекс</div>
-                        <div style={{ fontWeight: 'bold' }}>ФОП Таранов Руслан Сергійович</div>
-                        <div>вул. Промислова, буд. 18, кв. 33, м.</div>
-                        <div>Павлоград</div>
-                        <div style={{ fontSize: `${postalIndexFontSize}px`, fontWeight: 'bold', marginTop: '3mm', letterSpacing: '3px' }}>
-                          51400
-                        </div>
-                      </div>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(envelopeSizes).map(([key, { name }]) => (
+                            <SelectItem key={key} value={key}>{name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </TabsContent>
 
-                      {/* Реклама */}
-                      {adPositions.map(position => (
-                        <div
-                          key={position}
-                          style={{
-                            position: 'absolute',
-                            top: `${adPositionCoords[position as keyof typeof adPositionCoords].y}mm`,
-                            left: `${adPositionCoords[position as keyof typeof adPositionCoords].x}mm`,
-                            fontSize: `${advertisementFontSize}px`,
-                            maxWidth: position === 'bottom-left' ? '80mm' : '60mm',
-                            cursor: 'move',
-                            padding: '1mm',
-                            border: isDragging && draggedElement === `ad-${position}` ? '2px dashed #3b82f6' : '2px dashed transparent',
-                            backgroundColor: isDragging && draggedElement === `ad-${position}` ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
-                          }}
-                          onMouseDown={(e) => handleMouseDown(`ad-${position}`, e)}
-                          title="Натисніть та перетягніть для переміщення"
-                        >
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            flexDirection: imageRelativePosition === 'above' || imageRelativePosition === 'below' ? 'column' : 'row',
-                            gap: '3mm'
-                          }}>
-                            {imageRelativePosition === 'above' && advertisementImage && (
-                              <img 
-                                src={advertisementImage} 
-                                alt="Реклама" 
-                                style={{
-                                  width: getImageSizeValue(),
-                                  height: 'auto',
-                                  maxHeight: getImageSizeValue(),
-                                  alignSelf: centerImage ? 'center' : 'flex-start'
-                                }}
-                              />
-                            )}
-                            {imageRelativePosition === 'left' && advertisementImage && (
-                              <img 
-                                src={advertisementImage} 
-                                alt="Реклама" 
-                                style={{
-                                  width: getImageSizeValue(),
-                                  height: 'auto',
-                                  maxHeight: getImageSizeValue(),
-                                  marginRight: '3px',
-                                  alignSelf: centerImage ? 'center' : 'flex-start'
-                                }}
-                              />
-                            )}
-                            <div 
-                              style={{ 
-                                flex: 1,
-                                whiteSpace: 'pre-wrap',
-                                wordWrap: 'break-word',
-                                hyphens: 'auto',
-                                lineHeight: '1.3'
-                              }}
-                              dangerouslySetInnerHTML={{
-                                __html: advertisementText
-                                  .replace(/\n/g, '<br/>')
-                                  .replace(/(\w{6,})/g, (match) => {
-                                    return match.length > 8 ? 
-                                      match.replace(/(.{4})/g, '$1&shy;') : 
-                                      match;
-                                  })
+                  <TabsContent value="advertisement" className="space-y-4">
+                    <div>
+                      <Label>Текст реклами</Label>
+                      <Textarea
+                        value={envelopeSettings.advertisementText}
+                        onChange={(e) => setEnvelopeSettings(prev => ({ ...prev, advertisementText: e.target.value }))}
+                        placeholder="Введіть рекламний текст"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label>Позиції реклами</Label>
+                      <div className="space-y-2">
+                        {adPositionOptions.map(option => (
+                          <div key={option.value} className="flex items-center space-x-2">
+                            <Checkbox
+                              checked={envelopeSettings.adPositions.includes(option.value)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setEnvelopeSettings(prev => ({
+                                    ...prev,
+                                    adPositions: [...prev.adPositions, option.value]
+                                  }));
+                                } else {
+                                  setEnvelopeSettings(prev => ({
+                                    ...prev,
+                                    adPositions: prev.adPositions.filter(pos => pos !== option.value)
+                                  }));
+                                }
                               }}
                             />
-                            {imageRelativePosition === 'right' && advertisementImage && (
-                              <img 
-                                src={advertisementImage} 
-                                alt="Реклама" 
-                                style={{
-                                  width: getImageSizeValue(),
-                                  height: 'auto',
-                                  maxHeight: getImageSizeValue(),
-                                  marginLeft: '3px',
-                                  alignSelf: centerImage ? 'center' : 'flex-start'
-                                }}
-                              />
-                            )}
-                            {imageRelativePosition === 'below' && advertisementImage && (
-                              <img 
-                                src={advertisementImage} 
-                                alt="Реклама" 
-                                style={{
-                                  width: getImageSizeValue(),
-                                  height: 'auto',
-                                  maxHeight: getImageSizeValue(),
-                                  alignSelf: centerImage ? 'center' : 'flex-start'
-                                }}
-                              />
-                            )}
+                            <Label>{option.label}</Label>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Права колонка - Налаштування */}
-                <div className="space-y-4">
-                  <div className="p-4 border rounded-lg bg-gray-50">
-                    <h3 className="text-lg font-semibold mb-4">Налаштування</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Розмір конверта</Label>
-                        <Select value={envelopeSize} onValueChange={(size) => {
-                          setEnvelopeSize(size);
-                          loadSettingsForEnvelopeSize(size);
-                        }}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="dl">DL (110×220 мм)</SelectItem>
-                            <SelectItem value="c4">C4 (229×324 мм)</SelectItem>
-                            <SelectItem value="c5">C5 (162×229 мм)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label>Відправник/Отримувач (px)</Label>
-                        <Input 
-                          type="number" 
-                          value={senderRecipientFontSize} 
-                          onChange={(e) => setSenderRecipientFontSize(e.target.value)}
-                          min="8" 
-                          max="24" 
+                    
+                    <div>
+                      <Label>Зображення реклами</Label>
+                      <div className="space-y-2">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
                         />
-                      </div>
-                      <div>
-                        <Label>Поштові індекси (px)</Label>
-                        <Input 
-                          type="number" 
-                          value={postalIndexFontSize} 
-                          onChange={(e) => setPostalIndexFontSize(e.target.value)}
-                          min="8" 
-                          max="28" 
-                        />
-                      </div>
-                      <div>
-                        <Label>Розмір шрифту реклами (px)</Label>
-                        <Input 
-                          type="number" 
-                          value={advertisementFontSize} 
-                          onChange={(e) => setAdvertisementFontSize(e.target.value)}
-                          min="6" 
-                          max="18" 
-                        />
-                      </div>
-
-                    </div>
-                  </div>
-
-                  {/* Налаштування реклами */}
-                  <div className="p-4 border rounded-lg bg-blue-50">
-                    <h3 className="text-lg font-semibold mb-4">Налаштування реклами</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Текст реклами</Label>
-                        <Textarea 
-                          value={advertisementText}
-                          onChange={(e) => setAdvertisementText(e.target.value)}
-                          placeholder="Введіть рекламний текст"
-                          rows={3}
-                        />
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="centerImage" 
-                          checked={centerImage} 
-                          onCheckedChange={setCenterImage}
-                        />
-                        <Label htmlFor="centerImage">Центрувати зображення</Label>
-                      </div>
-                      <div>
-                        <Label>Зображення реклами</Label>
-                        <div className="flex gap-2 mt-2">
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="flex-1"
-                          />
-                          {advertisementImage && (
+                        <Button
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Завантажити зображення
+                        </Button>
+                        {envelopeSettings.advertisementImage && (
+                          <div className="flex items-center gap-2">
+                            <img 
+                              src={envelopeSettings.advertisementImage} 
+                              alt="Preview" 
+                              className="w-8 h-8 object-cover rounded"
+                            />
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => setAdvertisementImage(null)}
-                              type="button"
+                              onClick={() => setEnvelopeSettings(prev => ({ ...prev, advertisementImage: null }))}
                             >
-                              <X className="h-4 w-4" />
+                              Видалити
                             </Button>
-                          )}
-                        </div>
-                        {advertisementImage && (
-                          <div className="mt-3 p-3 border rounded-lg bg-white">
-                            <img 
-                              src={advertisementImage} 
-                              alt="Попередній перегляд" 
-                              className="max-w-32 max-h-32 object-contain border rounded mx-auto block"
-                            />
                           </div>
                         )}
                       </div>
-                      <div>
-                        <Label>Розташування зображення відносно тексту</Label>
-                        <Select value={imageRelativePosition} onValueChange={setImageRelativePosition}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="above">Над текстом</SelectItem>
-                            <SelectItem value="below">Під текстом</SelectItem>
-                            <SelectItem value="left">Зліва від тексту</SelectItem>
-                            <SelectItem value="right">Зправа від тексту</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Розмір зображення</Label>
-                        <Select value={imageSize} onValueChange={setImageSize}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="small">Малий (15мм)</SelectItem>
-                            <SelectItem value="medium">Середній (25мм)</SelectItem>
-                            <SelectItem value="large">Великий (35мм)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
                     </div>
-                  </div>
-
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-4">
-                <Button 
-                  className="w-full" 
-                  onClick={() => {
-                    const settingsData = {
-                      settingName: `Налаштування для ${envelopeSize.toUpperCase()}`,
-                      envelopeSize,
-                      senderName: "ТОВ \"РЕГМІК\"",
-                      senderAddress: "м. Київ, вул. Промислова, 15",
-                      senderPhone: "+38 (044) 123-45-67",
-                      advertisementText,
-                      advertisementImage,
-                      adPositions: JSON.stringify(adPositions),
-                      imageRelativePosition,
-                      imageSize,
-                      fontSize,
-                      senderRecipientFontSize,
-                      postalIndexFontSize,
-                      advertisementFontSize,
-                      centerImage,
-                      senderPosition: JSON.stringify(senderPosition),
-                      recipientPosition: JSON.stringify(recipientPosition),
-                      adPositionCoords: JSON.stringify(adPositionCoords)
-                    };
-                    saveSettingsMutation.mutate(settingsData);
-                  }}
-                  disabled={saveSettingsMutation.isPending}
-                >
-                  {saveSettingsMutation.isPending ? "Збереження..." : "Зберегти налаштування"}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Створити повідомлення
-          </Button>
-        </div>
-
-        {isCreateDialogOpen && (
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Створити повідомлення</DialogTitle>
-              </DialogHeader>
-              
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="recipientType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Тип отримувача</FormLabel>
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="all">Всі клієнти</SelectItem>
-                          <SelectItem value="selected">Обрані клієнти</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-
-                {form.watch('recipientType') === 'selected' && (
-                  <FormField
-                    control={form.control}
-                    name="selectedClients"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Обрані клієнти</FormLabel>
-                        <div className="space-y-2 max-h-40 overflow-y-auto border rounded p-2">
-                          {clients?.map((client: any) => (
-                            <div key={client.id} className="flex items-center space-x-2">
-                              <Checkbox
-                                checked={field.value?.includes(client.id) || false}
-                                onCheckedChange={(checked) => {
-                                  const currentIds = field.value || [];
-                                  if (checked && checked !== 'indeterminate') {
-                                    field.onChange([...currentIds, client.id]);
-                                  } else {
-                                    field.onChange(currentIds.filter((id: number) => id !== client.id));
-                                  }
-                                }}
-                              />
-                              <span className="text-sm">{client.name}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                )}
-
-                <FormField
-                  control={form.control}
-                  name="subject"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Тема</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="content"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Зміст повідомлення</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} rows={5} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="priority"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Пріоритет</FormLabel>
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="low">Низький</SelectItem>
-                          <SelectItem value="medium">Середній</SelectItem>
-                          <SelectItem value="high">Високий</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex justify-end space-x-2">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setIsCreateDialogOpen(false)}
-                  >
-                    Скасувати
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={createMutation.isPending}
-                  >
-                    {createMutation.isPending ? "Створення..." : "Створити"}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-        )}
-
-        <div className="grid grid-cols-1 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5" />
-                Поштові повідомлення
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {(mails as any[])?.filter((m: any) => !m.deleted).map((mail: any) => (
-                  <div key={mail.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-semibold">{mail.subject}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {mail.recipientType === 'all' ? 'Всі клієнти' : `${mail.recipientCount} клієнтів`}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={
-                          mail.priority === 'high' ? 'destructive' : 
-                          mail.priority === 'medium' ? 'default' : 
-                          'secondary'
-                        }>
-                          {mail.priority === 'high' ? 'Високий' : 
-                           mail.priority === 'medium' ? 'Середній' : 'Низький'}
-                        </Badge>
-                        <Badge variant={
-                          mail.status === 'sent' ? 'default' : 
-                          mail.status === 'draft' ? 'secondary' : 
-                          'destructive'
-                        }>
-                          {mail.status === 'sent' ? 'Відправлено' : 
-                           mail.status === 'draft' ? 'Чернетка' : 'Помилка'}
-                        </Badge>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteMutation.mutate(mail.id)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <p className="text-sm mb-2">{mail.content}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Створено: {new Date(mail.createdAt).toLocaleDateString('uk-UA')}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Клієнти для розсилки
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {(clients as any[])?.map((c: any) => (
-                  <div key={c.id} className="flex justify-between items-center p-2 border rounded">
+                    
                     <div>
-                      <span className="font-medium">{c.name}</span>
-                      <span className="text-sm text-muted-foreground ml-2">{c.email}</span>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {c.address}, {c.city}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Реєстр поштових відправлень
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {(mailRegistry as any[])?.map((entry: any) => (
-                  <div key={entry.id} className="flex justify-between items-center p-2 border rounded">
-                    <div>
-                      <span className="font-medium">{entry.recipientName}</span>
-                      <span className="text-sm text-muted-foreground ml-2">
-                        {entry.mailType} - {entry.trackingNumber}
-                      </span>
-                    </div>
-                    <div className="text-sm">
-                      <Badge variant={entry.status === 'delivered' ? 'default' : 'secondary'}>
-                        {entry.status === 'delivered' ? 'Доставлено' : 'В дорозі'}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Поштові повідомлення</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setSelectedMails([])}>
-            Очистити вибір
-          </Button>
-          <Button variant="outline" disabled={selectedMails.length === 0}>
-            Груповий друк ({selectedMails.length})
-          </Button>
-        </div>
-      </div>
-
-      {mailsQuery.isLoading ? (
-        <div>Завантаження...</div>
-      ) : (
-        <MailList mails={mails as Client[]} />
-      )}
-    </div>
-  );
-}
-                      </div>
-
-                      {/* Отримувач */}
-                      <div 
-                        style={{
-                          position: 'absolute',
-                          top: `${recipientPosition.y}mm`,
-                          left: `${recipientPosition.x}mm`,
-                          fontSize: `${senderRecipientFontSize}px`,
-                          lineHeight: '1.4',
-                          maxWidth: '90mm',
-                          cursor: 'move',
-                          padding: '2mm',
-                          border: isDragging && draggedElement === 'recipient' ? '2px dashed #3b82f6' : '2px dashed transparent',
-                          backgroundColor: isDragging && draggedElement === 'recipient' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
-                        }}
-                        onMouseDown={(e) => handleMouseDown('recipient', e)}
-                        title="Натисніть та перетягніть для переміщення"
-                      >
-                        <div style={{ fontSize: '8px', marginBottom: '1mm', color: '#666' }}>Адреса одержувача, індекс</div>
-                        <div style={{ fontWeight: 'bold' }}>ФОП Таранов Руслан Сергійович</div>
-                        <div>вул. Промислова, буд. 18, кв. 33, м.</div>
-                        <div>Павлоград</div>
-                        <div style={{ fontSize: `${postalIndexFontSize}px`, fontWeight: 'bold', marginTop: '3mm', letterSpacing: '3px' }}>
-                          51400
-                        </div>
-                      </div>
-
-                      {/* Реклама */}
-                      {adPositions.map(position => (
-                        <div
-                          key={position}
-                          style={{
-                            position: 'absolute',
-                            top: `${adPositionCoords[position as keyof typeof adPositionCoords].y}mm`,
-                            left: `${adPositionCoords[position as keyof typeof adPositionCoords].x}mm`,
-                            fontSize: `${advertisementFontSize}px`,
-                            maxWidth: position === 'bottom-left' ? '80mm' : '60mm',
-                            cursor: 'move',
-                            padding: '1mm',
-                            border: isDragging && draggedElement === `ad-${position}` ? '2px dashed #3b82f6' : '2px dashed transparent',
-                            backgroundColor: isDragging && draggedElement === `ad-${position}` ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
-                          }}
-                          onMouseDown={(e) => handleMouseDown(`ad-${position}`, e)}
-                          title="Натисніть та перетягніть для переміщення"
-                        >
-                          <div style={{
-                            display: 'flex',
-                            flexDirection: imageRelativePosition === 'above' || imageRelativePosition === 'below' ? 'column' : 'row',
-                            alignItems: centerImage ? 'center' : 'flex-start',
-                            gap: '2mm'
-                          }}>
-                            {imageRelativePosition === 'above' && advertisementImage && (
-                              <img 
-                                src={advertisementImage} 
-                                alt="Реклама" 
-                                style={{
-                                  width: getImageSizeValue(),
-                                  height: 'auto',
-                                  maxHeight: getImageSizeValue(),
-                                  alignSelf: centerImage ? 'center' : 'flex-start'
-                                }}
-                              />
-                            )}
-                            {imageRelativePosition === 'left' && advertisementImage && (
-                              <img 
-                                src={advertisementImage} 
-                                alt="Реклама" 
-                                style={{
-                                  width: getImageSizeValue(),
-                                  height: 'auto',
-                                  maxHeight: getImageSizeValue(),
-                                  marginRight: '3px',
-                                  alignSelf: centerImage ? 'center' : 'flex-start'
-                                }}
-                              />
-                            )}
-                            <div 
-                              style={{ 
-                                flex: 1,
-                                whiteSpace: 'pre-wrap',
-                                wordWrap: 'break-word',
-                                hyphens: 'auto',
-                                lineHeight: '1.3'
-                              }}
-                              dangerouslySetInnerHTML={{
-                                __html: advertisementText
-                                  .replace(/\n/g, '<br/>')
-                                  .replace(/(\w{6,})/g, (match) => {
-                                    // Додаємо м'які переноси для довгих слів
-                                    return match.length > 8 ? 
-                                      match.replace(/(.{4})/g, '$1&shy;') : 
-                                      match;
-                                  })
-                              }}
-                            />
-                            {imageRelativePosition === 'right' && advertisementImage && (
-                              <img 
-                                src={advertisementImage} 
-                                alt="Реклама" 
-                                style={{
-                                  width: getImageSizeValue(),
-                                  height: 'auto',
-                                  maxHeight: getImageSizeValue(),
-                                  marginLeft: '3px',
-                                  alignSelf: centerImage ? 'center' : 'flex-start'
-                                }}
-                              />
-                            )}
-                            {imageRelativePosition === 'below' && advertisementImage && (
-                              <img 
-                                src={advertisementImage} 
-                                alt="Реклама" 
-                                style={{
-                                  width: getImageSizeValue(),
-                                  height: 'auto',
-                                  maxHeight: getImageSizeValue(),
-                                  alignSelf: centerImage ? 'center' : 'flex-start'
-                                }}
-                              />
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-4">
-                <Button 
-                  className="w-full" 
-                  onClick={() => {
-                    const settingsData = {
-                      settingName: `Налаштування для ${envelopeSize.toUpperCase()}`,
-                      envelopeSize,
-                      senderName: "ТОВ \"РЕГМІК\"",
-                      senderAddress: "м. Київ, вул. Промислова, 15",
-                      senderPhone: "+38 (044) 123-45-67",
-                      advertisementText,
-                      advertisementImage,
-                      adPositions: JSON.stringify(adPositions),
-                      imageRelativePosition,
-                      imageSize,
-                      fontSize,
-                      senderRecipientFontSize,
-                      postalIndexFontSize,
-                      advertisementFontSize,
-                      centerImage,
-                      senderPosition: JSON.stringify(senderPosition),
-                      recipientPosition: JSON.stringify(recipientPosition),
-                      adPositionCoords: JSON.stringify(adPositionCoords)
-                    };
-                    saveSettingsMutation.mutate(settingsData);
-                  }}
-                  disabled={saveSettingsMutation.isPending}
-                >
-                  {saveSettingsMutation.isPending ? "Збереження..." : "Зберегти налаштування"}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Новий лист
-          </Button>
-        </div>
-      </div>
-
-      <Tabs defaultValue="mails" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="mails">Листи</TabsTrigger>
-          <TabsTrigger value="registry">Реєстр надсилань</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="mails" className="space-y-4">
-          {/* Групові дії */}
-          {selectedItems.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Групові дії ({selectedItems.length} обрано)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-4 items-end">
-                  <div className="flex-1">
-                    <Label htmlFor="batchName">Назва партії для друку</Label>
-                    <Input
-                      id="batchName"
-                      value={batchName}
-                      onChange={(e) => setBatchName(e.target.value)}
-                      placeholder="Наприклад: Маркетингова розсилка листопад 2024"
-                    />
-                  </div>
-                  <Button onClick={handleBatchPrint} disabled={batchPrintMutation.isPending}>
-                    <Printer className="h-4 w-4 mr-2" />
-                    {batchPrintMutation.isPending ? "Друк..." : "Друкувати конверти"}
-                  </Button>
-                  <Button variant="outline" onClick={selectAllItems}>
-                    Обрати всі чернетки
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">
-                  <Checkbox
-                    checked={selectedItems.length === mails.filter(m => m.status === "draft").length && mails.length > 0}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        selectAllItems();
-                      } else {
-                        setSelectedItems([]);
-                      }
-                    }}
-                  />
-                </TableHead>
-                <TableHead>Клієнт</TableHead>
-                <TableHead>Тема</TableHead>
-                <TableHead>Тип</TableHead>
-                <TableHead>Статус</TableHead>
-                <TableHead>Дата створення</TableHead>
-                <TableHead>Дії</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {mails.map((mail) => (
-                <TableRow key={mail.id}>
-                  <TableCell>
-                    {mail.status === "draft" && (
-                      <Checkbox
-                        checked={selectedItems.includes(mail.id)}
-                        onCheckedChange={() => toggleSelectItem(mail.id)}
+                      <Label>Розмір зображення: {envelopeSettings.imageSize}px</Label>
+                      <Input
+                        type="range"
+                        min="10"
+                        max="50"
+                        value={envelopeSettings.imageSize}
+                        onChange={(e) => setEnvelopeSettings(prev => ({ ...prev, imageSize: Number(e.target.value) }))}
                       />
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {clients.find(c => c.id === mail.clientId)?.name || mail.clientId}
-                  </TableCell>
-                  <TableCell>{mail.subject}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">
-                      {mail.mailType === "invoice" ? "Рахунок" : 
-                       mail.mailType === "contract" ? "Договір" : 
-                       mail.mailType === "notification" ? "Повідомлення" : "Інше"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(mail.status)}>
-                      {mail.status === "draft" ? "Чернетка" :
-                       mail.status === "queued" ? "В черзі" :
-                       mail.status === "sent" ? "Відправлено" : "Доставлено"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {mail.createdAt ? new Date(mail.createdAt).toLocaleDateString('uk-UA') : '-'}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      {mail.status === "draft" && (
-                        <Button variant="ghost" size="sm">
-                          <Send className="h-4 w-4" />
-                        </Button>
-                      )}
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TabsContent>
+                  </TabsContent>
 
-        <TabsContent value="registry" className="space-y-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Назва партії</TableHead>
-                <TableHead>Дата реєстрації</TableHead>
-                <TableHead>Кількість листів</TableHead>
-                <TableHead>Статус</TableHead>
-                <TableHead>Надіслав</TableHead>
-                <TableHead>Примітки</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {mailRegistry.map((entry) => (
-                <TableRow key={entry.id}>
-                  <TableCell className="font-medium">{entry.batchName}</TableCell>
-                  <TableCell>
-                    {new Date(entry.registryDate).toLocaleDateString('uk-UA')}
-                  </TableCell>
-                  <TableCell>{entry.mailCount}</TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(entry.status)}>
-                      {entry.status === "registered" ? "Зареєстровано" : 
-                       entry.status === "sent" ? "Відправлено" : "Доставлено"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{entry.sentBy || '-'}</TableCell>
-                  <TableCell>{entry.notes || '-'}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TabsContent>
-      </Tabs>
-
-      {/* Діалог друку конвертів */}
-      <EnvelopePrintDialog
-        isOpen={isEnvelopePrintDialogOpen}
-        onClose={() => setIsEnvelopePrintDialogOpen(false)}
-        mails={currentBatchMails}
-        clients={clients}
-        batchName={batchName}
-      />
+                  <TabsContent value="fonts" className="space-y-4">
+                    <div>
+                      <Label>Шрифт відправник/отримувач: {senderRecipientFontSize}px</Label>
+                      <Input
+                        type="range"
+                        min="6"
+                        max="16"
+                        value={senderRecipientFontSize}
+                        onChange={(e) => setEnvelopeSettings(prev => ({ ...prev, senderRecipientFontSize: Number(e.target.value) }))}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label>Шрифт поштових індексів: {postalIndexFontSize}px</Label>
+                      <Input
+                        type="range"
+                        min="8"
+                        max="18"
+                        value={postalIndexFontSize}
+                        onChange={(e) => setEnvelopeSettings(prev => ({ ...prev, postalIndexFontSize: Number(e.target.value) }))}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label>Шрифт тексту реклами: {advertisementFontSize}px</Label>
+                      <Input
+                        type="range"
+                        min="6"
+                        max="14"
+                        value={advertisementFontSize}
+                        onChange={(e) => setEnvelopeSettings(prev => ({ ...prev, advertisementFontSize: Number(e.target.value) }))}
+                      />
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
+              
+              {/* Action buttons */}
+              <div className="pt-4 border-t space-y-2">
+                <Button 
+                  onClick={() => saveSettingsMutation.mutate(envelopeSettings)}
+                  disabled={saveSettingsMutation.isPending}
+                  className="w-full"
+                >
+                  <Settings2 className="h-4 w-4 mr-2" />
+                  Зберегти налаштування
+                </Button>
+                
+                <Button 
+                  onClick={() => batchPrintMutation.mutate({ 
+                    batchName, 
+                    clientIds: currentBatchMails.map(c => c.id), 
+                    settings: envelopeSettings 
+                  })}
+                  disabled={batchPrintMutation.isPending}
+                  className="w-full"
+                >
+                  <Printer className="h-4 w-4 mr-2" />
+                  Друкувати конверти
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
