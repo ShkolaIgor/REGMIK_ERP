@@ -682,11 +682,11 @@ export default function ClientMailPage() {
                     </div>
                     
                     <div>
-                      <Label>Розмір зображення: {envelopeSettings.imageSize}px</Label>
+                      <Label>Розмір зображення: {envelopeSettings.imageSize}%</Label>
                       <Input
                         type="range"
-                        min="10"
-                        max="50"
+                        min="25"
+                        max="200"
                         value={envelopeSettings.imageSize}
                         onChange={(e) => setEnvelopeSettings(prev => ({ ...prev, imageSize: Number(e.target.value) }))}
                       />
