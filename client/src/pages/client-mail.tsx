@@ -690,6 +690,10 @@ export default function ClientMailPage() {
                 <Button 
                   className="w-full" 
                   onClick={() => {
+                    console.log("Кнопка збереження натиснута");
+                    console.log("advertisementText:", advertisementText);
+                    console.log("advertisementImage:", advertisementImage ? "Зображення є" : "Зображення відсутнє");
+                    
                     const settingsData = {
                       settingName: `Налаштування для ${envelopeSize.toUpperCase()}`,
                       envelopeSize,
@@ -708,7 +712,14 @@ export default function ClientMailPage() {
                       adPositionCoords: JSON.stringify(adPositionCoords)
                     };
                     console.log("Збереження налаштувань:", settingsData);
-                    saveSettingsMutation.mutate(settingsData);
+                    console.log("Викликаємо мутацію...");
+                    
+                    try {
+                      saveSettingsMutation.mutate(settingsData);
+                      console.log("Мутація викликана успішно");
+                    } catch (error) {
+                      console.error("Помилка виклику мутації:", error);
+                    }
                   }}
                   disabled={saveSettingsMutation.isPending}
                 >
