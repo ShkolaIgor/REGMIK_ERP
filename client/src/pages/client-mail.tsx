@@ -508,8 +508,8 @@ export default function ClientMailPage() {
                   width: `${envelopeSizes[envelopeSettings.envelopeSize].width}mm`,
                   height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
                   transform: `scale(${Math.min(
-                    (window.innerWidth * 0.6 - 80) / (envelopeSizes[envelopeSettings.envelopeSize].width * 3.78),
-                    500 / (envelopeSizes[envelopeSettings.envelopeSize].height * 3.78)
+                    400 / envelopeSizes[envelopeSettings.envelopeSize].width,
+                    500 / envelopeSizes[envelopeSettings.envelopeSize].height
                   )})`,
                   transformOrigin: 'center'
                 }}
