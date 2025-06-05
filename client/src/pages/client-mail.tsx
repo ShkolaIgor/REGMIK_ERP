@@ -493,28 +493,27 @@ export default function ClientMailPage() {
 
       {/* Envelope Print Dialog with Horizontal Layout */}
       <Dialog open={isEnvelopePrintDialogOpen} onOpenChange={setIsEnvelopePrintDialogOpen}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-auto">
+        <DialogContent className="max-w-7xl h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>Налаштування друку конвертів - {batchName}</DialogTitle>
           </DialogHeader>
           
           {/* Horizontal Layout: Preview Left, Settings Right */}
-          <div className="flex gap-6 h-[600px]">
+          <div className="flex gap-6 flex-1">
             {/* Preview Section - Left */}
-            <div className="flex-1 flex flex-col">
-              <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg p-4">
-                <div 
-                  className="envelope-preview bg-white shadow-lg relative border"
-                  style={{
-                    width: `${envelopeSizes[envelopeSettings.envelopeSize].width}mm`,
-                    height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
-                    transform: `scale(${Math.min(
-                      (window.innerWidth * 0.45 - 64) / (envelopeSizes[envelopeSettings.envelopeSize].width * 3.78),
-                      (550 - 64) / (envelopeSizes[envelopeSettings.envelopeSize].height * 3.78)
-                    )})`,
-                    transformOrigin: 'center'
-                  }}
-                >
+            <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg p-4">
+              <div 
+                className="envelope-preview bg-white shadow-lg relative border"
+                style={{
+                  width: `${envelopeSizes[envelopeSettings.envelopeSize].width}mm`,
+                  height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
+                  transform: `scale(${Math.min(
+                    400 / envelopeSizes[envelopeSettings.envelopeSize].width,
+                    450 / envelopeSizes[envelopeSettings.envelopeSize].height
+                  )})`,
+                  transformOrigin: 'center'
+                }}
+              >
                   {/* Stamp area */}
                   <div 
                     className="absolute border-2 border-dashed border-gray-300"
@@ -633,7 +632,6 @@ export default function ClientMailPage() {
                       />
                     </div>
                   )}
-                </div>
               </div>
             </div>
 
