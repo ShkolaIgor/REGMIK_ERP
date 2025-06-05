@@ -493,13 +493,13 @@ export default function ClientMailPage() {
 
       {/* Envelope Print Dialog with Horizontal Layout */}
       <Dialog open={isEnvelopePrintDialogOpen} onOpenChange={setIsEnvelopePrintDialogOpen}>
-        <DialogContent className="max-w-7xl h-[90vh] overflow-hidden">
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>Налаштування друку конвертів - {batchName}</DialogTitle>
           </DialogHeader>
           
           {/* Horizontal Layout: Preview Left, Settings Right */}
-          <div className="flex gap-6 flex-1">
+          <div className="flex gap-6 h-[600px]">
             {/* Preview Section - Left */}
             <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg p-4">
               <div 
@@ -508,8 +508,8 @@ export default function ClientMailPage() {
                   width: `${envelopeSizes[envelopeSettings.envelopeSize].width}mm`,
                   height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
                   transform: `scale(${Math.min(
-                    400 / envelopeSizes[envelopeSettings.envelopeSize].width,
-                    450 / envelopeSizes[envelopeSettings.envelopeSize].height
+                    350 / envelopeSizes[envelopeSettings.envelopeSize].width,
+                    400 / envelopeSizes[envelopeSettings.envelopeSize].height
                   )})`,
                   transformOrigin: 'center'
                 }}
