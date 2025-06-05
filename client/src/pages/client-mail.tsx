@@ -121,7 +121,7 @@ export default function ClientMailPage() {
 
   // Mutations
   const createMutation = useMutation({
-    mutationFn: (data: InsertClientMail) => apiRequest("/api/client-mail", "POST", data),
+    mutationFn: (data: InsertClientMail) => apiRequest("/api/client-mail", { method: "POST", body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/client-mail"] });
       toast({ title: "Кореспонденція додана" });
@@ -135,7 +135,10 @@ export default function ClientMailPage() {
   const saveSettingsMutation = useMutation({
     mutationFn: (settings: EnvelopeSettings) => {
       const { id, ...settingsData } = settings;
-      return apiRequest("/api/envelope-print-settings", id ? "PATCH" : "POST", settingsData);
+      return apiRequest("/api/envelope-print-settings", { 
+        method: id ? "PATCH" : "POST", 
+        body: settingsData 
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/envelope-print-settings"] });
@@ -148,7 +151,7 @@ export default function ClientMailPage() {
 
   const batchPrintMutation = useMutation({
     mutationFn: async (data: { batchName: string; clientIds: number[]; settings: EnvelopeSettings }) => {
-      return apiRequest("/api/envelope-print", "POST", data);
+      return apiRequest("/api/envelope-print", { method: "POST", body: data });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/mail-registry"] });
@@ -162,7 +165,7 @@ export default function ClientMailPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/client-mail/${id}`, "DELETE"),
+    mutationFn: (id: number) => apiRequest(`/api/client-mail/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/client-mail"] });
       toast({ title: "Кореспонденція видалена" });
@@ -336,7 +339,7 @@ export default function ClientMailPage() {
                   <Label htmlFor="description">Опис</Label>
                   <Textarea id="description" placeholder="Введіть опис" />
                 </div>
-                <Button onClick={() => createMutation.mutate({ subject: '', description: '', clientId: 1 })}>
+                <Button onClick={() => createMutation.mutate({ subject: '', content: '', clientId: '1' })}>
                   Додати
                 </Button>
               </div>
@@ -349,6 +352,13 @@ export default function ClientMailPage() {
           >
             <Printer className="h-4 w-4 mr-2" />
             Друк конвертів ({selectedMails.length})
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setIsEnvelopePrintDialogOpen(true)}
+          >
+            <Settings2 className="h-4 w-4 mr-2" />
+            Налаштування конвертів
           </Button>
         </div>
       </div>
@@ -716,7 +726,7 @@ export default function ClientMailPage() {
                 <Button 
                   onClick={() => batchPrintMutation.mutate({ 
                     batchName, 
-                    clientIds: currentBatchMails.map(c => c.id), 
+                    clientIds: currentBatchMails.map(c => parseInt(c.id.toString())), 
                     settings: envelopeSettings 
                   })}
                   disabled={batchPrintMutation.isPending}
