@@ -664,7 +664,7 @@ export default function ClientMailPage() {
                         <div style={{ fontWeight: 'bold' }}>ФОП Таранов Руслан Сергійович</div>
                         <div>вул. Промислова, буд. 18, кв. 33, м.</div>
                         <div>Павлоград</div>
-                        <div style={{ fontSize: `${Math.round(parseInt(fontSize) * 1.5)}px`, fontWeight: 'bold', marginTop: '3mm', letterSpacing: '3px' }}>
+                        <div style={{ fontSize: `${postalIndexFontSize}px`, fontWeight: 'bold', marginTop: '3mm', letterSpacing: '3px' }}>
                           51400
                         </div>
                       </div>
