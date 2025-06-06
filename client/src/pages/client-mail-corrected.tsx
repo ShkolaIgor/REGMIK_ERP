@@ -42,20 +42,49 @@ const envelopeSizes = {
   c6: { name: 'C6 (162×114мм)', width: 162, height: 114 }
 };
 
-const getDefaultSettings = (size: EnvelopeSize): EnvelopeSettings => ({
-  envelopeSize: size,
-  advertisementText: '',
-  advertisementImage: null,
-  imageSize: 100,
-  fontSize: 14,
-  senderRecipientFontSize: 12,
-  postalIndexFontSize: 24,
-  advertisementFontSize: 12,
-  senderPosition: { x: 10, y: 10 },
-  recipientPosition: { x: 30, y: 100 },
-  advertisementPosition: { x: 20, y: 160 },
-  imagePosition: { x: 120, y: 10 }
-});
+
+
+const getDefaultSettings = (size: EnvelopeSize): EnvelopeSettings => {
+  // Різні позиції для різних розмірів конвертів
+  const positions = {
+    c5: {
+      senderPosition: { x: 10, y: 10 },
+      recipientPosition: { x: 30, y: 100 },
+      advertisementPosition: { x: 20, y: 140 },
+      imagePosition: { x: 120, y: 10 }
+    },
+    c4: {
+      senderPosition: { x: 10, y: 10 },
+      recipientPosition: { x: 40, y: 120 },
+      advertisementPosition: { x: 30, y: 180 },
+      imagePosition: { x: 160, y: 10 }
+    },
+    dl: {
+      senderPosition: { x: 10, y: 8 },
+      recipientPosition: { x: 25, y: 60 },
+      advertisementPosition: { x: 15, y: 85 },
+      imagePosition: { x: 120, y: 8 }
+    },
+    c6: {
+      senderPosition: { x: 8, y: 8 },
+      recipientPosition: { x: 20, y: 50 },
+      advertisementPosition: { x: 12, y: 75 },
+      imagePosition: { x: 90, y: 8 }
+    }
+  };
+
+  return {
+    envelopeSize: size,
+    advertisementText: '',
+    advertisementImage: null,
+    imageSize: 100,
+    fontSize: 14,
+    senderRecipientFontSize: 12,
+    postalIndexFontSize: 24,
+    advertisementFontSize: 12,
+    ...positions[size]
+  };
+};
 
 export default function ClientMailPage() {
   const [newClientMail, setNewClientMail] = useState<InsertClientMail>({
@@ -69,6 +98,22 @@ export default function ClientMailPage() {
     const saved = localStorage.getItem(`envelopeSettings_dl`);
     return saved ? JSON.parse(saved) : getDefaultSettings('dl');
   });
+
+  // Функція для визначення максимальної ширини реклами залежно від розміру конверта
+  const getAdvertisementMaxWidth = (size: EnvelopeSize): number => {
+    switch (size) {
+      case 'dl':
+        return 120; // Менша ширина для DL
+      case 'c6':
+        return 100; // Найменша ширина для C6
+      case 'c5':
+        return 180;
+      case 'c4':
+        return 220;
+      default:
+        return 200;
+    }
+  };
 
   const [isEnvelopePrintDialogOpen, setIsEnvelopePrintDialogOpen] = useState(false);
   const [selectedClients, setSelectedClients] = useState<Set<number>>(new Set());
@@ -152,8 +197,40 @@ export default function ClientMailPage() {
 
       setEnvelopeSettings(prev => {
         const currentPosition = prev[`${draggedElement}Position` as keyof EnvelopeSettings] as { x: number; y: number };
-        const maxX = envelopeSizes[prev.envelopeSize].width - 40;
-        const maxY = envelopeSizes[prev.envelopeSize].height - 40;
+        const envelope = envelopeSizes[prev.envelopeSize];
+        
+        // Різні обмеження для різних елементів та розмірів конвертів
+        let maxX, maxY;
+        
+        if (draggedElement === 'advertisement') {
+          // Для реклами використовуємо менші обмеження залежно від розміру конверта
+          if (prev.envelopeSize === 'dl') {
+            maxX = envelope.width - 80; // Більше обмеження для DL
+            maxY = envelope.height - 25;
+          } else if (prev.envelopeSize === 'c6') {
+            maxX = envelope.width - 70; // Більше обмеження для C6
+            maxY = envelope.height - 30;
+          } else {
+            maxX = envelope.width - 60;
+            maxY = envelope.height - 40;
+          }
+        } else if (draggedElement === 'image') {
+          // Для зображень теж обмежуємо
+          if (prev.envelopeSize === 'dl') {
+            maxX = envelope.width - 50;
+            maxY = envelope.height - 30;
+          } else if (prev.envelopeSize === 'c6') {
+            maxX = envelope.width - 45;
+            maxY = envelope.height - 35;
+          } else {
+            maxX = envelope.width - 40;
+            maxY = envelope.height - 40;
+          }
+        } else {
+          // Для відправника та одержувача
+          maxX = envelope.width - 60;
+          maxY = envelope.height - 50;
+        }
         
         return {
           ...prev,
@@ -411,7 +488,7 @@ export default function ClientMailPage() {
                       top: `${(envelopeSettings.advertisementPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE)}px`,
                       left: `${(envelopeSettings.advertisementPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE}px`,
                       fontSize: `${advertisementFontSize * elementScale}px`,
-                      maxWidth: `${200 * elementScale}px`,
+                      maxWidth: `${getAdvertisementMaxWidth(envelopeSettings.envelopeSize) * elementScale}px`,
                       whiteSpace: 'pre-wrap',
                       wordWrap: 'break-word',
                       cursor: isDragging ? 'grabbing' : 'grab',
