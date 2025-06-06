@@ -95,7 +95,7 @@ export default function ClientMailPage() {
     mutationFn: (data: InsertClientMail) => apiRequest("/api/client-mail", { method: "POST", body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/client-mail"] });
-      setNewClientMail({ clientId: "0", subject: '', content: '', status: 'draft' });
+      setNewClientMail({ clientId: 0, subject: '', content: '', status: 'draft' });
       toast({ title: "Листування створено!" });
     }
   });
@@ -257,13 +257,13 @@ export default function ClientMailPage() {
                 <div key={client.id} className="flex items-center space-x-2">
                   <Checkbox
                     id={`client-${client.id}`}
-                    checked={selectedClients.has(parseInt(client.id.toString()))}
+                    checked={selectedClients.has(client.id)}
                     onCheckedChange={(checked) => {
                       const newSelected = new Set(selectedClients);
                       if (checked) {
-                        newSelected.add(parseInt(client.id.toString()));
+                        newSelected.add(client.id);
                       } else {
-                        newSelected.delete(parseInt(client.id.toString()));
+                        newSelected.delete(client.id);
                       }
                       setSelectedClients(newSelected);
                     }}
@@ -289,7 +289,7 @@ export default function ClientMailPage() {
         </Card>
       </div>
 
-      {/* Envelope Print Dialog with Vertical Layout */}
+      {/* Envelope Print Dialog with Horizontal Layout */}
       <Dialog open={isEnvelopePrintDialogOpen} onOpenChange={setIsEnvelopePrintDialogOpen}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden" aria-describedby="envelope-dialog-description">
           <DialogHeader>
@@ -310,8 +310,8 @@ export default function ClientMailPage() {
                   height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
                   transform: `scale(${Math.min(
                     350 / envelopeSizes[envelopeSettings.envelopeSize].width,
-                    250 / envelopeSizes[envelopeSettings.envelopeSize].height
-                  ) * 0.5})`,
+                    500 / envelopeSizes[envelopeSettings.envelopeSize].height
+                  ) * 0.4})`,
                   transformOrigin: 'center'
                 }}
               >
@@ -345,6 +345,7 @@ export default function ClientMailPage() {
                     onMouseDown={(e) => handleMouseDown('sender', e)}
                     title="Натисніть та перетягніть для переміщення"
                   >
+
                     <div style={{ fontWeight: 'bold' }}>НВФ "РЕГМІК"</div>
                     <div>вул.Гагаріна, 25</div>
                     <div>с.Рівнопілля, Чернігівський район</div>
@@ -372,6 +373,7 @@ export default function ClientMailPage() {
                     onMouseDown={(e) => handleMouseDown('recipient', e)}
                     title="Натисніть та перетягніть для переміщення"
                   >
+
                     <div style={{ fontWeight: 'bold' }}>ФОП Таранов Руслан Сергійович</div>
                     <div>вул. Промислова, буд. 18, кв. 33, м.</div>
                     <div>Павлоград</div>
@@ -437,15 +439,15 @@ export default function ClientMailPage() {
             {/* Settings Section - Bottom */}
             <div className="flex flex-col">
               <h3 className="text-lg font-semibold mb-3">Налаштування</h3>
-              <div className="overflow-auto">
-                <Tabs defaultValue="envelope" className="w-full">
+              <div className="overflow-auto space-y-4">
+                <Tabs defaultValue="envelope" className="h-full">
                   <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="envelope">Конверт</TabsTrigger>
                     <TabsTrigger value="advertisement">Реклама</TabsTrigger>
                     <TabsTrigger value="fonts">Шрифти</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="envelope" className="space-y-4 mt-4">
+                  <TabsContent value="envelope" className="space-y-4">
                     <div>
                       <Label>Розмір конверта</Label>
                       <Select
@@ -466,7 +468,7 @@ export default function ClientMailPage() {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="advertisement" className="space-y-4 mt-4">
+                  <TabsContent value="advertisement" className="space-y-4">
                     <div>
                       <Label>Рекламний текст</Label>
                       <Textarea
@@ -498,7 +500,7 @@ export default function ClientMailPage() {
                           }}
                         />
                         {envelopeSettings.advertisementImage && (
-                          <div className="relative inline-block">
+                          <div className="relative">
                             <img 
                               src={envelopeSettings.advertisementImage} 
                               alt="Реклама" 
@@ -530,7 +532,7 @@ export default function ClientMailPage() {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="fonts" className="space-y-4 mt-4">
+                  <TabsContent value="fonts" className="space-y-4">
                     <div>
                       <Label>Розмір шрифту відправника/одержувача: {senderRecipientFontSize}px</Label>
                       <Slider
@@ -568,9 +570,8 @@ export default function ClientMailPage() {
                     </div>
                   </TabsContent>
                 </Tabs>
-              </div>
               
-              <div className="flex gap-2 mt-6">
+              <div className="flex gap-2 mt-4">
                 <Button 
                   variant="outline" 
                   onClick={() => setIsEnvelopePrintDialogOpen(false)}
