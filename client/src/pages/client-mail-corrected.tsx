@@ -426,7 +426,7 @@ export default function ClientMailPage() {
       <Dialog open={isEnvelopePrintDialogOpen} onOpenChange={setIsEnvelopePrintDialogOpen}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden" aria-describedby="envelope-dialog-description">
           <DialogHeader>
-            <DialogTitle>Налаштування друку конвертів - {batchName}</DialogTitle>
+            <DialogTitle>Налаштування друку конвертів {batchName}</DialogTitle>
             <div id="envelope-dialog-description" className="sr-only">
               Діалог для налаштування параметрів друку конвертів з попереднім переглядом
             </div>
@@ -511,8 +511,8 @@ export default function ClientMailPage() {
                   <div
                     style={{
                       position: 'absolute',
-                      top: `${envelopeSettings.advertisementPosition.y * baseScale}px`,
-                      left: `${envelopeSettings.advertisementPosition.x * baseScale}px`,
+                      top: `${(envelopeSettings.advertisementPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE)}px`,
+                      left: `${(envelopeSettings.advertisementPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE}px`,
                       fontSize: `${advertisementFontSize * elementScale}px`,
                       fontFamily: 'sans-serif, Ubuntu, Arial',
                       maxWidth: `${getAdvertisementMaxWidth(envelopeSettings.envelopeSize) * elementScale}px`,
