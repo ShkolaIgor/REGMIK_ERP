@@ -724,7 +724,7 @@ export default function Clients() {
                   <div className="min-w-0 flex-1">
                     <CardTitle className="text-lg leading-tight truncate">{client.name}</CardTitle>
                     <CardDescription className="text-sm mt-1">
-                      {client.type === "organization" ? "ЄДРПОУ" : "ІПН"}: <span className="font-bold text-base text-foreground">{client.id}</span>
+                      {client.type === "organization" ? "ЄДРПОУ" : "ІПН"}: <span className="font-bold text-base text-foreground">{client.taxCode}</span>
                     </CardDescription>
                   </div>
                 </div>
