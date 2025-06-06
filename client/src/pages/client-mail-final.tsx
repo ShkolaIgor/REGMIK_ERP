@@ -67,7 +67,7 @@ export default function ClientMailPage() {
   });
 
   const [envelopeSettings, setEnvelopeSettings] = useState<EnvelopeSettings>(() => {
-    const saved = localStorage.getItem('envelopeSettings');
+    const saved = localStorage.getItem(`envelopeSettings_dl`);
     return saved ? JSON.parse(saved) : getDefaultSettings('dl');
   });
 
@@ -79,10 +79,21 @@ export default function ClientMailPage() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [envelopeBounds, setEnvelopeBounds] = useState<DOMRect | null>(null);
 
-  // Auto-save settings to localStorage
+  // Auto-save settings to localStorage for each envelope type separately
   useEffect(() => {
-    localStorage.setItem('envelopeSettings', JSON.stringify(envelopeSettings));
+    localStorage.setItem(`envelopeSettings_${envelopeSettings.envelopeSize}`, JSON.stringify(envelopeSettings));
   }, [envelopeSettings]);
+
+  // Load settings when envelope type changes
+  useEffect(() => {
+    const saved = localStorage.getItem(`envelopeSettings_${envelopeSettings.envelopeSize}`);
+    if (saved) {
+      const savedSettings = JSON.parse(saved);
+      if (savedSettings.envelopeSize === envelopeSettings.envelopeSize) {
+        setEnvelopeSettings(savedSettings);
+      }
+    }
+  }, [envelopeSettings.envelopeSize]);
 
   const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ["/api/clients"]
@@ -191,9 +202,9 @@ export default function ClientMailPage() {
 
   const { senderRecipientFontSize, postalIndexFontSize, advertisementFontSize } = envelopeSettings;
   
-  // Фіксований масштаб для 550px ширини з сильним зменшенням елементів
+  // Фіксований масштаб для 550px ширини з максимальним зменшенням елементів
   const ENVELOPE_SCALE = 550;
-  const scaleRatio = (ENVELOPE_SCALE / Math.max(envelopeSizes[envelopeSettings.envelopeSize].width, envelopeSizes[envelopeSettings.envelopeSize].height)) * 0.35;
+  const scaleRatio = (ENVELOPE_SCALE / Math.max(envelopeSizes[envelopeSettings.envelopeSize].width, envelopeSizes[envelopeSettings.envelopeSize].height)) * 0.25;
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -476,9 +487,16 @@ export default function ClientMailPage() {
                       <Label>Розмір конверта</Label>
                       <Select
                         value={envelopeSettings.envelopeSize}
-                        onValueChange={(value: EnvelopeSize) => 
-                          setEnvelopeSettings(prev => ({ ...prev, envelopeSize: value }))
-                        }
+                        onValueChange={(value: EnvelopeSize) => {
+                          // Завантажуємо збережені налаштування для нового типу конверта
+                          const saved = localStorage.getItem(`envelopeSettings_${value}`);
+                          if (saved) {
+                            const savedSettings = JSON.parse(saved);
+                            setEnvelopeSettings(savedSettings);
+                          } else {
+                            setEnvelopeSettings(getDefaultSettings(value));
+                          }
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -603,14 +621,6 @@ export default function ClientMailPage() {
                   className="w-full"
                 >
                   Закрити
-                </Button>
-                <Button 
-                  onClick={() => saveSettingsMutation.mutate(envelopeSettings)}
-                  disabled={saveSettingsMutation.isPending}
-                  variant="outline"
-                  className="w-full"
-                >
-                  {saveSettingsMutation.isPending ? 'Збереження...' : 'Зберегти'}
                 </Button>
                 <Button 
                   onClick={() => batchPrintMutation.mutate({ 
