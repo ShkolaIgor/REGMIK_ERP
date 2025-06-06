@@ -723,8 +723,27 @@ export default function Clients() {
         </div>
       </div>
 
+      {/* Поле пошуку */}
+      <div className="mb-6">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            type="text"
+            placeholder="Пошук клієнтів за назвою, ЄДРПОУ або повним ім'ям..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        {searchQuery && (
+          <p className="text-sm text-muted-foreground mt-2">
+            Знайдено: {filteredClients.length} з {clients.length} клієнтів
+          </p>
+        )}
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        {clients.map((client: Client) => (
+        {filteredClients.map((client: Client) => (
           <Card key={client.id}>
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start mb-3">
