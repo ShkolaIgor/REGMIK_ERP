@@ -95,8 +95,13 @@ export default function ClientMailPage() {
   });
 
   const [envelopeSettings, setEnvelopeSettings] = useState<EnvelopeSettings>(() => {
-    const saved = localStorage.getItem(`envelopeSettings_dl`);
-    return saved ? JSON.parse(saved) : getDefaultSettings('dl');
+    try {
+      const saved = localStorage.getItem(`envelopeSettings_dl`);
+      return saved ? JSON.parse(saved) : getDefaultSettings('dl');
+    } catch (error) {
+      console.warn('localStorage помилка, використовуємо стандартні налаштування');
+      return getDefaultSettings('dl');
+    }
   });
 
   // Функція для визначення максимальної ширини реклами залежно від розміру конверта
