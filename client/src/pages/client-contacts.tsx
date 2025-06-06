@@ -267,8 +267,7 @@ export default function ClientContacts() {
                                   {(clients as Client[])
                                     .filter((client) =>
                                       client.name.toLowerCase().includes(clientSearchValue.toLowerCase()) ||
-                                      client.id.toLowerCase().includes(clientSearchValue.toLowerCase()) ||
-                                      client.taxNumber?.toLowerCase().includes(clientSearchValue.toLowerCase())
+                                      client.id.toLowerCase().includes(clientSearchValue.toLowerCase())
                                     )
                                     .map((client) => (
                                       <CommandItem
@@ -288,8 +287,7 @@ export default function ClientContacts() {
                                         <div className="flex flex-col">
                                           <span className="font-medium">{client.name}</span>
                                           <span className="text-sm text-muted-foreground">
-                                            {client.taxNumber && `ЄДРПОУ: ${client.taxNumber}`}
-                                            {client.id && ` • ID: ${client.id}`}
+                                            ID: {client.id}
                                           </span>
                                         </div>
                                       </CommandItem>
