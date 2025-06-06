@@ -50,7 +50,7 @@ import {
   Truck,
   Percent
 } from "lucide-react";
-import { insertClientSchema, type Client, type InsertClient } from "@shared/schema";
+import { insertClientSchema, insertClientContactSchema, type Client, type InsertClient, type ClientContact, type InsertClientContact } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -72,9 +72,25 @@ const formSchema = insertClientSchema.extend({
 
 type FormData = z.infer<typeof formSchema>;
 
+// Схема для швидкого додавання контакту
+const contactFormSchema = insertClientContactSchema.extend({
+  clientId: z.string().min(1, "Клієнт обов'язковий"),
+  fullName: z.string().min(1, "Повне ім'я обов'язкове"),
+  position: z.string().optional(),
+  email: z.string().email("Невірний формат email").optional().or(z.literal("")),
+  primaryPhone: z.string().optional(),
+  primaryPhoneType: z.enum(["mobile", "office", "home"]).default("mobile"),
+  notes: z.string().optional(),
+  isActive: z.boolean().default(true)
+});
+
+type ContactFormData = z.infer<typeof contactFormSchema>;
+
 export default function Clients() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
+  const [selectedClientForContact, setSelectedClientForContact] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -96,6 +112,20 @@ export default function Clients() {
       notes: "",
       novaPoshtaApiKey: "",
       enableThirdPartyShipping: false,
+      isActive: true,
+    },
+  });
+
+  const contactForm = useForm<ContactFormData>({
+    resolver: zodResolver(contactFormSchema),
+    defaultValues: {
+      clientId: "",
+      fullName: "",
+      position: "",
+      email: "",
+      primaryPhone: "",
+      primaryPhoneType: "mobile",
+      notes: "",
       isActive: true,
     },
   });
@@ -175,12 +205,51 @@ export default function Clients() {
     },
   });
 
+  const createContactMutation = useMutation({
+    mutationFn: async (data: ContactFormData) => {
+      const response = await apiRequest("/api/client-contacts", {
+        method: "POST",
+        body: data,
+      });
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/client-contacts"] });
+      toast({
+        title: "Успіх",
+        description: "Контакт створено успішно",
+      });
+      setIsContactDialogOpen(false);
+      contactForm.reset();
+      setSelectedClientForContact("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Не вдалося створити контакт",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: FormData) => {
     if (editingClient) {
       updateMutation.mutate(data);
     } else {
       createMutation.mutate(data);
     }
+  };
+
+  const onContactSubmit = (data: ContactFormData) => {
+    createContactMutation.mutate(data);
+  };
+
+  const openAddContactDialog = (clientId?: string) => {
+    if (clientId) {
+      setSelectedClientForContact(clientId);
+      contactForm.setValue("clientId", clientId);
+    }
+    setIsContactDialogOpen(true);
   };
 
   const handleEdit = (client: Client) => {
@@ -228,19 +297,159 @@ export default function Clients() {
             Управління клієнтами з налаштуваннями Нової Пошти
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button
-              onClick={() => {
-                setEditingClient(null);
-                form.reset();
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Додати клієнта
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex gap-2">
+          <Dialog open={isContactDialogOpen} onOpenChange={setIsContactDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                onClick={() => openAddContactDialog()}
+              >
+                <User className="h-4 w-4 mr-2" />
+                Додати контакт
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Додати контакт клієнта</DialogTitle>
+                <DialogDescription>
+                  Створіть новий контакт для клієнта
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...contactForm}>
+                <form onSubmit={contactForm.handleSubmit(onContactSubmit)} className="space-y-4">
+                  <FormField
+                    control={contactForm.control}
+                    name="clientId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Клієнт *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Введіть назву, ЄДРПОУ або ІПН клієнта..."
+                            {...field}
+                            onChange={(e) => {
+                              const searchValue = e.target.value;
+                              field.onChange(searchValue);
+                              
+                              // Знайти клієнта по назві, ID або будь-якому збігу
+                              const matchedClient = (clients as Client[]).find(client => 
+                                client.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+                                client.id.toLowerCase().includes(searchValue.toLowerCase())
+                              );
+                              
+                              if (matchedClient && searchValue === matchedClient.name) {
+                                field.onChange(matchedClient.id);
+                              }
+                            }}
+                            autoComplete="off"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={contactForm.control}
+                    name="fullName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Повне ім'я *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Іван Іванович Іваненко" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={contactForm.control}
+                    name="position"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Посада</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Менеджер з продажу" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={contactForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="ivan@example.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={contactForm.control}
+                      name="primaryPhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Телефон</FormLabel>
+                          <FormControl>
+                            <Input placeholder="+380501234567" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={contactForm.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Примітки</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Додаткова інформація..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsContactDialogOpen(false)}
+                    >
+                      Скасувати
+                    </Button>
+                    <Button type="submit" disabled={createContactMutation.isPending}>
+                      {createContactMutation.isPending ? "Створення..." : "Створити"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                onClick={() => {
+                  setEditingClient(null);
+                  form.reset();
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Додати клієнта
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingClient ? "Редагувати клієнта" : "Новий клієнт"}
