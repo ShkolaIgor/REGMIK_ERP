@@ -410,7 +410,8 @@ export default function ClientMailPage() {
                   height: `${(envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * 550}px`,
                   transformOrigin: 'center',
                   maxWidth: '100%',
-                  maxHeight: '100%'
+                  maxHeight: '100%',
+                  overflow: 'visible'
                 }}
               >
                 {/* Stamp area */}
@@ -485,8 +486,8 @@ export default function ClientMailPage() {
                   <div
                     style={{
                       position: 'absolute',
-                      top: `${(envelopeSettings.advertisementPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE)}px`,
-                      left: `${(envelopeSettings.advertisementPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE}px`,
+                      top: `${envelopeSettings.advertisementPosition.y * baseScale}px`,
+                      left: `${envelopeSettings.advertisementPosition.x * baseScale}px`,
                       fontSize: `${advertisementFontSize * elementScale}px`,
                       maxWidth: `${getAdvertisementMaxWidth(envelopeSettings.envelopeSize) * elementScale}px`,
                       whiteSpace: 'pre-wrap',
