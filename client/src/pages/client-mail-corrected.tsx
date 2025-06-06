@@ -610,6 +610,23 @@ export default function ClientMailPage() {
                         pointerEvents: 'none'
                       }}
                     />
+                    {/* Resize handle for image */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: '-4px',
+                        right: '-4px',
+                        width: '12px',
+                        height: '12px',
+                        backgroundColor: '#3b82f6',
+                        border: '2px solid white',
+                        borderRadius: '50%',
+                        cursor: 'nw-resize',
+                        display: isDragging && draggedElement === 'image' ? 'block' : 'none'
+                      }}
+                      onMouseDown={(e) => handleResizeMouseDown('image', e)}
+                      title="Перетягніть для зміни розміру"
+                    />
                   </div>
                 )}
               </div>
