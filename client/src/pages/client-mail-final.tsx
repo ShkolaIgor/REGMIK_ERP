@@ -190,6 +190,10 @@ export default function ClientMailPage() {
   ).filter(Boolean) as Client[];
 
   const { senderRecipientFontSize, postalIndexFontSize, advertisementFontSize } = envelopeSettings;
+  
+  // Фіксований масштаб для 550px ширини
+  const ENVELOPE_SCALE = 550;
+  const scaleRatio = ENVELOPE_SCALE / Math.max(envelopeSizes[envelopeSettings.envelopeSize].width, envelopeSizes[envelopeSettings.envelopeSize].height);
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -325,8 +329,8 @@ export default function ClientMailPage() {
               <div 
                 className="envelope-preview bg-white shadow-lg relative border select-none"
                 style={{
-                  width: '500px',
-                  height: `${(envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * 500}px`,
+                  width: '550px',
+                  height: `${(envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * 550}px`,
                   transformOrigin: 'center',
                   maxWidth: '100%',
                   maxHeight: '100%'
@@ -336,26 +340,26 @@ export default function ClientMailPage() {
                 <div 
                   className="absolute border-2 border-dashed border-gray-300"
                   style={{
-                    top: '12px',
-                    right: '12px',
-                    width: '65px',
-                    height: '40px'
+                    top: `${12 * scaleRatio}px`,
+                    right: `${12 * scaleRatio}px`,
+                    width: `${65 * scaleRatio}px`,
+                    height: `${40 * scaleRatio}px`
                   }}
                 >
-                  <div className="text-sm text-gray-400 p-1">Марка</div>
+                  <div className={`text-gray-400 p-1`} style={{ fontSize: `${12 * scaleRatio}px` }}>Марка</div>
                 </div>
 
                 {/* Sender */}
                 <div 
                   style={{
                     position: 'absolute',
-                    top: `${(envelopeSettings.senderPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * 500)}px`,
-                    left: `${(envelopeSettings.senderPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * 500}px`,
-                    fontSize: `${senderRecipientFontSize}px`,
+                    top: `${(envelopeSettings.senderPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE)}px`,
+                    left: `${(envelopeSettings.senderPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE}px`,
+                    fontSize: `${senderRecipientFontSize * scaleRatio}px`,
                     lineHeight: '1.4',
-                    maxWidth: '230px',
+                    maxWidth: `${230 * scaleRatio}px`,
                     cursor: isDragging ? 'grabbing' : 'grab',
-                    padding: '5px',
+                    padding: `${5 * scaleRatio}px`,
                     border: isDragging && draggedElement === 'sender' ? '2px dashed #3b82f6' : '2px dashed transparent',
                     backgroundColor: isDragging && draggedElement === 'sender' ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
                     userSelect: 'none'
@@ -368,7 +372,7 @@ export default function ClientMailPage() {
                   <div>с.Рівнопілля, Чернігівський район</div>
                   <div>Чернігівська обл.</div>
                   <div>Україна</div>
-                  <div style={{ fontSize: `${postalIndexFontSize}px`, fontWeight: 'bold', marginTop: '2mm', letterSpacing: '2px' }}>
+                  <div style={{ fontSize: `${postalIndexFontSize * scaleRatio}px`, fontWeight: 'bold', marginTop: `${2 * scaleRatio}px`, letterSpacing: `${2 * scaleRatio}px` }}>
                     15582
                   </div>
                 </div>
@@ -377,13 +381,13 @@ export default function ClientMailPage() {
                 <div 
                   style={{
                     position: 'absolute',
-                    top: `${(envelopeSettings.recipientPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * 500)}px`,
-                    left: `${(envelopeSettings.recipientPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * 500}px`,
-                    fontSize: `${senderRecipientFontSize}px`,
+                    top: `${(envelopeSettings.recipientPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE)}px`,
+                    left: `${(envelopeSettings.recipientPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE}px`,
+                    fontSize: `${senderRecipientFontSize * scaleRatio}px`,
                     lineHeight: '1.4',
-                    maxWidth: '230px',
+                    maxWidth: `${230 * scaleRatio}px`,
                     cursor: isDragging ? 'grabbing' : 'grab',
-                    padding: '5px',
+                    padding: `${5 * scaleRatio}px`,
                     border: isDragging && draggedElement === 'recipient' ? '2px dashed #3b82f6' : '2px dashed transparent',
                     backgroundColor: isDragging && draggedElement === 'recipient' ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
                     userSelect: 'none'
@@ -394,7 +398,7 @@ export default function ClientMailPage() {
                   <div style={{ fontWeight: 'bold' }}>ФОП Таранов Руслан Сергійович</div>
                   <div>вул. Промислова, буд. 18, кв. 33, м.</div>
                   <div>Павлоград</div>
-                  <div style={{ fontSize: `${postalIndexFontSize}px`, fontWeight: 'bold', marginTop: '3mm', letterSpacing: '3px' }}>
+                  <div style={{ fontSize: `${postalIndexFontSize * scaleRatio}px`, fontWeight: 'bold', marginTop: `${3 * scaleRatio}px`, letterSpacing: `${3 * scaleRatio}px` }}>
                     51400
                   </div>
                 </div>
@@ -404,14 +408,14 @@ export default function ClientMailPage() {
                   <div
                     style={{
                       position: 'absolute',
-                      top: `${(envelopeSettings.advertisementPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * 500)}px`,
-                      left: `${(envelopeSettings.advertisementPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * 500}px`,
-                      fontSize: `${advertisementFontSize}px`,
-                      maxWidth: '200px',
+                      top: `${(envelopeSettings.advertisementPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE)}px`,
+                      left: `${(envelopeSettings.advertisementPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE}px`,
+                      fontSize: `${advertisementFontSize * scaleRatio}px`,
+                      maxWidth: `${200 * scaleRatio}px`,
                       whiteSpace: 'pre-wrap',
                       wordWrap: 'break-word',
                       cursor: isDragging ? 'grabbing' : 'grab',
-                      padding: '5px',
+                      padding: `${5 * scaleRatio}px`,
                       border: isDragging && draggedElement === 'advertisement' ? '2px dashed #3b82f6' : '2px dashed transparent',
                       backgroundColor: isDragging && draggedElement === 'advertisement' ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
                       userSelect: 'none'
@@ -428,10 +432,10 @@ export default function ClientMailPage() {
                   <div
                     style={{
                       position: 'absolute',
-                      top: `${(envelopeSettings.imagePosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * 500)}px`,
-                      left: `${(envelopeSettings.imagePosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * 500}px`,
+                      top: `${(envelopeSettings.imagePosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE)}px`,
+                      left: `${(envelopeSettings.imagePosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE}px`,
                       cursor: isDragging ? 'grabbing' : 'grab',
-                      padding: '5px',
+                      padding: `${5 * scaleRatio}px`,
                       border: isDragging && draggedElement === 'image' ? '2px dashed #3b82f6' : '2px dashed transparent',
                       backgroundColor: isDragging && draggedElement === 'image' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
                     }}
@@ -442,10 +446,10 @@ export default function ClientMailPage() {
                       src={envelopeSettings.advertisementImage} 
                       alt="Реклама"
                       style={{
-                        width: `${(envelopeSettings.imageSize / 100) * 130}px`,
+                        width: `${(envelopeSettings.imageSize / 100) * 130 * scaleRatio}px`,
                         height: 'auto',
-                        maxWidth: '130px',
-                        maxHeight: '130px',
+                        maxWidth: `${130 * scaleRatio}px`,
+                        maxHeight: `${130 * scaleRatio}px`,
                         objectFit: 'contain',
                         userSelect: 'none',
                         pointerEvents: 'none'
