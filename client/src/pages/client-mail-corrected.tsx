@@ -270,7 +270,7 @@ export default function ClientMailPage() {
   // Фіксований масштаб для 550px ширини
   const ENVELOPE_SCALE = 550;
   const baseScale = ENVELOPE_SCALE / envelopeSizes[envelopeSettings.envelopeSize].width;
-  const elementScale = baseScale * 0.5; // Менший масштаб для елементів
+  const elementScale = baseScale * 0.35; // Ще менший масштаб для елементів
 
   return (
     <div className="container mx-auto py-6 space-y-6">
