@@ -10,7 +10,7 @@ import {
   componentCategories, componentAlternatives, carriers, shipments, shipmentItems, customerAddresses, senderSettings,
   manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, exchangeRateHistory, serialNumbers, serialNumberSettings, emailSettings,
   sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients,
-  clientMail, mailRegistry, envelopePrintSettings, envelopeSettings,
+  clientMail, mailRegistry, envelopePrintSettings,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
   type Category, type InsertCategory,
@@ -33,7 +33,6 @@ import {
   type ClientMail, type InsertClientMail,
   type MailRegistry, type InsertMailRegistry,
   type EnvelopePrintSettings, type InsertEnvelopePrintSettings,
-  type EnvelopeSettings, type InsertEnvelopeSettings,
   type Shipment, type InsertShipment,
   type CustomerAddress, type InsertCustomerAddress,
   type SenderSettings, type InsertSenderSettings,
@@ -5307,41 +5306,6 @@ export class DatabaseStorage implements IStorage {
       mails: createdMails,
       batchId 
     };
-  }
-
-  // Envelope Settings methods
-  async getEnvelopeSettings(userId: string, envelopeSize: string): Promise<EnvelopeSettings | null> {
-    const [settings] = await db
-      .select()
-      .from(envelopeSettings)
-      .where(and(eq(envelopeSettings.userId, userId), eq(envelopeSettings.envelopeSize, envelopeSize)));
-    return settings || null;
-  }
-
-  async createEnvelopeSettings(settingsData: InsertEnvelopeSettings): Promise<EnvelopeSettings> {
-    const [settings] = await db
-      .insert(envelopeSettings)
-      .values(settingsData)
-      .returning();
-    return settings;
-  }
-
-  async upsertEnvelopeSettings(settingsData: InsertEnvelopeSettings): Promise<EnvelopeSettings> {
-    const [settings] = await db
-      .insert(envelopeSettings)
-      .values(settingsData)
-      .onConflictDoUpdate({
-        target: [envelopeSettings.userId, envelopeSettings.envelopeSize],
-        set: {
-          senderNameWidth: settingsData.senderNameWidth,
-          senderAddressWidth: settingsData.senderAddressWidth,
-          recipientNameWidth: settingsData.recipientNameWidth,
-          recipientAddressWidth: settingsData.recipientAddressWidth,
-          updatedAt: new Date()
-        }
-      })
-      .returning();
-    return settings;
   }
 }
 

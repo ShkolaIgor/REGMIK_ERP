@@ -4460,48 +4460,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Envelope Settings API
-  app.get("/api/envelope-settings", async (req, res) => {
-    try {
-      const { userId, envelopeSize } = req.query;
-      const settings = await storage.getEnvelopeSettings(userId as string, envelopeSize as string);
-      res.json(settings);
-    } catch (error) {
-      console.error("Error fetching envelope settings:", error);
-      res.status(500).json({ error: "Failed to fetch envelope settings" });
-    }
-  });
-
-  app.post("/api/envelope-settings", async (req, res) => {
-    try {
-      const settingsData = insertEnvelopeSettingsSchema.parse(req.body);
-      const settings = await storage.createEnvelopeSettings(settingsData);
-      res.status(201).json(settings);
-    } catch (error) {
-      console.error("Error creating envelope settings:", error);
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Invalid envelope settings data", details: error.errors });
-      } else {
-        res.status(500).json({ error: "Failed to create envelope settings" });
-      }
-    }
-  });
-
-  app.put("/api/envelope-settings", async (req, res) => {
-    try {
-      const settingsData = insertEnvelopeSettingsSchema.parse(req.body);
-      const settings = await storage.upsertEnvelopeSettings(settingsData);
-      res.json(settings);
-    } catch (error) {
-      console.error("Error updating envelope settings:", error);
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Invalid envelope settings data", details: error.errors });
-      } else {
-        res.status(500).json({ error: "Failed to update envelope settings" });
-      }
-    }
-  });
-
   const httpServer = createServer(app);
   return httpServer;
 }
