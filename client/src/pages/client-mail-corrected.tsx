@@ -294,15 +294,19 @@ export default function ClientMailPage() {
       
       const deltaX = e.clientX - resizeStart.x;
       const deltaY = e.clientY - resizeStart.y;
+      const diagonal = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      const direction = deltaX > 0 ? 1 : -1;
       
       if (resizedElement === 'image') {
-        // Calculate new size based on diagonal movement
-        const diagonal = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-        const direction = deltaX > 0 ? 1 : -1; // Positive for enlarging, negative for shrinking
         const newWidth = Math.max(20, Math.min(200, resizeStart.width + (diagonal * direction)));
         const sizePercent = Math.max(10, Math.min(150, (newWidth / 130) * 100));
-        
         setEnvelopeSettings(prev => ({ ...prev, imageSize: sizePercent }));
+      } else if (resizedElement === 'advertisement') {
+        const newSize = Math.max(8, Math.min(24, resizeStart.width + (deltaX * 0.2)));
+        setEnvelopeSettings(prev => ({ ...prev, advertisementFontSize: newSize }));
+      } else if (resizedElement === 'sender' || resizedElement === 'recipient') {
+        const newSize = Math.max(8, Math.min(20, resizeStart.width + (deltaX * 0.2)));
+        setEnvelopeSettings(prev => ({ ...prev, senderRecipientFontSize: newSize }));
       }
     };
 
@@ -535,6 +539,33 @@ export default function ClientMailPage() {
                   <div style={{ fontSize: `${postalIndexFontSize * elementScale}px`, fontWeight: 'bold', marginTop: `${2 * elementScale}px`, letterSpacing: `${2 * elementScale}px` }}>
                     15582
                   </div>
+                  {/* Resize handle for sender */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '-10px',
+                      right: '-10px',
+                      width: '20px',
+                      height: '20px',
+                      backgroundColor: '#3b82f6',
+                      border: '2px solid white',
+                      borderRadius: '4px',
+                      cursor: 'nw-resize',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 1000,
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleResizeMouseDown('sender', e);
+                    }}
+                    title="Перетягніть для зміни розміру тексту"
+                  >
+                    <ArrowUpDown size={12} color="white" />
+                  </div>
                 </div>
 
                 {/* Recipient */}
@@ -562,6 +593,33 @@ export default function ClientMailPage() {
                   <div style={{ fontSize: `${postalIndexFontSize * elementScale}px`, fontWeight: 'bold', marginTop: `${3 * elementScale}px`, letterSpacing: `${3 * elementScale}px` }}>
                     51400
                   </div>
+                  {/* Resize handle for recipient */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '-10px',
+                      right: '-10px',
+                      width: '20px',
+                      height: '20px',
+                      backgroundColor: '#3b82f6',
+                      border: '2px solid white',
+                      borderRadius: '4px',
+                      cursor: 'nw-resize',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 1000,
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleResizeMouseDown('recipient', e);
+                    }}
+                    title="Перетягніть для зміни розміру тексту"
+                  >
+                    <ArrowUpDown size={12} color="white" />
+                  </div>
                 </div>
 
                 {/* Advertisement text */}
@@ -586,6 +644,33 @@ export default function ClientMailPage() {
                     title="Натисніть та перетягніть для переміщення"
                   >
                     {envelopeSettings.advertisementText}
+                    {/* Resize handle for advertisement */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: '-10px',
+                        right: '-10px',
+                        width: '20px',
+                        height: '20px',
+                        backgroundColor: '#3b82f6',
+                        border: '2px solid white',
+                        borderRadius: '4px',
+                        cursor: 'nw-resize',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                      }}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleResizeMouseDown('advertisement', e);
+                      }}
+                      title="Перетягніть для зміни розміру тексту"
+                    >
+                      <ArrowUpDown size={12} color="white" />
+                    </div>
                   </div>
                 )}
 
@@ -621,15 +706,17 @@ export default function ClientMailPage() {
                     <div
                       style={{
                         position: 'absolute',
-                        bottom: '-8px',
-                        right: '-8px',
-                        width: '16px',
-                        height: '16px',
+                        bottom: '-10px',
+                        right: '-10px',
+                        width: '20px',
+                        height: '20px',
                         backgroundColor: '#3b82f6',
                         border: '2px solid white',
-                        borderRadius: '50%',
+                        borderRadius: '4px',
                         cursor: 'nw-resize',
-                        display: 'block',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         zIndex: 1000,
                         boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                       }}
@@ -638,8 +725,10 @@ export default function ClientMailPage() {
                         e.stopPropagation();
                         handleResizeMouseDown('image', e);
                       }}
-                      title="Перетягніть для зміни розміру"
-                    />
+                      title="Перетягніть для зміни розміру зображення"
+                    >
+                      <ArrowUpDown size={12} color="white" />
+                    </div>
                   </div>
                 )}
               </div>
