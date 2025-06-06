@@ -320,33 +320,23 @@ export default function Clients() {
                   <FormField
                     control={contactForm.control}
                     name="clientId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Клієнт *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Введіть назву, ЄДРПОУ або ІПН клієнта..."
-                            {...field}
-                            onChange={(e) => {
-                              const searchValue = e.target.value;
-                              field.onChange(searchValue);
-                              
-                              // Знайти клієнта по назві, ID або будь-якому збігу
-                              const matchedClient = (clients as Client[]).find(client => 
-                                client.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-                                client.id.toLowerCase().includes(searchValue.toLowerCase())
-                              );
-                              
-                              if (matchedClient && searchValue === matchedClient.name) {
-                                field.onChange(matchedClient.id);
-                              }
-                            }}
-                            autoComplete="off"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const selectedClient = (clients as Client[]).find(client => client.id === field.value);
+                      return (
+                        <FormItem>
+                          <FormLabel>Клієнт *</FormLabel>
+                          <FormControl>
+                            <Input 
+                              value={selectedClient ? selectedClient.name : field.value}
+                              readOnly
+                              className="bg-muted cursor-not-allowed"
+                              placeholder="Клієнт не вибрано"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                   
                   <FormField
