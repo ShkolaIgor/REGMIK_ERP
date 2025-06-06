@@ -92,12 +92,22 @@ export default function Clients() {
   const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
   const [selectedClientForContact, setSelectedClientForContact] = useState<string>("");
   const [isGlobalContactAdd, setIsGlobalContactAdd] = useState(false);
+  const fullNameInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: clients = [], isLoading } = useQuery<Client[]>({
     queryKey: ["/api/clients"],
   });
+
+  // Автоматичне фокусування на поле "Повне ім'я" при відкритті діалогу контакту
+  useEffect(() => {
+    if (isContactDialogOpen && fullNameInputRef.current) {
+      setTimeout(() => {
+        fullNameInputRef.current?.focus();
+      }, 100);
+    }
+  }, [isContactDialogOpen]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -388,7 +398,11 @@ export default function Clients() {
                       <FormItem>
                         <FormLabel>Повне ім'я *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Іван Іванович Іваненко" {...field} />
+                          <Input 
+                            ref={fullNameInputRef}
+                            placeholder="Іван Іванович Іваненко" 
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
