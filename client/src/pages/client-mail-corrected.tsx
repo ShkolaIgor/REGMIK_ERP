@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Client, InsertClientMail, ClientMail } from "@shared/schema";
-import { Plus, Printer, Users, Trash2, Download, Upload, FileText, Settings2, Move, Image as ImageIcon } from "lucide-react";
+import { Plus, Printer, Users, Trash2, Download, Upload, FileText, Settings2, Move, Image as ImageIcon, ArrowUpDown, ArrowLeftRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 type EnvelopeSize = 'c5' | 'c4' | 'dl' | 'c6';
@@ -199,11 +199,14 @@ export default function ClientMailPage() {
     // Get current size based on element type
     let currentWidth = 100, currentHeight = 50;
     if (element === 'advertisement') {
-      currentWidth = getAdvertisementMaxWidth(envelopeSettings.envelopeSize);
-      currentHeight = 40;
+      currentWidth = advertisementFontSize;
+      currentHeight = advertisementFontSize;
     } else if (element === 'image') {
       currentWidth = (envelopeSettings.imageSize / 100) * 130;
       currentHeight = (envelopeSettings.imageSize / 100) * 130;
+    } else if (element === 'sender' || element === 'recipient') {
+      currentWidth = senderRecipientFontSize;
+      currentHeight = senderRecipientFontSize;
     }
     
     setResizeStart({ 
@@ -479,7 +482,7 @@ export default function ClientMailPage() {
 
       {/* Envelope Print Dialog */}
       <Dialog open={isEnvelopePrintDialogOpen} onOpenChange={setIsEnvelopePrintDialogOpen}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden" aria-describedby="envelope-dialog-description">
+        <DialogContent className="w-[1000px] max-h-[95vh] overflow-hidden" aria-describedby="envelope-dialog-description">
           <DialogHeader>
             <DialogTitle>Налаштування друку конвертів {batchName}</DialogTitle>
             <div id="envelope-dialog-description" className="sr-only">
@@ -747,17 +750,7 @@ export default function ClientMailPage() {
                       </div>
                     </div>
 
-                    <div>
-                      <Label>Розмір зображення (%): {envelopeSettings.imageSize}%</Label>
-                      <Slider
-                        value={[envelopeSettings.imageSize]}
-                        onValueChange={([value]) => setEnvelopeSettings(prev => ({ ...prev, imageSize: value }))}
-                        min={25}
-                        max={200}
-                        step={5}
-                        className="mt-2"
-                      />
-                    </div>
+
                   </TabsContent>
 
                   <TabsContent value="fonts" className="space-y-3 mt-3">
