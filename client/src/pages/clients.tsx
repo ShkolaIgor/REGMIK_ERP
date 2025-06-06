@@ -355,14 +355,14 @@ export default function Clients() {
                                   const searchValue = e.target.value;
                                   field.onChange(searchValue);
                                   
-                                  // Знайти клієнта по назві або ID
+                                  // Знайти клієнта по назві або ЄДРПОУ/ІПН
                                   const matchedClient = (clients as Client[]).find(client => 
                                     client.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-                                    client.id.toLowerCase().includes(searchValue.toLowerCase())
+                                    client.taxCode?.toLowerCase().includes(searchValue.toLowerCase())
                                   );
                                   
                                   if (matchedClient && searchValue === matchedClient.name) {
-                                    field.onChange(matchedClient.id);
+                                    field.onChange(matchedClient.id.toString());
                                   }
                                 }}
                                 autoComplete="off"
@@ -795,7 +795,7 @@ export default function Clients() {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => openAddContactDialog(client.id)}
+                    onClick={() => openAddContactDialog(client.id.toString())}
                     className="text-blue-600 hover:text-blue-700"
                   >
                     <User className="h-4 w-4" />
@@ -806,7 +806,7 @@ export default function Clients() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDelete(client.id)}
+                    onClick={() => handleDelete(client.id.toString())}
                     className="text-red-600 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4" />

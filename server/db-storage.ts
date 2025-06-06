@@ -330,11 +330,11 @@ export class DatabaseStorage implements IStorage {
     
     for (const item of items) {
       // Отримуємо товар з бази даних для встановлення актуальної ціни
-      const product = await db.select().from(products).where(eq(products.id, item.productId)).limit(1);
+      const product = await db.select().from(products).where(eq(products.id, typeof item.productId === 'string' ? parseInt(item.productId) : item.productId)).limit(1);
       
       if (product.length > 0) {
         const unitPrice = parseFloat(product[0].retailPrice || "0");
-        const quantity = parseFloat(item.quantity || "1");
+        const quantity = parseFloat(typeof item.quantity === 'string' ? item.quantity : item.quantity?.toString() || "1");
         const totalPrice = unitPrice * quantity;
         
         const itemWithPrice = {
@@ -388,7 +388,7 @@ export class DatabaseStorage implements IStorage {
       for (const item of items) {
         // Використовуємо ціну з форми, а не з бази даних
         const unitPrice = parseFloat(item.unitPrice || "0");
-        const quantity = parseFloat(item.quantity || "1");
+        const quantity = parseFloat(typeof item.quantity === 'string' ? item.quantity : item.quantity?.toString() || "1");
         const totalPrice = unitPrice * quantity;
         
         const itemWithPrice = {
