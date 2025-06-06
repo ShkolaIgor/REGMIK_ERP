@@ -188,7 +188,7 @@ export class DatabaseStorage implements IStorage {
 
   async getProduct(id: number): Promise<Product | undefined> {
     const result = await db.select().from(products).where(eq(products.id, id));
-    return result[0];
+    return result[0] || undefined;
   }
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
@@ -682,6 +682,7 @@ export class DatabaseStorage implements IStorage {
       difficulty: techCards.difficulty,
       status: techCards.status,
       materialCost: techCards.materialCost,
+      createdBy: techCards.createdBy,
       createdAt: techCards.createdAt,
       product: products
     })
@@ -818,12 +819,7 @@ export class DatabaseStorage implements IStorage {
     const [productionTasksResult] = await db.select({ count: sql<number>`count(*)` }).from(productionTasks)
       .where(sql`${productionTasks.status} != 'completed'`);
 
-    // Підрахунок дефіциту матеріалів
-    const [materialShortagesResult] = await db.select({ count: sql<number>`count(*)` }).from(materialShortages)
-      .where(eq(materialShortages.status, 'pending'));
 
-    const [criticalShortagesResult] = await db.select({ count: sql<number>`count(*)` }).from(materialShortages)
-      .where(eq(materialShortages.priority, 'critical'));
 
     // Розрахунок загальної вартості та низьких запасів
     const inventoryData = await db.select({
@@ -880,6 +876,7 @@ export class DatabaseStorage implements IStorage {
         unit: products.unit,
         minStock: products.minStock,
         maxStock: products.maxStock,
+        hasSerialNumbers: products.hasSerialNumbers,
         createdAt: products.createdAt
       }
     })
