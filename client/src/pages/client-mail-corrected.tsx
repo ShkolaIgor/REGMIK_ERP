@@ -591,8 +591,10 @@ export default function ClientMailPage() {
                       <Label>Рекламне зображення</Label>
                       <div className="space-y-2">
                         <Input
+                          id="image-upload"
                           type="file"
                           accept="image/*"
+                          className="hidden"
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
@@ -607,12 +609,15 @@ export default function ClientMailPage() {
                             }
                           }}
                         />
-                        {envelopeSettings.advertisementImage && (
+                        
+                        {envelopeSettings.advertisementImage ? (
                           <div className="relative inline-block">
                             <img 
                               src={envelopeSettings.advertisementImage} 
                               alt="Реклама" 
-                              className="w-20 h-20 object-contain border rounded"
+                              className="w-20 h-20 object-contain border rounded cursor-pointer"
+                              onClick={() => document.getElementById('image-upload')?.click()}
+                              title="Клікніть для зміни зображення"
                             />
                             <Button
                               variant="destructive"
@@ -622,6 +627,17 @@ export default function ClientMailPage() {
                             >
                               ×
                             </Button>
+                          </div>
+                        ) : (
+                          <div 
+                            className="w-20 h-20 border-2 border-dashed border-gray-300 rounded flex items-center justify-center cursor-pointer hover:border-gray-400 transition-colors"
+                            onClick={() => document.getElementById('image-upload')?.click()}
+                            title="Клікніть для вибору зображення"
+                          >
+                            <div className="text-center text-xs text-gray-500">
+                              <ImageIcon className="h-6 w-6 mx-auto mb-1" />
+                              <div>Виберіть зображення</div>
+                            </div>
                           </div>
                         )}
                       </div>
