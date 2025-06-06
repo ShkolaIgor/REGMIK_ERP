@@ -17,7 +17,6 @@ import { Plus, Printer, Users, Trash2, Download, Upload, FileText, Settings2, Mo
 import { toast } from "@/hooks/use-toast";
 
 type EnvelopeSize = 'c5' | 'c4' | 'dl' | 'c6';
-type ImageRelativePosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
 interface EnvelopeSettings {
   id?: number;
@@ -112,15 +111,6 @@ export default function ClientMailPage() {
     }
   });
 
-  const saveSettingsMutation = useMutation({
-    mutationFn: (settings: EnvelopeSettings) => {
-      return apiRequest("/api/envelope-settings", { method: "POST", body: settings });
-    },
-    onSuccess: () => {
-      toast({ title: "Налаштування збережено!" });
-    }
-  });
-
   const batchPrintMutation = useMutation({
     mutationFn: async (data: { batchName: string; clientIds: number[]; settings: EnvelopeSettings }) => {
       return apiRequest("/api/client-mail/batch-print", { method: "POST", body: data });
@@ -135,7 +125,6 @@ export default function ClientMailPage() {
     e.preventDefault();
     e.stopPropagation();
     
-    // Зберігаємо межі конверта для обмеження перетягування
     const envelopeEl = e.currentTarget.closest('.envelope-preview') as HTMLElement;
     if (envelopeEl) {
       setEnvelopeBounds(envelopeEl.getBoundingClientRect());
@@ -150,16 +139,15 @@ export default function ClientMailPage() {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging || !draggedElement || !envelopeBounds) return;
       
-      // Перевіряємо, чи курсор знаходиться в межах конверта
       if (e.clientX < envelopeBounds.left || e.clientX > envelopeBounds.right ||
           e.clientY < envelopeBounds.top || e.clientY > envelopeBounds.bottom) {
-        return; // Ігноруємо рух за межами конверта
+        return;
       }
       
       e.preventDefault();
       const deltaX = e.clientX - dragStart.x;
       const deltaY = e.clientY - dragStart.y;
-      const mmDeltaX = deltaX * 1.2; // Збільшена чутливість для піксельної системи
+      const mmDeltaX = deltaX * 1.2;
       const mmDeltaY = deltaY * 1.2;
 
       setEnvelopeSettings(prev => {
@@ -205,7 +193,7 @@ export default function ClientMailPage() {
   // Фіксований масштаб для 550px ширини
   const ENVELOPE_SCALE = 550;
   const baseScale = ENVELOPE_SCALE / envelopeSizes[envelopeSettings.envelopeSize].width;
-  const elementScale = baseScale * 0.8; // Масштаб для елементів (шрифти, відступи)
+  const elementScale = baseScale * 0.5; // Менший масштаб для елементів
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -367,11 +355,11 @@ export default function ClientMailPage() {
                     position: 'absolute',
                     top: `${(envelopeSettings.senderPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE)}px`,
                     left: `${(envelopeSettings.senderPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE}px`,
-                    fontSize: `${senderRecipientFontSize * scaleRatio}px`,
+                    fontSize: `${senderRecipientFontSize * elementScale}px`,
                     lineHeight: '1.4',
-                    maxWidth: `${230 * scaleRatio}px`,
+                    maxWidth: `${230 * elementScale}px`,
                     cursor: isDragging ? 'grabbing' : 'grab',
-                    padding: `${5 * scaleRatio}px`,
+                    padding: `${5 * elementScale}px`,
                     border: isDragging && draggedElement === 'sender' ? '2px dashed #3b82f6' : '2px dashed transparent',
                     backgroundColor: isDragging && draggedElement === 'sender' ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
                     userSelect: 'none'
@@ -395,11 +383,11 @@ export default function ClientMailPage() {
                     position: 'absolute',
                     top: `${(envelopeSettings.recipientPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE)}px`,
                     left: `${(envelopeSettings.recipientPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE}px`,
-                    fontSize: `${senderRecipientFontSize * scaleRatio}px`,
+                    fontSize: `${senderRecipientFontSize * elementScale}px`,
                     lineHeight: '1.4',
-                    maxWidth: `${230 * scaleRatio}px`,
+                    maxWidth: `${230 * elementScale}px`,
                     cursor: isDragging ? 'grabbing' : 'grab',
-                    padding: `${5 * scaleRatio}px`,
+                    padding: `${5 * elementScale}px`,
                     border: isDragging && draggedElement === 'recipient' ? '2px dashed #3b82f6' : '2px dashed transparent',
                     backgroundColor: isDragging && draggedElement === 'recipient' ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
                     userSelect: 'none'
@@ -410,7 +398,7 @@ export default function ClientMailPage() {
                   <div style={{ fontWeight: 'bold' }}>ФОП Таранов Руслан Сергійович</div>
                   <div>вул. Промислова, буд. 18, кв. 33, м.</div>
                   <div>Павлоград</div>
-                  <div style={{ fontSize: `${postalIndexFontSize * scaleRatio}px`, fontWeight: 'bold', marginTop: `${3 * scaleRatio}px`, letterSpacing: `${3 * scaleRatio}px` }}>
+                  <div style={{ fontSize: `${postalIndexFontSize * elementScale}px`, fontWeight: 'bold', marginTop: `${3 * elementScale}px`, letterSpacing: `${3 * elementScale}px` }}>
                     51400
                   </div>
                 </div>
@@ -422,12 +410,12 @@ export default function ClientMailPage() {
                       position: 'absolute',
                       top: `${(envelopeSettings.advertisementPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE)}px`,
                       left: `${(envelopeSettings.advertisementPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE}px`,
-                      fontSize: `${advertisementFontSize * scaleRatio}px`,
-                      maxWidth: `${200 * scaleRatio}px`,
+                      fontSize: `${advertisementFontSize * elementScale}px`,
+                      maxWidth: `${200 * elementScale}px`,
                       whiteSpace: 'pre-wrap',
                       wordWrap: 'break-word',
                       cursor: isDragging ? 'grabbing' : 'grab',
-                      padding: `${5 * scaleRatio}px`,
+                      padding: `${5 * elementScale}px`,
                       border: isDragging && draggedElement === 'advertisement' ? '2px dashed #3b82f6' : '2px dashed transparent',
                       backgroundColor: isDragging && draggedElement === 'advertisement' ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
                       userSelect: 'none'
@@ -447,7 +435,7 @@ export default function ClientMailPage() {
                       top: `${(envelopeSettings.imagePosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE)}px`,
                       left: `${(envelopeSettings.imagePosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE}px`,
                       cursor: isDragging ? 'grabbing' : 'grab',
-                      padding: `${5 * scaleRatio}px`,
+                      padding: `${5 * elementScale}px`,
                       border: isDragging && draggedElement === 'image' ? '2px dashed #3b82f6' : '2px dashed transparent',
                       backgroundColor: isDragging && draggedElement === 'image' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
                     }}
@@ -458,10 +446,10 @@ export default function ClientMailPage() {
                       src={envelopeSettings.advertisementImage} 
                       alt="Реклама"
                       style={{
-                        width: `${(envelopeSettings.imageSize / 100) * 130 * scaleRatio}px`,
+                        width: `${(envelopeSettings.imageSize / 100) * 130 * elementScale}px`,
                         height: 'auto',
-                        maxWidth: `${130 * scaleRatio}px`,
-                        maxHeight: `${130 * scaleRatio}px`,
+                        maxWidth: `${130 * elementScale}px`,
+                        maxHeight: `${130 * elementScale}px`,
                         objectFit: 'contain',
                         userSelect: 'none',
                         pointerEvents: 'none'
@@ -489,7 +477,6 @@ export default function ClientMailPage() {
                       <Select
                         value={envelopeSettings.envelopeSize}
                         onValueChange={(value: EnvelopeSize) => {
-                          // Завантажуємо збережені налаштування для нового типу конверта
                           const saved = localStorage.getItem(`envelopeSettings_${value}`);
                           if (saved) {
                             const savedSettings = JSON.parse(saved);
