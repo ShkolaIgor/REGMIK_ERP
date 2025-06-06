@@ -1420,8 +1420,7 @@ export const productPrices = pgTable("product_prices", {
 export const insertCurrencySchema = createInsertSchema(currencies).omit({ 
   id: true, 
   createdAt: true, 
-  updatedAt: true,
-  lastUpdated: true 
+  updatedAt: true
 });
 
 export const insertExchangeRateHistorySchema = createInsertSchema(exchangeRateHistory).omit({ 
