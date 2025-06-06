@@ -481,7 +481,7 @@ export default function ClientMailPage() {
                 </div>
 
                 {/* Advertisement text */}
-                {envelopeSettings.advertisementText && (
+                {(envelopeSettings.advertisementText || envelopeSettings.envelopeSize === 'dl' || envelopeSettings.envelopeSize === 'c6') && (
                   <div
                     style={{
                       position: 'absolute',
@@ -500,7 +500,7 @@ export default function ClientMailPage() {
                     onMouseDown={(e) => handleMouseDown('advertisement', e)}
                     title="Натисніть та перетягніть для переміщення"
                   >
-                    {envelopeSettings.advertisementText}
+                    {envelopeSettings.advertisementText || 'Рекламна область (додайте текст)'}
                   </div>
                 )}
 
