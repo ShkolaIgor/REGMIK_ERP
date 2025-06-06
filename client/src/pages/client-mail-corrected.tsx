@@ -33,6 +33,8 @@ interface EnvelopeSettings {
   recipientPosition: { x: number; y: number };
   advertisementPosition: { x: number; y: number };
   imagePosition: { x: number; y: number };
+  addressMaxWidth?: number;
+  advertisementMaxWidth?: number;
 }
 
 const envelopeSizes = {
@@ -293,20 +295,30 @@ export default function ClientMailPage() {
       if (!isResizing || !resizedElement) return;
       
       const deltaX = e.clientX - resizeStart.x;
-      const deltaY = e.clientY - resizeStart.y;
-      const diagonal = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      const direction = deltaX > 0 ? 1 : -1;
       
       if (resizedElement === 'image') {
+        // Для зображення - змінюємо масштаб
+        const diagonal = Math.sqrt(deltaX * deltaX + (e.clientY - resizeStart.y) * (e.clientY - resizeStart.y));
+        const direction = deltaX > 0 ? 1 : -1;
         const newWidth = Math.max(20, Math.min(200, resizeStart.width + (diagonal * direction * 0.5)));
         const sizePercent = Math.max(10, Math.min(150, (newWidth / 130) * 100));
         setEnvelopeSettings(prev => ({ ...prev, imageSize: sizePercent }));
       } else if (resizedElement === 'advertisement') {
-        const newSize = Math.max(8, Math.min(28, resizeStart.width + (deltaX * 0.15)));
-        setEnvelopeSettings(prev => ({ ...prev, advertisementFontSize: newSize }));
+        // Для реклами - змінюємо ширину поля
+        const newWidth = Math.max(100, Math.min(350, resizeStart.width + deltaX));
+        const maxWidth = getAdvertisementMaxWidth(envelopeSettings.envelopeSize);
+        const widthPercent = Math.max(50, Math.min(150, (newWidth / maxWidth) * 100));
+        setEnvelopeSettings(prev => ({ 
+          ...prev, 
+          advertisementMaxWidth: Math.round(maxWidth * (widthPercent / 100))
+        }));
       } else if (resizedElement === 'sender' || resizedElement === 'recipient') {
-        const newSize = Math.max(8, Math.min(24, resizeStart.width + (deltaX * 0.15)));
-        setEnvelopeSettings(prev => ({ ...prev, senderRecipientFontSize: newSize }));
+        // Для адрес - змінюємо ширину поля
+        const newWidth = Math.max(150, Math.min(300, resizeStart.width + deltaX));
+        setEnvelopeSettings(prev => ({ 
+          ...prev, 
+          addressMaxWidth: Math.round(newWidth)
+        }));
       }
     };
 
@@ -540,29 +552,24 @@ export default function ClientMailPage() {
                   <div
                     style={{
                       position: 'absolute',
-                      bottom: '-10px',
-                      right: '-10px',
-                      width: '20px',
-                      height: '20px',
+                      bottom: '-5px',
+                      right: '-5px',
+                      width: '12px',
+                      height: '8px',
                       backgroundColor: '#3b82f6',
-                      border: '2px solid white',
-                      borderRadius: '4px',
-                      cursor: 'nw-resize',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      border: '1px solid white',
+                      borderRadius: '2px',
+                      cursor: 'ew-resize',
                       zIndex: 1000,
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
                     }}
                     onMouseDown={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       handleResizeMouseDown('sender', e);
                     }}
-                    title="Перетягніть для зміни розміру тексту"
-                  >
-                    <ArrowUpDown size={12} color="white" />
-                  </div>
+                    title="Перетягніть для зміни ширини поля"
+                  />
                 </div>
 
                 {/* Recipient */}
@@ -594,29 +601,24 @@ export default function ClientMailPage() {
                   <div
                     style={{
                       position: 'absolute',
-                      bottom: '-10px',
-                      right: '-10px',
-                      width: '20px',
-                      height: '20px',
+                      bottom: '-5px',
+                      right: '-5px',
+                      width: '12px',
+                      height: '8px',
                       backgroundColor: '#3b82f6',
-                      border: '2px solid white',
-                      borderRadius: '4px',
-                      cursor: 'nw-resize',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      border: '1px solid white',
+                      borderRadius: '2px',
+                      cursor: 'ew-resize',
                       zIndex: 1000,
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
                     }}
                     onMouseDown={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       handleResizeMouseDown('recipient', e);
                     }}
-                    title="Перетягніть для зміни розміру тексту"
-                  >
-                    <ArrowUpDown size={12} color="white" />
-                  </div>
+                    title="Перетягніть для зміни ширини поля"
+                  />
                 </div>
 
                 {/* Advertisement text */}
@@ -645,29 +647,24 @@ export default function ClientMailPage() {
                     <div
                       style={{
                         position: 'absolute',
-                        bottom: '-10px',
-                        right: '-10px',
-                        width: '20px',
-                        height: '20px',
+                        bottom: '-5px',
+                        right: '-5px',
+                        width: '12px',
+                        height: '8px',
                         backgroundColor: '#3b82f6',
-                        border: '2px solid white',
-                        borderRadius: '4px',
-                        cursor: 'nw-resize',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        border: '1px solid white',
+                        borderRadius: '2px',
+                        cursor: 'ew-resize',
                         zIndex: 1000,
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
                       }}
                       onMouseDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         handleResizeMouseDown('advertisement', e);
                       }}
-                      title="Перетягніть для зміни розміру тексту"
-                    >
-                      <ArrowUpDown size={12} color="white" />
-                    </div>
+                      title="Перетягніть для зміни ширини поля"
+                    />
                   </div>
                 )}
 
@@ -703,29 +700,24 @@ export default function ClientMailPage() {
                     <div
                       style={{
                         position: 'absolute',
-                        bottom: '-10px',
-                        right: '-10px',
-                        width: '20px',
-                        height: '20px',
+                        bottom: '-5px',
+                        right: '-5px',
+                        width: '12px',
+                        height: '8px',
                         backgroundColor: '#3b82f6',
-                        border: '2px solid white',
-                        borderRadius: '4px',
-                        cursor: 'nw-resize',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        border: '1px solid white',
+                        borderRadius: '2px',
+                        cursor: 'se-resize',
                         zIndex: 1000,
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
                       }}
                       onMouseDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         handleResizeMouseDown('image', e);
                       }}
-                      title="Перетягніть для зміни розміру зображення"
-                    >
-                      <ArrowUpDown size={12} color="white" />
-                    </div>
+                      title="Перетягніть для зміни масштабу зображення"
+                    />
                   </div>
                 )}
               </div>
