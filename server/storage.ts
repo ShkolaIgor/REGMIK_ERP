@@ -4,7 +4,7 @@ import {
   components, productComponents, costCalculations, materialShortages, inventoryAudits, inventoryAuditItems, workers,
   packageTypes, solderingTypes, componentCategories, shipments, shipmentItems, carriers,
   customerAddresses, senderSettings, currencies, exchangeRateHistory, serialNumbers, emailSettings,
-  clients, clientContacts, clientPhones, clientMail, mailRegistry, envelopePrintSettings,
+  clients, clientContacts, clientPhones, clientMail, mailRegistry, envelopePrintSettings, envelopeSettings,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
   type EmailSettings, type InsertEmailSettings,
@@ -49,6 +49,7 @@ import {
   type ClientMail, type InsertClientMail,
   type MailRegistry, type InsertMailRegistry,
   type EnvelopePrintSettings, type InsertEnvelopePrintSettings,
+  type EnvelopeSettings, type InsertEnvelopeSettings,
   departments
 } from "@shared/schema";
 

@@ -5333,10 +5333,15 @@ export class DatabaseStorage implements IStorage {
       .onConflictDoUpdate({
         target: [envelopeSettings.userId, envelopeSettings.envelopeSize],
         set: {
-          senderNameWidth: settingsData.senderNameWidth,
-          senderAddressWidth: settingsData.senderAddressWidth,
-          recipientNameWidth: settingsData.recipientNameWidth,
-          recipientAddressWidth: settingsData.recipientAddressWidth,
+          senderWidth: settingsData.senderWidth,
+          recipientWidth: settingsData.recipientWidth,
+          advertisementWidth: settingsData.advertisementWidth,
+          senderPositionX: settingsData.senderPositionX,
+          senderPositionY: settingsData.senderPositionY,
+          recipientPositionX: settingsData.recipientPositionX,
+          recipientPositionY: settingsData.recipientPositionY,
+          advertisementPositionX: settingsData.advertisementPositionX,
+          advertisementPositionY: settingsData.advertisementPositionY,
           updatedAt: new Date()
         }
       })
