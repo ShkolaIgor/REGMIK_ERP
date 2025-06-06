@@ -756,47 +756,30 @@ export default function Clients() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {clients.map((client: Client) => (
           <Card key={client.id}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div className="flex items-center space-x-2">
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex items-start space-x-3 flex-1 min-w-0">
                   {client.type === "organization" ? (
-                    <Building2 className="h-5 w-5 text-blue-600" />
+                    <Building2 className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                   ) : (
-                    <User className="h-5 w-5 text-green-600" />
+                    <User className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                   )}
-                  <div>
-                    <CardTitle className="text-lg">{client.name}</CardTitle>
-                    <CardDescription className="text-sm">
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-lg leading-tight truncate">{client.name}</CardTitle>
+                    <CardDescription className="text-sm mt-1">
                       {client.type === "organization" ? "ЄДРПОУ" : "ІПН"}: <span className="font-bold text-base text-foreground">{client.id}</span>
                     </CardDescription>
                   </div>
-                  <div className="flex gap-2">
-                    <Badge variant={client.isActive ? "default" : "secondary"}>
-                      {client.isActive ? "Активний" : "Неактивний"}
-                    </Badge>
-                    {client.enableThirdPartyShipping && (
-                      <Badge variant="outline" className="text-blue-600">
-                        <Truck className="h-3 w-3 mr-1" />
-                        Відправки клієнта
-                      </Badge>
-                    )}
-                    {client.discount && parseFloat(client.discount) > 0 && (
-                      <Badge variant="outline" className="text-green-600">
-                        <Percent className="h-3 w-3 mr-1" />
-                        -{client.discount}%
-                      </Badge>
-                    )}
-                  </div>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex space-x-1 flex-shrink-0">
                   <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={() => openAddContactDialog(client.id.toString())}
-                    className="text-blue-600 hover:text-blue-700"
+                    className="text-blue-600 hover:text-blue-700 h-8 w-8 p-0"
                     title="Контакти клієнта"
                   >
                     <User className="h-4 w-4" />
@@ -805,57 +788,74 @@ export default function Clients() {
                     variant="outline" 
                     size="sm" 
                     onClick={() => window.location.href = `/clients/${client.id}/nova-poshta-settings`}
-                    className="text-green-600 hover:text-green-700"
+                    className="text-green-600 hover:text-green-700 h-8 w-8 p-0"
                     title="Налаштування Нової Пошти"
                   >
                     <Truck className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(client)}>
+                  <Button variant="outline" size="sm" onClick={() => handleEdit(client)} className="h-8 w-8 p-0">
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleDelete(client.id.toString())}
-                    className="text-red-600 hover:text-red-700"
+                    className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant={client.isActive ? "default" : "secondary"} className="text-xs">
+                  {client.isActive ? "Активний" : "Неактивний"}
+                </Badge>
+                {client.enableThirdPartyShipping && (
+                  <Badge variant="outline" className="text-blue-600 text-xs">
+                    <Truck className="h-3 w-3 mr-1" />
+                    Відправки клієнта
+                  </Badge>
+                )}
+                {client.discount && parseFloat(client.discount) > 0 && (
+                  <Badge variant="outline" className="text-green-600 text-xs">
+                    <Percent className="h-3 w-3 mr-1" />
+                    -{client.discount}%
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+            <CardContent className="pt-0">
+              <div className="space-y-3 text-sm">
                 {client.fullName && (
                   <div>
-                    <span className="font-medium">Повна назва:</span>
-                    <p className="text-muted-foreground">{client.fullName}</p>
+                    <span className="font-medium text-foreground">Повна назва:</span>
+                    <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{client.fullName}</p>
                   </div>
                 )}
                 {client.legalAddress && (
                   <div>
-                    <span className="font-medium">Юридична адреса:</span>
-                    <p className="text-muted-foreground">{client.legalAddress}</p>
+                    <span className="font-medium text-foreground">Юридична адреса:</span>
+                    <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{client.legalAddress}</p>
                   </div>
                 )}
                 {client.physicalAddress && !client.addressesMatch && (
                   <div>
-                    <span className="font-medium">Фактична адреса:</span>
-                    <p className="text-muted-foreground">{client.physicalAddress}</p>
+                    <span className="font-medium text-foreground">Фактична адреса:</span>
+                    <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{client.physicalAddress}</p>
                   </div>
                 )}
                 {client.notes && (
-                  <div className="col-span-2">
-                    <span className="font-medium">Примітки:</span>
-                    <p className="text-muted-foreground">{client.notes}</p>
+                  <div>
+                    <span className="font-medium text-foreground">Примітки:</span>
+                    <p className="text-muted-foreground text-xs mt-1 line-clamp-3">{client.notes}</p>
                   </div>
                 )}
               </div>
               {client.createdAt && (
-                <div className="text-xs text-muted-foreground mt-4">
+                <div className="text-xs text-muted-foreground mt-4 pt-3 border-t">
                   Створено: {new Date(client.createdAt).toLocaleDateString("uk-UA")}
                   {client.updatedAt && client.updatedAt !== client.createdAt && (
-                    <span> • Оновлено: {new Date(client.updatedAt).toLocaleDateString("uk-UA")}</span>
+                    <span className="block mt-1">Оновлено: {new Date(client.updatedAt).toLocaleDateString("uk-UA")}</span>
                   )}
                 </div>
               )}
