@@ -399,9 +399,9 @@ export default function Clients() {
                         <FormLabel>Повне ім'я *</FormLabel>
                         <FormControl>
                           <Input 
-                            ref={fullNameInputRef}
                             placeholder="Іван Іванович Іваненко" 
-                            {...field} 
+                            {...field}
+                            ref={fullNameInputRef}
                           />
                         </FormControl>
                         <FormMessage />
@@ -756,7 +756,7 @@ export default function Clients() {
         </div>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {clients.map((client: Client) => (
           <Card key={client.id}>
             <CardHeader>
@@ -770,7 +770,7 @@ export default function Clients() {
                   <div>
                     <CardTitle className="text-lg">{client.name}</CardTitle>
                     <CardDescription className="text-sm">
-                      {client.type === "organization" ? "ЄДРПОУ" : "ІПН"}: {client.id}
+                      {client.type === "organization" ? "ЄДРПОУ" : "ІПН"}: <span className="font-bold text-base text-foreground">{client.id}</span>
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
