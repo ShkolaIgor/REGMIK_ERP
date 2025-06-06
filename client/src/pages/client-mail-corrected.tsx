@@ -204,33 +204,33 @@ export default function ClientMailPage() {
         let maxX, maxY;
         
         if (draggedElement === 'advertisement') {
-          // Для реклами використовуємо менші обмеження залежно від розміру конверта
+          // Для реклами - дозволяємо більше руху по всій площі
           if (prev.envelopeSize === 'dl') {
-            maxX = envelope.width - 80; // Більше обмеження для DL
-            maxY = envelope.height - 25;
+            maxX = envelope.width - 40; // Менше обмеження для DL
+            maxY = envelope.height - 10;
           } else if (prev.envelopeSize === 'c6') {
-            maxX = envelope.width - 70; // Більше обмеження для C6
-            maxY = envelope.height - 30;
+            maxX = envelope.width - 35; // Менше обмеження для C6
+            maxY = envelope.height - 15;
           } else {
-            maxX = envelope.width - 60;
-            maxY = envelope.height - 40;
+            maxX = envelope.width - 30;
+            maxY = envelope.height - 20;
           }
         } else if (draggedElement === 'image') {
-          // Для зображень теж обмежуємо
+          // Для зображень - більша свобода руху
           if (prev.envelopeSize === 'dl') {
-            maxX = envelope.width - 50;
-            maxY = envelope.height - 30;
+            maxX = envelope.width - 25;
+            maxY = envelope.height - 15;
           } else if (prev.envelopeSize === 'c6') {
-            maxX = envelope.width - 45;
-            maxY = envelope.height - 35;
+            maxX = envelope.width - 20;
+            maxY = envelope.height - 20;
           } else {
-            maxX = envelope.width - 40;
-            maxY = envelope.height - 40;
+            maxX = envelope.width - 20;
+            maxY = envelope.height - 25;
           }
         } else {
-          // Для відправника та одержувача
-          maxX = envelope.width - 60;
-          maxY = envelope.height - 50;
+          // Для відправника та одержувача - більша свобода
+          maxX = envelope.width - 30;
+          maxY = envelope.height - 25;
         }
         
         return {
