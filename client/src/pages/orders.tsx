@@ -270,9 +270,6 @@ export default function Orders() {
 
   // Функція для початку редагування замовлення
   const handleEditOrder = (order: any) => {
-    console.log("Editing order:", order);
-    console.log("Order clientId:", order.clientId, "type:", typeof order.clientId);
-    console.log("Available clients:", clients);
     setEditingOrder(order);
     setIsEditMode(true);
     
@@ -283,12 +280,9 @@ export default function Orders() {
       return date.toISOString().slice(0, 16);
     };
 
-    const clientIdStr = order.clientId ? order.clientId.toString() : "";
-    console.log("Setting clientId to:", clientIdStr);
-
     // Заповнюємо форму даними замовлення
-    const formData = {
-      clientId: clientIdStr,
+    form.reset({
+      clientId: order.clientId ? order.clientId.toString() : "",
       customerEmail: order.customerEmail || "",
       customerPhone: order.customerPhone || "",
       status: order.status,
@@ -296,14 +290,7 @@ export default function Orders() {
       paymentDate: formatDateForInput(order.paymentDate),
       dueDate: formatDateForInput(order.dueDate),
       shippedDate: formatDateForInput(order.shippedDate),
-    };
-    console.log("Form data being set:", formData);
-    form.reset(formData);
-    
-    // Перевірка значення після встановлення
-    setTimeout(() => {
-      console.log("Form clientId after reset:", form.watch("clientId"));
-    }, 100);
+    });
 
     // Заповнюємо товари замовлення
     if (order.items) {

@@ -248,7 +248,10 @@ export default function ClientContacts() {
                                 className="justify-between"
                               >
                                 {field.value
-                                  ? (clients as Client[]).find((client) => client.id.toString() === field.value)?.name
+                                  ? (() => {
+                                      const selectedClient = (clients as Client[]).find((client) => client.id.toString() === field.value);
+                                      return selectedClient ? `${selectedClient.name} (${selectedClient.taxCode})` : "Клієнт не знайдений";
+                                    })()
                                   : "Пошук по назві, ЄДРПОУ або ІПН..."}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
@@ -287,7 +290,7 @@ export default function ClientContacts() {
                                         <div className="flex flex-col">
                                           <span className="font-medium">{client.name}</span>
                                           <span className="text-sm text-muted-foreground">
-                                            ID: {client.id}
+                                            ЄДРПОУ: {client.taxCode}
                                           </span>
                                         </div>
                                       </CommandItem>
