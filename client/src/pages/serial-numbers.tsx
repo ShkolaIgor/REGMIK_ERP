@@ -20,7 +20,7 @@ import { z } from "zod";
 
 const formSchema = insertSerialNumberSchema.extend({
   manufacturedDate: z.string().optional(),
-  expiryDate: z.string().optional(),
+  saleDate: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -59,7 +59,9 @@ export default function SerialNumbers() {
       orderId: undefined,
       notes: "",
       manufacturedDate: "",
-      expiryDate: "",
+      invoiceNumber: "",
+      clientShortName: "",
+      saleDate: "",
     },
   });
 
@@ -395,10 +397,38 @@ export default function SerialNumbers() {
 
                   <FormField
                     control={form.control}
-                    name="expiryDate"
+                    name="invoiceNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Термін придатності</FormLabel>
+                        <FormLabel>Номер рахунку</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Введіть номер рахунку" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="clientShortName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Скорочена назва клієнта</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Введіть скорочену назву клієнта" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="saleDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Дата продажі</FormLabel>
                         <FormControl>
                           <Input type="datetime-local" {...field} />
                         </FormControl>

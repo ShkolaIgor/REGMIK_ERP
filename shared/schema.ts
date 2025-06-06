@@ -1467,9 +1467,11 @@ export const serialNumbers = pgTable("serial_numbers", {
   status: text("status").notNull().default("available"), // available, reserved, sold, defective
   warehouseId: integer("warehouse_id").references(() => warehouses.id),
   orderId: integer("order_id").references(() => orders.id),
+  invoiceNumber: text("invoice_number"), // номер рахунку
+  clientShortName: text("client_short_name"), // скорочена назва клієнта
+  saleDate: timestamp("sale_date"), // дата продажі
   notes: text("notes"),
   manufacturedDate: timestamp("manufactured_date"),
-  expiryDate: timestamp("expiry_date"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
