@@ -120,28 +120,33 @@ export default function ClientMailPage() {
   });
 
   const handleMouseDown = (element: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
     setDraggedElement(element);
     setDragStart({ x: e.clientX, y: e.clientY });
-    e.preventDefault();
   };
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging || !draggedElement) return;
-
+      
+      e.preventDefault();
       const deltaX = e.clientX - dragStart.x;
       const deltaY = e.clientY - dragStart.y;
-      const mmDeltaX = deltaX * 0.264583; // px to mm
-      const mmDeltaY = deltaY * 0.264583;
+      const mmDeltaX = deltaX * 0.4; // Зменшено чутливість для більш точного керування
+      const mmDeltaY = deltaY * 0.4;
 
       setEnvelopeSettings(prev => {
         const currentPosition = prev[`${draggedElement}Position` as keyof EnvelopeSettings] as { x: number; y: number };
+        const maxX = envelopeSizes[prev.envelopeSize].width - 30; // Обмеження по ширині
+        const maxY = envelopeSizes[prev.envelopeSize].height - 30; // Обмеження по висоті
+        
         return {
           ...prev,
           [`${draggedElement}Position`]: {
-            x: Math.max(0, currentPosition.x + mmDeltaX),
-            y: Math.max(0, currentPosition.y + mmDeltaY)
+            x: Math.max(0, Math.min(maxX, currentPosition.x + mmDeltaX)),
+            y: Math.max(0, Math.min(maxY, currentPosition.y + mmDeltaY))
           }
         };
       });
@@ -308,11 +313,10 @@ export default function ClientMailPage() {
                 style={{
                   width: `${envelopeSizes[envelopeSettings.envelopeSize].width}mm`,
                   height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
-                  transform: `scale(${Math.min(
-                    500 / envelopeSizes[envelopeSettings.envelopeSize].width,
-                    550 / envelopeSizes[envelopeSettings.envelopeSize].height
-                  ) * 0.7})`,
-                  transformOrigin: 'center'
+                  transform: `scale(0.6)`,
+                  transformOrigin: 'center',
+                  maxWidth: '100%',
+                  maxHeight: '100%'
                 }}
               >
                   {/* Stamp area */}
