@@ -325,8 +325,8 @@ export default function ClientMailPage() {
               <div 
                 className="envelope-preview bg-white shadow-lg relative border select-none"
                 style={{
-                  width: '300px',
-                  height: `${(envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * 300}px`,
+                  width: '500px',
+                  height: `${(envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * 500}px`,
                   transformOrigin: 'center',
                   maxWidth: '100%',
                   maxHeight: '100%'
@@ -336,26 +336,26 @@ export default function ClientMailPage() {
                 <div 
                   className="absolute border-2 border-dashed border-gray-300"
                   style={{
-                    top: '8px',
-                    right: '8px',
-                    width: '40px',
-                    height: '25px'
+                    top: '12px',
+                    right: '12px',
+                    width: '65px',
+                    height: '40px'
                   }}
                 >
-                  <div className="text-xs text-gray-400 p-1">Марка</div>
+                  <div className="text-sm text-gray-400 p-1">Марка</div>
                 </div>
 
                 {/* Sender */}
                 <div 
                   style={{
                     position: 'absolute',
-                    top: `${(envelopeSettings.senderPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * 300)}px`,
-                    left: `${(envelopeSettings.senderPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * 300}px`,
+                    top: `${(envelopeSettings.senderPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * 500)}px`,
+                    left: `${(envelopeSettings.senderPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * 500}px`,
                     fontSize: `${senderRecipientFontSize}px`,
                     lineHeight: '1.4',
-                    maxWidth: '140px',
+                    maxWidth: '230px',
                     cursor: isDragging ? 'grabbing' : 'grab',
-                    padding: '3px',
+                    padding: '5px',
                     border: isDragging && draggedElement === 'sender' ? '2px dashed #3b82f6' : '2px dashed transparent',
                     backgroundColor: isDragging && draggedElement === 'sender' ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
                     userSelect: 'none'
@@ -377,13 +377,13 @@ export default function ClientMailPage() {
                 <div 
                   style={{
                     position: 'absolute',
-                    top: `${(envelopeSettings.recipientPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * 300)}px`,
-                    left: `${(envelopeSettings.recipientPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * 300}px`,
+                    top: `${(envelopeSettings.recipientPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * 500)}px`,
+                    left: `${(envelopeSettings.recipientPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * 500}px`,
                     fontSize: `${senderRecipientFontSize}px`,
                     lineHeight: '1.4',
-                    maxWidth: '140px',
+                    maxWidth: '230px',
                     cursor: isDragging ? 'grabbing' : 'grab',
-                    padding: '3px',
+                    padding: '5px',
                     border: isDragging && draggedElement === 'recipient' ? '2px dashed #3b82f6' : '2px dashed transparent',
                     backgroundColor: isDragging && draggedElement === 'recipient' ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
                     userSelect: 'none'
@@ -404,14 +404,14 @@ export default function ClientMailPage() {
                   <div
                     style={{
                       position: 'absolute',
-                      top: `${(envelopeSettings.advertisementPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * 300)}px`,
-                      left: `${(envelopeSettings.advertisementPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * 300}px`,
+                      top: `${(envelopeSettings.advertisementPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * 500)}px`,
+                      left: `${(envelopeSettings.advertisementPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * 500}px`,
                       fontSize: `${advertisementFontSize}px`,
-                      maxWidth: '120px',
+                      maxWidth: '200px',
                       whiteSpace: 'pre-wrap',
                       wordWrap: 'break-word',
                       cursor: isDragging ? 'grabbing' : 'grab',
-                      padding: '2px',
+                      padding: '5px',
                       border: isDragging && draggedElement === 'advertisement' ? '2px dashed #3b82f6' : '2px dashed transparent',
                       backgroundColor: isDragging && draggedElement === 'advertisement' ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
                       userSelect: 'none'
@@ -428,10 +428,10 @@ export default function ClientMailPage() {
                   <div
                     style={{
                       position: 'absolute',
-                      top: `${(envelopeSettings.imagePosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * 300)}px`,
-                      left: `${(envelopeSettings.imagePosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * 300}px`,
+                      top: `${(envelopeSettings.imagePosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * 500)}px`,
+                      left: `${(envelopeSettings.imagePosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * 500}px`,
                       cursor: isDragging ? 'grabbing' : 'grab',
-                      padding: '2px',
+                      padding: '5px',
                       border: isDragging && draggedElement === 'image' ? '2px dashed #3b82f6' : '2px dashed transparent',
                       backgroundColor: isDragging && draggedElement === 'image' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
                     }}
@@ -442,10 +442,10 @@ export default function ClientMailPage() {
                       src={envelopeSettings.advertisementImage} 
                       alt="Реклама"
                       style={{
-                        width: `${(envelopeSettings.imageSize / 100) * 80}px`,
+                        width: `${(envelopeSettings.imageSize / 100) * 130}px`,
                         height: 'auto',
-                        maxWidth: '80px',
-                        maxHeight: '80px',
+                        maxWidth: '130px',
+                        maxHeight: '130px',
                         objectFit: 'contain',
                         userSelect: 'none',
                         pointerEvents: 'none'
