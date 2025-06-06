@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom dialog styles for large envelope print dialog */
+[data-state="open"] > div[role="dialog"] {
+  max-width: none !important;
+}
+
+.envelope-dialog {
+  width: 2200px !important;
+  max-width: none !important;
+}
+
 :root {
   --background: 210 11% 98%; /* #F5F7FA */
   --foreground: 220 15% 15%; /* #1E293B */
