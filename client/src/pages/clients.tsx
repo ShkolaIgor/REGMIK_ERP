@@ -746,6 +746,14 @@ export default function Clients() {
                   </div>
                 </div>
                 <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => openAddContactDialog(client.id)}
+                    className="text-blue-600 hover:text-blue-700"
+                  >
+                    <User className="h-4 w-4" />
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => handleEdit(client)}>
                     <Edit className="h-4 w-4" />
                   </Button>
