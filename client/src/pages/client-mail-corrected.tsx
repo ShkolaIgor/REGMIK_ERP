@@ -199,23 +199,20 @@ export default function ClientMailPage() {
     setResizedElement(element);
     
     // Get current size based on element type
-    let currentWidth = 100, currentHeight = 50;
+    let currentWidth = 100;
     if (element === 'advertisement') {
-      currentWidth = advertisementFontSize;
-      currentHeight = advertisementFontSize;
+      currentWidth = envelopeSettings.advertisementMaxWidth || getAdvertisementMaxWidth(envelopeSettings.envelopeSize);
     } else if (element === 'image') {
       currentWidth = (envelopeSettings.imageSize / 100) * 130;
-      currentHeight = (envelopeSettings.imageSize / 100) * 130;
     } else if (element === 'sender' || element === 'recipient') {
-      currentWidth = senderRecipientFontSize;
-      currentHeight = senderRecipientFontSize;
+      currentWidth = envelopeSettings.addressMaxWidth || 230;
     }
     
     setResizeStart({ 
       x: e.clientX, 
       y: e.clientY, 
       width: currentWidth, 
-      height: currentHeight 
+      height: 0 
     });
   };
 
@@ -554,14 +551,14 @@ export default function ClientMailPage() {
                       position: 'absolute',
                       bottom: '-5px',
                       right: '-5px',
-                      width: '12px',
-                      height: '8px',
-                      backgroundColor: '#3b82f6',
-                      border: '1px solid white',
+                      width: '10px',
+                      height: '10px',
+                      backgroundColor: '#e5e7eb',
+                      border: '1px solid #9ca3af',
                       borderRadius: '2px',
                       cursor: 'ew-resize',
                       zIndex: 1000,
-                      boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
                     }}
                     onMouseDown={(e) => {
                       e.preventDefault();
@@ -603,14 +600,14 @@ export default function ClientMailPage() {
                       position: 'absolute',
                       bottom: '-5px',
                       right: '-5px',
-                      width: '12px',
-                      height: '8px',
-                      backgroundColor: '#3b82f6',
-                      border: '1px solid white',
+                      width: '10px',
+                      height: '10px',
+                      backgroundColor: '#e5e7eb',
+                      border: '1px solid #9ca3af',
                       borderRadius: '2px',
                       cursor: 'ew-resize',
                       zIndex: 1000,
-                      boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
                     }}
                     onMouseDown={(e) => {
                       e.preventDefault();
@@ -649,14 +646,14 @@ export default function ClientMailPage() {
                         position: 'absolute',
                         bottom: '-5px',
                         right: '-5px',
-                        width: '12px',
-                        height: '8px',
-                        backgroundColor: '#3b82f6',
-                        border: '1px solid white',
+                        width: '10px',
+                        height: '10px',
+                        backgroundColor: '#e5e7eb',
+                        border: '1px solid #9ca3af',
                         borderRadius: '2px',
                         cursor: 'ew-resize',
                         zIndex: 1000,
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
                       }}
                       onMouseDown={(e) => {
                         e.preventDefault();
@@ -702,14 +699,14 @@ export default function ClientMailPage() {
                         position: 'absolute',
                         bottom: '-5px',
                         right: '-5px',
-                        width: '12px',
-                        height: '8px',
-                        backgroundColor: '#3b82f6',
-                        border: '1px solid white',
+                        width: '10px',
+                        height: '10px',
+                        backgroundColor: '#e5e7eb',
+                        border: '1px solid #9ca3af',
                         borderRadius: '2px',
                         cursor: 'se-resize',
                         zIndex: 1000,
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
                       }}
                       onMouseDown={(e) => {
                         e.preventDefault();
