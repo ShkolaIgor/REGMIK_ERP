@@ -961,6 +961,7 @@ export default function ClientMailPage() {
               </Button>
             </div>
           </div>
+        </div>
         </DialogContent>
       </Dialog>
     </div>
