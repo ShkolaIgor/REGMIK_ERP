@@ -1,18 +1,17 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Edit, Trash2, Package, Search, QrCode } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Search, Edit, Trash, QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertSerialNumberSchema, type SerialNumber, type Product, type Warehouse } from "@shared/schema";
@@ -29,22 +28,22 @@ const statusLabels = {
   available: "Доступний",
   reserved: "Зарезервований", 
   sold: "Проданий",
-  defective: "Дефектний"
+  defective: "Дефектний",
 };
 
 const statusColors = {
-  available: "default",
-  reserved: "secondary",
-  sold: "destructive", 
-  defective: "outline"
-} as const;
+  available: "bg-green-100 text-green-800",
+  reserved: "bg-yellow-100 text-yellow-800",
+  sold: "bg-blue-100 text-blue-800", 
+  defective: "bg-red-100 text-red-800",
+};
 
 export default function SerialNumbers() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<SerialNumber | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterProductId, setFilterProductId] = useState<string>("");
-  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterProductId, setFilterProductId] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -70,12 +69,12 @@ export default function SerialNumbers() {
     queryKey: ["/api/serial-numbers"],
   });
 
-  // Fetch products for dropdown
+  // Fetch products
   const { data: products = [] } = useQuery({
     queryKey: ["/api/products"],
   });
 
-  // Fetch warehouses for dropdown
+  // Fetch warehouses
   const { data: warehouses = [] } = useQuery({
     queryKey: ["/api/warehouses"],
   });
@@ -86,7 +85,7 @@ export default function SerialNumbers() {
       const payload = {
         ...data,
         manufacturedDate: data.manufacturedDate ? new Date(data.manufacturedDate).toISOString() : null,
-        expiryDate: data.expiryDate ? new Date(data.expiryDate).toISOString() : null,
+        saleDate: data.saleDate ? new Date(data.saleDate).toISOString() : null,
       };
       return apiRequest("/api/serial-numbers", {
         method: "POST",
@@ -118,10 +117,10 @@ export default function SerialNumbers() {
       const payload = {
         ...data,
         manufacturedDate: data.manufacturedDate ? new Date(data.manufacturedDate).toISOString() : null,
-        expiryDate: data.expiryDate ? new Date(data.expiryDate).toISOString() : null,
+        saleDate: data.saleDate ? new Date(data.saleDate).toISOString() : null,
       };
       return apiRequest(`/api/serial-numbers/${id}`, {
-        method: "PUT",
+        method: "PATCH",
         body: payload,
       });
     },
@@ -146,7 +145,9 @@ export default function SerialNumbers() {
 
   // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/serial-numbers/${id}`, { method: "DELETE" }),
+    mutationFn: (id: number) => apiRequest(`/api/serial-numbers/${id}`, {
+      method: "DELETE",
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/serial-numbers"] });
       toast({
@@ -163,24 +164,8 @@ export default function SerialNumbers() {
     },
   });
 
-  const handleSubmit = (data: FormData) => {
-    if (editingItem) {
-      updateMutation.mutate({ id: editingItem.id, data });
-    } else {
-      createMutation.mutate(data);
-    }
-  };
-
-  const handleEdit = (item: SerialNumber) => {
+  const openEditDialog = (item: SerialNumber) => {
     setEditingItem(item);
-    
-    // Format dates for datetime-local input
-    const formatDateForInput = (date: string | Date | null) => {
-      if (!date) return "";
-      const d = new Date(date);
-      return d.toISOString().slice(0, 16);
-    };
-
     form.reset({
       productId: item.productId,
       serialNumber: item.serialNumber,
@@ -188,16 +173,12 @@ export default function SerialNumbers() {
       warehouseId: item.warehouseId || undefined,
       orderId: item.orderId || undefined,
       notes: item.notes || "",
-      manufacturedDate: formatDateForInput(item.manufacturedDate),
-      expiryDate: formatDateForInput(item.expiryDate),
+      invoiceNumber: item.invoiceNumber || "",
+      clientShortName: item.clientShortName || "",
+      manufacturedDate: item.manufacturedDate ? new Date(item.manufacturedDate).toISOString().slice(0, 16) : "",
+      saleDate: item.saleDate ? new Date(item.saleDate).toISOString().slice(0, 16) : "",
     });
     setIsDialogOpen(true);
-  };
-
-  const handleDelete = (id: number) => {
-    if (confirm("Ви впевнені, що хочете видалити цей серійний номер?")) {
-      deleteMutation.mutate(id);
-    }
   };
 
   const openCreateDialog = () => {
@@ -210,7 +191,7 @@ export default function SerialNumbers() {
   const autoGenerateMutation = useMutation({
     mutationFn: async () => {
       const productId = form.getValues("productId");
-      const selectedProduct = products.find((p: Product) => p.id === productId);
+      const selectedProduct = (products as Product[]).find((p: Product) => p.id === productId);
       
       return apiRequest("/api/serial-numbers/generate", {
         method: "POST",
@@ -241,7 +222,7 @@ export default function SerialNumbers() {
   };
 
   // Filter serial numbers
-  const filteredSerialNumbers = serialNumbers.filter((item: SerialNumber & { product?: Product }) => {
+  const filteredSerialNumbers = (serialNumbers as (SerialNumber & { product?: Product })[]).filter((item) => {
     const matchesSearch = item.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.product?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.product?.sku.toLowerCase().includes(searchTerm.toLowerCase());
@@ -251,28 +232,33 @@ export default function SerialNumbers() {
     return matchesSearch && matchesProduct && matchesStatus;
   });
 
+  const onSubmit = (data: FormData) => {
+    if (editingItem) {
+      updateMutation.mutate({ id: editingItem.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Серійні номери</h1>
-          <p className="text-muted-foreground">Управління серійними номерами продукції</p>
-        </div>
+    <div className="container mx-auto p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Серійні номери</h1>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={openCreateDialog}>
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="h-4 w-4 mr-2" />
               Додати серійний номер
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>
-                {editingItem ? "Редагувати серійний номер" : "Новий серійний номер"}
+                {editingItem ? "Редагувати серійний номер" : "Додати серійний номер"}
               </DialogTitle>
             </DialogHeader>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -282,7 +268,7 @@ export default function SerialNumbers() {
                         <FormLabel>Продукт</FormLabel>
                         <Select
                           onValueChange={(value) => field.onChange(parseInt(value))}
-                          value={field.value?.toString()}
+                          value={field.value?.toString() || ""}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -290,7 +276,7 @@ export default function SerialNumbers() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {products.map((product: Product) => (
+                            {(products as Product[]).map((product) => (
                               <SelectItem key={product.id} value={product.id.toString()}>
                                 {product.name} ({product.sku})
                               </SelectItem>
@@ -369,7 +355,7 @@ export default function SerialNumbers() {
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="none">Не вибрано</SelectItem>
-                            {warehouses.map((warehouse: Warehouse) => (
+                            {(warehouses as Warehouse[]).map((warehouse) => (
                               <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
                                 {warehouse.name}
                               </SelectItem>
@@ -445,25 +431,18 @@ export default function SerialNumbers() {
                     <FormItem>
                       <FormLabel>Примітки</FormLabel>
                       <FormControl>
-                        <Textarea {...field} placeholder="Додаткова інформація" />
+                        <Textarea {...field} placeholder="Додаткові примітки" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <div className="flex justify-end space-x-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
-                  >
+                <div className="flex gap-2 justify-end">
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                     Скасувати
                   </Button>
-                  <Button
-                    type="submit"
-                    disabled={createMutation.isPending || updateMutation.isPending}
-                  >
+                  <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
                     {editingItem ? "Оновити" : "Створити"}
                   </Button>
                 </div>
@@ -473,72 +452,56 @@ export default function SerialNumbers() {
         </Dialog>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex gap-4 flex-wrap">
-            <div className="flex-1 min-w-64">
-              <Label htmlFor="search">Пошук</Label>
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  placeholder="Пошук за серійним номером або продуктом..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
+      {/* Фільтри */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Фільтри</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Пошук за серійним номером, назвою продукту..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
-            <div className="w-48">
-              <Label>Продукт</Label>
-              <Select value={filterProductId} onValueChange={setFilterProductId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Всі продукти" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Всі продукти</SelectItem>
-                  {products.map((product: Product) => (
-                    <SelectItem key={product.id} value={product.id.toString()}>
-                      {product.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-48">
-              <Label>Статус</Label>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Всі статуси" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Всі статуси</SelectItem>
-                  <SelectItem value="available">Доступний</SelectItem>
-                  <SelectItem value="reserved">Зарезервований</SelectItem>
-                  <SelectItem value="sold">Проданий</SelectItem>
-                  <SelectItem value="defective">Дефектний</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Select value={filterProductId} onValueChange={setFilterProductId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Фільтр за продуктом" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Всі продукти</SelectItem>
+                {(products as Product[]).map((product) => (
+                  <SelectItem key={product.id} value={product.id.toString()}>
+                    {product.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger>
+                <SelectValue placeholder="Фільтр за статусом" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Всі статуси</SelectItem>
+                <SelectItem value="available">Доступний</SelectItem>
+                <SelectItem value="reserved">Зарезервований</SelectItem>
+                <SelectItem value="sold">Проданий</SelectItem>
+                <SelectItem value="defective">Дефектний</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Results */}
+      {/* Таблиця */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <QrCode className="mr-2 h-5 w-5" />
-            Серійні номери ({filteredSerialNumbers.length})
-          </CardTitle>
-          <CardDescription>
-            Список всіх серійних номерів у системі
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {isLoading ? (
-            <div className="text-center py-4">Завантаження...</div>
+            <div className="p-6 text-center">Завантаження...</div>
           ) : (
             <Table>
               <TableHeader>
@@ -547,49 +510,48 @@ export default function SerialNumbers() {
                   <TableHead>Продукт</TableHead>
                   <TableHead>Статус</TableHead>
                   <TableHead>Склад</TableHead>
-                  <TableHead>Дата виробництва</TableHead>
-                  <TableHead>Термін придатності</TableHead>
+                  <TableHead>Номер рахунку</TableHead>
+                  <TableHead>Клієнт</TableHead>
+                  <TableHead>Дата продажі</TableHead>
                   <TableHead>Дії</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSerialNumbers.map((item: SerialNumber & { product?: Product; warehouse?: Warehouse }) => (
+                {filteredSerialNumbers.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-mono">{item.serialNumber}</TableCell>
                     <TableCell>
-                      <div>
-                        <div className="font-medium">{item.product?.name}</div>
-                        <div className="text-sm text-muted-foreground">{item.product?.sku}</div>
-                      </div>
+                      {item.product?.name} ({item.product?.sku})
                     </TableCell>
                     <TableCell>
-                      <Badge variant={statusColors[item.status as keyof typeof statusColors]}>
+                      <Badge className={statusColors[item.status as keyof typeof statusColors]}>
                         {statusLabels[item.status as keyof typeof statusLabels]}
                       </Badge>
                     </TableCell>
-                    <TableCell>{item.warehouse?.name || "—"}</TableCell>
                     <TableCell>
-                      {item.manufacturedDate ? new Date(item.manufacturedDate).toLocaleDateString() : "—"}
+                      {(warehouses as Warehouse[]).find((w) => w.id === item.warehouseId)?.name || "-"}
+                    </TableCell>
+                    <TableCell>{item.invoiceNumber || "-"}</TableCell>
+                    <TableCell>{item.clientShortName || "-"}</TableCell>
+                    <TableCell>
+                      {item.saleDate ? new Date(item.saleDate).toLocaleDateString("uk-UA") : "-"}
                     </TableCell>
                     <TableCell>
-                      {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : "—"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
+                      <div className="flex gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleEdit(item)}
+                          onClick={() => openEditDialog(item)}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDelete(item.id)}
+                          onClick={() => deleteMutation.mutate(item.id)}
                           disabled={deleteMutation.isPending}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -597,7 +559,7 @@ export default function SerialNumbers() {
                 ))}
                 {filteredSerialNumbers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-4">
+                    <TableCell colSpan={8} className="text-center py-6">
                       Серійні номери не знайдено
                     </TableCell>
                   </TableRow>
