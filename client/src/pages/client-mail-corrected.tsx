@@ -298,14 +298,14 @@ export default function ClientMailPage() {
       const direction = deltaX > 0 ? 1 : -1;
       
       if (resizedElement === 'image') {
-        const newWidth = Math.max(20, Math.min(200, resizeStart.width + (diagonal * direction)));
+        const newWidth = Math.max(20, Math.min(200, resizeStart.width + (diagonal * direction * 0.5)));
         const sizePercent = Math.max(10, Math.min(150, (newWidth / 130) * 100));
         setEnvelopeSettings(prev => ({ ...prev, imageSize: sizePercent }));
       } else if (resizedElement === 'advertisement') {
-        const newSize = Math.max(8, Math.min(24, resizeStart.width + (deltaX * 0.2)));
+        const newSize = Math.max(8, Math.min(24, resizeStart.width + (deltaX * 0.1)));
         setEnvelopeSettings(prev => ({ ...prev, advertisementFontSize: newSize }));
       } else if (resizedElement === 'sender' || resizedElement === 'recipient') {
-        const newSize = Math.max(8, Math.min(20, resizeStart.width + (deltaX * 0.2)));
+        const newSize = Math.max(8, Math.min(20, resizeStart.width + (deltaX * 0.1)));
         setEnvelopeSettings(prev => ({ ...prev, senderRecipientFontSize: newSize }));
       }
     };
