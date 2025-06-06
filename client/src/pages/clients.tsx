@@ -509,7 +509,7 @@ export default function Clients() {
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="id"
+                    name="taxCode"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>ЄДРПОУ/ІПН *</FormLabel>
