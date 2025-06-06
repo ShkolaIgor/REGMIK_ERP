@@ -15,6 +15,7 @@ import Production from "@/pages/production";
 import Orders from "@/pages/orders";
 import Clients from "@/pages/clients";
 import ClientContacts from "@/pages/client-contacts";
+import ClientNovaPoshtaSettings from "@/pages/client-nova-poshta-settings";
 import ClientMail from "@/pages/client-mail-corrected";
 import Recipes from "@/pages/recipes";
 import TechCards from "@/pages/tech-cards";
