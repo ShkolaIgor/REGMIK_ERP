@@ -695,28 +695,31 @@ export const clients = pgTable("clients", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Контактні особи клієнтів
+// Контактні особи клієнтів (об'єднана таблиця)
 export const clientContacts = pgTable("client_contacts", {
   id: serial("id").primaryKey(),
   clientId: varchar("client_id", { length: 20 }).notNull().references(() => clients.id, { onDelete: "cascade" }),
   fullName: varchar("full_name", { length: 255 }).notNull(),
   position: varchar("position", { length: 255 }),
-  mobilePhone: varchar("mobile_phone", { length: 50 }),
   email: varchar("email", { length: 255 }),
-  isPrimary: boolean("is_primary").default(false),
+  
+  // Основний телефон
+  primaryPhone: varchar("primary_phone", { length: 50 }),
+  primaryPhoneType: varchar("primary_phone_type", { length: 50 }).default("mobile"), // mobile, office, home
+  
+  // Додатковий телефон
+  secondaryPhone: varchar("secondary_phone", { length: 50 }),
+  secondaryPhoneType: varchar("secondary_phone_type", { length: 50 }).default("office"), // mobile, office, home, fax
+  
+  // Третій телефон (для факсу або додаткового)
+  tertiaryPhone: varchar("tertiary_phone", { length: 50 }),
+  tertiaryPhoneType: varchar("tertiary_phone_type", { length: 50 }).default("fax"), // mobile, office, home, fax
+  
+  notes: text("notes"),
+  isPrimary: boolean("is_primary").default(false), // основний контакт клієнта
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
-});
-
-// Телефони клієнтів
-export const clientPhones = pgTable("client_phones", {
-  id: serial("id").primaryKey(),
-  clientId: varchar("client_id", { length: 20 }).notNull().references(() => clients.id, { onDelete: "cascade" }),
-  phoneNumber: varchar("phone_number", { length: 50 }).notNull(),
-  phoneType: varchar("phone_type", { length: 50 }).default("office"), // office, mobile, fax
-  description: varchar("description", { length: 255 }),
-  isPrimary: boolean("is_primary").default(false),
-  createdAt: timestamp("created_at").defaultNow()
 });
 
 // Insert schemas
@@ -740,11 +743,6 @@ export const insertClientContactSchema = createInsertSchema(clientContacts).omit
   id: true,
   createdAt: true,
   updatedAt: true
-});
-
-export const insertClientPhoneSchema = createInsertSchema(clientPhones).omit({
-  id: true,
-  createdAt: true
 });
 
 // Inventory Audits
@@ -1645,8 +1643,6 @@ export type Client = typeof clients.$inferSelect;
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type ClientContact = typeof clientContacts.$inferSelect;
 export type InsertClientContact = z.infer<typeof insertClientContactSchema>;
-export type ClientPhone = typeof clientPhones.$inferSelect;
-export type InsertClientPhone = z.infer<typeof insertClientPhoneSchema>;
 
 // Tasks table for general task management
 export const tasks = pgTable("tasks", {
