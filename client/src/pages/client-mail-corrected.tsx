@@ -61,14 +61,14 @@ const getDefaultSettings = (size: EnvelopeSize): EnvelopeSettings => {
     },
     dl: {
       senderPosition: { x: 10, y: 8 },
-      recipientPosition: { x: 25, y: 60 },
-      advertisementPosition: { x: 15, y: 85 },
+      recipientPosition: { x: 25, y: 55 },
+      advertisementPosition: { x: 15, y: 75 },
       imagePosition: { x: 120, y: 8 }
     },
     c6: {
       senderPosition: { x: 8, y: 8 },
-      recipientPosition: { x: 20, y: 50 },
-      advertisementPosition: { x: 12, y: 75 },
+      recipientPosition: { x: 20, y: 45 },
+      advertisementPosition: { x: 12, y: 65 },
       imagePosition: { x: 90, y: 8 }
     }
   };
