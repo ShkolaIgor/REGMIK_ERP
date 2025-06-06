@@ -392,7 +392,7 @@ export default function ClientMailPage() {
 
       {/* Envelope Print Dialog */}
       <Dialog open={isEnvelopePrintDialogOpen} onOpenChange={setIsEnvelopePrintDialogOpen}>
-        <DialogContent className="max-w-[90vw] max-h-[85vh] overflow-hidden" aria-describedby="envelope-dialog-description">
+        <DialogContent className="max-w-[90vw] max-h-[95vh] overflow-hidden" aria-describedby="envelope-dialog-description">
           <DialogHeader>
             <DialogTitle>Налаштування друку конвертів - {batchName}</DialogTitle>
             <div id="envelope-dialog-description" className="sr-only">
@@ -400,7 +400,7 @@ export default function ClientMailPage() {
             </div>
           </DialogHeader>
           
-          <div className="flex gap-4 h-[400px]">
+          <div className="flex gap-4 h-[500px]">
             {/* Preview Section - Left */}
             <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg p-4 overflow-hidden">
               <div 
