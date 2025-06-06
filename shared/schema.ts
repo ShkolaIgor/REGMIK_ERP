@@ -723,6 +723,36 @@ export const clientContacts = pgTable("client_contacts", {
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
+// Налаштування Нової Пошти для клієнтів
+export const clientNovaPoshtaSettings = pgTable("client_nova_poshta_settings", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  
+  // API налаштування
+  apiKey: varchar("api_key", { length: 255 }).notNull(),
+  
+  // Налаштування відправника
+  senderRef: varchar("sender_ref", { length: 255 }), // Референс відправника в НП
+  senderAddress: varchar("sender_address", { length: 255 }), // Адреса відправника
+  senderCityRef: varchar("sender_city_ref", { length: 255 }), // Референс міста відправника
+  senderPhone: varchar("sender_phone", { length: 50 }),
+  senderContact: varchar("sender_contact", { length: 255 }),
+  
+  // Налаштування за замовчуванням
+  defaultServiceType: varchar("default_service_type", { length: 100 }).default("WarehouseWarehouse"), // WarehouseWarehouse, WarehouseDoors, DoorsWarehouse, DoorsDoors
+  defaultCargoType: varchar("default_cargo_type", { length: 100 }).default("Parcel"), // Parcel, Cargo
+  defaultPaymentMethod: varchar("default_payment_method", { length: 100 }).default("Cash"), // Cash, NonCash
+  defaultPayer: varchar("default_payer", { length: 100 }).default("Sender"), // Sender, Recipient, ThirdPerson
+  
+  // Додаткові налаштування
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  isPrimary: boolean("is_primary").default(false), // основні налаштування для клієнта
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
 // Insert schemas
 export const insertAssemblyOperationSchema = createInsertSchema(assemblyOperations).omit({ 
   id: true, 

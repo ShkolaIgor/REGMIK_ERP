@@ -627,6 +627,7 @@ export class DatabaseStorage implements IStorage {
       difficulty: techCards.difficulty,
       status: techCards.status,
       materialCost: techCards.materialCost,
+      createdBy: techCards.createdBy,
       createdAt: techCards.createdAt,
       product: products
     })
@@ -717,7 +718,7 @@ export class DatabaseStorage implements IStorage {
 
     return {
       ...techCard,
-      product: techCard.product,
+      product: techCard.product!,
       steps,
       materials
     };
@@ -2747,9 +2748,9 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(carriers).where(eq(carriers.isActive, true)).orderBy(carriers.name);
   }
 
-  async getCarrier(id: number): Promise<Carrier | undefined> {
+  async getCarrier(id: number): Promise<Carrier | null> {
     const [carrier] = await db.select().from(carriers).where(eq(carriers.id, id));
-    return carrier;
+    return carrier || null;
   }
 
   async getCarrierByName(name: string): Promise<Carrier | undefined> {
@@ -2762,13 +2763,13 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateCarrier(id: number, carrierData: Partial<InsertCarrier>): Promise<Carrier | undefined> {
+  async updateCarrier(id: number, carrierData: Partial<InsertCarrier>): Promise<Carrier | null> {
     const [updated] = await db
       .update(carriers)
       .set({ ...carrierData, updatedAt: new Date() })
       .where(eq(carriers.id, id))
       .returning();
-    return updated;
+    return updated || null;
   }
 
   async deleteCarrier(id: number): Promise<boolean> {
@@ -3590,7 +3591,7 @@ export class DatabaseStorage implements IStorage {
           const currentCounter = (settings.currentGlobalCounter || 0) + i + 1;
           
           serialNumber = this.formatSerialNumber(template, prefix, currentCounter);
-        } else if (category?.hasSerialNumbers) {
+        } else if (category?.useSerialNumbers) {
           // Використовуємо налаштування категорії
           const template = category.serialNumberTemplate || "{year}{month:2}{day:2}-{counter:6}";
           const prefix = category.serialNumberPrefix || "";
