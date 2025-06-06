@@ -293,8 +293,12 @@ export default function ClientMailPage() {
       const deltaY = e.clientY - resizeStart.y;
       
       if (resizedElement === 'image') {
-        const newSize = Math.max(20, Math.min(200, resizeStart.width + deltaX));
-        const sizePercent = (newSize / 130) * 100;
+        // Calculate new size based on diagonal movement
+        const diagonal = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const direction = deltaX > 0 ? 1 : -1; // Positive for enlarging, negative for shrinking
+        const newWidth = Math.max(20, Math.min(200, resizeStart.width + (diagonal * direction)));
+        const sizePercent = Math.max(10, Math.min(150, (newWidth / 130) * 100));
+        
         setEnvelopeSettings(prev => ({ ...prev, imageSize: sizePercent }));
       }
     };
@@ -614,17 +618,23 @@ export default function ClientMailPage() {
                     <div
                       style={{
                         position: 'absolute',
-                        bottom: '-4px',
-                        right: '-4px',
-                        width: '12px',
-                        height: '12px',
+                        bottom: '-8px',
+                        right: '-8px',
+                        width: '16px',
+                        height: '16px',
                         backgroundColor: '#3b82f6',
                         border: '2px solid white',
                         borderRadius: '50%',
                         cursor: 'nw-resize',
-                        display: isDragging && draggedElement === 'image' ? 'block' : 'none'
+                        display: 'block',
+                        zIndex: 1000,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                       }}
-                      onMouseDown={(e) => handleResizeMouseDown('image', e)}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleResizeMouseDown('image', e);
+                      }}
                       title="Перетягніть для зміни розміру"
                     />
                   </div>
