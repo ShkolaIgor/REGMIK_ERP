@@ -357,7 +357,7 @@ export class DatabaseStorage implements IStorage {
       ...insertOrder,
       orderNumber,
       totalAmount: totalAmount.toString(),
-      clientId: insertOrder.clientId ? parseInt(insertOrder.clientId as string) : null,
+      clientId: insertOrder.clientId ? (typeof insertOrder.clientId === 'string' ? parseInt(insertOrder.clientId) : insertOrder.clientId) : null,
     };
 
     const orderResult = await db.insert(orders).values(orderData).returning();
@@ -405,7 +405,7 @@ export class DatabaseStorage implements IStorage {
       const orderData = {
         ...insertOrder,
         totalAmount: totalAmount.toString(),
-        clientId: insertOrder.clientId ? parseInt(insertOrder.clientId as string) : null,
+        clientId: insertOrder.clientId ? (typeof insertOrder.clientId === 'string' ? parseInt(insertOrder.clientId) : insertOrder.clientId) : null,
       };
 
       const orderResult = await db.update(orders)
@@ -851,9 +851,7 @@ export class DatabaseStorage implements IStorage {
       totalValue,
       lowStockCount,
       activeOrders: activeOrdersResult.count,
-      productionTasks: productionTasksResult.count,
-      materialShortages: materialShortagesResult.count,
-      criticalShortages: criticalShortagesResult.count
+      productionTasks: productionTasksResult.count
     };
   }
 
