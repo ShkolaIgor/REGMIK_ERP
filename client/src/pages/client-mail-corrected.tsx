@@ -419,7 +419,7 @@ export default function ClientMailPage() {
 
       {/* Envelope Print Dialog */}
       <Dialog open={isEnvelopePrintDialogOpen} onOpenChange={setIsEnvelopePrintDialogOpen}>
-        <DialogContent className="max-w-[90vw] max-h-[95vh] overflow-hidden" aria-describedby="envelope-dialog-description">
+        <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden" aria-describedby="envelope-dialog-description">
           <DialogHeader>
             <DialogTitle>Налаштування друку конвертів - {batchName}</DialogTitle>
             <div id="envelope-dialog-description" className="sr-only">
@@ -427,16 +427,17 @@ export default function ClientMailPage() {
             </div>
           </DialogHeader>
           
-          <div className="flex gap-4 h-[500px]">
+          <div className="flex gap-4 h-[600px]">
             {/* Preview Section - Left */}
-            <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg p-4 overflow-hidden">
+            <div className="flex-[2] flex items-center justify-center bg-gray-50 rounded-lg p-4 overflow-hidden">
               <div 
                 className="envelope-preview bg-white shadow-lg relative border select-none"
                 style={{
-                  width: '550px',
-                  height: `${(envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * 550}px`,
+                  width: 'calc(100vw - 450px)',
+                  maxWidth: '800px',
+                  minWidth: '500px',
+                  height: `${(envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * Math.min(800, window.innerWidth - 450)}px`,
                   transformOrigin: 'center',
-                  maxWidth: '100%',
                   maxHeight: '100%',
                   overflow: 'visible'
                 }}
