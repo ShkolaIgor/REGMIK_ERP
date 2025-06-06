@@ -37,10 +37,10 @@ interface EnvelopeSettings {
 }
 
 const envelopeSizes = {
-  c5: { name: 'C5 (162×229мм)', width: 162, height: 229 },
-  c4: { name: 'C4 (229×324мм)', width: 229, height: 324 },
-  dl: { name: 'DL (110×220мм)', width: 110, height: 220 },
-  c6: { name: 'C6 (114×162мм)', width: 114, height: 162 }
+  c5: { name: 'C5 (162×229мм)', width: 229, height: 162 },
+  c4: { name: 'C4 (229×324мм)', width: 324, height: 229 },
+  dl: { name: 'DL (110×220мм)', width: 220, height: 110 },
+  c6: { name: 'C6 (114×162мм)', width: 162, height: 114 }
 };
 
 const getDefaultSettings = (size: EnvelopeSize): EnvelopeSettings => ({
@@ -60,7 +60,7 @@ const getDefaultSettings = (size: EnvelopeSize): EnvelopeSettings => ({
 
 export default function ClientMailPage() {
   const [newClientMail, setNewClientMail] = useState<InsertClientMail>({
-    clientId: 0,
+    clientId: "0",
     subject: '',
     content: '',
     status: 'draft'
@@ -135,13 +135,16 @@ export default function ClientMailPage() {
       const mmDeltaX = deltaX * 0.264583; // px to mm
       const mmDeltaY = deltaY * 0.264583;
 
-      setEnvelopeSettings(prev => ({
-        ...prev,
-        [`${draggedElement}Position`]: {
-          x: Math.max(0, prev[`${draggedElement}Position` as keyof EnvelopeSettings].x + mmDeltaX),
-          y: Math.max(0, prev[`${draggedElement}Position` as keyof EnvelopeSettings].y + mmDeltaY)
-        }
-      }));
+      setEnvelopeSettings(prev => {
+        const currentPosition = prev[`${draggedElement}Position` as keyof EnvelopeSettings] as { x: number; y: number };
+        return {
+          ...prev,
+          [`${draggedElement}Position`]: {
+            x: Math.max(0, currentPosition.x + mmDeltaX),
+            y: Math.max(0, currentPosition.y + mmDeltaY)
+          }
+        };
+      });
 
       setDragStart({ x: e.clientX, y: e.clientY });
     };
@@ -163,7 +166,7 @@ export default function ClientMailPage() {
   }, [isDragging, draggedElement, dragStart]);
 
   const currentBatchMails = Array.from(selectedClients).map(clientId => 
-    clients.find(c => c.id === clientId)
+    clients.find(c => c.id.toString() === clientId.toString())
   ).filter(Boolean) as Client[];
 
   const { senderRecipientFontSize, postalIndexFontSize, advertisementFontSize } = envelopeSettings;
@@ -197,7 +200,7 @@ export default function ClientMailPage() {
               <Label>Клієнт</Label>
               <Select
                 value={newClientMail.clientId.toString()}
-                onValueChange={(value) => setNewClientMail(prev => ({ ...prev, clientId: parseInt(value) }))}
+                onValueChange={(value) => setNewClientMail(prev => ({ ...prev, clientId: value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Оберіть клієнта" />
@@ -233,7 +236,7 @@ export default function ClientMailPage() {
 
             <Button
               onClick={() => createMutation.mutate(newClientMail)}
-              disabled={createMutation.isPending || !newClientMail.clientId}
+              disabled={createMutation.isPending || newClientMail.clientId === "0"}
               className="w-full"
             >
               {createMutation.isPending ? 'Створення...' : 'Створити листування'}
@@ -288,9 +291,12 @@ export default function ClientMailPage() {
 
       {/* Envelope Print Dialog with Horizontal Layout */}
       <Dialog open={isEnvelopePrintDialogOpen} onOpenChange={setIsEnvelopePrintDialogOpen}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden">
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden" aria-describedby="envelope-dialog-description">
           <DialogHeader>
             <DialogTitle>Налаштування друку конвертів - {batchName}</DialogTitle>
+            <div id="envelope-dialog-description" className="sr-only">
+              Діалог для налаштування параметрів друку конвертів з попереднім переглядом
+            </div>
           </DialogHeader>
           
           {/* Horizontal Layout: Preview Left, Settings Right */}
