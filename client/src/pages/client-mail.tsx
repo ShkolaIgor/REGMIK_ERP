@@ -36,260 +36,114 @@ interface EnvelopeSettings {
   imagePosition: { x: number; y: number };
 }
 
-const envelopeSizes: Record<EnvelopeSize, { width: number; height: number; name: string }> = {
-  'c5': { width: 229, height: 162, name: 'C5 (229×162мм)' },
-  'c4': { width: 324, height: 229, name: 'C4 (324×229мм)' },
-  'dl': { width: 220, height: 110, name: 'DL (220×110мм)' },
-  'c6': { width: 162, height: 114, name: 'C6 (162×114мм)' }
+const envelopeSizes = {
+  c5: { name: 'C5 (162×229мм)', width: 162, height: 229 },
+  c4: { name: 'C4 (229×324мм)', width: 229, height: 324 },
+  dl: { name: 'DL (110×220мм)', width: 110, height: 220 },
+  c6: { name: 'C6 (114×162мм)', width: 114, height: 162 }
 };
 
 const getDefaultSettings = (size: EnvelopeSize): EnvelopeSettings => ({
   envelopeSize: size,
-  settingName: `Налаштування ${envelopeSizes[size].name}`,
   advertisementText: '',
   advertisementImage: null,
-  imageSize: 100, // у відсотках
-  fontSize: 12,
-  senderRecipientFontSize: 10,
-  postalIndexFontSize: 12,
-  advertisementFontSize: 8,
-  senderPosition: { x: 15, y: 10 },
-  recipientPosition: { x: 120, y: 50 },
-  advertisementPosition: { x: 15, y: 80 },
-  imagePosition: { x: 30, y: 25 }
+  imageSize: 100,
+  fontSize: 14,
+  senderRecipientFontSize: 12,
+  postalIndexFontSize: 24,
+  advertisementFontSize: 12,
+  senderPosition: { x: 10, y: 10 },
+  recipientPosition: { x: 30, y: 100 },
+  advertisementPosition: { x: 20, y: 160 },
+  imagePosition: { x: 120, y: 10 }
 });
 
 export default function ClientMailPage() {
-  // State management
-  const [selectedMails, setSelectedMails] = useState<number[]>([]);
-  const [batchName, setBatchName] = useState('');
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEnvelopePrintDialogOpen, setIsEnvelopePrintDialogOpen] = useState(false);
-  const [currentBatchMails, setCurrentBatchMails] = useState<Client[]>([]);
-  
-  // Envelope settings state with localStorage initialization
+  const [newClientMail, setNewClientMail] = useState<InsertClientMail>({
+    clientId: 0,
+    subject: '',
+    content: '',
+    status: 'draft'
+  });
+
   const [envelopeSettings, setEnvelopeSettings] = useState<EnvelopeSettings>(() => {
     const saved = localStorage.getItem('envelopeSettings');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Error parsing saved envelope settings:', e);
-      }
-    }
-    return getDefaultSettings('dl');
+    return saved ? JSON.parse(saved) : getDefaultSettings('dl');
   });
+
+  const [isEnvelopePrintDialogOpen, setIsEnvelopePrintDialogOpen] = useState(false);
+  const [selectedClients, setSelectedClients] = useState<Set<number>>(new Set());
+  const [batchName, setBatchName] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [draggedElement, setDraggedElement] = useState<string | null>(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
-  // Queries
-  const { data: envelopeSettingsData } = useQuery({
-    queryKey: ['/api/envelope-print-settings'],
-  });
-
-  const mailsQuery = useQuery({
-    queryKey: ['/api/client-mail'],
-  });
-
-  const { data: clients } = useQuery({
-    queryKey: ['/api/clients'],
-  });
-
-  const { data: mailRegistry } = useQuery({
-    queryKey: ['/api/mail-registry'],
-  });
-
-  // Load settings from server only once, prioritize localStorage
-  useEffect(() => {
-    // Check if we have saved settings in localStorage first
-    const savedSettings = localStorage.getItem('envelopeSettings');
-    if (savedSettings) {
-      try {
-        const parsed = JSON.parse(savedSettings);
-        setEnvelopeSettings(parsed);
-        return; // Don't override with server settings if we have local ones
-      } catch (e) {
-        console.error('Error parsing saved envelope settings:', e);
-      }
-    }
-
-    // Only use server settings if no localStorage data exists
-    if (envelopeSettingsData && Array.isArray(envelopeSettingsData) && envelopeSettingsData.length > 0) {
-      const serverSettings = envelopeSettingsData[0];
-      const parsedSettings = {
-        ...serverSettings,
-        senderPosition: typeof serverSettings.senderPosition === 'string' 
-          ? JSON.parse(serverSettings.senderPosition) 
-          : serverSettings.senderPosition || { x: 15, y: 10 },
-        recipientPosition: typeof serverSettings.recipientPosition === 'string' 
-          ? JSON.parse(serverSettings.recipientPosition) 
-          : serverSettings.recipientPosition || { x: 120, y: 50 },
-        advertisementPosition: typeof serverSettings.advertisementPosition === 'string' 
-          ? JSON.parse(serverSettings.advertisementPosition) 
-          : serverSettings.advertisementPosition || { x: 15, y: 80 },
-        imagePosition: typeof serverSettings.imagePosition === 'string' 
-          ? JSON.parse(serverSettings.imagePosition) 
-          : serverSettings.imagePosition || { x: 30, y: 25 },
-        senderRecipientFontSize: Number(serverSettings.senderRecipientFontSize) || 14,
-        postalIndexFontSize: Number(serverSettings.postalIndexFontSize) || 18,
-        advertisementFontSize: Number(serverSettings.advertisementFontSize) || 11,
-        imageSize: Number(serverSettings.imageSize) || 100
-      };
-      setEnvelopeSettings(parsedSettings);
-    }
-  }, [envelopeSettingsData]);
-
-  // Auto-save to localStorage when settings change
+  // Auto-save settings to localStorage
   useEffect(() => {
     localStorage.setItem('envelopeSettings', JSON.stringify(envelopeSettings));
   }, [envelopeSettings]);
 
-  // Mutations
+  const { data: clients = [] } = useQuery<Client[]>({
+    queryKey: ["/api/clients"]
+  });
+
+  const { data: clientMails = [] } = useQuery<ClientMail[]>({
+    queryKey: ["/api/client-mail"]
+  });
+
   const createMutation = useMutation({
     mutationFn: (data: InsertClientMail) => apiRequest("/api/client-mail", { method: "POST", body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/client-mail"] });
-      toast({ title: "Кореспонденція додана" });
-      setIsCreateDialogOpen(false);
-    },
-    onError: (error) => {
-      toast({ title: "Помилка", description: error.message, variant: "destructive" });
+      setNewClientMail({ clientId: 0, subject: '', content: '', status: 'draft' });
+      toast({ title: "Листування створено!" });
     }
   });
 
   const saveSettingsMutation = useMutation({
     mutationFn: (settings: EnvelopeSettings) => {
-      const { id, ...settingsData } = settings;
-      // Convert position objects to JSON strings for database storage
-      const dataToSend = {
-        ...settingsData,
-        settingName: settingsData.settingName || `Налаштування ${envelopeSizes[settings.envelopeSize].name}`,
-        senderPosition: JSON.stringify(settingsData.senderPosition),
-        recipientPosition: JSON.stringify(settingsData.recipientPosition),
-        advertisementPosition: JSON.stringify(settingsData.advertisementPosition),
-        imagePosition: JSON.stringify(settingsData.imagePosition),
-        senderRecipientFontSize: String(settingsData.senderRecipientFontSize),
-        postalIndexFontSize: String(settingsData.postalIndexFontSize),
-        advertisementFontSize: String(settingsData.advertisementFontSize),
-        imageSize: String(settingsData.imageSize)
-      };
-      
-      console.log('Saving settings:', dataToSend);
-      
-      return apiRequest("/api/envelope-print-settings", { 
-        method: id ? "PATCH" : "POST", 
-        body: dataToSend 
-      });
+      return apiRequest("/api/envelope-settings", { method: "POST", body: settings });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/envelope-print-settings"] });
-      toast({ title: "Налаштування збережено" });
-    },
-    onError: (error) => {
-      console.error('Save settings error:', error);
-      toast({ title: "Помилка", description: error.message, variant: "destructive" });
+      toast({ title: "Налаштування збережено!" });
     }
   });
 
   const batchPrintMutation = useMutation({
     mutationFn: async (data: { batchName: string; clientIds: number[]; settings: EnvelopeSettings }) => {
-      return apiRequest("/api/envelope-print", { method: "POST", body: data });
+      return apiRequest("/api/client-mail/batch-print", { method: "POST", body: data });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/mail-registry"] });
-      toast({ title: "Пакетний друк розпочато" });
+      toast({ title: "Партія конвертів готова до друку!" });
       setIsEnvelopePrintDialogOpen(false);
-      setSelectedMails([]);
-    },
-    onError: (error) => {
-      toast({ title: "Помилка", description: error.message, variant: "destructive" });
     }
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/client-mail/${id}`, { method: "DELETE" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/client-mail"] });
-      toast({ title: "Кореспонденція видалена" });
-    },
-    onError: (error) => {
-      toast({ title: "Помилка", description: error.message, variant: "destructive" });
-    }
-  });
-
-  // Drag and drop handlers
-  const handleMouseDown = (elementType: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleMouseDown = (element: string, e: React.MouseEvent) => {
     setIsDragging(true);
-    setDraggedElement(elementType);
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    setDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    });
+    setDraggedElement(element);
+    setDragStart({ x: e.clientX, y: e.clientY });
+    e.preventDefault();
   };
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging || !draggedElement) return;
 
-      const previewContainer = document.querySelector('.envelope-preview');
-      if (!previewContainer) return;
+      const deltaX = e.clientX - dragStart.x;
+      const deltaY = e.clientY - dragStart.y;
+      const mmDeltaX = deltaX * 0.264583; // px to mm
+      const mmDeltaY = deltaY * 0.264583;
 
-      const rect = previewContainer.getBoundingClientRect();
-      
-      // Calculate position relative to envelope container
-      const x = e.clientX - rect.left - dragOffset.x;
-      const y = e.clientY - rect.top - dragOffset.y;
+      setEnvelopeSettings(prev => ({
+        ...prev,
+        [`${draggedElement}Position`]: {
+          x: Math.max(0, prev[`${draggedElement}Position` as keyof EnvelopeSettings].x + mmDeltaX),
+          y: Math.max(0, prev[`${draggedElement}Position` as keyof EnvelopeSettings].y + mmDeltaY)
+        }
+      }));
 
-      // Convert to mm considering the scale factor (0.85) and CSS pixel to mm conversion
-      const scale = 0.85;
-      const pixelToMm = 1 / 3.78; // 1mm ≈ 3.78px
-      const xMm = (x / scale) * pixelToMm;
-      const yMm = (y / scale) * pixelToMm;
-
-      // Get envelope boundaries
-      const maxX = envelopeSizes[envelopeSettings.envelopeSize].width;
-      const maxY = envelopeSizes[envelopeSettings.envelopeSize].height;
-
-      if (draggedElement === 'sender') {
-        setEnvelopeSettings(prev => ({
-          ...prev,
-          senderPosition: { 
-            x: Math.max(5, Math.min(xMm, maxX - 60)), 
-            y: Math.max(5, Math.min(yMm, maxY - 30)) 
-          }
-        }));
-      } else if (draggedElement === 'recipient') {
-        setEnvelopeSettings(prev => ({
-          ...prev,
-          recipientPosition: { 
-            x: Math.max(5, Math.min(xMm, maxX - 90)), 
-            y: Math.max(5, Math.min(yMm, maxY - 40)) 
-          }
-        }));
-      } else if (draggedElement === 'advertisement') {
-        setEnvelopeSettings(prev => ({
-          ...prev,
-          advertisementPosition: { 
-            x: Math.max(5, Math.min(xMm, maxX - 80)), 
-            y: Math.max(5, Math.min(yMm, maxY - 20)) 
-          }
-        }));
-      } else if (draggedElement === 'image') {
-        setEnvelopeSettings(prev => ({
-          ...prev,
-          imagePosition: { 
-            x: Math.max(5, Math.min(xMm, maxX - 30)), 
-            y: Math.max(5, Math.min(yMm, maxY - 30)) 
-          }
-        }));
-      }
+      setDragStart({ x: e.clientX, y: e.clientY });
     };
 
     const handleMouseUp = () => {
@@ -306,188 +160,128 @@ export default function ClientMailPage() {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, draggedElement, dragOffset, envelopeSettings.envelopeSize]);
+  }, [isDragging, draggedElement, dragStart]);
 
-  // Helper functions
-  const mails = mailsQuery.data || [];
-  const toggleSelectItem = (id: number) => {
-    setSelectedMails(prev => 
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    );
-  };
-
-  const selectAllItems = () => {
-    const allIds = (mails as any[]).map((m: any) => m.id);
-    setSelectedMails(selectedMails.length === allIds.length ? [] : allIds);
-  };
-
-  const handleBatchPrint = () => {
-    const selectedClients = (clients as any[] || []).filter((c: any) => 
-      selectedMails.some(mailId => (mails as any[]).find((m: any) => m.id === mailId)?.clientId === c.id)
-    );
-    setCurrentBatchMails(selectedClients);
-    setIsEnvelopePrintDialogOpen(true);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'printed': return 'bg-blue-100 text-blue-800';
-      case 'sent': return 'bg-green-100 text-green-800';
-      case 'delivered': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const imageData = event.target?.result as string;
-        setEnvelopeSettings(prev => ({ ...prev, advertisementImage: imageData }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const currentBatchMails = Array.from(selectedClients).map(clientId => 
+    clients.find(c => c.id === clientId)
+  ).filter(Boolean) as Client[];
 
   const { senderRecipientFontSize, postalIndexFontSize, advertisementFontSize } = envelopeSettings;
 
-  // Mail list component
-  const MailList = ({ mails }: { mails: Client[] }) => (
-    <div className="space-y-2">
-      {(mails as any[]).map((mail: any) => (
-        <div key={mail.id} className="flex items-center space-x-2 p-2 bg-gray-50 rounded">
-          <Checkbox
-            checked={selectedMails.includes(mail.id)}
-            onCheckedChange={() => toggleSelectItem(mail.id)}
-          />
-          <div className="flex-1">
-            <div className="font-medium">{mail.subject}</div>
-            <div className="text-sm text-gray-600">{mail.description}</div>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => deleteMutation.mutate(mail.id)}
-            disabled={deleteMutation.isPending}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      ))}
-    </div>
-  );
-
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Users className="h-8 w-8" />
-          Кореспонденція клієнтів
-        </h1>
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Кореспонденція клієнтів</h1>
         <div className="flex gap-2">
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Додати кореспонденцію
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Додати нову кореспонденцію</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="subject">Тема</Label>
-                  <Input id="subject" placeholder="Введіть тему" />
-                </div>
-                <div>
-                  <Label htmlFor="description">Опис</Label>
-                  <Textarea id="description" placeholder="Введіть опис" />
-                </div>
-                <Button onClick={() => createMutation.mutate({ subject: '', content: '', clientId: '1' })}>
-                  Додати
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-          <Button 
-            variant="outline" 
-            onClick={handleBatchPrint}
-            disabled={selectedMails.length === 0}
+          <Button
+            onClick={() => setIsEnvelopePrintDialogOpen(true)}
+            disabled={selectedClients.size === 0}
+            variant="outline"
           >
             <Printer className="h-4 w-4 mr-2" />
-            Друк конвертів ({selectedMails.length})
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => setIsEnvelopePrintDialogOpen(true)}
-          >
-            <Settings2 className="h-4 w-4 mr-2" />
-            Налаштування конвертів
+            Друкувати конверти ({selectedClients.size})
           </Button>
         </div>
-      </div>
-
-      {/* Batch selection controls */}
-      <div className="mb-4 flex items-center gap-4">
-        <Button variant="outline" onClick={selectAllItems}>
-          {selectedMails.length === (mails as any[]).length ? 'Скасувати вибір' : 'Вибрати все'}
-        </Button>
-        {selectedMails.length > 0 && (
-          <div className="flex items-center gap-2">
-            <Input
-              placeholder="Назва пакету"
-              value={batchName}
-              onChange={(e) => setBatchName(e.target.value)}
-              className="w-48"
-            />
-            <Button 
-              onClick={handleBatchPrint}
-              disabled={!batchName || batchPrintMutation.isPending}
-            >
-              Створити пакет
-            </Button>
-          </div>
-        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Mail list */}
         <Card>
           <CardHeader>
-            <CardTitle>Список кореспонденції</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5" />
+              Створити листування
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            {mailsQuery.isLoading ? (
-              <div>Завантаження...</div>
-            ) : (
-              <MailList mails={mails as Client[]} />
-            )}
+          <CardContent className="space-y-4">
+            <div>
+              <Label>Клієнт</Label>
+              <Select
+                value={newClientMail.clientId.toString()}
+                onValueChange={(value) => setNewClientMail(prev => ({ ...prev, clientId: parseInt(value) }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Оберіть клієнта" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map(client => (
+                    <SelectItem key={client.id} value={client.id.toString()}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Тема</Label>
+              <Input
+                value={newClientMail.subject}
+                onChange={(e) => setNewClientMail(prev => ({ ...prev, subject: e.target.value }))}
+                placeholder="Введіть тему листування"
+              />
+            </div>
+
+            <div>
+              <Label>Зміст</Label>
+              <Textarea
+                value={newClientMail.content}
+                onChange={(e) => setNewClientMail(prev => ({ ...prev, content: e.target.value }))}
+                placeholder="Введіть зміст листування"
+                rows={4}
+              />
+            </div>
+
+            <Button
+              onClick={() => createMutation.mutate(newClientMail)}
+              disabled={createMutation.isPending || !newClientMail.clientId}
+              className="w-full"
+            >
+              {createMutation.isPending ? 'Створення...' : 'Створити листування'}
+            </Button>
           </CardContent>
         </Card>
 
-        {/* Mail registry */}
         <Card>
           <CardHeader>
-            <CardTitle>Реєстр відправлень</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Вибір клієнтів для друку
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {(mailRegistry as any[] || []).map((entry: any) => (
-                <div key={entry.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                  <div>
-                    <div className="font-medium">{entry.batchName}</div>
-                    <div className="text-sm text-gray-600">{entry.createdAt}</div>
-                  </div>
-                  <Badge className={getStatusColor(entry.status)}>
-                    {entry.status}
-                  </Badge>
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {clients.map(client => (
+                <div key={client.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`client-${client.id}`}
+                    checked={selectedClients.has(client.id)}
+                    onCheckedChange={(checked) => {
+                      const newSelected = new Set(selectedClients);
+                      if (checked) {
+                        newSelected.add(client.id);
+                      } else {
+                        newSelected.delete(client.id);
+                      }
+                      setSelectedClients(newSelected);
+                    }}
+                  />
+                  <label htmlFor={`client-${client.id}`} className="text-sm font-medium">
+                    {client.name}
+                  </label>
                 </div>
               ))}
             </div>
+
+            {selectedClients.size > 0 && (
+              <div className="mt-4 space-y-2">
+                <Label>Назва партії</Label>
+                <Input
+                  value={batchName}
+                  onChange={(e) => setBatchName(e.target.value)}
+                  placeholder="Введіть назву партії"
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -670,113 +464,124 @@ export default function ClientMailPage() {
 
                   <TabsContent value="advertisement" className="space-y-4">
                     <div>
-                      <Label>Текст реклами</Label>
+                      <Label>Рекламний текст</Label>
                       <Textarea
                         value={envelopeSettings.advertisementText}
                         onChange={(e) => setEnvelopeSettings(prev => ({ ...prev, advertisementText: e.target.value }))}
                         placeholder="Введіть рекламний текст"
+                        rows={3}
                       />
                     </div>
-                    
 
-                    
                     <div>
-                      <Label>Зображення реклами</Label>
+                      <Label>Рекламне зображення</Label>
                       <div className="space-y-2">
-                        <input
-                          ref={fileInputRef}
+                        <Input
                           type="file"
                           accept="image/*"
-                          onChange={handleImageUpload}
-                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (e) => {
+                                setEnvelopeSettings(prev => ({ 
+                                  ...prev, 
+                                  advertisementImage: e.target?.result as string 
+                                }));
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
                         />
-                        <Button
-                          variant="outline"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="w-full"
-                        >
-                          <Upload className="h-4 w-4 mr-2" />
-                          Завантажити зображення
-                        </Button>
                         {envelopeSettings.advertisementImage && (
-                          <div className="flex items-center gap-2">
+                          <div className="relative">
                             <img 
                               src={envelopeSettings.advertisementImage} 
-                              alt="Preview" 
-                              className="w-8 h-8 object-cover rounded"
+                              alt="Реклама" 
+                              className="w-20 h-20 object-contain border rounded"
                             />
                             <Button
-                              variant="outline"
+                              variant="destructive"
                               size="sm"
                               onClick={() => setEnvelopeSettings(prev => ({ ...prev, advertisementImage: null }))}
+                              className="absolute -top-2 -right-2 h-6 w-6 p-0"
                             >
-                              Видалити
+                              ×
                             </Button>
                           </div>
                         )}
                       </div>
                     </div>
-                    
+
                     <div>
-                      <Label>Розмір зображення: {envelopeSettings.imageSize}%</Label>
-                      <Input
-                        type="range"
-                        min="25"
-                        max="200"
-                        value={envelopeSettings.imageSize}
-                        onChange={(e) => setEnvelopeSettings(prev => ({ ...prev, imageSize: Number(e.target.value) }))}
+                      <Label>Розмір зображення (%): {envelopeSettings.imageSize}%</Label>
+                      <Slider
+                        value={[envelopeSettings.imageSize]}
+                        onValueChange={([value]) => setEnvelopeSettings(prev => ({ ...prev, imageSize: value }))}
+                        min={25}
+                        max={200}
+                        step={5}
+                        className="mt-2"
                       />
                     </div>
                   </TabsContent>
 
                   <TabsContent value="fonts" className="space-y-4">
                     <div>
-                      <Label>Шрифт відправник/отримувач: {senderRecipientFontSize}px</Label>
-                      <Input
-                        type="range"
-                        min="10"
-                        max="18"
-                        value={senderRecipientFontSize}
-                        onChange={(e) => setEnvelopeSettings(prev => ({ ...prev, senderRecipientFontSize: Number(e.target.value) }))}
+                      <Label>Розмір шрифту відправника/одержувача: {senderRecipientFontSize}px</Label>
+                      <Slider
+                        value={[senderRecipientFontSize]}
+                        onValueChange={([value]) => setEnvelopeSettings(prev => ({ ...prev, senderRecipientFontSize: value }))}
+                        min={10}
+                        max={18}
+                        step={1}
+                        className="mt-2"
                       />
                     </div>
-                    
+
                     <div>
-                      <Label>Шрифт поштових індексів: {postalIndexFontSize}px</Label>
-                      <Input
-                        type="range"
-                        min="16"
-                        max="36"
-                        value={postalIndexFontSize}
-                        onChange={(e) => setEnvelopeSettings(prev => ({ ...prev, postalIndexFontSize: Number(e.target.value) }))}
+                      <Label>Розмір шрифту поштового індексу: {postalIndexFontSize}px</Label>
+                      <Slider
+                        value={[postalIndexFontSize]}
+                        onValueChange={([value]) => setEnvelopeSettings(prev => ({ ...prev, postalIndexFontSize: value }))}
+                        min={16}
+                        max={36}
+                        step={1}
+                        className="mt-2"
                       />
                     </div>
-                    
+
                     <div>
-                      <Label>Шрифт тексту реклами: {advertisementFontSize}px</Label>
-                      <Input
-                        type="range"
-                        min="8"
-                        max="18"
-                        value={advertisementFontSize}
-                        onChange={(e) => setEnvelopeSettings(prev => ({ ...prev, advertisementFontSize: Number(e.target.value) }))}
+                      <Label>Розмір шрифту реклами: {advertisementFontSize}px</Label>
+                      <Slider
+                        value={[advertisementFontSize]}
+                        onValueChange={([value]) => setEnvelopeSettings(prev => ({ ...prev, advertisementFontSize: value }))}
+                        min={8}
+                        max={18}
+                        step={1}
+                        className="mt-2"
                       />
                     </div>
                   </TabsContent>
                 </Tabs>
               </div>
-              
-              {/* Action buttons */}
-              <div className="pt-4 border-t space-y-2">
+
+              <div className="flex gap-2 mt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEnvelopePrintDialogOpen(false)}
+                  className="flex-1"
+                >
+                  Закрити
+                </Button>
                 <Button 
                   onClick={() => saveSettingsMutation.mutate(envelopeSettings)}
                   disabled={saveSettingsMutation.isPending}
-                  className="w-full"
+                  variant="outline"
+                  className="flex-1"
                 >
-                  <Settings2 className="h-4 w-4 mr-2" />
-                  Зберегти налаштування
+                  {saveSettingsMutation.isPending ? 'Збереження...' : 'Зберегти'}
                 </Button>
-                
                 <Button 
                   onClick={() => batchPrintMutation.mutate({ 
                     batchName, 
@@ -784,184 +589,14 @@ export default function ClientMailPage() {
                     settings: envelopeSettings 
                   })}
                   disabled={batchPrintMutation.isPending}
-                  className="w-full"
+                  className="flex-1"
                 >
                   <Printer className="h-4 w-4 mr-2" />
-                  Друкувати конверти
+                  Друкувати
                 </Button>
               </div>
             </div>
           </div>
-
-          {/* Settings Section - Right */}
-          <div className="w-80 flex flex-col">
-            <h3 className="text-lg font-semibold mb-3">Налаштування</h3>
-            <div className="flex-1 overflow-auto space-y-4">
-              <Tabs defaultValue="envelope" className="h-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="envelope">Конверт</TabsTrigger>
-                  <TabsTrigger value="advertisement">Реклама</TabsTrigger>
-                  <TabsTrigger value="fonts">Шрифти</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="envelope" className="space-y-4">
-                  <div>
-                    <Label>Розмір конверта</Label>
-                    <Select
-                      value={envelopeSettings.envelopeSize}
-                      onValueChange={(value: EnvelopeSize) => 
-                        setEnvelopeSettings(prev => ({ ...prev, envelopeSize: value }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(envelopeSizes).map(([size, info]) => (
-                          <SelectItem key={size} value={size}>
-                            {info.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="advertisement" className="space-y-4">
-                  <div>
-                    <Label>Текст реклами</Label>
-                    <Textarea
-                      value={envelopeSettings.advertisementText}
-                      onChange={(e) => setEnvelopeSettings(prev => ({ ...prev, advertisementText: e.target.value }))}
-                      placeholder="Введіть рекламний текст..."
-                      rows={4}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label>Зображення реклами</Label>
-                    <div className="space-y-2">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                      />
-                      <Button 
-                        type="button"
-                        variant="outline" 
-                        onClick={() => fileInputRef.current?.click()}
-                        className="w-full"
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Завантажити зображення
-                      </Button>
-                      {envelopeSettings.advertisementImage && (
-                        <div className="relative">
-                          <img 
-                            src={envelopeSettings.advertisementImage} 
-                            alt="Preview" 
-                            className="w-20 h-20 object-contain border rounded"
-                          />
-                          <Button 
-                            type="button"
-                            variant="destructive" 
-                            size="sm"
-                            onClick={() => setEnvelopeSettings(prev => ({ ...prev, advertisementImage: null }))}
-                            className="absolute -top-2 -right-2 h-6 w-6 p-0"
-                          >
-                            ×
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Розмір зображення (%): {envelopeSettings.imageSize}%</Label>
-                    <Slider
-                      value={[envelopeSettings.imageSize]}
-                      onValueChange={([value]) => setEnvelopeSettings(prev => ({ ...prev, imageSize: value }))}
-                      min={25}
-                      max={200}
-                      step={5}
-                      className="mt-2"
-                    />
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="fonts" className="space-y-4">
-                  <div>
-                    <Label>Розмір шрифту відправника/одержувача: {senderRecipientFontSize}px</Label>
-                    <Slider
-                      value={[senderRecipientFontSize]}
-                      onValueChange={([value]) => setEnvelopeSettings(prev => ({ ...prev, senderRecipientFontSize: value }))}
-                      min={10}
-                      max={18}
-                      step={1}
-                      className="mt-2"
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Розмір шрифту поштового індексу: {postalIndexFontSize}px</Label>
-                    <Slider
-                      value={[postalIndexFontSize]}
-                      onValueChange={([value]) => setEnvelopeSettings(prev => ({ ...prev, postalIndexFontSize: value }))}
-                      min={16}
-                      max={36}
-                      step={1}
-                      className="mt-2"
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Розмір шрифту реклами: {advertisementFontSize}px</Label>
-                    <Slider
-                      value={[advertisementFontSize]}
-                      onValueChange={([value]) => setEnvelopeSettings(prev => ({ ...prev, advertisementFontSize: value }))}
-                      min={8}
-                      max={18}
-                      step={1}
-                      className="mt-2"
-                    />
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-
-            <div className="flex gap-2 mt-4">
-              <Button 
-                variant="outline" 
-                onClick={() => setIsEnvelopePrintDialogOpen(false)}
-                className="flex-1"
-              >
-                Закрити
-              </Button>
-              <Button 
-                onClick={() => saveSettingsMutation.mutate(envelopeSettings)}
-                disabled={saveSettingsMutation.isPending}
-                variant="outline"
-                className="flex-1"
-              >
-                {saveSettingsMutation.isPending ? 'Збереження...' : 'Зберегти'}
-              </Button>
-              <Button 
-                onClick={() => batchPrintMutation.mutate({ 
-                  batchName, 
-                  clientIds: currentBatchMails.map(c => parseInt(c.id.toString())), 
-                  settings: envelopeSettings 
-                })}
-                disabled={batchPrintMutation.isPending}
-                className="flex-1"
-              >
-                <Printer className="h-4 w-4 mr-2" />
-                Друкувати
-              </Button>
-            </div>
-          </div>
-        </div>
         </DialogContent>
       </Dialog>
     </div>
