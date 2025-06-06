@@ -191,9 +191,9 @@ export default function ClientMailPage() {
 
   const { senderRecipientFontSize, postalIndexFontSize, advertisementFontSize } = envelopeSettings;
   
-  // Фіксований масштаб для 550px ширини
+  // Фіксований масштаб для 550px ширини з зменшенням елементів
   const ENVELOPE_SCALE = 550;
-  const scaleRatio = ENVELOPE_SCALE / Math.max(envelopeSizes[envelopeSettings.envelopeSize].width, envelopeSizes[envelopeSettings.envelopeSize].height);
+  const scaleRatio = (ENVELOPE_SCALE / Math.max(envelopeSizes[envelopeSettings.envelopeSize].width, envelopeSizes[envelopeSettings.envelopeSize].height)) * 0.6;
 
   return (
     <div className="container mx-auto py-6 space-y-6">
