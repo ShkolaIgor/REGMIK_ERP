@@ -122,6 +122,7 @@ export default function ClientMailPage() {
   const [draggedElement, setDraggedElement] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [envelopeBounds, setEnvelopeBounds] = useState<DOMRect | null>(null);
+  const [clientSearchQuery, setClientSearchQuery] = useState('');
 
   // Auto-save settings to localStorage for each envelope type separately
   useEffect(() => {
@@ -261,6 +262,20 @@ export default function ClientMailPage() {
     };
   }, [isDragging, draggedElement, dragStart, envelopeBounds]);
 
+  // Фільтрація клієнтів за пошуковим запитом
+  const filteredClients = clients.filter(client => {
+    if (!clientSearchQuery) return true;
+    
+    const query = clientSearchQuery.toLowerCase();
+    const name = client.name?.toLowerCase() || '';
+    const fullName = client.fullName?.toLowerCase() || '';
+    const id = client.id?.toLowerCase() || ''; // ЄДРПОУ або ІПН
+    
+    return name.includes(query) || 
+           fullName.includes(query) || 
+           id.includes(query);
+  });
+
   const currentBatchMails = Array.from(selectedClients).map(clientId => 
     clients.find(c => c.id.toString() === clientId.toString())
   ).filter(Boolean) as Client[];
@@ -353,8 +368,19 @@ export default function ClientMailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 max-h-80 overflow-y-auto">
-              {clients.map(client => (
+            <div className="space-y-4">
+              <div>
+                <Label>Пошук клієнтів</Label>
+                <Input
+                  value={clientSearchQuery}
+                  onChange={(e) => setClientSearchQuery(e.target.value)}
+                  placeholder="Пошук за назвою, ЄДРПОУ або ІПН..."
+                  className="mt-1"
+                />
+              </div>
+              
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {filteredClients.map(client => (
                 <div key={client.id} className="flex items-center space-x-2">
                   <Checkbox
                     id={`client-${client.id}`}
@@ -386,6 +412,7 @@ export default function ClientMailPage() {
                 />
               </div>
             )}
+            </div>
           </CardContent>
         </Card>
       </div>
