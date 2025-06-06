@@ -119,8 +119,11 @@ export default function ClientMailPage() {
   const [selectedClients, setSelectedClients] = useState<Set<number>>(new Set());
   const [batchName, setBatchName] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
   const [draggedElement, setDraggedElement] = useState<string | null>(null);
+  const [resizedElement, setResizedElement] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [resizeStart, setResizeStart] = useState({ x: 0, width: 0 });
   const [envelopeBounds, setEnvelopeBounds] = useState<DOMRect | null>(null);
   const [clientSearchQuery, setClientSearchQuery] = useState('');
 

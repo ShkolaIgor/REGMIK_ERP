@@ -719,6 +719,33 @@ export const clientPhones = pgTable("client_phones", {
   createdAt: timestamp("created_at").defaultNow()
 });
 
+// Налаштування конвертів з параметрами ширини елементів
+export const envelopeSettings = pgTable("envelope_settings", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id", { length: 50 }),
+  envelopeSize: varchar("envelope_size", { length: 10 }).notNull().default("dl"), // c6, dl, c5, c4
+  senderPositionX: decimal("sender_position_x", { precision: 8, scale: 2 }).default("10"),
+  senderPositionY: decimal("sender_position_y", { precision: 8, scale: 2 }).default("8"),
+  senderWidth: decimal("sender_width", { precision: 8, scale: 2 }).default("230"),
+  recipientPositionX: decimal("recipient_position_x", { precision: 8, scale: 2 }).default("25"),
+  recipientPositionY: decimal("recipient_position_y", { precision: 8, scale: 2 }).default("55"),
+  recipientWidth: decimal("recipient_width", { precision: 8, scale: 2 }).default("230"),
+  advertisementPositionX: decimal("advertisement_position_x", { precision: 8, scale: 2 }).default("15"),
+  advertisementPositionY: decimal("advertisement_position_y", { precision: 8, scale: 2 }).default("75"),
+  advertisementWidth: decimal("advertisement_width", { precision: 8, scale: 2 }).default("180"),
+  advertisementText: text("advertisement_text"),
+  advertisementImage: text("advertisement_image"), // base64 або URL
+  imagePositionX: decimal("image_position_x", { precision: 8, scale: 2 }).default("120"),
+  imagePositionY: decimal("image_position_y", { precision: 8, scale: 2 }).default("8"),
+  imageSize: decimal("image_size", { precision: 8, scale: 2 }).default("100"),
+  fontSize: decimal("font_size", { precision: 5, scale: 2 }).default("14"),
+  senderRecipientFontSize: decimal("sender_recipient_font_size", { precision: 5, scale: 2 }).default("12"),
+  postalIndexFontSize: decimal("postal_index_font_size", { precision: 5, scale: 2 }).default("24"),
+  advertisementFontSize: decimal("advertisement_font_size", { precision: 5, scale: 2 }).default("12"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertAssemblyOperationSchema = createInsertSchema(assemblyOperations).omit({ 
   id: true, 
@@ -746,6 +773,15 @@ export const insertClientPhoneSchema = createInsertSchema(clientPhones).omit({
   id: true,
   createdAt: true
 });
+
+export const insertEnvelopeSettingsSchema = createInsertSchema(envelopeSettings).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export type InsertEnvelopeSettings = z.infer<typeof insertEnvelopeSettingsSchema>;
+export type EnvelopeSettings = typeof envelopeSettings.$inferSelect;
 
 // Inventory Audits
 export const inventoryAudits = pgTable("inventory_audits", {
