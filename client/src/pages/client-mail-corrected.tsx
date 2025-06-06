@@ -127,6 +127,9 @@ export default function ClientMailPage() {
   const [draggedElement, setDraggedElement] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [envelopeBounds, setEnvelopeBounds] = useState<DOMRect | null>(null);
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizedElement, setResizedElement] = useState<string | null>(null);
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [clientSearchQuery, setClientSearchQuery] = useState('');
 
   // Auto-save settings to localStorage for each envelope type separately
@@ -186,8 +189,41 @@ export default function ClientMailPage() {
     setDragStart({ x: e.clientX, y: e.clientY });
   };
 
+  const handleResizeMouseDown = (element: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setIsResizing(true);
+    setResizedElement(element);
+    
+    // Get current size based on element type
+    let currentWidth = 100, currentHeight = 50;
+    if (element === 'advertisement') {
+      currentWidth = getAdvertisementMaxWidth(envelopeSettings.envelopeSize);
+      currentHeight = 40;
+    } else if (element === 'image') {
+      currentWidth = (envelopeSettings.imageSize / 100) * 130;
+      currentHeight = (envelopeSettings.imageSize / 100) * 130;
+    }
+    
+    setResizeStart({ 
+      x: e.clientX, 
+      y: e.clientY, 
+      width: currentWidth, 
+      height: currentHeight 
+    });
+  };
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging && draggedElement && envelopeBounds) {
+        handleDragMove(e);
+      } else if (isResizing && resizedElement) {
+        handleResizeMove(e);
+      }
+    };
+
+    const handleDragMove = (e: MouseEvent) => {
       if (!isDragging || !draggedElement || !envelopeBounds) return;
       
       if (e.clientX < envelopeBounds.left || e.clientX > envelopeBounds.right ||
@@ -250,13 +286,28 @@ export default function ClientMailPage() {
       setDragStart({ x: e.clientX, y: e.clientY });
     };
 
+    const handleResizeMove = (e: MouseEvent) => {
+      if (!isResizing || !resizedElement) return;
+      
+      const deltaX = e.clientX - resizeStart.x;
+      const deltaY = e.clientY - resizeStart.y;
+      
+      if (resizedElement === 'image') {
+        const newSize = Math.max(20, Math.min(200, resizeStart.width + deltaX));
+        const sizePercent = (newSize / 130) * 100;
+        setEnvelopeSettings(prev => ({ ...prev, imageSize: sizePercent }));
+      }
+    };
+
     const handleMouseUp = () => {
       setIsDragging(false);
       setDraggedElement(null);
       setEnvelopeBounds(null);
+      setIsResizing(false);
+      setResizedElement(null);
     };
 
-    if (isDragging) {
+    if (isDragging || isResizing) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     }
@@ -265,7 +316,7 @@ export default function ClientMailPage() {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, draggedElement, dragStart, envelopeBounds]);
+  }, [isDragging, draggedElement, dragStart, envelopeBounds, isResizing, resizedElement, resizeStart]);
 
   // Фільтрація клієнтів за пошуковим запитом
   const filteredClients = clients.filter(client => {
