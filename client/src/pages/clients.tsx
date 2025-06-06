@@ -65,8 +65,6 @@ const formSchema = insertClientSchema.extend({
   addressesMatch: z.boolean().default(false),
   discount: z.string().optional().transform(val => val || "0.00"),
   notes: z.string().optional(),
-  novaPoshtaApiKey: z.string().optional(),
-  enableThirdPartyShipping: z.boolean().default(false),
   isActive: z.boolean().default(true)
 });
 
@@ -521,7 +519,6 @@ export default function Clients() {
                           <Input 
                             placeholder="12345678 або 1234567890"
                             {...field}
-                            disabled={!!editingClient}
                           />
                         </FormControl>
                         <FormMessage />
@@ -677,48 +674,7 @@ export default function Clients() {
                   )}
                 />
 
-                <div className="border-t pt-4">
-                  <h3 className="text-lg font-semibold mb-4">Налаштування Нової Пошти</h3>
-                  
-                  <FormField
-                    control={form.control}
-                    name="enableThirdPartyShipping"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 mb-4">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>Дозволити відправки від імені клієнта</FormLabel>
-                          <p className="text-sm text-muted-foreground">
-                            Використовувати API ключі клієнта для створення відправок
-                          </p>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
 
-                  <FormField
-                    control={form.control}
-                    name="novaPoshtaApiKey"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>API ключ Нової Пошти</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                            type="password"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
 
                 <FormField
                   control={form.control}
@@ -810,12 +766,7 @@ export default function Clients() {
                 <Badge variant={client.isActive ? "default" : "secondary"} className="text-xs">
                   {client.isActive ? "Активний" : "Неактивний"}
                 </Badge>
-                {client.enableThirdPartyShipping && (
-                  <Badge variant="outline" className="text-blue-600 text-xs">
-                    <Truck className="h-3 w-3 mr-1" />
-                    Відправки клієнта
-                  </Badge>
-                )}
+
                 {client.discount && parseFloat(client.discount) > 0 && (
                   <Badge variant="outline" className="text-green-600 text-xs">
                     <Percent className="h-3 w-3 mr-1" />
