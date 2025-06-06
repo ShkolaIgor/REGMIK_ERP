@@ -291,7 +291,7 @@ export default function ClientMailPage() {
 
       {/* Envelope Print Dialog with Horizontal Layout */}
       <Dialog open={isEnvelopePrintDialogOpen} onOpenChange={setIsEnvelopePrintDialogOpen}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden" aria-describedby="envelope-dialog-description">
+        <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden" aria-describedby="envelope-dialog-description">
           <DialogHeader>
             <DialogTitle>Налаштування друку конвертів - {batchName}</DialogTitle>
             <div id="envelope-dialog-description" className="sr-only">
@@ -300,18 +300,18 @@ export default function ClientMailPage() {
           </DialogHeader>
           
           {/* Horizontal Layout: Preview Left, Settings Right */}
-          <div className="flex gap-6 h-[600px]">
+          <div className="flex gap-4 h-[700px]">
             {/* Preview Section - Left */}
-            <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg p-4 overflow-hidden">
+            <div className="flex-[2] flex items-center justify-center bg-gray-50 rounded-lg p-4 overflow-hidden">
               <div 
                 className="envelope-preview bg-white shadow-lg relative border"
                 style={{
                   width: `${envelopeSizes[envelopeSettings.envelopeSize].width}mm`,
                   height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
                   transform: `scale(${Math.min(
-                    200 / envelopeSizes[envelopeSettings.envelopeSize].width,
-                    150 / envelopeSizes[envelopeSettings.envelopeSize].height
-                  ) * 0.8})`,
+                    300 / envelopeSizes[envelopeSettings.envelopeSize].width,
+                    400 / envelopeSizes[envelopeSettings.envelopeSize].height
+                  ) * 0.6})`,
                   transformOrigin: 'center'
                 }}
               >
@@ -437,7 +437,7 @@ export default function ClientMailPage() {
             </div>
 
             {/* Settings Section - Right */}
-            <div className="w-80 flex flex-col">
+            <div className="min-w-80 w-80 flex flex-col flex-shrink-0">
               <h3 className="text-lg font-semibold mb-3">Налаштування</h3>
               <div className="flex-1 overflow-auto space-y-4">
                 <Tabs defaultValue="envelope" className="h-full">
