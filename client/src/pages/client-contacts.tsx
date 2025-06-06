@@ -12,7 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Search, Edit, Trash, Phone, Mail, User } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Plus, Search, Edit, Trash, Phone, Mail, User, Check, ChevronsUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertClientContactSchema, type ClientContact, type Client } from "@shared/schema";
@@ -49,6 +51,8 @@ export default function ClientContacts() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterClientId, setFilterClientId] = useState<string>("all");
   const [filterActive, setFilterActive] = useState<string>("all");
+  const [clientSearchOpen, setClientSearchOpen] = useState(false);
+  const [clientSearchValue, setClientSearchValue] = useState("");
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -232,22 +236,69 @@ export default function ClientContacts() {
                     control={form.control}
                     name="clientId"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex flex-col">
                         <FormLabel>Клієнт</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Оберіть клієнта" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {(clients as Client[]).map((client) => (
-                              <SelectItem key={client.id} value={client.id}>
-                                {client.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Popover open={clientSearchOpen} onOpenChange={setClientSearchOpen}>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={clientSearchOpen}
+                                className="justify-between"
+                              >
+                                {field.value
+                                  ? (clients as Client[]).find((client) => client.id === field.value)?.name
+                                  : "Пошук по назві, ЄДРПОУ або ІПН..."}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="p-0" style={{ width: "var(--radix-popover-trigger-width)" }}>
+                            <Command>
+                              <CommandInput 
+                                placeholder="Пошук по назві, ЄДРПОУ або ІПН..." 
+                                value={clientSearchValue}
+                                onValueChange={setClientSearchValue}
+                              />
+                              <CommandList>
+                                <CommandEmpty>Клієнтів не знайдено.</CommandEmpty>
+                                <CommandGroup>
+                                  {(clients as Client[])
+                                    .filter((client) =>
+                                      client.name.toLowerCase().includes(clientSearchValue.toLowerCase()) ||
+                                      client.id.toLowerCase().includes(clientSearchValue.toLowerCase()) ||
+                                      client.taxNumber?.toLowerCase().includes(clientSearchValue.toLowerCase())
+                                    )
+                                    .map((client) => (
+                                      <CommandItem
+                                        key={client.id}
+                                        value={client.id}
+                                        onSelect={() => {
+                                          field.onChange(client.id);
+                                          setClientSearchOpen(false);
+                                          setClientSearchValue("");
+                                        }}
+                                      >
+                                        <Check
+                                          className={`mr-2 h-4 w-4 ${
+                                            field.value === client.id ? "opacity-100" : "opacity-0"
+                                          }`}
+                                        />
+                                        <div className="flex flex-col">
+                                          <span className="font-medium">{client.name}</span>
+                                          <span className="text-sm text-muted-foreground">
+                                            {client.taxNumber && `ЄДРПОУ: ${client.taxNumber}`}
+                                            {client.id && ` • ID: ${client.id}`}
+                                          </span>
+                                        </div>
+                                      </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}
