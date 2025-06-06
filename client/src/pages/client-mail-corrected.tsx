@@ -486,8 +486,8 @@ export default function ClientMailPage() {
                   <div
                     style={{
                       position: 'absolute',
-                      top: `${envelopeSettings.advertisementPosition.y * baseScale}px`,
-                      left: `${envelopeSettings.advertisementPosition.x * baseScale}px`,
+                      top: '50px', // Фіксована позиція для тестування
+                      left: '50px', // Фіксована позиція для тестування
                       fontSize: `${advertisementFontSize * elementScale}px`,
                       maxWidth: `${getAdvertisementMaxWidth(envelopeSettings.envelopeSize) * elementScale}px`,
                       whiteSpace: 'pre-wrap',
