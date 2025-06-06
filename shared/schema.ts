@@ -151,7 +151,7 @@ export const orders = pgTable("orders", {
   customerName: text("customer_name"),
   customerEmail: text("customer_email"),
   customerPhone: text("customer_phone"),
-  clientId: varchar("client_id", { length: 20 }).references(() => clients.id), // зв'язок з клієнтом для використання його API ключів
+  clientId: integer("client_id").references(() => clients.id), // зв'язок з клієнтом для використання його API ключів
   status: text("status").notNull().default("pending"), // pending, processing, shipped, delivered, cancelled
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   notes: text("notes"),
@@ -668,7 +668,8 @@ export const emailSettings = pgTable("email_settings", {
 
 // Таблиця клієнтів з налаштуваннями Нової Пошти
 export const clients = pgTable("clients", {
-  id: varchar("id", { length: 20 }).primaryKey(), // ЄДРПОУ або ІПН
+  id: serial("id").primaryKey(), // Автоматично генерований унікальний ID
+  taxCode: varchar("tax_code", { length: 20 }).notNull().unique(), // ЄДРПОУ або ІПН
   name: varchar("name", { length: 255 }).notNull(), // Скорочена назва
   fullName: varchar("full_name", { length: 500 }),  // Повна назва
   type: varchar("type", { length: 50 }).notNull().default("individual"), // individual, organization
@@ -698,7 +699,7 @@ export const clients = pgTable("clients", {
 // Контактні особи клієнтів (об'єднана таблиця)
 export const clientContacts = pgTable("client_contacts", {
   id: serial("id").primaryKey(),
-  clientId: varchar("client_id", { length: 20 }).notNull().references(() => clients.id, { onDelete: "cascade" }),
+  clientId: integer("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
   fullName: varchar("full_name", { length: 255 }).notNull(),
   position: varchar("position", { length: 255 }),
   email: varchar("email", { length: 255 }),

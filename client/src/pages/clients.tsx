@@ -56,7 +56,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // Розширена схема валідації для нової структури
 const formSchema = insertClientSchema.extend({
-  id: z.string().min(1, "ЄДРПОУ/ІПН обов'язковий").max(20, "Максимум 20 символів"),
+  taxCode: z.string().min(1, "ЄДРПОУ/ІПН обов'язковий").max(20, "Максимум 20 символів"),
   type: z.enum(["individual", "organization"]),
   name: z.string().min(1, "Скорочена назва обов'язкова"),
   fullName: z.string().optional(),
@@ -112,7 +112,7 @@ export default function Clients() {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      id: "",
+      taxCode: "",
       type: "organization",
       name: "",
       fullName: "",
