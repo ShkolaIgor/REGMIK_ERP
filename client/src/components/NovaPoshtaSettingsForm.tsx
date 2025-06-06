@@ -54,15 +54,12 @@ export default function NovaPoshtaSettingsForm({
     defaultValues: {
       clientId,
       apiKey: settings?.apiKey || "",
-      senderCity: settings?.senderCity || "",
+      senderRef: settings?.senderRef || "",
       senderCityRef: settings?.senderCityRef || "",
-      senderWarehouse: settings?.senderWarehouse || "",
-      senderWarehouseRef: settings?.senderWarehouseRef || "",
       senderAddress: settings?.senderAddress || "",
       senderContact: settings?.senderContact || "",
       senderPhone: settings?.senderPhone || "",
       isActive: settings?.isActive ?? true,
-      notes: settings?.notes || "",
     },
   });
 
@@ -71,15 +68,12 @@ export default function NovaPoshtaSettingsForm({
       const insertData: InsertClientNovaPoshtaSettings = {
         clientId: data.clientId,
         apiKey: data.apiKey,
-        senderCity: data.senderCity || null,
+        senderRef: data.senderRef || null,
         senderCityRef: data.senderCityRef || null,
-        senderWarehouse: data.senderWarehouse || null,
-        senderWarehouseRef: data.senderWarehouseRef || null,
         senderAddress: data.senderAddress || null,
         senderContact: data.senderContact || null,
         senderPhone: data.senderPhone || null,
         isActive: data.isActive,
-        notes: data.notes || null,
       };
       
       return await apiRequest("/api/client-nova-poshta-settings", {
@@ -108,15 +102,12 @@ export default function NovaPoshtaSettingsForm({
     mutationFn: async (data: FormData) => {
       const updateData: Partial<InsertClientNovaPoshtaSettings> = {
         apiKey: data.apiKey,
-        senderCity: data.senderCity || null,
+        senderRef: data.senderRef || null,
         senderCityRef: data.senderCityRef || null,
-        senderWarehouse: data.senderWarehouse || null,
-        senderWarehouseRef: data.senderWarehouseRef || null,
         senderAddress: data.senderAddress || null,
         senderContact: data.senderContact || null,
         senderPhone: data.senderPhone || null,
         isActive: data.isActive,
-        notes: data.notes || null,
       };
       
       return await apiRequest(`/api/client-nova-poshta-settings/${settings!.id}`, {
@@ -178,13 +169,13 @@ export default function NovaPoshtaSettingsForm({
 
           <FormField
             control={form.control}
-            name="senderCity"
+            name="senderRef"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Місто відправника</FormLabel>
+                <FormLabel>Референс відправника</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Київ"
+                    placeholder="1ec09d88-e1c2-11e3-8c4a-0050568002cf"
                     {...field}
                   />
                 </FormControl>
@@ -202,40 +193,6 @@ export default function NovaPoshtaSettingsForm({
                 <FormControl>
                   <Input 
                     placeholder="8d5a980d-391c-11dd-90d9-001a92567626"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="senderWarehouse"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Відділення відправника</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Відділення №1"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="senderWarehouseRef"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Ref відділення відправника</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="1ec09d88-e1c2-11e3-8c4a-0050568002cf"
                     {...field}
                   />
                 </FormControl>
@@ -296,23 +253,6 @@ export default function NovaPoshtaSettingsForm({
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="notes"
-            render={({ field }) => (
-              <FormItem className="md:col-span-2">
-                <FormLabel>Примітки</FormLabel>
-                <FormControl>
-                  <Textarea 
-                    placeholder="Додаткові примітки до налаштувань"
-                    className="min-h-[60px]"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
 
         <FormField
