@@ -42,17 +42,11 @@ const envelopeSizes = {
 
 const getDefaultSettings = (size: EnvelopeSize): EnvelopeSettings => {
   const positions = {
-    c5: {
-      senderPosition: { x: 10, y: 10 },
-      recipientPosition: { x: 30, y: 100 },
-      advertisementPosition: { x: 20, y: 140 },
-      imagePosition: { x: 120, y: 10 }
-    },
-    c4: {
-      senderPosition: { x: 10, y: 10 },
-      recipientPosition: { x: 40, y: 120 },
-      advertisementPosition: { x: 30, y: 180 },
-      imagePosition: { x: 160, y: 10 }
+    c6: {
+      senderPosition: { x: 8, y: 6 },
+      recipientPosition: { x: 20, y: 45 },
+      advertisementPosition: { x: 15, y: 70 },
+      imagePosition: { x: 80, y: 6 }
     },
     dl: {
       senderPosition: { x: 10, y: 8 },
@@ -60,11 +54,17 @@ const getDefaultSettings = (size: EnvelopeSize): EnvelopeSettings => {
       advertisementPosition: { x: 15, y: 75 },
       imagePosition: { x: 120, y: 8 }
     },
-    c6: {
-      senderPosition: { x: 8, y: 8 },
-      recipientPosition: { x: 20, y: 45 },
-      advertisementPosition: { x: 12, y: 65 },
-      imagePosition: { x: 90, y: 8 }
+    c5: {
+      senderPosition: { x: 12, y: 10 },
+      recipientPosition: { x: 30, y: 100 },
+      advertisementPosition: { x: 20, y: 140 },
+      imagePosition: { x: 120, y: 10 }
+    },
+    c4: {
+      senderPosition: { x: 15, y: 15 },
+      recipientPosition: { x: 40, y: 120 },
+      advertisementPosition: { x: 30, y: 180 },
+      imagePosition: { x: 160, y: 15 }
     }
   };
 
@@ -130,7 +130,7 @@ export default function ClientMailPage() {
     mutationFn: async (settings: EnvelopeSettings) => {
       return await apiRequest('/api/envelope-settings', {
         method: 'PUT',
-        body: JSON.stringify({
+        body: {
           userId: 'default', // Можна буде пізніше підключити до системи користувачів
           envelopeSize: settings.envelopeSize,
           senderPositionX: settings.senderPosition.x,
@@ -151,9 +151,6 @@ export default function ClientMailPage() {
           senderRecipientFontSize: settings.senderRecipientFontSize,
           postalIndexFontSize: settings.postalIndexFontSize,
           advertisementFontSize: settings.advertisementFontSize
-        }),
-        headers: {
-          'Content-Type': 'application/json'
         }
       });
     },
