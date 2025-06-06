@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, decimal, doublePrecision, timestamp, varchar, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, decimal, timestamp, varchar, jsonb, index } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -724,24 +724,24 @@ export const envelopeSettings = pgTable("envelope_settings", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id", { length: 50 }),
   envelopeSize: varchar("envelope_size", { length: 10 }).notNull().default("dl"), // c6, dl, c5, c4
-  senderPositionX: doublePrecision("sender_position_x").default(10),
-  senderPositionY: doublePrecision("sender_position_y").default(8),
-  senderWidth: doublePrecision("sender_width").default(230),
-  recipientPositionX: doublePrecision("recipient_position_x").default(25),
-  recipientPositionY: doublePrecision("recipient_position_y").default(55),
-  recipientWidth: doublePrecision("recipient_width").default(230),
-  advertisementPositionX: doublePrecision("advertisement_position_x").default(15),
-  advertisementPositionY: doublePrecision("advertisement_position_y").default(75),
-  advertisementWidth: doublePrecision("advertisement_width").default(180),
+  senderPositionX: decimal("sender_position_x", { precision: 8, scale: 2 }).default("10"),
+  senderPositionY: decimal("sender_position_y", { precision: 8, scale: 2 }).default("8"),
+  senderWidth: decimal("sender_width", { precision: 8, scale: 2 }).default("230"),
+  recipientPositionX: decimal("recipient_position_x", { precision: 8, scale: 2 }).default("25"),
+  recipientPositionY: decimal("recipient_position_y", { precision: 8, scale: 2 }).default("55"),
+  recipientWidth: decimal("recipient_width", { precision: 8, scale: 2 }).default("230"),
+  advertisementPositionX: decimal("advertisement_position_x", { precision: 8, scale: 2 }).default("15"),
+  advertisementPositionY: decimal("advertisement_position_y", { precision: 8, scale: 2 }).default("75"),
+  advertisementWidth: decimal("advertisement_width", { precision: 8, scale: 2 }).default("180"),
   advertisementText: text("advertisement_text"),
   advertisementImage: text("advertisement_image"), // base64 або URL
-  imagePositionX: doublePrecision("image_position_x").default(120),
-  imagePositionY: doublePrecision("image_position_y").default(8),
-  imageSize: doublePrecision("image_size").default(100),
-  fontSize: doublePrecision("font_size").default(14),
-  senderRecipientFontSize: doublePrecision("sender_recipient_font_size").default(12),
-  postalIndexFontSize: doublePrecision("postal_index_font_size").default(24),
-  advertisementFontSize: doublePrecision("advertisement_font_size").default(12),
+  imagePositionX: decimal("image_position_x", { precision: 8, scale: 2 }).default("120"),
+  imagePositionY: decimal("image_position_y", { precision: 8, scale: 2 }).default("8"),
+  imageSize: decimal("image_size", { precision: 8, scale: 2 }).default("100"),
+  fontSize: decimal("font_size", { precision: 5, scale: 2 }).default("14"),
+  senderRecipientFontSize: decimal("sender_recipient_font_size", { precision: 5, scale: 2 }).default("12"),
+  postalIndexFontSize: decimal("postal_index_font_size", { precision: 5, scale: 2 }).default("24"),
+  advertisementFontSize: decimal("advertisement_font_size", { precision: 5, scale: 2 }).default("12"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -5327,35 +5327,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertEnvelopeSettings(settingsData: InsertEnvelopeSettings): Promise<EnvelopeSettings> {
-    // Спробуємо знайти існуючі налаштування для користувача
-    const existing = await db
-      .select()
-      .from(envelopeSettings)
-      .where(eq(envelopeSettings.userId, settingsData.userId || 'default'))
-      .limit(1);
-
-    if (existing.length > 0) {
-      // Оновлюємо існуючі налаштування
-      const [updated] = await db
-        .update(envelopeSettings)
-        .set({
-          ...settingsData,
-          updatedAt: new Date(),
-        })
-        .where(eq(envelopeSettings.userId, settingsData.userId || 'default'))
-        .returning();
-      return updated;
-    } else {
-      // Створюємо нові налаштування
-      const [created] = await db
-        .insert(envelopeSettings)
-        .values({
-          ...settingsData,
-          userId: settingsData.userId || 'default',
-        })
-        .returning();
-      return created;
-    }
+    const [settings] = await db
+      .insert(envelopeSettings)
+      .values(settingsData)
+      .onConflictDoUpdate({
+        target: [envelopeSettings.userId, envelopeSettings.envelopeSize],
+        set: {
+          senderNameWidth: settingsData.senderNameWidth,
+          senderAddressWidth: settingsData.senderAddressWidth,
+          recipientNameWidth: settingsData.recipientNameWidth,
+          recipientAddressWidth: settingsData.recipientAddressWidth,
+          updatedAt: new Date()
+        }
+      })
+      .returning();
+    return settings;
   }
 }
 
