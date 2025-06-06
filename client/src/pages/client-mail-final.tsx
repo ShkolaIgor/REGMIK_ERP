@@ -311,7 +311,7 @@ export default function ClientMailPage() {
 
       {/* Envelope Print Dialog */}
       <Dialog open={isEnvelopePrintDialogOpen} onOpenChange={setIsEnvelopePrintDialogOpen}>
-        <DialogContent className="max-w-[98vw] max-h-[90vh] overflow-auto" aria-describedby="envelope-dialog-description">
+        <DialogContent className="max-w-[85vw] max-h-[80vh] overflow-auto" aria-describedby="envelope-dialog-description">
           <DialogHeader>
             <DialogTitle>Налаштування друку конвертів - {batchName}</DialogTitle>
             <div id="envelope-dialog-description" className="sr-only">
@@ -319,7 +319,7 @@ export default function ClientMailPage() {
             </div>
           </DialogHeader>
           
-          <div className="flex gap-4 h-[700px]">
+          <div className="flex gap-4 h-[500px]">
             {/* Preview Section - Left */}
             <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg p-4 overflow-hidden">
               <div 
@@ -327,7 +327,7 @@ export default function ClientMailPage() {
                 style={{
                   width: `${envelopeSizes[envelopeSettings.envelopeSize].width}mm`,
                   height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
-                  transform: `scale(0.55)`,
+                  transform: `scale(0.45)`,
                   transformOrigin: 'center',
                   maxWidth: '100%',
                   maxHeight: '100%'
@@ -458,7 +458,7 @@ export default function ClientMailPage() {
             </div>
 
             {/* Settings Section - Right */}
-            <div className="w-80 flex flex-col flex-shrink-0">
+            <div className="w-72 flex flex-col flex-shrink-0">
               <h3 className="text-lg font-semibold mb-3">Налаштування</h3>
               <div className="flex-1 overflow-auto space-y-4">
                 <Tabs defaultValue="envelope" className="w-full">
