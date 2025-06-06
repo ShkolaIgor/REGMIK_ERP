@@ -36,7 +36,7 @@ export default function ClientNovaPoshtaSettings() {
     mutationFn: (data: InsertClientNovaPoshtaSettings) =>
       apiRequest(`/api/clients/${clientId}/nova-poshta-settings`, {
         method: "POST",
-        body: JSON.stringify(data),
+        body: data,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients", clientId, "nova-poshta-settings"] });
@@ -60,7 +60,7 @@ export default function ClientNovaPoshtaSettings() {
     mutationFn: ({ id, data }: { id: number; data: Partial<InsertClientNovaPoshtaSettings> }) =>
       apiRequest(`/api/nova-poshta-settings/${id}`, {
         method: "PATCH",
-        body: JSON.stringify(data),
+        body: data,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients", clientId, "nova-poshta-settings"] });
@@ -125,11 +125,15 @@ export default function ClientNovaPoshtaSettings() {
     },
   });
 
-  const handleSubmit = (data: InsertClientNovaPoshtaSettings) => {
+  const handleSubmit = (data: any) => {
     if (editingSettings) {
       updateMutation.mutate({ id: editingSettings.id, data });
     } else {
-      createMutation.mutate(data);
+      const dataWithClientId = {
+        ...data,
+        clientId: parseInt(clientId),
+      };
+      createMutation.mutate(dataWithClientId);
     }
   };
 
