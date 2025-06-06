@@ -797,8 +797,18 @@ export default function Clients() {
                     size="sm" 
                     onClick={() => openAddContactDialog(client.id.toString())}
                     className="text-blue-600 hover:text-blue-700"
+                    title="Контакти клієнта"
                   >
                     <User className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => window.location.href = `/clients/${client.id}/nova-poshta-settings`}
+                    className="text-green-600 hover:text-green-700"
+                    title="Налаштування Нової Пошти"
+                  >
+                    <Truck className="h-4 w-4" />
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => handleEdit(client)}>
                     <Edit className="h-4 w-4" />
