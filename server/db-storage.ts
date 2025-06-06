@@ -5307,6 +5307,87 @@ export class DatabaseStorage implements IStorage {
       batchId 
     };
   }
+
+  // Client Contacts methods (Combined table)
+  async getClientContacts(): Promise<ClientContact[]> {
+    try {
+      const contacts = await db
+        .select()
+        .from(clientContacts)
+        .leftJoin(clients, eq(clientContacts.clientId, clients.id))
+        .orderBy(clientContacts.fullName);
+      
+      return contacts.map(row => ({
+        ...row.client_contacts,
+        client: row.clients
+      }));
+    } catch (error) {
+      console.error("Error fetching client contacts:", error);
+      throw error;
+    }
+  }
+
+  async getClientContact(id: number): Promise<ClientContact | undefined> {
+    try {
+      const [contact] = await db
+        .select()
+        .from(clientContacts)
+        .leftJoin(clients, eq(clientContacts.clientId, clients.id))
+        .where(eq(clientContacts.id, id));
+      
+      if (!contact) return undefined;
+      
+      return {
+        ...contact.client_contacts,
+        client: contact.clients
+      };
+    } catch (error) {
+      console.error("Error fetching client contact:", error);
+      throw error;
+    }
+  }
+
+  async createClientContact(contactData: InsertClientContact): Promise<ClientContact> {
+    try {
+      const [contact] = await db
+        .insert(clientContacts)
+        .values(contactData)
+        .returning();
+      return contact;
+    } catch (error) {
+      console.error("Error creating client contact:", error);
+      throw error;
+    }
+  }
+
+  async updateClientContact(id: number, contactData: Partial<InsertClientContact>): Promise<ClientContact | undefined> {
+    try {
+      const [contact] = await db
+        .update(clientContacts)
+        .set({
+          ...contactData,
+          updatedAt: new Date()
+        })
+        .where(eq(clientContacts.id, id))
+        .returning();
+      return contact;
+    } catch (error) {
+      console.error("Error updating client contact:", error);
+      throw error;
+    }
+  }
+
+  async deleteClientContact(id: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(clientContacts)
+        .where(eq(clientContacts.id, id));
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      console.error("Error deleting client contact:", error);
+      throw error;
+    }
+  }
 }
 
 export const dbStorage = new DatabaseStorage();

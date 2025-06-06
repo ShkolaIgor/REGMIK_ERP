@@ -4460,6 +4460,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Client Contacts API (Combined table)
+  app.get("/api/client-contacts", async (req, res) => {
+    try {
+      const contacts = await storage.getClientContacts();
+      res.json(contacts);
+    } catch (error) {
+      console.error("Error fetching client contacts:", error);
+      res.status(500).json({ error: "Failed to fetch client contacts" });
+    }
+  });
+
+  app.post("/api/client-contacts", async (req, res) => {
+    try {
+      const validatedData = insertClientContactSchema.parse(req.body);
+      const contact = await storage.createClientContact(validatedData);
+      res.status(201).json(contact);
+    } catch (error) {
+      console.error("Error creating client contact:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid contact data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create client contact" });
+      }
+    }
+  });
+
+  app.get("/api/client-contacts/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const contact = await storage.getClientContact(id);
+      if (!contact) {
+        return res.status(404).json({ error: "Contact not found" });
+      }
+      res.json(contact);
+    } catch (error) {
+      console.error("Error fetching client contact:", error);
+      res.status(500).json({ error: "Failed to fetch client contact" });
+    }
+  });
+
+  app.patch("/api/client-contacts/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const contact = await storage.updateClientContact(id, req.body);
+      if (!contact) {
+        return res.status(404).json({ error: "Contact not found" });
+      }
+      res.json(contact);
+    } catch (error) {
+      console.error("Error updating client contact:", error);
+      res.status(500).json({ error: "Failed to update client contact" });
+    }
+  });
+
+  app.delete("/api/client-contacts/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteClientContact(id);
+      if (!success) {
+        return res.status(404).json({ error: "Contact not found" });
+      }
+      res.json({ message: "Contact deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting client contact:", error);
+      res.status(500).json({ error: "Failed to delete client contact" });
+    }
+  });
+
+  // Legacy client phones API (deprecated - redirects to contacts)
+  app.get("/api/client-phones", async (req, res) => {
+    try {
+      // Перенаправляємо на об'єднану таблицю контактів
+      const contacts = await storage.getClientContacts();
+      // Трансформуємо дані для сумісності зі старим API
+      const phones = contacts.flatMap((contact: any) => {
+        const result = [];
+        if (contact.primaryPhone) {
+          result.push({
+            id: `${contact.id}-primary`,
+            clientId: contact.clientId,
+            phoneNumber: contact.primaryPhone,
+            phoneType: contact.primaryPhoneType,
+            description: `Основний телефон - ${contact.fullName}`,
+            isPrimary: true,
+            createdAt: contact.createdAt
+          });
+        }
+        if (contact.secondaryPhone) {
+          result.push({
+            id: `${contact.id}-secondary`,
+            clientId: contact.clientId,
+            phoneNumber: contact.secondaryPhone,
+            phoneType: contact.secondaryPhoneType,
+            description: `Додатковий телефон - ${contact.fullName}`,
+            isPrimary: false,
+            createdAt: contact.createdAt
+          });
+        }
+        if (contact.tertiaryPhone) {
+          result.push({
+            id: `${contact.id}-tertiary`,
+            clientId: contact.clientId,
+            phoneNumber: contact.tertiaryPhone,
+            phoneType: contact.tertiaryPhoneType,
+            description: `Третій телефон - ${contact.fullName}`,
+            isPrimary: false,
+            createdAt: contact.createdAt
+          });
+        }
+        return result;
+      });
+      res.json(phones);
+    } catch (error) {
+      console.error("Error fetching client phones (legacy):", error);
+      res.status(500).json({ error: "Failed to fetch client phones" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
