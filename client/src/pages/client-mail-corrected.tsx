@@ -125,8 +125,52 @@ export default function ClientMailPage() {
   const [clientSearchQuery, setClientSearchQuery] = useState('');
   const { toast } = useToast();
 
+  // Мутація для збереження налаштувань конвертів в базі даних
+  const saveEnvelopeSettingsMutation = useMutation({
+    mutationFn: async (settings: EnvelopeSettings) => {
+      return await apiRequest('/api/envelope-settings', {
+        method: 'PUT',
+        body: JSON.stringify({
+          userId: 'default', // Можна буде пізніше підключити до системи користувачів
+          envelopeSize: settings.envelopeSize,
+          senderPositionX: settings.senderPosition.x,
+          senderPositionY: settings.senderPosition.y,
+          senderWidth: settings.senderWidth || 230,
+          recipientPositionX: settings.recipientPosition.x,
+          recipientPositionY: settings.recipientPosition.y,
+          recipientWidth: settings.recipientWidth || 230,
+          advertisementPositionX: settings.advertisementPosition.x,
+          advertisementPositionY: settings.advertisementPosition.y,
+          advertisementWidth: settings.advertisementWidth || 180,
+          advertisementText: settings.advertisementText,
+          advertisementImage: settings.advertisementImage,
+          imagePositionX: settings.imagePosition.x,
+          imagePositionY: settings.imagePosition.y,
+          imageSize: settings.imageSize,
+          fontSize: settings.fontSize,
+          senderRecipientFontSize: settings.senderRecipientFontSize,
+          postalIndexFontSize: settings.postalIndexFontSize,
+          advertisementFontSize: settings.advertisementFontSize
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    },
+    onError: (error) => {
+      console.error('Помилка збереження налаштувань конверта:', error);
+    }
+  });
+
   useEffect(() => {
     localStorage.setItem(`envelopeSettings_${envelopeSettings.envelopeSize}`, JSON.stringify(envelopeSettings));
+    
+    // Автоматично зберігаємо налаштування в базі даних при зміні
+    const timeoutId = setTimeout(() => {
+      saveEnvelopeSettingsMutation.mutate(envelopeSettings);
+    }, 1000); // Затримка 1 секунда для уникнення частих запитів
+
+    return () => clearTimeout(timeoutId);
   }, [envelopeSettings]);
 
   useEffect(() => {

@@ -1430,6 +1430,11 @@ export class MemStorage implements IStorage {
   // Envelope Print Settings methods
   getEnvelopePrintSettings(): Promise<EnvelopePrintSettings[]>;
   createEnvelopePrintSettings(settingsData: InsertEnvelopePrintSettings): Promise<EnvelopePrintSettings>;
+
+  // Envelope Settings methods
+  getEnvelopeSettings(userId: string, envelopeSize: string): Promise<EnvelopeSettings | null>;
+  createEnvelopeSettings(settingsData: InsertEnvelopeSettings): Promise<EnvelopeSettings>;
+  upsertEnvelopeSettings(settingsData: InsertEnvelopeSettings): Promise<EnvelopeSettings>;
 }
 
 // Використовуємо DatabaseStorage для роботи з базою даних
