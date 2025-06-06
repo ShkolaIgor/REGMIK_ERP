@@ -56,6 +56,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // Розширена схема валідації для нової структури
 const formSchema = insertClientSchema.extend({
+  id: z.string().min(1, "ЄДРПОУ/ІПН обов'язковий").max(20, "Максимум 20 символів").transform(val => parseInt(val)),
   taxCode: z.string().min(1, "ЄДРПОУ/ІПН обов'язковий").max(20, "Максимум 20 символів"),
   type: z.enum(["individual", "organization"]),
   name: z.string().min(1, "Скорочена назва обов'язкова"),
@@ -272,6 +273,7 @@ export default function Clients() {
   const handleEdit = (client: Client) => {
     setEditingClient(client);
     form.reset({
+      id: client.id.toString(),
       taxCode: client.taxCode,
       type: client.type as "individual" | "organization",
       name: client.name,
@@ -281,8 +283,6 @@ export default function Clients() {
       addressesMatch: client.addressesMatch || false,
       discount: client.discount || "0.00",
       notes: client.notes || "",
-      novaPoshtaApiKey: client.novaPoshtaApiKey || "",
-      enableThirdPartyShipping: client.enableThirdPartyShipping || false,
       isActive: client.isActive !== false,
     });
     setIsDialogOpen(true);
