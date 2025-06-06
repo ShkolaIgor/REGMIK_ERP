@@ -486,7 +486,7 @@ export default function ClientMailPage() {
 
       {/* Envelope Print Dialog */}
       <Dialog open={isEnvelopePrintDialogOpen} onOpenChange={setIsEnvelopePrintDialogOpen}>
-        <DialogContent className="w-[1000px] max-h-[95vh] overflow-hidden" aria-describedby="envelope-dialog-description">
+        <DialogContent className="w-[1200px] max-h-[95vh] overflow-hidden" aria-describedby="envelope-dialog-description">
           <DialogHeader>
             <DialogTitle>Налаштування друку конвертів {batchName}</DialogTitle>
             <div id="envelope-dialog-description" className="sr-only">
@@ -500,10 +500,10 @@ export default function ClientMailPage() {
               <div 
                 className="envelope-preview bg-white shadow-lg relative border select-none"
                 style={{
-                  width: 'calc(100vw - 450px)',
-                  maxWidth: '800px',
-                  minWidth: '500px',
-                  height: `${(envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * Math.min(800, window.innerWidth - 450)}px`,
+                  width: 'calc(100vw - 350px)',
+                  maxWidth: '900px',
+                  minWidth: '600px',
+                  height: `${(envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * Math.min(900, window.innerWidth - 350)}px`,
                   transformOrigin: 'center',
                   maxHeight: '100%',
                   overflow: 'visible',
