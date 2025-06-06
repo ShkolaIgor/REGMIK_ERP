@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -789,6 +790,175 @@ export default function ClientMailPage() {
                   Друкувати конверти
                 </Button>
               </div>
+            </div>
+          </div>
+
+          {/* Settings Section - Right */}
+          <div className="w-80 flex flex-col">
+            <h3 className="text-lg font-semibold mb-3">Налаштування</h3>
+            <div className="flex-1 overflow-auto space-y-4">
+              <Tabs defaultValue="envelope" className="h-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="envelope">Конверт</TabsTrigger>
+                  <TabsTrigger value="advertisement">Реклама</TabsTrigger>
+                  <TabsTrigger value="fonts">Шрифти</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="envelope" className="space-y-4">
+                  <div>
+                    <Label>Розмір конверта</Label>
+                    <Select
+                      value={envelopeSettings.envelopeSize}
+                      onValueChange={(value: EnvelopeSize) => 
+                        setEnvelopeSettings(prev => ({ ...prev, envelopeSize: value }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(envelopeSizes).map(([size, info]) => (
+                          <SelectItem key={size} value={size}>
+                            {info.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="advertisement" className="space-y-4">
+                  <div>
+                    <Label>Текст реклами</Label>
+                    <Textarea
+                      value={envelopeSettings.advertisementText}
+                      onChange={(e) => setEnvelopeSettings(prev => ({ ...prev, advertisementText: e.target.value }))}
+                      placeholder="Введіть рекламний текст..."
+                      rows={4}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label>Зображення реклами</Label>
+                    <div className="space-y-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                      <Button 
+                        type="button"
+                        variant="outline" 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Завантажити зображення
+                      </Button>
+                      {envelopeSettings.advertisementImage && (
+                        <div className="relative">
+                          <img 
+                            src={envelopeSettings.advertisementImage} 
+                            alt="Preview" 
+                            className="w-20 h-20 object-contain border rounded"
+                          />
+                          <Button 
+                            type="button"
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => setEnvelopeSettings(prev => ({ ...prev, advertisementImage: null }))}
+                            className="absolute -top-2 -right-2 h-6 w-6 p-0"
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Розмір зображення (%): {envelopeSettings.imageSize}%</Label>
+                    <Slider
+                      value={[envelopeSettings.imageSize]}
+                      onValueChange={([value]) => setEnvelopeSettings(prev => ({ ...prev, imageSize: value }))}
+                      min={25}
+                      max={200}
+                      step={5}
+                      className="mt-2"
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="fonts" className="space-y-4">
+                  <div>
+                    <Label>Розмір шрифту відправника/одержувача: {senderRecipientFontSize}px</Label>
+                    <Slider
+                      value={[senderRecipientFontSize]}
+                      onValueChange={([value]) => setEnvelopeSettings(prev => ({ ...prev, senderRecipientFontSize: value }))}
+                      min={10}
+                      max={18}
+                      step={1}
+                      className="mt-2"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Розмір шрифту поштового індексу: {postalIndexFontSize}px</Label>
+                    <Slider
+                      value={[postalIndexFontSize]}
+                      onValueChange={([value]) => setEnvelopeSettings(prev => ({ ...prev, postalIndexFontSize: value }))}
+                      min={16}
+                      max={36}
+                      step={1}
+                      className="mt-2"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Розмір шрифту реклами: {advertisementFontSize}px</Label>
+                    <Slider
+                      value={[advertisementFontSize]}
+                      onValueChange={([value]) => setEnvelopeSettings(prev => ({ ...prev, advertisementFontSize: value }))}
+                      min={8}
+                      max={18}
+                      step={1}
+                      className="mt-2"
+                    />
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+
+            <div className="flex gap-2 mt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsEnvelopePrintDialogOpen(false)}
+                className="flex-1"
+              >
+                Закрити
+              </Button>
+              <Button 
+                onClick={() => saveSettingsMutation.mutate(envelopeSettings)}
+                disabled={saveSettingsMutation.isPending}
+                variant="outline"
+                className="flex-1"
+              >
+                {saveSettingsMutation.isPending ? 'Збереження...' : 'Зберегти'}
+              </Button>
+              <Button 
+                onClick={() => batchPrintMutation.mutate({ 
+                  batchName, 
+                  clientIds: currentBatchMails.map(c => parseInt(c.id.toString())), 
+                  settings: envelopeSettings 
+                })}
+                disabled={batchPrintMutation.isPending}
+                className="flex-1"
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                Друкувати
+              </Button>
             </div>
           </div>
         </DialogContent>
