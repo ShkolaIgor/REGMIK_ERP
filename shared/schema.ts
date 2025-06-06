@@ -766,6 +766,7 @@ export const insertAssemblyOperationItemSchema = createInsertSchema(assemblyOper
 });
 
 export const insertClientSchema = createInsertSchema(clients).omit({
+  id: true,
   createdAt: true,
   updatedAt: true
 });
