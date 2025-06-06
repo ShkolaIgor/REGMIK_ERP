@@ -271,6 +271,8 @@ export default function Orders() {
   // Функція для початку редагування замовлення
   const handleEditOrder = (order: any) => {
     console.log("Editing order:", order);
+    console.log("Order clientId:", order.clientId, "type:", typeof order.clientId);
+    console.log("Available clients:", clients);
     setEditingOrder(order);
     setIsEditMode(true);
     
@@ -281,9 +283,12 @@ export default function Orders() {
       return date.toISOString().slice(0, 16);
     };
 
+    const clientIdStr = order.clientId ? order.clientId.toString() : "";
+    console.log("Setting clientId to:", clientIdStr);
+
     // Заповнюємо форму даними замовлення
     form.reset({
-      clientId: order.clientId || "",
+      clientId: clientIdStr,
       customerEmail: order.customerEmail || "",
       customerPhone: order.customerPhone || "",
       status: order.status,
@@ -473,8 +478,8 @@ export default function Orders() {
                       </SelectTrigger>
                       <SelectContent>
                         {clients.map((client: any) => (
-                          <SelectItem key={client.id} value={client.id}>
-                            {client.name} ({client.id})
+                          <SelectItem key={client.id} value={client.id.toString()}>
+                            {client.name} ({client.taxCode})
                           </SelectItem>
                         ))}
                       </SelectContent>
