@@ -48,7 +48,8 @@ import {
   Edit, 
   Trash2, 
   Truck,
-  Percent
+  Percent,
+  Search
 } from "lucide-react";
 import { insertClientSchema, insertClientContactSchema, type Client, type InsertClient, type ClientContact, type InsertClientContact } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -90,12 +91,24 @@ export default function Clients() {
   const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
   const [selectedClientForContact, setSelectedClientForContact] = useState<string>("");
   const [isGlobalContactAdd, setIsGlobalContactAdd] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const fullNameInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: clients = [], isLoading } = useQuery<Client[]>({
     queryKey: ["/api/clients"],
+  });
+
+  // Фільтрація клієнтів за пошуковим запитом
+  const filteredClients = clients.filter(client => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      client.name.toLowerCase().includes(query) ||
+      (client.taxCode && client.taxCode.toLowerCase().includes(query)) ||
+      (client.fullName && client.fullName.toLowerCase().includes(query))
+    );
   });
 
   // Автоматичне фокусування на поле "Повне ім'я" при відкритті діалогу контакту
@@ -305,7 +318,7 @@ export default function Clients() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-3xl font-bold">Клієнти</h1>
           <p className="text-muted-foreground">
