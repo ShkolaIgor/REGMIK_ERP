@@ -164,7 +164,7 @@ export default function ClientContacts() {
   const openEditDialog = (item: ClientContact) => {
     setEditingItem(item);
     form.reset({
-      clientId: item.clientId,
+      clientId: item.clientId.toString(),
       fullName: item.fullName,
       position: item.position || "",
       email: item.email || "",
@@ -196,7 +196,7 @@ export default function ClientContacts() {
                          item.secondaryPhone?.includes(searchTerm) ||
                          item.tertiaryPhone?.includes(searchTerm) ||
                          item.client?.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesClient = filterClientId === "all" || !filterClientId || item.clientId === filterClientId;
+    const matchesClient = filterClientId === "all" || !filterClientId || item.clientId.toString() === filterClientId;
     const matchesActive = filterActive === "all" || 
                          (filterActive === "active" && item.isActive) ||
                          (filterActive === "inactive" && !item.isActive);
@@ -248,7 +248,7 @@ export default function ClientContacts() {
                                 className="justify-between"
                               >
                                 {field.value
-                                  ? (clients as Client[]).find((client) => client.id === field.value)?.name
+                                  ? (clients as Client[]).find((client) => client.id.toString() === field.value)?.name
                                   : "Пошук по назві, ЄДРПОУ або ІПН..."}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>

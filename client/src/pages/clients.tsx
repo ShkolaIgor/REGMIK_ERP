@@ -274,7 +274,7 @@ export default function Clients() {
   const handleEdit = (client: Client) => {
     setEditingClient(client);
     form.reset({
-      id: client.id,
+      taxCode: client.taxCode,
       type: client.type as "individual" | "organization",
       name: client.name,
       fullName: client.fullName || "",
