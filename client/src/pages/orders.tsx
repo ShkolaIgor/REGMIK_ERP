@@ -287,7 +287,7 @@ export default function Orders() {
     console.log("Setting clientId to:", clientIdStr);
 
     // Заповнюємо форму даними замовлення
-    form.reset({
+    const formData = {
       clientId: clientIdStr,
       customerEmail: order.customerEmail || "",
       customerPhone: order.customerPhone || "",
@@ -296,7 +296,14 @@ export default function Orders() {
       paymentDate: formatDateForInput(order.paymentDate),
       dueDate: formatDateForInput(order.dueDate),
       shippedDate: formatDateForInput(order.shippedDate),
-    });
+    };
+    console.log("Form data being set:", formData);
+    form.reset(formData);
+    
+    // Перевірка значення після встановлення
+    setTimeout(() => {
+      console.log("Form clientId after reset:", form.watch("clientId"));
+    }, 100);
 
     // Заповнюємо товари замовлення
     if (order.items) {
@@ -771,7 +778,7 @@ export default function Orders() {
                             <div className="text-sm text-gray-500">
                               {order.clientId && (
                                 <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded mr-2">
-                                  {order.clientId}
+                                  {clients.find((client: any) => client.id === order.clientId)?.taxCode || order.clientId}
                                 </span>
                               )}
                               {order.customerEmail}
