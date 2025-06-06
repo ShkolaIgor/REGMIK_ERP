@@ -482,26 +482,26 @@ export default function ClientMailPage() {
                 </div>
 
                 {/* Advertisement text */}
-                {(envelopeSettings.advertisementText || envelopeSettings.envelopeSize === 'dl' || envelopeSettings.envelopeSize === 'c6') && (
+                {envelopeSettings.advertisementText && (
                   <div
                     style={{
                       position: 'absolute',
-                      top: '50px', // Фіксована позиція для тестування
-                      left: '50px', // Фіксована позиція для тестування
+                      top: `${envelopeSettings.advertisementPosition.y * baseScale}px`,
+                      left: `${envelopeSettings.advertisementPosition.x * baseScale}px`,
                       fontSize: `${advertisementFontSize * elementScale}px`,
                       maxWidth: `${getAdvertisementMaxWidth(envelopeSettings.envelopeSize) * elementScale}px`,
                       whiteSpace: 'pre-wrap',
                       wordWrap: 'break-word',
                       cursor: isDragging ? 'grabbing' : 'grab',
                       padding: `${5 * elementScale}px`,
-                      border: '2px solid red', // Тимчасова рамка для діагностики
-                      backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                      border: isDragging && draggedElement === 'advertisement' ? '2px dashed #3b82f6' : '2px dashed transparent',
+                      backgroundColor: isDragging && draggedElement === 'advertisement' ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
                       userSelect: 'none'
                     }}
                     onMouseDown={(e) => handleMouseDown('advertisement', e)}
                     title="Натисніть та перетягніть для переміщення"
                   >
-                    {envelopeSettings.advertisementText || 'Рекламна область (додайте текст)'}
+                    {envelopeSettings.advertisementText}
                   </div>
                 )}
 
