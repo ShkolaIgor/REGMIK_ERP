@@ -486,7 +486,7 @@ export default function ClientMailPage() {
 
       {/* Envelope Print Dialog */}
       <Dialog open={isEnvelopePrintDialogOpen} onOpenChange={setIsEnvelopePrintDialogOpen}>
-        <DialogContent className="envelope-dialog w-[700px] max-w-none max-h-[95vh] overflow-hidden" aria-describedby="envelope-dialog-description" style={{ width: '700px', maxWidth: 'none' }}>
+        <DialogContent className="envelope-dialog w-[1200px] max-w-none max-h-[95vh] overflow-hidden" aria-describedby="envelope-dialog-description" style={{ width: '1200px', maxWidth: 'none' }}>
           <DialogHeader>
             <DialogTitle>Налаштування друку конвертів {batchName}</DialogTitle>
             <div id="envelope-dialog-description" className="sr-only">
