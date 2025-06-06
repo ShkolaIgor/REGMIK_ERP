@@ -439,21 +439,11 @@ export default function ClientMailPage() {
                   height: `${(envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * Math.min(800, window.innerWidth - 450)}px`,
                   transformOrigin: 'center',
                   maxHeight: '100%',
-                  overflow: 'visible'
+                  overflow: 'visible',
+                  fontFamily: 'sans-serif, Ubuntu, Arial'
                 }}
               >
-                {/* Stamp area */}
-                <div 
-                  className="absolute border-2 border-dashed border-gray-300"
-                  style={{
-                    top: `${12 * elementScale}px`,
-                    right: `${12 * elementScale}px`,
-                    width: `${65 * elementScale}px`,
-                    height: `${40 * elementScale}px`
-                  }}
-                >
-                  <div className={`text-gray-400 p-1`} style={{ fontSize: `${12 * elementScale}px` }}>Марка</div>
-                </div>
+
 
                 {/* Sender */}
                 <div 
@@ -462,6 +452,7 @@ export default function ClientMailPage() {
                     top: `${(envelopeSettings.senderPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE)}px`,
                     left: `${(envelopeSettings.senderPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE}px`,
                     fontSize: `${senderRecipientFontSize * elementScale}px`,
+                    fontFamily: 'sans-serif, Ubuntu, Arial',
                     lineHeight: '1.4',
                     maxWidth: `${230 * elementScale}px`,
                     cursor: isDragging ? 'grabbing' : 'grab',
@@ -490,6 +481,7 @@ export default function ClientMailPage() {
                     top: `${(envelopeSettings.recipientPosition.y / envelopeSizes[envelopeSettings.envelopeSize].height) * ((envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE)}px`,
                     left: `${(envelopeSettings.recipientPosition.x / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE}px`,
                     fontSize: `${senderRecipientFontSize * elementScale}px`,
+                    fontFamily: 'sans-serif, Ubuntu, Arial',
                     lineHeight: '1.4',
                     maxWidth: `${230 * elementScale}px`,
                     cursor: isDragging ? 'grabbing' : 'grab',
@@ -517,6 +509,7 @@ export default function ClientMailPage() {
                       top: `${envelopeSettings.advertisementPosition.y * baseScale}px`,
                       left: `${envelopeSettings.advertisementPosition.x * baseScale}px`,
                       fontSize: `${advertisementFontSize * elementScale}px`,
+                      fontFamily: 'sans-serif, Ubuntu, Arial',
                       maxWidth: `${getAdvertisementMaxWidth(envelopeSettings.envelopeSize) * elementScale}px`,
                       whiteSpace: 'pre-wrap',
                       wordWrap: 'break-word',
