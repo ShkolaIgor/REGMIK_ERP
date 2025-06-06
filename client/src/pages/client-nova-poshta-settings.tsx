@@ -228,6 +228,7 @@ export default function ClientNovaPoshtaSettings() {
               onSubmit={handleSubmit}
               defaultValues={editingSettings || undefined}
               isLoading={createMutation.isPending || updateMutation.isPending}
+              onSuccess={() => setIsFormOpen(false)}
             />
           </DialogContent>
         </Dialog>
