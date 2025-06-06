@@ -350,7 +350,7 @@ export default function ClientMailPage() {
   const { senderRecipientFontSize, postalIndexFontSize, advertisementFontSize } = envelopeSettings;
   
   // Фіксований масштаб для 550px ширини
-  const ENVELOPE_SCALE = 550;
+  const ENVELOPE_SCALE = 700;
   const baseScale = ENVELOPE_SCALE / envelopeSizes[envelopeSettings.envelopeSize].width;
   const elementScale = baseScale * 0.35; // Ще менший масштаб для елементів
 
@@ -500,12 +500,9 @@ export default function ClientMailPage() {
               <div 
                 className="envelope-preview bg-white shadow-lg relative border select-none"
                 style={{
-                  width: 'calc(100vw - 350px)',
-                  maxWidth: '900px',
-                  minWidth: '600px',
-                  height: `${(envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * Math.min(900, window.innerWidth - 350)}px`,
+                  width: `${ENVELOPE_SCALE}px`,
+                  height: `${(envelopeSizes[envelopeSettings.envelopeSize].height / envelopeSizes[envelopeSettings.envelopeSize].width) * ENVELOPE_SCALE}px`,
                   transformOrigin: 'center',
-                  maxHeight: '100%',
                   overflow: 'visible',
                   fontFamily: 'sans-serif, Ubuntu, Arial'
                 }}
