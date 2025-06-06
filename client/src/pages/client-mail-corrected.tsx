@@ -493,8 +493,8 @@ export default function ClientMailPage() {
                       wordWrap: 'break-word',
                       cursor: isDragging ? 'grabbing' : 'grab',
                       padding: `${5 * elementScale}px`,
-                      border: isDragging && draggedElement === 'advertisement' ? '2px dashed #3b82f6' : '2px dashed transparent',
-                      backgroundColor: isDragging && draggedElement === 'advertisement' ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                      border: '2px solid red', // Тимчасова рамка для діагностики
+                      backgroundColor: 'rgba(255, 0, 0, 0.1)',
                       userSelect: 'none'
                     }}
                     onMouseDown={(e) => handleMouseDown('advertisement', e)}
