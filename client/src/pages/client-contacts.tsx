@@ -267,21 +267,21 @@ export default function ClientContacts() {
                                   {(clients as Client[])
                                     .filter((client) =>
                                       client.name.toLowerCase().includes(clientSearchValue.toLowerCase()) ||
-                                      client.id.toLowerCase().includes(clientSearchValue.toLowerCase())
+                                      client.taxCode.toLowerCase().includes(clientSearchValue.toLowerCase())
                                     )
                                     .map((client) => (
                                       <CommandItem
                                         key={client.id}
-                                        value={client.id}
+                                        value={client.id.toString()}
                                         onSelect={() => {
-                                          field.onChange(client.id);
+                                          field.onChange(client.id.toString());
                                           setClientSearchOpen(false);
                                           setClientSearchValue("");
                                         }}
                                       >
                                         <Check
                                           className={`mr-2 h-4 w-4 ${
-                                            field.value === client.id ? "opacity-100" : "opacity-0"
+                                            field.value === client.id.toString() ? "opacity-100" : "opacity-0"
                                           }`}
                                         />
                                         <div className="flex flex-col">
@@ -560,7 +560,7 @@ export default function ClientContacts() {
               <SelectContent>
                 <SelectItem value="all">Всі клієнти</SelectItem>
                 {(clients as Client[]).map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
+                  <SelectItem key={client.id} value={client.id.toString()}>
                     {client.name}
                   </SelectItem>
                 ))}

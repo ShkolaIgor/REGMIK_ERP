@@ -340,7 +340,7 @@ export default function Clients() {
                     control={contactForm.control}
                     name="clientId"
                     render={({ field }) => {
-                      const selectedClient = (clients as Client[]).find(client => client.id === field.value);
+                      const selectedClient = (clients as Client[]).find(client => client.id.toString() === field.value);
                       
                       if (isGlobalContactAdd) {
                         // Режим пошуку для глобального додавання
