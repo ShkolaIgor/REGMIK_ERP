@@ -91,6 +91,7 @@ export default function Clients() {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
   const [selectedClientForContact, setSelectedClientForContact] = useState<string>("");
+  const [isGlobalContactAdd, setIsGlobalContactAdd] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -220,8 +221,9 @@ export default function Clients() {
         description: "Контакт створено успішно",
       });
       setIsContactDialogOpen(false);
-      contactForm.reset();
+      setIsGlobalContactAdd(false);
       setSelectedClientForContact("");
+      contactForm.reset();
     },
     onError: (error: any) => {
       toast({
@@ -246,8 +248,15 @@ export default function Clients() {
 
   const openAddContactDialog = (clientId?: string) => {
     if (clientId) {
+      // Додавання з карточки клієнта
       setSelectedClientForContact(clientId);
+      setIsGlobalContactAdd(false);
       contactForm.setValue("clientId", clientId);
+    } else {
+      // Глобальне додавання
+      setSelectedClientForContact("");
+      setIsGlobalContactAdd(true);
+      contactForm.setValue("clientId", "");
     }
     setIsContactDialogOpen(true);
   };
@@ -322,20 +331,53 @@ export default function Clients() {
                     name="clientId"
                     render={({ field }) => {
                       const selectedClient = (clients as Client[]).find(client => client.id === field.value);
-                      return (
-                        <FormItem>
-                          <FormLabel>Клієнт *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              value={selectedClient ? selectedClient.name : field.value}
-                              readOnly
-                              className="bg-muted cursor-not-allowed"
-                              placeholder="Клієнт не вибрано"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      );
+                      
+                      if (isGlobalContactAdd) {
+                        // Режим пошуку для глобального додавання
+                        return (
+                          <FormItem>
+                            <FormLabel>Клієнт *</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Введіть назву або ID клієнта..."
+                                {...field}
+                                onChange={(e) => {
+                                  const searchValue = e.target.value;
+                                  field.onChange(searchValue);
+                                  
+                                  // Знайти клієнта по назві або ID
+                                  const matchedClient = (clients as Client[]).find(client => 
+                                    client.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+                                    client.id.toLowerCase().includes(searchValue.toLowerCase())
+                                  );
+                                  
+                                  if (matchedClient && searchValue === matchedClient.name) {
+                                    field.onChange(matchedClient.id);
+                                  }
+                                }}
+                                autoComplete="off"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      } else {
+                        // Режим відображення для додавання з карточки
+                        return (
+                          <FormItem>
+                            <FormLabel>Клієнт *</FormLabel>
+                            <FormControl>
+                              <Input 
+                                value={selectedClient ? selectedClient.name : field.value}
+                                readOnly
+                                className="bg-muted cursor-not-allowed"
+                                placeholder="Клієнт не вибрано"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }
                     }}
                   />
                   
