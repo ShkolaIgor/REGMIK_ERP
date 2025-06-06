@@ -776,6 +776,12 @@ export const insertClientContactSchema = createInsertSchema(clientContacts).omit
   updatedAt: true
 });
 
+export const insertClientNovaPoshtaSettingsSchema = createInsertSchema(clientNovaPoshtaSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 // Inventory Audits
 export const inventoryAudits = pgTable("inventory_audits", {
   id: serial("id").primaryKey(),
@@ -1698,5 +1704,8 @@ export const insertTaskSchema = createInsertSchema(tasks).omit({
 
 export type Task = typeof tasks.$inferSelect;
 export type InsertTask = z.infer<typeof insertTaskSchema>;
+
+export type ClientNovaPoshtaSettings = typeof clientNovaPoshtaSettings.$inferSelect;
+export type InsertClientNovaPoshtaSettings = z.infer<typeof insertClientNovaPoshtaSettingsSchema>;
 
 

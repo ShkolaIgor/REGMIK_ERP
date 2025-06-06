@@ -45,6 +45,7 @@ import {
   type SerialNumber, type InsertSerialNumber,
   type Client, type InsertClient,
   type ClientContact, type InsertClientContact,
+  type ClientNovaPoshtaSettings, type InsertClientNovaPoshtaSettings,
   type ClientPhone, type InsertClientPhone,
   type ClientMail, type InsertClientMail,
   type MailRegistry, type InsertMailRegistry,
@@ -402,6 +403,14 @@ export interface IStorage {
   // Supply Decisions
   getSupplyDecisions(): Promise<any[]>;
   analyzeSupplyDecision(productId: number, requiredQuantity: number): Promise<any>;
+
+  // Client Nova Poshta Settings
+  getClientNovaPoshtaSettings(clientId: number): Promise<ClientNovaPoshtaSettings[]>;
+  getClientNovaPoshtaSetting(id: number): Promise<ClientNovaPoshtaSettings | undefined>;
+  createClientNovaPoshtaSettings(settings: InsertClientNovaPoshtaSettings): Promise<ClientNovaPoshtaSettings>;
+  updateClientNovaPoshtaSettings(id: number, settings: Partial<InsertClientNovaPoshtaSettings>): Promise<ClientNovaPoshtaSettings | undefined>;
+  deleteClientNovaPoshtaSettings(id: number): Promise<boolean>;
+  setPrimaryClientNovaPoshtaSettings(clientId: number, settingsId: number): Promise<boolean>;
 
   // Email Settings
   getEmailSettings(): Promise<EmailSettings | null>;

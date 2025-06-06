@@ -3997,6 +3997,77 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Client Nova Poshta Settings Methods
+  async getClientNovaPoshtaSettings(clientId: number): Promise<ClientNovaPoshtaSettings[]> {
+    return await db
+      .select()
+      .from(clientNovaPoshtaSettings)
+      .where(eq(clientNovaPoshtaSettings.clientId, clientId))
+      .orderBy(desc(clientNovaPoshtaSettings.isPrimary), desc(clientNovaPoshtaSettings.createdAt));
+  }
+
+  async getClientNovaPoshtaSetting(id: number): Promise<ClientNovaPoshtaSettings | undefined> {
+    const [settings] = await db
+      .select()
+      .from(clientNovaPoshtaSettings)
+      .where(eq(clientNovaPoshtaSettings.id, id));
+    return settings;
+  }
+
+  async createClientNovaPoshtaSettings(settings: InsertClientNovaPoshtaSettings): Promise<ClientNovaPoshtaSettings> {
+    const [created] = await db
+      .insert(clientNovaPoshtaSettings)
+      .values(settings)
+      .returning();
+    return created;
+  }
+
+  async updateClientNovaPoshtaSettings(id: number, settings: Partial<InsertClientNovaPoshtaSettings>): Promise<ClientNovaPoshtaSettings | undefined> {
+    const [updated] = await db
+      .update(clientNovaPoshtaSettings)
+      .set({ ...settings, updatedAt: new Date() })
+      .where(eq(clientNovaPoshtaSettings.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteClientNovaPoshtaSettings(id: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(clientNovaPoshtaSettings)
+        .where(eq(clientNovaPoshtaSettings.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error("Error deleting Nova Poshta settings:", error);
+      return false;
+    }
+  }
+
+  async setPrimaryClientNovaPoshtaSettings(clientId: number, settingsId: number): Promise<boolean> {
+    try {
+      // Спочатку знімаємо прапорець isPrimary з усіх налаштувань клієнта
+      await db
+        .update(clientNovaPoshtaSettings)
+        .set({ isPrimary: false, updatedAt: new Date() })
+        .where(eq(clientNovaPoshtaSettings.clientId, clientId));
+
+      // Потім встановлюємо обрані налаштування як основні
+      const [updated] = await db
+        .update(clientNovaPoshtaSettings)
+        .set({ isPrimary: true, updatedAt: new Date() })
+        .where(and(
+          eq(clientNovaPoshtaSettings.id, settingsId),
+          eq(clientNovaPoshtaSettings.clientId, clientId)
+        ))
+        .returning();
+
+      return !!updated;
+    } catch (error) {
+      console.error("Error setting primary Nova Poshta settings:", error);
+      return false;
+    }
+  }
+
   // Partial Shipment Methods
   async getOrderItemsWithShipmentInfo(orderId: number): Promise<any[]> {
     try {
