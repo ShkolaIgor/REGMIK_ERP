@@ -299,19 +299,19 @@ export default function ClientMailPage() {
             </div>
           </DialogHeader>
           
-          {/* Vertical Layout for better space utilization */}
-          <div className="space-y-4">
-            {/* Preview Section - Top */}
-            <div className="h-80 flex items-center justify-center bg-gray-50 rounded-lg p-4 overflow-hidden">
+          {/* Horizontal Layout: Preview Left, Settings Right */}
+          <div className="flex gap-4 h-[650px]">
+            {/* Preview Section - Left */}
+            <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg p-4 overflow-hidden">
               <div 
                 className="envelope-preview bg-white shadow-lg relative border"
                 style={{
                   width: `${envelopeSizes[envelopeSettings.envelopeSize].width}mm`,
                   height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
                   transform: `scale(${Math.min(
-                    350 / envelopeSizes[envelopeSettings.envelopeSize].width,
-                    250 / envelopeSizes[envelopeSettings.envelopeSize].height
-                  ) * 0.5})`,
+                    500 / envelopeSizes[envelopeSettings.envelopeSize].width,
+                    550 / envelopeSizes[envelopeSettings.envelopeSize].height
+                  ) * 0.7})`,
                   transformOrigin: 'center'
                 }}
               >
@@ -434,10 +434,10 @@ export default function ClientMailPage() {
               </div>
             </div>
 
-            {/* Settings Section - Bottom */}
-            <div className="flex flex-col">
+            {/* Settings Section - Right */}
+            <div className="w-80 flex flex-col flex-shrink-0">
               <h3 className="text-lg font-semibold mb-3">Налаштування</h3>
-              <div className="overflow-auto">
+              <div className="flex-1 overflow-auto space-y-4">
                 <Tabs defaultValue="envelope" className="w-full">
                   <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="envelope">Конверт</TabsTrigger>
@@ -570,11 +570,12 @@ export default function ClientMailPage() {
                 </Tabs>
               </div>
               
-              <div className="flex gap-2 mt-6">
+              
+              <div className="flex flex-col gap-2 mt-4">
                 <Button 
                   variant="outline" 
                   onClick={() => setIsEnvelopePrintDialogOpen(false)}
-                  className="flex-1"
+                  className="w-full"
                 >
                   Закрити
                 </Button>
@@ -582,7 +583,7 @@ export default function ClientMailPage() {
                   onClick={() => saveSettingsMutation.mutate(envelopeSettings)}
                   disabled={saveSettingsMutation.isPending}
                   variant="outline"
-                  className="flex-1"
+                  className="w-full"
                 >
                   {saveSettingsMutation.isPending ? 'Збереження...' : 'Зберегти'}
                 </Button>
@@ -593,7 +594,7 @@ export default function ClientMailPage() {
                     settings: envelopeSettings 
                   })}
                   disabled={batchPrintMutation.isPending}
-                  className="flex-1"
+                  className="w-full"
                 >
                   <Printer className="h-4 w-4 mr-2" />
                   Друкувати
