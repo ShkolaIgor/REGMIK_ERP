@@ -392,7 +392,7 @@ export default function ClientMailPage() {
 
       {/* Envelope Print Dialog */}
       <Dialog open={isEnvelopePrintDialogOpen} onOpenChange={setIsEnvelopePrintDialogOpen}>
-        <DialogContent className="max-w-[85vw] max-h-[80vh] overflow-auto" aria-describedby="envelope-dialog-description">
+        <DialogContent className="max-w-[90vw] max-h-[85vh] overflow-hidden" aria-describedby="envelope-dialog-description">
           <DialogHeader>
             <DialogTitle>Налаштування друку конвертів - {batchName}</DialogTitle>
             <div id="envelope-dialog-description" className="sr-only">
@@ -400,7 +400,7 @@ export default function ClientMailPage() {
             </div>
           </DialogHeader>
           
-          <div className="flex gap-4 h-[500px]">
+          <div className="flex gap-4 h-[400px]">
             {/* Preview Section - Left */}
             <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg p-4 overflow-hidden">
               <div 
@@ -539,9 +539,9 @@ export default function ClientMailPage() {
             </div>
 
             {/* Settings Section - Right */}
-            <div className="w-72 flex flex-col flex-shrink-0">
-              <h3 className="text-lg font-semibold mb-3">Налаштування</h3>
-              <div className="flex-1 overflow-auto space-y-4">
+            <div className="w-64 flex flex-col flex-shrink-0">
+              <h3 className="text-base font-semibold mb-2">Налаштування</h3>
+              <div className="flex-1 overflow-auto space-y-3">
                 <Tabs defaultValue="envelope" className="w-full">
                   <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="envelope">Конверт</TabsTrigger>
@@ -549,7 +549,7 @@ export default function ClientMailPage() {
                     <TabsTrigger value="fonts">Шрифти</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="envelope" className="space-y-4 mt-4">
+                  <TabsContent value="envelope" className="space-y-3 mt-3">
                     <div>
                       <Label>Розмір конверта</Label>
                       <Select
@@ -576,7 +576,7 @@ export default function ClientMailPage() {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="advertisement" className="space-y-4 mt-4">
+                  <TabsContent value="advertisement" className="space-y-3 mt-3">
                     <div>
                       <Label>Рекламний текст</Label>
                       <Textarea
@@ -656,7 +656,7 @@ export default function ClientMailPage() {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="fonts" className="space-y-4 mt-4">
+                  <TabsContent value="fonts" className="space-y-3 mt-3">
                     <div>
                       <Label>Розмір шрифту відправника/одержувача: {senderRecipientFontSize}px</Label>
                       <Slider
@@ -697,13 +697,6 @@ export default function ClientMailPage() {
               </div>
               
               <div className="flex flex-col gap-2 mt-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsEnvelopePrintDialogOpen(false)}
-                  className="w-full"
-                >
-                  Закрити
-                </Button>
                 <Button 
                   onClick={() => batchPrintMutation.mutate({ 
                     batchName, 
