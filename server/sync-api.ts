@@ -47,6 +47,8 @@ export function registerSyncApiRoutes(app: Express) {
       const existingClient = await storage.getClientByExternalId(validatedData.externalId);
       
       let client;
+      let action;
+      
       if (existingClient) {
         // Оновлюємо існуючого клієнта
         client = await storage.updateClient(existingClient.id.toString(), {
@@ -59,26 +61,50 @@ export function registerSyncApiRoutes(app: Express) {
           isActive: validatedData.isActive,
           type: validatedData.type
         });
+        action = 'updated';
       } else {
-        // Створюємо нового клієнта
-        client = await storage.createClient({
-          name: validatedData.name,
-          taxCode: validatedData.taxCode,
-          fullName: validatedData.fullName,
-          legalAddress: validatedData.legalAddress,
-          physicalAddress: validatedData.physicalAddress,
-          notes: validatedData.notes,
-          isActive: validatedData.isActive,
-          type: validatedData.type,
-          externalId: validatedData.externalId,
-          source: validatedData.source
-        });
+        // Перевіряємо чи існує клієнт з таким taxCode
+        const existingByTaxCode = await storage.getClientByTaxCode(validatedData.taxCode);
+        
+        if (existingByTaxCode) {
+          // Оновлюємо існуючого клієнта та додаємо externalId
+          client = await storage.updateClient(existingByTaxCode.id.toString(), {
+            name: validatedData.name,
+            taxCode: validatedData.taxCode,
+            fullName: validatedData.fullName,
+            legalAddress: validatedData.legalAddress,
+            physicalAddress: validatedData.physicalAddress,
+            notes: validatedData.notes,
+            isActive: validatedData.isActive,
+            type: validatedData.type
+          });
+          
+          // Додаємо externalId та source до існуючого клієнта
+          await storage.updateClientSyncInfo(existingByTaxCode.id, validatedData.externalId, validatedData.source);
+          action = 'linked';
+        } else {
+          // Створюємо нового клієнта
+          client = await storage.createClient({
+            name: validatedData.name,
+            taxCode: validatedData.taxCode,
+            fullName: validatedData.fullName,
+            legalAddress: validatedData.legalAddress,
+            physicalAddress: validatedData.physicalAddress,
+            notes: validatedData.notes,
+            isActive: validatedData.isActive,
+            type: validatedData.type
+          });
+          
+          // Додаємо externalId та source до нового клієнта
+          await storage.updateClientSyncInfo(client.id, validatedData.externalId, validatedData.source);
+          action = 'created';
+        }
       }
 
       res.json({
         success: true,
         client,
-        action: existingClient ? 'updated' : 'created'
+        action
       });
 
     } catch (error) {

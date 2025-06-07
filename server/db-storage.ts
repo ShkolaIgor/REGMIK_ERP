@@ -4636,6 +4636,22 @@ export class DatabaseStorage implements IStorage {
     return client;
   }
 
+  async getClientByTaxCode(taxCode: string): Promise<Client | undefined> {
+    const [client] = await db
+      .select()
+      .from(clients)
+      .where(eq(clients.taxCode, taxCode))
+      .limit(1);
+    return client;
+  }
+
+  async updateClientSyncInfo(clientId: number, externalId: string, source: string): Promise<void> {
+    await db
+      .update(clients)
+      .set({ externalId, source })
+      .where(eq(clients.id, clientId));
+  }
+
   // Методи для контактів клієнтів з externalId
   async getClientContactByExternalId(externalId: string): Promise<ClientContact | undefined> {
     const [contact] = await db
