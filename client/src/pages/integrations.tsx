@@ -421,7 +421,7 @@ export default function Integrations() {
                           onClick={() => syncDataMutation.mutate({ id: integration.id, direction: "import" })}
                           disabled={syncDataMutation.isPending}
                         >
-                          <Sync className="mr-2 h-4 w-4" />
+                          <RefreshCw className="mr-2 h-4 w-4" />
                           Імпорт
                         </Button>
                         <Button
@@ -430,7 +430,7 @@ export default function Integrations() {
                           onClick={() => syncDataMutation.mutate({ id: integration.id, direction: "export" })}
                           disabled={syncDataMutation.isPending}
                         >
-                          <Sync className="mr-2 h-4 w-4" />
+                          <RefreshCw className="mr-2 h-4 w-4" />
                           Експорт
                         </Button>
                         <Button
