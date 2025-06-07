@@ -1709,4 +1709,178 @@ export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type ClientNovaPoshtaSettings = typeof clientNovaPoshtaSettings.$inferSelect;
 export type InsertClientNovaPoshtaSettings = z.infer<typeof insertClientNovaPoshtaSettingsSchema>;
 
+// ================================
+// ІНТЕГРАЦІЇ З ЗОВНІШНІМИ СИСТЕМАМИ
+// ================================
+
+// Таблиця конфігурацій інтеграцій
+export const integrationConfigs = pgTable("integration_configs", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(), // "bitrix24", "1c_enterprise", "1c_accounting"
+  displayName: varchar("display_name", { length: 200 }).notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // "crm", "accounting", "erp"
+  isActive: boolean("is_active").default(false),
+  config: jsonb("config").$type<{
+    baseUrl?: string;
+    apiKey?: string;
+    clientId?: string;
+    clientSecret?: string;
+    webhookUrl?: string;
+    syncInterval?: number; // хвилини
+    lastSyncAt?: string;
+    syncMethods?: string[]; // ["clients", "orders", "products", "payments"]
+    customFields?: Record<string, any>;
+  }>().notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Таблиця логів синхронізації
+export const syncLogs = pgTable("sync_logs", {
+  id: serial("id").primaryKey(),
+  integrationId: integer("integration_id").references(() => integrationConfigs.id).notNull(),
+  operation: varchar("operation", { length: 100 }).notNull(), // "import_clients", "export_orders", "sync_products"
+  status: varchar("status", { length: 50 }).notNull(), // "started", "completed", "failed", "partial"
+  recordsProcessed: integer("records_processed").default(0),
+  recordsSuccessful: integer("records_successful").default(0),
+  recordsFailed: integer("records_failed").default(0),
+  startedAt: timestamp("started_at").notNull(),
+  completedAt: timestamp("completed_at"),
+  errorMessage: text("error_message"),
+  details: jsonb("details"), // детальна інформація про синхронізацію
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Таблиця мапінгу ID між системами
+export const entityMappings = pgTable("entity_mappings", {
+  id: serial("id").primaryKey(),
+  integrationId: integer("integration_id").references(() => integrationConfigs.id).notNull(),
+  entityType: varchar("entity_type", { length: 50 }).notNull(), // "client", "order", "product", "contact"
+  localId: varchar("local_id", { length: 100 }).notNull(), // ID в нашій системі
+  externalId: varchar("external_id", { length: 100 }).notNull(), // ID в зовнішній системі
+  lastSyncAt: timestamp("last_sync_at").defaultNow(),
+  syncDirection: varchar("sync_direction", { length: 20 }).default("bidirectional"), // "import", "export", "bidirectional"
+  metadata: jsonb("metadata"), // додаткова інформація про мапінг
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_entity_mappings_integration_entity").on(table.integrationId, table.entityType),
+  index("idx_entity_mappings_local_id").on(table.localId),
+  index("idx_entity_mappings_external_id").on(table.externalId),
+]);
+
+// Таблиця черги синхронізації
+export const syncQueue = pgTable("sync_queue", {
+  id: serial("id").primaryKey(),
+  integrationId: integer("integration_id").references(() => integrationConfigs.id).notNull(),
+  operation: varchar("operation", { length: 100 }).notNull(),
+  entityType: varchar("entity_type", { length: 50 }).notNull(),
+  entityId: varchar("entity_id", { length: 100 }).notNull(),
+  direction: varchar("direction", { length: 20 }).notNull(), // "import", "export"
+  priority: integer("priority").default(5), // 1-10, де 1 - найвищий пріоритет
+  status: varchar("status", { length: 50 }).default("pending"), // "pending", "processing", "completed", "failed"
+  attempts: integer("attempts").default(0),
+  maxAttempts: integer("max_attempts").default(3),
+  payload: jsonb("payload"), // дані для синхронізації
+  errorMessage: text("error_message"),
+  scheduledAt: timestamp("scheduled_at").defaultNow(),
+  processedAt: timestamp("processed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Таблиця налаштувань полів мапінгу
+export const fieldMappings = pgTable("field_mappings", {
+  id: serial("id").primaryKey(),
+  integrationId: integer("integration_id").references(() => integrationConfigs.id).notNull(),
+  entityType: varchar("entity_type", { length: 50 }).notNull(),
+  localField: varchar("local_field", { length: 100 }).notNull(), // назва поля в нашій системі
+  externalField: varchar("external_field", { length: 100 }).notNull(), // назва поля в зовнішній системі
+  transformation: varchar("transformation", { length: 50 }), // "none", "date_format", "currency_conversion", "custom"
+  transformationConfig: jsonb("transformation_config"), // конфігурація трансформації
+  isRequired: boolean("is_required").default(false),
+  direction: varchar("direction", { length: 20 }).default("bidirectional"), // "import", "export", "bidirectional"
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Релації для інтеграцій
+export const integrationConfigsRelations = relations(integrationConfigs, ({ many }) => ({
+  syncLogs: many(syncLogs),
+  entityMappings: many(entityMappings),
+  syncQueue: many(syncQueue),
+  fieldMappings: many(fieldMappings),
+}));
+
+export const syncLogsRelations = relations(syncLogs, ({ one }) => ({
+  integration: one(integrationConfigs, {
+    fields: [syncLogs.integrationId],
+    references: [integrationConfigs.id],
+  }),
+}));
+
+export const entityMappingsRelations = relations(entityMappings, ({ one }) => ({
+  integration: one(integrationConfigs, {
+    fields: [entityMappings.integrationId],
+    references: [integrationConfigs.id],
+  }),
+}));
+
+export const syncQueueRelations = relations(syncQueue, ({ one }) => ({
+  integration: one(integrationConfigs, {
+    fields: [syncQueue.integrationId],
+    references: [integrationConfigs.id],
+  }),
+}));
+
+export const fieldMappingsRelations = relations(fieldMappings, ({ one }) => ({
+  integration: one(integrationConfigs, {
+    fields: [fieldMappings.integrationId],
+    references: [integrationConfigs.id],
+  }),
+}));
+
+// Zod схеми для інтеграцій
+export const insertIntegrationConfigSchema = createInsertSchema(integrationConfigs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSyncLogSchema = createInsertSchema(syncLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertEntityMappingSchema = createInsertSchema(entityMappings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSyncQueueSchema = createInsertSchema(syncQueue).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertFieldMappingSchema = createInsertSchema(fieldMappings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Типи для інтеграцій
+export type IntegrationConfig = typeof integrationConfigs.$inferSelect;
+export type InsertIntegrationConfig = z.infer<typeof insertIntegrationConfigSchema>;
+export type SyncLog = typeof syncLogs.$inferSelect;
+export type InsertSyncLog = z.infer<typeof insertSyncLogSchema>;
+export type EntityMapping = typeof entityMappings.$inferSelect;
+export type InsertEntityMapping = z.infer<typeof insertEntityMappingSchema>;
+export type SyncQueue = typeof syncQueue.$inferSelect;
+export type InsertSyncQueue = z.infer<typeof insertSyncQueueSchema>;
+export type FieldMapping = typeof fieldMappings.$inferSelect;
+export type InsertFieldMapping = z.infer<typeof insertFieldMappingSchema>;
+
 
