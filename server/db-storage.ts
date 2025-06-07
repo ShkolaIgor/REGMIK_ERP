@@ -4631,7 +4631,7 @@ export class DatabaseStorage implements IStorage {
     const [client] = await db
       .select()
       .from(clients)
-      .where(sql`external_id = ${externalId}`)
+      .where(eq(clients.externalId, externalId))
       .limit(1);
     return client;
   }

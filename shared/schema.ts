@@ -723,6 +723,11 @@ export const clientContacts = pgTable("client_contacts", {
   notes: text("notes"),
   isPrimary: boolean("is_primary").default(false), // основний контакт клієнта
   isActive: boolean("is_active").default(true),
+  
+  // Поля для синхронізації з зовнішніми системами
+  externalId: varchar("external_id", { length: 100 }),
+  source: varchar("source", { length: 20 }).default("manual"), // bitrix24, 1c, manual
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
