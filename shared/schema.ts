@@ -691,6 +691,10 @@ export const clients = pgTable("clients", {
   novaPoshtaAddressRef: varchar("nova_poshta_address_ref", { length: 255 }),
   enableThirdPartyShipping: boolean("enable_third_party_shipping").default(false),
   
+  // Поля для синхронізації з зовнішніми системами
+  externalId: varchar("external_id", { length: 100 }),
+  source: varchar("source", { length: 20 }).default("manual"), // bitrix24, 1c, manual
+  
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

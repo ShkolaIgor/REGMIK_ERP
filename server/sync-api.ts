@@ -7,59 +7,34 @@ import { z } from "zod";
 const syncClientSchema = z.object({
   externalId: z.string(),
   name: z.string().min(1),
-  email: z.string().email().optional(),
-  phone: z.string().optional(),
-  contactPerson: z.string().optional(),
-  address: z.string().optional(),
-  description: z.string().optional(),
+  taxCode: z.string().default(""),
+  fullName: z.string().optional(),
+  legalAddress: z.string().optional(),
+  physicalAddress: z.string().optional(),
+  notes: z.string().optional(),
   isActive: z.boolean().default(true),
-  rating: z.number().min(1).max(5).optional(),
-  paymentTerms: z.string().optional(),
-  deliveryTerms: z.string().optional(),
-  // Мета-дані синхронізації
-  lastSyncAt: z.string().datetime().optional(),
+  type: z.string().optional(),
   source: z.enum(['bitrix24', '1c', 'manual']).default('manual')
 });
 
 const syncContactSchema = z.object({
   externalId: z.string(),
   clientExternalId: z.string(),
-  name: z.string().min(1),
+  fullName: z.string().min(1),
   email: z.string().email().optional(),
-  phone: z.string().optional(),
+  primaryPhone: z.string().optional(),
   position: z.string().optional(),
   isPrimary: z.boolean().default(false),
   isActive: z.boolean().default(true),
-  source: z.enum(['bitrix24', '1c', 'manual']).default('manual')
-});
-
-const syncInvoiceSchema = z.object({
-  externalId: z.string(),
-  clientExternalId: z.string(),
-  invoiceNumber: z.string(),
-  amount: z.number().positive(),
-  currency: z.string().default('UAH'),
-  status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled']),
-  issueDate: z.string().datetime(),
-  dueDate: z.string().datetime(),
-  description: z.string().optional(),
-  items: z.array(z.object({
-    productExternalId: z.string().optional(),
-    name: z.string(),
-    quantity: z.number().positive(),
-    unitPrice: z.number().positive(),
-    totalPrice: z.number().positive(),
-    description: z.string().optional()
-  })).optional(),
+  notes: z.string().optional(),
   source: z.enum(['bitrix24', '1c', 'manual']).default('manual')
 });
 
 const batchSyncSchema = z.object({
   clients: z.array(syncClientSchema).optional(),
   contacts: z.array(syncContactSchema).optional(),
-  invoices: z.array(syncInvoiceSchema).optional(),
   source: z.enum(['bitrix24', '1c', 'manual']).default('manual'),
-  syncId: z.string().optional() // Унікальний ідентифікатор сесії синхронізації
+  syncId: z.string().optional()
 });
 
 export function registerSyncApiRoutes(app: Express) {
@@ -74,32 +49,27 @@ export function registerSyncApiRoutes(app: Express) {
       let client;
       if (existingClient) {
         // Оновлюємо існуючого клієнта
-        client = await storage.updateClient(existingClient.id, {
+        client = await storage.updateClient(existingClient.id.toString(), {
           name: validatedData.name,
-          email: validatedData.email,
-          phone: validatedData.phone,
-          contactPerson: validatedData.contactPerson,
-          address: validatedData.address,
-          description: validatedData.description,
+          taxCode: validatedData.taxCode,
+          fullName: validatedData.fullName,
+          legalAddress: validatedData.legalAddress,
+          physicalAddress: validatedData.physicalAddress,
+          notes: validatedData.notes,
           isActive: validatedData.isActive,
-          rating: validatedData.rating,
-          paymentTerms: validatedData.paymentTerms,
-          deliveryTerms: validatedData.deliveryTerms,
-          lastSyncAt: new Date()
+          type: validatedData.type
         });
       } else {
         // Створюємо нового клієнта
         client = await storage.createClient({
           name: validatedData.name,
-          email: validatedData.email,
-          phone: validatedData.phone,
-          contactPerson: validatedData.contactPerson,
-          address: validatedData.address,
-          description: validatedData.description,
+          taxCode: validatedData.taxCode,
+          fullName: validatedData.fullName,
+          legalAddress: validatedData.legalAddress,
+          physicalAddress: validatedData.physicalAddress,
+          notes: validatedData.notes,
           isActive: validatedData.isActive,
-          rating: validatedData.rating,
-          paymentTerms: validatedData.paymentTerms,
-          deliveryTerms: validatedData.deliveryTerms,
+          type: validatedData.type,
           externalId: validatedData.externalId,
           source: validatedData.source
         });
@@ -144,23 +114,25 @@ export function registerSyncApiRoutes(app: Express) {
       if (existingContact) {
         // Оновлюємо існуючий контакт
         contact = await storage.updateClientContact(existingContact.id, {
-          name: validatedData.name,
+          fullName: validatedData.fullName,
           email: validatedData.email,
-          phone: validatedData.phone,
+          primaryPhone: validatedData.primaryPhone,
           position: validatedData.position,
           isPrimary: validatedData.isPrimary,
-          isActive: validatedData.isActive
+          isActive: validatedData.isActive,
+          notes: validatedData.notes
         });
       } else {
         // Створюємо новий контакт
         contact = await storage.createClientContact({
           clientId: client.id,
-          name: validatedData.name,
+          fullName: validatedData.fullName,
           email: validatedData.email,
-          phone: validatedData.phone,
+          primaryPhone: validatedData.primaryPhone,
           position: validatedData.position,
           isPrimary: validatedData.isPrimary,
           isActive: validatedData.isActive,
+          notes: validatedData.notes,
           externalId: validatedData.externalId,
           source: validatedData.source
         });
@@ -185,94 +157,14 @@ export function registerSyncApiRoutes(app: Express) {
     }
   });
 
-  // Синхронізація рахунків
-  app.post("/api/sync/invoices", async (req, res) => {
-    try {
-      const validatedData = syncInvoiceSchema.parse(req.body);
-      
-      // Знаходимо клієнта за externalId
-      const client = await storage.getClientByExternalId(validatedData.clientExternalId);
-      if (!client) {
-        return res.status(404).json({ 
-          error: "Client not found", 
-          clientExternalId: validatedData.clientExternalId 
-        });
-      }
-
-      // Перевіряємо чи існує рахунок з таким externalId
-      const existingInvoice = await storage.getInvoiceByExternalId(validatedData.externalId);
-      
-      let invoice;
-      if (existingInvoice) {
-        // Оновлюємо існуючий рахунок
-        invoice = await storage.updateInvoice(existingInvoice.id, {
-          invoiceNumber: validatedData.invoiceNumber,
-          amount: validatedData.amount,
-          currency: validatedData.currency,
-          status: validatedData.status,
-          issueDate: new Date(validatedData.issueDate),
-          dueDate: new Date(validatedData.dueDate),
-          description: validatedData.description
-        });
-      } else {
-        // Створюємо новий рахунок
-        invoice = await storage.createInvoice({
-          clientId: client.id,
-          invoiceNumber: validatedData.invoiceNumber,
-          amount: validatedData.amount,
-          currency: validatedData.currency,
-          status: validatedData.status,
-          issueDate: new Date(validatedData.issueDate),
-          dueDate: new Date(validatedData.dueDate),
-          description: validatedData.description,
-          externalId: validatedData.externalId,
-          source: validatedData.source
-        });
-
-        // Додаємо позиції рахунку, якщо вони є
-        if (validatedData.items && validatedData.items.length > 0) {
-          for (const item of validatedData.items) {
-            await storage.createInvoiceItem({
-              invoiceId: invoice.id,
-              name: item.name,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              totalPrice: item.totalPrice,
-              description: item.description,
-              productExternalId: item.productExternalId
-            });
-          }
-        }
-      }
-
-      res.json({
-        success: true,
-        invoice,
-        action: existingInvoice ? 'updated' : 'created',
-        clientId: client.id
-      });
-
-    } catch (error) {
-      console.error("Error syncing invoice:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          error: "Validation error", 
-          details: error.errors 
-        });
-      }
-      res.status(500).json({ error: "Failed to sync invoice" });
-    }
-  });
-
   // Масова синхронізація
   app.post("/api/sync/batch", async (req, res) => {
     try {
       const validatedData = batchSyncSchema.parse(req.body);
       const results = {
-        clients: [],
-        contacts: [],
-        invoices: [],
-        errors: []
+        clients: [] as any[],
+        contacts: [] as any[],
+        errors: [] as any[]
       };
 
       const syncId = validatedData.syncId || `sync_${Date.now()}`;
@@ -285,37 +177,43 @@ export function registerSyncApiRoutes(app: Express) {
             let client;
             
             if (existingClient) {
-              client = await storage.updateClient(existingClient.id, {
+              client = await storage.updateClient(existingClient.id.toString(), {
                 name: clientData.name,
-                email: clientData.email,
-                phone: clientData.phone,
-                contactPerson: clientData.contactPerson,
-                address: clientData.address,
-                description: clientData.description,
+                taxCode: clientData.taxCode,
+                fullName: clientData.fullName,
+                legalAddress: clientData.legalAddress,
+                physicalAddress: clientData.physicalAddress,
+                notes: clientData.notes,
                 isActive: clientData.isActive,
-                rating: clientData.rating,
-                paymentTerms: clientData.paymentTerms,
-                deliveryTerms: clientData.deliveryTerms,
-                lastSyncAt: new Date()
+                type: clientData.type
               });
             } else {
               client = await storage.createClient({
-                ...clientData,
+                name: clientData.name,
+                taxCode: clientData.taxCode,
+                fullName: clientData.fullName,
+                legalAddress: clientData.legalAddress,
+                physicalAddress: clientData.physicalAddress,
+                notes: clientData.notes,
+                isActive: clientData.isActive,
+                type: clientData.type,
                 externalId: clientData.externalId,
                 source: validatedData.source
               });
             }
 
-            results.clients.push({
-              externalId: clientData.externalId,
-              id: client.id,
-              action: existingClient ? 'updated' : 'created'
-            });
+            if (client) {
+              results.clients.push({
+                externalId: clientData.externalId,
+                id: client.id,
+                action: existingClient ? 'updated' : 'created'
+              });
+            }
           } catch (error) {
             results.errors.push({
               type: 'client',
               externalId: clientData.externalId,
-              error: error.message
+              error: error instanceof Error ? error.message : 'Unknown error'
             });
           }
         }
@@ -340,123 +238,53 @@ export function registerSyncApiRoutes(app: Express) {
 
             if (existingContact) {
               contact = await storage.updateClientContact(existingContact.id, {
-                name: contactData.name,
+                fullName: contactData.fullName,
                 email: contactData.email,
-                phone: contactData.phone,
+                primaryPhone: contactData.primaryPhone,
                 position: contactData.position,
                 isPrimary: contactData.isPrimary,
-                isActive: contactData.isActive
+                isActive: contactData.isActive,
+                notes: contactData.notes
               });
             } else {
               contact = await storage.createClientContact({
                 clientId: client.id,
-                name: contactData.name,
+                fullName: contactData.fullName,
                 email: contactData.email,
-                phone: contactData.phone,
+                primaryPhone: contactData.primaryPhone,
                 position: contactData.position,
                 isPrimary: contactData.isPrimary,
                 isActive: contactData.isActive,
+                notes: contactData.notes,
                 externalId: contactData.externalId,
                 source: validatedData.source
               });
             }
 
-            results.contacts.push({
-              externalId: contactData.externalId,
-              id: contact.id,
-              clientId: client.id,
-              action: existingContact ? 'updated' : 'created'
-            });
+            if (contact) {
+              results.contacts.push({
+                externalId: contactData.externalId,
+                id: contact.id,
+                clientId: client.id,
+                action: existingContact ? 'updated' : 'created'
+              });
+            }
           } catch (error) {
             results.errors.push({
               type: 'contact',
               externalId: contactData.externalId,
-              error: error.message
+              error: error instanceof Error ? error.message : 'Unknown error'
             });
           }
         }
       }
-
-      // Синхронізуємо рахунки
-      if (validatedData.invoices) {
-        for (const invoiceData of validatedData.invoices) {
-          try {
-            const client = await storage.getClientByExternalId(invoiceData.clientExternalId);
-            if (!client) {
-              results.errors.push({
-                type: 'invoice',
-                externalId: invoiceData.externalId,
-                error: `Client not found: ${invoiceData.clientExternalId}`
-              });
-              continue;
-            }
-
-            const existingInvoice = await storage.getInvoiceByExternalId(invoiceData.externalId);
-            let invoice;
-
-            if (existingInvoice) {
-              invoice = await storage.updateInvoice(existingInvoice.id, {
-                invoiceNumber: invoiceData.invoiceNumber,
-                amount: invoiceData.amount,
-                currency: invoiceData.currency,
-                status: invoiceData.status,
-                issueDate: new Date(invoiceData.issueDate),
-                dueDate: new Date(invoiceData.dueDate),
-                description: invoiceData.description
-              });
-            } else {
-              invoice = await storage.createInvoice({
-                clientId: client.id,
-                invoiceNumber: invoiceData.invoiceNumber,
-                amount: invoiceData.amount,
-                currency: invoiceData.currency,
-                status: invoiceData.status,
-                issueDate: new Date(invoiceData.issueDate),
-                dueDate: new Date(invoiceData.dueDate),
-                description: invoiceData.description,
-                externalId: invoiceData.externalId,
-                source: validatedData.source
-              });
-            }
-
-            results.invoices.push({
-              externalId: invoiceData.externalId,
-              id: invoice.id,
-              clientId: client.id,
-              action: existingInvoice ? 'updated' : 'created'
-            });
-          } catch (error) {
-            results.errors.push({
-              type: 'invoice',
-              externalId: invoiceData.externalId,
-              error: error.message
-            });
-          }
-        }
-      }
-
-      // Логуємо результати синхронізації
-      const syncLogId = await storage.createSyncLog({
-        source: validatedData.source,
-        syncId,
-        startTime: new Date(),
-        endTime: new Date(),
-        status: results.errors.length > 0 ? 'partial_success' : 'success',
-        clientsProcessed: results.clients.length,
-        contactsProcessed: results.contacts.length,
-        invoicesProcessed: results.invoices.length,
-        errorsCount: results.errors.length,
-        details: JSON.stringify(results)
-      });
 
       res.json({
         success: true,
         syncId,
-        syncLogId,
         summary: {
           clients: results.clients.length,
           contacts: results.contacts.length,
-          invoices: results.invoices.length,
           errors: results.errors.length
         },
         results
@@ -474,45 +302,40 @@ export function registerSyncApiRoutes(app: Express) {
     }
   });
 
-  // Отримання статусу синхронізації
-  app.get("/api/sync/status/:syncId", async (req, res) => {
+  // Отримання статистики синхронізації
+  app.get("/api/sync/stats", async (req, res) => {
     try {
-      const { syncId } = req.params;
-      const syncLog = await storage.getSyncLogBySyncId(syncId);
+      const { source } = req.query;
       
-      if (!syncLog) {
-        return res.status(404).json({ error: "Sync session not found" });
+      // Підраховуємо кількість об'єктів з зовнішніми ID
+      const clientsQuery = storage.getClients();
+      const contactsQuery = storage.getClientContacts();
+      
+      const [clients, contacts] = await Promise.all([clientsQuery, contactsQuery]);
+      
+      let stats = {
+        clients: {
+          total: clients.length,
+          withExternalId: clients.filter(c => c.externalId).length,
+          bySource: {} as Record<string, number>
+        },
+        contacts: {
+          total: contacts.length,
+          withExternalId: contacts.filter(c => c.externalId).length,
+          bySource: {} as Record<string, number>
+        }
+      };
+
+      // Підраховуємо по джерелах
+      if (source) {
+        stats.clients.bySource[source as string] = clients.filter(c => c.source === source).length;
+        stats.contacts.bySource[source as string] = contacts.filter(c => c.source === source).length;
       }
 
-      res.json({
-        syncId,
-        status: syncLog.status,
-        startTime: syncLog.startTime,
-        endTime: syncLog.endTime,
-        summary: {
-          clients: syncLog.clientsProcessed,
-          contacts: syncLog.contactsProcessed,
-          invoices: syncLog.invoicesProcessed,
-          errors: syncLog.errorsCount
-        },
-        details: syncLog.details ? JSON.parse(syncLog.details) : null
-      });
-
+      res.json(stats);
     } catch (error) {
-      console.error("Error getting sync status:", error);
-      res.status(500).json({ error: "Failed to get sync status" });
-    }
-  });
-
-  // Отримання історії синхронізацій
-  app.get("/api/sync/history", async (req, res) => {
-    try {
-      const { source, limit = 50 } = req.query;
-      const history = await storage.getSyncHistory(source as string, parseInt(limit as string));
-      res.json(history);
-    } catch (error) {
-      console.error("Error getting sync history:", error);
-      res.status(500).json({ error: "Failed to get sync history" });
+      console.error("Error getting sync stats:", error);
+      res.status(500).json({ error: "Failed to get sync stats" });
     }
   });
 }
