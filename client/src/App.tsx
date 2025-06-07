@@ -130,6 +130,7 @@ function Router() {
         <Route path="/email-settings" component={EmailSettings} />
         <Route path="/integrations" component={Integrations} />
         <Route path="/companies" component={Companies} />
+        <Route path="/invoices" component={Invoices} />
         <Route path="/analytics" component={Analytics} />
         <Route path="/product-profitability" component={ProductProfitability} />
         <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />

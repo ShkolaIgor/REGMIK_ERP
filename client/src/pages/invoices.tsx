@@ -56,7 +56,7 @@ export default function Invoices() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: invoices = [], isLoading } = useQuery({
+  const { data: invoicesData = [], isLoading } = useQuery({
     queryKey: ["/api/invoices"],
   });
 
