@@ -29,6 +29,29 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Таблиця компаній/фірм для мультифірмового режиму
+export const companies = pgTable("companies", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  fullName: varchar("full_name", { length: 500 }),
+  taxCode: varchar("tax_code", { length: 20 }).notNull().unique(), // ЄДРПОУ
+  vatNumber: varchar("vat_number", { length: 20 }), // ПДВ номер
+  legalAddress: text("legal_address"),
+  physicalAddress: text("physical_address"),
+  phone: varchar("phone", { length: 50 }),
+  email: varchar("email", { length: 255 }),
+  website: varchar("website", { length: 255 }),
+  bankName: varchar("bank_name", { length: 255 }),
+  bankAccount: varchar("bank_account", { length: 50 }),
+  bankCode: varchar("bank_code", { length: 20 }),
+  logo: text("logo"), // URL або base64 логотипу
+  isActive: boolean("is_active").default(true),
+  isDefault: boolean("is_default").default(false), // Компанія за замовчуванням
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Локальні користувачі для простої автентифікації (альтернатива Replit Auth)
 export const localUsers = pgTable("local_users", {
   id: serial("id").primaryKey(),
@@ -124,6 +147,7 @@ export const products = pgTable("products", {
   description: text("description"),
   barcode: text("barcode"),
   categoryId: integer("category_id").references(() => categories.id),
+  companyId: integer("company_id").references(() => companies.id), // Належність до компанії
   costPrice: decimal("cost_price", { precision: 10, scale: 2 }).notNull(),
   retailPrice: decimal("retail_price", { precision: 10, scale: 2 }).notNull(),
   photo: text("photo"),
@@ -152,6 +176,7 @@ export const orders = pgTable("orders", {
   customerEmail: text("customer_email"),
   customerPhone: text("customer_phone"),
   clientId: integer("client_id").references(() => clients.id), // зв'язок з клієнтом для використання його API ключів
+  companyId: integer("company_id").references(() => companies.id), // Компанія, від імені якої здійснюється продаж
   status: text("status").notNull().default("pending"), // pending, processing, shipped, delivered, cancelled
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   notes: text("notes"),
@@ -1944,5 +1969,15 @@ export type Invoice = typeof invoices.$inferSelect;
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
 export type InvoiceItem = typeof invoiceItems.$inferSelect;
 export type InsertInvoiceItem = z.infer<typeof insertInvoiceItemSchema>;
+
+// Типи для компаній
+export const insertCompanySchema = createInsertSchema(companies).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export type Company = typeof companies.$inferSelect;
+export type InsertCompany = z.infer<typeof insertCompanySchema>;
 
 
