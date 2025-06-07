@@ -5396,14 +5396,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Створюємо позиції рахунку на основі продуктів замовлення
       for (const orderProduct of orderProducts) {
+        // Використовуємо ціну з замовлення або роздрібну ціну продукту
+        const unitPrice = orderProduct.pricePerUnit || orderProduct.product?.retailPrice || "0";
+        const quantity = orderProduct.quantity || "1";
+        
         await storage.createInvoiceItem({
           invoiceId: invoice.id,
           productId: orderProduct.productId,
           name: orderProduct.product?.name || "Товар",
-          quantity: orderProduct.quantity,
-          price: orderProduct.pricePerUnit,
-          total: (parseFloat(orderProduct.pricePerUnit) * parseFloat(orderProduct.quantity)).toString(),
-          unit: orderProduct.product?.unit || "шт"
+          quantity: quantity,
+          unitPrice: unitPrice,
+          totalPrice: (parseFloat(unitPrice) * parseFloat(quantity)).toString()
         });
       }
 
