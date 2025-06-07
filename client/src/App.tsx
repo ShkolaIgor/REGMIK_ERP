@@ -56,6 +56,7 @@ import Users from "@/pages/users";
 import EmailSettings from "@/pages/email-settings";
 import Analytics from "@/pages/analytics";
 import ProductProfitability from "@/pages/product-profitability";
+import Integrations from "@/pages/integrations";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -125,6 +126,7 @@ function Router() {
         <Route path="/currencies" component={Currencies} />
         <Route path="/users" component={Users} />
         <Route path="/email-settings" component={EmailSettings} />
+        <Route path="/integrations" component={Integrations} />
         <Route path="/analytics" component={Analytics} />
         <Route path="/product-profitability" component={ProductProfitability} />
         <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />

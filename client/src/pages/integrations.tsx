@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Settings, Sync, TestTube, Trash2, Check, X, Clock, AlertCircle } from "lucide-react";
+import { Plus, Settings, RefreshCw, TestTube, Trash2, Check, X, Clock, AlertCircle } from "lucide-react";
 
 interface IntegrationConfig {
   id: number;

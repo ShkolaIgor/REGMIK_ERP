@@ -4661,6 +4661,296 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===============================
+  // ІНТЕГРАЦІЇ БІТРІКС24 ТА 1С API
+  // ===============================
+
+  // Получение всех конфигураций интеграций
+  app.get("/api/integrations", async (req, res) => {
+    try {
+      const integrations = []; // Пока возвращаем пустой массив
+      res.json(integrations);
+    } catch (error) {
+      console.error("Error fetching integrations:", error);
+      res.status(500).json({ error: "Failed to fetch integrations" });
+    }
+  });
+
+  // Получение конкретной конфигурации интеграции
+  app.get("/api/integrations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const integration = null; // Заглушка
+      if (!integration) {
+        return res.status(404).json({ error: "Integration not found" });
+      }
+      res.json(integration);
+    } catch (error) {
+      console.error("Error fetching integration:", error);
+      res.status(500).json({ error: "Failed to fetch integration" });
+    }
+  });
+
+  // Создание новой конфигурации интеграции
+  app.post("/api/integrations", async (req, res) => {
+    try {
+      const { name, displayName, type, isActive, config } = req.body;
+      
+      if (!name || !displayName || !type) {
+        return res.status(400).json({ error: "Name, displayName and type are required" });
+      }
+
+      const integration = {
+        id: Date.now(), // Временный ID
+        name,
+        displayName,
+        type,
+        isActive: isActive || false,
+        config: config || {},
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      res.status(201).json(integration);
+    } catch (error) {
+      console.error("Error creating integration:", error);
+      res.status(500).json({ error: "Failed to create integration" });
+    }
+  });
+
+  // Обновление конфигурации интеграции
+  app.patch("/api/integrations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = req.body;
+      
+      const integration = {
+        id,
+        ...updateData,
+        updatedAt: new Date()
+      };
+
+      res.json(integration);
+    } catch (error) {
+      console.error("Error updating integration:", error);
+      res.status(500).json({ error: "Failed to update integration" });
+    }
+  });
+
+  // Удаление конфигурации интеграции
+  app.delete("/api/integrations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting integration:", error);
+      res.status(500).json({ error: "Failed to delete integration" });
+    }
+  });
+
+  // Тестирование подключения к интеграции
+  app.post("/api/integrations/:id/test", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Здесь будет логика тестирования подключения
+      const success = true; // Заглушка
+      
+      res.json({ success, message: success ? "Connection successful" : "Connection failed" });
+    } catch (error) {
+      console.error("Error testing integration connection:", error);
+      res.status(500).json({ error: "Failed to test connection" });
+    }
+  });
+
+  // Запуск синхронизации данных
+  app.post("/api/integrations/:id/sync", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { direction } = req.body; // 'import' или 'export'
+      
+      if (!direction || !['import', 'export'].includes(direction)) {
+        return res.status(400).json({ error: "Direction must be 'import' or 'export'" });
+      }
+
+      // Здесь будет логика синхронизации
+      const result = {
+        success: true,
+        recordsProcessed: 0,
+        recordsSuccessful: 0,
+        recordsFailed: 0,
+        message: `${direction === 'import' ? 'Import' : 'Export'} started successfully`
+      };
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error starting sync:", error);
+      res.status(500).json({ error: "Failed to start synchronization" });
+    }
+  });
+
+  // Получение логов синхронизации
+  app.get("/api/integrations/sync-logs", async (req, res) => {
+    try {
+      const { integrationId } = req.query;
+      
+      const syncLogs = []; // Заглушка для логов
+      
+      res.json(syncLogs);
+    } catch (error) {
+      console.error("Error fetching sync logs:", error);
+      res.status(500).json({ error: "Failed to fetch sync logs" });
+    }
+  });
+
+  // Получение мапінгів сутностей
+  app.get("/api/integrations/:id/mappings", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { entityType } = req.query;
+      
+      const mappings = []; // Заглушка
+      
+      res.json(mappings);
+    } catch (error) {
+      console.error("Error fetching entity mappings:", error);
+      res.status(500).json({ error: "Failed to fetch entity mappings" });
+    }
+  });
+
+  // Создание мапінгу сутностей
+  app.post("/api/integrations/:id/mappings", async (req, res) => {
+    try {
+      const integrationId = parseInt(req.params.id);
+      const { entityType, localId, externalId, syncDirection } = req.body;
+      
+      if (!entityType || !localId || !externalId) {
+        return res.status(400).json({ error: "entityType, localId and externalId are required" });
+      }
+
+      const mapping = {
+        id: Date.now(),
+        integrationId,
+        entityType,
+        localId,
+        externalId,
+        syncDirection: syncDirection || 'bidirectional',
+        lastSyncAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      res.status(201).json(mapping);
+    } catch (error) {
+      console.error("Error creating entity mapping:", error);
+      res.status(500).json({ error: "Failed to create entity mapping" });
+    }
+  });
+
+  // Удаление мапінгу
+  app.delete("/api/integrations/:id/mappings/:mappingId", async (req, res) => {
+    try {
+      const mappingId = parseInt(req.params.mappingId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting entity mapping:", error);
+      res.status(500).json({ error: "Failed to delete entity mapping" });
+    }
+  });
+
+  // Получение очереди синхронизации
+  app.get("/api/integrations/:id/sync-queue", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      const queueItems = []; // Заглушка
+      
+      res.json(queueItems);
+    } catch (error) {
+      console.error("Error fetching sync queue:", error);
+      res.status(500).json({ error: "Failed to fetch sync queue" });
+    }
+  });
+
+  // Добавление елемента в очередь синхронизации
+  app.post("/api/integrations/:id/sync-queue", async (req, res) => {
+    try {
+      const integrationId = parseInt(req.params.id);
+      const { operation, entityType, entityId, direction, priority } = req.body;
+      
+      if (!operation || !entityType || !entityId || !direction) {
+        return res.status(400).json({ error: "operation, entityType, entityId and direction are required" });
+      }
+
+      const queueItem = {
+        id: Date.now(),
+        integrationId,
+        operation,
+        entityType,
+        entityId,
+        direction,
+        priority: priority || 5,
+        status: 'pending',
+        attempts: 0,
+        maxAttempts: 3,
+        scheduledAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      res.status(201).json(queueItem);
+    } catch (error) {
+      console.error("Error adding to sync queue:", error);
+      res.status(500).json({ error: "Failed to add to sync queue" });
+    }
+  });
+
+  // Получение настроек мапінгу полей
+  app.get("/api/integrations/:id/field-mappings", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { entityType } = req.query;
+      
+      const fieldMappings = []; // Заглушка
+      
+      res.json(fieldMappings);
+    } catch (error) {
+      console.error("Error fetching field mappings:", error);
+      res.status(500).json({ error: "Failed to fetch field mappings" });
+    }
+  });
+
+  // Создание настроек мапінгу полей
+  app.post("/api/integrations/:id/field-mappings", async (req, res) => {
+    try {
+      const integrationId = parseInt(req.params.id);
+      const { entityType, localField, externalField, transformation, direction } = req.body;
+      
+      if (!entityType || !localField || !externalField) {
+        return res.status(400).json({ error: "entityType, localField and externalField are required" });
+      }
+
+      const fieldMapping = {
+        id: Date.now(),
+        integrationId,
+        entityType,
+        localField,
+        externalField,
+        transformation: transformation || 'none',
+        direction: direction || 'bidirectional',
+        isRequired: false,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      res.status(201).json(fieldMapping);
+    } catch (error) {
+      console.error("Error creating field mapping:", error);
+      res.status(500).json({ error: "Failed to create field mapping" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
