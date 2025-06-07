@@ -5240,6 +5240,123 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Invoice routes
+  const invoiceCreateSchema = z.object({
+    clientId: z.number(),
+    companyId: z.number(),
+    invoiceNumber: z.string(),
+    amount: z.number(),
+    currency: z.string().default("UAH"),
+    status: z.string().default("draft"),
+    issueDate: z.string().transform(str => new Date(str)),
+    dueDate: z.string().transform(str => new Date(str)),
+    description: z.string().optional(),
+  });
+
+  // Отримання всіх рахунків з клієнтами та компаніями
+  app.get("/api/invoices", async (req, res) => {
+    try {
+      const invoices = await storage.getInvoices();
+      res.json(invoices);
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      res.status(500).json({ error: "Failed to fetch invoices" });
+    }
+  });
+
+  // Отримання рахунку за ID з деталями
+  app.get("/api/invoices/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const invoice = await storage.getInvoice(id);
+      
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+      
+      // Отримуємо позиції рахунку
+      const items = await storage.getInvoiceItems(id);
+      
+      res.json({
+        ...invoice,
+        items
+      });
+    } catch (error) {
+      console.error("Error fetching invoice:", error);
+      res.status(500).json({ error: "Failed to fetch invoice" });
+    }
+  });
+
+  // Створення нового рахунку
+  app.post("/api/invoices", async (req, res) => {
+    try {
+      const validatedData = invoiceCreateSchema.parse(req.body);
+      
+      const invoice = await storage.createInvoice({
+        clientId: validatedData.clientId,
+        companyId: validatedData.companyId,
+        invoiceNumber: validatedData.invoiceNumber,
+        amount: validatedData.amount.toString(),
+        currency: validatedData.currency,
+        status: validatedData.status,
+        issueDate: validatedData.issueDate,
+        dueDate: validatedData.dueDate,
+        description: validatedData.description || null,
+        externalId: null,
+        source: "manual"
+      });
+      
+      res.status(201).json(invoice);
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation error", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create invoice" });
+    }
+  });
+
+  // Оновлення рахунку
+  app.put("/api/invoices/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = invoiceCreateSchema.parse(req.body);
+      
+      const invoice = await storage.updateInvoice(id, {
+        clientId: validatedData.clientId,
+        companyId: validatedData.companyId,
+        invoiceNumber: validatedData.invoiceNumber,
+        amount: validatedData.amount.toString(),
+        currency: validatedData.currency,
+        status: validatedData.status,
+        issueDate: validatedData.issueDate,
+        dueDate: validatedData.dueDate,
+        description: validatedData.description || null,
+        updatedAt: new Date()
+      });
+      
+      res.json(invoice);
+    } catch (error) {
+      console.error("Error updating invoice:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation error", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update invoice" });
+    }
+  });
+
+  // Видалення рахунку
+  app.delete("/api/invoices/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteInvoice(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting invoice:", error);
+      res.status(500).json({ error: "Failed to delete invoice" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

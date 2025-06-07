@@ -58,6 +58,7 @@ import Analytics from "@/pages/analytics";
 import ProductProfitability from "@/pages/product-profitability";
 import Integrations from "@/pages/integrations";
 import Companies from "@/pages/companies";
+import Invoices from "@/pages/invoices";
 import NotFound from "@/pages/not-found";
 
 function Router() {
