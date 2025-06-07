@@ -4622,6 +4622,108 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // ================================
+  // МЕТОДИ СИНХРОНІЗАЦІЇ API
+  // ================================
+
+  // Методи для клієнтів з externalId
+  async getClientByExternalId(externalId: string): Promise<Client | undefined> {
+    const [client] = await db
+      .select()
+      .from(clients)
+      .where(eq(clients.externalId, externalId))
+      .limit(1);
+    return client;
+  }
+
+  // Методи для контактів клієнтів з externalId
+  async getClientContactByExternalId(externalId: string): Promise<ClientContact | undefined> {
+    const [contact] = await db
+      .select()
+      .from(clientContacts)
+      .where(eq(clientContacts.externalId, externalId))
+      .limit(1);
+    return contact;
+  }
+
+  // Методи для рахунків
+  async getInvoiceByExternalId(externalId: string): Promise<any> {
+    const [invoice] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.externalId, externalId))
+      .limit(1);
+    return invoice;
+  }
+
+  async createInvoice(invoiceData: any): Promise<any> {
+    const [invoice] = await db
+      .insert(invoices)
+      .values(invoiceData)
+      .returning();
+    return invoice;
+  }
+
+  async updateInvoice(id: number, invoiceData: any): Promise<any> {
+    const [invoice] = await db
+      .update(invoices)
+      .set({ ...invoiceData, updatedAt: new Date() })
+      .where(eq(invoices.id, id))
+      .returning();
+    return invoice;
+  }
+
+  async createInvoiceItem(itemData: any): Promise<any> {
+    const [item] = await db
+      .insert(invoiceItems)
+      .values(itemData)
+      .returning();
+    return item;
+  }
+
+  // Методи для логів синхронізації
+  async createSyncLog(logData: any): Promise<any> {
+    const [log] = await db
+      .insert(syncLogs)
+      .values({
+        integrationId: 1, // Тимчасово використовуємо фіксований ID
+        operation: 'batch_sync',
+        status: logData.status,
+        recordsProcessed: logData.clientsProcessed + logData.contactsProcessed + logData.invoicesProcessed,
+        recordsSuccessful: logData.clientsProcessed + logData.contactsProcessed + logData.invoicesProcessed - logData.errorsCount,
+        recordsFailed: logData.errorsCount,
+        startedAt: logData.startTime,
+        completedAt: logData.endTime,
+        details: logData.details
+      })
+      .returning();
+    return log;
+  }
+
+  async getSyncLogBySyncId(syncId: string): Promise<any> {
+    // Поки що використовуємо просте пошук по деталях
+    const [log] = await db
+      .select()
+      .from(syncLogs)
+      .where(sql`details->>'syncId' = ${syncId}`)
+      .limit(1);
+    return log;
+  }
+
+  async getSyncHistory(source?: string, limit: number = 50): Promise<any[]> {
+    let query = db
+      .select()
+      .from(syncLogs)
+      .orderBy(desc(syncLogs.startedAt))
+      .limit(limit);
+
+    if (source) {
+      query = query.where(sql`details->>'source' = ${source}`);
+    }
+
+    return await query;
+  }
+
   // Roles management
   async getRoles() {
     return await db.select().from(roles).orderBy(roles.name);

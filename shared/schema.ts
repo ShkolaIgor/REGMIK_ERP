@@ -1883,4 +1883,57 @@ export type InsertSyncQueue = z.infer<typeof insertSyncQueueSchema>;
 export type FieldMapping = typeof fieldMappings.$inferSelect;
 export type InsertFieldMapping = z.infer<typeof insertFieldMappingSchema>;
 
+// ================================
+// РАХУНКИ ТА ПЛАТЕЖІ
+// ================================
+
+// Таблиця для рахунків
+export const invoices = pgTable("invoices", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").references(() => clients.id).notNull(),
+  invoiceNumber: varchar("invoice_number", { length: 50 }).notNull().unique(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("UAH"),
+  status: varchar("status", { length: 20 }).notNull().default("draft"), // draft, sent, paid, overdue, cancelled
+  issueDate: timestamp("issue_date").notNull(),
+  dueDate: timestamp("due_date").notNull(),
+  paidDate: timestamp("paid_date"),
+  description: text("description"),
+  externalId: varchar("external_id", { length: 100 }),
+  source: varchar("source", { length: 20 }).default("manual"), // bitrix24, 1c, manual
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Таблиця для позицій рахунків
+export const invoiceItems = pgTable("invoice_items", {
+  id: serial("id").primaryKey(),
+  invoiceId: integer("invoice_id").references(() => invoices.id).notNull(),
+  productId: integer("product_id").references(() => products.id),
+  productExternalId: varchar("product_external_id", { length: 100 }),
+  name: varchar("name", { length: 255 }).notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 3 }).notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Схеми валідації для рахунків
+export const insertInvoiceSchema = createInsertSchema(invoices).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertInvoiceItemSchema = createInsertSchema(invoiceItems).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export type Invoice = typeof invoices.$inferSelect;
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+export type InvoiceItem = typeof invoiceItems.$inferSelect;
+export type InsertInvoiceItem = z.infer<typeof insertInvoiceItemSchema>;
+
 

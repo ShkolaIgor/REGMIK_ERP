@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { dbStorage as storage } from "./db-storage";
 import { registerSimpleIntegrationRoutes } from "./integrations-simple";
+import { registerSyncApiRoutes } from "./sync-api";
 import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./simple-auth";
 import { novaPoshtaApi } from "./nova-poshta-api";
 import { novaPoshtaCache } from "./nova-poshta-cache";
@@ -32,6 +33,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register simple integration routes
   registerSimpleIntegrationRoutes(app);
+  
+  // Register sync API routes
+  registerSyncApiRoutes(app);
 
   // Dashboard stats
   app.get("/api/dashboard/stats", async (req, res) => {
