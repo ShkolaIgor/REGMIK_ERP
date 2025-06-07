@@ -574,6 +574,163 @@ export function registerSyncApiRoutes(app: Express) {
     }
   });
 
+  // Тестова масова синхронізація рахунків
+  app.post("/api/sync/bulk-invoices", async (req, res) => {
+    try {
+      const startTime = new Date();
+      let invoicesProcessed = 0;
+      let itemsProcessed = 0;
+      let errors: string[] = [];
+
+      // Симуляція даних з Bitrix24
+      const invoicesData = [
+        {
+          externalId: "bitrix_invoice_003",
+          clientExternalId: "bitrix_client_001",
+          companyId: 1,
+          invoiceNumber: "INV-2025-003",
+          amount: 12000,
+          currency: "UAH",
+          status: "pending",
+          issueDate: "2025-06-08T00:00:00Z",
+          dueDate: "2025-06-22T00:00:00Z",
+          description: "Рахунок за аналітичні модулі",
+          source: "bitrix24",
+          items: [
+            {
+              name: "Модуль аналітики продажів",
+              quantity: 1,
+              unitPrice: 6000,
+              totalPrice: 6000,
+              description: "Розробка та впровадження модуля аналітики продажів"
+            },
+            {
+              name: "Модуль звітності",
+              quantity: 1,
+              unitPrice: 6000,
+              totalPrice: 6000,
+              description: "Створення системи звітності та дашбордів"
+            }
+          ]
+        },
+        {
+          externalId: "bitrix_invoice_004",
+          clientExternalId: "bitrix_client_001",
+          companyId: 1,
+          invoiceNumber: "INV-2025-004",
+          amount: 7500,
+          currency: "UAH",
+          status: "sent",
+          issueDate: "2025-06-08T00:00:00Z",
+          dueDate: "2025-06-25T00:00:00Z",
+          description: "Рахунок за підтримку системи",
+          source: "bitrix24",
+          items: [
+            {
+              name: "Технічна підтримка (3 місяці)",
+              quantity: 1,
+              unitPrice: 7500,
+              totalPrice: 7500,
+              description: "Технічна підтримка ERP системи протягом 3 місяців"
+            }
+          ]
+        }
+      ];
+
+      // Обробка кожного рахунку
+      for (const invoiceData of invoicesData) {
+        try {
+          // Перевіряємо існування клієнта
+          const clients = await storage.getClients();
+          const client = clients.find(c => c.externalId === invoiceData.clientExternalId);
+          
+          if (!client) {
+            errors.push(`Client not found: ${invoiceData.clientExternalId}`);
+            continue;
+          }
+
+          // Створюємо або оновлюємо рахунок
+          const existingInvoice = await storage.getInvoiceByExternalId(invoiceData.externalId);
+          let invoice;
+
+          if (existingInvoice) {
+            invoice = await storage.updateInvoice(existingInvoice.id, {
+              clientId: client.id,
+              companyId: invoiceData.companyId,
+              invoiceNumber: invoiceData.invoiceNumber,
+              amount: invoiceData.amount.toString(),
+              currency: invoiceData.currency,
+              status: invoiceData.status,
+              issueDate: new Date(invoiceData.issueDate),
+              dueDate: new Date(invoiceData.dueDate),
+              description: invoiceData.description,
+              source: invoiceData.source,
+              updatedAt: new Date()
+            });
+          } else {
+            invoice = await storage.createInvoice({
+              clientId: client.id,
+              companyId: invoiceData.companyId,
+              invoiceNumber: invoiceData.invoiceNumber,
+              amount: invoiceData.amount.toString(),
+              currency: invoiceData.currency,
+              status: invoiceData.status,
+              issueDate: new Date(invoiceData.issueDate),
+              dueDate: new Date(invoiceData.dueDate),
+              description: invoiceData.description,
+              externalId: invoiceData.externalId,
+              source: invoiceData.source
+            });
+          }
+
+          invoicesProcessed++;
+
+          // Створюємо позиції рахунку
+          for (const itemData of invoiceData.items) {
+            try {
+              await storage.createInvoiceItem({
+                invoiceId: invoice.id,
+                productId: null,
+                productExternalId: null,
+                name: itemData.name,
+                quantity: itemData.quantity.toString(),
+                unitPrice: itemData.unitPrice.toString(),
+                totalPrice: itemData.totalPrice.toString(),
+                description: itemData.description
+              });
+              itemsProcessed++;
+            } catch (itemError) {
+              errors.push(`Failed to create item for invoice ${invoice.invoiceNumber}: ${itemError}`);
+            }
+          }
+
+        } catch (invoiceError) {
+          errors.push(`Failed to process invoice ${invoiceData.externalId}: ${invoiceError}`);
+        }
+      }
+
+      const endTime = new Date();
+      const duration = endTime.getTime() - startTime.getTime();
+
+      res.json({
+        success: true,
+        summary: {
+          invoicesProcessed,
+          itemsProcessed,
+          errorsCount: errors.length,
+          duration: `${duration}ms`,
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString()
+        },
+        errors: errors.length > 0 ? errors : undefined
+      });
+
+    } catch (error) {
+      console.error("Bulk sync error:", error);
+      res.status(500).json({ error: "Failed to perform bulk sync" });
+    }
+  });
+
   // Отримання статистики синхронізації
   app.get("/api/sync/stats", async (req, res) => {
     try {
