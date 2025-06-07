@@ -4680,7 +4680,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/integrations/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const integration = null; // Заглушка
+      const integration = await storage.getIntegrationConfig(id);
       if (!integration) {
         return res.status(404).json({ error: "Integration not found" });
       }
@@ -4700,17 +4700,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Name, displayName and type are required" });
       }
 
-      const integration = {
-        id: Date.now(), // Временный ID
+      const integrationData = {
         name,
         displayName,
         type,
         isActive: isActive || false,
-        config: config || {},
-        createdAt: new Date(),
-        updatedAt: new Date()
+        config: config || {}
       };
 
+      const integration = await storage.createIntegrationConfig(integrationData);
       res.status(201).json(integration);
     } catch (error) {
       console.error("Error creating integration:", error);
@@ -4724,11 +4722,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const updateData = req.body;
       
-      const integration = {
-        id,
-        ...updateData,
-        updatedAt: new Date()
-      };
+      const integration = await storage.updateIntegrationConfig(id, updateData);
+      if (!integration) {
+        return res.status(404).json({ error: "Integration not found" });
+      }
 
       res.json(integration);
     } catch (error) {
@@ -4741,6 +4738,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/integrations/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const success = await storage.deleteIntegrationConfig(id);
+      if (!success) {
+        return res.status(404).json({ error: "Integration not found" });
+      }
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting integration:", error);
