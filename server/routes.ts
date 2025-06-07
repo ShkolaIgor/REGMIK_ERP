@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { dbStorage as storage } from "./db-storage";
+import { registerSimpleIntegrationRoutes } from "./integrations-simple";
 import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./simple-auth";
 import { novaPoshtaApi } from "./nova-poshta-api";
 import { novaPoshtaCache } from "./nova-poshta-cache";
@@ -28,6 +29,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Simple auth setup
   setupSimpleSession(app);
   setupSimpleAuth(app);
+
+  // Register simple integration routes
+  registerSimpleIntegrationRoutes(app);
 
   // Dashboard stats
   app.get("/api/dashboard/stats", async (req, res) => {

@@ -1688,6 +1688,4 @@ export class MemStorage implements IStorage {
   createEnvelopePrintSettings(settingsData: InsertEnvelopePrintSettings): Promise<EnvelopePrintSettings>;
 }
 
-// Використовуємо DatabaseStorage для роботи з базою даних
-import { DatabaseStorage } from "./db-storage";
-export const storage = new DatabaseStorage();
+export const storage = new MemStorage();
