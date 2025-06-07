@@ -835,6 +835,27 @@ export class MemStorage implements IStorage {
     return { ...order, items };
   }
 
+  async getOrderProducts(orderId: number): Promise<any[]> {
+    const orderItemsList = this.orderItems.get(orderId) || [];
+    const result: any[] = [];
+
+    for (const item of orderItemsList) {
+      const product = this.products.get(item.productId);
+      if (product) {
+        result.push({
+          id: item.id,
+          orderId: item.orderId,
+          productId: item.productId,
+          quantity: item.quantity,
+          pricePerUnit: item.unitPrice,
+          product
+        });
+      }
+    }
+
+    return result;
+  }
+
   async createOrder(insertOrder: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
     const id = this.currentOrderId++;
     const order: Order = { 

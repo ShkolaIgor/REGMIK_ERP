@@ -5377,9 +5377,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return sum + (parseFloat(product.pricePerUnit) * parseFloat(product.quantity));
       }, 0);
 
-      // Створюємо рахунок
+      // Створюємо рахунок - використовуємо clientId з замовлення або перший доступний клієнт
+      const clientId = order.clientId || 1; // Якщо clientId відсутній, використовуємо клієнт з ID 1
+      
       const invoice = await storage.createInvoice({
-        clientId: order.customerId,
+        clientId: clientId,
         companyId: 1, // Використовуємо основну компанію
         orderId: orderId,
         invoiceNumber: invoiceNumber,
