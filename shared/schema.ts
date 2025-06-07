@@ -1925,6 +1925,7 @@ export type InsertFieldMapping = z.infer<typeof insertFieldMappingSchema>;
 export const invoices = pgTable("invoices", {
   id: serial("id").primaryKey(),
   clientId: integer("client_id").references(() => clients.id).notNull(),
+  companyId: integer("company_id").references(() => companies.id), // яка компанія виставила рахунок
   invoiceNumber: varchar("invoice_number", { length: 50 }).notNull().unique(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   currency: varchar("currency", { length: 3 }).default("UAH"),

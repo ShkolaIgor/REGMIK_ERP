@@ -30,9 +30,58 @@ const syncContactSchema = z.object({
   source: z.enum(['bitrix24', '1c', 'manual']).default('manual')
 });
 
+const syncInvoiceSchema = z.object({
+  externalId: z.string(),
+  clientExternalId: z.string(),
+  companyId: z.number().optional(),
+  invoiceNumber: z.string().min(1),
+  amount: z.number().positive(),
+  currency: z.string().default("UAH"),
+  status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled']).default('draft'),
+  issueDate: z.string().transform((val) => new Date(val)),
+  dueDate: z.string().transform((val) => new Date(val)),
+  paidDate: z.string().optional().transform((val) => val ? new Date(val) : null),
+  description: z.string().optional(),
+  source: z.enum(['bitrix24', '1c', 'manual']).default('manual')
+});
+
+const syncInvoiceItemSchema = z.object({
+  externalId: z.string(),
+  invoiceExternalId: z.string(),
+  productExternalId: z.string().optional(),
+  name: z.string().min(1),
+  quantity: z.number().positive(),
+  unitPrice: z.number(),
+  totalPrice: z.number(),
+  description: z.string().optional()
+});
+
+const syncCompanySchema = z.object({
+  externalId: z.string(),
+  name: z.string().min(1),
+  fullName: z.string().optional(),
+  taxCode: z.string().min(1),
+  vatNumber: z.string().optional(),
+  legalAddress: z.string().optional(),
+  physicalAddress: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email().optional(),
+  website: z.string().optional(),
+  bankName: z.string().optional(),
+  bankAccount: z.string().optional(),
+  bankCode: z.string().optional(),
+  isDefault: z.boolean().default(false),
+  isActive: z.boolean().default(true),
+  notes: z.string().optional(),
+  source: z.enum(['bitrix24', '1c', 'manual']).default('manual')
+});
+
 const batchSyncSchema = z.object({
   clients: z.array(syncClientSchema).optional(),
   contacts: z.array(syncContactSchema).optional(),
+  invoices: z.array(syncInvoiceSchema).optional(),
+  invoiceItems: z.array(syncInvoiceItemSchema).optional(),
+  companies: z.array(syncCompanySchema).optional(),
   source: z.enum(['bitrix24', '1c', 'manual']).default('manual'),
   syncId: z.string().optional()
 });
@@ -328,6 +377,142 @@ export function registerSyncApiRoutes(app: Express) {
     }
   });
 
+  // Синхронізація компаній
+  app.post("/api/sync/companies", async (req, res) => {
+    try {
+      const validatedData = syncCompanySchema.parse(req.body);
+      
+      // Перевіряємо чи існує компанія з таким externalId
+      const existingCompany = await storage.getCompanyByExternalId?.(validatedData.externalId);
+      
+      let company;
+      let action;
+
+      if (existingCompany) {
+        // Оновлюємо існуючу компанію
+        company = await storage.updateCompany(existingCompany.id, {
+          name: validatedData.name,
+          fullName: validatedData.fullName,
+          taxCode: validatedData.taxCode,
+          vatNumber: validatedData.vatNumber,
+          legalAddress: validatedData.legalAddress,
+          physicalAddress: validatedData.physicalAddress,
+          phone: validatedData.phone,
+          email: validatedData.email,
+          website: validatedData.website,
+          bankName: validatedData.bankName,
+          bankAccount: validatedData.bankAccount,
+          bankCode: validatedData.bankCode,
+          isDefault: validatedData.isDefault,
+          isActive: validatedData.isActive,
+          notes: validatedData.notes
+        });
+        action = 'updated';
+      } else {
+        // Створюємо нову компанію
+        company = await storage.createCompany({
+          name: validatedData.name,
+          fullName: validatedData.fullName,
+          taxCode: validatedData.taxCode,
+          vatNumber: validatedData.vatNumber,
+          legalAddress: validatedData.legalAddress,
+          physicalAddress: validatedData.physicalAddress,
+          phone: validatedData.phone,
+          email: validatedData.email,
+          website: validatedData.website,
+          bankName: validatedData.bankName,
+          bankAccount: validatedData.bankAccount,
+          bankCode: validatedData.bankCode,
+          isDefault: validatedData.isDefault,
+          isActive: validatedData.isActive,
+          notes: validatedData.notes
+        });
+        action = 'created';
+      }
+
+      res.json({
+        success: true,
+        company,
+        action,
+        externalId: validatedData.externalId
+      });
+
+    } catch (error) {
+      console.error("Error syncing company:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          error: "Validation error", 
+          details: error.errors 
+        });
+      }
+      res.status(500).json({ error: "Failed to sync company" });
+    }
+  });
+
+  // Синхронізація рахунків
+  app.post("/api/sync/invoices", async (req, res) => {
+    try {
+      const validatedData = syncInvoiceSchema.parse(req.body);
+      
+      // Знаходимо клієнта за externalId
+      const client = await storage.getClientByExternalId(validatedData.clientExternalId);
+      if (!client) {
+        return res.status(404).json({ 
+          error: `Client not found with external ID: ${validatedData.clientExternalId}` 
+        });
+      }
+
+      // Перевіряємо чи існує рахунок з таким externalId
+      const existingInvoice = await storage.getInvoiceByExternalId?.(validatedData.externalId);
+      
+      let invoice;
+      let action;
+
+      const invoiceData = {
+        clientId: client.id,
+        companyId: validatedData.companyId,
+        invoiceNumber: validatedData.invoiceNumber,
+        amount: validatedData.amount,
+        currency: validatedData.currency,
+        status: validatedData.status,
+        issueDate: validatedData.issueDate,
+        dueDate: validatedData.dueDate,
+        paidDate: validatedData.paidDate,
+        description: validatedData.description,
+        externalId: validatedData.externalId,
+        source: validatedData.source
+      };
+
+      if (existingInvoice) {
+        // Оновлюємо існуючий рахунок
+        invoice = await storage.updateInvoice(existingInvoice.id, invoiceData);
+        action = 'updated';
+      } else {
+        // Створюємо новий рахунок
+        invoice = await storage.createInvoice(invoiceData);
+        action = 'created';
+      }
+
+      res.json({
+        success: true,
+        invoice,
+        action,
+        clientId: client.id,
+        externalId: validatedData.externalId
+      });
+
+    } catch (error) {
+      console.error("Error syncing invoice:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          error: "Validation error", 
+          details: error.errors 
+        });
+      }
+      res.status(500).json({ error: "Failed to sync invoice" });
+    }
+  });
+
   // Отримання статистики синхронізації
   app.get("/api/sync/stats", async (req, res) => {
     try {
@@ -336,8 +521,15 @@ export function registerSyncApiRoutes(app: Express) {
       // Підраховуємо кількість об'єктів з зовнішніми ID
       const clientsQuery = storage.getClients();
       const contactsQuery = storage.getClientContacts();
+      const companiesQuery = storage.getCompanies();
+      const invoicesQuery = storage.getInvoices();
       
-      const [clients, contacts] = await Promise.all([clientsQuery, contactsQuery]);
+      const [clients, contacts, companies, invoices] = await Promise.all([
+        clientsQuery, 
+        contactsQuery, 
+        companiesQuery, 
+        invoicesQuery
+      ]);
       
       let stats = {
         clients: {
@@ -349,6 +541,16 @@ export function registerSyncApiRoutes(app: Express) {
           total: contacts.length,
           withExternalId: contacts.filter(c => c.externalId).length,
           bySource: {} as Record<string, number>
+        },
+        companies: {
+          total: companies.length,
+          synced: companies.filter(c => c.source && c.source !== 'manual').length,
+          bySource: {} as Record<string, number>
+        },
+        invoices: {
+          total: invoices.length,
+          withExternalId: invoices.filter(i => i.externalId).length,
+          bySource: {} as Record<string, number>
         }
       };
 
@@ -356,6 +558,8 @@ export function registerSyncApiRoutes(app: Express) {
       if (source) {
         stats.clients.bySource[source as string] = clients.filter(c => c.source === source).length;
         stats.contacts.bySource[source as string] = contacts.filter(c => c.source === source).length;
+        stats.companies.bySource[source as string] = companies.filter(c => c.source === source).length;
+        stats.invoices.bySource[source as string] = invoices.filter(i => i.source === source).length;
       }
 
       res.json(stats);

@@ -5749,6 +5749,183 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+
+  // ================================
+  // РАХУНКИ
+  // ================================
+
+  async getInvoices(): Promise<Invoice[]> {
+    try {
+      return await db
+        .select()
+        .from(invoices)
+        .leftJoin(clients, eq(invoices.clientId, clients.id))
+        .leftJoin(companies, eq(invoices.companyId, companies.id))
+        .orderBy(desc(invoices.createdAt));
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      throw error;
+    }
+  }
+
+  async getInvoice(id: number): Promise<Invoice | undefined> {
+    try {
+      const [invoice] = await db
+        .select()
+        .from(invoices)
+        .leftJoin(clients, eq(invoices.clientId, clients.id))
+        .leftJoin(companies, eq(invoices.companyId, companies.id))
+        .where(eq(invoices.id, id));
+      return invoice;
+    } catch (error) {
+      console.error("Error fetching invoice:", error);
+      throw error;
+    }
+  }
+
+  async createInvoice(invoiceData: InsertInvoice): Promise<Invoice> {
+    try {
+      const [invoice] = await db
+        .insert(invoices)
+        .values(invoiceData)
+        .returning();
+      return invoice;
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      throw error;
+    }
+  }
+
+  async updateInvoice(id: number, updates: Partial<InsertInvoice>): Promise<Invoice> {
+    try {
+      const [invoice] = await db
+        .update(invoices)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(invoices.id, id))
+        .returning();
+      return invoice;
+    } catch (error) {
+      console.error("Error updating invoice:", error);
+      throw error;
+    }
+  }
+
+  async deleteInvoice(id: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(invoices)
+        .where(eq(invoices.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error("Error deleting invoice:", error);
+      throw error;
+    }
+  }
+
+  async getInvoiceItems(invoiceId: number): Promise<InvoiceItem[]> {
+    try {
+      return await db
+        .select()
+        .from(invoiceItems)
+        .leftJoin(products, eq(invoiceItems.productId, products.id))
+        .where(eq(invoiceItems.invoiceId, invoiceId));
+    } catch (error) {
+      console.error("Error fetching invoice items:", error);
+      throw error;
+    }
+  }
+
+  async createInvoiceItem(itemData: InsertInvoiceItem): Promise<InvoiceItem> {
+    try {
+      const [item] = await db
+        .insert(invoiceItems)
+        .values(itemData)
+        .returning();
+      return item;
+    } catch (error) {
+      console.error("Error creating invoice item:", error);
+      throw error;
+    }
+  }
+
+  async updateInvoiceItem(id: number, updates: Partial<InsertInvoiceItem>): Promise<InvoiceItem> {
+    try {
+      const [item] = await db
+        .update(invoiceItems)
+        .set(updates)
+        .where(eq(invoiceItems.id, id))
+        .returning();
+      return item;
+    } catch (error) {
+      console.error("Error updating invoice item:", error);
+      throw error;
+    }
+  }
+
+  async deleteInvoiceItem(id: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(invoiceItems)
+        .where(eq(invoiceItems.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error("Error deleting invoice item:", error);
+      throw error;
+    }
+  }
+
+  async getInvoicesByCompany(companyId?: number): Promise<Invoice[]> {
+    try {
+      const query = db
+        .select()
+        .from(invoices)
+        .leftJoin(clients, eq(invoices.clientId, clients.id))
+        .leftJoin(companies, eq(invoices.companyId, companies.id));
+
+      if (companyId) {
+        query.where(eq(invoices.companyId, companyId));
+      }
+
+      return await query.orderBy(desc(invoices.createdAt));
+    } catch (error) {
+      console.error("Error fetching invoices by company:", error);
+      throw error;
+    }
+  }
+
+  async syncInvoiceFromExternal(externalInvoice: any, source: string, companyId?: number): Promise<Invoice> {
+    try {
+      // Перевіряємо чи існує рахунок з таким external_id
+      const [existingInvoice] = await db
+        .select()
+        .from(invoices)
+        .where(eq(invoices.externalId, externalInvoice.id));
+
+      const invoiceData = {
+        clientId: externalInvoice.clientId,
+        companyId: companyId || null,
+        invoiceNumber: externalInvoice.invoiceNumber,
+        amount: parseFloat(externalInvoice.amount),
+        currency: externalInvoice.currency || "UAH",
+        status: externalInvoice.status || "draft",
+        issueDate: new Date(externalInvoice.issueDate),
+        dueDate: new Date(externalInvoice.dueDate),
+        paidDate: externalInvoice.paidDate ? new Date(externalInvoice.paidDate) : null,
+        description: externalInvoice.description,
+        externalId: externalInvoice.id,
+        source: source,
+      };
+
+      if (existingInvoice) {
+        return await this.updateInvoice(existingInvoice.id, invoiceData);
+      } else {
+        return await this.createInvoice(invoiceData);
+      }
+    } catch (error) {
+      console.error("Error syncing invoice from external source:", error);
+      throw error;
+    }
+  }
 }
 
 export const dbStorage = new DatabaseStorage();
