@@ -48,7 +48,7 @@ interface Order {
   items?: any[];
 }
 
-interface Invoice {
+interface InvoiceWithJoins {
   invoices: {
     id: number;
     clientId: number;
@@ -65,16 +65,16 @@ interface Invoice {
     source: string;
     createdAt: string;
   };
-  client: {
+  clients?: {
     id: number;
     name: string;
     taxCode: string;
-  };
-  company: {
+  } | null;
+  companies?: {
     id: number;
     name: string;
     fullName: string;
-  };
+  } | null;
 }
 
 const statusColors = {
@@ -157,15 +157,15 @@ export default function OrdersInvoices() {
       date: order.createdAt,
       clientName: order.customerName,
     })),
-    ...invoices.map((invoice: Invoice) => ({
+    ...invoices.map((invoice: InvoiceWithJoins) => ({
       ...invoice.invoices,
       type: "invoice",
       number: invoice.invoices.invoiceNumber,
       amount: invoice.invoices.amount,
       date: invoice.invoices.createdAt,
-      clientName: invoice.client?.name || "Невідомий клієнт",
-      client: invoice.client,
-      company: invoice.company,
+      clientName: invoice.clients?.name || "Невідомий клієнт",
+      client: invoice.clients,
+      company: invoice.companies,
     }))
   ];
 
@@ -189,7 +189,7 @@ export default function OrdersInvoices() {
     totalInvoices: invoices.length,
     totalAmount: combinedData.reduce((sum, item) => sum + parseFloat(item.amount || "0"), 0),
     pendingOrders: orders.filter((o: Order) => o.status === "pending").length,
-    paidInvoices: invoices.filter((i: Invoice) => i.invoices.status === "paid").length,
+    paidInvoices: invoices.filter((i: InvoiceWithJoins) => i.invoices.status === "paid").length,
   };
 
   return (
