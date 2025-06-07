@@ -5,6 +5,7 @@ import {
   packageTypes, solderingTypes, componentCategories, shipments, shipmentItems, carriers,
   customerAddresses, senderSettings, currencies, exchangeRateHistory, serialNumbers, emailSettings,
   clients, clientContacts, clientPhones, clientMail, mailRegistry, envelopePrintSettings,
+  integrationConfigs, syncLogs, entityMappings, syncQueue, fieldMappings,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
   type EmailSettings, type InsertEmailSettings,
@@ -50,6 +51,11 @@ import {
   type ClientMail, type InsertClientMail,
   type MailRegistry, type InsertMailRegistry,
   type EnvelopePrintSettings, type InsertEnvelopePrintSettings,
+  type IntegrationConfig, type InsertIntegrationConfig,
+  type SyncLog, type InsertSyncLog,
+  type EntityMapping, type InsertEntityMapping,
+  type SyncQueue, type InsertSyncQueue,
+  type FieldMapping, type InsertFieldMapping,
   departments
 } from "@shared/schema";
 
@@ -429,6 +435,39 @@ export interface IStorage {
   // Inventory alerts
   getInventoryAlerts(): Promise<any[]>;
   checkAndCreateInventoryAlerts(): Promise<void>;
+
+  // Integration Management
+  getIntegrationConfigs(): Promise<IntegrationConfig[]>;
+  getIntegrationConfig(id: number): Promise<IntegrationConfig | undefined>;
+  createIntegrationConfig(config: InsertIntegrationConfig): Promise<IntegrationConfig>;
+  updateIntegrationConfig(id: number, config: Partial<InsertIntegrationConfig>): Promise<IntegrationConfig | undefined>;
+  deleteIntegrationConfig(id: number): Promise<boolean>;
+  
+  // Sync Logs
+  getSyncLogs(integrationId?: number): Promise<SyncLog[]>;
+  createSyncLog(log: InsertSyncLog): Promise<number>;
+  updateSyncLog(id: number, log: Partial<InsertSyncLog>): Promise<boolean>;
+  
+  // Entity Mappings
+  getEntityMappings(integrationId: number, entityType?: string): Promise<EntityMapping[]>;
+  getEntityMapping(integrationId: number, entityType: string, externalId: string): Promise<EntityMapping | undefined>;
+  getEntityMappingByLocalId(integrationId: number, entityType: string, localId: string): Promise<EntityMapping | undefined>;
+  createEntityMapping(mapping: InsertEntityMapping): Promise<EntityMapping>;
+  updateEntityMapping(id: number, mapping: Partial<InsertEntityMapping>): Promise<EntityMapping | undefined>;
+  deleteEntityMapping(id: number): Promise<boolean>;
+  
+  // Sync Queue
+  getSyncQueueItems(integrationId?: number): Promise<SyncQueue[]>;
+  getPendingSyncQueueItems(): Promise<SyncQueue[]>;
+  createSyncQueueItem(item: InsertSyncQueue): Promise<SyncQueue>;
+  updateSyncQueueItem(id: number, item: Partial<InsertSyncQueue>): Promise<boolean>;
+  deleteSyncQueueItem(id: number): Promise<boolean>;
+  
+  // Field Mappings
+  getFieldMappings(integrationId: number, entityType?: string): Promise<FieldMapping[]>;
+  createFieldMapping(mapping: InsertFieldMapping): Promise<FieldMapping>;
+  updateFieldMapping(id: number, mapping: Partial<InsertFieldMapping>): Promise<FieldMapping | undefined>;
+  deleteFieldMapping(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {

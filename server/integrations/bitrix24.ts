@@ -130,7 +130,7 @@ export class Bitrix24Service {
         },
       });
       return response.data.result || [];
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Помилка отримання контактів з Бітрікс24: ${error.message}`);
     }
   }
@@ -141,7 +141,7 @@ export class Bitrix24Service {
         fields: contact,
       });
       return response.data.result.toString();
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Помилка створення контакту в Бітрікс24: ${error.message}`);
     }
   }
@@ -153,7 +153,7 @@ export class Bitrix24Service {
         fields: contact,
       });
       return response.data.result === true;
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Помилка оновлення контакту в Бітрікс24: ${error.message}`);
     }
   }
@@ -172,7 +172,7 @@ export class Bitrix24Service {
         },
       });
       return response.data.result || [];
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Помилка отримання компаній з Бітрікс24: ${error.message}`);
     }
   }
@@ -183,7 +183,7 @@ export class Bitrix24Service {
         fields: company,
       });
       return response.data.result.toString();
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Помилка створення компанії в Бітрікс24: ${error.message}`);
     }
   }
@@ -195,7 +195,7 @@ export class Bitrix24Service {
         fields: company,
       });
       return response.data.result === true;
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Помилка оновлення компанії в Бітрікс24: ${error.message}`);
     }
   }
@@ -214,7 +214,7 @@ export class Bitrix24Service {
         },
       });
       return response.data.result || [];
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Помилка отримання угод з Бітрікс24: ${error.message}`);
     }
   }
@@ -225,7 +225,7 @@ export class Bitrix24Service {
         fields: deal,
       });
       return response.data.result.toString();
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Помилка створення угоди в Бітрікс24: ${error.message}`);
     }
   }
@@ -237,7 +237,7 @@ export class Bitrix24Service {
         fields: deal,
       });
       return response.data.result === true;
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Помилка оновлення угоди в Бітрікс24: ${error.message}`);
     }
   }
