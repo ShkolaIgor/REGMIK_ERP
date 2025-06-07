@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
-import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText } from "lucide-react";
 import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -244,10 +244,37 @@ export default function Orders() {
     },
   });
 
+  // Мутація для створення рахунку з замовлення
+  const createInvoiceMutation = useMutation({
+    mutationFn: async (orderId: number) => {
+      return await apiRequest(`/api/orders/${orderId}/create-invoice`, { method: "POST" });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Успіх",
+        description: "Рахунок створено успішно",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Не вдалося створити рахунок",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Функція для відвантаження замовлення
   const handleShipOrder = (order: any) => {
     if (confirm(`Підтвердити відвантаження замовлення ${order.orderNumber}?`)) {
       shipOrderMutation.mutate(order.id);
+    }
+  };
+
+  // Функція для створення рахунку
+  const handleCreateInvoice = (order: any) => {
+    if (confirm(`Створити рахунок для замовлення ${order.orderNumber}?`)) {
+      createInvoiceMutation.mutate(order.id);
     }
   };
 
@@ -876,6 +903,16 @@ export default function Orders() {
                                   </div>
                                 </div>
                               )}
+                              <DialogFooter>
+                                <Button
+                                  onClick={() => handleCreateInvoice(selectedOrder)}
+                                  disabled={createInvoiceMutation.isPending}
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                  <FileText className="w-4 h-4 mr-2" />
+                                  {createInvoiceMutation.isPending ? "Створюється..." : "Створити рахунок"}
+                                </Button>
+                              </DialogFooter>
                             </DialogContent>
                           </Dialog>
                           <Button 

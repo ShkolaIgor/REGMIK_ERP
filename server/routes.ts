@@ -5357,6 +5357,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Створення рахунку на основі замовлення
+  app.post("/api/orders/:orderId/create-invoice", async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.orderId);
+      
+      // Отримуємо замовлення з деталями
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      // Генеруємо номер рахунку
+      const invoiceNumber = `INV-${Date.now()}`;
+      
+      // Розраховуємо суму замовлення
+      const orderProducts = await storage.getOrderProducts(orderId);
+      const totalAmount = orderProducts.reduce((sum, product) => {
+        return sum + (parseFloat(product.pricePerUnit) * parseFloat(product.quantity));
+      }, 0);
+
+      // Створюємо рахунок
+      const invoice = await storage.createInvoice({
+        clientId: order.customerId,
+        companyId: 1, // Використовуємо основну компанію
+        orderId: orderId,
+        invoiceNumber: invoiceNumber,
+        amount: totalAmount.toString(),
+        currency: "UAH",
+        status: "draft",
+        issueDate: new Date(),
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 днів
+        description: `Рахунок для замовлення ${order.orderNumber}`,
+        source: "manual"
+      });
+
+      // Створюємо позиції рахунку на основі продуктів замовлення
+      for (const orderProduct of orderProducts) {
+        await storage.createInvoiceItem({
+          invoiceId: invoice.id,
+          productId: orderProduct.productId,
+          name: orderProduct.product?.name || "Товар",
+          quantity: orderProduct.quantity,
+          price: orderProduct.pricePerUnit,
+          total: (parseFloat(orderProduct.pricePerUnit) * parseFloat(orderProduct.quantity)).toString(),
+          unit: orderProduct.product?.unit || "шт"
+        });
+      }
+
+      res.status(201).json(invoice);
+    } catch (error) {
+      console.error("Error creating invoice from order:", error);
+      res.status(500).json({ error: "Failed to create invoice from order" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
