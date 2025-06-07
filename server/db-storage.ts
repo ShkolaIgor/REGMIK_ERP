@@ -5578,6 +5578,177 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+
+  // Company methods for multi-company sales functionality
+  async getCompanies(): Promise<Company[]> {
+    try {
+      return await db
+        .select()
+        .from(companies)
+        .where(eq(companies.isActive, true))
+        .orderBy(desc(companies.isDefault), companies.name);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      throw error;
+    }
+  }
+
+  async getCompany(id: number): Promise<Company | undefined> {
+    try {
+      const [company] = await db
+        .select()
+        .from(companies)
+        .where(eq(companies.id, id));
+      return company;
+    } catch (error) {
+      console.error("Error fetching company:", error);
+      throw error;
+    }
+  }
+
+  async getDefaultCompany(): Promise<Company | undefined> {
+    try {
+      const [company] = await db
+        .select()
+        .from(companies)
+        .where(and(eq(companies.isDefault, true), eq(companies.isActive, true)));
+      return company;
+    } catch (error) {
+      console.error("Error fetching default company:", error);
+      throw error;
+    }
+  }
+
+  async createCompany(companyData: InsertCompany): Promise<Company> {
+    try {
+      // Якщо це перша компанія або встановлено як default, оновлюємо інші
+      if (companyData.isDefault) {
+        await db
+          .update(companies)
+          .set({ isDefault: false })
+          .where(eq(companies.isDefault, true));
+      }
+
+      const [company] = await db
+        .insert(companies)
+        .values({
+          ...companyData,
+          updatedAt: new Date()
+        })
+        .returning();
+      return company;
+    } catch (error) {
+      console.error("Error creating company:", error);
+      throw error;
+    }
+  }
+
+  async updateCompany(id: number, companyData: Partial<InsertCompany>): Promise<Company | undefined> {
+    try {
+      // Якщо встановлюємо як default, оновлюємо інші
+      if (companyData.isDefault) {
+        await db
+          .update(companies)
+          .set({ isDefault: false })
+          .where(eq(companies.isDefault, true));
+      }
+
+      const [company] = await db
+        .update(companies)
+        .set({
+          ...companyData,
+          updatedAt: new Date()
+        })
+        .where(eq(companies.id, id))
+        .returning();
+      return company;
+    } catch (error) {
+      console.error("Error updating company:", error);
+      throw error;
+    }
+  }
+
+  async deleteCompany(id: number): Promise<boolean> {
+    try {
+      // Перевіряємо, чи не є це єдиною активною компанією
+      const activeCompanies = await db
+        .select()
+        .from(companies)
+        .where(eq(companies.isActive, true));
+
+      if (activeCompanies.length <= 1) {
+        throw new Error("Неможливо видалити останню активну компанію");
+      }
+
+      // Soft delete - позначаємо як неактивну
+      const [company] = await db
+        .update(companies)
+        .set({ 
+          isActive: false,
+          isDefault: false,
+          updatedAt: new Date()
+        })
+        .where(eq(companies.id, id))
+        .returning();
+
+      // Якщо це була компанія за замовчуванням, встановлюємо іншу
+      if (company && company.isDefault) {
+        const [firstActiveCompany] = await db
+          .select()
+          .from(companies)
+          .where(eq(companies.isActive, true))
+          .limit(1);
+
+        if (firstActiveCompany) {
+          await db
+            .update(companies)
+            .set({ isDefault: true })
+            .where(eq(companies.id, firstActiveCompany.id));
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error deleting company:", error);
+      throw error;
+    }
+  }
+
+  async getProductsByCompany(companyId?: number): Promise<Product[]> {
+    try {
+      const query = db
+        .select()
+        .from(products)
+        .leftJoin(categories, eq(products.categoryId, categories.id));
+
+      if (companyId) {
+        query.where(eq(products.companyId, companyId));
+      }
+
+      return await query.orderBy(products.name);
+    } catch (error) {
+      console.error("Error fetching products by company:", error);
+      throw error;
+    }
+  }
+
+  async getOrdersByCompany(companyId?: number): Promise<Order[]> {
+    try {
+      const query = db
+        .select()
+        .from(orders)
+        .leftJoin(clients, eq(orders.clientId, clients.id));
+
+      if (companyId) {
+        query.where(eq(orders.companyId, companyId));
+      }
+
+      return await query.orderBy(desc(orders.createdAt));
+    } catch (error) {
+      console.error("Error fetching orders by company:", error);
+      throw error;
+    }
+  }
 }
 
 export const dbStorage = new DatabaseStorage();

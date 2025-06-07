@@ -4958,6 +4958,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Companies endpoints for multi-company sales functionality
+  app.get("/api/companies", async (req, res) => {
+    try {
+      const companies = await storage.getCompanies();
+      res.json(companies);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      res.status(500).json({ error: "Failed to fetch companies" });
+    }
+  });
+
+  app.get("/api/companies/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const company = await storage.getCompany(id);
+      
+      if (!company) {
+        return res.status(404).json({ error: "Company not found" });
+      }
+      
+      res.json(company);
+    } catch (error) {
+      console.error("Error fetching company:", error);
+      res.status(500).json({ error: "Failed to fetch company" });
+    }
+  });
+
+  app.get("/api/companies/default/current", async (req, res) => {
+    try {
+      const company = await storage.getDefaultCompany();
+      
+      if (!company) {
+        return res.status(404).json({ error: "No default company found" });
+      }
+      
+      res.json(company);
+    } catch (error) {
+      console.error("Error fetching default company:", error);
+      res.status(500).json({ error: "Failed to fetch default company" });
+    }
+  });
+
+  app.post("/api/companies", async (req, res) => {
+    try {
+      const companyData = req.body;
+      
+      if (!companyData.name || !companyData.taxCode) {
+        return res.status(400).json({ error: "Name and tax code are required" });
+      }
+
+      const company = await storage.createCompany(companyData);
+      res.status(201).json(company);
+    } catch (error) {
+      console.error("Error creating company:", error);
+      res.status(500).json({ error: "Failed to create company" });
+    }
+  });
+
+  app.patch("/api/companies/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const companyData = req.body;
+      
+      const company = await storage.updateCompany(id, companyData);
+      
+      if (!company) {
+        return res.status(404).json({ error: "Company not found" });
+      }
+      
+      res.json(company);
+    } catch (error) {
+      console.error("Error updating company:", error);
+      res.status(500).json({ error: "Failed to update company" });
+    }
+  });
+
+  app.delete("/api/companies/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteCompany(id);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Company not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting company:", error);
+      res.status(500).json({ error: error.message || "Failed to delete company" });
+    }
+  });
+
+  // Get products by company
+  app.get("/api/companies/:id/products", async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      const products = await storage.getProductsByCompany(companyId);
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching products by company:", error);
+      res.status(500).json({ error: "Failed to fetch products" });
+    }
+  });
+
+  // Get orders by company
+  app.get("/api/companies/:id/orders", async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      const orders = await storage.getOrdersByCompany(companyId);
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching orders by company:", error);
+      res.status(500).json({ error: "Failed to fetch orders" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
