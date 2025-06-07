@@ -58,7 +58,8 @@ import {
   type ComponentAlternative, type InsertComponentAlternative,
   type EmailSettings, type InsertEmailSettings,
   type ClientContact, type InsertClientContact,
-  type ClientNovaPoshtaSettings, type InsertClientNovaPoshtaSettings
+  type ClientNovaPoshtaSettings, type InsertClientNovaPoshtaSettings,
+  type Invoice, type InsertInvoice, type InvoiceItem, type InsertInvoiceItem
 } from "@shared/schema";
 
 export class DatabaseStorage implements IStorage {

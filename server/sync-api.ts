@@ -513,6 +513,67 @@ export function registerSyncApiRoutes(app: Express) {
     }
   });
 
+  // Синхронізація позицій рахунків
+  app.post("/api/sync/invoice-items", async (req, res) => {
+    try {
+      const invoiceItemSchema = z.object({
+        invoiceId: z.number(),
+        productId: z.number().optional(),
+        productExternalId: z.string().optional(),
+        name: z.string(),
+        quantity: z.number(),
+        unitPrice: z.number(),
+        totalPrice: z.number(),
+        description: z.string().optional()
+      });
+
+      const validatedData = invoiceItemSchema.parse(req.body);
+
+      // Перевіряємо існування рахунку
+      const invoice = await storage.getInvoice(validatedData.invoiceId);
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+
+      // Якщо вказано productExternalId, знаходимо продукт
+      let productId = validatedData.productId;
+      if (validatedData.productExternalId && !productId) {
+        const products = await storage.getProducts();
+        const product = products.find(p => p.sku === validatedData.productExternalId);
+        if (product) {
+          productId = product.id;
+        }
+      }
+
+      const invoiceItem = await storage.createInvoiceItem({
+        invoiceId: validatedData.invoiceId,
+        productId: productId || null,
+        productExternalId: validatedData.productExternalId || null,
+        name: validatedData.name,
+        quantity: validatedData.quantity.toString(),
+        unitPrice: validatedData.unitPrice.toString(),
+        totalPrice: validatedData.totalPrice.toString(),
+        description: validatedData.description || null
+      });
+
+      res.json({
+        success: true,
+        invoiceItem,
+        action: "created"
+      });
+
+    } catch (error) {
+      console.error("Error syncing invoice item:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          error: "Validation error", 
+          details: error.errors 
+        });
+      }
+      res.status(500).json({ error: "Failed to sync invoice item" });
+    }
+  });
+
   // Отримання статистики синхронізації
   app.get("/api/sync/stats", async (req, res) => {
     try {
