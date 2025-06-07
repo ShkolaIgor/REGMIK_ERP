@@ -4,7 +4,7 @@ import {
   components, productComponents, costCalculations, materialShortages, inventoryAudits, inventoryAuditItems, workers,
   packageTypes, solderingTypes, componentCategories, shipments, shipmentItems, carriers,
   customerAddresses, senderSettings, currencies, exchangeRateHistory, serialNumbers, emailSettings,
-  clients, clientContacts, clientPhones, clientMail, mailRegistry, envelopePrintSettings,
+  clients, clientContacts, clientMail, mailRegistry, envelopePrintSettings,
   integrationConfigs, syncLogs, entityMappings, syncQueue, fieldMappings,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
@@ -47,7 +47,7 @@ import {
   type Client, type InsertClient,
   type ClientContact, type InsertClientContact,
   type ClientNovaPoshtaSettings, type InsertClientNovaPoshtaSettings,
-  type ClientPhone, type InsertClientPhone,
+
   type ClientMail, type InsertClientMail,
   type MailRegistry, type InsertMailRegistry,
   type EnvelopePrintSettings, type InsertEnvelopePrintSettings,
@@ -468,13 +468,6 @@ export interface IStorage {
   createFieldMapping(mapping: InsertFieldMapping): Promise<FieldMapping>;
   updateFieldMapping(id: number, mapping: Partial<InsertFieldMapping>): Promise<FieldMapping | undefined>;
   deleteFieldMapping(id: number): Promise<boolean>;
-
-  // Integration Configs
-  getIntegrationConfigs(): Promise<IntegrationConfig[]>;
-  getIntegrationConfig(id: number): Promise<IntegrationConfig | undefined>;
-  createIntegrationConfig(config: InsertIntegrationConfig): Promise<IntegrationConfig>;
-  updateIntegrationConfig(id: number, config: Partial<InsertIntegrationConfig>): Promise<IntegrationConfig | undefined>;
-  deleteIntegrationConfig(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {

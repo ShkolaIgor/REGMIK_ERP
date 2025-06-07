@@ -4794,9 +4794,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/integrations/sync-logs", async (req, res) => {
     try {
       const { integrationId } = req.query;
-      
-      const syncLogs = []; // Заглушка для логов
-      
+      const syncLogs = await storage.getSyncLogs(integrationId ? parseInt(integrationId as string) : undefined);
       res.json(syncLogs);
     } catch (error) {
       console.error("Error fetching sync logs:", error);
