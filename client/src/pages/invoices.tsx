@@ -345,12 +345,17 @@ export default function Invoices() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {invoices.map((invoice: any) => (
+              {invoicesData.map((invoiceData: any) => {
+                const invoice = invoiceData.invoices;
+                const client = invoiceData.clients;
+                const company = invoiceData.companies;
+                
+                return (
                 <TableRow key={invoice.id}>
                   <TableCell className="font-medium">
                     {invoice.invoiceNumber}
                   </TableCell>
-                  <TableCell>{invoice.client?.name || 'Невідомий клієнт'}</TableCell>
+                  <TableCell>{client?.name || 'Невідомий клієнт'}</TableCell>
                   <TableCell>
                     {formatCurrency(invoice.amount, invoice.currency)}
                   </TableCell>
@@ -388,7 +393,8 @@ export default function Invoices() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
