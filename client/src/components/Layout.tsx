@@ -114,6 +114,7 @@ const navigationItems = [
     title: "Адміністрування",
     items: [
       { name: "Управління користувачами", href: "/users", icon: Users },
+      { name: "Компанії", href: "/companies", icon: Building2 },
       { name: "Налаштування email", href: "/email-settings", icon: Mail },
       { name: "Інтеграції", href: "/integrations", icon: Cog },
       { name: "Налаштування серійних номерів", href: "/serial-number-settings", icon: Cog }
