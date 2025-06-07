@@ -130,6 +130,7 @@ export interface IStorage {
   // Orders
   getOrders(): Promise<(Order & { items: (OrderItem & { product: Product })[] })[]>;
   getOrder(id: number): Promise<(Order & { items: (OrderItem & { product: Product })[] }) | undefined>;
+  getOrderProducts(orderId: number): Promise<any[]>;
   createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order>;
   updateOrder(id: number, order: InsertOrder, items: InsertOrderItem[]): Promise<Order | undefined>;
   updateOrderStatus(id: number, status: string): Promise<Order | undefined>;

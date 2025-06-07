@@ -323,6 +323,22 @@ export class DatabaseStorage implements IStorage {
     return { ...orderResult[0], items };
   }
 
+  async getOrderProducts(orderId: number): Promise<any[]> {
+    const result = await db.select({
+      id: orderItems.id,
+      orderId: orderItems.orderId,
+      productId: orderItems.productId,
+      quantity: orderItems.quantity,
+      pricePerUnit: orderItems.unitPrice,
+      product: products
+    })
+    .from(orderItems)
+    .leftJoin(products, eq(orderItems.productId, products.id))
+    .where(eq(orderItems.orderId, orderId));
+    
+    return result;
+  }
+
   async createOrder(insertOrder: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
     // Генеруємо номер замовлення
     const orderNumber = `ORD-${Date.now()}`;
