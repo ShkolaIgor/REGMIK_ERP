@@ -4668,7 +4668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Получение всех конфигураций интеграций
   app.get("/api/integrations", async (req, res) => {
     try {
-      const integrations = []; // Пока возвращаем пустой массив
+      const integrations = await storage.getIntegrationConfigs();
       res.json(integrations);
     } catch (error) {
       console.error("Error fetching integrations:", error);

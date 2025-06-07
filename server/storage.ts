@@ -468,6 +468,13 @@ export interface IStorage {
   createFieldMapping(mapping: InsertFieldMapping): Promise<FieldMapping>;
   updateFieldMapping(id: number, mapping: Partial<InsertFieldMapping>): Promise<FieldMapping | undefined>;
   deleteFieldMapping(id: number): Promise<boolean>;
+
+  // Integration Configs
+  getIntegrationConfigs(): Promise<IntegrationConfig[]>;
+  getIntegrationConfig(id: number): Promise<IntegrationConfig | undefined>;
+  createIntegrationConfig(config: InsertIntegrationConfig): Promise<IntegrationConfig>;
+  updateIntegrationConfig(id: number, config: Partial<InsertIntegrationConfig>): Promise<IntegrationConfig | undefined>;
+  deleteIntegrationConfig(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -490,6 +497,11 @@ export class MemStorage implements IStorage {
   private productComponents: Map<number, ProductComponent[]> = new Map();
   private shipments: Map<number, any> = new Map();
   private serialNumbers: Map<number, SerialNumber> = new Map();
+  private integrationConfigs: Map<number, IntegrationConfig> = new Map();
+  private syncLogs: Map<number, SyncLog> = new Map();
+  private entityMappings: Map<number, EntityMapping> = new Map();
+  private syncQueue: Map<number, SyncQueue> = new Map();
+  private fieldMappings: Map<number, FieldMapping> = new Map();
 
   private currentUserId = 1;
   private currentCategoryId = 1;
@@ -510,6 +522,11 @@ export class MemStorage implements IStorage {
   private currentProductComponentId = 1;
   private currentShipmentId = 1;
   private currentSerialNumberId = 1;
+  private currentIntegrationConfigId = 1;
+  private currentSyncLogId = 1;
+  private currentEntityMappingId = 1;
+  private currentSyncQueueId = 1;
+  private currentFieldMappingId = 1;
   private carriers: Map<number, Carrier> = new Map();
   private nextCarrierId = 1;
 
@@ -1461,6 +1478,207 @@ export class MemStorage implements IStorage {
     }
 
     return decision;
+  }
+
+  // Integration Configs methods
+  async getIntegrationConfigs(): Promise<IntegrationConfig[]> {
+    return Array.from(this.integrationConfigs.values());
+  }
+
+  async getIntegrationConfig(id: number): Promise<IntegrationConfig | undefined> {
+    return this.integrationConfigs.get(id);
+  }
+
+  async createIntegrationConfig(config: InsertIntegrationConfig): Promise<IntegrationConfig> {
+    const newConfig: IntegrationConfig = {
+      id: this.currentIntegrationConfigId++,
+      ...config,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.integrationConfigs.set(newConfig.id, newConfig);
+    return newConfig;
+  }
+
+  async updateIntegrationConfig(id: number, config: Partial<InsertIntegrationConfig>): Promise<IntegrationConfig | undefined> {
+    const existing = this.integrationConfigs.get(id);
+    if (!existing) return undefined;
+
+    const updated: IntegrationConfig = {
+      ...existing,
+      ...config,
+      updatedAt: new Date()
+    };
+    this.integrationConfigs.set(id, updated);
+    return updated;
+  }
+
+  async deleteIntegrationConfig(id: number): Promise<boolean> {
+    return this.integrationConfigs.delete(id);
+  }
+
+  // Sync Logs methods
+  async getSyncLogs(integrationId?: number): Promise<SyncLog[]> {
+    const logs = Array.from(this.syncLogs.values());
+    if (integrationId) {
+      return logs.filter(log => log.integrationId === integrationId);
+    }
+    return logs;
+  }
+
+  async createSyncLog(log: InsertSyncLog): Promise<SyncLog> {
+    const newLog: SyncLog = {
+      id: this.currentSyncLogId++,
+      ...log,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.syncLogs.set(newLog.id, newLog);
+    return newLog;
+  }
+
+  async updateSyncLog(id: number, log: Partial<InsertSyncLog>): Promise<boolean> {
+    const existing = this.syncLogs.get(id);
+    if (!existing) return false;
+
+    const updated: SyncLog = {
+      ...existing,
+      ...log,
+      updatedAt: new Date()
+    };
+    this.syncLogs.set(id, updated);
+    return true;
+  }
+
+  // Entity Mappings methods
+  async getEntityMappings(integrationId: number, entityType?: string): Promise<EntityMapping[]> {
+    const mappings = Array.from(this.entityMappings.values());
+    let filtered = mappings.filter(mapping => mapping.integrationId === integrationId);
+    if (entityType) {
+      filtered = filtered.filter(mapping => mapping.entityType === entityType);
+    }
+    return filtered;
+  }
+
+  async getEntityMapping(integrationId: number, entityType: string, localId: string): Promise<EntityMapping | undefined> {
+    const mappings = Array.from(this.entityMappings.values());
+    return mappings.find(mapping => 
+      mapping.integrationId === integrationId && 
+      mapping.entityType === entityType && 
+      mapping.localId === localId
+    );
+  }
+
+  async getEntityMappingByLocalId(integrationId: number, entityType: string, localId: string): Promise<EntityMapping | undefined> {
+    return this.getEntityMapping(integrationId, entityType, localId);
+  }
+
+  async createEntityMapping(mapping: InsertEntityMapping): Promise<EntityMapping> {
+    const newMapping: EntityMapping = {
+      id: this.currentEntityMappingId++,
+      ...mapping,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.entityMappings.set(newMapping.id, newMapping);
+    return newMapping;
+  }
+
+  async updateEntityMapping(id: number, mapping: Partial<InsertEntityMapping>): Promise<EntityMapping | undefined> {
+    const existing = this.entityMappings.get(id);
+    if (!existing) return undefined;
+
+    const updated: EntityMapping = {
+      ...existing,
+      ...mapping,
+      updatedAt: new Date()
+    };
+    this.entityMappings.set(id, updated);
+    return updated;
+  }
+
+  async deleteEntityMapping(id: number): Promise<boolean> {
+    return this.entityMappings.delete(id);
+  }
+
+  // Sync Queue methods
+  async getSyncQueueItems(integrationId?: number): Promise<SyncQueue[]> {
+    const items = Array.from(this.syncQueue.values());
+    if (integrationId) {
+      return items.filter(item => item.integrationId === integrationId);
+    }
+    return items;
+  }
+
+  async getPendingSyncQueueItems(): Promise<SyncQueue[]> {
+    const items = Array.from(this.syncQueue.values());
+    return items.filter(item => item.status === 'pending');
+  }
+
+  async createSyncQueueItem(item: InsertSyncQueue): Promise<SyncQueue> {
+    const newItem: SyncQueue = {
+      id: this.currentSyncQueueId++,
+      ...item,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.syncQueue.set(newItem.id, newItem);
+    return newItem;
+  }
+
+  async updateSyncQueueItem(id: number, item: Partial<InsertSyncQueue>): Promise<boolean> {
+    const existing = this.syncQueue.get(id);
+    if (!existing) return false;
+
+    const updated: SyncQueue = {
+      ...existing,
+      ...item,
+      updatedAt: new Date()
+    };
+    this.syncQueue.set(id, updated);
+    return true;
+  }
+
+  async deleteSyncQueueItem(id: number): Promise<boolean> {
+    return this.syncQueue.delete(id);
+  }
+
+  // Field Mappings methods
+  async getFieldMappings(integrationId: number, entityType?: string): Promise<FieldMapping[]> {
+    const mappings = Array.from(this.fieldMappings.values());
+    let filtered = mappings.filter(mapping => mapping.integrationId === integrationId);
+    if (entityType) {
+      filtered = filtered.filter(mapping => mapping.entityType === entityType);
+    }
+    return filtered;
+  }
+
+  async createFieldMapping(mapping: InsertFieldMapping): Promise<FieldMapping> {
+    const newMapping: FieldMapping = {
+      id: this.currentFieldMappingId++,
+      ...mapping,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.fieldMappings.set(newMapping.id, newMapping);
+    return newMapping;
+  }
+
+  async updateFieldMapping(id: number, mapping: Partial<InsertFieldMapping>): Promise<FieldMapping | undefined> {
+    const existing = this.fieldMappings.get(id);
+    if (!existing) return undefined;
+
+    const updated: FieldMapping = {
+      ...existing,
+      ...mapping,
+      updatedAt: new Date()
+    };
+    this.fieldMappings.set(id, updated);
+    return updated;
+  }
+
+  async deleteFieldMapping(id: number): Promise<boolean> {
+    return this.fieldMappings.delete(id);
   }
 
   // Client Mail methods
