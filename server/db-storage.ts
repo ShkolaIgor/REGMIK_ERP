@@ -10,7 +10,7 @@ import {
   componentCategories, componentAlternatives, carriers, shipments, shipmentItems, customerAddresses, senderSettings,
   manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, exchangeRateHistory, serialNumbers, serialNumberSettings, emailSettings,
   sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients, clientContacts, clientNovaPoshtaSettings,
-  clientMail, mailRegistry, envelopePrintSettings, companies,
+  clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
   type Category, type InsertCategory,
@@ -4680,6 +4680,43 @@ export class DatabaseStorage implements IStorage {
     return contact;
   }
 
+  // Методи для клієнтів
+  async getClients(): Promise<any[]> {
+    return await db.select().from(clients).orderBy(clients.name);
+  }
+
+  async createClient(clientData: any): Promise<any> {
+    const [client] = await db
+      .insert(clients)
+      .values(clientData)
+      .returning();
+    return client;
+  }
+
+  async getClient(id: number): Promise<any> {
+    const [client] = await db
+      .select()
+      .from(clients)
+      .where(eq(clients.id, id))
+      .limit(1);
+    return client;
+  }
+
+  async updateClient(id: number, updates: any): Promise<any> {
+    const [client] = await db
+      .update(clients)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(clients.id, id))
+      .returning();
+    return client;
+  }
+
+  async deleteClient(id: number): Promise<boolean> {
+    const result = await db
+      .delete(clients)
+      .where(eq(clients.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
 
   // Методи для логів синхронізації
   async createSyncLog(logData: any): Promise<any> {
