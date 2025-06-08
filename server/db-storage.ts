@@ -294,7 +294,23 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(products, eq(orderItems.productId, products.id))
         .where(eq(orderItems.orderId, order.id));
 
+        // Логування для замовлення #9
+        if (order.id === 9) {
+          console.log(`Замовлення #9 - всього товарів: ${itemsResult.length}`);
+          console.log('Товари замовлення #9:', itemsResult.map(item => ({ 
+            id: item.id, 
+            productId: item.productId, 
+            hasProduct: !!item.product,
+            productName: item.product?.name
+          })));
+        }
+
         const items = itemsResult.filter(item => item.product) as (OrderItem & { product: Product })[];
+        
+        // Логування після фільтрації
+        if (order.id === 9) {
+          console.log(`Замовлення #9 - після фільтрації: ${items.length} товарів`);
+        }
         
         return { ...order, items };
       })
