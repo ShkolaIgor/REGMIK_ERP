@@ -4404,6 +4404,41 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async stopManufacturing(id: number): Promise<any> {
+    try {
+      console.log(`Зупинка виробництва замовлення ID: ${id}`);
+      
+      const [updated] = await db
+        .update(manufacturingOrders)
+        .set({ 
+          status: 'paused',
+          updatedAt: new Date()
+        })
+        .where(eq(manufacturingOrders.id, id))
+        .returning();
+
+      // Зупиняємо всі активні кроки виробництва
+      await db
+        .update(manufacturingSteps)
+        .set({ 
+          status: 'paused',
+          endTime: new Date()
+        })
+        .where(
+          and(
+            eq(manufacturingSteps.manufacturingOrderId, id),
+            eq(manufacturingSteps.status, 'in_progress')
+          )
+        );
+
+      console.log(`Виробництво зупинено для замовлення ID: ${id}`);
+      return updated;
+    } catch (error) {
+      console.error('Error stopping manufacturing:', error);
+      throw error;
+    }
+  }
+
   async getManufacturingSteps(manufacturingOrderId: number): Promise<any[]> {
     try {
       const steps = await db

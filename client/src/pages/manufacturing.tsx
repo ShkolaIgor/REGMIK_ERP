@@ -19,6 +19,7 @@ import {
   XCircle, 
   Pause,
   Play,
+  Square,
   Edit,
   Trash2,
   Calendar,
@@ -251,6 +252,26 @@ export default function Manufacturing() {
       toast({
         title: "Помилка",
         description: "Не вдалося згенерувати серійні номери",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const stopMutation = useMutation({
+    mutationFn: async (orderId: number) => 
+      apiRequest(`/api/manufacturing-orders/${orderId}/stop`, "POST"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/manufacturing-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ordered-products-info"] });
+      toast({
+        title: "Успіх",
+        description: "Виробництво зупинено",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося зупинити виробництво",
         variant: "destructive",
       });
     },
@@ -765,22 +786,34 @@ export default function Manufacturing() {
                         </Button>
                       )}
                       {order.status === "in_progress" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedOrder(order);
-                            setCompleteData({
-                              producedQuantity: order.producedQuantity,
-                              qualityRating: "good",
-                              notes: ""
-                            });
-                            setIsCompleteDialogOpen(true);
-                          }}
-                          title="Завершити виробництво"
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                        </Button>
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => stopMutation.mutate(order.id)}
+                            disabled={stopMutation.isPending}
+                            title="Зупинити виробництво"
+                            className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                          >
+                            <Square className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setCompleteData({
+                                producedQuantity: order.producedQuantity,
+                                qualityRating: "good",
+                                notes: ""
+                              });
+                              setIsCompleteDialogOpen(true);
+                            }}
+                            title="Завершити виробництво"
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                          </Button>
+                        </>
                       )}
                       <Button
                         variant="outline"

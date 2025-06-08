@@ -3378,6 +3378,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Зупинка виробництва
+  app.post("/api/manufacturing-orders/:id/stop", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      console.log("Stopping manufacturing order:", id);
+      const order = await storage.stopManufacturing(id);
+      if (!order) {
+        return res.status(404).json({ error: "Manufacturing order not found" });
+      }
+      console.log("Manufacturing stopped successfully:", order);
+      res.json(order);
+    } catch (error) {
+      console.error("Failed to stop manufacturing:", error);
+      res.status(500).json({ error: "Failed to stop manufacturing" });
+    }
+  });
+
   // Генерація серійних номерів
   app.get("/api/manufacturing-orders/:id/generate-serial-numbers", async (req, res) => {
     try {
