@@ -127,6 +127,124 @@ export default function Orders() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Функція обробки перетягування стовпців
+  const handleColumnDragEnd = (result: any) => {
+    if (!result.destination) return;
+
+    const newColumnOrder = Array.from(columnOrder);
+    const [reorderedItem] = newColumnOrder.splice(result.source.index, 1);
+    newColumnOrder.splice(result.destination.index, 0, reorderedItem);
+
+    setColumnOrder(newColumnOrder);
+    localStorage.setItem('orders-column-order', JSON.stringify(newColumnOrder));
+  };
+
+  // Мапа назв стовпців
+  const columnLabels = {
+    orderSequenceNumber: 'Замовлення',
+    orderNumber: 'Рахунок',
+    customerName: 'Клієнт',
+    paymentDate: 'Дата оплати',
+    dueDate: 'Термін виконання',
+    totalAmount: 'Сума',
+    status: 'Статус',
+    actions: 'Дії'
+  };
+
+  // Функція рендерингу контенту стовпця
+  const renderColumnContent = (columnKey: string, order: any) => {
+    switch (columnKey) {
+      case 'orderSequenceNumber':
+        return <div className="font-semibold text-center">{order.orderSequenceNumber}</div>;
+      
+      case 'orderNumber':
+        return (
+          <div className={`${getOrderNumberBgColor(order)}`}>
+            <div className="font-mono font-medium">{order.orderNumber}</div>
+            <div className="text-sm text-gray-500">{formatDate(order.createdAt)}</div>
+          </div>
+        );
+      
+      case 'customerName':
+        return (
+          <div>
+            <div className="font-medium">
+              {order.clientId 
+                ? (clients.find((client: any) => client.id === order.clientId)?.name || order.customerName)
+                : order.customerName
+              }
+            </div>
+            <div className="text-sm text-gray-500">
+              {order.clientId && (
+                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded mr-2">
+                  {clients.find((client: any) => client.id === order.clientId)?.taxCode || order.clientId}
+                </span>
+              )}
+              {order.customerEmail}
+            </div>
+          </div>
+        );
+      
+      case 'paymentDate':
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <PaymentDateButton 
+              order={order}
+              onPaymentDateChange={(orderId, paymentDate) => {
+                updatePaymentDateMutation.mutate({ id: orderId, paymentDate });
+              }}
+              isLoading={updatePaymentDateMutation.isPending}
+            />
+          </div>
+        );
+      
+      case 'dueDate':
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <DueDateButton 
+              order={order}
+              onDueDateChange={(orderId, dueDate) => {
+                updateDueDateMutation.mutate({ id: orderId, dueDate });
+              }}
+              isLoading={updateDueDateMutation.isPending}
+            />
+          </div>
+        );
+      
+      case 'totalAmount':
+        return <div className="font-medium">{formatCurrency(parseFloat(order.totalAmount))}</div>;
+      
+      case 'status':
+        return <Badge variant={getStatusColor(order.status)}>{order.status}</Badge>;
+      
+      case 'actions':
+        return (
+          <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleEditOrder(order)}
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSelectedOrderForShipment(order);
+                setIsPartialShipmentOpen(true);
+              }}
+            >
+              <Truck className="w-4 h-4" />
+            </Button>
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
+
   const { data: orders = [], isLoading } = useQuery<OrderWithItems[]>({
     queryKey: ["/api/orders"],
   });
@@ -474,6 +592,32 @@ export default function Orders() {
       const price = parseFloat(item.unitPrice) || 0;
       return sum + (qty * price);
     }, 0);
+  };
+
+  // Допоміжні функції для таблиці
+  const getOrderNumberBgColor = (order: any) => {
+    if (order.paymentDate) return "bg-green-50 border-green-200";
+    if (order.dueDate && new Date(order.dueDate) < new Date()) return "bg-red-50 border-red-200";
+    return "bg-gray-50";
+  };
+
+  const getStatusText = (status: string) => {
+    const statusMap: { [key: string]: string } = {
+      pending: "Нове",
+      processing: "В обробці", 
+      completed: "Завершено",
+      cancelled: "Скасовано"
+    };
+    return statusMap[status] || status;
+  };
+
+  const toggleOrderExpansion = (orderId: number) => {
+    setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
+  };
+
+  const handlePartialShipment = (order: Order) => {
+    setSelectedOrderForShipment(order);
+    setIsPartialShipmentOpen(true);
   };
 
   // Функції для роботи з клієнтами
@@ -985,285 +1129,89 @@ export default function Orders() {
                 </Button>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Замовлення</TableHead>
-                    <TableHead>Рахунок</TableHead>
-                    <TableHead>Клієнт</TableHead>
-                    <TableHead>Дата оплати</TableHead>
-                    <TableHead>Термін виконання</TableHead>
-                    <TableHead>Сума</TableHead>
-                    <TableHead>Статус</TableHead>
-                    <TableHead>Дії</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orders.map((order: any) => (
-                    <React.Fragment key={order.id}>
-                      <TableRow 
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => toggleOrderExpansion(order.id)}
-                      >
-                        <TableCell className="font-semibold text-center">{order.orderSequenceNumber}</TableCell>
-                        <TableCell className={`${getOrderNumberBgColor(order)}`}>
-                          <div>
-                            <div className="font-mono font-medium">{order.orderNumber}</div>
-                            <div className="text-sm text-gray-500">{formatDate(order.createdAt)}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">
-                              {order.clientId 
-                                ? (clients.find((client: any) => client.id === order.clientId)?.name || order.customerName)
-                                : order.customerName
-                              }
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {order.clientId && (
-                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded mr-2">
-                                  {clients.find((client: any) => client.id === order.clientId)?.taxCode || order.clientId}
-                                </span>
-                              )}
-                              {order.customerEmail}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <PaymentDateButton 
-                            order={order}
-                            onPaymentDateChange={(orderId, paymentDate) => {
-                              updatePaymentDateMutation.mutate({ id: orderId, paymentDate });
-                            }}
-                            isLoading={updatePaymentDateMutation.isPending}
-                          />
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <DueDateButton 
-                            order={order}
-                            onDueDateChange={(orderId, dueDate) => {
-                              updateDueDateMutation.mutate({ id: orderId, dueDate });
-                            }}
-                            isLoading={updateDueDateMutation.isPending}
-                          />
-                        </TableCell>
-                        <TableCell>{formatCurrency(order.totalAmount)}</TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(order.status)}>
-                            {getStatusText(order.status)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center space-x-2">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button size="sm" variant="ghost" onClick={() => setSelectedOrder(order)}>
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-4xl" aria-describedby="order-details-description">
-                              <DialogHeader>
-                                <DialogTitle>Деталі замовлення {selectedOrder?.orderNumber}</DialogTitle>
-                                <DialogDescription id="order-details-description">
-                                  Повна інформація про замовлення, клієнта та товари
-                                </DialogDescription>
-                              </DialogHeader>
-                              {selectedOrder && (
-                                <div className="space-y-6">
-                                  {/* Інформація про клієнта */}
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                      <Label className="text-sm font-medium">Клієнт</Label>
-                                      <p className="text-sm text-gray-600">{selectedOrder.customerName}</p>
-                                    </div>
-                                    <div>
-                                      <Label className="text-sm font-medium">Email</Label>
-                                      <p className="text-sm text-gray-600">{selectedOrder.customerEmail || "Не вказано"}</p>
-                                    </div>
-                                    <div>
-                                      <Label className="text-sm font-medium">Телефон</Label>
-                                      <p className="text-sm text-gray-600">{selectedOrder.customerPhone || "Не вказано"}</p>
-                                    </div>
-                                    <div>
-                                      <Label className="text-sm font-medium">Статус</Label>
-                                      <Select
-                                        value={selectedOrder.status}
-                                        onValueChange={(value) => updateStatusMutation.mutate({ id: selectedOrder.id, status: value })}
-                                      >
-                                        <SelectTrigger className="w-40">
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="pending">Очікує</SelectItem>
-                                          <SelectItem value="processing">В обробці</SelectItem>
-                                          <SelectItem value="completed">Завершено</SelectItem>
-                                          <SelectItem value="cancelled">Скасовано</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                  </div>
-
-                                  {/* Товари в замовленні */}
-                                  <div>
-                                    <Label className="text-lg font-medium">Товари</Label>
-                                    <Table className="mt-2">
-                                      <TableHeader>
-                                        <TableRow>
-                                          <TableHead>Товар</TableHead>
-                                          <TableHead>Кількість</TableHead>
-                                          <TableHead>Ціна за одиницю</TableHead>
-                                          <TableHead>Сума</TableHead>
-                                        </TableRow>
-                                      </TableHeader>
-                                      <TableBody>
-                                        {selectedOrder.items?.map((item: any) => (
-                                          <TableRow key={item.id}>
-                                            <TableCell>
-                                              <div>
-                                                <div className="font-medium">{item.product?.name}</div>
-                                                <div className="text-sm text-gray-500">SKU: {item.product?.sku}</div>
-                                              </div>
-                                            </TableCell>
-                                            <TableCell>{item.quantity}</TableCell>
-                                            <TableCell>{formatCurrency(item.unitPrice)}</TableCell>
-                                            <TableCell>{formatCurrency(item.totalPrice)}</TableCell>
-                                          </TableRow>
-                                        ))}
-                                      </TableBody>
-                                    </Table>
-                                    <div className="text-right mt-4">
-                                      <p className="text-lg font-semibold">
-                                        Загальна сума: {formatCurrency(selectedOrder.totalAmount)}
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  {/* Примітки */}
-                                  {selectedOrder.notes && (
-                                    <div>
-                                      <Label className="text-sm font-medium">Примітки</Label>
-                                      <p className="text-sm text-gray-600 mt-1">{selectedOrder.notes}</p>
-                                    </div>
-                                  )}
-
-                                  {/* Дата створення */}
-                                  <div>
-                                    <Label className="text-sm font-medium">Дата створення</Label>
-                                    <p className="text-sm text-gray-600">{formatDate(selectedOrder.createdAt)}</p>
-                                  </div>
-                                </div>
-                              )}
-                              <DialogFooter>
-                                <Button
-                                  onClick={() => handleCreateInvoice(selectedOrder)}
-                                  disabled={createInvoiceMutation.isPending}
-                                  className="bg-blue-600 hover:bg-blue-700"
+              <DragDropContext onDragEnd={handleColumnDragEnd}>
+                <Table>
+                  <TableHeader>
+                    <Droppable droppableId="table-headers" direction="horizontal">
+                      {(provided) => (
+                        <TableRow ref={provided.innerRef} {...provided.droppableProps}>
+                          {columnOrder.map((columnKey, index) => (
+                            <Draggable key={columnKey} draggableId={columnKey} index={index}>
+                              {(provided, snapshot) => (
+                                <TableHead
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  className={`relative ${snapshot.isDragging ? 'bg-blue-100 shadow-lg' : ''}`}
                                 >
-                                  <FileText className="w-4 h-4 mr-2" />
-                                  {createInvoiceMutation.isPending ? "Створюється..." : "Створити рахунок"}
-                                </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            onClick={() => handleEditOrder(order)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          {order.shippedDate ? (
-                            <Button 
-                              size="sm" 
-                              variant="ghost"
-                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                              disabled
-                            >
-                              <Truck className="w-4 h-4" />
-                            </Button>
-                          ) : (
-                            <>
-                              <Button 
-                                size="sm" 
-                                variant="ghost"
-                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                onClick={() => handleShipOrder(order)}
-                                title="Повне відвантаження"
-                              >
-                                <Truck className="w-4 h-4" />
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="ghost"
-                                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                                onClick={() => handlePartialShipment(order)}
-                                title="Часткове відвантаження"
-                              >
-                                <Package className="w-4 h-4" />
-                              </Button>
-                            </>
-                          )}
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => {
-                              console.log('Delete button clicked for order:', order.id);
-                              if (confirm('Ви впевнені, що хочете видалити це замовлення?')) {
-                                console.log('User confirmed deletion, calling API...');
-                                deleteOrderMutation.mutate(order.id);
-                              } else {
-                                console.log('User cancelled deletion');
-                              }
-                            }}
-                            disabled={deleteOrderMutation.isPending}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                      
-                      {/* Розкривний рядок з деталями замовлення */}
-                      {expandedOrderId === order.id && (
-                        <TableRow>
-                          <TableCell colSpan={6} className="bg-gray-50 p-0">
-                            <div className="p-4">
-                              <h4 className="font-medium mb-3">Склад замовлення:</h4>
-                              {order.items && order.items.length > 0 ? (
-                                <div className="space-y-2">
-                                  {order.items.map((item: any, index: number) => (
-                                    <div key={index} className="flex justify-between items-center py-2 px-3 bg-white rounded border">
-                                      <div className="flex-1">
-                                        <span className="font-medium">{item.product?.name || 'Товар не знайдено'}</span>
-                                        <span className="text-sm text-gray-500 ml-2">({item.product?.sku})</span>
-                                      </div>
-                                      <div className="flex items-center space-x-4">
-                                        <span className="text-sm text-gray-600">
-                                          Кількість: <span className="font-medium">{item.quantity}</span>
-                                        </span>
-                                        <span className="text-sm text-gray-600">
-                                          Ціна: <span className="font-medium">{formatCurrency(item.unitPrice)}</span>
-                                        </span>
-                                        <span className="text-sm font-medium">
-                                          Всього: {formatCurrency(item.totalPrice)}
-                                        </span>
-                                      </div>
+                                  <div className="flex items-center gap-2">
+                                    <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing">
+                                      <GripVertical className="w-4 h-4 text-gray-400 hover:text-gray-600" />
                                     </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <p className="text-gray-500 text-sm">Замовлення не містить товарів</p>
+                                    <span>{columnLabels[columnKey as keyof typeof columnLabels]}</span>
+                                  </div>
+                                </TableHead>
                               )}
-                            </div>
-                          </TableCell>
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
                         </TableRow>
                       )}
-                    </React.Fragment>
-                  ))}
-                </TableBody>
-              </Table>
+                    </Droppable>
+                  </TableHeader>
+                  <TableBody>
+                    {orders.map((order: any) => (
+                      <React.Fragment key={order.id}>
+                        <TableRow 
+                          className="cursor-pointer hover:bg-gray-50"
+                          onClick={() => toggleOrderExpansion(order.id)}
+                        >
+                          {columnOrder.map((columnKey) => (
+                            <TableCell key={columnKey}>
+                              {renderColumnContent(columnKey, order)}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                        
+                        {/* Розкривний рядок з деталями замовлення */}
+                        {expandedOrderId === order.id && (
+                          <TableRow>
+                            <TableCell colSpan={columnOrder.length} className="bg-gray-50 p-0">
+                              <div className="p-4">
+                                <h4 className="font-medium mb-3">Склад замовлення:</h4>
+                                {order.items && order.items.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {order.items.map((item: any, index: number) => (
+                                      <div key={index} className="flex justify-between items-center py-2 px-3 bg-white rounded border">
+                                        <div className="flex-1">
+                                          <span className="font-medium">{item.product?.name || 'Товар не знайдено'}</span>
+                                          <span className="text-sm text-gray-500 ml-2">({item.product?.sku})</span>
+                                        </div>
+                                        <div className="flex items-center space-x-4">
+                                          <span className="text-sm text-gray-600">
+                                            Кількість: <span className="font-medium">{item.quantity}</span>
+                                          </span>
+                                          <span className="text-sm text-gray-600">
+                                            Ціна: <span className="font-medium">{formatCurrency(item.unitPrice)}</span>
+                                          </span>
+                                          <span className="text-sm font-medium">
+                                            Всього: {formatCurrency(item.totalPrice)}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-gray-500 text-sm">Замовлення не містить товарів</p>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </TableBody>
+                </Table>
+              </DragDropContext>
             )}
           </CardContent>
         </Card>
