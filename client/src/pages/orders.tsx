@@ -566,81 +566,91 @@ export default function Orders() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="clientId">Клієнт *</Label>
-                    <Popover open={clientComboboxOpen} onOpenChange={setClientComboboxOpen}>
-                      <PopoverTrigger asChild>
+                    <div className="relative">
+                      <Input
+                        placeholder="Почніть вводити назву клієнта..."
+                        value={clientSearchValue}
+                        onChange={(e) => handleClientSearchChange(e.target.value)}
+                        onFocus={() => setClientComboboxOpen(true)}
+                        className={form.formState.errors.clientId ? "border-red-500" : ""}
+                      />
+                      {clientSearchValue && (
+                        <Popover open={clientComboboxOpen} onOpenChange={setClientComboboxOpen}>
+                          <PopoverContent className="w-full p-0 mt-1" align="start">
+                            <Command>
+                              <CommandList>
+                                {filteredClients.length > 0 ? (
+                                  <CommandGroup>
+                                    {filteredClients.map((client: any) => (
+                                      <CommandItem
+                                        key={client.id}
+                                        value={client.id.toString()}
+                                        onSelect={() => handleClientSelect(client.id.toString())}
+                                        className="cursor-pointer"
+                                      >
+                                        <div className="flex items-center w-full">
+                                          <Check
+                                            className={`mr-2 h-4 w-4 ${
+                                              form.watch("clientId") === client.id.toString()
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                            }`}
+                                          />
+                                          <div className="flex-1">
+                                            <div className="font-medium">{client.name}</div>
+                                            <div className="text-sm text-gray-500">{client.taxCode}</div>
+                                          </div>
+                                        </div>
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                ) : clientSearchValue.length > 2 ? (
+                                  <div className="p-3">
+                                    <p className="text-sm text-muted-foreground mb-3">
+                                      Клієнт "{clientSearchValue}" не знайдений
+                                    </p>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        setNewClientName(clientSearchValue);
+                                        setIsCreateClientDialogOpen(true);
+                                        setClientComboboxOpen(false);
+                                      }}
+                                      className="w-full"
+                                    >
+                                      <Plus className="w-4 h-4 mr-2" />
+                                      Створити нового клієнта
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className="p-3 text-sm text-muted-foreground">
+                                    Введіть мінімум 3 символи для пошуку
+                                  </div>
+                                )}
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                      )}
+                    </div>
+                    {form.watch("clientId") && (
+                      <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
+                        <span className="text-blue-800">
+                          Обрано: {clients.find((c: any) => c.id.toString() === form.watch("clientId"))?.name}
+                        </span>
                         <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={clientComboboxOpen}
-                          className={`w-full justify-between ${form.formState.errors.clientId ? "border-red-500" : ""}`}
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            form.setValue("clientId", "");
+                            setClientSearchValue("");
+                          }}
+                          className="ml-2 h-6 w-6 p-0 text-blue-600 hover:text-blue-800"
                         >
-                          {form.watch("clientId") ? (
-                            (() => {
-                              const selectedClient = clients.find((client: any) => 
-                                client.id.toString() === form.watch("clientId")
-                              );
-                              return selectedClient ? 
-                                `${selectedClient.name} (${selectedClient.taxCode})` : 
-                                "Оберіть клієнта";
-                            })()
-                          ) : (
-                            "Оберіть клієнта"
-                          )}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          ×
                         </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-full p-0">
-                        <Command>
-                          <CommandInput
-                            placeholder="Шукати клієнта або ввести нового..."
-                            value={clientSearchValue}
-                            onValueChange={handleClientSearchChange}
-                          />
-                          <CommandList>
-                            <CommandEmpty>
-                              {clientSearchValue.length > 0 ? (
-                                <div className="p-2">
-                                  <p className="text-sm text-muted-foreground mb-2">
-                                    Клієнт не знайдений
-                                  </p>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => {
-                                      setNewClientName(clientSearchValue);
-                                      setIsCreateClientDialogOpen(true);
-                                    }}
-                                    className="w-full"
-                                  >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Створити "{clientSearchValue}"
-                                  </Button>
-                                </div>
-                              ) : (
-                                "Почніть вводити назву клієнта"
-                              )}
-                            </CommandEmpty>
-                            <CommandGroup>
-                              {filteredClients.map((client: any) => (
-                                <CommandItem
-                                  key={client.id}
-                                  value={client.id.toString()}
-                                  onSelect={() => handleClientSelect(client.id.toString())}
-                                >
-                                  <Check
-                                    className={`mr-2 h-4 w-4 ${
-                                      form.watch("clientId") === client.id.toString()
-                                        ? "opacity-100"
-                                        : "opacity-0"
-                                    }`}
-                                  />
-                                  {client.name} ({client.taxCode})
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                      </div>
+                    )}
                     {form.formState.errors.clientId && (
                       <p className="text-sm text-red-500 mt-1">
                         {form.formState.errors.clientId.message}
