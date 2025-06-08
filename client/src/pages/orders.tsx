@@ -185,6 +185,11 @@ export default function Orders() {
 
   // Функція рендерингу контенту стовпця
   const renderColumnContent = (columnKey: string, order: any) => {
+    // Логування для замовлення #9
+    if (order.id === 9) {
+      console.log(`Рендерим стовпець "${columnKey}" для замовлення #9:`, order);
+    }
+    
     switch (columnKey) {
       case 'orderSequenceNumber':
         return (
@@ -1779,7 +1784,8 @@ export default function Orders() {
               </div>
             ) : (
               <DragDropContext onDragEnd={handleColumnDragEnd}>
-                <Table>
+                <div className="w-full" style={{ overflow: 'visible', minHeight: '500px' }}>
+                <Table style={{ tableLayout: 'auto', minHeight: '400px' }}>
                   <TableHeader>
                     <Droppable droppableId="table-headers" direction="horizontal">
                       {(provided) => (
@@ -1835,9 +1841,19 @@ export default function Orders() {
                         });
                       }
                       return (
-                      <React.Fragment key={order.id}>
+                      <React.Fragment key={`order-${order.id}`}>
                         <TableRow 
-                          className="cursor-pointer hover:bg-gray-50"
+                          key={`row-${order.id}`}
+                          className={`cursor-pointer hover:bg-gray-50 ${order.id === 9 ? 'border-4 border-red-500 bg-yellow-100' : ''}`}
+                          style={order.id === 9 ? {
+                            display: 'table-row !important',
+                            visibility: 'visible !important',
+                            opacity: '1 !important',
+                            position: 'relative !important',
+                            zIndex: '999 !important',
+                            height: '60px !important',
+                            minHeight: '60px !important'
+                          } : {}}
                           onClick={() => toggleOrderExpansion(order.id)}
                         >
                           {columnOrder.map((columnKey) => (
@@ -1887,6 +1903,7 @@ export default function Orders() {
                     })}
                   </TableBody>
                 </Table>
+                </div>
               </DragDropContext>
             )}
           </CardContent>
