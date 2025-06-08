@@ -3625,6 +3625,21 @@ export class DatabaseStorage implements IStorage {
 
       const [newOrder] = await db.insert(manufacturingOrders).values(completeOrderData).returning();
       console.log("🟢 DB: Successfully inserted order:", newOrder);
+
+      // Створюємо відповідний production_task
+      if (newOrder.recipeId) {
+        const [newTask] = await db.insert(productionTasks).values({
+          recipeId: newOrder.recipeId,
+          quantity: parseInt(newOrder.plannedQuantity),
+          unit: newOrder.unit,
+          status: 'planned',
+          priority: newOrder.priority,
+          notes: `Виробниче завдання для замовлення ${newOrder.orderNumber}: ${newOrder.plannedQuantity} ${newOrder.unit}`,
+          progress: 0,
+          createdAt: new Date()
+        }).returning();
+        console.log(`🟢 DB: Створено production_task ${newTask.id} для manufacturing_order ${newOrder.id}`);
+      }
       
       return newOrder;
     } catch (error) {
