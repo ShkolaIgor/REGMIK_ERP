@@ -3636,7 +3636,39 @@ export class DatabaseStorage implements IStorage {
 
   async deleteManufacturingOrder(id: number): Promise<boolean> {
     try {
+      // Спочатку отримуємо інформацію про manufacturing order
+      const [manufacturingOrder] = await db.select()
+        .from(manufacturingOrders)
+        .where(eq(manufacturingOrders.id, id));
+
+      if (!manufacturingOrder) {
+        return false;
+      }
+
+      // Знаходимо відповідний production_task з тими ж параметрами
+      const [productionTask] = await db.select()
+        .from(productionTasks)
+        .leftJoin(recipes, eq(productionTasks.recipeId, recipes.id))
+        .where(and(
+          eq(recipes.productId, manufacturingOrder.productId),
+          eq(productionTasks.quantity, parseInt(manufacturingOrder.plannedQuantity))
+        ));
+
+      // Видаляємо manufacturing order
       await db.delete(manufacturingOrders).where(eq(manufacturingOrders.id, id));
+
+      // Якщо знайдено відповідний production_task, змінюємо його статус назад на planned
+      if (productionTask) {
+        await db.update(productionTasks)
+          .set({ 
+            status: 'planned',
+            startDate: null,
+            endDate: null,
+            progress: 0
+          })
+          .where(eq(productionTasks.id, productionTask.production_tasks.id));
+      }
+
       return true;
     } catch (error) {
       console.error("Error deleting manufacturing order:", error);
