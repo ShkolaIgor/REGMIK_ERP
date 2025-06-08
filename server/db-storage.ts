@@ -4858,8 +4858,72 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  // Автоматичне створення виробничих завдань після оплати замовлень
-  async processOrderPayment(orderId: number): Promise<void> {
+  // Обробка оплати та запуск виробництва (повна/часткова/по договору)
+  async processOrderPayment(
+    orderId: number, 
+    paymentData: {
+      paymentType: 'full' | 'partial' | 'contract' | 'none';
+      paidAmount?: string;
+      contractNumber?: string;
+      productionApproved?: boolean;
+      approvedBy?: string;
+    }
+  ): Promise<void> {
+    try {
+      const now = new Date();
+      
+      // Оновлюємо інформацію про оплату в замовленні
+      const updateData: any = {
+        paymentType: paymentData.paymentType,
+        paidAmount: paymentData.paidAmount || "0",
+      };
+
+      // Для повної оплати встановлюємо дату оплати
+      if (paymentData.paymentType === 'full') {
+        updateData.paymentDate = now;
+        updateData.productionApproved = true;
+        updateData.productionApprovedBy = paymentData.approvedBy || 'system';
+        updateData.productionApprovedAt = now;
+      }
+
+      // Для часткової оплати
+      if (paymentData.paymentType === 'partial') {
+        updateData.paymentDate = now;
+        // Дозвіл на виробництво треба надавати окремо
+        if (paymentData.productionApproved) {
+          updateData.productionApproved = true;
+          updateData.productionApprovedBy = paymentData.approvedBy;
+          updateData.productionApprovedAt = now;
+        }
+      }
+
+      // Для договірної роботи
+      if (paymentData.paymentType === 'contract') {
+        updateData.contractNumber = paymentData.contractNumber;
+        updateData.productionApproved = true;
+        updateData.productionApprovedBy = paymentData.approvedBy || 'contract';
+        updateData.productionApprovedAt = now;
+      }
+
+      // Оновлюємо замовлення
+      await db.update(orders)
+        .set(updateData)
+        .where(eq(orders.id, orderId));
+
+      // Якщо дозволено виробництво - створюємо завдання
+      if (updateData.productionApproved) {
+        await this.createManufacturingTasksForOrder(orderId);
+      }
+
+      console.log(`Оброблено платіж для замовлення ${orderId}: тип ${paymentData.paymentType}, виробництво ${updateData.productionApproved ? 'дозволено' : 'не дозволено'}`);
+    } catch (error) {
+      console.error("Помилка при обробці платежу замовлення:", error);
+      throw error;
+    }
+  }
+
+  // Створення виробничих завдань для замовлення
+  private async createManufacturingTasksForOrder(orderId: number): Promise<void> {
     try {
       // Отримуємо замовлення з товарами
       const orderWithItems = await db.select({
@@ -4906,9 +4970,36 @@ export class DatabaseStorage implements IStorage {
         );
       }
 
-      console.log(`Оброблено оплату замовлення ${orderWithItems[0].orderNumber}: створено завдання на виробництво`);
+      console.log(`Створено виробничі завдання для замовлення ${orderWithItems[0].orderNumber}`);
     } catch (error) {
-      console.error("Помилка при обробці оплати замовлення:", error);
+      console.error("Помилка при створенні виробничих завдань:", error);
+      throw error;
+    }
+  }
+
+  // Окремий метод для дозволу виробництва без оплати
+  async approveProductionForOrder(
+    orderId: number,
+    approvedBy: string,
+    reason: string = 'manual_approval'
+  ): Promise<void> {
+    try {
+      const now = new Date();
+      
+      await db.update(orders)
+        .set({
+          productionApproved: true,
+          productionApprovedBy: approvedBy,
+          productionApprovedAt: now,
+        })
+        .where(eq(orders.id, orderId));
+
+      // Створюємо виробничі завдання
+      await this.createManufacturingTasksForOrder(orderId);
+
+      console.log(`Дозволено виробництво для замовлення ${orderId} користувачем ${approvedBy}`);
+    } catch (error) {
+      console.error("Помилка при дозволі виробництва:", error);
       throw error;
     }
   }

@@ -194,6 +194,12 @@ export const orders = pgTable("orders", {
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   notes: text("notes"),
   paymentDate: timestamp("payment_date"), // дата оплати
+  paymentType: varchar("payment_type", { length: 50 }).default("full"), // full, partial, contract, none
+  paidAmount: decimal("paid_amount", { precision: 10, scale: 2 }).default("0"), // сума оплачена
+  contractNumber: varchar("contract_number", { length: 100 }), // номер договору для contract типу
+  productionApproved: boolean("production_approved").default(false), // дозвіл на запуск виробництва
+  productionApprovedBy: varchar("production_approved_by", { length: 100 }), // хто дав дозвіл
+  productionApprovedAt: timestamp("production_approved_at"), // коли дали дозвіл
   dueDate: timestamp("due_date"), // термін виконання
   shippedDate: timestamp("shipped_date"), // дата відвантаження
   createdAt: timestamp("created_at").defaultNow(),

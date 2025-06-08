@@ -5486,11 +5486,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/orders/:id/process-payment", async (req, res) => {
     try {
       const orderId = parseInt(req.params.id);
-      await storage.processOrderPayment(orderId);
-      res.json({ success: true, message: "Оплату замовлення оброблено, створено завдання на виробництво" });
+      const paymentData = req.body;
+      
+      // Валідація вхідних даних
+      const validPaymentTypes = ['full', 'partial', 'contract', 'none'];
+      if (!validPaymentTypes.includes(paymentData.paymentType)) {
+        return res.status(400).json({ error: "Недійсний тип оплати" });
+      }
+
+      await storage.processOrderPayment(orderId, paymentData);
+      
+      let message = "Оплату замовлення оброблено";
+      if (paymentData.paymentType === 'full') {
+        message += ", створено завдання на виробництво";
+      } else if (paymentData.paymentType === 'contract') {
+        message += ", запущено виробництво по договору";
+      } else if (paymentData.paymentType === 'partial' && paymentData.productionApproved) {
+        message += ", дозволено виробництво";
+      }
+      
+      res.json({ success: true, message });
     } catch (error) {
       console.error("Error processing order payment:", error);
       res.status(500).json({ error: "Failed to process order payment" });
+    }
+  });
+
+  // Окремий endpoint для дозволу виробництва
+  app.post("/api/orders/:id/approve-production", async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      const { approvedBy, reason } = req.body;
+      
+      if (!approvedBy) {
+        return res.status(400).json({ error: "Не вказано користувача, який дає дозвіл" });
+      }
+
+      await storage.approveProductionForOrder(orderId, approvedBy, reason);
+      res.json({ success: true, message: "Дозволено запуск виробництва" });
+    } catch (error) {
+      console.error("Error approving production:", error);
+      res.status(500).json({ error: "Failed to approve production" });
     }
   });
 

@@ -21,7 +21,7 @@ import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ClientForm } from "@/components/ClientForm";
-import { PaymentDateButton } from "@/components/PaymentDateButton";
+import { PaymentDialog } from "@/components/PaymentDialog";
 import DueDateButton from "@/components/DueDateButton";
 import { useSorting } from "@/hooks/useSorting";
 // Типи
