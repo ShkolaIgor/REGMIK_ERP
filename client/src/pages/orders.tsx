@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
-import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X, Settings, Palette } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
 import { useForm } from "react-hook-form";
@@ -101,8 +101,15 @@ const orderSchema = z.object({
   path: ["clientId"],
 });
 
+const statusSchema = z.object({
+  name: z.string().min(1, "Введіть назву статусу"),
+  textColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Введіть правильний HEX колір"),
+  backgroundColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Введіть правильний HEX колір"),
+});
+
 type OrderFormData = z.infer<typeof orderSchema>;
 type OrderItemFormData = z.infer<typeof orderItemSchema>;
+type StatusFormData = z.infer<typeof statusSchema>;
 
 export default function Orders() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -121,6 +128,9 @@ export default function Orders() {
   const [clientSearchValue, setClientSearchValue] = useState("");
   const [isCreateClientDialogOpen, setIsCreateClientDialogOpen] = useState(false);
   const [newClientName, setNewClientName] = useState("");
+  const [isStatusSettingsOpen, setIsStatusSettingsOpen] = useState(false);
+  const [editingStatus, setEditingStatus] = useState<OrderStatus | null>(null);
+  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   
   // Стан для керування порядком стовпців
   const [columnOrder, setColumnOrder] = useState(() => {
@@ -561,6 +571,73 @@ export default function Orders() {
       toast({
         title: "Помилка",
         description: error.message || "Не вдалося створити клієнта",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Мутації для управління статусами
+  const createStatusMutation = useMutation({
+    mutationFn: async (data: StatusFormData) => {
+      return await apiRequest("/api/order-statuses", { method: "POST", body: data });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/order-statuses"] });
+      setIsStatusDialogOpen(false);
+      setEditingStatus(null);
+      statusForm.reset();
+      toast({
+        title: "Успіх",
+        description: "Статус створено",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося створити статус",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateStatusSettingsMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: StatusFormData }) => {
+      return await apiRequest(`/api/order-statuses/${id}`, { method: "PUT", body: data });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/order-statuses"] });
+      setIsStatusDialogOpen(false);
+      setEditingStatus(null);
+      statusForm.reset();
+      toast({
+        title: "Успіх",
+        description: "Статус оновлено",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося оновити статус",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteStatusMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return await apiRequest(`/api/order-statuses/${id}`, { method: "DELETE" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/order-statuses"] });
+      toast({
+        title: "Успіх",
+        description: "Статус видалено",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося видалити статус",
         variant: "destructive",
       });
     },
