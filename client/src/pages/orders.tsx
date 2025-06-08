@@ -1408,9 +1408,9 @@ export default function Orders() {
                         </Button>
                         <Button 
                           type="submit" 
-                          disabled={updateStatusMutation.isPending}
+                          disabled={updateStatusSettingsMutation.isPending}
                         >
-                          {updateStatusMutation.isPending ? "Оновлення..." : "Оновити"}
+                          {updateStatusSettingsMutation.isPending ? "Оновлення..." : "Оновити"}
                         </Button>
                       </div>
                     </div>
