@@ -3959,6 +3959,30 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async deleteOrderedProduct(productId: number): Promise<any> {
+    try {
+      // Видаляємо всі замовлення з цим товаром
+      const deletedOrders = await db.delete(orderItems)
+        .where(eq(orderItems.productId, productId))
+        .returning();
+
+      // Видаляємо всі виробничі завдання з цим товаром
+      const deletedProductionTasks = await db.delete(productionTasks)
+        .where(eq(productionTasks.productId, productId))
+        .returning();
+
+      return {
+        success: true,
+        message: `Видалено ${deletedOrders.length} замовлень та ${deletedProductionTasks.length} виробничих завдань`,
+        deletedOrders: deletedOrders.length,
+        deletedProductionTasks: deletedProductionTasks.length
+      };
+    } catch (error) {
+      console.error('Error deleting ordered product:', error);
+      throw error;
+    }
+  }
+
   async createSupplierOrderForShortage(productId: number, quantity: string, notes?: string): Promise<any> {
     try {
       // Отримуємо інформацію про товар

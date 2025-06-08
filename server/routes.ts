@@ -3247,6 +3247,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/ordered-products/:productId", async (req, res) => {
+    try {
+      const productId = parseInt(req.params.productId);
+      const result = await storage.deleteOrderedProduct(productId);
+      res.json(result);
+    } catch (error) {
+      console.error("Failed to delete ordered product:", error);
+      res.status(500).json({ error: "Failed to delete ordered product" });
+    }
+  });
+
   app.post("/api/create-supplier-order-for-shortage", async (req, res) => {
     try {
       const { productId, quantity, notes } = req.body;
