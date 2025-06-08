@@ -1016,6 +1016,15 @@ export default function Orders() {
                             isLoading={updatePaymentDateMutation.isPending}
                           />
                         </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <DueDateButton 
+                            order={order}
+                            onDueDateChange={(orderId, dueDate) => {
+                              updateDueDateMutation.mutate({ id: orderId, dueDate });
+                            }}
+                            isLoading={updateDueDateMutation.isPending}
+                          />
+                        </TableCell>
                         <TableCell>{formatCurrency(order.totalAmount)}</TableCell>
                         <TableCell>
                           <Badge className={getStatusColor(order.status)}>

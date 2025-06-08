@@ -502,6 +502,14 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async updateOrderDueDate(id: number, dueDate: string | null): Promise<Order | undefined> {
+    const result = await db.update(orders)
+      .set({ dueDate: dueDate ? new Date(dueDate) : null })
+      .where(eq(orders.id, id))
+      .returning();
+    return result[0];
+  }
+
   // Recipes
   async getRecipes(): Promise<Recipe[]> {
     return await db.select().from(recipes);

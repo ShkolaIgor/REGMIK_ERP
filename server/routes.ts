@@ -797,6 +797,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update due date for order
+  app.patch("/api/orders/:id/due-date", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { dueDate } = req.body;
+      
+      console.log(`Updating due date for order ${id}:`, dueDate);
+      
+      const order = await storage.updateOrderDueDate(id, dueDate);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+      
+      res.json(order);
+    } catch (error) {
+      console.error("Failed to update due date:", error);
+      res.status(500).json({ error: "Failed to update due date" });
+    }
+  });
+
   // Recipes
   app.get("/api/recipes", async (req, res) => {
     try {
