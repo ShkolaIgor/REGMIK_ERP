@@ -34,6 +34,7 @@ import {
   type MailRegistry, type InsertMailRegistry,
   type EnvelopePrintSettings, type InsertEnvelopePrintSettings,
   type Company, type InsertCompany,
+  type OrderStatus, type InsertOrderStatus,
   type Shipment, type InsertShipment,
   type CustomerAddress, type InsertCustomerAddress,
   type SenderSettings, type InsertSenderSettings,
@@ -4776,6 +4777,58 @@ export class DatabaseStorage implements IStorage {
       .where(sql`details->>'syncId' = ${syncId}`)
       .limit(1);
     return log;
+  }
+
+  // Order Status Methods
+  async getOrderStatuses(): Promise<OrderStatus[]> {
+    return await db
+      .select()
+      .from(orderStatuses)
+      .orderBy(orderStatuses.name);
+  }
+
+  async getOrderStatus(id: number): Promise<OrderStatus | undefined> {
+    const [status] = await db
+      .select()
+      .from(orderStatuses)
+      .where(eq(orderStatuses.id, id));
+    return status;
+  }
+
+  async createOrderStatus(statusData: InsertOrderStatus): Promise<OrderStatus> {
+    const [status] = await db
+      .insert(orderStatuses)
+      .values({
+        ...statusData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return status;
+  }
+
+  async updateOrderStatusRecord(id: number, statusData: Partial<InsertOrderStatus>): Promise<OrderStatus | undefined> {
+    const [status] = await db
+      .update(orderStatuses)
+      .set({
+        ...statusData,
+        updatedAt: new Date()
+      })
+      .where(eq(orderStatuses.id, id))
+      .returning();
+    return status;
+  }
+
+  async deleteOrderStatusRecord(id: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(orderStatuses)
+        .where(eq(orderStatuses.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error("Error deleting order status:", error);
+      return false;
+    }
   }
 }
 

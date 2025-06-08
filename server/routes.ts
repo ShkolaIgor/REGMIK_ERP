@@ -820,7 +820,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Order Status API
   app.get("/api/order-statuses", async (req, res) => {
     try {
+      console.log("Fetching order statuses...");
       const statuses = await storage.getOrderStatuses();
+      console.log("Order statuses fetched:", statuses);
       res.json(statuses);
     } catch (error) {
       console.error("Failed to fetch order statuses:", error);
@@ -843,7 +845,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const statusData = req.body;
-      const status = await storage.updateOrderStatus(id, statusData);
+      const status = await storage.updateOrderStatusRecord(id, statusData);
       if (!status) {
         return res.status(404).json({ error: "Order status not found" });
       }
@@ -857,7 +859,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/order-statuses/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      await storage.deleteOrderStatus(id);
+      await storage.deleteOrderStatusRecord(id);
       res.json({ success: true });
     } catch (error) {
       console.error("Failed to delete order status:", error);
