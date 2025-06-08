@@ -470,54 +470,7 @@ export default function Orders() {
 
   const filteredOrders = filterOrders(allOrders);
 
-  // Логування фільтрації замовлення #9
-  React.useEffect(() => {
-    if (allOrders.length > 0) {
-      const order9 = allOrders.find(order => order.id === 9);
-      if (order9) {
-        const isInFiltered = filteredOrders.find(order => order.id === 9);
-        console.log('Замовлення #9 після фільтрації:', isInFiltered ? 'ВІДОБРАЖАЄТЬСЯ' : 'ВІДФІЛЬТРОВАНО');
-        
-        if (!isInFiltered) {
-          console.log('Перевірка фільтрів для замовлення #9:');
-          console.log('- searchTerm:', searchTerm);
-          console.log('- statusFilter:', statusFilter);
-          console.log('- paymentFilter:', paymentFilter);
-          console.log('- dateRangeFilter:', dateRangeFilter);
-          
-          // Детальна перевірка кожного фільтра
-          const searchLower = searchTerm.toLowerCase();
-          const matchesSearch = !searchTerm || 
-            order9.orderNumber.toLowerCase().includes(searchLower) ||
-            order9.customerName.toLowerCase().includes(searchLower) ||
-            order9.customerEmail?.toLowerCase().includes(searchLower) ||
-            order9.customerPhone?.toLowerCase().includes(searchLower) ||
-            order9.orderSequenceNumber.toString().includes(searchLower);
-          
-          const matchesStatus = statusFilter === "all" || order9.status === statusFilter;
-          const matchesPayment = 
-            paymentFilter === "all" ||
-            (paymentFilter === "paid" && order9.paymentDate) ||
-            (paymentFilter === "unpaid" && !order9.paymentDate) ||
-            (paymentFilter === "overdue" && !order9.paymentDate && order9.dueDate && new Date(order9.dueDate) < new Date());
-          
-          const now = new Date();
-          const orderDate = new Date(order9.createdAt);
-          const matchesDateRange = 
-            dateRangeFilter === "all" ||
-            (dateRangeFilter === "today" && orderDate.toDateString() === now.toDateString()) ||
-            (dateRangeFilter === "week" && (now.getTime() - orderDate.getTime()) <= 7 * 24 * 60 * 60 * 1000) ||
-            (dateRangeFilter === "month" && (now.getTime() - orderDate.getTime()) <= 30 * 24 * 60 * 60 * 1000);
-          
-          console.log('Результати фільтрації:');
-          console.log('- matchesSearch:', matchesSearch);
-          console.log('- matchesStatus:', matchesStatus, '(статус замовлення:', order9.status + ')');
-          console.log('- matchesPayment:', matchesPayment, '(paymentDate:', order9.paymentDate + ')');
-          console.log('- matchesDateRange:', matchesDateRange, '(дата створення:', order9.createdAt + ')');
-        }
-      }
-    }
-  }, [filteredOrders, allOrders, searchTerm, statusFilter, paymentFilter, dateRangeFilter]);
+
 
   // Хук сортування з збереженням налаштувань користувача
   const { sortedData: orders, sortConfig, handleSort } = useSorting({
@@ -532,8 +485,7 @@ export default function Orders() {
     queryKey: ["/api/products"],
   });
 
-  // Додаємо логування для діагностики
-  console.log("Products in orders dialog:", products);
+
 
   const { data: clients = [] } = useQuery<any[]>({
     queryKey: ["/api/clients"],
@@ -1816,29 +1768,11 @@ export default function Orders() {
                     </Droppable>
                   </TableHeader>
                   <TableBody>
-                    {orders.map((order: any) => {
-                      // Логування для замовлення #9
-                      if (order.id === 9) {
-                        console.log('РЕНДЕРИТСЯ замовлення #9 в таблиці!', {
-                          id: order.id,
-                          orderNumber: order.orderNumber,
-                          customerName: order.customerName
-                        });
-                      }
-                      return (
+                    {orders.map((order: any) => (
                       <React.Fragment key={`order-${order.id}`}>
                         <TableRow 
                           key={`row-${order.id}`}
-                          className={`cursor-pointer hover:bg-gray-50 ${order.id === 9 ? 'border-4 border-red-500 bg-yellow-100' : ''}`}
-                          style={order.id === 9 ? {
-                            display: 'table-row !important',
-                            visibility: 'visible !important',
-                            opacity: '1 !important',
-                            position: 'relative !important',
-                            zIndex: '999 !important',
-                            height: '60px !important',
-                            minHeight: '60px !important'
-                          } : {}}
+                          className="cursor-pointer hover:bg-gray-50"
                           onClick={() => toggleOrderExpansion(order.id)}
                         >
                           {columnOrder.map((columnKey) => (
@@ -1884,11 +1818,9 @@ export default function Orders() {
                           </TableRow>
                         )}
                       </React.Fragment>
-                      );
-                    })}
+                    ))}
                   </TableBody>
                 </Table>
-                </div>
               </DragDropContext>
             )}
           </CardContent>
