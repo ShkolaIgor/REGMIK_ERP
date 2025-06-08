@@ -56,6 +56,9 @@ export function PaymentDialog({
     mutationFn: async (paymentData: any) => {
       return await apiRequest(`/api/orders/${orderId}/process-payment`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(paymentData),
       });
     },

@@ -5486,7 +5486,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/orders/:id/process-payment", async (req, res) => {
     try {
       const orderId = parseInt(req.params.id);
-      const paymentData = req.body;
+      console.log("Raw request body:", req.body);
+      console.log("Request body type:", typeof req.body);
+      
+      let paymentData;
+      if (typeof req.body === 'string') {
+        try {
+          paymentData = JSON.parse(req.body);
+        } catch (parseError) {
+          console.error("JSON parse error:", parseError);
+          return res.status(400).json({ error: "Неправильний формат JSON" });
+        }
+      } else {
+        paymentData = req.body;
+      }
       
       // Валідація вхідних даних
       const validPaymentTypes = ['full', 'partial', 'contract', 'none'];
