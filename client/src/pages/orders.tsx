@@ -469,8 +469,8 @@ export default function Orders() {
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-semibold text-gray-900">Замовлення</h2>
-            <p className="text-gray-600">Управління клієнтськими замовленнями</p>
+            <h2 className="text-2xl font-semibold text-gray-900">Замовлення / Рахунки</h2>
+            <p className="text-gray-600">Управління замовленнями та рахунками (номер замовлення = номер рахунку)</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -560,6 +560,45 @@ export default function Orders() {
                       </Select>
                     )}
                   </div>
+                </div>
+
+                {/* Дати для рахунку */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="paymentDate">Дата оплати</Label>
+                    <Input
+                      id="paymentDate"
+                      type="datetime-local"
+                      {...form.register("paymentDate")}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="dueDate">Термін виконання</Label>
+                    <Input
+                      id="dueDate"
+                      type="datetime-local"
+                      {...form.register("dueDate")}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="shippedDate">Дата відвантаження</Label>
+                    <Input
+                      id="shippedDate"
+                      type="datetime-local"
+                      {...form.register("shippedDate")}
+                    />
+                  </div>
+                </div>
+
+                {/* Примітки */}
+                <div>
+                  <Label htmlFor="notes">Примітки до рахунку</Label>
+                  <Textarea
+                    id="notes"
+                    {...form.register("notes")}
+                    placeholder="Додаткова інформація про замовлення/рахунок"
+                    rows={3}
+                  />
                 </div>
 
                 {/* Товари в замовленні */}
@@ -765,9 +804,10 @@ export default function Orders() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Номер замовлення</TableHead>
+                    <TableHead>Номер рахунку</TableHead>
                     <TableHead>Клієнт</TableHead>
-                    <TableHead>Дата</TableHead>
+                    <TableHead>Дата створення</TableHead>
+                    <TableHead>Дата оплати</TableHead>
                     <TableHead>Сума</TableHead>
                     <TableHead>Статус</TableHead>
                     <TableHead>Дії</TableHead>
@@ -800,6 +840,15 @@ export default function Orders() {
                           </div>
                         </TableCell>
                         <TableCell>{formatDate(order.createdAt)}</TableCell>
+                        <TableCell>
+                          {order.paymentDate ? (
+                            <span className="text-green-600 font-medium">
+                              {formatDate(order.paymentDate)}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">Не оплачено</span>
+                          )}
+                        </TableCell>
                         <TableCell>{formatCurrency(order.totalAmount)}</TableCell>
                         <TableCell>
                           <Badge className={getStatusColor(order.status)}>
