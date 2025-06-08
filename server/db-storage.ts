@@ -3576,10 +3576,13 @@ export class DatabaseStorage implements IStorage {
 
   async createManufacturingOrder(orderData: any): Promise<any> {
     try {
+      console.log("🟡 DB: Starting createManufacturingOrder with data:", orderData);
+      
       // Генеруємо номер завдання, якщо він не вказаний
       if (!orderData.orderNumber) {
         orderData.orderNumber = `MFG-${Date.now()}-${orderData.productId || 'NEW'}`;
       }
+      console.log("🟡 DB: Generated order number:", orderData.orderNumber);
 
       // Встановлюємо значення за замовчуванням
       const completeOrderData = {
@@ -3597,10 +3600,14 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       };
 
+      console.log("🟡 DB: Complete order data for insert:", completeOrderData);
+
       const [newOrder] = await db.insert(manufacturingOrders).values(completeOrderData).returning();
+      console.log("🟢 DB: Successfully inserted order:", newOrder);
+      
       return newOrder;
     } catch (error) {
-      console.error("Error creating manufacturing order:", error);
+      console.error("🔴 DB: Error creating manufacturing order:", error);
       throw error;
     }
   }
