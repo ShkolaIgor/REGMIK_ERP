@@ -4680,22 +4680,6 @@ export class DatabaseStorage implements IStorage {
     return contact;
   }
 
-  // Методи для рахунків
-      .select()
-      .limit(1);
-  }
-
-      .returning();
-  }
-
-      .returning();
-  }
-
-    const [item] = await db
-      .values(itemData)
-      .returning();
-    return item;
-  }
 
   // Методи для логів синхронізації
   async createSyncLog(logData: any): Promise<any> {
@@ -4723,60 +4707,9 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
     return log;
   }
+}
 
-  async getSyncHistory(source?: string, limit: number = 50): Promise<any[]> {
-    let query = db
-      .select()
-      .from(syncLogs)
-      .orderBy(desc(syncLogs.startedAt))
-      .limit(limit);
-
-    if (source) {
-      query = query.where(sql`details->>'source' = ${source}`);
-    }
-
-    return await query;
-  }
-
-  // Roles management
-  async getRoles() {
-    return await db.select().from(roles).orderBy(roles.name);
-  }
-
-  async createRole(roleData: any) {
-    const [role] = await db
-      .insert(roles)
-      .values(roleData)
-      .returning();
-    return role;
-  }
-
-  // System modules management
-  async getSystemModules() {
-    return await db.select().from(systemModules).orderBy(systemModules.sortOrder);
-  }
-
-  async createSystemModule(moduleData: any) {
-    const [module] = await db
-      .insert(systemModules)
-      .values(moduleData)
-      .returning();
-    return module;
-  }
-
-  // Email Settings
-  async getEmailSettings(): Promise<EmailSettings | null> {
-    const [settings] = await db.select().from(emailSettings).limit(1);
-    return settings || null;
-  }
-
-  async updateEmailSettings(settingsData: InsertEmailSettings): Promise<EmailSettings> {
-    // Спочатку перевіримо, чи існують налаштування
-    const existing = await this.getEmailSettings();
-    
-    if (existing) {
-      // Оновлюємо існуючі налаштування
-      const [settings] = await db
+export const storage = new DatabaseStorage();
         .update(emailSettings)
         .set({
           ...settingsData,
