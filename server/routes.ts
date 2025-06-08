@@ -5509,6 +5509,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await storage.processOrderPayment(orderId, paymentData);
       
+      // Отримуємо оновлене замовлення для перевірки
+      const updatedOrder = await storage.getOrder(orderId);
+      console.log("Оновлене замовлення після оплати:", updatedOrder);
+      
       let message = "Оплату замовлення оброблено";
       if (paymentData.paymentType === 'full') {
         message += ", створено завдання на виробництво";
