@@ -93,6 +93,8 @@ export default function Manufacturing() {
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["/api/manufacturing-orders"],
+    staleTime: 0, // Дозволяємо оновлення даних
+    gcTime: 0, // Не кешуємо дані між оновленнями
   });
 
   const { data: products = [] } = useQuery({
