@@ -81,8 +81,7 @@ export default function OrderedProducts() {
   const [isProductionDialogOpen, setIsProductionDialogOpen] = useState(false);
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
   const [isSupplierOrderDialogOpen, setIsSupplierOrderDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [productToDelete, setProductToDelete] = useState<any>(null);
+
   
   // Стан для фільтрації та пошуку
   const [searchTerm, setSearchTerm] = useState("");
@@ -278,28 +277,7 @@ export default function OrderedProducts() {
     },
   });
 
-  const deleteOrderedProductMutation = useMutation({
-    mutationFn: async (productId: number) => {
-      return await apiRequest(`/api/ordered-products/${productId}`, "DELETE");
-    },
-    onSuccess: () => {
-      toast({
-        title: "Успішно",
-        description: "Замовлений товар видалено",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/ordered-products-info"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      setIsDeleteDialogOpen(false);
-      setProductToDelete(null);
-    },
-    onError: () => {
-      toast({
-        title: "Помилка",
-        description: "Не вдалося видалити замовлений товар",
-        variant: "destructive",
-      });
-    },
-  });
+
 
   const handleSendToProduction = () => {
     if (!selectedProduct || productionQuantity <= 0) return;
@@ -488,6 +466,7 @@ export default function OrderedProducts() {
                     </TableHead>
                     <TableHead>У виробництві</TableHead>
                     <TableHead>Статус</TableHead>
+                    <TableHead>Дії</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -745,19 +724,7 @@ export default function OrderedProducts() {
                             </Dialog>
                           )}
 
-                          {/* Кнопка видалення замовленого товару */}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setProductToDelete(item);
-                              setIsDeleteDialogOpen(true);
-                            }}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Видалити
-                          </Button>
+
                         </div>
                       </TableCell>
                     </TableRow>
@@ -769,40 +736,7 @@ export default function OrderedProducts() {
         </div>
       )}
 
-      {/* Діалог підтвердження видалення */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Підтвердити видалення</DialogTitle>
-            <DialogDescription>
-              Ви дійсно хочете видалити замовлений товар "{productToDelete?.product?.name}"?
-              Ця дія призведе до видалення всіх пов'язаних замовлень і виробничих завдань.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsDeleteDialogOpen(false);
-                setProductToDelete(null);
-              }}
-            >
-              Скасувати
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                if (productToDelete) {
-                  deleteOrderedProductMutation.mutate(productToDelete.productId);
-                }
-              }}
-              disabled={deleteOrderedProductMutation.isPending}
-            >
-              {deleteOrderedProductMutation.isPending ? "Видалення..." : "Видалити"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
     </div>
   );
 }
