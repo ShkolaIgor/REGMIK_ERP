@@ -479,9 +479,16 @@ export const insertUnitSchema = createInsertSchema(units).omit({ id: true, creat
 export const insertWarehouseSchema = createInsertSchema(warehouses).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true });
 export const insertInventorySchema = createInsertSchema(inventory).omit({ id: true, updatedAt: true });
-export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, orderNumber: true, totalAmount: true }).extend({
-  customerName: z.string().optional(), // робимо опціональним, якщо є clientId
-  clientId: z.number().optional(), // опціональний зв'язок з клієнтом
+export const insertOrderSchema = z.object({
+  customerName: z.string().optional(),
+  clientId: z.number().optional(),
+  customerEmail: z.string().email().optional().or(z.literal("")),
+  customerPhone: z.string().optional(),
+  status: z.string().default("pending"),
+  notes: z.string().optional(),
+  paymentDate: z.string().optional().nullable(),
+  dueDate: z.string().optional().nullable(),
+  shippedDate: z.string().optional().nullable(),
 }).refine(data => data.customerName || data.clientId, {
   message: "Потрібно вказати або ім'я клієнта, або обрати клієнта зі списку"
 });

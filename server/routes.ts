@@ -735,7 +735,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Items data:", items);
       
       const orderData = insertOrderSchema.parse(order);
-      const updatedOrder = await storage.updateOrder(id, orderData, items || []);
+      
+      // Конвертуємо строки дат в Date об'єкти
+      const processedOrderData = {
+        ...orderData,
+        paymentDate: orderData.paymentDate ? new Date(orderData.paymentDate) : null,
+        dueDate: orderData.dueDate ? new Date(orderData.dueDate) : null,
+        shippedDate: orderData.shippedDate ? new Date(orderData.shippedDate) : null,
+      };
+      
+      const updatedOrder = await storage.updateOrder(id, processedOrderData, items || []);
       
       console.log("Updated order result:", updatedOrder);
       
