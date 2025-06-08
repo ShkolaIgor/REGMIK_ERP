@@ -526,21 +526,7 @@ export default function Orders() {
     defaultSort: { field: 'orderSequenceNumber', direction: 'desc' }
   });
 
-  // Логування після сортування
-  React.useEffect(() => {
-    if (orders.length > 0) {
-      const order9InSorted = orders.find(order => order.id === 9);
-      console.log('Замовлення #9 після сортування:', order9InSorted ? 'ПРИСУТНЄ' : 'ВІДСУТНЄ');
-      console.log('Всього замовлень після сортування:', orders.length);
-      console.log('IDs замовлень після сортування:', orders.map(o => o.id));
-      
-      if (order9InSorted) {
-        const index = orders.findIndex(order => order.id === 9);
-        console.log('Позиція замовлення #9 в списку:', index);
-        console.log('orderSequenceNumber замовлення #9:', order9InSorted.orderSequenceNumber);
-      }
-    }
-  }, [orders]);
+
 
   const { data: products = [] } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -1784,8 +1770,7 @@ export default function Orders() {
               </div>
             ) : (
               <DragDropContext onDragEnd={handleColumnDragEnd}>
-                <div className="w-full" style={{ overflow: 'visible', minHeight: '500px' }}>
-                <Table style={{ tableLayout: 'auto', minHeight: '400px' }}>
+                <Table>
                   <TableHeader>
                     <Droppable droppableId="table-headers" direction="horizontal">
                       {(provided) => (
