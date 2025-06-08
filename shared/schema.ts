@@ -329,6 +329,7 @@ export const productionTasks = pgTable("production_tasks", {
   id: serial("id").primaryKey(),
   recipeId: integer("recipe_id").references(() => recipes.id).notNull(),
   quantity: integer("quantity").notNull(),
+  unit: text("unit").notNull().default("шт"),
   status: text("status").notNull().default("planned"), // planned, in-progress, quality-check, completed
   priority: text("priority").notNull().default("medium"), // low, medium, high
   assignedTo: text("assigned_to"),
