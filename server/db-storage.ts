@@ -3491,6 +3491,7 @@ export class DatabaseStorage implements IStorage {
   // Manufacturing Orders
   async getManufacturingOrders(): Promise<any[]> {
     try {
+      console.log("Отримання виробничих завдань з фільтрацією скасованих...");
       const orders = await db.select({
         id: manufacturingOrders.id,
         orderNumber: manufacturingOrders.orderNumber,
@@ -3547,6 +3548,11 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(warehouses, eq(manufacturingOrders.warehouseId, warehouses.id))
       .where(ne(manufacturingOrders.status, 'cancelled'))
       .orderBy(desc(manufacturingOrders.createdAt));
+
+      console.log(`Знайдено ${orders.length} активних виробничих завдань (без скасованих)`);
+      orders.forEach(order => {
+        console.log(`- Завдання ${order.orderNumber}, статус: ${order.status}, продукт: ${order.productId}`);
+      });
 
       return orders;
     } catch (error) {
@@ -4976,14 +4982,19 @@ export class DatabaseStorage implements IStorage {
         .where(eq(orders.id, orderId));
 
       // Видаляємо або скасовуємо пов'язані виробничі завдання
-      await db.update(manufacturingOrders)
+      const updatedOrders = await db.update(manufacturingOrders)
         .set({
           status: 'cancelled',
           updatedAt: new Date(),
         })
-        .where(eq(manufacturingOrders.sourceOrderId, orderId));
+        .where(eq(manufacturingOrders.sourceOrderId, orderId))
+        .returning();
 
       console.log(`Скасовано оплату для замовлення ${orderId}, виробничі завдання скасовано`);
+      console.log(`Кількість скасованих виробничих завдань: ${updatedOrders.length}`);
+      updatedOrders.forEach(order => {
+        console.log(`- Скасовано завдання ${order.orderNumber}, статус тепер: ${order.status}`);
+      });
     } catch (error) {
       console.error("Помилка при скасуванні оплати замовлення:", error);
       throw error;
