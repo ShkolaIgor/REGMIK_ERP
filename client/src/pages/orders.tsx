@@ -428,9 +428,12 @@ export default function Orders() {
 
   // Мутація для оновлення статусу
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: string }) => {
-      console.log("Frontend: Updating order status", { id, status });
-      return apiRequest(`/api/orders/${id}/status`, { method: "PUT", body: { status } });
+    mutationFn: (params: { id: number; status: string }) => {
+      console.log("Frontend: Updating order status - params:", params);
+      console.log("Frontend: Updating order status - id:", params.id, "status:", params.status);
+      const requestData = { status: params.status };
+      console.log("Frontend: Request data being sent:", requestData);
+      return apiRequest(`/api/orders/${params.id}/status`, { method: "PUT", body: requestData });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
