@@ -3418,14 +3418,13 @@ export class DatabaseStorage implements IStorage {
 
         const totalAvailable = inventoryData.reduce((sum, inv) => sum + parseFloat(inv.quantity), 0);
 
-        // Перевіряємо чи є товар у виробництві (тільки активні завдання)
+        // Перевіряємо чи є товар у виробництві (тільки активні завдання в процесі)
         const productionTasksData = await db.select()
           .from(productionTasks)
           .innerJoin(recipes, eq(productionTasks.recipeId, recipes.id))
           .where(and(
             eq(recipes.productId, productId),
-            ne(productionTasks.status, 'completed'),
-            ne(productionTasks.status, 'cancelled')
+            eq(productionTasks.status, 'in-progress')
           ));
 
         const inProduction = productionTasksData.reduce((sum, task) => sum + parseFloat(task.production_tasks.quantity), 0);
