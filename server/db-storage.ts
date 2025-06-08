@@ -4857,6 +4857,131 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return result;
   }
+
+  // Автоматичне створення виробничих завдань після оплати замовлень
+  async processOrderPayment(orderId: number): Promise<void> {
+    try {
+      // Отримуємо замовлення з товарами
+      const orderWithItems = await db.select({
+        orderId: orders.id,
+        orderNumber: orders.orderNumber,
+        item: orderItems,
+        product: products,
+      })
+      .from(orders)
+      .innerJoin(orderItems, eq(orders.id, orderItems.orderId))
+      .innerJoin(products, eq(orderItems.productId, products.id))
+      .where(eq(orders.id, orderId));
+
+      if (orderWithItems.length === 0) {
+        console.log(`Замовлення з ID ${orderId} не знайдено або не має товарів`);
+        return;
+      }
+
+      // Групуємо товари по productId
+      const productGroups = new Map<number, { product: any, totalQuantity: number }>();
+      
+      for (const row of orderWithItems) {
+        const productId = row.item.productId;
+        const quantity = parseInt(row.item.quantity.toString());
+        
+        if (!productGroups.has(productId)) {
+          productGroups.set(productId, {
+            product: row.product,
+            totalQuantity: 0
+          });
+        }
+        
+        const group = productGroups.get(productId)!;
+        group.totalQuantity += quantity;
+      }
+
+      // Обробляємо кожний тип товару
+      for (const [productId, group] of productGroups) {
+        await this.createOrUpdateManufacturingOrder(
+          productId, 
+          group.totalQuantity, 
+          orderId,
+          orderWithItems[0].orderNumber
+        );
+      }
+
+      console.log(`Оброблено оплату замовлення ${orderWithItems[0].orderNumber}: створено завдання на виробництво`);
+    } catch (error) {
+      console.error("Помилка при обробці оплати замовлення:", error);
+      throw error;
+    }
+  }
+
+  private async createOrUpdateManufacturingOrder(
+    productId: number, 
+    quantity: number, 
+    sourceOrderId: number,
+    orderNumber: string
+  ): Promise<void> {
+    try {
+      // Перевіряємо чи є рецепт для цього продукту
+      const recipe = await db.select()
+        .from(recipes)
+        .where(eq(recipes.productId, productId))
+        .limit(1);
+
+      if (recipe.length === 0) {
+        console.log(`Рецепт для продукту з ID ${productId} не знайдено. Пропускаємо створення виробничого завдання.`);
+        return;
+      }
+
+      // Шукаємо існуючі незапущені виробничі завдання для цього продукту
+      const existingOrders = await db.select()
+        .from(manufacturingOrders)
+        .where(and(
+          eq(manufacturingOrders.productId, productId),
+          eq(manufacturingOrders.status, 'pending')
+        ));
+
+      if (existingOrders.length > 0) {
+        // Якщо є незапущені завдання - об'єднуємо кількість
+        const existingOrder = existingOrders[0];
+        const newQuantity = parseFloat(existingOrder.plannedQuantity) + quantity;
+        
+        await db.update(manufacturingOrders)
+          .set({
+            plannedQuantity: newQuantity.toString(),
+            notes: `${existingOrder.notes || ''}\nДодано з замовлення ${orderNumber}: ${quantity} шт.`,
+            updatedAt: new Date()
+          })
+          .where(eq(manufacturingOrders.id, existingOrder.id));
+
+        console.log(`Додано ${quantity} шт. до існуючого завдання на виробництво #${existingOrder.orderNumber}`);
+      } else {
+        // Створюємо нове виробниче завдання
+        const manufacturingOrderNumber = `MFG-${Date.now()}-${productId}`;
+        
+        await db.insert(manufacturingOrders).values({
+          orderNumber: manufacturingOrderNumber,
+          productId: productId,
+          recipeId: recipe[0].id,
+          plannedQuantity: quantity.toString(),
+          producedQuantity: '0',
+          status: 'pending',
+          priority: 'medium',
+          sourceOrderId: sourceOrderId,
+          materialCost: '0.00',
+          laborCost: '0.00',
+          overheadCost: '0.00',
+          totalCost: '0.00',
+          notes: `Автоматично створено з замовлення ${orderNumber}. Потрібно виготовити: ${quantity} шт.`,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+
+        console.log(`Створено нове завдання на виробництво ${manufacturingOrderNumber} для ${quantity} шт.`);
+      }
+    } catch (error) {
+      console.error("Помилка при створенні/оновленні виробничого завдання:", error);
+      throw error;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();

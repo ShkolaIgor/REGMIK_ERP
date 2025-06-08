@@ -1769,6 +1769,9 @@ export class MemStorage implements IStorage {
   // User Sort Preferences methods
   getUserSortPreferences(userId: string, tableName: string): Promise<UserSortPreference | null>;
   saveUserSortPreferences(preference: InsertUserSortPreference): Promise<UserSortPreference>;
+
+  // Manufacturing automation methods
+  processOrderPayment(orderId: number): Promise<void>;
 }
 
 export const storage = new MemStorage();

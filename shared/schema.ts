@@ -1421,6 +1421,7 @@ export const manufacturingOrders = pgTable("manufacturing_orders", {
   notes: text("notes"),
   batchNumber: varchar("batch_number", { length: 100 }),
   serialNumbers: text("serial_numbers").array(), // масив серійних номерів
+  sourceOrderId: integer("source_order_id").references(() => orders.id), // джерело замовлення
   createdBy: varchar("created_by", { length: 100 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

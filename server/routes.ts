@@ -5482,6 +5482,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Обробка оплати замовлення та автоматичне створення виробничих завдань
+  app.post("/api/orders/:id/process-payment", async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      await storage.processOrderPayment(orderId);
+      res.json({ success: true, message: "Оплату замовлення оброблено, створено завдання на виробництво" });
+    } catch (error) {
+      console.error("Error processing order payment:", error);
+      res.status(500).json({ error: "Failed to process order payment" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
