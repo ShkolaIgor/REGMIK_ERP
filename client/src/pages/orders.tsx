@@ -9,8 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
-import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown } from "lucide-react";
 import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -93,6 +95,10 @@ export default function Orders() {
   const [isPartialShipmentOpen, setIsPartialShipmentOpen] = useState(false);
   const [selectedOrderForShipment, setSelectedOrderForShipment] = useState<Order | null>(null);
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
+  const [clientComboboxOpen, setClientComboboxOpen] = useState(false);
+  const [clientSearchValue, setClientSearchValue] = useState("");
+  const [isCreateClientDialogOpen, setIsCreateClientDialogOpen] = useState(false);
+  const [newClientName, setNewClientName] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -264,6 +270,35 @@ export default function Orders() {
     },
   });
 
+  // Мутація для створення нового клієнта
+  const createClientMutation = useMutation({
+    mutationFn: async (clientData: any) => {
+      return await apiRequest("/api/clients", {
+        method: "POST",
+        body: clientData
+      });
+    },
+    onSuccess: (newClient) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      // Автоматично вибираємо новоствореного клієнта
+      form.setValue("clientId", newClient.id.toString());
+      setIsCreateClientDialogOpen(false);
+      setNewClientName("");
+      setClientSearchValue("");
+      toast({
+        title: "Успіх",
+        description: "Клієнта створено та обрано",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Не вдалося створити клієнта",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Функція для відвантаження замовлення
   const handleShipOrder = (order: any) => {
     if (confirm(`Підтвердити відвантаження замовлення ${order.orderNumber}?`)) {
@@ -365,6 +400,62 @@ export default function Orders() {
       const price = parseFloat(item.unitPrice) || 0;
       return sum + (qty * price);
     }, 0);
+  };
+
+  // Функції для роботи з клієнтами
+  const filteredClients = clients.filter((client: any) =>
+    client.name.toLowerCase().includes(clientSearchValue.toLowerCase()) ||
+    client.taxCode.toLowerCase().includes(clientSearchValue.toLowerCase())
+  );
+
+  const handleClientSelect = (clientId: string) => {
+    form.setValue("clientId", clientId);
+    setClientComboboxOpen(false);
+    setClientSearchValue("");
+  };
+
+  const handleClientSearchChange = (value: string) => {
+    setClientSearchValue(value);
+    
+    // Якщо введено текст і немає точного збігу з існуючими клієнтами
+    if (value.length > 2 && !clients.find((client: any) => 
+      client.name.toLowerCase() === value.toLowerCase()
+    )) {
+      // Перевіряємо, чи потрібно відкрити діалог створення нового клієнта
+      const hasPartialMatch = clients.some((client: any) =>
+        client.name.toLowerCase().includes(value.toLowerCase())
+      );
+      
+      if (!hasPartialMatch && value.length > 3) {
+        setNewClientName(value);
+        setIsCreateClientDialogOpen(true);
+      }
+    }
+  };
+
+  const handleCreateNewClient = () => {
+    if (!newClientName.trim()) {
+      toast({
+        title: "Помилка",
+        description: "Введіть назву клієнта",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Створюємо базовий об'єкт клієнта
+    const clientData = {
+      name: newClientName.trim(),
+      taxCode: `AUTO-${Date.now()}`, // Тимчасовий код
+      fullName: newClientName.trim(),
+      address: "",
+      phone: "",
+      email: "",
+      contactPerson: "",
+      notes: "Автоматично створений клієнт",
+    };
+
+    createClientMutation.mutate(clientData);
   };
 
   const handleSubmit = (data: OrderFormData) => {
@@ -490,21 +581,81 @@ export default function Orders() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="clientId">Клієнт *</Label>
-                    <Select
-                      value={form.watch("clientId")}
-                      onValueChange={(value) => form.setValue("clientId", value)}
-                    >
-                      <SelectTrigger className={form.formState.errors.clientId ? "border-red-500" : ""}>
-                        <SelectValue placeholder="Оберіть клієнта" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {clients.map((client: any) => (
-                          <SelectItem key={client.id} value={client.id.toString()}>
-                            {client.name} ({client.taxCode})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={clientComboboxOpen} onOpenChange={setClientComboboxOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={clientComboboxOpen}
+                          className={`w-full justify-between ${form.formState.errors.clientId ? "border-red-500" : ""}`}
+                        >
+                          {form.watch("clientId") ? (
+                            (() => {
+                              const selectedClient = clients.find((client: any) => 
+                                client.id.toString() === form.watch("clientId")
+                              );
+                              return selectedClient ? 
+                                `${selectedClient.name} (${selectedClient.taxCode})` : 
+                                "Оберіть клієнта";
+                            })()
+                          ) : (
+                            "Оберіть клієнта"
+                          )}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput
+                            placeholder="Шукати клієнта або ввести нового..."
+                            value={clientSearchValue}
+                            onValueChange={handleClientSearchChange}
+                          />
+                          <CommandList>
+                            <CommandEmpty>
+                              {clientSearchValue.length > 0 ? (
+                                <div className="p-2">
+                                  <p className="text-sm text-muted-foreground mb-2">
+                                    Клієнт не знайдений
+                                  </p>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => {
+                                      setNewClientName(clientSearchValue);
+                                      setIsCreateClientDialogOpen(true);
+                                    }}
+                                    className="w-full"
+                                  >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Створити "{clientSearchValue}"
+                                  </Button>
+                                </div>
+                              ) : (
+                                "Почніть вводити назву клієнта"
+                              )}
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {filteredClients.map((client: any) => (
+                                <CommandItem
+                                  key={client.id}
+                                  value={client.id.toString()}
+                                  onSelect={() => handleClientSelect(client.id.toString())}
+                                >
+                                  <Check
+                                    className={`mr-2 h-4 w-4 ${
+                                      form.watch("clientId") === client.id.toString()
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    }`}
+                                  />
+                                  {client.name} ({client.taxCode})
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                     {form.formState.errors.clientId && (
                       <p className="text-sm text-red-500 mt-1">
                         {form.formState.errors.clientId.message}
