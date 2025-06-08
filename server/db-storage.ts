@@ -4397,15 +4397,19 @@ export class DatabaseStorage implements IStorage {
         await this.createDefaultManufacturingSteps(id);
 
         // Оновлюємо статус відповідного production_task
-        const [productionTask] = await db.select()
+        const productionTasks_list = await db.select()
           .from(productionTasks)
           .leftJoin(recipes, eq(productionTasks.recipeId, recipes.id))
           .where(and(
             eq(recipes.productId, updated.productId),
-            eq(productionTasks.quantity, parseInt(updated.plannedQuantity))
+            eq(productionTasks.quantity, parseInt(updated.plannedQuantity)),
+            eq(productionTasks.status, 'planned')
           ));
 
-        if (productionTask) {
+        console.log(`Знайдено production tasks для продукту ${updated.productId}, кількість ${updated.plannedQuantity}:`, productionTasks_list.length);
+
+        if (productionTasks_list.length > 0) {
+          const productionTask = productionTasks_list[0];
           await db.update(productionTasks)
             .set({ 
               status: 'in-progress',
@@ -4413,6 +4417,7 @@ export class DatabaseStorage implements IStorage {
               progress: 10
             })
             .where(eq(productionTasks.id, productionTask.production_tasks.id));
+          console.log(`Оновлено статус production_task ${productionTask.production_tasks.id} на in-progress`);
         }
       }
 
