@@ -42,6 +42,7 @@ export async function apiRequest(
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
+    cache: "no-cache", // Примусово відключаємо кеш браузера для всіх запитів
   });
 
   await throwIfResNotOk(res);
