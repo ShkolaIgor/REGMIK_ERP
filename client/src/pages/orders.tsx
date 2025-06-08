@@ -717,47 +717,9 @@ export default function Orders() {
     }
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending': return 'Очікує';
-      case 'processing': return 'В обробці';
-      case 'completed': return 'Завершено';
-      case 'cancelled': return 'Скасовано';
-      case 'partially_shipped': return 'Частково відвантажено';
-      case 'shipped': return 'Відвантажено';
-      default: return status;
-    }
-  };
 
-  // Функція для визначення кольору фону номера рахунку
-  const getOrderNumberBgColor = (order: any) => {
-    const currentDate = new Date();
-    const dueDate = order.dueDate ? new Date(order.dueDate) : null;
-    const paymentDate = order.paymentDate ? new Date(order.paymentDate) : null;
-    const shippedDate = order.shippedDate ? new Date(order.shippedDate) : null;
 
-    // Якщо поточна дата більша за термін відвантаження - червоний фон
-    if (dueDate && currentDate > dueDate) {
-      return 'bg-red-200 text-red-900';
-    }
 
-    // Якщо рахунок оплачений і не відвантажений і не прострочений - світло-зелений фон
-    if (paymentDate && !shippedDate && (!dueDate || currentDate <= dueDate)) {
-      return 'bg-green-200 text-green-900';
-    }
-
-    // Звичайний фон
-    return '';
-  };
-
-  const handlePartialShipment = (order: Order) => {
-    setSelectedOrderForShipment(order);
-    setIsPartialShipmentOpen(true);
-  };
-
-  const toggleOrderExpansion = (orderId: number) => {
-    setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
-  };
 
   if (isLoading) {
     return <div className="p-6">Завантаження...</div>;
