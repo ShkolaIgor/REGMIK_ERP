@@ -243,14 +243,18 @@ export default function Orders() {
       
       case 'status':
         const statusInfo = orderStatuses.find(s => s.name === order.status);
+        
+        const handleStatusChange = (newStatus: string) => {
+          console.log("Status change handler called with:", { orderId: order.id, currentStatus: order.status, newStatus });
+          console.log("About to call updateStatusMutation.mutate with:", { id: order.id, status: newStatus });
+          updateStatusMutation.mutate({ id: order.id, status: newStatus });
+        };
+        
         return (
           <div onClick={(e) => e.stopPropagation()}>
             <Select
               value={order.status}
-              onValueChange={(value) => {
-                console.log("Select onValueChange triggered with:", { orderId: order.id, newStatus: value });
-                updateStatusMutation.mutate({ id: order.id, status: value });
-              }}
+              onValueChange={handleStatusChange}
             >
               <SelectTrigger className="w-[140px] h-7 border-0 p-1">
                 <Badge 
