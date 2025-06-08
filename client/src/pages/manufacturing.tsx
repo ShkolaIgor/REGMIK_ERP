@@ -124,7 +124,9 @@ export default function Manufacturing() {
     },
     onSuccess: (result) => {
       console.log("Manufacturing order created successfully:", result);
+      console.log("Invalidating cache for /api/manufacturing-orders");
       queryClient.invalidateQueries({ queryKey: ["/api/manufacturing-orders"] });
+      console.log("Cache invalidated, refetching data...");
       setIsDialogOpen(false);
       resetForm();
       toast({
