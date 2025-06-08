@@ -1407,7 +1407,7 @@ export default function Orders() {
                 </DialogHeader>
                 {editingStatus && (
                   <form onSubmit={statusForm.handleSubmit((data) => {
-                    updateStatusMutation.mutate({
+                    updateStatusSettingsMutation.mutate({
                       id: editingStatus.id,
                       data
                     });
