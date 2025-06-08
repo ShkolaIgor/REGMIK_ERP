@@ -480,15 +480,15 @@ export const insertWarehouseSchema = createInsertSchema(warehouses).omit({ id: t
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true });
 export const insertInventorySchema = createInsertSchema(inventory).omit({ id: true, updatedAt: true });
 export const insertOrderSchema = z.object({
-  customerName: z.string().optional(),
-  clientId: z.number().optional(),
-  customerEmail: z.string().email().optional().or(z.literal("")),
-  customerPhone: z.string().optional(),
+  customerName: z.union([z.string(), z.null()]).optional(),
+  clientId: z.union([z.number(), z.null()]).optional(),
+  customerEmail: z.union([z.string(), z.null()]).optional(),
+  customerPhone: z.union([z.string(), z.null()]).optional(),
   status: z.string().default("pending"),
-  notes: z.string().optional(),
-  paymentDate: z.string().optional().nullable(),
-  dueDate: z.string().optional().nullable(),
-  shippedDate: z.string().optional().nullable(),
+  notes: z.union([z.string(), z.null()]).optional(),
+  paymentDate: z.union([z.string(), z.null()]).optional(),
+  dueDate: z.union([z.string(), z.null()]).optional(),
+  shippedDate: z.union([z.string(), z.null()]).optional(),
 }).refine(data => data.customerName || data.clientId, {
   message: "Потрібно вказати або ім'я клієнта, або обрати клієнта зі списку"
 });
