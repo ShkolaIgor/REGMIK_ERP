@@ -430,7 +430,7 @@ export default function OrderedProducts() {
             </CardHeader>
             <CardContent>
               {/* Фільтри та пошук над таблицею */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 {/* Пошук */}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -445,7 +445,7 @@ export default function OrderedProducts() {
                 {/* Фільтр за статусом */}
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Статус" />
+                    <SelectValue placeholder="Фільтр за статусом" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Всі статуси</SelectItem>
@@ -455,38 +455,6 @@ export default function OrderedProducts() {
                     <SelectItem value="sufficient">Достатньо на складі</SelectItem>
                   </SelectContent>
                 </Select>
-
-                {/* Сортування */}
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Сортувати за" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="name">Назвою</SelectItem>
-                    <SelectItem value="quantity">Кількістю замовлено</SelectItem>
-                    <SelectItem value="shortage">Дефіцитом</SelectItem>
-                    <SelectItem value="available">Наявністю</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {/* Порядок сортування */}
-                <Button
-                  variant="outline"
-                  onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
-                  className="flex items-center gap-2"
-                >
-                  {sortDirection === "asc" ? (
-                    <>
-                      <ArrowUp className="h-4 w-4" />
-                      За зростанням
-                    </>
-                  ) : (
-                    <>
-                      <ArrowDown className="h-4 w-4" />
-                      За спаданням
-                    </>
-                  )}
-                </Button>
               </div>
               <Table>
                 <TableHeader>
