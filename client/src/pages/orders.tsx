@@ -1058,23 +1058,42 @@ export default function Orders() {
 
 
 
-                <div className="flex justify-end space-x-2 pt-4">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setIsDialogOpen(false)}
-                  >
-                    Скасувати
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={isEditMode ? updateOrderMutation.isPending : createOrderMutation.isPending}
-                  >
-                    {isEditMode 
-                      ? (updateOrderMutation.isPending ? "Оновлення..." : "Оновити замовлення")
-                      : (createOrderMutation.isPending ? "Створення..." : "Створити рахунок")
-                    }
-                  </Button>
+                <div className="flex justify-between pt-4">
+                  {/* Кнопка видалення (тільки в режимі редагування) */}
+                  {isEditMode && editingOrder && (
+                    <Button 
+                      type="button" 
+                      variant="destructive" 
+                      onClick={() => {
+                        if (window.confirm(`Ви впевнені, що хочете видалити замовлення ${editingOrder.orderNumber}? Цю дію неможливо скасувати.`)) {
+                          deleteOrderMutation.mutate(editingOrder.id);
+                        }
+                      }}
+                      disabled={deleteOrderMutation.isPending}
+                    >
+                      {deleteOrderMutation.isPending ? "Видалення..." : "Видалити замовлення"}
+                    </Button>
+                  )}
+                  
+                  {/* Кнопки скасування та збереження */}
+                  <div className="flex space-x-2 ml-auto">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setIsDialogOpen(false)}
+                    >
+                      Скасувати
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={isEditMode ? updateOrderMutation.isPending : createOrderMutation.isPending}
+                    >
+                      {isEditMode 
+                        ? (updateOrderMutation.isPending ? "Оновлення..." : "Оновити замовлення")
+                        : (createOrderMutation.isPending ? "Створення..." : "Створити рахунок")
+                      }
+                    </Button>
+                  </div>
                 </div>
               </form>
             </DialogContent>

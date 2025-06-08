@@ -179,6 +179,7 @@ export const orders = pgTable("orders", {
   clientId: integer("client_id").references(() => clients.id), // зв'язок з клієнтом для використання його API ключів
   companyId: integer("company_id").references(() => companies.id), // Компанія, від імені якої здійснюється продаж
   status: text("status").notNull().default("pending"), // pending, processing, shipped, delivered, cancelled
+  statusId: integer("status_id").references(() => orderStatuses.id), // зв'язок з таблицею статусів
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   notes: text("notes"),
   paymentDate: timestamp("payment_date"), // дата оплати
@@ -202,6 +203,20 @@ export const customerAddresses = pgTable("customer_addresses", {
   isDefault: boolean("is_default").default(false),
   lastUsed: timestamp("last_used").defaultNow(), // для сортування за останнім використанням
   usageCount: integer("usage_count").default(1), // кількість використань
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Таблиця статусів замовлень
+export const orderStatuses = pgTable("order_statuses", {
+  id: serial("id").primaryKey(),
+  code: varchar("code", { length: 50 }).notNull().unique(), // pending, processing, shipped, delivered, cancelled
+  name: varchar("name", { length: 100 }).notNull(), // Назва українською
+  description: text("description"),
+  textColor: varchar("text_color", { length: 7 }).notNull(), // HEX колір тексту, наприклад #FFFFFF
+  backgroundColor: varchar("background_color", { length: 7 }).notNull(), // HEX колір фону, наприклад #FF0000
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0), // порядок сортування
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -1708,6 +1723,15 @@ export type AdminResetPassword = z.infer<typeof adminResetPasswordSchema>;
 export type Login = z.infer<typeof loginSchema>;
 export type ResetPassword = z.infer<typeof resetPasswordSchema>;
 export type NewPassword = z.infer<typeof newPasswordSchema>;
+
+// Order status types
+export type OrderStatus = typeof orderStatuses.$inferSelect;
+export type InsertOrderStatus = typeof orderStatuses.$inferInsert;
+export const insertOrderStatusSchema = createInsertSchema(orderStatuses).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
 
 // Tech card types
 export type TechCard = typeof techCards.$inferSelect;
