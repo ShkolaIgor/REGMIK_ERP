@@ -64,8 +64,8 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     let url = queryKey[0] as string;
     
-    // Додаємо cache busting параметр для позицій, щоб обійти кеш браузера
-    if (url.includes('/api/positions')) {
+    // Додаємо cache busting параметр для позицій та виробничих завдань, щоб обійти кеш браузера
+    if (url.includes('/api/positions') || url.includes('/api/manufacturing-orders')) {
       const separator = url.includes('?') ? '&' : '?';
       url += `${separator}_t=${Date.now()}`;
     }
