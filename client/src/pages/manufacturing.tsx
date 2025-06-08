@@ -121,16 +121,13 @@ export default function Manufacturing() {
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log("🔥 MUTATION: mutationFn called with data:", data);
-      console.log("🔥 MUTATION: About to call apiRequest");
-      const result = await apiRequest("/api/manufacturing-orders", "POST", data);
-      console.log("🔥 MUTATION: apiRequest returned:", result);
-      return result;
+      return apiRequest("/api/manufacturing-orders", "POST", data);
     },
     onSuccess: (result) => {
       console.log("Manufacturing order created successfully:", result);
       console.log("Invalidating cache for /api/manufacturing-orders");
       queryClient.invalidateQueries({ queryKey: ["/api/manufacturing-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ordered-products-info"] });
       console.log("Cache invalidated, refetching data...");
       setIsDialogOpen(false);
       resetForm();
@@ -154,6 +151,7 @@ export default function Manufacturing() {
       apiRequest(`/api/manufacturing-orders/${id}`, "PATCH", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/manufacturing-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ordered-products-info"] });
       setIsDialogOpen(false);
       resetForm();
       toast({
@@ -174,6 +172,7 @@ export default function Manufacturing() {
     mutationFn: async (id: number) => apiRequest(`/api/manufacturing-orders/${id}`, "DELETE"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/manufacturing-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ordered-products-info"] });
       toast({
         title: "Успіх",
         description: "Завдання на виготовлення видалено",
@@ -192,6 +191,7 @@ export default function Manufacturing() {
     mutationFn: async (id: number) => apiRequest(`/api/manufacturing-orders/${id}/start`, "POST"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/manufacturing-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ordered-products-info"] });
       toast({
         title: "Успіх",
         description: "Виробництво розпочато",
@@ -204,6 +204,7 @@ export default function Manufacturing() {
       apiRequest(`/api/manufacturing-orders/${id}/complete`, "POST", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/manufacturing-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ordered-products-info"] });
       setIsCompleteDialogOpen(false);
       toast({
         title: "Успіх",
