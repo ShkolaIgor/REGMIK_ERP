@@ -736,22 +736,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const orderData = insertOrderSchema.parse(order);
       
-      // Конвертуємо строки дат в Date об'єкти та виправляємо типи
-      // Фільтруємо null значення та обробляємо дати
-      const processedOrderData: any = {};
-      
-      Object.keys(orderData).forEach(key => {
-        const value = orderData[key as keyof typeof orderData];
-        if (value !== null && value !== undefined) {
-          if (key === 'paymentDate' || key === 'dueDate' || key === 'shippedDate') {
-            processedOrderData[key] = new Date(value as string);
-          } else {
-            processedOrderData[key] = value;
-          }
-        }
-      });
-      
-      const updatedOrder = await storage.updateOrder(id, processedOrderData, items || []);
+      // Передаємо дані без перетворення дат - це зробить db-storage.ts
+      const updatedOrder = await storage.updateOrder(id, orderData, items || []);
       
       console.log("Updated order result:", updatedOrder);
       
