@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertTriangle, Package, Factory, CheckCircle, ArrowRight, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useSorting } from "@/hooks/useSorting";
+
 
 // Компонент для відображення замовлень по товару
 function OrdersByProduct({ productId }: { productId: number }) {
@@ -98,6 +98,22 @@ export default function OrderedProducts() {
 
   const [sortField, setSortField] = useState<string>('product.name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  // Функція сортування по кліку на заголовок
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Отримати іконку сортування
+  const getSortIcon = (field: string) => {
+    if (sortField !== field) return null;
+    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
+  };
 
   const { data: warehouses = [] } = useQuery({
     queryKey: ["/api/warehouses"],
@@ -484,9 +500,33 @@ export default function OrderedProducts() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Товар</TableHead>
-                    <TableHead>Замовлено</TableHead>
-                    <TableHead>На складі</TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('product.name')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Товар
+                        {getSortIcon('product.name')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('totalOrdered')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Замовлено
+                        {getSortIcon('totalOrdered')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('totalAvailable')}
+                    >
+                      <div className="flex items-center gap-2">
+                        На складі
+                        {getSortIcon('totalAvailable')}
+                      </div>
+                    </TableHead>
                     <TableHead>У виробництві</TableHead>
                     <TableHead>Статус</TableHead>
                     <TableHead>Дії</TableHead>
