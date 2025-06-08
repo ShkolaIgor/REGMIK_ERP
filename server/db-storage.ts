@@ -477,6 +477,14 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async updateOrderPaymentDate(id: number, paymentDate: string | null): Promise<Order | undefined> {
+    const result = await db.update(orders)
+      .set({ paymentDate: paymentDate ? new Date(paymentDate) : null })
+      .where(eq(orders.id, id))
+      .returning();
+    return result[0];
+  }
+
   // Recipes
   async getRecipes(): Promise<Recipe[]> {
     return await db.select().from(recipes);

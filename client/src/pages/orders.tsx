@@ -536,6 +536,27 @@ export default function Orders() {
     }
   };
 
+  // Функція для визначення кольору фону номера рахунку
+  const getOrderNumberBgColor = (order: any) => {
+    const currentDate = new Date();
+    const dueDate = order.dueDate ? new Date(order.dueDate) : null;
+    const paymentDate = order.paymentDate ? new Date(order.paymentDate) : null;
+    const shippedDate = order.shippedDate ? new Date(order.shippedDate) : null;
+
+    // Якщо поточна дата більша за термін відвантаження - червоний фон
+    if (dueDate && currentDate > dueDate) {
+      return 'bg-red-200 text-red-900';
+    }
+
+    // Якщо рахунок оплачений і не відвантажений і не прострочений - світло-зелений фон
+    if (paymentDate && !shippedDate && (!dueDate || currentDate <= dueDate)) {
+      return 'bg-green-200 text-green-900';
+    }
+
+    // Звичайний фон
+    return '';
+  };
+
   const handlePartialShipment = (order: Order) => {
     setSelectedOrderForShipment(order);
     setIsPartialShipmentOpen(true);
@@ -967,7 +988,7 @@ export default function Orders() {
                         className="cursor-pointer hover:bg-gray-50"
                         onClick={() => toggleOrderExpansion(order.id)}
                       >
-                        <TableCell className="font-mono">{order.orderNumber}</TableCell>
+                        <TableCell className={`font-mono ${getOrderNumberBgColor(order)}`}>{order.orderNumber}</TableCell>
                         <TableCell>
                           <div>
                             <div className="font-medium">
