@@ -210,13 +210,9 @@ export const customerAddresses = pgTable("customer_addresses", {
 // Таблиця статусів замовлень
 export const orderStatuses = pgTable("order_statuses", {
   id: serial("id").primaryKey(),
-  code: varchar("code", { length: 50 }).notNull().unique(), // pending, processing, shipped, delivered, cancelled
-  name: varchar("name", { length: 100 }).notNull(), // Назва українською
-  description: text("description"),
-  textColor: varchar("text_color", { length: 7 }).notNull(), // HEX колір тексту, наприклад #FFFFFF
-  backgroundColor: varchar("background_color", { length: 7 }).notNull(), // HEX колір фону, наприклад #FF0000
-  isActive: boolean("is_active").default(true),
-  sortOrder: integer("sort_order").default(0), // порядок сортування
+  name: varchar("name", { length: 255 }).notNull().unique(), // Назва українською
+  textColor: varchar("text_color", { length: 7 }).notNull().default('#000000'), // HEX колір тексту
+  backgroundColor: varchar("background_color", { length: 7 }).notNull().default('#ffffff'), // HEX колір фону
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
