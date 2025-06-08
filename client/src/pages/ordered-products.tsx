@@ -370,75 +370,7 @@ export default function OrderedProducts() {
         </div>
       </div>
 
-      {/* Фільтри та пошук */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Фільтри та пошук
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Пошук */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Пошук за назвою або артикулом..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
 
-            {/* Фільтр за статусом */}
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Статус" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Всі статуси</SelectItem>
-                <SelectItem value="shortage">Дефіцит</SelectItem>
-                <SelectItem value="production">Потрібне виробництво</SelectItem>
-                <SelectItem value="inProgress">У виробництві</SelectItem>
-                <SelectItem value="sufficient">Достатньо на складі</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Сортування */}
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger>
-                <SelectValue placeholder="Сортувати за" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name">Назвою</SelectItem>
-                <SelectItem value="quantity">Кількістю замовлено</SelectItem>
-                <SelectItem value="shortage">Дефіцитом</SelectItem>
-                <SelectItem value="available">Наявністю</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Порядок сортування */}
-            <Button
-              variant="outline"
-              onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
-              className="flex items-center gap-2"
-            >
-              {sortDirection === "asc" ? (
-                <>
-                  <ArrowUp className="h-4 w-4" />
-                  За зростанням
-                </>
-              ) : (
-                <>
-                  <ArrowDown className="h-4 w-4" />
-                  За спаданням
-                </>
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       {filteredAndSortedProducts.length === 0 ? (
         <Card>
@@ -497,6 +429,65 @@ export default function OrderedProducts() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Фільтри та пошук над таблицею */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                {/* Пошук */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Пошук за назвою або артикулом..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+
+                {/* Фільтр за статусом */}
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Статус" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Всі статуси</SelectItem>
+                    <SelectItem value="shortage">Дефіцит</SelectItem>
+                    <SelectItem value="production">Потрібне виробництво</SelectItem>
+                    <SelectItem value="inProgress">У виробництві</SelectItem>
+                    <SelectItem value="sufficient">Достатньо на складі</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Сортування */}
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Сортувати за" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Назвою</SelectItem>
+                    <SelectItem value="quantity">Кількістю замовлено</SelectItem>
+                    <SelectItem value="shortage">Дефіцитом</SelectItem>
+                    <SelectItem value="available">Наявністю</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Порядок сортування */}
+                <Button
+                  variant="outline"
+                  onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
+                  className="flex items-center gap-2"
+                >
+                  {sortDirection === "asc" ? (
+                    <>
+                      <ArrowUp className="h-4 w-4" />
+                      За зростанням
+                    </>
+                  ) : (
+                    <>
+                      <ArrowDown className="h-4 w-4" />
+                      За спаданням
+                    </>
+                  )}
+                </Button>
+              </div>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -529,7 +520,6 @@ export default function OrderedProducts() {
                     </TableHead>
                     <TableHead>У виробництві</TableHead>
                     <TableHead>Статус</TableHead>
-                    <TableHead>Дії</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
