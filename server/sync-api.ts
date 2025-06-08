@@ -1,6 +1,6 @@
 // API для синхронізації з зовнішніми системами
 import type { Express } from "express";
-import { dbStorage as storage } from "./db-storage";
+import { storage } from "./db-storage";
 import { z } from "zod";
 
 // Схеми валідації для вхідних даних синхронізації
