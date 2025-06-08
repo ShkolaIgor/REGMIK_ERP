@@ -25,6 +25,7 @@ import DueDateButton from "@/components/DueDateButton";
 // Типи
 type Order = {
   id: number;
+  orderSequenceNumber: number;
   orderNumber: string;
   customerName: string;
   customerEmail: string | null;
