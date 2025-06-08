@@ -3983,6 +3983,30 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getOrdersByProduct(productId: number): Promise<any[]> {
+    try {
+      const result = await db
+        .select({
+          id: orders.id,
+          orderNumber: orders.orderNumber,
+          status: orders.status,
+          totalAmount: orders.totalAmount,
+          createdAt: orders.createdAt,
+          customerName: orders.customerName,
+          quantity: orderItems.quantity,
+        })
+        .from(orderItems)
+        .innerJoin(orders, eq(orderItems.orderId, orders.id))
+        .where(eq(orderItems.productId, productId))
+        .orderBy(orders.createdAt);
+
+      return result;
+    } catch (error) {
+      console.error('Error getting orders by product:', error);
+      throw error;
+    }
+  }
+
   async createSupplierOrderForShortage(productId: number, quantity: string, notes?: string): Promise<any> {
     try {
       // Отримуємо інформацію про товар

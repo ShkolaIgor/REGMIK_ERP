@@ -5,12 +5,63 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { AlertTriangle, Package, Factory, CheckCircle, ArrowRight, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+
+// Компонент для відображення замовлень по товару
+function OrdersByProduct({ productId }: { productId: number }) {
+  const { data: orders = [], isLoading } = useQuery({
+    queryKey: ["/api/orders-by-product", productId],
+    queryFn: () => fetch(`/api/orders-by-product/${productId}`).then(res => res.json()),
+  });
+
+  if (isLoading) {
+    return <div className="p-4 text-center">Завантаження...</div>;
+  }
+
+  if (orders.length === 0) {
+    return <div className="p-4 text-center text-muted-foreground">Замовлень не знайдено</div>;
+  }
+
+  return (
+    <div className="space-y-2">
+      <h4 className="font-medium mb-2">Замовлення з цим товаром:</h4>
+      <div className="max-h-60 overflow-y-auto space-y-2">
+        {orders.map((order: any) => (
+          <div key={order.id} className="border rounded p-2 text-sm">
+            <div className="flex justify-between items-start">
+              <div>
+                <div className="font-medium">{order.orderNumber}</div>
+                <div className="text-muted-foreground">
+                  {order.customerName || 'Без клієнта'}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="font-medium">{order.quantity} шт</div>
+                <div className="text-muted-foreground">
+                  {new Date(order.createdAt).toLocaleDateString('uk-UA')}
+                </div>
+              </div>
+            </div>
+            <div className="mt-1">
+              <Badge variant="secondary" className="text-xs">
+                {order.status}
+              </Badge>
+              <span className="ml-2 text-xs text-muted-foreground">
+                {order.totalAmount} грн
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function OrderedProducts() {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -282,7 +333,16 @@ export default function OrderedProducts() {
                     <TableRow key={item.productId}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{item.product.name}</div>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="link" className="p-0 h-auto font-medium text-left">
+                                {item.product.name}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
+                              <OrdersByProduct productId={item.productId} />
+                            </PopoverContent>
+                          </Popover>
                           <div className="text-sm text-muted-foreground">
                             {item.product.sku}
                           </div>

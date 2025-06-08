@@ -3258,6 +3258,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/orders-by-product/:productId", async (req, res) => {
+    try {
+      const productId = parseInt(req.params.productId);
+      const orders = await storage.getOrdersByProduct(productId);
+      res.json(orders);
+    } catch (error) {
+      console.error("Failed to get orders by product:", error);
+      res.status(500).json({ error: "Failed to get orders by product" });
+    }
+  });
+
   app.post("/api/create-supplier-order-for-shortage", async (req, res) => {
     try {
       const { productId, quantity, notes } = req.body;
