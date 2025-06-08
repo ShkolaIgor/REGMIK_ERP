@@ -54,6 +54,7 @@ import {
 import { insertClientSchema, insertClientContactSchema, type Client, type InsertClient, type ClientContact, type InsertClientContact } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { ClientForm } from "@/components/ClientForm";
 
 // Розширена схема валідації для нової структури
 const formSchema = insertClientSchema.extend({
@@ -284,18 +285,6 @@ export default function Clients() {
 
   const handleEdit = (client: Client) => {
     setEditingClient(client);
-    form.reset({
-      taxCode: client.taxCode,
-      type: client.type as "individual" | "organization",
-      name: client.name,
-      fullName: client.fullName || "",
-      legalAddress: client.legalAddress || "",
-      physicalAddress: client.physicalAddress || "",
-      addressesMatch: client.addressesMatch || false,
-      discount: client.discount || "0.00",
-      notes: client.notes || "",
-      isActive: client.isActive !== false,
-    });
     setIsDialogOpen(true);
   };
 
@@ -504,7 +493,7 @@ export default function Clients() {
                 Додати клієнта
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingClient ? "Редагувати клієнта" : "Новий клієнт"}
@@ -517,207 +506,15 @@ export default function Clients() {
               </DialogDescription>
             </DialogHeader>
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="taxCode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>ЄДРПОУ/ІПН *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="12345678 або 1234567890"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Тип клієнта</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Оберіть тип" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="organization">Організація</SelectItem>
-                            <SelectItem value="individual">Фізична особа</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Скорочена назва *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="ТОВ АБВГД або Іванов І.І." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="fullName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Повна назва</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Товариство з обмеженою відповідальністю..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="legalAddress"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Юридична адреса</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="01001, м. Київ, вул. Хрещатик, 1"
-                          className="min-h-[60px]"
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="addressesMatch"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={(checked) => {
-                            field.onChange(checked);
-                            handleAddressMatch(!!checked);
-                          }}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Фактична адреса співпадає з юридичною</FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="physicalAddress"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Фактична адреса для відвантаження</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Адреса для доставки товарів"
-                          className="min-h-[60px]"
-                          {...field}
-                          disabled={form.watch("addressesMatch")}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="discount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Знижка клієнта (%)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          step="0.01" 
-                          min="0" 
-                          max="100" 
-                          placeholder="0.00"
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Примітки</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Додаткова інформація про клієнта"
-                          className="min-h-[60px]"
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-
-
-                <FormField
-                  control={form.control}
-                  name="isActive"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Активний клієнт</FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex justify-end space-x-2 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Скасувати
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={createMutation.isPending || updateMutation.isPending}
-                  >
-                    {editingClient ? "Оновити" : "Створити"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
+            <ClientForm
+              editingClient={editingClient}
+              onSubmit={onSubmit}
+              onCancel={() => {
+                setIsDialogOpen(false);
+                setEditingClient(null);
+              }}
+              isLoading={createMutation.isPending || updateMutation.isPending}
+            />
           </DialogContent>
           </Dialog>
         </div>
