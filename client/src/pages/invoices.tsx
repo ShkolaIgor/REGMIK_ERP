@@ -27,6 +27,21 @@ const invoiceSchema = z.object({
   issueDate: z.string().min(1, "Оберіть дату створення"),
   dueDate: z.string().min(1, "Оберіть термін оплати"),
   description: z.string().optional(),
+  
+  // Додаткові поля для самостійних рахунків
+  customerName: z.string().optional(),
+  customerPhone: z.string().optional(),
+  customerEmail: z.string().optional(),
+  deliveryAddress: z.string().optional(),
+  deliveryCity: z.string().optional(),
+  deliveryRegion: z.string().optional(),
+  deliveryPostalCode: z.string().optional(),
+  deliveryCountry: z.string().default("Україна"),
+  deliveryMethod: z.string().optional(),
+  deliveryNotes: z.string().optional(),
+  paymentMethod: z.string().optional(),
+  paymentTerms: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 type InvoiceFormData = z.infer<typeof invoiceSchema>;
@@ -308,6 +323,153 @@ export default function Invoices() {
                     </FormItem>
                   )}
                 />
+
+                {/* Секція інформації про клієнта */}
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-medium mb-3">Інформація про клієнта</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="customerName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ім'я клієнта</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ім'я контактної особи" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="customerPhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Телефон</FormLabel>
+                          <FormControl>
+                            <Input placeholder="+380501234567" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="mt-4">
+                    <FormField
+                      control={form.control}
+                      name="customerEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="client@example.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Секція доставки */}
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-medium mb-3">Інформація про доставку</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="deliveryCity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Місто</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Київ" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="deliveryRegion"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Область</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Київська область" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="mt-4">
+                    <FormField
+                      control={form.control}
+                      name="deliveryAddress"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Адреса доставки</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Повна адреса доставки..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    <FormField
+                      control={form.control}
+                      name="deliveryMethod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Спосіб доставки</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Нова Пошта, Самовивіз" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="paymentMethod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Спосіб оплати</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Готівка, Картка, Банківський переказ" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Додаткові примітки */}
+                <div className="border-t pt-4">
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Додаткові примітки</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Особливі вимоги, коментарі..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <div className="flex justify-end space-x-2">
                   <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
