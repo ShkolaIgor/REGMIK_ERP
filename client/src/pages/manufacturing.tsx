@@ -653,7 +653,7 @@ export default function Manufacturing() {
                 <TableHead>Прогрес</TableHead>
                 <TableHead>Статус</TableHead>
                 <TableHead>Пріоритет</TableHead>
-                <TableHead>Джерельне замовлення</TableHead>
+                <TableHead>Джерело</TableHead>
                 <TableHead>Серійні номери</TableHead>
                 <TableHead>Відповідальний</TableHead>
                 <TableHead>Дата завершення</TableHead>
@@ -814,6 +814,18 @@ export default function Manufacturing() {
                             <CheckCircle className="h-4 w-4" />
                           </Button>
                         </>
+                      )}
+                      {order.status === "paused" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => startMutation.mutate(order.id)}
+                          disabled={startMutation.isPending}
+                          title="Відновити виробництво"
+                          className="text-green-600 border-green-200 hover:bg-green-50"
+                        >
+                          <Play className="h-4 w-4" />
+                        </Button>
                       )}
                       <Button
                         variant="outline"

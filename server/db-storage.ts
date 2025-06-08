@@ -4445,17 +4445,15 @@ export class DatabaseStorage implements IStorage {
         .select({
           id: manufacturingSteps.id,
           stepNumber: manufacturingSteps.stepNumber,
-          name: manufacturingSteps.name,
+          operationName: manufacturingSteps.operationName,
           description: manufacturingSteps.description,
           status: manufacturingSteps.status,
           estimatedDuration: manufacturingSteps.estimatedDuration,
           actualDuration: manufacturingSteps.actualDuration,
-          startTime: manufacturingSteps.startTime,
-          endTime: manufacturingSteps.endTime,
+          startedAt: manufacturingSteps.startedAt,
+          completedAt: manufacturingSteps.completedAt,
           qualityCheckPassed: manufacturingSteps.qualityCheckPassed,
-          notes: manufacturingSteps.notes,
-          equipment: manufacturingSteps.equipment,
-          temperature: manufacturingSteps.temperature,
+          qualityNotes: manufacturingSteps.qualityNotes,
           worker: workers
         })
         .from(manufacturingSteps)
@@ -4505,7 +4503,7 @@ export class DatabaseStorage implements IStorage {
         .update(manufacturingSteps)
         .set({ 
           status: 'in_progress',
-          startTime: new Date()
+          startedAt: new Date()
         })
         .where(eq(manufacturingSteps.id, stepId))
         .returning();
@@ -4529,18 +4527,18 @@ export class DatabaseStorage implements IStorage {
         throw new Error('Manufacturing step not found');
       }
 
-      const startTime = step[0].startTime;
-      const endTime = new Date();
-      const actualDuration = startTime ? Math.floor((endTime.getTime() - startTime.getTime()) / (1000 * 60)) : null;
+      const startedAt = step[0].startedAt;
+      const completedAt = new Date();
+      const actualDuration = startedAt ? Math.floor((completedAt.getTime() - startedAt.getTime()) / (1000 * 60)) : null;
 
       const [updated] = await db
         .update(manufacturingSteps)
         .set({ 
           status: 'completed',
-          endTime,
+          completedAt,
           actualDuration,
           qualityCheckPassed: data.qualityCheckPassed ?? true,
-          notes: data.notes
+          qualityNotes: data.notes
         })
         .where(eq(manufacturingSteps.id, stepId))
         .returning();
@@ -4554,11 +4552,11 @@ export class DatabaseStorage implements IStorage {
 
   private async createDefaultManufacturingSteps(manufacturingOrderId: number): Promise<void> {
     const defaultSteps = [
-      { stepNumber: 1, name: 'Підготовка матеріалів', description: 'Перевірка та підготовка всіх необхідних матеріалів' },
-      { stepNumber: 2, name: 'Налаштування обладнання', description: 'Налаштування та калібрування виробничого обладнання' },
-      { stepNumber: 3, name: 'Виробництво', description: 'Основний процес виготовлення продукції' },
-      { stepNumber: 4, name: 'Контроль якості', description: 'Перевірка якості готової продукції' },
-      { stepNumber: 5, name: 'Пакування', description: 'Пакування готової продукції' }
+      { stepNumber: 1, operationName: 'Підготовка матеріалів', description: 'Перевірка та підготовка всіх необхідних матеріалів' },
+      { stepNumber: 2, operationName: 'Налаштування обладнання', description: 'Налаштування та калібрування виробничого обладнання' },
+      { stepNumber: 3, operationName: 'Виробництво', description: 'Основний процес виготовлення продукції' },
+      { stepNumber: 4, operationName: 'Контроль якості', description: 'Перевірка якості готової продукції' },
+      { stepNumber: 5, operationName: 'Пакування', description: 'Пакування готової продукції' }
     ];
 
     for (const step of defaultSteps) {
