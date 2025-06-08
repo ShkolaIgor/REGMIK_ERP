@@ -19,6 +19,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { ClientForm } from "@/components/ClientForm";
 // Типи
 type Order = {
   id: number;
@@ -423,29 +424,8 @@ export default function Orders() {
     }
   };
 
-  const handleCreateNewClient = () => {
-    if (!newClientName.trim()) {
-      toast({
-        title: "Помилка",
-        description: "Введіть назву клієнта",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Створюємо базовий об'єкт клієнта
-    const clientData = {
-      name: newClientName.trim(),
-      taxCode: `AUTO-${Date.now()}`, // Тимчасовий код
-      fullName: newClientName.trim(),
-      address: "",
-      phone: "",
-      email: "",
-      contactPerson: "",
-      notes: "Автоматично створений клієнт",
-    };
-
-    createClientMutation.mutate(clientData);
+  const handleCreateNewClient = (formData: any) => {
+    createClientMutation.mutate(formData);
   };
 
   const handleSubmit = (data: OrderFormData) => {
@@ -1221,41 +1201,22 @@ export default function Orders() {
 
       {/* Діалог для створення нового клієнта */}
       <Dialog open={isCreateClientDialogOpen} onOpenChange={setIsCreateClientDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Створити нового клієнта</DialogTitle>
             <DialogDescription>
-              Введіть базову інформацію про клієнта. Додаткові дані можна буде додати пізніше.
+              Додайте повну інформацію про нового клієнта
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="newClientName">Назва клієнта *</Label>
-              <Input
-                id="newClientName"
-                value={newClientName}
-                onChange={(e) => setNewClientName(e.target.value)}
-                placeholder="Введіть назву клієнта"
-              />
-            </div>
-          </div>
-          <DialogFooter className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsCreateClientDialogOpen(false);
-                setNewClientName("");
-              }}
-            >
-              Скасувати
-            </Button>
-            <Button
-              onClick={handleCreateNewClient}
-              disabled={createClientMutation.isPending || !newClientName.trim()}
-            >
-              {createClientMutation.isPending ? "Створюється..." : "Створити клієнта"}
-            </Button>
-          </DialogFooter>
+          <ClientForm
+            prefillName={newClientName}
+            onSubmit={handleCreateNewClient}
+            onCancel={() => {
+              setIsCreateClientDialogOpen(false);
+              setNewClientName("");
+            }}
+            isLoading={createClientMutation.isPending}
+          />
         </DialogContent>
       </Dialog>
     </div>
