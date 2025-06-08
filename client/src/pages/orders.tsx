@@ -263,11 +263,11 @@ export default function Orders() {
               return (
                 <div className="space-y-1">
                   <Badge className="bg-green-100 text-green-800 border-green-300">
-                    💳 Повна оплата
+                    ✅ Повна оплата
                   </Badge>
                   {order.paymentDate && (
-                    <div className="text-xs text-gray-600">
-                      Оплачено: {formatDate(new Date(order.paymentDate))}
+                    <div className="text-xs text-green-700 font-medium flex items-center gap-1">
+                      📅 {formatDate(new Date(order.paymentDate))}
                     </div>
                   )}
                 </div>
@@ -283,8 +283,8 @@ export default function Orders() {
                     {formatCurrency(paidAmount)} з {formatCurrency(totalAmount)}
                   </div>
                   {order.paymentDate && (
-                    <div className="text-xs text-gray-600">
-                      Оплачено: {formatDate(new Date(order.paymentDate))}
+                    <div className="text-xs text-yellow-700 font-medium flex items-center gap-1">
+                      📅 {formatDate(new Date(order.paymentDate))}
                     </div>
                   )}
                 </div>
@@ -293,11 +293,11 @@ export default function Orders() {
               return (
                 <div className="space-y-1">
                   <Badge className="bg-blue-100 text-blue-800 border-blue-300">
-                    📄 По договору
+                    📋 По договору
                   </Badge>
                   {order.contractNumber && (
-                    <div className="text-xs text-gray-600">
-                      №{order.contractNumber}
+                    <div className="text-xs text-blue-700 font-medium">
+                      📝 №{order.contractNumber}
                     </div>
                   )}
                 </div>
