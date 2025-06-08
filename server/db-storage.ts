@@ -421,11 +421,30 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Оновлюємо замовлення
-      const orderData = {
+      const orderData: any = {
         ...insertOrder,
         totalAmount: totalAmount.toString(),
         clientId: insertOrder.clientId ? (typeof insertOrder.clientId === 'string' ? parseInt(insertOrder.clientId) : insertOrder.clientId) : null,
       };
+
+      // Конвертуємо дати з рядків у Date об'єкти
+      if (orderData.paymentDate && typeof orderData.paymentDate === 'string') {
+        console.log('Converting paymentDate:', orderData.paymentDate);
+        orderData.paymentDate = new Date(orderData.paymentDate);
+        console.log('Converted paymentDate:', orderData.paymentDate);
+      }
+      if (orderData.dueDate && typeof orderData.dueDate === 'string') {
+        console.log('Converting dueDate:', orderData.dueDate);
+        orderData.dueDate = new Date(orderData.dueDate);
+        console.log('Converted dueDate:', orderData.dueDate);
+      }
+      if (orderData.shippedDate && typeof orderData.shippedDate === 'string') {
+        console.log('Converting shippedDate:', orderData.shippedDate);
+        orderData.shippedDate = new Date(orderData.shippedDate);
+        console.log('Converted shippedDate:', orderData.shippedDate);
+      }
+      
+      console.log('Final orderData before DB update:', orderData);
 
       const orderResult = await db.update(orders)
         .set(orderData)

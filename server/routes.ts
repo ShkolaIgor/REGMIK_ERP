@@ -744,7 +744,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const value = orderData[key as keyof typeof orderData];
         if (value !== null && value !== undefined) {
           if (key === 'paymentDate' || key === 'dueDate' || key === 'shippedDate') {
-            processedOrderData[key] = new Date(value as string).toISOString();
+            processedOrderData[key] = new Date(value as string);
           } else {
             processedOrderData[key] = value;
           }
