@@ -1454,19 +1454,18 @@ export const manufacturingSteps = pgTable("manufacturing_steps", {
   id: serial("id").primaryKey(),
   manufacturingOrderId: integer("manufacturing_order_id").notNull().references(() => manufacturingOrders.id),
   stepNumber: integer("step_number").notNull(),
-  name: varchar("name", { length: 255 }).notNull(),
+  operationName: varchar("operation_name", { length: 255 }).notNull(),
   description: text("description"),
   status: varchar("status", { length: 50 }).default("pending"), // pending, in_progress, completed, skipped
   estimatedDuration: integer("estimated_duration"), // в хвилинах
   actualDuration: integer("actual_duration"), // в хвилинах
   assignedWorkerId: integer("assigned_worker_id").references(() => workers.id),
-  startTime: timestamp("start_time"),
-  endTime: timestamp("end_time"),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
   qualityCheckPassed: boolean("quality_check_passed").default(true),
-  notes: text("notes"),
-  equipment: varchar("equipment", { length: 255 }),
-  temperature: varchar("temperature", { length: 50 }),
+  qualityNotes: text("quality_notes"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertManufacturingOrderSchema = createInsertSchema(manufacturingOrders).omit({ 

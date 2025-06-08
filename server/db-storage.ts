@@ -4422,7 +4422,7 @@ export class DatabaseStorage implements IStorage {
         .update(manufacturingSteps)
         .set({ 
           status: 'paused',
-          endTime: new Date()
+          completedAt: new Date()
         })
         .where(
           and(
