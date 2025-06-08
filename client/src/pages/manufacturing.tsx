@@ -271,6 +271,8 @@ export default function Manufacturing() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log("Form data before validation:", formData);
+    
     if (!formData.productId || !formData.plannedQuantity) {
       toast({
         title: "Помилка",
@@ -289,6 +291,8 @@ export default function Manufacturing() {
       estimatedDuration: formData.estimatedDuration ? parseInt(formData.estimatedDuration) : undefined,
       plannedEndDate: formData.plannedEndDate ? new Date(formData.plannedEndDate).toISOString() : undefined,
     };
+    
+    console.log("Submit data after transformation:", submitData);
 
     if (editingOrder) {
       updateMutation.mutate({ id: editingOrder.id, data: submitData });
