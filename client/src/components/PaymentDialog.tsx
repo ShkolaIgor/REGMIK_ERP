@@ -45,6 +45,7 @@ export function PaymentDialog({
   const [paymentType, setPaymentType] = useState<'full' | 'partial' | 'contract' | 'none'>(currentPaymentType as any);
   const [paidAmount, setPaidAmount] = useState(currentPaidAmount);
   const [contractNumber, setContractNumber] = useState("");
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [productionApproved, setProductionApproved] = useState(isProductionApproved);
   const [approvedBy, setApprovedBy] = useState("admin");
 
@@ -80,7 +81,8 @@ export function PaymentDialog({
     const paymentData = {
       paymentType,
       paidAmount: paymentType === 'full' ? totalAmount : paidAmount,
-      contractNumber: paymentType === 'contract' ? contractNumber : undefined,
+      contractNumber: paymentType === 'contract' ? contractNumber : null,
+      paymentDate: new Date(paymentDate).toISOString(),
       productionApproved: paymentType === 'contract' || paymentType === 'full' || productionApproved,
       approvedBy,
     };
@@ -162,6 +164,18 @@ export function PaymentDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {paymentType !== 'none' && (
+            <div className="space-y-2">
+              <Label htmlFor="paymentDate">Дата оплати</Label>
+              <Input
+                id="paymentDate"
+                type="date"
+                value={paymentDate}
+                onChange={(e) => setPaymentDate(e.target.value)}
+              />
+            </div>
+          )}
 
           {paymentType === 'partial' && (
             <div className="space-y-2">
