@@ -626,7 +626,7 @@ export default function Orders() {
                             setClientSearchValue(selectedClient?.name || "");
                             form.setValue("clientId", "");
                           }
-                          if (clientSearchValue.length > 0) setClientComboboxOpen(true);
+                          // Не відкриваємо автоматично список при фокусі
                         }}
                         onBlur={() => setTimeout(() => setClientComboboxOpen(false), 200)}
                         className={form.formState.errors.clientId ? "border-red-500" : ""}
