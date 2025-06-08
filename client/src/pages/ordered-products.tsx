@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle, Package, Factory, CheckCircle, ArrowRight, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertTriangle, Package, Factory, CheckCircle, ArrowRight, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -81,6 +82,13 @@ export default function OrderedProducts() {
   const [isSupplierOrderDialogOpen, setIsSupplierOrderDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<any>(null);
+  
+  // Стан для фільтрації та пошуку
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -91,6 +99,76 @@ export default function OrderedProducts() {
   const { data: warehouses = [] } = useQuery({
     queryKey: ["/api/warehouses"],
   });
+
+  // Фільтрована та відсортована продукція
+  const filteredAndSortedProducts = useMemo(() => {
+    let filtered = [...(orderedProducts as any[])];
+    
+    // Пошук
+    if (searchTerm) {
+      filtered = filtered.filter(item => 
+        item.product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.product.sku.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    // Фільтр за статусом
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(item => {
+        const shortage = Math.max(0, item.totalOrdered - item.available - item.inProduction);
+        const needsProduction = item.needsProduction;
+        const inProduction = item.inProduction > 0;
+        
+        switch (statusFilter) {
+          case "shortage":
+            return shortage > 0;
+          case "production":
+            return needsProduction && shortage === 0;
+          case "inProgress":
+            return inProduction;
+          case "sufficient":
+            return !needsProduction && shortage === 0 && !inProduction;
+          default:
+            return true;
+        }
+      });
+    }
+    
+    // Сортування
+    filtered.sort((a, b) => {
+      let aValue, bValue;
+      
+      switch (sortBy) {
+        case "name":
+          aValue = a.product.name.toLowerCase();
+          bValue = b.product.name.toLowerCase();
+          break;
+        case "quantity":
+          aValue = a.totalOrdered;
+          bValue = b.totalOrdered;
+          break;
+        case "shortage":
+          aValue = Math.max(0, a.totalOrdered - a.available - a.inProduction);
+          bValue = Math.max(0, b.totalOrdered - b.available - b.inProduction);
+          break;
+        case "available":
+          aValue = a.available;
+          bValue = b.available;
+          break;
+        default:
+          aValue = a.product.name.toLowerCase();
+          bValue = b.product.name.toLowerCase();
+      }
+      
+      if (sortOrder === "asc") {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
+    });
+    
+    return filtered;
+  }, [orderedProducts, searchTerm, statusFilter, sortBy, sortOrder]);
 
   const sendToProductionMutation = useMutation({
     mutationFn: async (data: { productId: number; quantity: number; notes?: string }) => {
@@ -268,7 +346,77 @@ export default function OrderedProducts() {
         </div>
       </div>
 
-      {orderedProducts.length === 0 ? (
+      {/* Фільтри та пошук */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Фільтри та пошук
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Пошук */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Пошук за назвою або артикулом..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Фільтр за статусом */}
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Статус" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Всі статуси</SelectItem>
+                <SelectItem value="shortage">Дефіцит</SelectItem>
+                <SelectItem value="production">Потрібне виробництво</SelectItem>
+                <SelectItem value="inProgress">У виробництві</SelectItem>
+                <SelectItem value="sufficient">Достатньо на складі</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Сортування */}
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger>
+                <SelectValue placeholder="Сортувати за" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">Назвою</SelectItem>
+                <SelectItem value="quantity">Кількістю замовлено</SelectItem>
+                <SelectItem value="shortage">Дефіцитом</SelectItem>
+                <SelectItem value="available">Наявністю</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Порядок сортування */}
+            <Button
+              variant="outline"
+              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+              className="flex items-center gap-2"
+            >
+              {sortOrder === "asc" ? (
+                <>
+                  <ArrowUp className="h-4 w-4" />
+                  За зростанням
+                </>
+              ) : (
+                <>
+                  <ArrowDown className="h-4 w-4" />
+                  За спаданням
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {filteredAndSortedProducts.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Package className="h-12 w-12 text-muted-foreground mb-4" />
