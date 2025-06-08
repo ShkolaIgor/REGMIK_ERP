@@ -155,11 +155,15 @@ export default function Orders() {
   const renderColumnContent = (columnKey: string, order: any) => {
     switch (columnKey) {
       case 'orderSequenceNumber':
-        return <div className="font-semibold text-center">{order.orderSequenceNumber}</div>;
+        return (
+          <div className={`font-semibold text-center text-lg p-2 rounded ${getOrderNumberBgColor(order)}`}>
+            {order.orderSequenceNumber}
+          </div>
+        );
       
       case 'orderNumber':
         return (
-          <div className={`${getOrderNumberBgColor(order)}`}>
+          <div>
             <div className="font-mono font-medium">{order.orderNumber}</div>
             <div className="text-sm text-gray-500">{formatDate(order.createdAt)}</div>
           </div>
