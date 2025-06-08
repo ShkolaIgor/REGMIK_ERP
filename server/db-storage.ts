@@ -1,4 +1,4 @@
-import { eq, sql, desc, and, gte, lte, isNull, ne, or } from "drizzle-orm";
+import { eq, sql, desc, and, gte, lte, isNull, ne, or, not } from "drizzle-orm";
 import { db } from "./db";
 import { IStorage } from "./storage";
 import {
@@ -3418,11 +3418,15 @@ export class DatabaseStorage implements IStorage {
 
         const totalAvailable = inventoryData.reduce((sum, inv) => sum + parseFloat(inv.quantity), 0);
 
-        // Перевіряємо чи є товар у виробництві
+        // Перевіряємо чи є товар у виробництві (тільки активні завдання)
         const productionTasksData = await db.select()
           .from(productionTasks)
           .innerJoin(recipes, eq(productionTasks.recipeId, recipes.id))
-          .where(eq(recipes.productId, productId));
+          .where(and(
+            eq(recipes.productId, productId),
+            ne(productionTasks.status, 'completed'),
+            ne(productionTasks.status, 'cancelled')
+          ));
 
         const inProduction = productionTasksData.reduce((sum, task) => sum + parseFloat(task.production_tasks.quantity), 0);
 
