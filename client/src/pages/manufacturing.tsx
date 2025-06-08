@@ -118,8 +118,12 @@ export default function Manufacturing() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: any) => apiRequest("/api/manufacturing-orders", "POST", data),
-    onSuccess: () => {
+    mutationFn: async (data: any) => {
+      console.log("Creating manufacturing order with data:", data);
+      return apiRequest("/api/manufacturing-orders", "POST", data);
+    },
+    onSuccess: (result) => {
+      console.log("Manufacturing order created successfully:", result);
       queryClient.invalidateQueries({ queryKey: ["/api/manufacturing-orders"] });
       setIsDialogOpen(false);
       resetForm();
@@ -128,7 +132,8 @@ export default function Manufacturing() {
         description: "Завдання на виготовлення створено",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Error creating manufacturing order:", error);
       toast({
         title: "Помилка",
         description: "Не вдалося створити завдання на виготовлення",
