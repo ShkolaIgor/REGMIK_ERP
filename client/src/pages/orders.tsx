@@ -358,6 +358,16 @@ export default function Orders() {
     },
   });
 
+  // Форма для управління статусами
+  const statusForm = useForm<StatusFormData>({
+    resolver: zodResolver(statusSchema),
+    defaultValues: {
+      name: "",
+      textColor: "#000000",
+      backgroundColor: "#ffffff",
+    },
+  });
+
   // Мутація для створення замовлення
   const createOrderMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -657,6 +667,41 @@ export default function Orders() {
     }
   };
 
+  // Функції для управління статусами
+  const handleCreateStatus = () => {
+    setEditingStatus(null);
+    statusForm.reset({
+      name: "",
+      textColor: "#000000",
+      backgroundColor: "#ffffff",
+    });
+    setIsStatusDialogOpen(true);
+  };
+
+  const handleEditStatus = (status: OrderStatus) => {
+    setEditingStatus(status);
+    statusForm.reset({
+      name: status.name,
+      textColor: status.textColor,
+      backgroundColor: status.backgroundColor,
+    });
+    setIsStatusDialogOpen(true);
+  };
+
+  const handleDeleteStatus = (id: number) => {
+    if (confirm("Видалити цей статус?")) {
+      deleteStatusMutation.mutate(id);
+    }
+  };
+
+  const handleStatusSubmit = (data: StatusFormData) => {
+    if (editingStatus) {
+      updateStatusSettingsMutation.mutate({ id: editingStatus.id, data });
+    } else {
+      createStatusMutation.mutate(data);
+    }
+  };
+
   // Функція для закриття діалогу та очищення форми
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
@@ -887,14 +932,22 @@ export default function Orders() {
             <h2 className="text-2xl font-semibold text-gray-900">Замовлення / Рахунки</h2>
             <p className="text-gray-600">Управління замовленнями та рахунками (номер замовлення = номер рахунку)</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => setIsDialogOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Новий рахунок/замовлення
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" aria-describedby="order-dialog-description">
+          <div className="flex items-center space-x-3">
+            <Button
+              variant="outline"
+              onClick={() => setIsStatusSettingsOpen(!isStatusSettingsOpen)}
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Налаштування статусів
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => setIsDialogOpen(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Новий рахунок/замовлення
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" aria-describedby="order-dialog-description">
               <DialogHeader>
                 <DialogTitle>
                   {isEditMode ? `Редагувати рахунок ${editingOrder?.orderNumber}` : "Створити новий рахунок/замовлення"}
@@ -1197,10 +1250,177 @@ export default function Orders() {
                   </div>
                 </div>
               </form>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </header>
+
+      {/* Status Settings Panel */}
+      {isStatusSettingsOpen && (
+        <div className="bg-gray-50 border-b border-gray-200 p-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Управління статусами замовлень</h3>
+              <Button
+                variant="outline"
+                onClick={() => setIsStatusSettingsOpen(false)}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Закрити
+              </Button>
+            </div>
+
+            {/* Create New Status Form */}
+            <Card className="mb-4">
+              <CardHeader>
+                <CardTitle>Створити новий статус</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={statusForm.handleSubmit(handleStatusSubmit)} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <Label htmlFor="statusName">Назва статусу</Label>
+                    <Input
+                      id="statusName"
+                      {...statusForm.register("name")}
+                      placeholder="Назва статусу"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="textColor">Колір тексту</Label>
+                    <Input
+                      id="textColor"
+                      type="color"
+                      {...statusForm.register("textColor")}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="backgroundColor">Колір фону</Label>
+                    <Input
+                      id="backgroundColor"
+                      type="color"
+                      {...statusForm.register("backgroundColor")}
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button 
+                      type="submit" 
+                      disabled={createStatusMutation.isPending}
+                      className="w-full"
+                    >
+                      {createStatusMutation.isPending ? "Створення..." : "Створити"}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Existing Statuses */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Існуючі статуси</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {orderStatuses?.map((status: OrderStatus) => (
+                    <div key={status.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div
+                          className="px-3 py-1 rounded-full text-sm font-medium"
+                          style={{
+                            color: status.textColor,
+                            backgroundColor: status.backgroundColor
+                          }}
+                        >
+                          {status.name}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditStatus(status)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteStatusMutation.mutate(status.id)}
+                          disabled={deleteStatusMutation.isPending}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Edit Status Dialog */}
+            <Dialog open={!!editingStatus} onOpenChange={() => setEditingStatus(null)}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Редагувати статус</DialogTitle>
+                </DialogHeader>
+                {editingStatus && (
+                  <form onSubmit={statusForm.handleSubmit((data) => {
+                    updateStatusMutation.mutate({
+                      id: editingStatus.id,
+                      data
+                    });
+                  })}>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="editStatusName">Назва статусу</Label>
+                        <Input
+                          id="editStatusName"
+                          {...statusForm.register("name")}
+                          defaultValue={editingStatus.name}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="editTextColor">Колір тексту</Label>
+                        <Input
+                          id="editTextColor"
+                          type="color"
+                          {...statusForm.register("textColor")}
+                          defaultValue={editingStatus.textColor}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="editBackgroundColor">Колір фону</Label>
+                        <Input
+                          id="editBackgroundColor"
+                          type="color"
+                          {...statusForm.register("backgroundColor")}
+                          defaultValue={editingStatus.backgroundColor}
+                        />
+                      </div>
+                      <div className="flex justify-end space-x-2">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setEditingStatus(null)}
+                        >
+                          Скасувати
+                        </Button>
+                        <Button 
+                          type="submit" 
+                          disabled={updateStatusMutation.isPending}
+                        >
+                          {updateStatusMutation.isPending ? "Оновлення..." : "Оновити"}
+                        </Button>
+                      </div>
+                    </div>
+                  </form>
+                )}
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+      )}
 
       <main className="p-6 space-y-6">
         {/* Stats */}
