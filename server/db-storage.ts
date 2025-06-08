@@ -4951,6 +4951,44 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Скасування оплати замовлення
+  async cancelOrderPayment(orderId: number): Promise<void> {
+    try {
+      // Перевіряємо поточний стан замовлення
+      const existingOrder = await this.getOrder(orderId);
+      if (!existingOrder) {
+        throw new Error(`Замовлення з ID ${orderId} не знайдено`);
+      }
+
+      // Скасовуємо оплату, повертаючи до стану "без оплати"
+      await db.update(orders)
+        .set({
+          paymentType: 'none',
+          paymentDate: null,
+          paidAmount: '0.00',
+          contractNumber: null,
+          productionApproved: false,
+          productionApprovedBy: null,
+          productionApprovedAt: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(orders.id, orderId));
+
+      // Видаляємо або скасовуємо пов'язані виробничі завдання
+      await db.update(manufacturingOrders)
+        .set({
+          status: 'cancelled',
+          updatedAt: new Date(),
+        })
+        .where(eq(manufacturingOrders.orderId, orderId));
+
+      console.log(`Скасовано оплату для замовлення ${orderId}, виробничі завдання скасовано`);
+    } catch (error) {
+      console.error("Помилка при скасуванні оплати замовлення:", error);
+      throw error;
+    }
+  }
+
   // Створення виробничих завдань для замовлення
   private async createManufacturingTasksForOrder(orderId: number): Promise<void> {
     try {

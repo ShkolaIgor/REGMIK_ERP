@@ -77,6 +77,30 @@ export function PaymentDialog({
     },
   });
 
+  const cancelPaymentMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest(`/api/orders/${orderId}/cancel-payment`, {
+        method: "POST",
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Успішно",
+        description: data.message || "Оплату скасовано",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/manufacturing-orders"] });
+      setOpen(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Не вдалося скасувати платіж",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = () => {
     const paymentData = {
       paymentType,
@@ -231,15 +255,27 @@ export function PaymentDialog({
             <Button
               variant="outline"
               onClick={() => setOpen(false)}
-              disabled={processPaymentMutation.isPending}
+              disabled={processPaymentMutation.isPending || cancelPaymentMutation.isPending}
             >
-              Скасувати
+              Закрити
             </Button>
+            
+            {/* Показуємо кнопку скасування оплати якщо є оплата */}
+            {currentPaymentType !== "none" && (
+              <Button
+                variant="destructive"
+                onClick={() => cancelPaymentMutation.mutate()}
+                disabled={processPaymentMutation.isPending || cancelPaymentMutation.isPending}
+              >
+                {cancelPaymentMutation.isPending ? "Скасування..." : "Скасувати оплату"}
+              </Button>
+            )}
+            
             <Button
               onClick={handleSubmit}
-              disabled={processPaymentMutation.isPending}
+              disabled={processPaymentMutation.isPending || cancelPaymentMutation.isPending}
             >
-              {processPaymentMutation.isPending ? "Обробка..." : "Обробити"}
+              {processPaymentMutation.isPending ? "Обробка..." : "Оплатити"}
             </Button>
           </div>
         </div>

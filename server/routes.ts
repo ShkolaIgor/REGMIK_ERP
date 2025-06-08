@@ -5529,6 +5529,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Скасування оплати замовлення
+  app.post("/api/orders/:id/cancel-payment", async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      
+      // Отримуємо поточне замовлення
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ error: "Замовлення не знайдено" });
+      }
+
+      // Перевіряємо, чи є оплата для скасування
+      if (order.paymentType === 'none' || !order.paymentDate) {
+        return res.status(400).json({ error: "Немає оплати для скасування" });
+      }
+
+      // Скасовуємо оплату
+      await storage.cancelOrderPayment(orderId);
+      
+      res.json({ success: true, message: "Оплату скасовано успішно" });
+    } catch (error) {
+      console.error("Error canceling payment:", error);
+      res.status(500).json({ error: "Failed to cancel payment" });
+    }
+  });
+
   // Окремий endpoint для дозволу виробництва
   app.post("/api/orders/:id/approve-production", async (req, res) => {
     try {
