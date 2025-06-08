@@ -491,7 +491,8 @@ export default function Orders() {
 
     const orderData = {
       order: {
-        clientId: data.clientId,
+        clientId: data.clientId || null,
+        customerName: data.customerName || (editingOrder?.customerName) || null,
         customerEmail: data.customerEmail || null,
         customerPhone: data.customerPhone || null,
         status: data.status,
