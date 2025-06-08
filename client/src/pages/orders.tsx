@@ -496,15 +496,15 @@ export default function Orders() {
 
     const orderData = {
       order: {
-        clientId: data.clientId ? parseInt(data.clientId) : null,
-        customerName: data.customerName || (editingOrder?.customerName) || null,
-        customerEmail: data.customerEmail || null,
-        customerPhone: data.customerPhone || null,
+        ...(data.clientId && { clientId: parseInt(data.clientId) }),
+        ...(data.customerName && { customerName: data.customerName }),
+        ...(data.customerEmail && { customerEmail: data.customerEmail }),
+        ...(data.customerPhone && { customerPhone: data.customerPhone }),
         status: data.status,
-        notes: data.notes || null,
-        paymentDate: parseDateForServer(data.paymentDate || ""),
-        dueDate: parseDateForServer(data.dueDate || ""),
-        shippedDate: parseDateForServer(data.shippedDate || ""),
+        ...(data.notes && { notes: data.notes }),
+        ...(data.paymentDate && { paymentDate: parseDateForServer(data.paymentDate) }),
+        ...(data.dueDate && { dueDate: parseDateForServer(data.dueDate) }),
+        ...(data.shippedDate && { shippedDate: parseDateForServer(data.shippedDate) }),
       },
       items: orderItems.map(item => ({
         productId: item.productId,

@@ -737,12 +737,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const orderData = insertOrderSchema.parse(order);
       
       // Конвертуємо строки дат в Date об'єкти та виправляємо типи
-      const processedOrderData = {
-        ...orderData,
-        paymentDate: orderData.paymentDate ? new Date(orderData.paymentDate).toISOString() : null,
-        dueDate: orderData.dueDate ? new Date(orderData.dueDate).toISOString() : null,
-        shippedDate: orderData.shippedDate ? new Date(orderData.shippedDate).toISOString() : null,
-      };
+      // Фільтруємо null значення та обробляємо дати
+      const processedOrderData: any = {};
+      
+      Object.keys(orderData).forEach(key => {
+        const value = orderData[key as keyof typeof orderData];
+        if (value !== null && value !== undefined) {
+          if (key === 'paymentDate' || key === 'dueDate' || key === 'shippedDate') {
+            processedOrderData[key] = new Date(value as string).toISOString();
+          } else {
+            processedOrderData[key] = value;
+          }
+        }
+      });
       
       const updatedOrder = await storage.updateOrder(id, processedOrderData, items || []);
       
