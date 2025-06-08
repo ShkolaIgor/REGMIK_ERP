@@ -574,9 +574,25 @@ export default function Orders() {
                     <div className="relative">
                       <Input
                         placeholder="Почніть вводити назву клієнта..."
-                        value={clientSearchValue}
-                        onChange={(e) => handleClientSearchChange(e.target.value)}
-                        onFocus={() => clientSearchValue.length > 0 && setClientComboboxOpen(true)}
+                        value={form.watch("clientId") ? 
+                          clients.find((c: any) => c.id.toString() === form.watch("clientId"))?.name || clientSearchValue 
+                          : clientSearchValue}
+                        onChange={(e) => {
+                          // Якщо є обраний клієнт і користувач редагує, скидаємо вибір
+                          if (form.watch("clientId")) {
+                            form.setValue("clientId", "");
+                          }
+                          handleClientSearchChange(e.target.value);
+                        }}
+                        onFocus={() => {
+                          // При фокусі, якщо є обраний клієнт, очищаємо поле для редагування
+                          if (form.watch("clientId")) {
+                            const selectedClient = clients.find((c: any) => c.id.toString() === form.watch("clientId"));
+                            setClientSearchValue(selectedClient?.name || "");
+                            form.setValue("clientId", "");
+                          }
+                          if (clientSearchValue.length > 0) setClientComboboxOpen(true);
+                        }}
                         onBlur={() => setTimeout(() => setClientComboboxOpen(false), 200)}
                         className={form.formState.errors.clientId ? "border-red-500" : ""}
                       />
@@ -630,24 +646,7 @@ export default function Orders() {
                         </div>
                       )}
                     </div>
-                    {form.watch("clientId") && (
-                      <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
-                        <span className="text-blue-800">
-                          Обрано: {clients.find((c: any) => c.id.toString() === form.watch("clientId"))?.name}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            form.setValue("clientId", "");
-                            setClientSearchValue("");
-                          }}
-                          className="ml-2 h-6 w-6 p-0 text-blue-600 hover:text-blue-800"
-                        >
-                          ×
-                        </Button>
-                      </div>
-                    )}
+
                     {form.formState.errors.clientId && (
                       <p className="text-sm text-red-500 mt-1">
                         {form.formState.errors.clientId.message}
