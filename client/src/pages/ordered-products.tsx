@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle, Package, Factory, CheckCircle, ArrowRight } from "lucide-react";
+import { AlertTriangle, Package, Factory, CheckCircle, ArrowRight, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -23,6 +23,8 @@ export default function OrderedProducts() {
   const [isProductionDialogOpen, setIsProductionDialogOpen] = useState(false);
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
   const [isSupplierOrderDialogOpen, setIsSupplierOrderDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -113,6 +115,29 @@ export default function OrderedProducts() {
       toast({
         title: "Помилка",
         description: error.message || "Не вдалося створити замовлення постачальнику",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteOrderedProductMutation = useMutation({
+    mutationFn: async (productId: number) => {
+      return await apiRequest(`/api/ordered-products/${productId}`, "DELETE");
+    },
+    onSuccess: () => {
+      toast({
+        title: "Успішно",
+        description: "Замовлений товар видалено",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/ordered-products-info"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      setIsDeleteDialogOpen(false);
+      setProductToDelete(null);
+    },
+    onError: () => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося видалити замовлений товар",
         variant: "destructive",
       });
     },
@@ -497,6 +522,20 @@ export default function OrderedProducts() {
                               </DialogContent>
                             </Dialog>
                           )}
+
+                          {/* Кнопка видалення замовленого товару */}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setProductToDelete(item);
+                              setIsDeleteDialogOpen(true);
+                            }}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Видалити
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -507,6 +546,41 @@ export default function OrderedProducts() {
           </Card>
         </div>
       )}
+
+      {/* Діалог підтвердження видалення */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Підтвердити видалення</DialogTitle>
+            <DialogDescription>
+              Ви дійсно хочете видалити замовлений товар "{productToDelete?.product?.name}"?
+              Ця дія призведе до видалення всіх пов'язаних замовлень і виробничих завдань.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setProductToDelete(null);
+              }}
+            >
+              Скасувати
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (productToDelete) {
+                  deleteOrderedProductMutation.mutate(productToDelete.productId);
+                }
+              }}
+              disabled={deleteOrderedProductMutation.isPending}
+            >
+              {deleteOrderedProductMutation.isPending ? "Видалення..." : "Видалити"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
