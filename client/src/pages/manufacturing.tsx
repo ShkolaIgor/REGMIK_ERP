@@ -121,8 +121,11 @@ export default function Manufacturing() {
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log("Creating manufacturing order with data:", data);
-      return apiRequest("/api/manufacturing-orders", "POST", data);
+      console.log("🔥 MUTATION: mutationFn called with data:", data);
+      console.log("🔥 MUTATION: About to call apiRequest");
+      const result = await apiRequest("/api/manufacturing-orders", "POST", data);
+      console.log("🔥 MUTATION: apiRequest returned:", result);
+      return result;
     },
     onSuccess: (result) => {
       console.log("Manufacturing order created successfully:", result);
