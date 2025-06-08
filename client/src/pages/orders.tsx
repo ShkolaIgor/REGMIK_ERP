@@ -592,11 +592,14 @@ export default function Orders() {
                 Новий рахунок/замовлення
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" aria-describedby="order-dialog-description">
               <DialogHeader>
                 <DialogTitle>
                   {isEditMode ? `Редагувати рахунок ${editingOrder?.orderNumber}` : "Створити новий рахунок/замовлення"}
                 </DialogTitle>
+                <DialogDescription id="order-dialog-description">
+                  {isEditMode ? "Внесіть зміни до існуючого замовлення та його товарів" : "Створіть новий рахунок для клієнта з товарами та датами"}
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                 {/* Інформація про клієнта */}
@@ -852,43 +855,7 @@ export default function Orders() {
                   )}
                 </div>
 
-                {/* Примітки */}
-                <div>
-                  <Label htmlFor="notes">Примітки</Label>
-                  <Textarea
-                    id="notes"
-                    {...form.register("notes")}
-                    rows={3}
-                  />
-                </div>
 
-                {/* Дати замовлення */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="paymentDate">Дата оплати</Label>
-                    <Input
-                      id="paymentDate"
-                      type="datetime-local"
-                      {...form.register("paymentDate")}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="dueDate">Термін виконання</Label>
-                    <Input
-                      id="dueDate"
-                      type="datetime-local"
-                      {...form.register("dueDate")}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="shippedDate">Дата відвантаження</Label>
-                    <Input
-                      id="shippedDate"
-                      type="datetime-local"
-                      {...form.register("shippedDate")}
-                    />
-                  </div>
-                </div>
 
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button 
@@ -1037,9 +1004,12 @@ export default function Orders() {
                                 <Eye className="w-4 h-4" />
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-4xl">
+                            <DialogContent className="max-w-4xl" aria-describedby="order-details-description">
                               <DialogHeader>
                                 <DialogTitle>Деталі замовлення {selectedOrder?.orderNumber}</DialogTitle>
+                                <DialogDescription id="order-details-description">
+                                  Повна інформація про замовлення, клієнта та товари
+                                </DialogDescription>
                               </DialogHeader>
                               {selectedOrder && (
                                 <div className="space-y-6">
