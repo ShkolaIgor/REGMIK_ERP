@@ -28,12 +28,17 @@ function OrdersByProduct({ productId }: { productId: number }) {
     return <div className="p-4 text-center text-muted-foreground">Замовлень не знайдено</div>;
   }
 
+  // Видаляємо дублікати за orderNumber
+  const uniqueOrders = orders.filter((order: any, index: number, self: any[]) => 
+    index === self.findIndex((o: any) => o.orderNumber === order.orderNumber)
+  );
+
   return (
     <div className="space-y-2">
       <h4 className="font-medium mb-2">Замовлення з цим товаром:</h4>
       <div className="max-h-60 overflow-y-auto space-y-2">
-        {orders.map((order: any) => (
-          <div key={order.id} className="border rounded p-2 text-sm">
+        {uniqueOrders.map((order: any) => (
+          <div key={order.orderNumber} className="border rounded p-2 text-sm">
             <div className="flex justify-between items-start">
               <div>
                 <div className="font-medium">{order.orderNumber}</div>

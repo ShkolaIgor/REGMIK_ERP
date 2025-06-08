@@ -4000,7 +4000,23 @@ export class DatabaseStorage implements IStorage {
         .where(eq(orderItems.productId, productId))
         .orderBy(orders.createdAt);
 
-      return result;
+      // Групуємо результати по замовленнях та сумуємо кількість
+      const orderMap = new Map();
+      
+      result.forEach((item: any) => {
+        const key = item.orderNumber;
+        if (orderMap.has(key)) {
+          const existing = orderMap.get(key);
+          existing.quantity = Number(existing.quantity) + Number(item.quantity);
+        } else {
+          orderMap.set(key, {
+            ...item,
+            quantity: Number(item.quantity)
+          });
+        }
+      });
+
+      return Array.from(orderMap.values());
     } catch (error) {
       console.error('Error getting orders by product:', error);
       throw error;
