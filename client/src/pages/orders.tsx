@@ -416,6 +416,11 @@ export default function Orders() {
 
   const handleClientSearchChange = (value: string) => {
     setClientSearchValue(value);
+    if (value.length > 0) {
+      setClientComboboxOpen(true);
+    } else {
+      setClientComboboxOpen(false);
+    }
   };
 
   const handleCreateNewClient = () => {
@@ -571,66 +576,58 @@ export default function Orders() {
                         placeholder="Почніть вводити назву клієнта..."
                         value={clientSearchValue}
                         onChange={(e) => handleClientSearchChange(e.target.value)}
-                        onFocus={() => setClientComboboxOpen(true)}
+                        onFocus={() => clientSearchValue.length > 0 && setClientComboboxOpen(true)}
+                        onBlur={() => setTimeout(() => setClientComboboxOpen(false), 200)}
                         className={form.formState.errors.clientId ? "border-red-500" : ""}
                       />
-                      {clientSearchValue && (
-                        <Popover open={clientComboboxOpen} onOpenChange={setClientComboboxOpen}>
-                          <PopoverContent className="w-full p-0 mt-1" align="start">
-                            <Command>
-                              <CommandList>
-                                {filteredClients.length > 0 ? (
-                                  <CommandGroup>
-                                    {filteredClients.map((client: any) => (
-                                      <CommandItem
-                                        key={client.id}
-                                        value={client.id.toString()}
-                                        onSelect={() => handleClientSelect(client.id.toString())}
-                                        className="cursor-pointer"
-                                      >
-                                        <div className="flex items-center w-full">
-                                          <Check
-                                            className={`mr-2 h-4 w-4 ${
-                                              form.watch("clientId") === client.id.toString()
-                                                ? "opacity-100"
-                                                : "opacity-0"
-                                            }`}
-                                          />
-                                          <div className="flex-1">
-                                            <div className="font-medium">{client.name}</div>
-                                            <div className="text-sm text-gray-500">{client.taxCode}</div>
-                                          </div>
-                                        </div>
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                ) : clientSearchValue.length > 2 ? (
-                                  <div className="p-3">
-                                    <p className="text-sm text-muted-foreground mb-3">
-                                      Клієнт "{clientSearchValue}" не знайдений
-                                    </p>
-                                    <Button
-                                      size="sm"
-                                      onClick={() => {
-                                        setNewClientName(clientSearchValue);
-                                        setIsCreateClientDialogOpen(true);
-                                        setClientComboboxOpen(false);
-                                      }}
-                                      className="w-full"
-                                    >
-                                      <Plus className="w-4 h-4 mr-2" />
-                                      Створити нового клієнта
-                                    </Button>
+                      {clientSearchValue && clientComboboxOpen && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                          {filteredClients.length > 0 ? (
+                            <div className="py-1">
+                              {filteredClients.map((client: any) => (
+                                <div
+                                  key={client.id}
+                                  onClick={() => handleClientSelect(client.id.toString())}
+                                  className="px-3 py-2 cursor-pointer hover:bg-gray-100 flex items-center"
+                                >
+                                  <Check
+                                    className={`mr-2 h-4 w-4 ${
+                                      form.watch("clientId") === client.id.toString()
+                                        ? "opacity-100 text-blue-600"
+                                        : "opacity-0"
+                                    }`}
+                                  />
+                                  <div className="flex-1">
+                                    <div className="font-medium">{client.name}</div>
+                                    <div className="text-sm text-gray-500">{client.taxCode}</div>
                                   </div>
-                                ) : (
-                                  <div className="p-3 text-sm text-muted-foreground">
-                                    Введіть мінімум 3 символи для пошуку
-                                  </div>
-                                )}
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
+                                </div>
+                              ))}
+                            </div>
+                          ) : clientSearchValue.length > 2 ? (
+                            <div className="p-3">
+                              <p className="text-sm text-gray-600 mb-3">
+                                Клієнт "{clientSearchValue}" не знайдений
+                              </p>
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setNewClientName(clientSearchValue);
+                                  setIsCreateClientDialogOpen(true);
+                                  setClientComboboxOpen(false);
+                                }}
+                                className="w-full"
+                              >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Створити нового клієнта
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="p-3 text-sm text-gray-500">
+                              Введіть мінімум 3 символи для пошуку
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                     {form.watch("clientId") && (
