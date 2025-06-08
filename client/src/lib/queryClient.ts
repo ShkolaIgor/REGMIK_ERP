@@ -14,17 +14,25 @@ async function throwIfResNotOk(res: Response) {
 
 export async function apiRequest(
   urlOrOptions: string | { url: string; method?: string; body?: unknown },
-  options?: { method?: string; body?: unknown }
+  methodOrOptions?: string | { method?: string; body?: unknown },
+  bodyData?: unknown
 ): Promise<any> {
   let url: string;
   let method: string;
   let data: unknown;
 
   if (typeof urlOrOptions === 'string') {
-    // Простий виклик для GET запитів: apiRequest("/api/endpoint")
     url = urlOrOptions;
-    method = options?.method || 'GET';
-    data = options?.body;
+    
+    if (typeof methodOrOptions === 'string') {
+      // Виклик з 3 параметрами: apiRequest("/api/endpoint", "POST", data)
+      method = methodOrOptions;
+      data = bodyData;
+    } else {
+      // Виклик з об'єктом: apiRequest("/api/endpoint", {method: "POST", body: data})
+      method = methodOrOptions?.method || 'GET';
+      data = methodOrOptions?.body;
+    }
   } else {
     // Об'єктний виклик: apiRequest({ url: "/api/endpoint", method: "POST", body: data })
     url = urlOrOptions.url;
