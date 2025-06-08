@@ -3284,14 +3284,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/manufacturing-orders", async (req, res) => {
     try {
+      console.log("🟡 ROUTE: POST /api/manufacturing-orders called with body:", req.body);
+      
       const orderData = insertManufacturingOrderSchema.parse(req.body);
+      console.log("🟡 ROUTE: Zod validation passed, calling storage.createManufacturingOrder");
+      
       const order = await storage.createManufacturingOrder(orderData);
+      console.log("🟢 ROUTE: Order created successfully:", order);
+      
       res.status(201).json(order);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.log("🔴 ROUTE: Zod validation failed:", error.errors);
         res.status(400).json({ error: "Invalid manufacturing order data", details: error.errors });
       } else {
-        console.error("Failed to create manufacturing order:", error);
+        console.error("🔴 ROUTE: Failed to create manufacturing order:", error);
         res.status(500).json({ error: "Failed to create manufacturing order" });
       }
     }
