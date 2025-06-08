@@ -244,15 +244,39 @@ export default function Orders() {
       case 'status':
         const statusInfo = orderStatuses.find(s => s.name === order.status);
         return (
-          <Badge 
-            className="text-sm font-medium border-0"
-            style={{
-              color: statusInfo?.textColor || '#000000',
-              backgroundColor: statusInfo?.backgroundColor || '#f3f4f6'
-            }}
-          >
-            {order.status}
-          </Badge>
+          <div onClick={(e) => e.stopPropagation()}>
+            <Select
+              value={order.status}
+              onValueChange={(value) => {
+                updateStatusMutation.mutate({ id: order.id, status: value });
+              }}
+            >
+              <SelectTrigger className="w-[140px] h-7 border-0 p-1">
+                <Badge 
+                  className="text-sm font-medium border-0 w-full justify-center"
+                  style={{
+                    color: statusInfo?.textColor || '#000000',
+                    backgroundColor: statusInfo?.backgroundColor || '#f3f4f6'
+                  }}
+                >
+                  {order.status}
+                </Badge>
+              </SelectTrigger>
+              <SelectContent>
+                {orderStatuses.map((status) => (
+                  <SelectItem key={status.id} value={status.name}>
+                    <div className="flex items-center">
+                      <div
+                        className="w-3 h-3 rounded-full mr-2"
+                        style={{ backgroundColor: status.backgroundColor }}
+                      />
+                      {status.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         );
       
       case 'actions':
@@ -616,7 +640,6 @@ export default function Orders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/order-statuses"] });
-      setIsStatusDialogOpen(false);
       setEditingStatus(null);
       statusForm.reset();
       toast({
