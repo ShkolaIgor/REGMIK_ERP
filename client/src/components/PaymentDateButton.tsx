@@ -12,6 +12,9 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { uk } from "date-fns/locale";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface PaymentDateButtonProps {
   order: {
@@ -25,6 +28,28 @@ interface PaymentDateButtonProps {
 export function PaymentDateButton({ order, onPaymentDateChange, isLoading }: PaymentDateButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const { toast } = useToast();
+
+  // Мутація для автоматичного створення виробничих завдань
+  const processPaymentMutation = useMutation({
+    mutationFn: async (orderId: number) => {
+      return await apiRequest(`/api/orders/${orderId}/process-payment`, "POST");
+    },
+    onSuccess: () => {
+      toast({
+        title: "Успішно",
+        description: "Створено завдання на виробництво для оплаченого замовлення",
+      });
+    },
+    onError: (error) => {
+      console.error("Помилка при обробці оплати:", error);
+      toast({
+        title: "Помилка",
+        description: "Не вдалося створити завдання на виробництво",
+        variant: "destructive",
+      });
+    },
+  });
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return null;
@@ -35,9 +60,18 @@ export function PaymentDateButton({ order, onPaymentDateChange, isLoading }: Pay
     }
   };
 
-  const handleSetPaymentDate = (date: Date | null) => {
+  const handleSetPaymentDate = async (date: Date | null) => {
     const isoString = date ? date.toISOString() : null;
+    const wasUnpaid = !order.paymentDate;
+    
+    // Спочатку оновлюємо дату оплати
     onPaymentDateChange(order.id, isoString);
+    
+    // Якщо замовлення було неоплаченим і тепер стає оплаченим - створюємо виробничі завдання
+    if (wasUnpaid && isoString) {
+      processPaymentMutation.mutate(order.id);
+    }
+    
     setIsOpen(false);
   };
 

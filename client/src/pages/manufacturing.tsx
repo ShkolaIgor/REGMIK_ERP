@@ -48,6 +48,7 @@ interface ManufacturingOrder {
   materialCost: string;
   laborCost: string;
   overheadCost: string;
+  sourceOrderId?: number;
   totalCost: string;
   qualityRating: string;
   notes?: string;
@@ -603,6 +604,7 @@ export default function Manufacturing() {
                 <TableHead>Прогрес</TableHead>
                 <TableHead>Статус</TableHead>
                 <TableHead>Пріоритет</TableHead>
+                <TableHead>Джерельне замовлення</TableHead>
                 <TableHead>Серійні номери</TableHead>
                 <TableHead>Відповідальний</TableHead>
                 <TableHead>Дата завершення</TableHead>
@@ -652,6 +654,20 @@ export default function Manufacturing() {
                       {order.priority === "high" && "Високий"}
                       {order.priority === "urgent" && "Терміновий"}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {order.sourceOrderId ? (
+                      <div className="text-sm">
+                        <div className="font-medium text-blue-600">
+                          Замовлення #{order.sourceOrder?.orderNumber || order.sourceOrderId}
+                        </div>
+                        <div className="text-gray-500 text-xs">
+                          Автоматично створено
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 text-sm">Ручне створення</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     {order.serialNumbers && order.serialNumbers.length > 0 ? (
