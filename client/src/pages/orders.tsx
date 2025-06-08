@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
-import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
 import { useForm } from "react-hook-form";
@@ -223,23 +223,34 @@ export default function Orders() {
       
       case 'actions':
         return (
-          <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+          <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleEditOrder(order)}
+              title="Редагувати замовлення"
             >
               <Edit className="w-4 h-4" />
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                setSelectedOrderForShipment(order);
-                setIsPartialShipmentOpen(true);
-              }}
+              onClick={() => handlePartialShipment(order)}
+              title="Відвантажити замовлення"
             >
               <Truck className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => toggleOrderExpansion(order.id)}
+              title="Показати/сховати деталі"
+            >
+              {expandedOrderId === order.id ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
             </Button>
           </div>
         );
