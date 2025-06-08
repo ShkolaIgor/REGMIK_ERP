@@ -1631,7 +1631,24 @@ export default function Orders() {
                                     <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing">
                                       <GripVertical className="w-4 h-4 text-gray-400 hover:text-gray-600" />
                                     </div>
-                                    <span>{columnLabels[columnKey as keyof typeof columnLabels]}</span>
+                                    {columnKey !== 'actions' ? (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleSort(columnKey);
+                                        }}
+                                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                                      >
+                                        <span>{columnLabels[columnKey as keyof typeof columnLabels]}</span>
+                                        {sortConfig.field === columnKey && (
+                                          sortConfig.direction === 'asc' ? 
+                                            <ChevronUp className="w-4 h-4" /> : 
+                                            <ChevronDown className="w-4 h-4" />
+                                        )}
+                                      </button>
+                                    ) : (
+                                      <span>{columnLabels[columnKey as keyof typeof columnLabels]}</span>
+                                    )}
                                   </div>
                                 </TableHead>
                               )}
