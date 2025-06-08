@@ -481,7 +481,7 @@ export const insertProductSchema = createInsertSchema(products).omit({ id: true,
 export const insertInventorySchema = createInsertSchema(inventory).omit({ id: true, updatedAt: true });
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, orderNumber: true, totalAmount: true }).extend({
   customerName: z.string().optional(), // робимо опціональним, якщо є clientId
-  clientId: z.string().optional(), // опціональний зв'язок з клієнтом
+  clientId: z.number().optional(), // опціональний зв'язок з клієнтом
 }).refine(data => data.customerName || data.clientId, {
   message: "Потрібно вказати або ім'я клієнта, або обрати клієнта зі списку"
 });

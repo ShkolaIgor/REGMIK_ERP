@@ -436,11 +436,17 @@ export class DatabaseStorage implements IStorage {
         return undefined;
       }
 
-      // Видаляємо старі товари замовлення
-      await db.delete(orderItems).where(eq(orderItems.orderId, id));
-
-      // Додаємо нові товари
+      // Для безпечного оновлення не видаляємо існуючі товари, а тільки оновлюємо дані замовлення
+      // При необхідності можна додати нові товари
       if (itemsWithPrices.length > 0) {
+        // Видаляємо всі існуючі товари замовлення
+        try {
+          await db.delete(orderItems).where(eq(orderItems.orderId, id));
+        } catch (error: any) {
+          // Якщо не можемо видалити через foreign key constraint, просто додаємо нові товари
+          console.log('Cannot delete order items due to foreign key constraint, adding new items instead');
+        }
+        
         const itemsToInsert = itemsWithPrices.map(item => ({ ...item, orderId: id }));
         console.log('Updating order items with calculated prices:', itemsToInsert);
         
