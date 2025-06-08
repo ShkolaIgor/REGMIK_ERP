@@ -5122,6 +5122,7 @@ export class DatabaseStorage implements IStorage {
           recipeId: recipe[0].id,
           plannedQuantity: quantity.toString(),
           producedQuantity: '0',
+          unit: 'шт',
           status: 'pending',
           priority: 'medium',
           sourceOrderId: sourceOrderId,
