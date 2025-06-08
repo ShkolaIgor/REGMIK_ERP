@@ -404,6 +404,24 @@ export default function Orders() {
     queryKey: ["/api/orders"],
   });
 
+  // Логування для діагностики замовлення #9
+  React.useEffect(() => {
+    if (allOrders.length > 0) {
+      const order9 = allOrders.find(order => order.id === 9);
+      console.log('Всі замовлення:', allOrders.map(o => ({ id: o.id, orderNumber: o.orderNumber })));
+      console.log('Замовлення #9 в allOrders:', order9 ? 'ЗНАЙДЕНО' : 'НЕ ЗНАЙДЕНО');
+      if (order9) {
+        console.log('Деталі замовлення #9:', {
+          id: order9.id,
+          orderNumber: order9.orderNumber,
+          customerName: order9.customerName,
+          paymentDate: order9.paymentDate,
+          items: order9.items?.length || 0
+        });
+      }
+    }
+  }, [allOrders]);
+
 
 
   const { data: orderStatuses = [] } = useQuery<OrderStatus[]>({
@@ -447,12 +465,77 @@ export default function Orders() {
 
   const filteredOrders = filterOrders(allOrders);
 
+  // Логування фільтрації замовлення #9
+  React.useEffect(() => {
+    if (allOrders.length > 0) {
+      const order9 = allOrders.find(order => order.id === 9);
+      if (order9) {
+        const isInFiltered = filteredOrders.find(order => order.id === 9);
+        console.log('Замовлення #9 після фільтрації:', isInFiltered ? 'ВІДОБРАЖАЄТЬСЯ' : 'ВІДФІЛЬТРОВАНО');
+        
+        if (!isInFiltered) {
+          console.log('Перевірка фільтрів для замовлення #9:');
+          console.log('- searchTerm:', searchTerm);
+          console.log('- statusFilter:', statusFilter);
+          console.log('- paymentFilter:', paymentFilter);
+          console.log('- dateRangeFilter:', dateRangeFilter);
+          
+          // Детальна перевірка кожного фільтра
+          const searchLower = searchTerm.toLowerCase();
+          const matchesSearch = !searchTerm || 
+            order9.orderNumber.toLowerCase().includes(searchLower) ||
+            order9.customerName.toLowerCase().includes(searchLower) ||
+            order9.customerEmail?.toLowerCase().includes(searchLower) ||
+            order9.customerPhone?.toLowerCase().includes(searchLower) ||
+            order9.orderSequenceNumber.toString().includes(searchLower);
+          
+          const matchesStatus = statusFilter === "all" || order9.status === statusFilter;
+          const matchesPayment = 
+            paymentFilter === "all" ||
+            (paymentFilter === "paid" && order9.paymentDate) ||
+            (paymentFilter === "unpaid" && !order9.paymentDate) ||
+            (paymentFilter === "overdue" && !order9.paymentDate && order9.dueDate && new Date(order9.dueDate) < new Date());
+          
+          const now = new Date();
+          const orderDate = new Date(order9.createdAt);
+          const matchesDateRange = 
+            dateRangeFilter === "all" ||
+            (dateRangeFilter === "today" && orderDate.toDateString() === now.toDateString()) ||
+            (dateRangeFilter === "week" && (now.getTime() - orderDate.getTime()) <= 7 * 24 * 60 * 60 * 1000) ||
+            (dateRangeFilter === "month" && (now.getTime() - orderDate.getTime()) <= 30 * 24 * 60 * 60 * 1000);
+          
+          console.log('Результати фільтрації:');
+          console.log('- matchesSearch:', matchesSearch);
+          console.log('- matchesStatus:', matchesStatus, '(статус замовлення:', order9.status + ')');
+          console.log('- matchesPayment:', matchesPayment, '(paymentDate:', order9.paymentDate + ')');
+          console.log('- matchesDateRange:', matchesDateRange, '(дата створення:', order9.createdAt + ')');
+        }
+      }
+    }
+  }, [filteredOrders, allOrders, searchTerm, statusFilter, paymentFilter, dateRangeFilter]);
+
   // Хук сортування з збереженням налаштувань користувача
   const { sortedData: orders, sortConfig, handleSort } = useSorting({
     data: filteredOrders,
     tableName: 'orders',
     defaultSort: { field: 'orderSequenceNumber', direction: 'desc' }
   });
+
+  // Логування після сортування
+  React.useEffect(() => {
+    if (orders.length > 0) {
+      const order9InSorted = orders.find(order => order.id === 9);
+      console.log('Замовлення #9 після сортування:', order9InSorted ? 'ПРИСУТНЄ' : 'ВІДСУТНЄ');
+      console.log('Всього замовлень після сортування:', orders.length);
+      console.log('IDs замовлень після сортування:', orders.map(o => o.id));
+      
+      if (order9InSorted) {
+        const index = orders.findIndex(order => order.id === 9);
+        console.log('Позиція замовлення #9 в списку:', index);
+        console.log('orderSequenceNumber замовлення #9:', order9InSorted.orderSequenceNumber);
+      }
+    }
+  }, [orders]);
 
   const { data: products = [] } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -1742,7 +1825,16 @@ export default function Orders() {
                     </Droppable>
                   </TableHeader>
                   <TableBody>
-                    {orders.map((order: any) => (
+                    {orders.map((order: any) => {
+                      // Логування для замовлення #9
+                      if (order.id === 9) {
+                        console.log('РЕНДЕРИТСЯ замовлення #9 в таблиці!', {
+                          id: order.id,
+                          orderNumber: order.orderNumber,
+                          customerName: order.customerName
+                        });
+                      }
+                      return (
                       <React.Fragment key={order.id}>
                         <TableRow 
                           className="cursor-pointer hover:bg-gray-50"
@@ -1791,7 +1883,8 @@ export default function Orders() {
                           </TableRow>
                         )}
                       </React.Fragment>
-                    ))}
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </DragDropContext>
