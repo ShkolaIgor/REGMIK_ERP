@@ -3576,7 +3576,28 @@ export class DatabaseStorage implements IStorage {
 
   async createManufacturingOrder(orderData: any): Promise<any> {
     try {
-      const [newOrder] = await db.insert(manufacturingOrders).values(orderData).returning();
+      // Генеруємо номер завдання, якщо він не вказаний
+      if (!orderData.orderNumber) {
+        orderData.orderNumber = `MFG-${Date.now()}-${orderData.productId || 'NEW'}`;
+      }
+
+      // Встановлюємо значення за замовчуванням
+      const completeOrderData = {
+        ...orderData,
+        status: orderData.status || 'pending',
+        priority: orderData.priority || 'medium',
+        producedQuantity: orderData.producedQuantity || '0',
+        unit: orderData.unit || 'шт',
+        materialCost: orderData.materialCost || '0.00',
+        laborCost: orderData.laborCost || '0.00',
+        overheadCost: orderData.overheadCost || '0.00',
+        totalCost: orderData.totalCost || '0.00',
+        qualityRating: orderData.qualityRating || 'good',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      const [newOrder] = await db.insert(manufacturingOrders).values(completeOrderData).returning();
       return newOrder;
     } catch (error) {
       console.error("Error creating manufacturing order:", error);
