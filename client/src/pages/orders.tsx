@@ -21,6 +21,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ClientForm } from "@/components/ClientForm";
 import { PaymentDateButton } from "@/components/PaymentDateButton";
+import DueDateButton from "@/components/DueDateButton";
 // Типи
 type Order = {
   id: number;
@@ -250,6 +251,30 @@ export default function Orders() {
       toast({
         title: "Помилка",
         description: error.message || "Не вдалося оновити дату оплати",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Мутація для оновлення терміну виконання
+  const updateDueDateMutation = useMutation({
+    mutationFn: async ({ id, dueDate }: { id: number; dueDate: string | null }) => {
+      return await apiRequest(`/api/orders/${id}/due-date`, { 
+        method: "PATCH", 
+        body: { dueDate } 
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      toast({
+        title: "Успіх",
+        description: "Термін виконання оновлено",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Не вдалося оновити термін виконання",
         variant: "destructive",
       });
     },
@@ -949,6 +974,7 @@ export default function Orders() {
                     <TableHead>Клієнт</TableHead>
                     <TableHead>Дата створення</TableHead>
                     <TableHead>Дата оплати</TableHead>
+                    <TableHead>Термін виконання</TableHead>
                     <TableHead>Сума</TableHead>
                     <TableHead>Статус</TableHead>
                     <TableHead>Дії</TableHead>
