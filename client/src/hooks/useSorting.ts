@@ -70,6 +70,15 @@ export function useSorting<T extends Record<string, any>>({ data, tableName, def
     const newSortConfig = { field, direction: newDirection };
     
     setSortConfig(newSortConfig);
+    
+    // Зберігаємо в localStorage як fallback
+    const localStorageKey = `sort-preferences-${tableName}`;
+    localStorage.setItem(localStorageKey, JSON.stringify({
+      sortField: newSortConfig.field,
+      sortDirection: newSortConfig.direction
+    }));
+    
+    // Також намагаємося зберегти на сервері
     saveSortPreferencesMutation.mutate(newSortConfig);
   };
 
