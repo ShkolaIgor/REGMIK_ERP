@@ -14,15 +14,28 @@ interface UseSortingProps<T> {
 }
 
 export function useSorting<T extends Record<string, any>>({ data, tableName, defaultSort }: UseSortingProps<T>) {
-  const [sortConfig, setSortConfig] = useState<SortConfig>(defaultSort || { field: 'id', direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<SortConfig>(() => {
+    // Спочатку спробуємо завантажити з localStorage
+    const localStorageKey = `sort-preferences-${tableName}`;
+    const savedInLocalStorage = localStorage.getItem(localStorageKey);
+    if (savedInLocalStorage) {
+      try {
+        const parsed = JSON.parse(savedInLocalStorage);
+        return { field: parsed.sortField, direction: parsed.sortDirection };
+      } catch {
+        // Якщо помилка парсингу, використовуємо defaultSort
+      }
+    }
+    return defaultSort || { field: 'id', direction: 'asc' };
+  });
 
-  // Завантаження збережених налаштувань сортування
+  // Завантаження збережених налаштувань сортування з сервера
   const { data: savedPreferences } = useQuery({
     queryKey: [`/api/user-sort-preferences/${tableName}`],
     retry: false,
   });
 
-  // Збереження налаштувань сортування
+  // Збереження налаштувань сортування на сервері
   const saveSortPreferencesMutation = useMutation({
     mutationFn: async (sortConfig: SortConfig) => {
       return apiRequest('/api/user-sort-preferences', {
@@ -36,15 +49,20 @@ export function useSorting<T extends Record<string, any>>({ data, tableName, def
     },
   });
 
-  // Встановлення збережених налаштувань при завантаженні
+  // Встановлення збережених налаштувань при завантаженні з сервера
   useEffect(() => {
     if (savedPreferences && savedPreferences.sortField) {
-      setSortConfig({
+      const serverSortConfig = {
         field: savedPreferences.sortField,
         direction: savedPreferences.sortDirection
-      });
+      };
+      setSortConfig(serverSortConfig);
+      
+      // Також зберігаємо в localStorage як backup
+      const localStorageKey = `sort-preferences-${tableName}`;
+      localStorage.setItem(localStorageKey, JSON.stringify(savedPreferences));
     }
-  }, [savedPreferences]);
+  }, [savedPreferences, tableName]);
 
   // Функція для зміни сортування
   const handleSort = (field: string) => {

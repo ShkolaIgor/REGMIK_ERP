@@ -1765,6 +1765,10 @@ export class MemStorage implements IStorage {
   // Envelope Print Settings methods
   getEnvelopePrintSettings(): Promise<EnvelopePrintSettings[]>;
   createEnvelopePrintSettings(settingsData: InsertEnvelopePrintSettings): Promise<EnvelopePrintSettings>;
+
+  // User Sort Preferences methods
+  getUserSortPreferences(userId: string, tableName: string): Promise<UserSortPreference | null>;
+  saveUserSortPreferences(preference: InsertUserSortPreference): Promise<UserSortPreference>;
 }
 
 export const storage = new MemStorage();

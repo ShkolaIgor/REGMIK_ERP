@@ -10,7 +10,7 @@ import {
   componentCategories, componentAlternatives, carriers, shipments, shipmentItems, customerAddresses, senderSettings,
   manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, exchangeRateHistory, serialNumbers, serialNumberSettings, emailSettings,
   sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients, clientContacts, clientNovaPoshtaSettings,
-  clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs,
+  clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
   type Category, type InsertCategory,
@@ -60,6 +60,7 @@ import {
   type EmailSettings, type InsertEmailSettings,
   type ClientContact, type InsertClientContact,
   type ClientNovaPoshtaSettings, type InsertClientNovaPoshtaSettings,
+  type UserSortPreference, type InsertUserSortPreference,
 
 } from "@shared/schema";
 
