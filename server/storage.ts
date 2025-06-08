@@ -5,10 +5,11 @@ import {
   packageTypes, solderingTypes, componentCategories, shipments, shipmentItems, carriers,
   customerAddresses, senderSettings, currencies, exchangeRateHistory, serialNumbers, emailSettings,
   clients, clientContacts, clientMail, mailRegistry, envelopePrintSettings,
-  integrationConfigs, syncLogs, entityMappings, syncQueue, fieldMappings,
+  integrationConfigs, syncLogs, entityMappings, syncQueue, fieldMappings, userSortPreferences,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
   type EmailSettings, type InsertEmailSettings,
+  type UserSortPreference, type InsertUserSortPreference,
   type Category, type InsertCategory,
   type Unit, type InsertUnit,
   type Warehouse, type InsertWarehouse, type Product, type InsertProduct,
@@ -96,6 +97,10 @@ export interface IStorage {
 
   // User Login History
   logUserLogin(login: InsertUserLoginHistory): Promise<UserLoginHistory>;
+
+  // User Sort Preferences
+  getUserSortPreferences(userId: string, tableName: string): Promise<UserSortPreference | null>;
+  saveUserSortPreferences(preference: InsertUserSortPreference): Promise<UserSortPreference>;
 
   // Categories
   getCategories(): Promise<Category[]>;

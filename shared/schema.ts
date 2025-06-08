@@ -29,6 +29,17 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Налаштування сортування для користувачів
+export const userSortPreferences = pgTable("user_sort_preferences", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(), // Зв'язок з users.id
+  tableName: varchar("table_name", { length: 100 }).notNull(), // Назва таблиці (orders, products тощо)
+  sortField: varchar("sort_field", { length: 100 }).notNull(), // Поле для сортування
+  sortDirection: varchar("sort_direction", { length: 4 }).notNull().default("asc"), // asc або desc
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Таблиця компаній/фірм для мультифірмового режиму
 export const companies = pgTable("companies", {
   id: serial("id").primaryKey(),
@@ -1956,5 +1967,15 @@ export const insertCompanySchema = createInsertSchema(companies).omit({
 
 export type Company = typeof companies.$inferSelect;
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
+
+// Типи для налаштувань сортування
+export const insertUserSortPreferenceSchema = createInsertSchema(userSortPreferences).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export type UserSortPreference = typeof userSortPreferences.$inferSelect;
+export type InsertUserSortPreference = z.infer<typeof insertUserSortPreferenceSchema>;
 
 
