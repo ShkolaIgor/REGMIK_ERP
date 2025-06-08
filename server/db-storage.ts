@@ -1,4 +1,4 @@
-import { eq, sql, desc, and, gte, lte, isNull } from "drizzle-orm";
+import { eq, sql, desc, and, gte, lte, isNull, ne } from "drizzle-orm";
 import { db } from "./db";
 import { IStorage } from "./storage";
 import {
@@ -3545,6 +3545,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(recipes, eq(manufacturingOrders.recipeId, recipes.id))
       .leftJoin(workers, eq(manufacturingOrders.assignedWorkerId, workers.id))
       .leftJoin(warehouses, eq(manufacturingOrders.warehouseId, warehouses.id))
+      .where(ne(manufacturingOrders.status, 'cancelled'))
       .orderBy(desc(manufacturingOrders.createdAt));
 
       return orders;
