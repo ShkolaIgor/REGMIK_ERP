@@ -4872,6 +4872,17 @@ export class DatabaseStorage implements IStorage {
     try {
       const now = new Date();
       
+      // Перевіряємо поточний стан замовлення
+      const existingOrder = await this.getOrder(orderId);
+      if (!existingOrder) {
+        throw new Error(`Замовлення з ID ${orderId} не знайдено`);
+      }
+
+      // Якщо замовлення вже має тип оплати, що передбачає виробництво, не створюємо нові завдання
+      const alreadyHasProduction = existingOrder.productionApproved && 
+        (existingOrder.paymentType === 'full' || existingOrder.paymentType === 'contract' || 
+         (existingOrder.paymentType === 'partial' && existingOrder.productionApproved));
+      
       // Оновлюємо інформацію про оплату в замовленні
       const updateData: any = {
         paymentType: paymentData.paymentType,
@@ -4910,9 +4921,11 @@ export class DatabaseStorage implements IStorage {
         .set(updateData)
         .where(eq(orders.id, orderId));
 
-      // Якщо дозволено виробництво - створюємо завдання
-      if (updateData.productionApproved) {
+      // Якщо дозволено виробництво і не було раніше створено завдання - створюємо завдання
+      if (updateData.productionApproved && !alreadyHasProduction) {
         await this.createManufacturingTasksForOrder(orderId);
+      } else if (alreadyHasProduction) {
+        console.log(`Завдання на виробництво для замовлення ${orderId} вже існують, пропускаємо створення`);
       }
 
       console.log(`Оброблено платіж для замовлення ${orderId}: тип ${paymentData.paymentType}, виробництво ${updateData.productionApproved ? 'дозволено' : 'не дозволено'}`);

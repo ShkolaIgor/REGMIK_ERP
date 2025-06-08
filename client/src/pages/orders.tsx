@@ -260,9 +260,16 @@ export default function Orders() {
           switch (paymentType) {
             case 'full':
               return (
-                <Badge className="bg-green-100 text-green-800 border-green-300">
-                  💳 Повна оплата
-                </Badge>
+                <div className="space-y-1">
+                  <Badge className="bg-green-100 text-green-800 border-green-300">
+                    💳 Повна оплата
+                  </Badge>
+                  {order.paymentDate && (
+                    <div className="text-xs text-gray-600">
+                      Оплачено: {formatDate(order.paymentDate)}
+                    </div>
+                  )}
+                </div>
               );
             case 'partial':
               const percentage = totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0;
@@ -274,6 +281,11 @@ export default function Orders() {
                   <div className="text-xs text-gray-600">
                     {formatCurrency(paidAmount)} з {formatCurrency(totalAmount)}
                   </div>
+                  {order.paymentDate && (
+                    <div className="text-xs text-gray-600">
+                      Оплачено: {formatDate(order.paymentDate)}
+                    </div>
+                  )}
                 </div>
               );
             case 'contract':
