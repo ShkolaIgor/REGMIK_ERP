@@ -96,12 +96,8 @@ export default function OrderedProducts() {
     queryKey: ["/api/ordered-products-info"],
   });
 
-  // Хук сортування
-  const { sortedData, handleSort, sortConfig } = useSorting({
-    data: orderedProducts as any[],
-    tableName: 'ordered-products',
-    defaultSort: { field: 'product.name', direction: 'asc' }
-  });
+  const [sortField, setSortField] = useState<string>('product.name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const { data: warehouses = [] } = useQuery({
     queryKey: ["/api/warehouses"],
@@ -145,37 +141,42 @@ export default function OrderedProducts() {
     filtered.sort((a, b) => {
       let aValue, bValue;
       
-      switch (sortBy) {
-        case "name":
-          aValue = a.product.name.toLowerCase();
-          bValue = b.product.name.toLowerCase();
+      switch (sortField) {
+        case "product.name":
+          aValue = a.product?.name?.toLowerCase() || "";
+          bValue = b.product?.name?.toLowerCase() || "";
           break;
-        case "quantity":
-          aValue = a.totalOrdered;
-          bValue = b.totalOrdered;
+        case "product.sku":
+          aValue = a.product?.sku?.toLowerCase() || "";
+          bValue = b.product?.sku?.toLowerCase() || "";
+          break;
+        case "totalOrdered":
+          aValue = parseFloat(a.totalOrdered || "0");
+          bValue = parseFloat(b.totalOrdered || "0");
+          break;
+        case "totalAvailable":
+          aValue = parseFloat(a.totalAvailable || "0");
+          bValue = parseFloat(b.totalAvailable || "0");
           break;
         case "shortage":
-          aValue = Math.max(0, a.totalOrdered - a.available - a.inProduction);
-          bValue = Math.max(0, b.totalOrdered - b.available - b.inProduction);
-          break;
-        case "available":
-          aValue = a.available;
-          bValue = b.available;
+          aValue = Math.max(0, parseFloat(a.totalOrdered || "0") - parseFloat(a.totalAvailable || "0") - parseFloat(a.inProduction || "0"));
+          bValue = Math.max(0, parseFloat(b.totalOrdered || "0") - parseFloat(b.totalAvailable || "0") - parseFloat(b.inProduction || "0"));
           break;
         default:
-          aValue = a.product.name.toLowerCase();
-          bValue = b.product.name.toLowerCase();
+          aValue = a.product?.name?.toLowerCase() || "";
+          bValue = b.product?.name?.toLowerCase() || "";
       }
       
-      if (sortOrder === "asc") {
-        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        const comparison = aValue.localeCompare(bValue);
+        return sortDirection === "asc" ? comparison : -comparison;
       } else {
-        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+        return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
       }
     });
     
     return filtered;
-  }, [orderedProducts, searchTerm, statusFilter, sortBy, sortOrder]);
+  }, [orderedProducts, searchTerm, statusFilter, sortField, sortDirection]);
 
   const sendToProductionMutation = useMutation({
     mutationFn: async (data: { productId: number; quantity: number; notes?: string }) => {
@@ -404,10 +405,10 @@ export default function OrderedProducts() {
             {/* Порядок сортування */}
             <Button
               variant="outline"
-              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+              onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
               className="flex items-center gap-2"
             >
-              {sortOrder === "asc" ? (
+              {sortDirection === "asc" ? (
                 <>
                   <ArrowUp className="h-4 w-4" />
                   За зростанням
