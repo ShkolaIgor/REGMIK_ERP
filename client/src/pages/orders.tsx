@@ -12,7 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
-import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical } from "lucide-react";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -107,6 +108,22 @@ export default function Orders() {
   const [clientSearchValue, setClientSearchValue] = useState("");
   const [isCreateClientDialogOpen, setIsCreateClientDialogOpen] = useState(false);
   const [newClientName, setNewClientName] = useState("");
+  
+  // Стан для керування порядком стовпців
+  const [columnOrder, setColumnOrder] = useState(() => {
+    const saved = localStorage.getItem('orders-column-order');
+    return saved ? JSON.parse(saved) : [
+      'orderSequenceNumber',
+      'orderNumber', 
+      'customerName',
+      'paymentDate',
+      'dueDate',
+      'totalAmount',
+      'status',
+      'actions'
+    ];
+  });
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -971,10 +988,9 @@ export default function Orders() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>№</TableHead>
-                    <TableHead>Номер рахунку</TableHead>
+                    <TableHead>Замовлення</TableHead>
+                    <TableHead>Рахунок</TableHead>
                     <TableHead>Клієнт</TableHead>
-                    <TableHead>Дата створення</TableHead>
                     <TableHead>Дата оплати</TableHead>
                     <TableHead>Термін виконання</TableHead>
                     <TableHead>Сума</TableHead>
@@ -990,7 +1006,12 @@ export default function Orders() {
                         onClick={() => toggleOrderExpansion(order.id)}
                       >
                         <TableCell className="font-semibold text-center">{order.orderSequenceNumber}</TableCell>
-                        <TableCell className={`font-mono ${getOrderNumberBgColor(order)}`}>{order.orderNumber}</TableCell>
+                        <TableCell className={`${getOrderNumberBgColor(order)}`}>
+                          <div>
+                            <div className="font-mono font-medium">{order.orderNumber}</div>
+                            <div className="text-sm text-gray-500">{formatDate(order.createdAt)}</div>
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <div>
                             <div className="font-medium">
@@ -1009,7 +1030,6 @@ export default function Orders() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>{formatDate(order.createdAt)}</TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <PaymentDateButton 
                             order={order}
