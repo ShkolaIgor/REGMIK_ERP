@@ -817,6 +817,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Order Status API
+  app.get("/api/order-statuses", async (req, res) => {
+    try {
+      const statuses = await storage.getOrderStatuses();
+      res.json(statuses);
+    } catch (error) {
+      console.error("Failed to fetch order statuses:", error);
+      res.status(500).json({ error: "Failed to fetch order statuses" });
+    }
+  });
+
+  app.post("/api/order-statuses", async (req, res) => {
+    try {
+      const statusData = req.body;
+      const status = await storage.createOrderStatus(statusData);
+      res.status(201).json(status);
+    } catch (error) {
+      console.error("Failed to create order status:", error);
+      res.status(500).json({ error: "Failed to create order status" });
+    }
+  });
+
+  app.put("/api/order-statuses/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const statusData = req.body;
+      const status = await storage.updateOrderStatus(id, statusData);
+      if (!status) {
+        return res.status(404).json({ error: "Order status not found" });
+      }
+      res.json(status);
+    } catch (error) {
+      console.error("Failed to update order status:", error);
+      res.status(500).json({ error: "Failed to update order status" });
+    }
+  });
+
+  app.delete("/api/order-statuses/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteOrderStatus(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to delete order status:", error);
+      res.status(500).json({ error: "Failed to delete order status" });
+    }
+  });
+
   // Recipes
   app.get("/api/recipes", async (req, res) => {
     try {
