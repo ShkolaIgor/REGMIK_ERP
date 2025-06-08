@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Eye, Edit, Trash2, FileText, Send, CreditCard, Copy } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, FileText } from "lucide-react";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -27,21 +27,6 @@ const invoiceSchema = z.object({
   issueDate: z.string().min(1, "Оберіть дату створення"),
   dueDate: z.string().min(1, "Оберіть термін оплати"),
   description: z.string().optional(),
-  
-  // Додаткові поля для самостійних рахунків
-  customerName: z.string().optional(),
-  customerPhone: z.string().optional(),
-  customerEmail: z.string().optional(),
-  deliveryAddress: z.string().optional(),
-  deliveryCity: z.string().optional(),
-  deliveryRegion: z.string().optional(),
-  deliveryPostalCode: z.string().optional(),
-  deliveryCountry: z.string().default("Україна"),
-  deliveryMethod: z.string().optional(),
-  deliveryNotes: z.string().optional(),
-  paymentMethod: z.string().optional(),
-  paymentTerms: z.string().optional(),
-  notes: z.string().optional(),
 });
 
 type InvoiceFormData = z.infer<typeof invoiceSchema>;
@@ -161,118 +146,6 @@ export default function Invoices() {
         variant: "destructive",
       });
     }
-  };
-
-  const handleEditInvoice = (invoice: any) => {
-    form.reset({
-      clientId: invoice.clientId,
-      companyId: invoice.companyId,
-      invoiceNumber: invoice.invoiceNumber,
-      amount: invoice.amount.toString(),
-      currency: invoice.currency,
-      status: invoice.status,
-      issueDate: new Date(invoice.issueDate).toISOString().split('T')[0],
-      dueDate: new Date(invoice.dueDate).toISOString().split('T')[0],
-      description: invoice.description || "",
-      customerName: invoice.customerName || "",
-      customerPhone: invoice.customerPhone || "",
-      customerEmail: invoice.customerEmail || "",
-      deliveryAddress: invoice.deliveryAddress || "",
-      deliveryCity: invoice.deliveryCity || "",
-      deliveryRegion: invoice.deliveryRegion || "",
-      deliveryPostalCode: invoice.deliveryPostalCode || "",
-      deliveryCountry: invoice.deliveryCountry || "Україна",
-      deliveryMethod: invoice.deliveryMethod || "",
-      deliveryNotes: invoice.deliveryNotes || "",
-      paymentMethod: invoice.paymentMethod || "",
-      paymentTerms: invoice.paymentTerms || "",
-      notes: invoice.notes || "",
-    });
-    setSelectedInvoice(invoice);
-    setIsCreateOpen(true);
-  };
-
-  const handlePrintInvoice = (invoice: any) => {
-    const printWindow = window.open(`/invoices/${invoice.id}/print`, '_blank');
-    if (printWindow) {
-      printWindow.print();
-    } else {
-      toast({
-        title: "Помилка",
-        description: "Не вдалося відкрити вікно друку",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      return apiRequest(`/api/invoices/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status }),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-      toast({
-        title: "Успіх",
-        description: "Статус рахунку оновлено",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Помилка",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSendInvoice = (invoice: any) => {
-    updateStatusMutation.mutate({ id: invoice.id, status: "sent" });
-  };
-
-  const handleMarkAsPaid = (invoice: any) => {
-    updateStatusMutation.mutate({ id: invoice.id, status: "paid" });
-  };
-
-  const duplicateMutation = useMutation({
-    mutationFn: async (originalInvoice: any) => {
-      const duplicateData = {
-        ...originalInvoice,
-        invoiceNumber: `${originalInvoice.invoiceNumber}-COPY-${Date.now()}`,
-        status: "draft",
-        issueDate: new Date().toISOString(),
-        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-        paidDate: null,
-      };
-      delete duplicateData.id;
-      delete duplicateData.createdAt;
-      delete duplicateData.updatedAt;
-      
-      return apiRequest("/api/invoices", {
-        method: "POST",
-        body: JSON.stringify(duplicateData),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-      toast({
-        title: "Успіх",
-        description: "Рахунок успішно дубльовано",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Помилка",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleDuplicateInvoice = (invoice: any) => {
-    duplicateMutation.mutate(invoice);
   };
 
   const formatCurrency = (amount: string, currency: string) => {
@@ -436,153 +309,6 @@ export default function Invoices() {
                   )}
                 />
 
-                {/* Секція інформації про клієнта */}
-                <div className="border-t pt-4">
-                  <h4 className="text-sm font-medium mb-3">Інформація про клієнта</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="customerName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Ім'я клієнта</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ім'я контактної особи" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="customerPhone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Телефон</FormLabel>
-                          <FormControl>
-                            <Input placeholder="+380501234567" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="mt-4">
-                    <FormField
-                      control={form.control}
-                      name="customerEmail"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input type="email" placeholder="client@example.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                {/* Секція доставки */}
-                <div className="border-t pt-4">
-                  <h4 className="text-sm font-medium mb-3">Інформація про доставку</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="deliveryCity"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Місто</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Київ" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="deliveryRegion"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Область</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Київська область" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="mt-4">
-                    <FormField
-                      control={form.control}
-                      name="deliveryAddress"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Адреса доставки</FormLabel>
-                          <FormControl>
-                            <Textarea placeholder="Повна адреса доставки..." {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 mt-4">
-                    <FormField
-                      control={form.control}
-                      name="deliveryMethod"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Спосіб доставки</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Нова Пошта, Самовивіз" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="paymentMethod"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Спосіб оплати</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Готівка, Картка, Банківський переказ" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                {/* Додаткові примітки */}
-                <div className="border-t pt-4">
-                  <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Додаткові примітки</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Особливі вимоги, коментарі..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
                 <div className="flex justify-end space-x-2">
                   <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
                     Скасувати
@@ -653,65 +379,14 @@ export default function Invoices() {
                         variant="ghost"
                         size="sm"
                         onClick={() => viewInvoiceDetails(invoice)}
-                        title="Переглянути деталі"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEditInvoice(invoice)}
-                        title="Редагувати"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handlePrintInvoice(invoice)}
-                        title="Друкувати"
-                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                      >
-                        <FileText className="h-4 w-4" />
-                      </Button>
-                      {invoice.status === 'draft' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSendInvoice(invoice)}
-                          title="Відправити"
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                        >
-                          <Send className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {(invoice.status === 'sent' || invoice.status === 'overdue') && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleMarkAsPaid(invoice)}
-                          title="Позначити як оплачений"
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                        >
-                          <CreditCard className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDuplicateInvoice(invoice)}
-                        title="Дублювати"
-                        className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
                         onClick={() => deleteMutation.mutate(invoice.id)}
                         disabled={deleteMutation.isPending}
-                        title="Видалити"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

@@ -1926,7 +1926,7 @@ export const invoices = pgTable("invoices", {
   id: serial("id").primaryKey(),
   clientId: integer("client_id").references(() => clients.id).notNull(),
   companyId: integer("company_id").references(() => companies.id), // яка компанія виставила рахунок
-  orderId: integer("order_id").references(() => orders.id), // зв'язок з замовленням (опціонально)
+  orderId: integer("order_id").references(() => orders.id), // зв'язок з замовленням
   invoiceNumber: varchar("invoice_number", { length: 50 }).notNull().unique(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   currency: varchar("currency", { length: 3 }).default("UAH"),
@@ -1935,22 +1935,6 @@ export const invoices = pgTable("invoices", {
   dueDate: timestamp("due_date").notNull(),
   paidDate: timestamp("paid_date"),
   description: text("description"),
-  
-  // Додаткові поля з замовлення для можливості створення рахунків без замовлення
-  customerName: varchar("customer_name", { length: 255 }), // ім'я клієнта
-  customerPhone: varchar("customer_phone", { length: 50 }), // телефон клієнта
-  customerEmail: varchar("customer_email", { length: 255 }), // email клієнта
-  deliveryAddress: text("delivery_address"), // адреса доставки
-  deliveryCity: varchar("delivery_city", { length: 100 }), // місто доставки
-  deliveryRegion: varchar("delivery_region", { length: 100 }), // область доставки
-  deliveryPostalCode: varchar("delivery_postal_code", { length: 20 }), // поштовий індекс
-  deliveryCountry: varchar("delivery_country", { length: 100 }).default("Україна"), // країна доставки
-  deliveryMethod: varchar("delivery_method", { length: 50 }), // спосіб доставки
-  deliveryNotes: text("delivery_notes"), // примітки до доставки
-  paymentMethod: varchar("payment_method", { length: 50 }), // спосіб оплати
-  paymentTerms: text("payment_terms"), // умови оплати
-  notes: text("notes"), // додаткові примітки
-  
   externalId: varchar("external_id", { length: 100 }),
   source: varchar("source", { length: 20 }).default("manual"), // bitrix24, 1c, manual
   createdAt: timestamp("created_at").defaultNow(),

@@ -13,7 +13,6 @@ import Dashboard from "@/pages/dashboard";
 import Inventory from "@/pages/inventory";
 import Production from "@/pages/production";
 import Orders from "@/pages/orders";
-import OrdersInvoices from "@/pages/orders-invoices";
 import Clients from "@/pages/clients";
 import ClientContacts from "@/pages/client-contacts";
 import ClientNovaPoshtaSettings from "@/pages/client-nova-poshta-settings";
@@ -132,7 +131,6 @@ function Router() {
         <Route path="/integrations" component={Integrations} />
         <Route path="/companies" component={Companies} />
         <Route path="/invoices" component={Invoices} />
-        <Route path="/orders-invoices" component={OrdersInvoices} />
         <Route path="/analytics" component={Analytics} />
         <Route path="/product-profitability" component={ProductProfitability} />
         <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
