@@ -185,10 +185,6 @@ export default function Orders() {
 
   // Функція рендерингу контенту стовпця
   const renderColumnContent = (columnKey: string, order: any) => {
-    // Логування для замовлення #9
-    if (order.id === 9) {
-      console.log(`Рендерим стовпець "${columnKey}" для замовлення #9:`, order);
-    }
     
     switch (columnKey) {
       case 'orderSequenceNumber':
@@ -408,24 +404,6 @@ export default function Orders() {
   const { data: allOrders = [], isLoading } = useQuery<OrderWithItems[]>({
     queryKey: ["/api/orders"],
   });
-
-  // Логування для діагностики замовлення #9
-  React.useEffect(() => {
-    if (allOrders.length > 0) {
-      const order9 = allOrders.find(order => order.id === 9);
-      console.log('Всі замовлення:', allOrders.map(o => ({ id: o.id, orderNumber: o.orderNumber })));
-      console.log('Замовлення #9 в allOrders:', order9 ? 'ЗНАЙДЕНО' : 'НЕ ЗНАЙДЕНО');
-      if (order9) {
-        console.log('Деталі замовлення #9:', {
-          id: order9.id,
-          orderNumber: order9.orderNumber,
-          customerName: order9.customerName,
-          paymentDate: order9.paymentDate,
-          items: order9.items?.length || 0
-        });
-      }
-    }
-  }, [allOrders]);
 
 
 
