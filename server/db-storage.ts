@@ -4980,7 +4980,7 @@ export class DatabaseStorage implements IStorage {
           status: 'cancelled',
           updatedAt: new Date(),
         })
-        .where(eq(manufacturingOrders.orderId, orderId));
+        .where(eq(manufacturingOrders.sourceOrderId, orderId));
 
       console.log(`Скасовано оплату для замовлення ${orderId}, виробничі завдання скасовано`);
     } catch (error) {
