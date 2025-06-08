@@ -378,6 +378,56 @@ export interface IStorage {
   setDefaultSenderSetting(id: number): Promise<boolean>;
   getDefaultSenderSetting(): Promise<SenderSettings | null>;
 
+  // Clients
+  getClients(): Promise<Client[]>;
+  getClient(id: number): Promise<Client | undefined>;
+  createClient(client: InsertClient): Promise<Client>;
+  updateClient(id: number, client: Partial<InsertClient>): Promise<Client | undefined>;
+  deleteClient(id: number): Promise<boolean>;
+  getClientByExternalId(externalId: string): Promise<Client | undefined>;
+  getClientByTaxCode(taxCode: string): Promise<Client | undefined>;
+
+  // Client Contacts
+  getClientContacts(): Promise<ClientContact[]>;
+  getClientContact(id: number): Promise<ClientContact | undefined>;
+  createClientContact(contact: InsertClientContact): Promise<ClientContact>;
+  updateClientContact(id: number, contact: Partial<InsertClientContact>): Promise<ClientContact | undefined>;
+  deleteClientContact(id: number): Promise<boolean>;
+
+  // Client Mails
+  getClientMails(): Promise<ClientMail[]>;
+  createClientMail(mail: InsertClientMail): Promise<ClientMail>;
+
+  // Mail Registry
+  getMailRegistry(): Promise<MailRegistry[]>;
+  createMailRegistry(registry: InsertMailRegistry): Promise<MailRegistry>;
+  updateMailsForBatch(batchId: string, mailIds: number[]): Promise<void>;
+
+  // Envelope Print Settings
+  getEnvelopePrintSettings(): Promise<EnvelopePrintSettings[]>;
+  createEnvelopePrintSettings(settings: InsertEnvelopePrintSettings): Promise<EnvelopePrintSettings>;
+
+  // Sync Logs
+  getSyncLogs(): Promise<SyncLog[]>;
+  createSyncLog(log: InsertSyncLog): Promise<SyncLog>;
+
+  // Companies and multi-company functionality
+  getCompanies(): Promise<any[]>;
+  getCompany(id: number): Promise<any>;
+  getDefaultCompany(): Promise<any>;
+  createCompany(company: any): Promise<any>;
+  updateCompany(id: number, company: any): Promise<any>;
+  deleteCompany(id: number): Promise<boolean>;
+  getProductsByCompany(companyId: number): Promise<any[]>;
+  getOrdersByCompany(companyId: number): Promise<any[]>;
+
+  // Integration configs
+  getIntegrationConfigs(): Promise<IntegrationConfig[]>;
+  getIntegrationConfig(id: number): Promise<IntegrationConfig | undefined>;
+  createIntegrationConfig(config: InsertIntegrationConfig): Promise<IntegrationConfig>;
+  updateIntegrationConfig(id: number, config: Partial<InsertIntegrationConfig>): Promise<IntegrationConfig | undefined>;
+  deleteIntegrationConfig(id: number): Promise<boolean>;
+
   // Currencies
   getCurrencies(): Promise<Currency[]>;
   getCurrency(id: number): Promise<Currency | null>;
