@@ -75,7 +75,8 @@ const orderItemSchema = z.object({
 });
 
 const orderSchema = z.object({
-  clientId: z.string().min(1, "Оберіть клієнта"),
+  clientId: z.string().optional(),
+  customerName: z.string().optional(),
   customerEmail: z.string().email("Введіть правильний email").optional().or(z.literal("")),
   customerPhone: z.string().optional(),
   status: z.string().default("pending"),
@@ -83,6 +84,9 @@ const orderSchema = z.object({
   paymentDate: z.string().optional(),
   dueDate: z.string().optional(),
   shippedDate: z.string().optional(),
+}).refine(data => data.clientId || data.customerName, {
+  message: "Оберіть клієнта або введіть ім'я клієнта",
+  path: ["clientId"],
 });
 
 type OrderFormData = z.infer<typeof orderSchema>;
@@ -371,6 +375,7 @@ export default function Orders() {
     // Заповнюємо форму даними замовлення
     form.reset({
       clientId: order.clientId ? order.clientId.toString() : "",
+      customerName: order.customerName || "",
       customerEmail: order.customerEmail || "",
       customerPhone: order.customerPhone || "",
       status: order.status,
@@ -491,7 +496,7 @@ export default function Orders() {
 
     const orderData = {
       order: {
-        clientId: data.clientId || null,
+        clientId: data.clientId ? parseInt(data.clientId) : null,
         customerName: data.customerName || (editingOrder?.customerName) || null,
         customerEmail: data.customerEmail || null,
         customerPhone: data.customerPhone || null,
