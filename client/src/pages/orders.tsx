@@ -223,16 +223,80 @@ export default function Orders() {
         );
       
       case 'paymentDate':
+        const paymentType = order.paymentType || 'none';
+        const paidAmount = parseFloat(order.paidAmount || '0');
+        const totalAmount = parseFloat(order.totalAmount);
+        
+        const getPaymentDisplay = () => {
+          switch (paymentType) {
+            case 'full':
+              return (
+                <div className="space-y-1">
+                  <Badge className="bg-green-100 text-green-800 border-green-300">
+                    ✅ Повна оплата
+                  </Badge>
+                  {order.paymentDate && (
+                    <div className="text-xs text-green-700 font-medium flex items-center gap-1">
+                      📅 {formatDate(new Date(order.paymentDate))}
+                    </div>
+                  )}
+                </div>
+              );
+            case 'partial':
+              const percentage = totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0;
+              return (
+                <div className="space-y-1">
+                  <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                    🔸 Часткова ({percentage}%)
+                  </Badge>
+                  <div className="text-xs text-gray-600">
+                    {formatCurrency(paidAmount)} з {formatCurrency(totalAmount)}
+                  </div>
+                  {order.paymentDate && (
+                    <div className="text-xs text-yellow-700 font-medium flex items-center gap-1">
+                      📅 {formatDate(new Date(order.paymentDate))}
+                    </div>
+                  )}
+                </div>
+              );
+            case 'contract':
+              return (
+                <div className="space-y-1">
+                  <Badge className="bg-blue-100 text-blue-800 border-blue-300">
+                    📋 По договору
+                  </Badge>
+                  {order.contractNumber && (
+                    <div className="text-xs text-blue-700 font-medium">
+                      📝 №{order.contractNumber}
+                    </div>
+                  )}
+                </div>
+              );
+            case 'none':
+            default:
+              return (
+                <div onClick={(e) => e.stopPropagation()}>
+                  <PaymentDialog
+                    orderId={order.id}
+                    orderNumber={order.orderNumber}
+                    totalAmount={order.totalAmount}
+                    currentPaymentType={order.paymentType || "none"}
+                    currentPaidAmount={order.paidAmount || "0"}
+                    isProductionApproved={order.productionApproved || false}
+                  />
+                </div>
+              );
+          }
+        };
+
         return (
-          <div onClick={(e) => e.stopPropagation()}>
-            <PaymentDialog
-              orderId={order.id}
-              orderNumber={order.orderNumber}
-              totalAmount={order.totalAmount}
-              currentPaymentType={order.paymentType || "none"}
-              currentPaidAmount={order.paidAmount || "0"}
-              isProductionApproved={order.productionApproved || false}
-            />
+          <div className="flex flex-col items-start">
+            {getPaymentDisplay()}
+            {order.productionApproved && (
+              <div className="text-xs text-green-600 mt-1 flex items-center">
+                ✅ Виробництво дозволено
+              </div>
+            )}
           </div>
         );
       
