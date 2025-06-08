@@ -3488,6 +3488,20 @@ export class DatabaseStorage implements IStorage {
         createdAt: new Date()
       }).returning();
 
+      // Створюємо відповідний production_task
+      const [newTask] = await db.insert(productionTasks).values({
+        recipeId: recipe[0].id,
+        quantity: quantity.toString(),
+        unit: product[0].unit,
+        status: 'planned',
+        priority: 'high',
+        notes: notes || `Виробниче завдання для ${product[0].name}: ${quantity} шт.`,
+        progress: 0,
+        createdAt: new Date()
+      }).returning();
+
+      console.log(`Створено manufacturing_order ${newOrder.id} та production_task ${newTask.id} для продукту ${productId}`);
+
       return newOrder;
     } catch (error) {
       console.error("Error creating manufacturing order from production request:", error);
