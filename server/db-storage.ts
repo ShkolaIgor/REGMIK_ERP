@@ -4395,6 +4395,25 @@ export class DatabaseStorage implements IStorage {
       if (updated) {
         // Створюємо базові стадії виробництва якщо їх немає
         await this.createDefaultManufacturingSteps(id);
+
+        // Оновлюємо статус відповідного production_task
+        const [productionTask] = await db.select()
+          .from(productionTasks)
+          .leftJoin(recipes, eq(productionTasks.recipeId, recipes.id))
+          .where(and(
+            eq(recipes.productId, updated.productId),
+            eq(productionTasks.quantity, parseInt(updated.plannedQuantity))
+          ));
+
+        if (productionTask) {
+          await db.update(productionTasks)
+            .set({ 
+              status: 'in-progress',
+              startDate: new Date(),
+              progress: 10
+            })
+            .where(eq(productionTasks.id, productionTask.production_tasks.id));
+        }
       }
 
       return updated;
