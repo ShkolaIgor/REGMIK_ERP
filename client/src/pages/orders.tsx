@@ -41,6 +41,15 @@ type Order = {
   createdAt: Date | null;
 };
 
+type OrderStatus = {
+  id: number;
+  name: string;
+  textColor: string;
+  backgroundColor: string;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+};
+
 type OrderItem = {
   id: number;
   orderId: number;
@@ -223,7 +232,18 @@ export default function Orders() {
         return <div className="font-medium">{formatCurrency(parseFloat(order.totalAmount))}</div>;
       
       case 'status':
-        return <Badge variant={getStatusColor(order.status)}>{order.status}</Badge>;
+        const statusInfo = orderStatuses.find(s => s.name === order.status);
+        return (
+          <Badge 
+            className="text-sm font-medium border-0"
+            style={{
+              color: statusInfo?.textColor || '#000000',
+              backgroundColor: statusInfo?.backgroundColor || '#f3f4f6'
+            }}
+          >
+            {order.status}
+          </Badge>
+        );
       
       case 'actions':
         return (
@@ -262,6 +282,10 @@ export default function Orders() {
 
   const { data: allOrders = [], isLoading } = useQuery<OrderWithItems[]>({
     queryKey: ["/api/orders"],
+  });
+
+  const { data: orderStatuses = [] } = useQuery<OrderStatus[]>({
+    queryKey: ["/api/order-statuses"],
   });
 
   // Функція фільтрації замовлень
@@ -1169,11 +1193,11 @@ export default function Orders() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Всі статуси</SelectItem>
-                  <SelectItem value="pending">Очікує</SelectItem>
-                  <SelectItem value="processing">Обробляється</SelectItem>
-                  <SelectItem value="shipped">Відправлено</SelectItem>
-                  <SelectItem value="delivered">Доставлено</SelectItem>
-                  <SelectItem value="cancelled">Скасовано</SelectItem>
+                  {orderStatuses.map((status) => (
+                    <SelectItem key={status.id} value={status.name}>
+                      {status.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
