@@ -5074,40 +5074,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ================================
-  // РАХУНКИ API
-  // ================================
+
 
   // Get all invoices
-  app.get("/api/invoices", async (req, res) => {
-    try {
-      const companyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
-      const invoices = companyId 
-        ? await storage.getInvoicesByCompany(companyId)
-        : await storage.getInvoices();
-      res.json(invoices);
-    } catch (error) {
-      console.error("Error fetching invoices:", error);
-      res.status(500).json({ error: "Failed to fetch invoices" });
-    }
-  });
 
   // Get invoice by ID
-  app.get("/api/invoices/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const invoice = await storage.getInvoice(id);
-      
-      if (!invoice) {
-        return res.status(404).json({ error: "Invoice not found" });
-      }
-      
-      res.json(invoice);
-    } catch (error) {
-      console.error("Error fetching invoice:", error);
-      res.status(500).json({ error: "Failed to fetch invoice" });
-    }
-  });
 
   // Create new invoice
   app.post("/api/invoices", async (req, res) => {
@@ -5163,16 +5134,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get invoice items
-  app.get("/api/invoices/:id/items", async (req, res) => {
-    try {
-      const invoiceId = parseInt(req.params.id);
-      const items = await storage.getInvoiceItems(invoiceId);
-      res.json(items);
-    } catch (error) {
-      console.error("Error fetching invoice items:", error);
-      res.status(500).json({ error: "Failed to fetch invoice items" });
-    }
-  });
 
   // Create invoice item
   app.post("/api/invoices/:id/items", async (req, res) => {
@@ -5229,16 +5190,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get invoices by company
-  app.get("/api/companies/:id/invoices", async (req, res) => {
-    try {
-      const companyId = parseInt(req.params.id);
-      const invoices = await storage.getInvoicesByCompany(companyId);
-      res.json(invoices);
-    } catch (error) {
-      console.error("Error fetching invoices by company:", error);
-      res.status(500).json({ error: "Failed to fetch invoices" });
-    }
-  });
 
   // Invoice routes
   const invoiceCreateSchema = z.object({
@@ -5254,38 +5205,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Отримання всіх рахунків з клієнтами та компаніями
-  app.get("/api/invoices", async (req, res) => {
-    try {
-      const invoices = await storage.getInvoices();
-      res.json(invoices);
-    } catch (error) {
-      console.error("Error fetching invoices:", error);
-      res.status(500).json({ error: "Failed to fetch invoices" });
-    }
-  });
 
   // Отримання рахунку за ID з деталями
-  app.get("/api/invoices/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const invoice = await storage.getInvoice(id);
-      
-      if (!invoice) {
-        return res.status(404).json({ error: "Invoice not found" });
-      }
-      
-      // Отримуємо позиції рахунку
-      const items = await storage.getInvoiceItems(id);
-      
-      res.json({
-        ...invoice,
-        items
-      });
-    } catch (error) {
-      console.error("Error fetching invoice:", error);
-      res.status(500).json({ error: "Failed to fetch invoice" });
-    }
-  });
 
   // Створення нового рахунку
   app.post("/api/invoices", async (req, res) => {
