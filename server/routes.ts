@@ -775,6 +775,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update payment date for order
+  app.patch("/api/orders/:id/payment-date", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { paymentDate } = req.body;
+      
+      console.log(`Updating payment date for order ${id}:`, paymentDate);
+      
+      const order = await storage.updateOrderPaymentDate(id, paymentDate);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+      
+      res.json(order);
+    } catch (error) {
+      console.error("Failed to update payment date:", error);
+      res.status(500).json({ error: "Failed to update payment date" });
+    }
+  });
+
   // Recipes
   app.get("/api/recipes", async (req, res) => {
     try {

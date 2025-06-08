@@ -20,6 +20,7 @@ import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ClientForm } from "@/components/ClientForm";
+import { PaymentDateButton } from "@/components/PaymentDateButton";
 // Типи
 type Order = {
   id: number;
@@ -221,6 +222,30 @@ export default function Orders() {
       toast({
         title: "Помилка",
         description: error.message || "Не вдалося оновити замовлення",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Мутація для оновлення дати оплати
+  const updatePaymentDateMutation = useMutation({
+    mutationFn: async ({ id, paymentDate }: { id: number; paymentDate: string | null }) => {
+      return await apiRequest(`/api/orders/${id}/payment-date`, { 
+        method: "PATCH", 
+        body: { paymentDate } 
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      toast({
+        title: "Успіх",
+        description: "Дату оплати оновлено",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Не вдалося оновити дату оплати",
         variant: "destructive",
       });
     },
@@ -962,14 +987,14 @@ export default function Orders() {
                           </div>
                         </TableCell>
                         <TableCell>{formatDate(order.createdAt)}</TableCell>
-                        <TableCell>
-                          {order.paymentDate ? (
-                            <span className="text-green-600 font-medium">
-                              {formatDate(order.paymentDate)}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">Не оплачено</span>
-                          )}
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <PaymentDateButton 
+                            order={order}
+                            onPaymentDateChange={(orderId, paymentDate) => {
+                              updatePaymentDateMutation.mutate({ id: orderId, paymentDate });
+                            }}
+                            isLoading={updatePaymentDateMutation.isPending}
+                          />
                         </TableCell>
                         <TableCell>{formatCurrency(order.totalAmount)}</TableCell>
                         <TableCell>
