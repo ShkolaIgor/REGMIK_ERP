@@ -5541,7 +5541,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Перевіряємо, чи є оплата для скасування
-      if (order.paymentType === 'none' || !order.paymentDate) {
+      if (order.paymentType === 'none') {
         return res.status(400).json({ error: "Немає оплати для скасування" });
       }
 
