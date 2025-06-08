@@ -1227,6 +1227,46 @@ export default function Orders() {
           orderNumber={selectedOrderForShipment.orderNumber}
         />
       )}
+
+      {/* Діалог для створення нового клієнта */}
+      <Dialog open={isCreateClientDialogOpen} onOpenChange={setIsCreateClientDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Створити нового клієнта</DialogTitle>
+            <DialogDescription>
+              Введіть базову інформацію про клієнта. Додаткові дані можна буде додати пізніше.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="newClientName">Назва клієнта *</Label>
+              <Input
+                id="newClientName"
+                value={newClientName}
+                onChange={(e) => setNewClientName(e.target.value)}
+                placeholder="Введіть назву клієнта"
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex justify-between">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsCreateClientDialogOpen(false);
+                setNewClientName("");
+              }}
+            >
+              Скасувати
+            </Button>
+            <Button
+              onClick={handleCreateNewClient}
+              disabled={createClientMutation.isPending || !newClientName.trim()}
+            >
+              {createClientMutation.isPending ? "Створюється..." : "Створити клієнта"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
