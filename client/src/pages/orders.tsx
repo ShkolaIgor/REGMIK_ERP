@@ -416,21 +416,6 @@ export default function Orders() {
 
   const handleClientSearchChange = (value: string) => {
     setClientSearchValue(value);
-    
-    // Якщо введено текст і немає точного збігу з існуючими клієнтами
-    if (value.length > 2 && !clients.find((client: any) => 
-      client.name.toLowerCase() === value.toLowerCase()
-    )) {
-      // Перевіряємо, чи потрібно відкрити діалог створення нового клієнта
-      const hasPartialMatch = clients.some((client: any) =>
-        client.name.toLowerCase().includes(value.toLowerCase())
-      );
-      
-      if (!hasPartialMatch && value.length > 3) {
-        setNewClientName(value);
-        setIsCreateClientDialogOpen(true);
-      }
-    }
   };
 
   const handleCreateNewClient = () => {
