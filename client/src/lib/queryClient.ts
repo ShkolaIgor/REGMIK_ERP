@@ -32,6 +32,11 @@ export async function apiRequest(
     data = urlOrOptions.body;
   }
 
+  // Логування запитів на оновлення статусу
+  if (url.includes('/status') && method === 'PUT') {
+    console.log("apiRequest - Status update:", { url, method, data });
+  }
+
   const res = await fetch(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
