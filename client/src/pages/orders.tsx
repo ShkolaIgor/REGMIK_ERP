@@ -476,13 +476,13 @@ export default function Orders() {
             <DialogTrigger asChild>
               <Button onClick={() => setIsDialogOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
-                Нове замовлення
+                Новий рахунок/замовлення
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
-                  {isEditMode ? `Редагувати замовлення ${editingOrder?.orderNumber}` : "Створити нове замовлення"}
+                  {isEditMode ? `Редагувати рахунок ${editingOrder?.orderNumber}` : "Створити новий рахунок/замовлення"}
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
@@ -730,7 +730,7 @@ export default function Orders() {
                   >
                     {isEditMode 
                       ? (updateOrderMutation.isPending ? "Оновлення..." : "Оновити замовлення")
-                      : (createOrderMutation.isPending ? "Створення..." : "Створити замовлення")
+                      : (createOrderMutation.isPending ? "Створення..." : "Створити рахунок")
                     }
                   </Button>
                 </div>
