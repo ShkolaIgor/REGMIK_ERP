@@ -47,7 +47,7 @@ export function PaymentDialog({
   const [contractNumber, setContractNumber] = useState("");
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [productionApproved, setProductionApproved] = useState(isProductionApproved);
-  const [approvedBy, setApprovedBy] = useState("admin");
+
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -56,10 +56,7 @@ export function PaymentDialog({
     mutationFn: async (paymentData: any) => {
       return await apiRequest(`/api/orders/${orderId}/process-payment`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(paymentData),
+        body: paymentData,
       });
     },
     onSuccess: (data) => {
@@ -87,7 +84,6 @@ export function PaymentDialog({
       contractNumber: paymentType === 'contract' ? contractNumber : null,
       paymentDate: new Date(paymentDate).toISOString(),
       productionApproved: paymentType === 'contract' || paymentType === 'full' || productionApproved,
-      approvedBy,
     };
 
     // Валідація
@@ -219,17 +215,7 @@ export function PaymentDialog({
             </div>
           )}
 
-          {(paymentType === 'contract' || paymentType === 'full' || productionApproved) && (
-            <div className="space-y-2">
-              <Label htmlFor="approvedBy">Відповідальний</Label>
-              <Input
-                id="approvedBy"
-                value={approvedBy}
-                onChange={(e) => setApprovedBy(e.target.value)}
-                placeholder="Ім'я відповідального"
-              />
-            </div>
-          )}
+
 
           {paymentType === 'partial' && !productionApproved && (
             <div className="flex items-start space-x-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
