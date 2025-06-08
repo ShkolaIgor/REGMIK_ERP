@@ -971,6 +971,7 @@ export default function Orders() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>№</TableHead>
                     <TableHead>Номер рахунку</TableHead>
                     <TableHead>Клієнт</TableHead>
                     <TableHead>Дата створення</TableHead>
@@ -988,6 +989,7 @@ export default function Orders() {
                         className="cursor-pointer hover:bg-gray-50"
                         onClick={() => toggleOrderExpansion(order.id)}
                       >
+                        <TableCell className="font-semibold text-center">{order.orderSequenceNumber}</TableCell>
                         <TableCell className={`font-mono ${getOrderNumberBgColor(order)}`}>{order.orderNumber}</TableCell>
                         <TableCell>
                           <div>
