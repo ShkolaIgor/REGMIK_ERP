@@ -259,6 +259,7 @@ export default function Orders() {
           
           switch (paymentType) {
             case 'full':
+              console.log(`Замовлення ${order.id}: paymentDate =`, order.paymentDate, 'type:', typeof order.paymentDate);
               return (
                 <div className="space-y-1">
                   <Badge className="bg-green-100 text-green-800 border-green-300">
