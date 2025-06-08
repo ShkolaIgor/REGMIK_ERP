@@ -709,17 +709,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/orders/:id/status", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      console.log("UPDATE ORDER STATUS - ID:", id);
+      console.log("UPDATE ORDER STATUS - Request headers:", req.headers);
+      console.log("UPDATE ORDER STATUS - Raw body:", req.body);
+      console.log("UPDATE ORDER STATUS - Body type:", typeof req.body);
+      console.log("UPDATE ORDER STATUS - Body stringified:", JSON.stringify(req.body));
+      
       const { status } = req.body;
+      console.log("UPDATE ORDER STATUS - Extracted status:", status);
+      console.log("UPDATE ORDER STATUS - Status type:", typeof status);
+      
       if (!status) {
+        console.log("UPDATE ORDER STATUS - Status is missing!");
         return res.status(400).json({ error: "Status is required" });
       }
       
       const order = await storage.updateOrderStatus(id, status);
+      console.log("UPDATE ORDER STATUS - Storage result:", order);
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
       res.json(order);
     } catch (error) {
+      console.error("UPDATE ORDER STATUS - Error:", error);
       res.status(500).json({ error: "Failed to update order status" });
     }
   });
