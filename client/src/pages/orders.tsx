@@ -248,6 +248,7 @@ export default function Orders() {
             <Select
               value={order.status}
               onValueChange={(value) => {
+                console.log("Select onValueChange triggered with:", { orderId: order.id, newStatus: value });
                 updateStatusMutation.mutate({ id: order.id, status: value });
               }}
             >
