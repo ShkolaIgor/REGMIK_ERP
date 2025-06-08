@@ -406,6 +406,20 @@ export default function Orders() {
     queryKey: ["/api/orders"],
   });
 
+  // Логування всіх замовлень для діагностики
+  React.useEffect(() => {
+    if (allOrders.length > 0) {
+      console.log('=== ДІАГНОСТИКА ЗАМОВЛЕНЬ ===');
+      allOrders.forEach(order => {
+        console.log(`Замовлення ${order.id}:`, {
+          paymentDate: order.paymentDate,
+          paymentType: order.paymentType,
+          paidAmount: order.paidAmount
+        });
+      });
+    }
+  }, [allOrders]);
+
   const { data: orderStatuses = [] } = useQuery<OrderStatus[]>({
     queryKey: ["/api/order-statuses"],
   });
