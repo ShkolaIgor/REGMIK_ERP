@@ -435,7 +435,10 @@ export default function OrderedProducts() {
                 <Package className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{orderedProducts.length}</div>
+                <div className="text-2xl font-bold">{(orderedProducts as any[]).length}</div>
+                <p className="text-xs text-muted-foreground">
+                  Відфільтровано: {filteredAndSortedProducts.length}
+                </p>
               </CardContent>
             </Card>
             <Card>
@@ -445,7 +448,7 @@ export default function OrderedProducts() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {orderedProducts.filter((p: any) => p.needsProduction).length}
+                  {(orderedProducts as any[]).filter((p: any) => p.needsProduction).length}
                 </div>
               </CardContent>
             </Card>
@@ -456,7 +459,7 @@ export default function OrderedProducts() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {orderedProducts.filter((p: any) => p.shortage > 0).length}
+                  {(orderedProducts as any[]).filter((p: any) => p.shortage > 0).length}
                 </div>
               </CardContent>
             </Card>
@@ -482,7 +485,7 @@ export default function OrderedProducts() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {orderedProducts.map((item: any) => (
+                  {filteredAndSortedProducts.map((item: any) => (
                     <TableRow key={item.productId}>
                       <TableCell>
                         <div>
