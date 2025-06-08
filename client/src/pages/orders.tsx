@@ -793,6 +793,7 @@ export default function Orders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/order-statuses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       setIsStatusDialogOpen(false);
       setEditingStatus(null);
       statusForm.reset();
@@ -816,6 +817,7 @@ export default function Orders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/order-statuses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       setEditingStatus(null);
       statusForm.reset();
       toast({
@@ -838,6 +840,7 @@ export default function Orders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/order-statuses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       toast({
         title: "Успіх",
         description: "Статус видалено",
