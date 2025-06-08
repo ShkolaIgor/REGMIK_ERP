@@ -228,6 +228,22 @@ export default function Orders() {
         const totalAmount = parseFloat(order.totalAmount);
         
         const getPaymentDisplay = () => {
+          // Якщо немає дати оплати, показуємо кнопку оплати незалежно від типу оплати
+          if (!order.paymentDate) {
+            return (
+              <div onClick={(e) => e.stopPropagation()}>
+                <PaymentDialog
+                  orderId={order.id}
+                  orderNumber={order.orderNumber}
+                  totalAmount={order.totalAmount}
+                  currentPaymentType={order.paymentType || "none"}
+                  currentPaidAmount={order.paidAmount || "0"}
+                  isProductionApproved={order.productionApproved || false}
+                />
+              </div>
+            );
+          }
+
           switch (paymentType) {
             case 'full':
               return (
@@ -235,11 +251,9 @@ export default function Orders() {
                   <Badge className="bg-green-100 text-green-800 border-green-300">
                     ✅ Повна оплата
                   </Badge>
-                  {order.paymentDate && (
-                    <div className="text-xs text-green-700 font-medium flex items-center gap-1">
-                      📅 {formatDate(new Date(order.paymentDate))}
-                    </div>
-                  )}
+                  <div className="text-xs text-green-700 font-medium flex items-center gap-1">
+                    📅 {formatDate(new Date(order.paymentDate))}
+                  </div>
                 </div>
               );
             case 'partial':
@@ -252,11 +266,9 @@ export default function Orders() {
                   <div className="text-xs text-gray-600">
                     {formatCurrency(paidAmount)} з {formatCurrency(totalAmount)}
                   </div>
-                  {order.paymentDate && (
-                    <div className="text-xs text-yellow-700 font-medium flex items-center gap-1">
-                      📅 {formatDate(new Date(order.paymentDate))}
-                    </div>
-                  )}
+                  <div className="text-xs text-yellow-700 font-medium flex items-center gap-1">
+                    📅 {formatDate(new Date(order.paymentDate))}
+                  </div>
                 </div>
               );
             case 'contract':

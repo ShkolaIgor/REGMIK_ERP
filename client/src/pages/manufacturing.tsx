@@ -333,6 +333,17 @@ export default function Manufacturing() {
     }
   };
 
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "pending": return "Очікує";
+      case "in_progress": return "У виробництві";
+      case "completed": return "Завершено";
+      case "cancelled": return "Скасовано";
+      case "paused": return "Пауза";
+      default: return status;
+    }
+  };
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "low": return "bg-green-100 text-green-800";
@@ -639,11 +650,7 @@ export default function Manufacturing() {
                     <Badge className={getStatusColor(order.status)}>
                       <span className="flex items-center gap-1">
                         {getStatusIcon(order.status)}
-                        {order.status === "pending" && "Очікує"}
-                        {order.status === "in_progress" && "В роботі"}
-                        {order.status === "completed" && "Завершено"}
-                        {order.status === "cancelled" && "Скасовано"}
-                        {order.status === "paused" && "Пауза"}
+                        {getStatusText(order.status)}
                       </span>
                     </Badge>
                   </TableCell>
