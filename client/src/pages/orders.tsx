@@ -252,6 +252,7 @@ export default function Orders() {
         return <div className="font-medium">{formatCurrency(parseFloat(order.totalAmount))}</div>;
       
       case 'paymentStatus':
+        console.log(`Всі дані замовлення ${order.id}:`, order);
         const getPaymentStatusBadge = () => {
           const paymentType = order.paymentType || 'none';
           const paidAmount = parseFloat(order.paidAmount || '0');
