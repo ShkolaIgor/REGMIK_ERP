@@ -32,6 +32,11 @@ export async function apiRequest(
     data = urlOrOptions.body;
   }
 
+  // Логування всіх POST запитів для виробничих завдань
+  if (url.includes('/manufacturing-orders') && method === 'POST') {
+    console.log("🟡 apiRequest - Manufacturing POST:", { url, method, data });
+  }
+  
   // Логування запитів на оновлення статусу
   if (url.includes('/status') && method === 'PUT') {
     console.log("apiRequest - Status update:", { url, method, data });
