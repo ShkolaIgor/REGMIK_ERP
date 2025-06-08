@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertTriangle, Package, Factory, CheckCircle, ArrowRight, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useSorting } from "@/hooks/useSorting";
 
 // Компонент для відображення замовлень по товару
 function OrdersByProduct({ productId }: { productId: number }) {
@@ -87,13 +88,19 @@ export default function OrderedProducts() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("name");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: orderedProducts = [], isLoading } = useQuery({
     queryKey: ["/api/ordered-products-info"],
+  });
+
+  // Хук сортування
+  const { sortedData, handleSort, sortConfig } = useSorting({
+    data: orderedProducts as any[],
+    tableName: 'ordered-products',
+    defaultSort: { field: 'product.name', direction: 'asc' }
   });
 
   const { data: warehouses = [] } = useQuery({
