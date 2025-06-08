@@ -102,6 +102,8 @@ const statusLabels = {
 export default function OrdersInvoices() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false);
+  const [isCreateInvoiceOpen, setIsCreateInvoiceOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -197,14 +199,26 @@ export default function OrdersInvoices() {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Package className="h-6 w-6" />
-                Замовлення та Рахунки
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Управління замовленнями та рахунками в одному місці
-              </p>
+            <div className="flex justify-between items-center w-full">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <Package className="h-6 w-6" />
+                  Замовлення та Рахунки
+                </h1>
+                <p className="text-gray-600 mt-1">
+                  Управління замовленнями та рахунками в одному місці
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={() => setIsCreateOrderOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Створити замовлення
+                </Button>
+                <Button onClick={() => setIsCreateInvoiceOpen(true)} variant="outline">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Створити рахунок
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -310,7 +324,7 @@ export default function OrdersInvoices() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Тип</TableHead>
-                  <TableHead>Номер</TableHead>
+                  <TableHead>Номер рахунку</TableHead>
                   <TableHead>Клієнт</TableHead>
                   <TableHead>Сума</TableHead>
                   <TableHead>Статус</TableHead>

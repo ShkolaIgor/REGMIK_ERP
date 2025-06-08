@@ -5251,6 +5251,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     issueDate: z.string().transform(str => new Date(str)),
     dueDate: z.string().transform(str => new Date(str)),
     description: z.string().optional(),
+    
+    // Додаткові поля для самостійних рахунків
+    customerName: z.string().optional(),
+    customerPhone: z.string().optional(),
+    customerEmail: z.string().optional(),
+    deliveryAddress: z.string().optional(),
+    deliveryCity: z.string().optional(),
+    deliveryRegion: z.string().optional(),
+    deliveryPostalCode: z.string().optional(),
+    deliveryCountry: z.string().default("Україна"),
+    deliveryMethod: z.string().optional(),
+    deliveryNotes: z.string().optional(),
+    paymentMethod: z.string().optional(),
+    paymentTerms: z.string().optional(),
+    notes: z.string().optional(),
   });
 
   // Отримання всіх рахунків з клієнтами та компаніями
