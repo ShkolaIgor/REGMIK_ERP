@@ -8,6 +8,8 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Calendar, Check, X, Clock } from "lucide-react";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { uk } from "date-fns/locale";
 
@@ -22,6 +24,7 @@ interface PaymentDateButtonProps {
 
 export function PaymentDateButton({ order, onPaymentDateChange, isLoading }: PaymentDateButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return null;
@@ -43,13 +46,13 @@ export function PaymentDateButton({ order, onPaymentDateChange, isLoading }: Pay
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
     
-    const weekAgo = new Date(today);
-    weekAgo.setDate(weekAgo.getDate() - 7);
+    const dayBeforeYesterday = new Date(today);
+    dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2);
 
     return [
       { label: "Сьогодні", date: today },
       { label: "Вчора", date: yesterday },
-      { label: "Тиждень тому", date: weekAgo },
+      { label: "Позавчора", date: dayBeforeYesterday },
     ];
   };
 
@@ -103,29 +106,34 @@ export function PaymentDateButton({ order, onPaymentDateChange, isLoading }: Pay
             
             <DropdownMenuSeparator />
             
-            <DropdownMenuItem
-              onClick={() => {
-                const customDate = prompt("Введіть дату оплати (дд.мм.рррр):");
-                if (customDate) {
-                  const parts = customDate.split(".");
-                  if (parts.length === 3) {
-                    const [day, month, year] = parts;
-                    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                    if (!isNaN(date.getTime())) {
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+              <PopoverTrigger asChild>
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setIsCalendarOpen(true);
+                    setIsOpen(false);
+                  }}
+                  className="cursor-pointer"
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Інша дата...
+                </DropdownMenuItem>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={undefined}
+                  onSelect={(date) => {
+                    if (date) {
                       handleSetPaymentDate(date);
-                    } else {
-                      alert("Невірний формат дати");
                     }
-                  } else {
-                    alert("Введіть дату у форматі дд.мм.рррр");
-                  }
-                }
-              }}
-              className="cursor-pointer"
-            >
-              <Calendar className="w-4 h-4 mr-2" />
-              Інша дата...
-            </DropdownMenuItem>
+                    setIsCalendarOpen(false);
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </>
         )}
         
