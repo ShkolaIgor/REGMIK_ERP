@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
-import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
 import { useForm } from "react-hook-form";
@@ -98,6 +98,10 @@ type OrderItemFormData = z.infer<typeof orderItemSchema>;
 export default function Orders() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [paymentFilter, setPaymentFilter] = useState<string>("all");
+  const [dateRangeFilter, setDateRangeFilter] = useState<string>("all");
   const [orderItems, setOrderItems] = useState<OrderItemFormData[]>([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingOrder, setEditingOrder] = useState<any>(null);
@@ -256,9 +260,46 @@ export default function Orders() {
     }
   };
 
-  const { data: orders = [], isLoading } = useQuery<OrderWithItems[]>({
+  const { data: allOrders = [], isLoading } = useQuery<OrderWithItems[]>({
     queryKey: ["/api/orders"],
   });
+
+  // Функція фільтрації замовлень
+  const filterOrders = (orders: any[]) => {
+    return orders.filter((order: any) => {
+      // Пошук по тексту
+      const searchLower = searchTerm.toLowerCase();
+      const matchesSearch = !searchTerm || 
+        order.orderNumber.toLowerCase().includes(searchLower) ||
+        order.customerName.toLowerCase().includes(searchLower) ||
+        order.customerEmail?.toLowerCase().includes(searchLower) ||
+        order.customerPhone?.toLowerCase().includes(searchLower) ||
+        order.orderSequenceNumber.toString().includes(searchLower);
+
+      // Фільтр за статусом
+      const matchesStatus = statusFilter === "all" || order.status === statusFilter;
+
+      // Фільтр за оплатою
+      const matchesPayment = 
+        paymentFilter === "all" ||
+        (paymentFilter === "paid" && order.paymentDate) ||
+        (paymentFilter === "unpaid" && !order.paymentDate) ||
+        (paymentFilter === "overdue" && !order.paymentDate && order.dueDate && new Date(order.dueDate) < new Date());
+
+      // Фільтр за датами
+      const now = new Date();
+      const orderDate = new Date(order.createdAt);
+      const matchesDateRange = 
+        dateRangeFilter === "all" ||
+        (dateRangeFilter === "today" && orderDate.toDateString() === now.toDateString()) ||
+        (dateRangeFilter === "week" && (now.getTime() - orderDate.getTime()) <= 7 * 24 * 60 * 60 * 1000) ||
+        (dateRangeFilter === "month" && (now.getTime() - orderDate.getTime()) <= 30 * 24 * 60 * 60 * 1000);
+
+      return matchesSearch && matchesStatus && matchesPayment && matchesDateRange;
+    });
+  };
+
+  const orders = filterOrders(allOrders);
 
   const { data: products = [] } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -1086,6 +1127,87 @@ export default function Orders() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Filters and Search */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col lg:flex-row gap-4 items-center">
+              {/* Search */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Пошук за номером замовлення, клієнтом, email або телефоном..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              {/* Status Filter */}
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Статус" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Всі статуси</SelectItem>
+                  <SelectItem value="pending">Очікує</SelectItem>
+                  <SelectItem value="processing">Обробляється</SelectItem>
+                  <SelectItem value="shipped">Відправлено</SelectItem>
+                  <SelectItem value="delivered">Доставлено</SelectItem>
+                  <SelectItem value="cancelled">Скасовано</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Payment Filter */}
+              <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Оплата" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Всі</SelectItem>
+                  <SelectItem value="paid">Оплачено</SelectItem>
+                  <SelectItem value="unpaid">Не оплачено</SelectItem>
+                  <SelectItem value="overdue">Прострочено</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Date Range Filter */}
+              <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Період" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Весь час</SelectItem>
+                  <SelectItem value="today">Сьогодні</SelectItem>
+                  <SelectItem value="week">Тиждень</SelectItem>
+                  <SelectItem value="month">Місяць</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Clear Filters */}
+              {(searchTerm || statusFilter !== "all" || paymentFilter !== "all" || dateRangeFilter !== "all") && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setStatusFilter("all");
+                    setPaymentFilter("all");
+                    setDateRangeFilter("all");
+                  }}
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Очистити
+                </Button>
+              )}
+            </div>
+
+            {/* Results Count */}
+            <div className="mt-3 text-sm text-gray-600">
+              Знайдено: {orders.length} з {allOrders.length} замовлень
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Orders Table */}
         <Card>
