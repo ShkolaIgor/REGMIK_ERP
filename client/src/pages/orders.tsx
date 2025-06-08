@@ -252,7 +252,6 @@ export default function Orders() {
         return <div className="font-medium">{formatCurrency(parseFloat(order.totalAmount))}</div>;
       
       case 'paymentStatus':
-        console.log(`Всі дані замовлення ${order.id}:`, order);
         const getPaymentStatusBadge = () => {
           const paymentType = order.paymentType || 'none';
           const paidAmount = parseFloat(order.paidAmount || '0');
@@ -260,7 +259,6 @@ export default function Orders() {
           
           switch (paymentType) {
             case 'full':
-              console.log(`Замовлення ${order.id}: paymentDate =`, order.paymentDate, 'type:', typeof order.paymentDate);
               return (
                 <div className="space-y-1">
                   <Badge className="bg-green-100 text-green-800 border-green-300">
@@ -268,7 +266,7 @@ export default function Orders() {
                   </Badge>
                   {order.paymentDate && (
                     <div className="text-xs text-gray-600">
-                      Оплачено: {formatDate(order.paymentDate)}
+                      Оплачено: {formatDate(new Date(order.paymentDate))}
                     </div>
                   )}
                 </div>
@@ -285,7 +283,7 @@ export default function Orders() {
                   </div>
                   {order.paymentDate && (
                     <div className="text-xs text-gray-600">
-                      Оплачено: {formatDate(order.paymentDate)}
+                      Оплачено: {formatDate(new Date(order.paymentDate))}
                     </div>
                   )}
                 </div>
@@ -406,19 +404,7 @@ export default function Orders() {
     queryKey: ["/api/orders"],
   });
 
-  // Логування всіх замовлень для діагностики
-  React.useEffect(() => {
-    if (allOrders.length > 0) {
-      console.log('=== ДІАГНОСТИКА ЗАМОВЛЕНЬ ===');
-      allOrders.forEach(order => {
-        console.log(`Замовлення ${order.id}:`, {
-          paymentDate: order.paymentDate,
-          paymentType: order.paymentType,
-          paidAmount: order.paidAmount
-        });
-      });
-    }
-  }, [allOrders]);
+
 
   const { data: orderStatuses = [] } = useQuery<OrderStatus[]>({
     queryKey: ["/api/order-statuses"],
