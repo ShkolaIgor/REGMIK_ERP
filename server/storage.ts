@@ -134,6 +134,7 @@ export interface IStorage {
   createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order>;
   updateOrder(id: number, order: InsertOrder, items: InsertOrderItem[]): Promise<Order | undefined>;
   updateOrderStatus(id: number, status: string): Promise<Order | undefined>;
+  updateOrderPaymentDate(id: number, paymentDate: string | null): Promise<Order | undefined>;
   deleteOrder(id: number): Promise<boolean>;
 
   // Recipes
