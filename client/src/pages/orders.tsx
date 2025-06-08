@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ClientForm } from "@/components/ClientForm";
 import { PaymentDateButton } from "@/components/PaymentDateButton";
 import DueDateButton from "@/components/DueDateButton";
+import { useSorting } from "@/hooks/useSorting";
 // Типи
 type Order = {
   id: number;
@@ -362,7 +363,14 @@ export default function Orders() {
     });
   };
 
-  const orders = filterOrders(allOrders);
+  const filteredOrders = filterOrders(allOrders);
+
+  // Хук сортування з збереженням налаштувань користувача
+  const { sortedData: orders, sortConfig, handleSort } = useSorting({
+    data: filteredOrders,
+    tableName: 'orders',
+    defaultSort: { field: 'orderSequenceNumber', direction: 'desc' }
+  });
 
   const { data: products = [] } = useQuery<Product[]>({
     queryKey: ["/api/products"],

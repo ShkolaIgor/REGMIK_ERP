@@ -4830,6 +4830,32 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
   }
+
+  // User Sort Preferences
+  async getUserSortPreferences(userId: string, tableName: string): Promise<UserSortPreference | null> {
+    const [preference] = await db
+      .select()
+      .from(userSortPreferences)
+      .where(and(eq(userSortPreferences.userId, userId), eq(userSortPreferences.tableName, tableName)))
+      .limit(1);
+    return preference || null;
+  }
+
+  async saveUserSortPreferences(preference: InsertUserSortPreference): Promise<UserSortPreference> {
+    const [result] = await db
+      .insert(userSortPreferences)
+      .values(preference)
+      .onConflictDoUpdate({
+        target: [userSortPreferences.userId, userSortPreferences.tableName],
+        set: {
+          sortField: preference.sortField,
+          sortDirection: preference.sortDirection,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return result;
+  }
 }
 
 export const storage = new DatabaseStorage();

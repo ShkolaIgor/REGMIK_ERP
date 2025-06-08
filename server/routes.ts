@@ -5442,6 +5442,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sort Preferences Routes
+  app.get("/api/user-sort-preferences/:tableName", async (req, res) => {
+    try {
+      const { tableName } = req.params;
+      // Тимчасово використовуємо фіксований userId поки не підключений Replit Auth
+      const userId = "guest";
+      
+      const preference = await storage.getUserSortPreferences(userId, tableName);
+      res.json(preference);
+    } catch (error) {
+      console.error("Error fetching sort preferences:", error);
+      res.status(500).json({ error: "Failed to fetch sort preferences" });
+    }
+  });
+
+  app.post("/api/user-sort-preferences", async (req, res) => {
+    try {
+      const { tableName, sortField, sortDirection } = req.body;
+      
+      if (!tableName || !sortField || !sortDirection) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Тимчасово використовуємо фіксований userId поки не підключений Replit Auth
+      const userId = "guest";
+
+      const preference = await storage.saveUserSortPreferences({
+        userId,
+        tableName,
+        sortField,
+        sortDirection
+      });
+
+      res.json(preference);
+    } catch (error) {
+      console.error("Error saving sort preferences:", error);
+      res.status(500).json({ error: "Failed to save sort preferences" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
