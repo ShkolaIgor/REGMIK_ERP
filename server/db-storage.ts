@@ -1,4 +1,4 @@
-import { eq, sql, desc, and, gte, lte, isNull, ne } from "drizzle-orm";
+import { eq, sql, desc, and, gte, lte, isNull, ne, or } from "drizzle-orm";
 import { db } from "./db";
 import { IStorage } from "./storage";
 import {
@@ -3374,7 +3374,11 @@ export class DatabaseStorage implements IStorage {
       .from(orders)
       .innerJoin(orderItems, eq(orders.id, orderItems.orderId))
       .innerJoin(products, eq(orderItems.productId, products.id))
-      .where(eq(orders.status, 'pending'));
+      .where(or(
+        eq(orders.status, 'Нове'),
+        eq(orders.status, 'В роботі'),
+        eq(orders.status, 'pending')
+      ));
 
       // Групуємо за товарами
       const productGroups = new Map();
