@@ -4246,6 +4246,113 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Companies
+  async getCompanies(): Promise<Company[]> {
+    try {
+      return await db.select().from(companies).orderBy(companies.name);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      return [];
+    }
+  }
+
+  async getCompany(id: number): Promise<Company | undefined> {
+    try {
+      const [company] = await db.select().from(companies).where(eq(companies.id, id));
+      return company;
+    } catch (error) {
+      console.error("Error fetching company:", error);
+      return undefined;
+    }
+  }
+
+  async getDefaultCompany(): Promise<Company | undefined> {
+    try {
+      const [company] = await db.select().from(companies).where(eq(companies.isDefault, true));
+      return company;
+    } catch (error) {
+      console.error("Error fetching default company:", error);
+      return undefined;
+    }
+  }
+
+  async createCompany(companyData: InsertCompany): Promise<Company> {
+    try {
+      const [company] = await db.insert(companies).values(companyData).returning();
+      return company;
+    } catch (error) {
+      console.error("Error creating company:", error);
+      throw error;
+    }
+  }
+
+  async updateCompany(id: number, companyData: Partial<InsertCompany>): Promise<Company | undefined> {
+    try {
+      const [updated] = await db
+        .update(companies)
+        .set({ ...companyData, updatedAt: new Date() })
+        .where(eq(companies.id, id))
+        .returning();
+      return updated;
+    } catch (error) {
+      console.error("Error updating company:", error);
+      return undefined;
+    }
+  }
+
+  async deleteCompany(id: number): Promise<boolean> {
+    try {
+      // Перевіряємо чи це не основна компанія
+      const company = await this.getCompany(id);
+      if (company?.isDefault) {
+        throw new Error("Cannot delete default company");
+      }
+
+      const result = await db.delete(companies).where(eq(companies.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error("Error deleting company:", error);
+      throw error;
+    }
+  }
+
+  async setDefaultCompany(id: number): Promise<boolean> {
+    try {
+      // Спочатку знімаємо прапор isDefault з усіх компаній
+      await db.update(companies).set({ isDefault: false });
+      
+      // Потім встановлюємо прапор для обраної компанії
+      const [updated] = await db
+        .update(companies)
+        .set({ isDefault: true, updatedAt: new Date() })
+        .where(eq(companies.id, id))
+        .returning();
+      
+      return !!updated;
+    } catch (error) {
+      console.error("Error setting default company:", error);
+      return false;
+    }
+  }
+
+  async getProductsByCompany(companyId: number): Promise<Product[]> {
+    try {
+      return await db.select().from(products).where(eq(products.companyId, companyId));
+    } catch (error) {
+      console.error("Error fetching products by company:", error);
+      return [];
+    }
+  }
+
+  async getOrdersByCompany(companyId: number): Promise<Order[]> {
+    try {
+      return await db.select().from(orders).where(eq(orders.companyId, companyId));
+    } catch (error) {
+      console.error("Error fetching orders by company:", error);
+      return [];
+    }
+  }
+
   // Serial Numbers
   async getSerialNumbers(productId?: number, warehouseId?: number): Promise<SerialNumber[]> {
     let query = db.select().from(serialNumbers);

@@ -48,6 +48,7 @@ import Manufacturing from "@/pages/manufacturing";
 import Currencies from "@/pages/currencies";
 import ProductionAnalytics from "@/pages/production-analytics";
 import ProductionPlanning from "@/pages/production-planning";
+import Companies from "@/pages/companies";
 import OrderedProducts from "@/pages/ordered-products";
 import Scanner from "@/pages/scanner";
 import SerialNumbers from "@/pages/serial-numbers";

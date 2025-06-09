@@ -5200,6 +5200,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Set company as default
+  app.post("/api/companies/:id/set-default", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.setDefaultCompany(id);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Company not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error setting default company:", error);
+      res.status(500).json({ error: "Failed to set default company" });
+    }
+  });
+
   // Get products by company
   app.get("/api/companies/:id/products", async (req, res) => {
     try {
