@@ -651,7 +651,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteSupplier(id: number): Promise<boolean> {
     const result = await db.delete(suppliers).where(eq(suppliers.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   // Components
@@ -1231,6 +1231,8 @@ export class DatabaseStorage implements IStorage {
         if (!bom.component) continue;
         
         const key = bom.componentProductId;
+        if (key === null) continue;
+        
         const existingReq = requirements.get(key);
         const quantity = parseFloat(bom.quantity);
 
@@ -1558,7 +1560,7 @@ export class DatabaseStorage implements IStorage {
       const result = await db.delete(assemblyOperations)
         .where(eq(assemblyOperations.id, id));
       
-      return result.rowCount > 0;
+      return (result.rowCount || 0) > 0;
     } catch (error) {
       console.error('Error deleting assembly operation:', error);
       throw error;
@@ -1694,7 +1696,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteWorker(id: number): Promise<boolean> {
     const result = await this.db.delete(workers).where(eq(workers.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   // Inventory Audits
@@ -1760,7 +1762,7 @@ export class DatabaseStorage implements IStorage {
     await this.db.delete(inventoryAuditItems).where(eq(inventoryAuditItems.auditId, id));
     // Then delete the audit
     const result = await this.db.delete(inventoryAudits).where(eq(inventoryAudits.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   async getInventoryAuditItems(auditId: number): Promise<(InventoryAuditItem & { product: Product })[]> {
@@ -1792,7 +1794,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteInventoryAuditItem(id: number): Promise<boolean> {
     const result = await this.db.delete(inventoryAuditItems).where(eq(inventoryAuditItems.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   async generateInventoryAuditItems(auditId: number, warehouseId?: number): Promise<InventoryAuditItem[]> {
@@ -1889,7 +1891,7 @@ export class DatabaseStorage implements IStorage {
     try {
       const result = await this.db.delete(productionForecasts)
         .where(eq(productionForecasts.id, id));
-      return result.rowCount > 0;
+      return (result.rowCount || 0) > 0;
     } catch (error) {
       console.error('Error deleting production forecast:', error);
       throw error;
@@ -1990,7 +1992,7 @@ export class DatabaseStorage implements IStorage {
       // Then delete the transfer
       const result = await this.db.delete(warehouseTransfers)
         .where(eq(warehouseTransfers.id, id));
-      return result.rowCount > 0;
+      return (result.rowCount || 0) > 0;
     } catch (error) {
       console.error('Error deleting warehouse transfer:', error);
       throw error;
@@ -2158,7 +2160,7 @@ export class DatabaseStorage implements IStorage {
       const result = await this.db.update(departments)
         .set({ isActive: false, updatedAt: new Date() })
         .where(eq(departments.id, id));
-      return result.rowCount > 0;
+      return (result.rowCount || 0) > 0;
     } catch (error) {
       console.error('Error deleting department:', error);
       throw error;
@@ -4832,7 +4834,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(localUsers)
       .where(eq(localUsers.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   async toggleUserStatus(id: number, isActive: boolean) {

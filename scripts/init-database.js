@@ -107,7 +107,11 @@ async function initializeDatabase() {
       console.log('⚠ Foreign keys для client_mail потребують налаштування');
     }
     
-    console.log('\nБаза даних готова до роботи!');
+    // Оптимізація таблиць для кращої продуктивності
+    await client.query('VACUUM ANALYZE');
+    console.log('✓ Оптимізація бази даних завершена');
+    
+    console.log('\nБаза даних повністю синхронізована та готова до роботи!');
     
   } catch (error) {
     console.error('Помилка ініціалізації бази даних:', error.message);
