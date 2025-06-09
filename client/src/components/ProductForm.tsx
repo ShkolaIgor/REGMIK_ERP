@@ -331,6 +331,28 @@ export function ProductForm({ isOpen, onClose, product, isViewMode = false }: Pr
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="isActive"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Статус товару</FormLabel>
+                    <div className="text-sm text-muted-foreground">
+                      {field.value ? "Товар активний та доступний для продажу" : "Товар неактивний та прихований від продажу"}
+                    </div>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isViewMode}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
             <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
               <Button type="button" variant="outline" onClick={onClose}>
                 {isViewMode ? "Закрити" : "Скасувати"}
