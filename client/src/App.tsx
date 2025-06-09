@@ -58,7 +58,6 @@ import EmailSettings from "@/pages/email-settings";
 import Analytics from "@/pages/analytics";
 import ProductProfitability from "@/pages/product-profitability";
 import Integrations from "@/pages/integrations";
-import Companies from "@/pages/companies";
 
 import NotFound from "@/pages/not-found";
 
@@ -160,6 +159,10 @@ function Router() {
                     <a href="/shipments" className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 text-center">
                       <span className="block text-2xl mb-2">🚚</span>
                       <span className="text-sm font-medium">Відвантаження</span>
+                    </a>
+                    <a href="/companies" className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 text-center">
+                      <span className="block text-2xl mb-2">🏢</span>
+                      <span className="text-sm font-medium">Компанії</span>
                     </a>
                   </div>
                 </div>
