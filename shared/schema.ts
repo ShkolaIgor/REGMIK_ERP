@@ -167,6 +167,7 @@ export const products = pgTable("products", {
   minStock: integer("min_stock").default(0),
   maxStock: integer("max_stock").default(1000),
   hasSerialNumbers: boolean("has_serial_numbers").default(false), // чи використовує серійні номери
+  isActive: boolean("is_active").default(true), // статус активності товару
   createdAt: timestamp("created_at").defaultNow(),
 });
 

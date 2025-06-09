@@ -41,8 +41,9 @@ export function setupSimpleSession(app: Express) {
       httpOnly: true,
       secure: false, // false для development
       maxAge: sessionTtl,
+      sameSite: 'lax'
     },
-    name: 'sessionId'
+    name: 'regmik_session'
   }));
 }
 

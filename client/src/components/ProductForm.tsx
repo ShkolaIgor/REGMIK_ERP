@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { generateSKU } from "@/lib/utils";
@@ -35,6 +36,7 @@ export function ProductForm({ isOpen, onClose, product, isViewMode = false }: Pr
       costPrice: product?.costPrice || "0",
       retailPrice: product?.retailPrice || "0",
       photo: product?.photo || null,
+      isActive: product?.isActive !== undefined ? product.isActive : true,
     },
   });
 
@@ -55,6 +57,7 @@ export function ProductForm({ isOpen, onClose, product, isViewMode = false }: Pr
         costPrice: product.costPrice || "0",
         retailPrice: product.retailPrice || "0",
         photo: product.photo || null,
+        isActive: product.isActive !== undefined ? product.isActive : true,
       });
     } else {
       form.reset({
@@ -66,6 +69,7 @@ export function ProductForm({ isOpen, onClose, product, isViewMode = false }: Pr
         costPrice: "0",
         retailPrice: "0",
         photo: null,
+        isActive: true,
       });
     }
   }, [product, form]);
