@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/home/runner/workspace
-ExecStart=/usr/bin/npx tsx server/production-dev.ts
+ExecStart=/usr/bin/npx tsx server/production-ui.ts
 Restart=always
 RestartSec=10
 

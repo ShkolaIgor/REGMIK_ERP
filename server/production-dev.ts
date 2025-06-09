@@ -82,10 +82,64 @@ async function startProductionDevServer() {
             </div>
             
             <script>
-              // Simple redirect to main interface
+              // Load main REGMIK ERP interface
               setTimeout(() => {
-                window.location.href = '/api/dashboard/stats';
-              }, 2000);
+                document.body.innerHTML = \`
+                  <div style="padding: 20px; max-width: 1200px; margin: 0 auto;">
+                    <h1 style="color: #2563eb; text-align: center;">🚀 REGMIK ERP</h1>
+                    <p style="text-align: center; color: #666;">Система управління виробництвом готова до роботи</p>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px;">
+                      <div style="border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: white;">
+                        <h3>📊 Dashboard</h3>
+                        <p>Загальна статистика системи</p>
+                        <a href="/api/dashboard/stats" style="color: #2563eb;">Переглянути статистику</a>
+                      </div>
+                      
+                      <div style="border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: white;">
+                        <h3>📦 Продукція</h3>
+                        <p>Управління товарами та складом</p>
+                        <a href="/api/products" style="color: #2563eb;">Переглянути продукти</a>
+                      </div>
+                      
+                      <div style="border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: white;">
+                        <h3>📋 Замовлення</h3>
+                        <p>Робота з замовленнями клієнтів</p>
+                        <a href="/api/orders" style="color: #2563eb;">Переглянути замовлення</a>
+                      </div>
+                      
+                      <div style="border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: white;">
+                        <h3>👥 Клієнти</h3>
+                        <p>База даних клієнтів</p>
+                        <a href="/api/clients" style="color: #2563eb;">Переглянути клієнтів</a>
+                      </div>
+                      
+                      <div style="border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: white;">
+                        <h3>🏙️ Нова Пошта</h3>
+                        <p>Інтеграція з Nova Poshta API</p>
+                        <a href="/api/nova-poshta/cities" style="color: #2563eb;">Переглянути міста</a>
+                      </div>
+                      
+                      <div style="border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: white;">
+                        <h3>⚙️ Статуси замовлень</h3>
+                        <p>Управління статусами</p>
+                        <a href="/api/order-statuses" style="color: #2563eb;">Переглянути статуси</a>
+                      </div>
+                    </div>
+                    
+                    <div style="margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                      <h3>🔧 Інформація про систему</h3>
+                      <ul>
+                        <li><strong>Статус:</strong> Production Ready</li>
+                        <li><strong>База даних:</strong> PostgreSQL (Neon)</li>
+                        <li><strong>Порт:</strong> ${PORT}</li>
+                        <li><strong>Версія:</strong> 1.0.0</li>
+                        <li><strong>Локалізація:</strong> Українська</li>
+                      </ul>
+                    </div>
+                  </div>
+                \`;
+              }, 1000);
             </script>
           </body>
           </html>

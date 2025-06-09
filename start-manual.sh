@@ -44,15 +44,15 @@ fi
 echo -e "${GREEN}Starting production server...${NC}"
 echo "Choose server mode:"
 echo "1. API-only server (швидкий запуск)"
-echo "2. Full frontend server (повний інтерфейс)"
+echo "2. Production UI server (повний веб-інтерфейс)"
 echo ""
 
 read -p "Виберіть режим (1 або 2): " mode
 
 if [ "$mode" = "2" ]; then
-    echo "Запуск з повним frontend (порт 3000)..."
-    npx tsx server/production-dev.ts
+    echo "Запуск з повним веб-інтерфейсом..."
+    npx tsx server/production-ui.ts
 else
-    echo "Запуск API-only сервера (порт 3000)..."
+    echo "Запуск API-only сервера..."
     npx tsx server/production.ts
 fi
