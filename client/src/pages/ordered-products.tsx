@@ -652,7 +652,7 @@ export default function OrderedProducts() {
                                       className="w-full p-2 border rounded-md"
                                     >
                                       <option value="">Виберіть склад</option>
-                                      {warehouses.map((warehouse: any) => (
+                                      {(warehouses as any[])?.map((warehouse: any) => (
                                         <option key={warehouse.id} value={warehouse.id}>
                                           {warehouse.name}
                                         </option>

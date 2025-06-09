@@ -20,7 +20,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { CreditCard, FileContract, AlertCircle } from "lucide-react";
+import { CreditCard, FileText, AlertCircle } from "lucide-react";
 
 interface PaymentDialogProps {
   orderId: number;

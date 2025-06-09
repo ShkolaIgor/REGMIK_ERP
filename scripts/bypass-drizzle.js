@@ -7,7 +7,7 @@ const { Pool } = pg;
 const pool = new Pool({
   host: process.env.PGHOST || 'localhost',
   port: parseInt(process.env.PGPORT || '5432'),
-  database: process.env.PGDATABASE || 'neondb',
+  database: process.env.PGDATABASE || 'regmik-erp',
   user: process.env.PGUSER || 'postgres',
   password: process.env.PGPASSWORD || '',
   ssl: { rejectUnauthorized: false }
