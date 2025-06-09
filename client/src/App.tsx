@@ -62,22 +62,21 @@ import Companies from "@/pages/companies";
 import NotFound from "@/pages/not-found";
 
 function Router() {
-  // Тимчасово відключена авторизація
-  // const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
-  // if (isLoading) {
-  //   return <div className="min-h-screen flex items-center justify-center">Завантаження...</div>;
-  // }
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Завантаження...</div>;
+  }
 
-  // if (!isAuthenticated) {
-  //   return (
-  //     <Switch>
-  //       <Route path="/forgot-password" component={ForgotPassword} />
-  //       <Route path="/reset-password" component={ResetPassword} />
-  //       <Route component={SimpleLogin} />
-  //     </Switch>
-  //   );
-  // }
+  if (!isAuthenticated) {
+    return (
+      <Switch>
+        <Route path="/forgot-password" component={ForgotPassword} />
+        <Route path="/reset-password" component={ResetPassword} />
+        <Route component={SimpleLogin} />
+      </Switch>
+    );
+  }
 
   return (
     <Layout>
