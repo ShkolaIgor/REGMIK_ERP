@@ -394,6 +394,9 @@ export class DatabaseStorage implements IStorage {
       orderNumber,
       totalAmount: totalAmount.toString(),
       clientId: insertOrder.clientId ? (typeof insertOrder.clientId === 'string' ? parseInt(insertOrder.clientId) : insertOrder.clientId) : null,
+      paymentDate: insertOrder.paymentDate ? new Date(insertOrder.paymentDate) : null,
+      dueDate: insertOrder.dueDate ? new Date(insertOrder.dueDate) : null,
+      shippedDate: insertOrder.shippedDate ? new Date(insertOrder.shippedDate) : null,
     };
 
     const orderResult = await db.insert(orders).values([orderData]).returning();
