@@ -3,8 +3,20 @@
 import pg from 'pg';
 const { Pool } = pg;
 
+// Створюємо конфігурацію підключення з окремих змінних для обходу SCRAM проблем
+const poolConfig = process.env.DATABASE_URL 
+  ? { connectionString: process.env.DATABASE_URL }
+  : {
+      host: process.env.PGHOST || 'localhost',
+      port: parseInt(process.env.PGPORT || '5432'),
+      database: process.env.PGDATABASE || 'regmik-erp',
+      user: process.env.PGUSER || 'postgres',
+      password: process.env.PGPASSWORD || '',
+    };
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
+  ...poolConfig,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
 async function bypassDrizzleIssues() {
