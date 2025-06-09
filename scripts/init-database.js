@@ -62,8 +62,5 @@ async function initializeDatabase() {
   }
 }
 
-if (require.main === module) {
-  initializeDatabase();
-}
-
-module.exports = { initializeDatabase };
+// Запуск функції якщо файл викликається безпосередньо
+initializeDatabase().catch(console.error);
