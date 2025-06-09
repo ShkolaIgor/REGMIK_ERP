@@ -221,7 +221,7 @@ export default function OrderedProducts() {
     });
     
     return filtered;
-  }, [orderedProducts, searchTerm, statusFilter, sortField, sortDirection]);
+  }, [orderedProducts, searchTerm, paymentFilter, statusFilter, sortField, sortDirection]);
 
   const sendToProductionMutation = useMutation({
     mutationFn: async (data: { productId: number; quantity: number; notes?: string }) => {
