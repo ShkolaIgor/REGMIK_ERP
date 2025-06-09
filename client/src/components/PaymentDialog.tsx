@@ -66,6 +66,7 @@ export function PaymentDialog({
       });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/manufacturing-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ordered-products-info"] });
       setOpen(false);
     },
     onError: (error: any) => {
@@ -90,6 +91,7 @@ export function PaymentDialog({
       });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/manufacturing-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ordered-products-info"] });
       setOpen(false);
     },
     onError: (error: any) => {
