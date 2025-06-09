@@ -1180,7 +1180,7 @@ export default function Orders() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-semibold text-gray-900">Замовлення / Рахунки</h2>
-            <p className="text-gray-600">Управління замовленнями та рахунками (номер замовлення = номер рахунку)</p>
+            <p className="text-gray-600">Управління замовленнями та рахунками</p>
           </div>
           <div className="flex items-center space-x-3">
             <Button

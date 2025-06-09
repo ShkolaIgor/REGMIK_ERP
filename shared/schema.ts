@@ -438,7 +438,7 @@ export const components = pgTable("components", {
 // Листування з клієнтами
 export const clientMail = pgTable("client_mail", {
   id: serial("id").primaryKey(),
-  clientId: varchar("client_id").references(() => clients.id).notNull(),
+  clientId: integer("client_id").references(() => clients.id).notNull(),
   subject: varchar("subject", { length: 255 }).notNull(),
   content: text("content").notNull(),
   mailType: varchar("mail_type", { length: 50 }).notNull().default("letter"),
