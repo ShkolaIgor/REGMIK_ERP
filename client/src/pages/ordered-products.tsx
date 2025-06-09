@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -86,6 +86,10 @@ export default function OrderedProducts() {
   // Стан для фільтрації та пошуку
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [paymentFilter, setPaymentFilter] = useState(() => {
+    const saved = localStorage.getItem('orderedProducts_paymentFilter');
+    return saved || "all";
+  });
   const [sortBy, setSortBy] = useState("name");
 
   const { toast } = useToast();
@@ -118,6 +122,11 @@ export default function OrderedProducts() {
     queryKey: ["/api/warehouses"],
   });
 
+  // Зберігаємо налаштування фільтра оплати в localStorage
+  useEffect(() => {
+    localStorage.setItem('orderedProducts_paymentFilter', paymentFilter);
+  }, [paymentFilter]);
+
   // Фільтрована та відсортована продукція
   const filteredAndSortedProducts = useMemo(() => {
     let filtered = [...(orderedProducts as any[])];
@@ -128,6 +137,23 @@ export default function OrderedProducts() {
         item.product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.product.sku.toLowerCase().includes(searchTerm.toLowerCase())
       );
+    }
+    
+    // Фільтр за статусом оплати
+    if (paymentFilter !== "all") {
+      filtered = filtered.filter(item => {
+        const hasPaidOrders = item.orders && item.orders.some((order: any) => order.paymentDate);
+        const hasUnpaidOrders = item.orders && item.orders.some((order: any) => !order.paymentDate);
+        
+        switch (paymentFilter) {
+          case "paid":
+            return hasPaidOrders;
+          case "unpaid":
+            return hasUnpaidOrders;
+          default:
+            return true;
+        }
+      });
     }
     
     // Фільтр за статусом
@@ -345,6 +371,47 @@ export default function OrderedProducts() {
           <p className="text-muted-foreground">
             Інформація про наявність замовлених товарів та їх статус виробництва
           </p>
+        </div>
+      </div>
+
+      {/* Фільтри */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Пошук товарів..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+        </div>
+        
+        <div className="flex gap-2">
+          <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Статус оплати" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Всі товари</SelectItem>
+              <SelectItem value="paid">Оплачені</SelectItem>
+              <SelectItem value="unpaid">Не оплачені</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Статус" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Всі статуси</SelectItem>
+              <SelectItem value="shortage">Дефіцит</SelectItem>
+              <SelectItem value="production">Потрібне виробництво</SelectItem>
+              <SelectItem value="inProgress">У виробництві</SelectItem>
+              <SelectItem value="sufficient">Достатньо на складі</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
