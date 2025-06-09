@@ -142,17 +142,18 @@ export default function OrderedProducts() {
     // Фільтр за статусом оплати
     if (paymentFilter !== "all") {
       filtered = filtered.filter(item => {
-        const hasPaidOrders = item.orders && item.orders.some((order: any) => order.paymentDate);
-        const hasUnpaidOrders = item.orders && item.orders.some((order: any) => !order.paymentDate);
+        if (!item.orders || item.orders.length === 0) return false;
         
-        // Дебаг логування
-        console.log(`Товар ${item.product?.name}: hasPaid=${hasPaidOrders}, hasUnpaid=${hasUnpaidOrders}`, item.orders);
+        const paidOrders = item.orders.filter((order: any) => order.paymentDate);
+        const unpaidOrders = item.orders.filter((order: any) => !order.paymentDate);
         
         switch (paymentFilter) {
           case "paid":
-            return hasPaidOrders;
+            // Показувати тільки товари, які мають виключно оплачені замовлення
+            return paidOrders.length > 0 && unpaidOrders.length === 0;
           case "unpaid":
-            return hasUnpaidOrders;
+            // Показувати тільки товари, які мають виключно неоплачені замовлення
+            return unpaidOrders.length > 0 && paidOrders.length === 0;
           default:
             return true;
         }
