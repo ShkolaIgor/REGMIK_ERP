@@ -18,7 +18,7 @@ fi
 APP_DIR="/opt/REGMIK_ERP"
 DB_USER="regmik_user"
 DB_NAME="regmik-erp"
-SERVICE_USER="regmik"
+SERVICE_USER="runner"
 
 echo "📁 Налаштування каталогу додатку..."
 cd "$APP_DIR"

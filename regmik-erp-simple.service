@@ -1,0 +1,26 @@
+[Unit]
+Description=REGMIK ERP System
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/runner/workspace
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=10
+
+# Environment variables
+Environment=NODE_ENV=production
+Environment=PGHOST=localhost
+Environment=PGPORT=5432
+Environment=PGDATABASE=regmik-erp
+Environment=PGUSER=regmik_user
+Environment=PGPASSWORD=npg_PQu4CAr9yIYq
+Environment=SESSION_SECRET=regmik_erp_production_session_2025
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=regmik-erp
+
+[Install]
+WantedBy=multi-user.target

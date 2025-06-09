@@ -5,8 +5,8 @@ Requires=postgresql.service
 
 [Service]
 Type=simple
-User=regmik
-Group=regmik
+User=runner
+Group=runner
 WorkingDirectory=/opt/REGMIK_ERP
 ExecStart=/usr/bin/npm start
 Restart=always
