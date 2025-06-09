@@ -145,6 +145,9 @@ export default function OrderedProducts() {
         const hasPaidOrders = item.orders && item.orders.some((order: any) => order.paymentDate);
         const hasUnpaidOrders = item.orders && item.orders.some((order: any) => !order.paymentDate);
         
+        // Дебаг логування
+        console.log(`Товар ${item.product?.name}: hasPaid=${hasPaidOrders}, hasUnpaid=${hasUnpaidOrders}`, item.orders);
+        
         switch (paymentFilter) {
           case "paid":
             return hasPaidOrders;
