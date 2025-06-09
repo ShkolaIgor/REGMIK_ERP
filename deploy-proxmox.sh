@@ -133,38 +133,43 @@ fi' || {
     exit 1
 }
 
-# Step 7: Install systemd service
-log_info "Installing systemd service..."
+# Step 7: Install systemd service (skip in Replit environment)
+if command -v systemctl &> /dev/null; then
+    log_info "Installing systemd service..."
 
-# Update service file with correct paths
-sed "s|/home/runner/workspace|$(pwd)|g" regmik-erp-simple.service > /tmp/regmik-erp.service
-sed -i "s|User=runner|User=$(whoami)|g" /tmp/regmik-erp.service
+    # Update service file with correct paths
+    sed "s|/home/runner/workspace|$(pwd)|g" regmik-erp-simple.service > /tmp/regmik-erp.service
+    sed -i "s|User=runner|User=$(whoami)|g" /tmp/regmik-erp.service
 
-# Copy environment file for systemd
-sudo cp .env.production /etc/regmik-erp.env
-sudo chown root:root /etc/regmik-erp.env
-sudo chmod 600 /etc/regmik-erp.env
+    # Copy environment file for systemd
+    sudo cp .env.production /etc/regmik-erp.env
+    sudo chown root:root /etc/regmik-erp.env
+    sudo chmod 600 /etc/regmik-erp.env
 
-# Install service
-sudo cp /tmp/regmik-erp.service /etc/systemd/system/
-sudo systemctl daemon-reload
+    # Install service
+    sudo cp /tmp/regmik-erp.service /etc/systemd/system/
+    sudo systemctl daemon-reload
 
-log_info "Systemd service installed ✓"
+    log_info "Systemd service installed ✓"
 
-# Step 8: Start and enable service
-log_info "Starting REGMIK ERP service..."
+    # Step 8: Start and enable service
+    log_info "Starting REGMIK ERP service..."
 
-sudo systemctl enable regmik-erp
-sudo systemctl start regmik-erp
+    sudo systemctl enable regmik-erp
+    sudo systemctl start regmik-erp
 
-# Wait for service to start
-sleep 5
+    # Wait for service to start
+    sleep 5
 
-if sudo systemctl is-active --quiet regmik-erp; then
-    log_info "REGMIK ERP service started successfully ✓"
+    if sudo systemctl is-active --quiet regmik-erp; then
+        log_info "REGMIK ERP service started successfully ✓"
+    else
+        log_error "Service failed to start. Check logs: sudo journalctl -u regmik-erp -f"
+        exit 1
+    fi
 else
-    log_error "Service failed to start. Check logs: sudo journalctl -u regmik-erp -f"
-    exit 1
+    log_warning "Systemd not available (Replit environment detected)"
+    log_info "Service files prepared for manual installation in Proxmox"
 fi
 
 # Step 9: Configure firewall (if ufw is available)

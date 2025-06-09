@@ -60,6 +60,20 @@ ls -la
 - Запустить production сервер
 - Налаштує firewall
 
+### 3.1. Швидкий запуск (альтернатива)
+
+Для швидкого тестування без systemd:
+
+```bash
+# Швидкий manual запуск
+./start-manual.sh
+```
+
+Цей скрипт:
+- Автоматично створює .env.production
+- Завантажує environment variables
+- Запускає production server на порті 3000
+
 ### 4. Ручне налаштування змінних оточення
 
 Відредагуйте `.env.production`:

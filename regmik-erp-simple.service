@@ -11,12 +11,9 @@ RestartSec=10
 
 # Environment variables
 Environment=NODE_ENV=production
-Environment=PGHOST=localhost
-Environment=PGPORT=5432
-Environment=PGDATABASE=regmik-erp
-Environment=PGUSER=regmik_user
-Environment=PGPASSWORD=npg_PQu4CAr9yIYq
+Environment=DATABASE_URL=postgresql://neondb_owner:npg_PQu4CAr9yIYq@ep-spring-flower-a552xsk9.us-east-2.aws.neon.tech/neondb?sslmode=require
 Environment=SESSION_SECRET=regmik_erp_production_session_2025
+Environment=PORT=3000
 
 StandardOutput=journal
 StandardError=journal
