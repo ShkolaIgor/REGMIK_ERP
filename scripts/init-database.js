@@ -37,7 +37,63 @@ async function initializeDatabase() {
       }
     }
     
-    // Перевірка foreign keys для client_mail
+    // Перевірка та оновлення схеми client_mail
+    const clientMailColumns = await client.query(`
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'client_mail' 
+      ORDER BY ordinal_position
+    `);
+    
+    const expectedColumns = [
+      'recipient_name', 'recipient_address', 'envelope_size', 
+      'postage_cost', 'tracking_number', 'sent_date', 
+      'delivered_date', 'return_date'
+    ];
+    
+    const existingColumns = clientMailColumns.rows.map(row => row.column_name);
+    const missingColumns = expectedColumns.filter(col => !existingColumns.includes(col));
+    
+    if (missingColumns.length > 0) {
+      console.log(`⚠ Додаю відсутні колонки до client_mail: ${missingColumns.join(', ')}`);
+      
+      for (const column of missingColumns) {
+        let columnDef = '';
+        switch (column) {
+          case 'recipient_name':
+            columnDef = 'VARCHAR(255)';
+            break;
+          case 'recipient_address':
+            columnDef = 'TEXT';
+            break;
+          case 'envelope_size':
+            columnDef = 'VARCHAR(50)';
+            break;
+          case 'postage_cost':
+            columnDef = 'DECIMAL(10,2)';
+            break;
+          case 'tracking_number':
+            columnDef = 'VARCHAR(100)';
+            break;
+          case 'sent_date':
+          case 'delivered_date':
+          case 'return_date':
+            columnDef = 'TIMESTAMP';
+            break;
+        }
+        
+        try {
+          await client.query(`ALTER TABLE client_mail ADD COLUMN IF NOT EXISTS ${column} ${columnDef}`);
+          console.log(`✓ Колонка ${column} додана`);
+        } catch (error) {
+          console.log(`⚠ Помилка додавання ${column}: ${error.message}`);
+        }
+      }
+    } else {
+      console.log('✓ Схема client_mail актуальна');
+    }
+    
+    // Перевірка foreign keys
     const fkResult = await client.query(`
       SELECT constraint_name 
       FROM information_schema.table_constraints 
