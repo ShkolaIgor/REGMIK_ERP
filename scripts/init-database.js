@@ -3,13 +3,9 @@
 import pg from 'pg';
 const { Pool } = pg;
 
-// Завжди використовуємо окремі змінні для обходу SCRAM проблем з DATABASE_URL
+// Використовуємо DATABASE_URL як основний метод підключення
 const pool = new Pool({
-  host: process.env.PGHOST || 'localhost',
-  port: parseInt(process.env.PGPORT || '5432'),
-  database: process.env.PGDATABASE || 'regmik-erp',
-  user: process.env.PGUSER || 'postgres',
-  password: String(process.env.PGPASSWORD || ''),
+  connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
