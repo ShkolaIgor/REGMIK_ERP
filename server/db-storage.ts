@@ -5484,6 +5484,48 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+
+  // Client Mails methods
+  async getClientMails(): Promise<any[]> {
+    try {
+      // Повертаємо тестові дані для кореспонденції клієнтів
+      return [
+        {
+          id: 1,
+          clientId: 1,
+          subject: "Запит про ціни на продукцію",
+          content: "Доброго дня! Просимо надати комерційну пропозицію на РП2-У-410.",
+          dateReceived: new Date('2025-06-01'),
+          status: "processed",
+          priority: "medium",
+          attachments: []
+        },
+        {
+          id: 2,
+          clientId: 2,
+          subject: "Скарга на якість товару",
+          content: "Виявлено дефект в партії товарів номер 12345. Потребує перевірки.",
+          dateReceived: new Date('2025-06-02'),
+          status: "pending",
+          priority: "high",
+          attachments: ["defect_photo.jpg"]
+        },
+        {
+          id: 3,
+          clientId: 1,
+          subject: "Подяка за співпрацю",
+          content: "Дякуємо за якісне виконання замовлення та своєчасну доставку.",
+          dateReceived: new Date('2025-06-03'),
+          status: "archived",
+          priority: "low",
+          attachments: []
+        }
+      ];
+    } catch (error) {
+      console.error("Error fetching client mails:", error);
+      return [];
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
