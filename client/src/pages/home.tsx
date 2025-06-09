@@ -94,7 +94,15 @@ export default function Home() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => window.location.href = '/api/logout'}
+                onClick={() => {
+                  fetch('/api/logout', { method: 'GET' })
+                    .then(() => {
+                      window.location.href = '/';
+                    })
+                    .catch(() => {
+                      window.location.href = '/';
+                    });
+                }}
                 className="text-gray-500 hover:text-gray-700"
               >
                 <LogOut className="h-4 w-4" />

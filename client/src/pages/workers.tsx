@@ -83,10 +83,12 @@ export default function WorkersPage() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/available-workers"] });
       setIsCreateDialogOpen(false);
       form.reset();
       // Force refetch to ensure list is updated
       queryClient.refetchQueries({ queryKey: ["/api/workers"] });
+      queryClient.refetchQueries({ queryKey: ["/api/users/available-workers"] });
     },
   });
 
