@@ -91,6 +91,65 @@ export class DatabaseStorage implements IStorage {
       location: "Київ",
       description: "Основний склад"
     });
+
+    // Додаємо базові ролі
+    await db.insert(roles).values([
+      {
+        name: "Адміністратор",
+        description: "Повний доступ до системи",
+        permissions: "admin"
+      },
+      {
+        name: "Менеджер",
+        description: "Управління замовленнями та клієнтами",
+        permissions: "manager"
+      },
+      {
+        name: "Працівник склadu",
+        description: "Робота зі складськими операціями",
+        permissions: "warehouse"
+      }
+    ]);
+
+    // Додаємо системні модулі
+    await db.insert(systemModules).values([
+      {
+        name: "Управління продукцією",
+        description: "Товари, складські залишки, категорії",
+        isActive: true,
+        order: 1
+      },
+      {
+        name: "Замовлення клієнтів",
+        description: "Обробка замовлень, статуси, відвантаження",
+        isActive: true,
+        order: 2
+      },
+      {
+        name: "База клієнтів",
+        description: "Контактна інформація, історія співпраці",
+        isActive: true,
+        order: 3
+      },
+      {
+        name: "Виробництво",
+        description: "Технологічні карти, завдання виробництва",
+        isActive: true,
+        order: 4
+      },
+      {
+        name: "Нова Пошта",
+        description: "Інтеграція з сервісом доставки",
+        isActive: true,
+        order: 5
+      },
+      {
+        name: "Звіти та аналітика",
+        description: "Фінансові звіти, аналіз продажів",
+        isActive: true,
+        order: 6
+      }
+    ]);
   }
 
   // Users (for Replit Auth)
@@ -112,6 +171,54 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return result[0];
+  }
+
+  // Roles
+  async getRoles(): Promise<Role[]> {
+    return await db.select().from(roles);
+  }
+
+  async createRole(insertRole: InsertRole): Promise<Role> {
+    const result = await db.insert(roles).values(insertRole).returning();
+    return result[0];
+  }
+
+  async updateRole(id: number, roleData: Partial<InsertRole>): Promise<Role | undefined> {
+    const result = await db
+      .update(roles)
+      .set(roleData)
+      .where(eq(roles.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteRole(id: number): Promise<boolean> {
+    const result = await db.delete(roles).where(eq(roles.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // System Modules
+  async getSystemModules(): Promise<SystemModule[]> {
+    return await db.select().from(systemModules);
+  }
+
+  async createSystemModule(insertSystemModule: InsertSystemModule): Promise<SystemModule> {
+    const result = await db.insert(systemModules).values(insertSystemModule).returning();
+    return result[0];
+  }
+
+  async updateSystemModule(id: number, moduleData: Partial<InsertSystemModule>): Promise<SystemModule | undefined> {
+    const result = await db
+      .update(systemModules)
+      .set(moduleData)
+      .where(eq(systemModules.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteSystemModule(id: number): Promise<boolean> {
+    const result = await db.delete(systemModules).where(eq(systemModules.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
   // Categories
