@@ -127,6 +127,28 @@ export default function OrderedProducts() {
     localStorage.setItem('orderedProducts_paymentFilter', paymentFilter);
   }, [paymentFilter]);
 
+  // Функція для розрахунку відфільтрованої кількості
+  const getFilteredQuantity = (item: any) => {
+    if (paymentFilter === "all") {
+      return item.totalOrdered;
+    }
+    
+    if (!item.orders || item.orders.length === 0) {
+      return 0;
+    }
+    
+    const filteredOrders = item.orders.filter((order: any) => {
+      if (paymentFilter === "paid") {
+        return order.paymentDate;
+      } else if (paymentFilter === "unpaid") {
+        return !order.paymentDate;
+      }
+      return true;
+    });
+    
+    return filteredOrders.reduce((sum: number, order: any) => sum + parseFloat(order.quantity || "0"), 0);
+  };
+
   // Фільтрована та відсортована продукція
   const filteredAndSortedProducts = useMemo(() => {
     let filtered = [...(orderedProducts as any[])];
@@ -143,26 +165,19 @@ export default function OrderedProducts() {
     if (paymentFilter !== "all") {
       filtered = filtered.filter(item => {
         if (!item.orders || item.orders.length === 0) {
-          console.log(`Товар ${item.product?.name} - немає замовлень`);
           return false;
         }
         
         const paidOrders = item.orders.filter((order: any) => order.paymentDate);
         const unpaidOrders = item.orders.filter((order: any) => !order.paymentDate);
         
-        console.log(`Товар ${item.product?.name}: Оплачених - ${paidOrders.length}, Неоплачених - ${unpaidOrders.length}`);
-        
         switch (paymentFilter) {
           case "paid":
             // Показувати товари, які мають хоча б одне оплачене замовлення
-            const shouldShowPaid = paidOrders.length > 0;
-            console.log(`Фільтр "Оплачені" для ${item.product?.name}: ${shouldShowPaid}`);
-            return shouldShowPaid;
+            return paidOrders.length > 0;
           case "unpaid":
             // Показувати товари, які мають хоча б одне неоплачене замовлення
-            const shouldShowUnpaid = unpaidOrders.length > 0;
-            console.log(`Фільтр "Неоплачені" для ${item.product?.name}: ${shouldShowUnpaid}`);
-            return shouldShowUnpaid;
+            return unpaidOrders.length > 0;
           default:
             return true;
         }
@@ -571,10 +586,15 @@ export default function OrderedProducts() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
-                          <span className="font-medium">{item.totalOrdered}</span>
+                          <span className="font-medium">{getFilteredQuantity(item)}</span>
                           <span className="text-sm text-muted-foreground">
                             {item.product.unit}
                           </span>
+                          {paymentFilter !== "all" && (
+                            <span className="text-xs text-blue-600">
+                              (з {item.totalOrdered})
+                            </span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
