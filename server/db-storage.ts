@@ -3362,11 +3362,13 @@ export class DatabaseStorage implements IStorage {
   // Ordered Products Info
   async getOrderedProductsInfo(): Promise<any[]> {
     try {
-      // Отримуємо всі замовлення з товарами
+      // Отримуємо всі замовлення з товарами, включаючи дату оплати
       const ordersWithItems = await db.select({
         orderId: orders.id,
         orderStatus: orders.status,
         orderDate: orders.createdAt,
+        paymentDate: orders.paymentDate,
+        orderNumber: orders.orderNumber,
         productId: orderItems.productId,
         orderedQuantity: orderItems.quantity,
         product: products,
@@ -3400,6 +3402,8 @@ export class DatabaseStorage implements IStorage {
           orderId: item.orderId,
           orderStatus: item.orderStatus,
           orderDate: item.orderDate,
+          paymentDate: item.paymentDate,
+          orderNumber: item.orderNumber,
           quantity: item.orderedQuantity
         });
       }
