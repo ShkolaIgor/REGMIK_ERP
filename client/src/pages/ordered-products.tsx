@@ -149,6 +149,12 @@ export default function OrderedProducts() {
     return filteredOrders.reduce((sum: number, order: any) => sum + parseFloat(order.quantity || "0"), 0);
   };
 
+  // Функція для розрахунку відфільтрованого дефіциту
+  const getFilteredShortage = (item: any) => {
+    const filteredQuantity = getFilteredQuantity(item);
+    return Math.max(0, filteredQuantity - item.totalAvailable - item.inProduction);
+  };
+
   // Фільтрована та відсортована продукція
   const filteredAndSortedProducts = useMemo(() => {
     let filtered = [...(orderedProducts as any[])];
@@ -477,7 +483,7 @@ export default function OrderedProducts() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {(orderedProducts as any[]).filter((p: any) => p.needsProduction).length}
+                  {filteredAndSortedProducts.filter((p: any) => p.needsProduction).length}
                 </div>
               </CardContent>
             </Card>
@@ -488,7 +494,7 @@ export default function OrderedProducts() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {(orderedProducts as any[]).filter((p: any) => p.shortage > 0).length}
+                  {filteredAndSortedProducts.filter((p: any) => getFilteredShortage(p) > 0).length}
                 </div>
               </CardContent>
             </Card>
@@ -591,8 +597,8 @@ export default function OrderedProducts() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getStatusColor(item.needsProduction, item.shortage)}>
-                          {getStatusText(item.needsProduction, item.shortage, item.inProduction)}
+                        <Badge variant={getStatusColor(item.needsProduction, getFilteredShortage(item))}>
+                          {getStatusText(item.needsProduction, getFilteredShortage(item), item.inProduction)}
                         </Badge>
                       </TableCell>
                       <TableCell>
