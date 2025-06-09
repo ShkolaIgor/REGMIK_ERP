@@ -142,18 +142,27 @@ export default function OrderedProducts() {
     // Фільтр за статусом оплати
     if (paymentFilter !== "all") {
       filtered = filtered.filter(item => {
-        if (!item.orders || item.orders.length === 0) return false;
+        if (!item.orders || item.orders.length === 0) {
+          console.log(`Товар ${item.product?.name} - немає замовлень`);
+          return false;
+        }
         
         const paidOrders = item.orders.filter((order: any) => order.paymentDate);
         const unpaidOrders = item.orders.filter((order: any) => !order.paymentDate);
         
+        console.log(`Товар ${item.product?.name}: Оплачених - ${paidOrders.length}, Неоплачених - ${unpaidOrders.length}`);
+        
         switch (paymentFilter) {
           case "paid":
-            // Показувати тільки товари, які мають виключно оплачені замовлення
-            return paidOrders.length > 0 && unpaidOrders.length === 0;
+            // Показувати товари, які мають хоча б одне оплачене замовлення
+            const shouldShowPaid = paidOrders.length > 0;
+            console.log(`Фільтр "Оплачені" для ${item.product?.name}: ${shouldShowPaid}`);
+            return shouldShowPaid;
           case "unpaid":
-            // Показувати тільки товари, які мають виключно неоплачені замовлення
-            return unpaidOrders.length > 0 && paidOrders.length === 0;
+            // Показувати товари, які мають хоча б одне неоплачене замовлення
+            const shouldShowUnpaid = unpaidOrders.length > 0;
+            console.log(`Фільтр "Неоплачені" для ${item.product?.name}: ${shouldShowUnpaid}`);
+            return shouldShowUnpaid;
           default:
             return true;
         }
