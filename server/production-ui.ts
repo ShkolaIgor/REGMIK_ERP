@@ -168,7 +168,7 @@ async function startProductionUIServer() {
             </div>
             
             <script>
-              // Load dashboard statistics
+              // Load dashboard statistics and create dynamic interface
               fetch('/api/dashboard/stats')
                 .then(response => response.json())
                 .then(data => {
@@ -185,6 +185,99 @@ async function startProductionUIServer() {
                   console.error('Error loading dashboard:', error);
                   document.getElementById('loading').innerHTML = '<p>Помилка завантаження даних. Перевірте з\\'єднання з сервером.</p>';
                 });
+              
+              // Add click handlers for dynamic content loading
+              function loadContent(endpoint, title) {
+                const dashboard = document.getElementById('dashboard');
+                dashboard.innerHTML = \`
+                  <div style="margin-bottom: 1rem;">
+                    <button onclick="loadDashboard()" style="background: #6b7280; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">← Повернутися до головної</button>
+                  </div>
+                  <h2 style="margin-bottom: 1rem; color: #1f2937;">\${title}</h2>
+                  <div id="content-loading" style="text-align: center; padding: 2rem;">
+                    <div style="border: 3px solid #f3f4f6; border-top: 3px solid #2563eb; border-radius: 50%; width: 32px; height: 32px; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                    <p>Завантаження даних...</p>
+                  </div>
+                  <div id="content-data" style="display: none;"></div>
+                \`;
+                
+                fetch(endpoint)
+                  .then(response => response.json())
+                  .then(data => {
+                    document.getElementById('content-loading').style.display = 'none';
+                    document.getElementById('content-data').style.display = 'block';
+                    document.getElementById('content-data').innerHTML = formatData(data, title);
+                  })
+                  .catch(error => {
+                    document.getElementById('content-loading').innerHTML = '<p style="color: #dc2626;">Помилка завантаження: ' + error.message + '</p>';
+                  });
+              }
+              
+              function formatData(data, title) {
+                if (!Array.isArray(data)) {
+                  return '<pre style="background: #f8f9fa; padding: 1rem; border-radius: 4px; overflow: auto;">' + JSON.stringify(data, null, 2) + '</pre>';
+                }
+                
+                if (data.length === 0) {
+                  return '<p style="text-align: center; color: #6b7280; padding: 2rem;">Дані відсутні</p>';
+                }
+                
+                let html = '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">';
+                
+                // Table header
+                const headers = Object.keys(data[0]);
+                html += '<thead style="background: #f8f9fa;"><tr>';
+                headers.forEach(header => {
+                  html += \`<th style="padding: 1rem; text-align: left; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #374151;">\${header}</th>\`;
+                });
+                html += '</tr></thead>';
+                
+                // Table body
+                html += '<tbody>';
+                data.slice(0, 50).forEach((item, index) => { // Limit to 50 items
+                  html += \`<tr style="border-bottom: 1px solid #f3f4f6; \${index % 2 === 0 ? 'background: #f9fafb;' : ''}">\`;
+                  headers.forEach(header => {
+                    let value = item[header];
+                    if (typeof value === 'object' && value !== null) {
+                      value = JSON.stringify(value);
+                    }
+                    html += \`<td style="padding: 1rem; border-bottom: 1px solid #f3f4f6;">\${value || '-'}</td>\`;
+                  });
+                  html += '</tr>';
+                });
+                html += '</tbody></table></div>';
+                
+                if (data.length > 50) {
+                  html += \`<p style="text-align: center; margin-top: 1rem; color: #6b7280;">Показано 50 з \${data.length} записів</p>\`;
+                }
+                
+                return html;
+              }
+              
+              function loadDashboard() {
+                location.reload();
+              }
+              
+              // Add global click handlers
+              document.addEventListener('click', function(e) {
+                if (e.target.href && e.target.href.includes('/api/')) {
+                  e.preventDefault();
+                  const endpoint = e.target.href.split(window.location.origin)[1];
+                  let title = 'Дані API';
+                  
+                  if (endpoint.includes('products')) title = 'Продукти';
+                  else if (endpoint.includes('orders')) title = 'Замовлення';
+                  else if (endpoint.includes('clients')) title = 'Клієнти';
+                  else if (endpoint.includes('tech-cards')) title = 'Технологічні карти';
+                  else if (endpoint.includes('production-tasks')) title = 'Завдання виробництва';
+                  else if (endpoint.includes('nova-poshta/cities')) title = 'Міста Нової Пошти';
+                  else if (endpoint.includes('nova-poshta/warehouses')) title = 'Відділення Нової Пошти';
+                  else if (endpoint.includes('order-statuses')) title = 'Статуси замовлень';
+                  else if (endpoint.includes('dashboard/stats')) title = 'Статистика системи';
+                  
+                  loadContent(endpoint, title);
+                }
+              });
             </script>
           </body>
           </html>
