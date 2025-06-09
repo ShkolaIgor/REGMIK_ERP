@@ -255,8 +255,7 @@ export class DatabaseStorage implements IStorage {
   async updateInventory(productId: number, warehouseId: number, quantity: number): Promise<Inventory | undefined> {
     const existing = await db.select()
       .from(inventory)
-      .where(eq(inventory.productId, productId))
-      .and(eq(inventory.warehouseId, warehouseId));
+      .where(and(eq(inventory.productId, productId), eq(inventory.warehouseId, warehouseId)));
 
     if (existing.length > 0) {
       const result = await db.update(inventory)
@@ -397,7 +396,7 @@ export class DatabaseStorage implements IStorage {
       clientId: insertOrder.clientId ? (typeof insertOrder.clientId === 'string' ? parseInt(insertOrder.clientId) : insertOrder.clientId) : null,
     };
 
-    const orderResult = await db.insert(orders).values(orderData).returning();
+    const orderResult = await db.insert(orders).values([orderData]).returning();
     const order = orderResult[0];
 
     if (itemsWithPrices.length > 0) {
@@ -1866,7 +1865,7 @@ export class DatabaseStorage implements IStorage {
 
   async createProductionForecast(forecast: InsertProductionForecast): Promise<ProductionForecast> {
     try {
-      const result = await this.db.insert(productionForecasts).values(forecast).returning();
+      const result = await this.db.insert(productionForecasts).values([forecast]).returning();
       return result[0];
     } catch (error) {
       console.error('Error creating production forecast:', error);

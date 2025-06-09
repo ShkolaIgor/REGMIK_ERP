@@ -10,7 +10,7 @@ const pool = new Pool({
   database: process.env.PGDATABASE || 'neondb',
   user: process.env.PGUSER || 'postgres',
   password: process.env.PGPASSWORD || '',
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: { rejectUnauthorized: false }
 });
 
 async function bypassDrizzleIssues() {
