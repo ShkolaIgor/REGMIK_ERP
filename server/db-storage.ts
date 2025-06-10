@@ -4905,34 +4905,20 @@ export class DatabaseStorage implements IStorage {
 
   async getLocalUserWithWorker(userId: number): Promise<(LocalUser & { worker?: any }) | undefined> {
     try {
-      const [user] = await this.db
-        .select({
-          id: localUsers.id,
-          username: localUsers.username,
-          email: localUsers.email,
-          firstName: localUsers.firstName,
-          lastName: localUsers.lastName,
-          profileImageUrl: localUsers.profileImageUrl,
-          workerId: localUsers.workerId,
-          isActive: localUsers.isActive,
-          createdAt: localUsers.createdAt,
-          updatedAt: localUsers.updatedAt,
-          password: localUsers.password,
-          worker: {
-            id: workers.id,
-            firstName: workers.firstName,
-            lastName: workers.lastName,
-            photo: workers.photo,
-            email: workers.email,
-            phone: workers.phone
-          }
-        })
-        .from(localUsers)
-        .leftJoin(workers, eq(localUsers.workerId, workers.id))
-        .where(eq(localUsers.id, userId))
-        .limit(1);
-      
-      return user;
+      // Спочатку отримуємо користувача
+      const user = await this.getLocalUser(userId);
+      if (!user) return undefined;
+
+      // Якщо є зв'язок з робітником, отримуємо дані робітника
+      let worker = null;
+      if (user.workerId) {
+        worker = await this.getWorker(user.workerId);
+      }
+
+      return {
+        ...user,
+        worker
+      };
     } catch (error) {
       console.error("Error getting local user with worker:", error);
       return undefined;

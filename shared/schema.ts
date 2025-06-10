@@ -69,6 +69,9 @@ export const localUsers = pgTable("local_users", {
   workerId: integer("worker_id").references(() => workers.id).unique(), // Зв'язок з робітниками
   username: varchar("username", { length: 100 }).notNull().unique(),
   email: varchar("email", { length: 255 }).unique(), // Може відрізнятися від email робітника (для входу)
+  firstName: varchar("first_name", { length: 100 }), // Ім'я користувача
+  lastName: varchar("last_name", { length: 100 }), // Прізвище користувача
+  profileImageUrl: text("profile_image_url"), // Аватарка користувача (base64 або URL)
   password: varchar("password", { length: 255 }).notNull(), // хешований пароль
   roleId: integer("role_id").references(() => roles.id), // Зв'язок з таблицею ролей
   role: varchar("role", { length: 50 }).default("user"), // admin, manager, user, viewer (для сумісності)
