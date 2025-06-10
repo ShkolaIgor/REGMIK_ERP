@@ -220,6 +220,23 @@ class NovaPoshtaCache {
   getWarehousesCount(): number {
     return this.warehouses.size;
   }
+
+  async initialize(): Promise<void> {
+    try {
+      console.log("Оновлення кешу міст Нової Пошти...");
+      await this.updateCities();
+      console.log(`Кеш міст оновлено: ${this.getCitiesCount()} міст`);
+      
+      console.log("Оновлення кешу відділень Нової Пошти...");
+      await this.updateWarehouses();
+      console.log(`Кеш відділень оновлено: ${this.getWarehousesCount()} відділень`);
+      
+      console.log(`Кеш Нової Пошти готовий: ${this.getCitiesCount()} міст, ${this.getWarehousesCount()} відділень`);
+    } catch (error) {
+      console.error("Помилка ініціалізації кешу Нової Пошти:", error);
+      // Не перериваємо роботу сервера через помилки API Нової Пошти
+    }
+  }
 }
 
 export const novaPoshtaCache = new NovaPoshtaCache();

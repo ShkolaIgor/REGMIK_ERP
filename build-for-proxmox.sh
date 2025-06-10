@@ -18,7 +18,7 @@ npm install
 # Build the application
 echo "🔨 Building application..."
 # Build client first
-npm run vite build
+npx vite build
 # Build server with production entry point (without Vite dependencies)
 npx esbuild server/production.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --outfile=dist/index.js
 

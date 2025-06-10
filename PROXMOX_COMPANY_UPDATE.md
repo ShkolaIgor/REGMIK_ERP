@@ -1,76 +1,79 @@
-# REGMIK ERP - Company Management Module Update for Proxmox
+# REGMIK ERP - Оновлення модуля "Компанії" для Proxmox
 
-## Issue
-The production server on Proxmox (192.168.0.247:5000) has an outdated build that causes errors:
+## Проблема
+Продакшн сервер на Proxmox (192.168.0.247:5000) має застарілу збірку, що викликає помилки:
 - `storage.getCompanies is not a function`
 - `storage.createCompany is not a function`
+- `Cannot find package 'vite'` - Vite не повинен бути в продакшні
 
-## Solution
-The production build needs to be updated with the latest company management functionality.
+## Рішення
+Продакшн збірка потребує оновлення з новою функціональністю управління компаніями та виправленням залежностей.
 
-## Deployment Steps
+## Кроки розгортання
 
-### 1. Create Production Build
+### 1. Створення продакшн збірки
 ```bash
-# On development machine
+# На машині розробки
 ./build-for-proxmox.sh
 ```
 
-### 2. Upload to Proxmox Server
+### 2. Завантаження на Proxmox сервер
 ```bash
-# Upload deployment-package directory to server
+# Завантажити deployment-package на сервер
 scp -r deployment-package/* root@192.168.0.247:/tmp/regmik-update/
 ```
 
-### 3. Deploy on Proxmox Server
+### 3. Розгортання на Proxmox сервері
 ```bash
-# SSH to Proxmox server
+# Підключення до Proxmox сервера
 ssh root@192.168.0.247
 
-# Stop service
+# Зупинка сервісу
 sudo systemctl stop regmik-erp
 
-# Create backup
+# Створення резервної копії
 sudo cp -r /opt/REGMIK_ERP /opt/REGMIK_ERP_backup_$(date +%Y%m%d_%H%M%S)
 
-# Update files
+# Оновлення файлів
 sudo cp -r /tmp/regmik-update/* /opt/REGMIK_ERP/
 
-# Set permissions
+# Встановлення прав доступу
 sudo chown -R regmik:regmik /opt/REGMIK_ERP
 sudo chmod +x /opt/REGMIK_ERP/start-production.sh
 
-# Install dependencies
+# Встановлення залежностей
 cd /opt/REGMIK_ERP
 sudo -u regmik npm install --production
 
-# Update database schema
+# Оновлення схеми бази даних
 sudo -u regmik npm run db:push
 
-# Start service
+# Запуск сервісу
 sudo systemctl start regmik-erp
 sudo systemctl status regmik-erp
 ```
 
-### 4. Verify Deployment
+### 4. Перевірка розгортання
 ```bash
-# Check logs
+# Перегляд логів
 sudo journalctl -u regmik-erp -f
 
-# Test company functionality
+# Тестування функціональності компаній
 curl -b cookies.txt http://192.168.0.247:5000/api/companies
 ```
 
-## Files Updated
-- `server/db-storage.ts` - Added company management methods
-- `server/storage.ts` - Updated storage interface
-- `server/routes.ts` - Added company API endpoints
-- `client/src/pages/companies.tsx` - Company management UI
-- `shared/schema.ts` - Company data structures
+## Оновлені файли
+- `server/production.ts` - Новий продакшн сервер без Vite залежностей
+- `server/db-storage.ts` - Додані методи управління компаніями
+- `server/storage.ts` - Оновлений інтерфейс сховища
+- `server/routes.ts` - Додані API ендпоінти для компаній
+- `client/src/pages/companies.tsx` - UI управління компаніями
+- `shared/schema.ts` - Структури даних компаній
 
-## Expected Result
-After deployment, the Companies module should work correctly:
-- List companies: ✅
-- Create new companies: ✅
-- Edit existing companies: ✅
-- No "function not found" errors: ✅
+## Очікуваний результат
+Після розгортання модуль "Компанії" повинен працювати коректно:
+- Перегляд списку компаній: ✅
+- Створення нових компаній: ✅
+- Редагування існуючих компаній: ✅
+- Відсутність помилок "function not found": ✅
+- Відсутність помилок Vite залежностей: ✅
