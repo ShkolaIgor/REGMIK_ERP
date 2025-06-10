@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { User, Mail, Settings, Shield, Camera, Save, X } from "lucide-react";
+import { User, Mail, Settings, Shield, Camera, Save, X, Lock, Eye, EyeOff } from "lucide-react";
 
 export default function Profile() {
   const { user } = useAuth();
@@ -18,11 +18,22 @@ export default function Profile() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isEditing, setIsEditing] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
     email: user?.email || '',
     profileImageUrl: user?.profileImageUrl || ''
+  });
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
   });
 
   const updateProfileMutation = useMutation({
@@ -44,6 +55,37 @@ export default function Profile() {
       toast({
         title: "Помилка",
         description: error.message || "Помилка при оновленні профілю",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const changePasswordMutation = useMutation({
+    mutationFn: async (data: typeof passwordData) => {
+      await apiRequest("/api/auth/change-password", {
+        method: "POST",
+        body: {
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword
+        },
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Успіх",
+        description: "Пароль успішно змінено",
+      });
+      setIsChangingPassword(false);
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Помилка при зміні паролю",
         variant: "destructive",
       });
     },

@@ -4948,6 +4948,21 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async updateUserPassword(id: number, hashedPassword: string): Promise<void> {
+    try {
+      await this.db
+        .update(localUsers)
+        .set({ 
+          password: hashedPassword,
+          updatedAt: new Date() 
+        })
+        .where(eq(localUsers.id, id));
+    } catch (error) {
+      console.error("Error updating user password:", error);
+      throw error;
+    }
+  }
+
   async createLocalUserWithWorker(userData: any) {
     const [user] = await db
       .insert(localUsers)

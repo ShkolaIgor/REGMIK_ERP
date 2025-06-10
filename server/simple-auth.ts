@@ -219,4 +219,48 @@ export function setupSimpleAuth(app: Express) {
       res.json({ success: true });
     });
   });
+
+  // Маршрут для зміни паролю
+  app.post("/api/auth/change-password", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const sessionUser = (req.session as any)?.user;
+
+      if (!sessionUser?.id) {
+        return res.status(401).json({ message: "Не авторизований" });
+      }
+
+      // Валідація вхідних даних
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Поточний та новий пароль обов'язкові" });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: "Новий пароль повинен містити мінімум 6 символів" });
+      }
+
+      // Отримуємо користувача з бази
+      const user = await storage.getLocalUser(parseInt(sessionUser.id));
+      if (!user) {
+        return res.status(404).json({ message: "Користувач не знайдений" });
+      }
+
+      // Перевіряємо поточний пароль
+      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isCurrentPasswordValid) {
+        return res.status(400).json({ message: "Поточний пароль невірний" });
+      }
+
+      // Хешуємо новий пароль
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+      // Оновлюємо пароль в базі даних
+      await storage.updateUserPassword(user.id, hashedNewPassword);
+
+      res.json({ message: "Пароль успішно змінено" });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      res.status(500).json({ message: "Внутрішня помилка сервера" });
+    }
+  });
 }
