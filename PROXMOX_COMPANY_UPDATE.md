@@ -45,8 +45,11 @@ sudo chmod +x /opt/REGMIK_ERP/start-production.sh
 cd /opt/REGMIK_ERP
 sudo -u regmik npm install --production
 
-# Оновлення схеми бази даних
-sudo -u regmik npm run db:push
+# Застосування UTF8 налаштувань (ВАЖЛИВО!)
+sudo -u regmik psql $DATABASE_URL -f apply-utf8-setup.sql
+
+# Оновлення схеми бази даних (опціонально, якщо потрібно)
+# sudo -u regmik npm run db:push
 
 # Запуск сервісу
 sudo systemctl start regmik-erp
