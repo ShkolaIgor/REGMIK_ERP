@@ -1,6 +1,17 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   LayoutDashboard,
   Package,
@@ -29,7 +40,9 @@ import {
   QrCode,
   Mail,
   Menu,
-  X
+  X,
+  LogOut,
+  User
 } from "lucide-react";
 
 interface LayoutProps {
@@ -125,6 +138,11 @@ const navigationItems = [
 export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
+
+  const handleLogout = () => {
+    window.location.href = '/api/auth/logout';
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -214,7 +232,61 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden lg:ml-0">
-        <div className="flex-1 overflow-auto p-4 lg:p-6 pt-16 lg:pt-6">
+        {/* Top Header */}
+        <header className="bg-white border-b border-gray-200 px-4 py-3 lg:px-6 lg:py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <h2 className="text-lg font-semibold text-gray-900 lg:text-xl">
+                REGMIK ERP Система
+              </h2>
+            </div>
+            
+            {user && (
+              <div className="flex items-center space-x-4">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName} />
+                        <AvatarFallback>
+                          {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {user.firstName} {user.lastName}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Профіль</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Cog className="mr-2 h-4 w-4" />
+                      <span>Налаштування</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Вихід</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
+          </div>
+        </header>
+
+        <div className="flex-1 overflow-auto p-4 lg:p-6">
           {children}
         </div>
       </main>
