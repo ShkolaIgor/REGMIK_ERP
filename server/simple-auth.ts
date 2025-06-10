@@ -174,8 +174,26 @@ export function setupSimpleAuth(app: Express) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      // Отримуємо свіжі дані користувача з робітником
-      const fullUser = await storage.getLocalUserWithWorker(parseInt(sessionUser.id));
+      // Перевіряємо чи це demo користувач
+      if (sessionUser.username === 'demo') {
+        // Для demo користувача повертаємо дані із сесії
+        return res.json({
+          id: sessionUser.id,
+          username: sessionUser.username,
+          email: sessionUser.email,
+          firstName: sessionUser.firstName,
+          lastName: sessionUser.lastName,
+          profileImageUrl: sessionUser.profileImageUrl
+        });
+      }
+
+      // Для звичайних користувачів отримуємо дані з БД
+      const userId = parseInt(sessionUser.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Невірний ID користувача" });
+      }
+
+      const fullUser = await storage.getLocalUserWithWorker(userId);
       if (!fullUser) {
         return res.status(404).json({ message: "Користувач не знайдений" });
       }
