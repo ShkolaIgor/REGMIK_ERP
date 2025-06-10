@@ -2,7 +2,7 @@ import type { Express, RequestHandler } from "express";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import bcrypt from "bcryptjs";
-import { storage } from "./storage";
+import { storage } from "./db-storage";
 
 // Простий middleware для перевірки авторизації
 export const isSimpleAuthenticated: RequestHandler = (req, res, next) => {
