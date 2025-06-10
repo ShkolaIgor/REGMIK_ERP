@@ -553,6 +553,7 @@ export class MemStorage implements IStorage {
   private entityMappings: Map<number, EntityMapping> = new Map();
   private syncQueue: Map<number, SyncQueue> = new Map();
   private fieldMappings: Map<number, FieldMapping> = new Map();
+  private emailSettings: Map<number, EmailSettings> = new Map();
 
   private currentUserId = 1;
   private currentCategoryId = 1;
@@ -1769,6 +1770,26 @@ export class MemStorage implements IStorage {
   // User Sort Preferences methods
   getUserSortPreferences(userId: string, tableName: string): Promise<UserSortPreference | null>;
   saveUserSortPreferences(preference: InsertUserSortPreference): Promise<UserSortPreference>;
+
+  // Email Settings methods
+  async getEmailSettings(): Promise<EmailSettings | null> {
+    const settings = Array.from(this.emailSettings.values());
+    return settings.length > 0 ? settings[0] : null;
+  }
+
+  async updateEmailSettings(settings: InsertEmailSettings): Promise<EmailSettings> {
+    const existing = Array.from(this.emailSettings.values());
+    const existingSettings = existing.length > 0 ? existing[0] : null;
+    
+    const updated: EmailSettings = {
+      id: existingSettings?.id || 1,
+      ...settings,
+      updatedAt: new Date()
+    };
+    
+    this.emailSettings.set(updated.id, updated);
+    return updated;
+  }
 
   // Manufacturing automation methods
   processOrderPayment(orderId: number): Promise<void>;
