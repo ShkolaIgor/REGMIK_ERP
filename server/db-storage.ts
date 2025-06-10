@@ -4160,10 +4160,13 @@ export class DatabaseStorage implements IStorage {
 
   async createCompany(companyData: InsertCompany): Promise<Company> {
     try {
+      console.log("Creating company with data:", companyData);
       const [company] = await db.insert(companies).values(companyData).returning();
+      console.log("Company created successfully:", company);
       return company;
     } catch (error) {
       console.error("Error creating company:", error);
+      console.error("Company data that failed:", companyData);
       throw error;
     }
   }
