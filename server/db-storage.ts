@@ -4926,7 +4926,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByEmail(email: string): Promise<LocalUser | undefined> {
-    const [user] = await db
+    const [user] = await this.db
       .select()
       .from(localUsers)
       .where(eq(localUsers.email, email))
