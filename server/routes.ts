@@ -199,9 +199,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Отримати базову URL з заголовків
-      const protocol = req.get('x-forwarded-proto') || req.protocol;
+      const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
       const host = req.get('host');
       const resetUrl = `${protocol}://${host}/reset-password?token=${resetToken}`;
+      
+      console.log("Generated reset URL:", resetUrl);
 
       // Відправити email через налаштований сервіс
       console.log("Attempting to send email to:", email);
@@ -324,7 +326,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Пароль повинен містити мінімум 6 символів" });
       }
 
+      console.log("Looking for user with reset token:", token);
       const user = await storage.getUserByResetToken(token);
+      console.log("User found by reset token:", user ? `ID ${user.id}` : "None");
       
       if (!user) {
         return res.status(400).json({ message: "Недійсний або застарілий токен" });
@@ -332,9 +336,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Хешувати новий пароль
       const hashedPassword = await bcrypt.hash(password, 10);
+      console.log("Password hashed, updating for user ID:", user.id);
 
       // Оновити пароль та очистити токен скидання
       const success = await storage.confirmPasswordReset(user.id, hashedPassword);
+      console.log("Password reset result:", success);
       
       if (!success) {
         return res.status(500).json({ message: "Помилка оновлення паролю" });
