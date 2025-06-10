@@ -203,56 +203,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const host = req.get('host');
       const resetUrl = `${protocol}://${host}/reset-password?token=${resetToken}`;
 
-      // Відправити email
-      const emailSent = await sendEmail({
-        to: email,
-        from: "noreply@regmik-erp.com",
-        subject: "Відновлення паролю - REGMIK ERP",
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-              <h1 style="color: #2563eb; margin: 0; text-align: center;">REGMIK: ERP</h1>
-              <p style="color: #6b7280; margin: 5px 0 0 0; text-align: center;">Система управління виробництвом</p>
-            </div>
-            
-            <h2 style="color: #374151;">Відновлення паролю</h2>
-            
-            <p style="color: #6b7280; line-height: 1.6;">
-              Ви отримали цей лист, оскільки для вашого облікового запису був запитаний скидання паролю.
-            </p>
-            
-            <p style="color: #6b7280; line-height: 1.6;">
-              Натисніть на кнопку нижче, щоб встановити новий пароль:
-            </p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                Відновити пароль
-              </a>
-            </div>
-            
-            <p style="color: #6b7280; line-height: 1.6; font-size: 14px;">
-              Якщо кнопка не працює, скопіюйте та вставте це посилання у ваш браузер:
-            </p>
-            <p style="color: #2563eb; word-break: break-all; font-size: 14px;">
-              ${resetUrl}
-            </p>
-            
-            <p style="color: #6b7280; line-height: 1.6; font-size: 14px;">
-              Це посилання дійсне протягом 1 години. Якщо ви не запитували скидання паролю, проігноруйте цей лист.
-            </p>
-            
-            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-            
-            <p style="color: #9ca3af; font-size: 12px; text-align: center;">
-              REGMIK ERP - Система управління виробництвом
-            </p>
-          </div>
-        `
-      });
+      // Відправити email через налаштований сервіс
+      console.log("Attempting to send email to:", email);
+      
+      // Перевірити налаштування email
+      const emailSettings = await storage.getEmailSettings();
+      console.log("Email settings loaded:", emailSettings ? "Yes" : "No");
+      
+      if (!emailSettings || !emailSettings.smtpHost) {
+        console.log("Email service not configured or inactive");
+        return res.status(500).json({ message: "Помилка відправки email - сервіс не налаштований" });
+      }
+      
+      // Використовуємо nodemailer напряму з налаштуваннями
+      const nodemailer = await import('nodemailer');
+      const transportConfig = {
+        host: emailSettings.smtpHost,
+        port: emailSettings.smtpPort || 587,
+        secure: emailSettings.smtpSecure || false,
+        auth: {
+          user: emailSettings.smtpUser,
+          pass: emailSettings.smtpPassword,
+        },
+      };
+      const transporter = nodemailer.createTransport(transportConfig as any);
 
-      if (!emailSent) {
-        return res.status(500).json({ message: "Помилка відправки email" });
+      try {
+        const emailResult = await transporter.sendMail({
+          from: emailSettings.fromEmail || "noreply@regmik-erp.com",
+          to: email,
+          subject: "Відновлення паролю - REGMIK ERP",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h1 style="color: #2563eb; margin: 0; text-align: center;">REGMIK: ERP</h1>
+                <p style="color: #6b7280; margin: 5px 0 0 0; text-align: center;">Система управління виробництвом</p>
+              </div>
+              
+              <h2 style="color: #374151;">Відновлення паролю</h2>
+              
+              <p style="color: #6b7280; line-height: 1.6;">
+                Ви отримали цей лист, оскільки для вашого облікового запису був запитаний скидання паролю.
+              </p>
+              
+              <p style="color: #6b7280; line-height: 1.6;">
+                Натисніть на кнопку нижче, щоб встановити новий пароль:
+              </p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${resetUrl}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                  Відновити пароль
+                </a>
+              </div>
+              
+              <p style="color: #6b7280; line-height: 1.6; font-size: 14px;">
+                Якщо кнопка не працює, скопіюйте та вставте це посилання у ваш браузер:
+              </p>
+              <p style="color: #2563eb; word-break: break-all; font-size: 14px;">
+                ${resetUrl}
+              </p>
+              
+              <p style="color: #6b7280; line-height: 1.6; font-size: 14px;">
+                Це посилання дійсне протягом 1 години. Якщо ви не запитували скидання паролю, проігноруйте цей лист.
+              </p>
+              
+              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+              
+              <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+                REGMIK ERP - Система управління виробництвом
+              </p>
+            </div>
+          `
+        });
+        
+        console.log("Email sent successfully:", emailResult.messageId);
+      } catch (emailError) {
+        console.error("Failed to send email:", emailError);
+        return res.status(500).json({ message: "Помилка відправки email - перевірте налаштування SMTP" });
       }
 
       res.json({ message: "Якщо email існує в системі, лист буде відправлено" });
