@@ -5153,8 +5153,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/companies", async (req, res) => {
     try {
       const companyData = req.body;
+      console.log("Company creation request data:", companyData);
       
-      if (!companyData.name || !companyData.taxCode) {
+      if (!companyData.name || !companyData.taxCode || 
+          companyData.name.trim() === "" || companyData.taxCode.trim() === "") {
+        console.log("Validation failed - name:", companyData.name, "taxCode:", companyData.taxCode);
         return res.status(400).json({ error: "Name and tax code are required" });
       }
 
