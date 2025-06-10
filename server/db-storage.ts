@@ -4889,13 +4889,18 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getLocalUserByUsername(username: string) {
-    const [user] = await db
-      .select()
-      .from(localUsers)
-      .where(eq(localUsers.username, username))
-      .limit(1);
-    return user;
+  async getLocalUserByUsername(username: string): Promise<LocalUser | undefined> {
+    try {
+      const [user] = await this.db
+        .select()
+        .from(localUsers)
+        .where(eq(localUsers.username, username))
+        .limit(1);
+      return user;
+    } catch (error) {
+      console.error("Error getting local user by username:", error);
+      return undefined;
+    }
   }
 
   async getUserByEmail(email: string): Promise<LocalUser | undefined> {
@@ -4908,10 +4913,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserLastLogin(id: number): Promise<void> {
-    await db
-      .update(localUsers)
-      .set({ lastLoginAt: new Date() })
-      .where(eq(localUsers.id, id));
+    try {
+      await this.db
+        .update(localUsers)
+        .set({ 
+          lastLoginAt: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(localUsers.id, id));
+    } catch (error) {
+      console.error("Error updating user last login:", error);
+    }
   }
 
   async createLocalUserWithWorker(userData: any) {
