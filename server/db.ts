@@ -9,9 +9,7 @@ if (process.env.DATABASE_URL) {
   // Використовуємо DATABASE_URL якщо доступний
   poolConfig = {
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-    connectionTimeoutMillis: 10000,
-    idleTimeoutMillis: 30000
+    ssl: { rejectUnauthorized: false }
   };
 } else if (process.env.PGHOST && process.env.PGUSER && process.env.PGPASSWORD && process.env.PGDATABASE) {
   // Використовуємо окремі змінні PostgreSQL
@@ -21,9 +19,7 @@ if (process.env.DATABASE_URL) {
     database: process.env.PGDATABASE,
     user: process.env.PGUSER,
     password: process.env.PGPASSWORD,
-    ssl: { rejectUnauthorized: false },
-    connectionTimeoutMillis: 10000,
-    idleTimeoutMillis: 30000
+    ssl: { rejectUnauthorized: false }
   };
 } else {
   throw new Error(
@@ -32,11 +28,4 @@ if (process.env.DATABASE_URL) {
 }
 
 export const pool = new Pool(poolConfig);
-
-// Налаштування UTF8 кодування для всіх підключень
-pool.on('connect', (client) => {
-  client.query('SET client_encoding TO UTF8');
-  client.query('SET timezone TO "Europe/Kiev"');
-});
-
 export const db = drizzle(pool, { schema });

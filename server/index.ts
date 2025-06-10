@@ -4,25 +4,8 @@ import { setupVite, serveStatic, log } from "./vite";
 import { novaPoshtaCache } from "./nova-poshta-cache";
 
 const app = express();
-
-// Налаштування UTF8 підтримки для Express
-app.use(express.json({ 
-  limit: '10mb',
-  type: 'application/json'
-}));
-app.use(express.urlencoded({ 
-  extended: false, 
-  limit: '10mb'
-}));
-
-// Встановлення правильних заголовків для UTF8
-app.use((req, res, next) => {
-  res.charset = 'utf-8';
-  if (!res.getHeader('Content-Type')) {
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  }
-  next();
-});
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();

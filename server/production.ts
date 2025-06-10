@@ -4,48 +4,8 @@ import { registerRoutes } from "./routes";
 import { novaPoshtaCache } from "./nova-poshta-cache";
 
 const app = express();
-
-// Налаштування UTF8 підтримки для Express
-app.use(express.json({ 
-  limit: '10mb',
-  type: 'application/json'
-}));
-app.use(express.urlencoded({ 
-  extended: false, 
-  limit: '10mb'
-}));
-
-// Встановлення правильних заголовків для UTF8 та MIME типів
-app.use((req, res, next) => {
-  res.charset = 'utf-8';
-  
-  // Встановлення правильних MIME типів для статичних файлів
-  const ext = path.extname(req.path).toLowerCase();
-  
-  if (ext === '.css') {
-    res.setHeader('Content-Type', 'text/css; charset=utf-8');
-  } else if (ext === '.js' || ext === '.mjs') {
-    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-  } else if (ext === '.json') {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  } else if (ext === '.html') {
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  } else if (ext === '.svg') {
-    res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
-  } else if (ext === '.png') {
-    res.setHeader('Content-Type', 'image/png');
-  } else if (ext === '.jpg' || ext === '.jpeg') {
-    res.setHeader('Content-Type', 'image/jpeg');
-  } else if (ext === '.ico') {
-    res.setHeader('Content-Type', 'image/x-icon');
-  } else if (ext === '.woff' || ext === '.woff2') {
-    res.setHeader('Content-Type', 'font/woff2');
-  } else if (req.path.startsWith('/api/')) {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  }
-  
-  next();
-});
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 // Production logging middleware
 app.use((req, res, next) => {
@@ -86,40 +46,12 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  // Serve static files in production with correct MIME types
+  // Serve static files in production
   const staticPath = path.join(process.cwd(), 'dist/client');
-  app.use(express.static(staticPath, {
-    setHeaders: (res, filePath) => {
-      const ext = path.extname(filePath).toLowerCase();
-      
-      if (ext === '.css') {
-        res.setHeader('Content-Type', 'text/css; charset=utf-8');
-      } else if (ext === '.js' || ext === '.mjs') {
-        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-      } else if (ext === '.json') {
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
-      } else if (ext === '.html') {
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      } else if (ext === '.svg') {
-        res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
-      } else if (ext === '.png') {
-        res.setHeader('Content-Type', 'image/png');
-      } else if (ext === '.jpg' || ext === '.jpeg') {
-        res.setHeader('Content-Type', 'image/jpeg');
-      } else if (ext === '.ico') {
-        res.setHeader('Content-Type', 'image/x-icon');
-      } else if (ext === '.woff' || ext === '.woff2') {
-        res.setHeader('Content-Type', 'font/woff2');
-      }
-      
-      // Кешування для статичних файлів
-      res.setHeader('Cache-Control', 'public, max-age=31536000');
-    }
-  }));
+  app.use(express.static(staticPath));
 
   // Handle client-side routing
   app.get('*', (req, res) => {
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.sendFile(path.join(staticPath, 'index.html'));
   });
 
