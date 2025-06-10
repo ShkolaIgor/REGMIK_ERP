@@ -353,6 +353,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Оновлення профілю користувача
+  app.patch("/api/auth/profile", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const sessionUser = (req.session as any)?.user;
+      if (!sessionUser?.id) {
+        return res.status(401).json({ message: "Користувач не авторизований" });
+      }
+
+      const { firstName, lastName, email, profileImageUrl } = req.body;
+      
+      await storage.updateLocalUser(parseInt(sessionUser.id), {
+        firstName,
+        lastName,
+        email,
+        profileImageUrl,
+        updatedAt: new Date()
+      });
+
+      // Оновлюємо дані в сесії
+      if (req.session) {
+        (req.session as any).user = {
+          ...(req.session as any).user,
+          firstName,
+          lastName,
+          email,
+          profileImageUrl
+        };
+      }
+
+      res.json({ message: "Профіль успішно оновлено" });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Помилка при оновленні профілю" });
+    }
+  });
+
   // Production statistics by category
   app.get("/api/production-stats/by-category", isSimpleAuthenticated, async (req, res) => {
     try {

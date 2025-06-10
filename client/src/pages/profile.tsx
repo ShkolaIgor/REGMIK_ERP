@@ -1,3 +1,4 @@
+import { useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -5,10 +6,83 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Settings, Shield } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { User, Mail, Settings, Shield, Camera, Save, X } from "lucide-react";
 
 export default function Profile() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    email: user?.email || '',
+    profileImageUrl: user?.profileImageUrl || ''
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      await apiRequest("/api/auth/profile", {
+        method: "PATCH",
+        body: data,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Успіх",
+        description: "Профіль успішно оновлено",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      setIsEditing(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Помилка при оновленні профілю",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: "Помилка",
+          description: "Розмір файлу не повинен перевищувати 2 МБ",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setFormData(prev => ({ ...prev, profileImageUrl: result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSave = () => {
+    updateProfileMutation.mutate(formData);
+  };
+
+  const handleCancel = () => {
+    setFormData({
+      firstName: user?.firstName || '',
+      lastName: user?.lastName || '',
+      email: user?.email || '',
+      profileImageUrl: user?.profileImageUrl || ''
+    });
+    setIsEditing(false);
+  };
 
   if (!user) {
     return (
@@ -31,18 +105,30 @@ export default function Profile() {
         {/* Profile Card */}
         <Card className="lg:col-span-1">
           <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
+            <div className="flex justify-center mb-4 relative">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName} />
+                <AvatarImage src={isEditing ? formData.profileImageUrl : user.profileImageUrl || undefined} alt={user.firstName} />
                 <AvatarFallback className="text-xl">
                   {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
                 </AvatarFallback>
               </Avatar>
+              {isEditing && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Camera className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-            <CardTitle className="text-xl">{user.firstName} {user.lastName}</CardTitle>
+            <CardTitle className="text-xl">
+              {isEditing ? `${formData.firstName} ${formData.lastName}` : `${user.firstName} ${user.lastName}`}
+            </CardTitle>
             <CardDescription className="flex items-center justify-center gap-2">
               <Mail className="h-4 w-4" />
-              {user.email}
+              {isEditing ? formData.email : user.email}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -57,10 +143,32 @@ export default function Profile() {
               </div>
             </div>
             <Separator />
-            <Button variant="outline" className="w-full">
-              <Settings className="h-4 w-4 mr-2" />
-              Редагувати профіль
-            </Button>
+            {isEditing ? (
+              <div className="space-y-2">
+                <Button 
+                  onClick={handleSave} 
+                  className="w-full" 
+                  disabled={updateProfileMutation.isPending}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {updateProfileMutation.isPending ? "Збереження..." : "Зберегти"}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={handleCancel} 
+                  className="w-full"
+                  disabled={updateProfileMutation.isPending}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Скасувати
+                </Button>
+              </div>
+            ) : (
+              <Button variant="outline" className="w-full" onClick={() => setIsEditing(true)}>
+                <Settings className="h-4 w-4 mr-2" />
+                Редагувати профіль
+              </Button>
+            )}
           </CardContent>
         </Card>
 
@@ -76,23 +184,48 @@ export default function Profile() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">Ім'я</Label>
-                <Input id="firstName" value={user.firstName} readOnly />
+                <Input 
+                  id="firstName" 
+                  value={isEditing ? formData.firstName : user.firstName} 
+                  readOnly={!isEditing}
+                  onChange={(e) => isEditing && setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Прізвище</Label>
-                <Input id="lastName" value={user.lastName} readOnly />
+                <Input 
+                  id="lastName" 
+                  value={isEditing ? formData.lastName : user.lastName} 
+                  readOnly={!isEditing}
+                  onChange={(e) => isEditing && setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                />
               </div>
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="email">Email адреса</Label>
-              <Input id="email" type="email" value={user.email} readOnly />
+              <Input 
+                id="email" 
+                type="email" 
+                value={isEditing ? formData.email : user.email} 
+                readOnly={!isEditing}
+                onChange={(e) => isEditing && setFormData(prev => ({ ...prev, email: e.target.value }))}
+              />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="username">Логін</Label>
               <Input id="username" value={user.username} readOnly />
             </div>
+
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
 
             <Separator />
             
