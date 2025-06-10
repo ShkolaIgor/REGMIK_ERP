@@ -4355,7 +4355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Реальне тестування SMTP з автентифікацією
       const nodemailer = await import('nodemailer');
       
-      const transporter = nodemailer.default.createTransporter({
+      const transporter = nodemailer.createTransport({
         host: settingsData.smtpHost,
         port: settingsData.smtpPort || 587,
         secure: settingsData.smtpSecure || false,
