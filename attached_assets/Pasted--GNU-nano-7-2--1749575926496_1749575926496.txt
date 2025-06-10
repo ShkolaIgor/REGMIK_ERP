@@ -1,0 +1,41 @@
+  GNU nano 7.2                                                                                                  /var/log/syslog                                                                                                           
+2025-06-10T17:18:13.830368+00:00 ERP regmik-erp[23607]: Auth check - Session exists: true
+2025-06-10T17:18:13.830501+00:00 ERP regmik-erp[23607]: Auth check - User in session: false
+2025-06-10T17:18:13.830515+00:00 ERP regmik-erp[23607]: Auth check - Session ID: UiOaFjKoXuvNFJJrNiJGIsA6THAxHPNe
+2025-06-10T17:18:13.831306+00:00 ERP regmik-erp[23607]: Auth check - Session data: Session {
+2025-06-10T17:18:13.831320+00:00 ERP regmik-erp[23607]:   cookie: {
+2025-06-10T17:18:13.831332+00:00 ERP regmik-erp[23607]:     path: '/',
+2025-06-10T17:18:13.831346+00:00 ERP regmik-erp[23607]:     _expires: 2025-06-17T17:18:13.829Z,
+2025-06-10T17:18:13.831361+00:00 ERP regmik-erp[23607]:     originalMaxAge: 604800000,
+2025-06-10T17:18:13.831373+00:00 ERP regmik-erp[23607]:     httpOnly: true,
+2025-06-10T17:18:13.831387+00:00 ERP regmik-erp[23607]:     secure: false,
+2025-06-10T17:18:13.831401+00:00 ERP regmik-erp[23607]:     sameSite: 'lax'
+2025-06-10T17:18:13.831411+00:00 ERP regmik-erp[23607]:   }
+2025-06-10T17:18:13.831421+00:00 ERP regmik-erp[23607]: }
+2025-06-10T17:18:13.831437+00:00 ERP regmik-erp[23607]: Auth check - User NOT authenticated
+2025-06-10T17:18:13.832707+00:00 ERP regmik-erp[23607]: 5:18:13 PM [express] GET /api/auth/user 401 in 3ms :: {"message":"Unauthorized"}
+2025-06-10T17:18:18.430978+00:00 ERP regmik-erp[23607]: Error in forgot password: error: column "first_name" does not exist
+2025-06-10T17:18:18.431046+00:00 ERP regmik-erp[23607]:     at /opt/REGMIK_ERP/node_modules/pg-pool/index.js:45:11
+2025-06-10T17:18:18.431060+00:00 ERP regmik-erp[23607]:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-06-10T17:18:18.431081+00:00 ERP regmik-erp[23607]:     at async file:///opt/REGMIK_ERP/node_modules/drizzle-orm/node-postgres/session.js:83:22
+2025-06-10T17:18:18.431094+00:00 ERP regmik-erp[23607]:     at async DatabaseStorage.getUserByEmail (file:///opt/REGMIK_ERP/dist/index.js:6994:20)
+2025-06-10T17:18:18.431105+00:00 ERP regmik-erp[23607]:     at async file:///opt/REGMIK_ERP/dist/index.js:9165:20 {
+2025-06-10T17:18:18.431116+00:00 ERP regmik-erp[23607]:   length: 110,
+2025-06-10T17:18:18.431127+00:00 ERP regmik-erp[23607]:   severity: 'ERROR',
+2025-06-10T17:18:18.431138+00:00 ERP regmik-erp[23607]:   code: '42703',
+2025-06-10T17:18:18.431148+00:00 ERP regmik-erp[23607]:   detail: undefined,
+2025-06-10T17:18:18.431158+00:00 ERP regmik-erp[23607]:   hint: undefined,
+2025-06-10T17:18:18.431169+00:00 ERP regmik-erp[23607]:   position: '48',
+2025-06-10T17:18:18.431179+00:00 ERP regmik-erp[23607]:   internalPosition: undefined,
+2025-06-10T17:18:18.431190+00:00 ERP regmik-erp[23607]:   internalQuery: undefined,
+2025-06-10T17:18:18.431200+00:00 ERP regmik-erp[23607]:   where: undefined,
+2025-06-10T17:18:18.431210+00:00 ERP regmik-erp[23607]:   schema: undefined,
+2025-06-10T17:18:18.431226+00:00 ERP regmik-erp[23607]:   table: undefined,
+2025-06-10T17:18:18.431236+00:00 ERP regmik-erp[23607]:   column: undefined,
+2025-06-10T17:18:18.431247+00:00 ERP regmik-erp[23607]:   dataType: undefined,
+2025-06-10T17:18:18.431258+00:00 ERP regmik-erp[23607]:   constraint: undefined,
+2025-06-10T17:18:18.431269+00:00 ERP regmik-erp[23607]:   file: 'parse_relation.c',
+2025-06-10T17:18:18.431279+00:00 ERP regmik-erp[23607]:   line: '3665',
+2025-06-10T17:18:18.431290+00:00 ERP regmik-erp[23607]:   routine: 'errorMissingColumn'
+2025-06-10T17:18:18.431301+00:00 ERP regmik-erp[23607]: }
+2025-06-10T17:18:18.431555+00:00 ERP regmik-erp[23607]: 5:18:18 PM [express] POST /api/auth/forgot-password 500 in 23ms :: {"message":"Внутрішня помилка сер…

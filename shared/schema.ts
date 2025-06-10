@@ -736,6 +736,7 @@ export const emailSettings = pgTable("email_settings", {
   fromEmail: varchar("from_email", { length: 255 }),
   fromName: varchar("from_name", { length: 255 }).default("REGMIK ERP"),
   isActive: boolean("is_active").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   updatedBy: varchar("updated_by", { length: 50 })
 });
