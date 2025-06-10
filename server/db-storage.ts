@@ -4881,7 +4881,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getLocalUser(id: number) {
-    const [user] = await db
+    const [user] = await this.db
       .select()
       .from(localUsers)
       .where(eq(localUsers.id, id))
