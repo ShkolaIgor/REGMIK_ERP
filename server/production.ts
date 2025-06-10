@@ -1,105 +1,86 @@
-#!/usr/bin/env node
+import express, { type Request, Response, NextFunction } from "express";
+import path from "path";
+import { registerRoutes } from "./routes";
+import { novaPoshtaCache } from "./nova-poshta-cache";
 
-// Production launcher for REGMIK ERP without Vite dependencies
-// Direct import of server components
+const app = express();
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
-import express from 'express';
-import { createServer } from 'http';
-import path from 'path';
-import { fileURLToPath } from 'url';
+// Production logging middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  const path = req.path;
+  let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+  const originalResJson = res.json;
+  res.json = function (bodyJson, ...args) {
+    capturedJsonResponse = bodyJson;
+    return originalResJson.apply(res, [bodyJson, ...args]);
+  };
 
-// Set production environment
-process.env.NODE_ENV = 'production';
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    if (path.startsWith("/api")) {
+      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+      if (capturedJsonResponse) {
+        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+      }
 
-async function startProductionServer() {
-  try {
-    // Import server modules directly
-    const { registerRoutes } = await import('./routes.js');
-    
-    const app = express();
-    const PORT = process.env.PORT || 3000;
+      if (logLine.length > 80) {
+        logLine = logLine.slice(0, 79) + "…";
+      }
 
-    // Basic middleware
-    app.use(express.json());
-    app.use(express.urlencoded({ extended: true }));
-
-    // Register API routes first
-    await registerRoutes(app);
-
-    // Serve static files from client/dist if available
-    const clientDistPath = path.join(__dirname, '../client/dist');
-    const fs = await import('fs');
-    
-    if (fs.existsSync(clientDistPath) && fs.existsSync(path.join(clientDistPath, 'index.html'))) {
-      app.use(express.static(clientDistPath));
-      
-      // Fallback for client-side routing
-      app.get('*', (req, res) => {
-        if (req.path.startsWith('/api/')) {
-          res.status(404).json({ error: 'API endpoint not found' });
-        } else {
-          res.sendFile(path.join(clientDistPath, 'index.html'));
-        }
-      });
-    } else {
-      console.log('Client dist not available, serving API-only with basic frontend');
-      
-      // Serve a basic HTML page with links to API endpoints
-      app.get('*', (req, res) => {
-        if (req.path.startsWith('/api/')) {
-          res.status(404).json({ error: 'API endpoint not found' });
-        } else {
-          res.send(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <title>REGMIK ERP - API Server</title>
-              <meta charset="utf-8">
-              <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .header { color: #2563eb; }
-                .api-link { display: block; margin: 10px 0; color: #059669; }
-              </style>
-            </head>
-            <body>
-              <h1 class="header">🚀 REGMIK ERP Production Server</h1>
-              <p>Сервер працює в API режимі. Frontend файли не знайдені.</p>
-              
-              <h3>Доступні API ендпоінти:</h3>
-              <a href="/api/dashboard/stats" class="api-link">📊 Dashboard Statistics</a>
-              <a href="/api/products" class="api-link">📦 Products</a>
-              <a href="/api/orders" class="api-link">📋 Orders</a>
-              <a href="/api/clients" class="api-link">👥 Clients</a>
-              <a href="/api/nova-poshta/cities" class="api-link">🏙️ Nova Poshta Cities</a>
-              
-              <p><strong>Статус:</strong> Production server активний</p>
-              <p><strong>База даних:</strong> Підключена</p>
-              <p><strong>Порт:</strong> ${process.env.PORT || 3000}</p>
-              
-              <hr>
-              <p><em>Для повного frontend досвіду запустіть: npm run build</em></p>
-            </body>
-            </html>
-          `);
-        }
-      });
+      console.log(`${new Date().toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit", 
+        second: "2-digit",
+        hour12: true,
+      })} [express] ${logLine}`);
     }
+  });
 
-    const server = createServer(app);
-    
-    server.listen(Number(PORT), () => {
-      console.log(`REGMIK ERP Production Server running on port ${PORT}`);
-      console.log(`Database: ${process.env.PGDATABASE || 'Not configured'}`);
-      console.log(`Environment: ${process.env.NODE_ENV}`);
-    });
+  next();
+});
 
-  } catch (error) {
-    console.error('Failed to start production server:', error);
-    process.exit(1);
-  }
-}
+(async () => {
+  const server = await registerRoutes(app);
 
-startProductionServer();
+  // Serve static files in production
+  const staticPath = path.join(process.cwd(), 'dist/client');
+  app.use(express.static(staticPath));
+
+  // Handle client-side routing
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(staticPath, 'index.html'));
+  });
+
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+
+    res.status(status).json({ message });
+    throw err;
+  });
+
+  // Initialize Nova Poshta cache
+  console.log(`${new Date().toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit", 
+    hour12: true,
+  })} [express] Ініціалізація кешу Нової Пошти...`);
+  
+  await novaPoshtaCache.initialize();
+
+  const port = parseInt(process.env.PORT ?? "5000", 10);
+
+  server.listen(port, "0.0.0.0", () => {
+    console.log(`${new Date().toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    })} [express] serving on port ${port}`);
+  });
+})();
