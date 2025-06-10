@@ -362,14 +362,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { firstName, lastName, email, profileImageUrl } = req.body;
+      const userId = parseInt(sessionUser.id);
       
-      await storage.updateLocalUser(parseInt(sessionUser.id), {
+      // Отримуємо повні дані користувача
+      const fullUser = await storage.getLocalUserWithWorker(userId);
+      
+      // Оновлюємо дані користувача
+      await storage.updateLocalUser(userId, {
         firstName,
         lastName,
         email,
         profileImageUrl,
         updatedAt: new Date()
       });
+
+      // Якщо користувач пов'язаний з робітником, оновлюємо дані робітника
+      if (fullUser?.workerId) {
+        await storage.updateWorker(fullUser.workerId, {
+          firstName,
+          lastName,
+          email,
+          photo: profileImageUrl,
+          updatedAt: new Date()
+        });
+      }
 
       // Оновлюємо дані в сесії
       if (req.session) {

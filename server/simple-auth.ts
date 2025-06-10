@@ -126,14 +126,17 @@ export function setupSimpleAuth(app: Express) {
         if (isPasswordValid) {
           console.log("Database user authenticated successfully");
           
+          // Отримуємо повні дані користувача з робітником
+          const fullUser = await storage.getLocalUserWithWorker(dbUser.id);
+          
           // Створюємо сесію для користувача з бази даних
           (req.session as any).user = {
             id: dbUser.id.toString(),
             username: dbUser.username,
             email: dbUser.email,
-            firstName: dbUser.username, // Використовуємо username як firstName
-            lastName: "",
-            profileImageUrl: null
+            firstName: fullUser?.worker?.firstName || dbUser.firstName || dbUser.username,
+            lastName: fullUser?.worker?.lastName || dbUser.lastName || "",
+            profileImageUrl: fullUser?.worker?.photo || dbUser.profileImageUrl || null
           };
           
           // Оновлюємо час останнього входу
@@ -164,9 +167,34 @@ export function setupSimpleAuth(app: Express) {
   });
 
   // Маршрут для отримання поточного користувача
-  app.get("/api/auth/user", isSimpleAuthenticated, (req, res) => {
-    const user = (req.session as any).user;
-    res.json(user);
+  app.get("/api/auth/user", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const sessionUser = (req.session as any)?.user;
+      if (!sessionUser?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Отримуємо свіжі дані користувача з робітником
+      const fullUser = await storage.getLocalUserWithWorker(parseInt(sessionUser.id));
+      if (!fullUser) {
+        return res.status(404).json({ message: "Користувач не знайдений" });
+      }
+
+      // Використовуємо дані з робітника, якщо доступні
+      const userData = {
+        id: fullUser.id.toString(),
+        username: fullUser.username,
+        email: fullUser.worker?.email || fullUser.email,
+        firstName: fullUser.worker?.firstName || fullUser.firstName || fullUser.username,
+        lastName: fullUser.worker?.lastName || fullUser.lastName || "",
+        profileImageUrl: fullUser.worker?.photo || fullUser.profileImageUrl
+      };
+
+      res.json(userData);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Внутрішня помилка сервера" });
+    }
   });
 
   // Маршрут для виходу
