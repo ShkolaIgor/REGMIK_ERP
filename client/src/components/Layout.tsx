@@ -221,8 +221,74 @@ export function Layout({ children }: LayoutProps) {
           ))}
         </nav>
 
-        {/* Integration Status */}
-        <div className="p-4 border-t border-gray-200">
+        {/* User Profile & Status */}
+        <div className="p-4 border-t border-gray-200 space-y-3">
+          {user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="w-full flex items-center space-x-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName} />
+                    <AvatarFallback>
+                      {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-gray-900">
+                      {user.firstName} {user.lastName}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="start" side="top">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {user.firstName} {user.lastName}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => window.location.href = '/profile'}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Мій профіль</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.location.href = '/settings'}>
+                  <Cog className="mr-2 h-4 w-4" />
+                  <span>Налаштування</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.location.href = '/my-analytics'}>
+                  <BarChart className="mr-2 h-4 w-4" />
+                  <span>Моя статистика</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.location.href = '/my-documents'}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  <span>Мої документи</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => window.location.href = '/messages'}>
+                  <Mail className="mr-2 h-4 w-4" />
+                  <span>Повідомлення</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.location.href = '/notifications'}>
+                  <AlertTriangle className="mr-2 h-4 w-4" />
+                  <span>Сповіщення</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Вихід з системи</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          
           <div className="flex items-center space-x-2 text-sm">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             <span className="text-gray-600">ERP Ready</span>
@@ -232,61 +298,7 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden lg:ml-0">
-        {/* Top Header */}
-        <header className="bg-white border-b border-gray-200 px-4 py-3 lg:px-6 lg:py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h2 className="text-lg font-semibold text-gray-900 lg:text-xl">
-                REGMIK ERP Система
-              </h2>
-            </div>
-            
-            {user && (
-              <div className="flex items-center space-x-4">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName} />
-                        <AvatarFallback>
-                          {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {user.firstName} {user.lastName}
-                        </p>
-                        <p className="text-xs leading-none text-muted-foreground">
-                          {user.email}
-                        </p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Профіль</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Cog className="mr-2 h-4 w-4" />
-                      <span>Налаштування</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Вихід</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            )}
-          </div>
-        </header>
-
-        <div className="flex-1 overflow-auto p-4 lg:p-6">
+        <div className="flex-1 overflow-auto p-4 lg:p-6 pt-16 lg:pt-6">
           {children}
         </div>
       </main>

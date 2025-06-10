@@ -58,6 +58,7 @@ import EmailSettings from "@/pages/email-settings";
 import Analytics from "@/pages/analytics";
 import ProductProfitability from "@/pages/product-profitability";
 import Integrations from "@/pages/integrations";
+import Profile from "@/pages/profile";
 
 import NotFound from "@/pages/not-found";
 
@@ -217,10 +218,16 @@ function Router() {
         <Route path="/email-settings" component={EmailSettings} />
         <Route path="/integrations" component={Integrations} />
         <Route path="/companies" component={Companies} />
+        <Route path="/profile" component={Profile} />
 
         <Route path="/analytics" component={Analytics} />
         <Route path="/product-profitability" component={ProductProfitability} />
         <Route path="/documents" component={() => <div className="p-6">Документи - В розробці</div>} />
+        <Route path="/settings" component={() => <div className="p-6">Налаштування - В розробці</div>} />
+        <Route path="/my-analytics" component={() => <div className="p-6">Моя статистика - В розробці</div>} />
+        <Route path="/my-documents" component={() => <div className="p-6">Мої документи - В розробці</div>} />
+        <Route path="/messages" component={() => <div className="p-6">Повідомлення - В розробці</div>} />
+        <Route path="/notifications" component={() => <div className="p-6">Сповіщення - В розробці</div>} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
