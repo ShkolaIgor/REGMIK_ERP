@@ -5518,6 +5518,54 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
   }
+
+  // Email Settings methods
+  async getEmailSettings(): Promise<EmailSettings | null> {
+    try {
+      const settings = await this.db.select()
+        .from(emailSettings)
+        .limit(1);
+      
+      return settings.length > 0 ? settings[0] : null;
+    } catch (error) {
+      console.error("Error fetching email settings:", error);
+      return null;
+    }
+  }
+
+  async updateEmailSettings(settings: InsertEmailSettings): Promise<EmailSettings> {
+    try {
+      const existing = await this.db.select()
+        .from(emailSettings)
+        .limit(1);
+
+      if (existing.length > 0) {
+        // Оновлюємо існуючі налаштування
+        const [updated] = await this.db.update(emailSettings)
+          .set({
+            ...settings,
+            updatedAt: new Date()
+          })
+          .where(eq(emailSettings.id, existing[0].id))
+          .returning();
+        
+        return updated;
+      } else {
+        // Створюємо нові налаштування
+        const [created] = await this.db.insert(emailSettings)
+          .values({
+            ...settings,
+            updatedAt: new Date()
+          })
+          .returning();
+        
+        return created;
+      }
+    } catch (error) {
+      console.error("Error updating email settings:", error);
+      throw error;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
