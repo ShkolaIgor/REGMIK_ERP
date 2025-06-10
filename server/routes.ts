@@ -5111,10 +5111,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Companies endpoints for multi-company sales functionality
   app.get("/api/companies", async (req, res) => {
     try {
+      console.log("Fetching companies from database...");
       const companies = await storage.getCompanies();
+      console.log("Companies fetched successfully:", companies.length, "companies");
       res.json(companies);
     } catch (error) {
       console.error("Error fetching companies:", error);
+      console.error("Error details:", error.message);
+      console.error("Error stack:", error.stack);
       res.status(500).json({ error: "Failed to fetch companies" });
     }
   });
