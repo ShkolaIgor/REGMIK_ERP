@@ -1,7 +1,9 @@
-# Інструкції для виправлення помилки getUserByEmail в продакшн-системі
+# Інструкції для виправлення критичних помилок в продакшн-системі
 
-## Проблема
-Помилка `column "first_name" does not exist` виникає при спробі відновлення паролю через forgot-password API.
+## Проблеми
+1. Помилка `column "first_name" does not exist` при відновленні паролю
+2. Помилка `column "created_at" does not exist` при оновленні email налаштувань
+3. Помилка `invalid input syntax for type integer: "NaN"` при demo входi
 
 ## Причина
 Продакшн-система використовує застарілий скомпільований код в `/opt/REGMIK_ERP/dist/`, який не містить останніх виправлень.
@@ -27,6 +29,9 @@ git pull origin main
 
 # Перекомпілювати проект
 npm run build
+
+# Виправити схему бази даних
+psql -U postgres -d regmik_erp -f fix-email-settings-schema.sql
 
 # Запустити сервіс
 systemctl start regmik-erp.service
