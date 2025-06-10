@@ -4344,41 +4344,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const settingsData = insertEmailSettingsSchema.parse(req.body);
       
-      // Базове тестування підключення до SMTP
-      const net = await import('net');
-      
-      const testConnection = () => {
-        return new Promise((resolve, reject) => {
-          const socket = new net.default.Socket();
-          const timeout = setTimeout(() => {
-            socket.destroy();
-            reject(new Error('Connection timeout'));
-          }, 5000);
-
-          socket.connect(settingsData.smtpPort || 587, settingsData.smtpHost, () => {
-            clearTimeout(timeout);
-            socket.destroy();
-            resolve(true);
-          });
-
-          socket.on('error', (err: any) => {
-            clearTimeout(timeout);
-            reject(err);
-          });
+      // Перевірка обов'язкових полів
+      if (!settingsData.smtpHost || !settingsData.smtpUser || !settingsData.smtpPassword) {
+        return res.status(400).json({
+          success: false,
+          message: "Заповніть усі обов'язкові поля: SMTP хост, користувач та пароль"
         });
-      };
+      }
 
-      await testConnection();
+      // Реальне тестування SMTP з автентифікацією
+      const nodemailer = await import('nodemailer');
+      
+      const transporter = nodemailer.default.createTransporter({
+        host: settingsData.smtpHost,
+        port: settingsData.smtpPort || 587,
+        secure: settingsData.smtpSecure || false,
+        auth: {
+          user: settingsData.smtpUser,
+          pass: settingsData.smtpPassword,
+        },
+        connectionTimeout: 10000, // 10 секунд
+        greetingTimeout: 5000,   // 5 секунд
+        socketTimeout: 10000,    // 10 секунд
+      });
+
+      // Перевірка підключення та автентифікації
+      await transporter.verify();
+      
+      // Закриття з'єднання
+      transporter.close();
+      
       res.json({ 
         success: true, 
-        message: `SMTP server ${settingsData.smtpHost}:${settingsData.smtpPort} is reachable` 
+        message: `Успішне підключення до SMTP сервера ${settingsData.smtpHost}:${settingsData.smtpPort}. Автентифікація пройшла успішно.` 
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("SMTP connection test failed:", error);
+      
+      let errorMessage = "Помилка підключення до SMTP сервера";
+      
+      if (error.code === 'ENOTFOUND') {
+        errorMessage = "SMTP сервер не знайдено. Перевірте адресу хоста.";
+      } else if (error.code === 'ECONNREFUSED') {
+        errorMessage = "З'єднання відхилено. Перевірте хост та порт.";
+      } else if (error.code === 'ETIMEDOUT') {
+        errorMessage = "Тайм-аут підключення. Перевірте налаштування мережі.";
+      } else if (error.responseCode === 535) {
+        errorMessage = "Помилка автентифікації. Перевірте логін та пароль.";
+      } else if (error.responseCode === 534) {
+        errorMessage = "Потрібна двофакторна автентифікація або App Password.";
+      } else if (error.message && error.message.includes('Invalid login')) {
+        errorMessage = "Невірний логін або пароль.";
+      }
+      
       res.status(400).json({ 
         success: false, 
-        message: "SMTP connection failed", 
-        error: error instanceof Error ? error.message : String(error)
+        message: errorMessage,
+        details: error.message || "Невідома помилка"
       });
     }
   });
