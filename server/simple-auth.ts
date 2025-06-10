@@ -171,12 +171,14 @@ export function setupSimpleAuth(app: Express) {
 
   // Маршрут для виходу
   app.get("/api/logout", (req, res) => {
+    console.log("Logout request received");
     req.session.destroy((err) => {
       if (err) {
         console.error("Logout error:", err);
         return res.status(500).json({ message: "Помилка при виході" });
       }
       console.log("User logged out successfully");
+      res.clearCookie('regmik_session');
       res.redirect("/");
     });
   });
