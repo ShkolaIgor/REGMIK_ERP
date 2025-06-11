@@ -978,6 +978,7 @@ export default function Currencies() {
                         <TableHead className="text-sm">Дата курсу</TableHead>
                         <TableHead className="text-sm">EUR</TableHead>
                         <TableHead className="text-sm">USD</TableHead>
+                        <TableHead className="text-sm">Валюта</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1002,31 +1003,24 @@ export default function Currencies() {
                           })
                         : nbuRates;
 
-                      // Group rates by exchange date
-                      const ratesByDate = filteredRates.reduce((acc, rate) => {
-                        const date = rate.exchangeDate;
-                        if (!acc[date]) {
-                          acc[date] = {};
-                        }
-                        acc[date][rate.currencyCode] = rate.rate;
-                        return acc;
-                      }, {} as Record<string, Record<string, string>>);
-
-                      // Sort dates in descending order and take only 10 latest
-                      const sortedDates = Object.keys(ratesByDate)
-                        .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+                      // Sort by creation date and take only 10 latest records
+                      const latestRates = filteredRates
+                        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                         .slice(0, 10);
 
-                      return sortedDates.map((date) => (
-                        <TableRow key={date}>
+                      return latestRates.map((rate, index) => (
+                        <TableRow key={`${rate.id}-${index}`}>
                           <TableCell className="font-medium">
-                            {formatExchangeDate(date)}
+                            {formatExchangeDate(rate.exchangeDate)}
                           </TableCell>
                           <TableCell className="font-mono">
-                            {ratesByDate[date]['EUR'] || '—'}
+                            {rate.currencyCode === 'EUR' ? rate.rate : '—'}
                           </TableCell>
                           <TableCell className="font-mono">
-                            {ratesByDate[date]['USD'] || '—'}
+                            {rate.currencyCode === 'USD' ? rate.rate : '—'}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {rate.currencyCode}
                           </TableCell>
                         </TableRow>
                       ));
