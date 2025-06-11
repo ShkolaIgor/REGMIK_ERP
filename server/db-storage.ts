@@ -8,7 +8,7 @@ import {
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes, solderingTypes,
   componentCategories, componentAlternatives, carriers, shipments, shipmentItems, customerAddresses, senderSettings,
-  manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, serialNumbers, serialNumberSettings, emailSettings,
+  manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, currencyRates, serialNumbers, serialNumberSettings, emailSettings,
   sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients, clientContacts, clientNovaPoshtaSettings,
   clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
@@ -3278,7 +3278,54 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Видалено getLatestExchangeRates та updateExchangeRates - використовуємо currency_rates
+  // Currency rates methods (НБУ курси)
+  async getAllCurrencyRates(): Promise<any[]> {
+    try {
+      const rates = await db.select().from(currencyRates).orderBy(desc(currencyRates.exchangeDate));
+      return rates;
+    } catch (error) {
+      console.error("Error getting currency rates:", error);
+      throw error;
+    }
+  }
+
+  async getCurrencyRatesByDate(date: string): Promise<any[]> {
+    try {
+      const rates = await db.select()
+        .from(currencyRates)
+        .where(eq(currencyRates.exchangeDate, date))
+        .orderBy(currencyRates.currencyCode);
+      return rates;
+    } catch (error) {
+      console.error("Error getting currency rates by date:", error);
+      throw error;
+    }
+  }
+
+  async getCurrencyUpdateSettings(): Promise<any> {
+    try {
+      // Повертаємо базові налаштування
+      return {
+        autoUpdate: true,
+        updateInterval: 24, // годин
+        lastUpdate: new Date(),
+        baseCurrency: 'UAH'
+      };
+    } catch (error) {
+      console.error("Error getting currency update settings:", error);
+      throw error;
+    }
+  }
+
+  async saveCurrencyUpdateSettings(settings: any): Promise<any> {
+    try {
+      // Зберігаємо налаштування (заглушка)
+      return settings;
+    } catch (error) {
+      console.error("Error saving currency update settings:", error);
+      throw error;
+    }
+  }
 
   // Production analytics methods
   async getProductionAnalytics(filters: {
