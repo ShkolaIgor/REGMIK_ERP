@@ -427,11 +427,11 @@ export default function Currencies() {
   const baseCurrency = currencies.find(c => c.isBase);
 
   return (
-    <div className="h-screen flex flex-col p-2 overflow-hidden">
-      <div className="flex justify-between items-center mb-2 flex-shrink-0">
+    <div className="h-screen flex flex-col p-6 overflow-hidden">
+      <div className="flex justify-between items-center mb-6 flex-shrink-0">
         <div>
-          <h1 className="text-2xl font-bold mb-1">Валюти</h1>
-          <p className="text-sm text-muted-foreground">Управління валютами та курсами обміну</p>
+          <h1 className="text-3xl font-bold mb-2">Валюти</h1>
+          <p className="text-muted-foreground">Управління валютами та курсами обміну</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -552,28 +552,30 @@ export default function Currencies() {
         </Card>
       )}
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="currencies">Валюти</TabsTrigger>
-          <TabsTrigger value="nbu">Курси НБУ</TabsTrigger>
-        </TabsList>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+          <TabsList className="grid w-full grid-cols-2 flex-shrink-0">
+            <TabsTrigger value="currencies">Валюти</TabsTrigger>
+            <TabsTrigger value="nbu">Курси НБУ</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="currencies" className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Пошук валют..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
+          <TabsContent value="currencies" className="flex-1 flex flex-col space-y-4 overflow-hidden">
+            <div className="flex items-center space-x-2 flex-shrink-0">
+              <div className="relative flex-1">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Пошук валют..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
             </div>
-          </div>
 
-          <Card>
-            <Table>
-              <TableHeader>
+            <Card className="flex-1 overflow-hidden">
+              <div className="h-full overflow-auto">
+                <Table>
+                  <TableHeader>
                 <TableRow>
                   <TableHead>Код</TableHead>
                   <TableHead>Назва</TableHead>
@@ -606,16 +608,20 @@ export default function Currencies() {
                       <TableCell>
                         {currency.isBase ? (
                           <Badge variant="outline">Базова</Badge>
-                        ) : currency.latestRate ? (
-                          <div>
-                            <div className="font-medium">{parseFloat(currency.latestRate).toFixed(4)}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {currency.rateDate ? new Date(currency.rateDate).toLocaleDateString() : ""}
+                        ) : (() => {
+                          // Шукаємо поточний курс з таблиці currency_rates
+                          const currentRate = nbuRates.find(rate => rate.currencyCode === currency.code);
+                          return currentRate ? (
+                            <div>
+                              <div className="font-medium">{parseFloat(currentRate.rate).toFixed(4)}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {new Date(currentRate.exchangeDate).toLocaleDateString()}
+                              </div>
                             </div>
-                          </div>
-                        ) : (
-                          <Badge variant="secondary">Немає курсу</Badge>
-                        )}
+                          ) : (
+                            <Badge variant="secondary">Немає курсу</Badge>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
@@ -642,15 +648,7 @@ export default function Currencies() {
                               <Star className="h-4 w-4" />
                             </Button>
                           )}
-                          {!currency.isBase && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleAddRate(currency)}
-                            >
-                              <TrendingUp className="h-4 w-4" />
-                            </Button>
-                          )}
+
                           {!currency.isBase && (
                             <Button
                               variant="destructive"
@@ -666,9 +664,10 @@ export default function Currencies() {
                   ))
                 )}
               </TableBody>
-            </Table>
-          </Card>
-        </TabsContent>
+                </Table>
+              </div>
+            </Card>
+          </TabsContent>
 
 
 
@@ -1087,6 +1086,8 @@ export default function Currencies() {
           </div>
         </DialogContent>
       </Dialog>
+        </Tabs>
+      </div>
     </div>
   );
 }
