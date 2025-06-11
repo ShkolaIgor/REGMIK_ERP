@@ -1,4 +1,4 @@
-import { eq, sql, desc, and, gte, lte, isNull, ne, or, not, max } from "drizzle-orm";
+import { eq, sql, desc, and, gte, lte, isNull, ne, or, not } from "drizzle-orm";
 import { db } from "./db";
 import { IStorage } from "./storage";
 import {
@@ -10,7 +10,7 @@ import {
   componentCategories, componentAlternatives, carriers, shipments, shipmentItems, customerAddresses, senderSettings,
   manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, serialNumbers, serialNumberSettings, emailSettings,
   sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients, clientContacts, clientNovaPoshtaSettings,
-  clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences, currencyRates, currencyUpdateSettings,
+  clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
   type Category, type InsertCategory,
@@ -39,8 +39,6 @@ import {
   type CustomerAddress, type InsertCustomerAddress,
   type SenderSettings, type InsertSenderSettings,
   type Currency, type InsertCurrency,
-  type CurrencyRate, type InsertCurrencyRate,
-  type CurrencyUpdateSettings, type InsertCurrencyUpdateSettings,
   type SerialNumber, type InsertSerialNumber,
   type SerialNumberSettings, type InsertSerialNumberSettings,
   type CostCalculation, type InsertCostCalculation,
@@ -154,63 +152,25 @@ export class DatabaseStorage implements IStorage {
     ]);
   }
 
-  // Users (тепер використовуємо єдину таблицю для всіх середовищ)
+  // Users (for Replit Auth)
   async getUser(id: string): Promise<User | undefined> {
-    // Конвертуємо string id в number для пошуку
-    const numericId = parseInt(id);
-    if (!isNaN(numericId)) {
-      const [user] = await db.select().from(users).where(eq(users.id, numericId));
-      return user;
-    }
-    
-    // Якщо id є email, шукаємо за email
-    if (id.includes('@')) {
-      const [user] = await db.select().from(users).where(eq(users.email, id));
-      return user;
-    }
-    
-    return undefined;
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0];
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    // Шукаємо існуючого користувача за email
-    if (userData.email) {
-      const [existingUser] = await db.select().from(users).where(eq(users.email, userData.email));
-      if (existingUser) {
-        // Оновлюємо дані користувача
-        const [updatedUser] = await db
-          .update(users)
-          .set({
-            firstName: userData.firstName || existingUser.firstName,
-            lastName: userData.lastName || existingUser.lastName,
-            profileImageUrl: userData.profileImageUrl || existingUser.profileImageUrl,
-            lastLoginAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(eq(users.id, existingUser.id))
-          .returning();
-        return updatedUser;
-      }
-    }
-
-    // Створюємо нового користувача для Replit Auth
-    const [newUser] = await db
+    const result = await db
       .insert(users)
-      .values({
-        username: userData.email || userData.id || 'guest',
-        email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        profileImageUrl: userData.profileImageUrl,
-        password: 'external_auth', // Маркер зовнішньої аутентифікації
-        role: 'user',
-        isActive: true,
-        permissions: userData.permissions,
-        lastLoginAt: new Date(),
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
       })
       .returning();
-    
-    return newUser;
+    return result[0];
   }
 
   // Roles
@@ -3264,26 +3224,7 @@ export class DatabaseStorage implements IStorage {
 
   // Currency methods
   async getCurrencies(): Promise<Currency[]> {
-    const baseCurrencies = await db.select().from(currencies).orderBy(currencies.code);
-    
-    const currenciesWithRates = await Promise.all(
-      baseCurrencies.map(async (currency) => {
-        const [latestRate] = await db
-          .select()
-          .from(currencyRates)
-          .where(eq(currencyRates.currencyCode, currency.code))
-          .orderBy(desc(currencyRates.exchangeDate))
-          .limit(1);
-        
-        return {
-          ...currency,
-          latestRate: latestRate?.rate || null,
-          rateDate: latestRate?.createdAt || null,
-        };
-      })
-    );
-
-    return currenciesWithRates as any;
+    return await db.select().from(currencies).orderBy(currencies.code);
   }
 
   async getCurrency(id: number): Promise<Currency | null> {
@@ -3337,7 +3278,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Видалено getLatestExchangeRates - використовуємо currency_rates замість exchange_rate_history
+  // Видалено getLatestExchangeRates та updateExchangeRates - використовуємо currency_rates
 
   // Production analytics methods
   async getProductionAnalytics(filters: {
@@ -3975,7 +3916,39 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Exchange rates management
-  // Видалено getExchangeRates та createExchangeRate - використовуємо currency_rates
+  async getExchangeRates(): Promise<any[]> {
+    try {
+      const rates = await db.select({
+        id: exchangeRateHistory.id,
+        currencyId: exchangeRateHistory.currencyId,
+        rate: exchangeRateHistory.rate,
+        createdAt: exchangeRateHistory.createdAt,
+        currency: {
+          id: currencies.id,
+          code: currencies.code,
+          name: currencies.name,
+          symbol: currencies.symbol
+        }
+      })
+      .from(exchangeRateHistory)
+      .leftJoin(currencies, eq(exchangeRateHistory.currencyId, currencies.id))
+      .orderBy(desc(exchangeRateHistory.createdAt));
+
+      return rates;
+    } catch (error) {
+      console.error("Error getting exchange rates:", error);
+      throw error;
+    }
+  }
+
+  async createExchangeRate(rateData: any): Promise<any> {
+    try {
+      const [newRate] = await db.insert(exchangeRateHistory).values(rateData).returning();
+      return newRate;
+    } catch (error) {
+      console.error("Error creating exchange rate:", error);
+      throw error;
+    }
   }
 
   async completeProductOrder(productId: number, quantity: string, warehouseId: number): Promise<any> {
@@ -4165,13 +4138,10 @@ export class DatabaseStorage implements IStorage {
 
   async createCompany(companyData: InsertCompany): Promise<Company> {
     try {
-      console.log("Creating company with data:", companyData);
       const [company] = await db.insert(companies).values(companyData).returning();
-      console.log("Company created successfully:", company);
       return company;
     } catch (error) {
       console.error("Error creating company:", error);
-      console.error("Company data that failed:", companyData);
       throw error;
     }
   }
@@ -4886,7 +4856,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getLocalUser(id: number) {
-    const [user] = await this.db
+    const [user] = await db
       .select()
       .from(localUsers)
       .where(eq(localUsers.id, id))
@@ -4894,44 +4864,17 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getLocalUserByUsername(username: string): Promise<LocalUser | undefined> {
-    try {
-      const [user] = await this.db
-        .select()
-        .from(localUsers)
-        .where(eq(localUsers.username, username))
-        .limit(1);
-      return user;
-    } catch (error) {
-      console.error("Error getting local user by username:", error);
-      return undefined;
-    }
-  }
-
-  async getLocalUserWithWorker(userId: number): Promise<(LocalUser & { worker?: any }) | undefined> {
-    try {
-      // Спочатку отримуємо користувача
-      const user = await this.getLocalUser(userId);
-      if (!user) return undefined;
-
-      // Якщо є зв'язок з робітником, отримуємо дані робітника
-      let worker = null;
-      if (user.workerId) {
-        worker = await this.getWorker(user.workerId);
-      }
-
-      return {
-        ...user,
-        worker
-      };
-    } catch (error) {
-      console.error("Error getting local user with worker:", error);
-      return undefined;
-    }
+  async getLocalUserByUsername(username: string) {
+    const [user] = await db
+      .select()
+      .from(localUsers)
+      .where(eq(localUsers.username, username))
+      .limit(1);
+    return user;
   }
 
   async getUserByEmail(email: string): Promise<LocalUser | undefined> {
-    const [user] = await this.db
+    const [user] = await db
       .select()
       .from(localUsers)
       .where(eq(localUsers.email, email))
@@ -4940,32 +4883,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserLastLogin(id: number): Promise<void> {
-    try {
-      await this.db
-        .update(localUsers)
-        .set({ 
-          lastLoginAt: new Date(),
-          updatedAt: new Date()
-        })
-        .where(eq(localUsers.id, id));
-    } catch (error) {
-      console.error("Error updating user last login:", error);
-    }
-  }
-
-  async updateUserPassword(id: number, hashedPassword: string): Promise<void> {
-    try {
-      await this.db
-        .update(localUsers)
-        .set({ 
-          password: hashedPassword,
-          updatedAt: new Date() 
-        })
-        .where(eq(localUsers.id, id));
-    } catch (error) {
-      console.error("Error updating user password:", error);
-      throw error;
-    }
+    await db
+      .update(localUsers)
+      .set({ lastLoginAt: new Date() })
+      .where(eq(localUsers.id, id));
   }
 
   async createLocalUserWithWorker(userData: any) {
@@ -5570,760 +5491,6 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Error fetching client mails:", error);
       return [];
-    }
-  }
-
-  // Email Settings methods
-  async getEmailSettings(): Promise<EmailSettings | null> {
-    try {
-      const settings = await this.db.select()
-        .from(emailSettings)
-        .limit(1);
-      
-      return settings.length > 0 ? settings[0] : null;
-    } catch (error) {
-      console.error("Error fetching email settings:", error);
-      return null;
-    }
-  }
-
-  async updateEmailSettings(settings: InsertEmailSettings): Promise<EmailSettings> {
-    try {
-      const existing = await this.db.select()
-        .from(emailSettings)
-        .limit(1);
-
-      if (existing.length > 0) {
-        // Оновлюємо існуючі налаштування
-        const [updated] = await this.db.update(emailSettings)
-          .set({
-            ...settings,
-            updatedAt: new Date()
-          })
-          .where(eq(emailSettings.id, existing[0].id))
-          .returning();
-        
-        return updated;
-      } else {
-        // Створюємо нові налаштування
-        const [created] = await this.db.insert(emailSettings)
-          .values({
-            ...settings,
-            updatedAt: new Date()
-          })
-          .returning();
-        
-        return created;
-      }
-    } catch (error) {
-      console.error("Error updating email settings:", error);
-      throw error;
-    }
-  }
-
-  // Serial Number Settings methods
-  async getSerialNumberSettings(): Promise<SerialNumberSettings | null> {
-    try {
-      const settings = await this.db.select()
-        .from(serialNumberSettings)
-        .limit(1);
-      
-      return settings.length > 0 ? settings[0] : null;
-    } catch (error) {
-      console.error("Error fetching serial number settings:", error);
-      return null;
-    }
-  }
-
-  async updateSerialNumberSettings(settings: InsertSerialNumberSettings): Promise<SerialNumberSettings> {
-    try {
-      const existing = await this.db.select()
-        .from(serialNumberSettings)
-        .limit(1);
-
-      if (existing.length > 0) {
-        // Оновлюємо існуючі налаштування
-        const [updated] = await this.db.update(serialNumberSettings)
-          .set({
-            ...settings,
-            updatedAt: new Date()
-          })
-          .where(eq(serialNumberSettings.id, existing[0].id))
-          .returning();
-        
-        return updated;
-      } else {
-        // Створюємо нові налаштування
-        const [created] = await this.db.insert(serialNumberSettings)
-          .values({
-            ...settings,
-            updatedAt: new Date()
-          })
-          .returning();
-        
-        return created;
-      }
-    } catch (error) {
-      console.error("Error updating serial number settings:", error);
-      throw error;
-    }
-  }
-
-  // Analytics methods
-  async getSalesAnalytics(period: string): Promise<any> {
-    try {
-      const result = await this.db.select({
-        totalSales: sql<number>`COALESCE(SUM(CAST(${orders.totalPrice} AS DECIMAL)), 0)`,
-        orderCount: sql<number>`COUNT(*)`,
-        avgOrderValue: sql<number>`COALESCE(AVG(CAST(${orders.totalPrice} AS DECIMAL)), 0)`
-      }).from(orders)
-      .where(gte(orders.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)));
-      
-      return result[0] || { totalSales: 0, orderCount: 0, avgOrderValue: 0 };
-    } catch (error) {
-      console.error("Error fetching sales analytics:", error);
-      return { totalSales: 0, orderCount: 0, avgOrderValue: 0 };
-    }
-  }
-
-  async getExpensesAnalytics(period: string): Promise<any> {
-    try {
-      const result = await this.db.select({
-        totalExpenses: sql<number>`COALESCE(SUM(CAST(${costCalculations.totalCost} AS DECIMAL)), 0)`,
-        calculationCount: sql<number>`COUNT(*)`
-      }).from(costCalculations)
-      .where(gte(costCalculations.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)));
-      
-      return result[0] || { totalExpenses: 0, calculationCount: 0 };
-    } catch (error) {
-      console.error("Error fetching expenses analytics:", error);
-      return { totalExpenses: 0, calculationCount: 0 };
-    }
-  }
-
-  async getProfitAnalytics(period: string): Promise<any> {
-    try {
-      const salesResult = await this.getSalesAnalytics(period);
-      const expensesResult = await this.getExpensesAnalytics(period);
-      
-      const profit = salesResult.totalSales - expensesResult.totalExpenses;
-      const profitMargin = salesResult.totalSales > 0 ? (profit / salesResult.totalSales) * 100 : 0;
-      
-      return {
-        totalProfit: profit,
-        profitMargin: profitMargin,
-        revenue: salesResult.totalSales,
-        expenses: expensesResult.totalExpenses
-      };
-    } catch (error) {
-      console.error("Error fetching profit analytics:", error);
-      return { totalProfit: 0, profitMargin: 0, revenue: 0, expenses: 0 };
-    }
-  }
-
-  async calculateProductProfitability(productIds: number[]): Promise<any[]> {
-    try {
-      const results = [];
-      
-      for (const productId of productIds) {
-        const orderItems = await this.db.select({
-          revenue: sql<number>`COALESCE(SUM(CAST(${orderItems.totalPrice} AS DECIMAL)), 0)`,
-          quantity: sql<number>`SUM(${orderItems.quantity})`
-        })
-        .from(orderItems)
-        .where(eq(orderItems.productId, productId));
-        
-        const costs = await this.db.select({
-          totalCost: sql<number>`COALESCE(SUM(CAST(${costCalculations.totalCost} AS DECIMAL)), 0)`
-        })
-        .from(costCalculations)
-        .where(eq(costCalculations.productId, productId));
-        
-        const revenue = orderItems[0]?.revenue || 0;
-        const cost = costs[0]?.totalCost || 0;
-        const profit = revenue - cost;
-        const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
-        
-        results.push({
-          productId,
-          revenue,
-          cost,
-          profit,
-          margin,
-          quantity: orderItems[0]?.quantity || 0
-        });
-      }
-      
-      return results;
-    } catch (error) {
-      console.error("Error calculating product profitability:", error);
-      return [];
-    }
-  }
-
-  // Time tracking methods
-  async getTimeEntries(): Promise<any[]> {
-    // Stub implementation - time entries would need their own table
-    return [];
-  }
-
-  async createTimeEntry(entry: any): Promise<any> {
-    // Stub implementation
-    return { id: 1, ...entry, createdAt: new Date() };
-  }
-
-  async updateTimeEntry(id: number, entry: any): Promise<any> {
-    // Stub implementation
-    return { id, ...entry, updatedAt: new Date() };
-  }
-
-  // Inventory alerts
-  async getInventoryAlerts(): Promise<any[]> {
-    try {
-      const alerts = await this.db.select({
-        id: products.id,
-        name: products.name,
-        currentStock: inventory.quantity,
-        minStock: products.minStock,
-        status: sql<string>`CASE 
-          WHEN ${inventory.quantity} <= ${products.minStock} THEN 'low_stock'
-          WHEN ${inventory.quantity} = 0 THEN 'out_of_stock'
-          ELSE 'normal'
-        END`
-      })
-      .from(products)
-      .leftJoin(inventory, eq(products.id, inventory.productId))
-      .where(
-        or(
-          lte(inventory.quantity, products.minStock),
-          eq(inventory.quantity, 0)
-        )
-      );
-      
-      return alerts;
-    } catch (error) {
-      console.error("Error fetching inventory alerts:", error);
-      return [];
-    }
-  }
-
-  async checkAndCreateInventoryAlerts(): Promise<void> {
-    // Alerts are calculated on-demand, no need to create records
-    return;
-  }
-
-  // Order completion methods
-  async completeOrderFromStock(orderId: number): Promise<boolean> {
-    try {
-      // Update order status to completed
-      await this.db.update(orders)
-        .set({ 
-          status: 'completed',
-          updatedAt: new Date()
-        })
-        .where(eq(orders.id, orderId));
-      
-      // Update inventory quantities
-      const orderItemsList = await this.db.select()
-        .from(orderItems)
-        .where(eq(orderItems.orderId, orderId));
-      
-      for (const item of orderItemsList) {
-        await this.db.update(inventory)
-          .set({
-            quantity: sql`${inventory.quantity} - ${item.quantity}`,
-            updatedAt: new Date()
-          })
-          .where(eq(inventory.productId, item.productId));
-      }
-      
-      return true;
-    } catch (error) {
-      console.error("Error completing order from stock:", error);
-      return false;
-    }
-  }
-
-  // Production planning methods
-  async getProductionPlans(): Promise<any[]> {
-    // Use production tasks as production plans
-    return this.getProductionTasks();
-  }
-
-  async createProductionPlan(plan: any): Promise<any> {
-    // Create as production task
-    return this.createProductionTask(plan);
-  }
-
-  // Supply decision methods
-  async getSupplyDecisions(): Promise<any[]> {
-    // Use material shortages as supply decisions
-    return this.getMaterialShortages();
-  }
-
-  async analyzeSupplyDecision(data: any): Promise<any> {
-    // Analyze supply requirements based on current inventory and orders
-    try {
-      const analysis = {
-        recommendedAction: 'purchase',
-        urgency: 'medium',
-        estimatedCost: 0,
-        suppliers: [],
-        timeline: '7-14 days'
-      };
-      
-      return analysis;
-    } catch (error) {
-      console.error("Error analyzing supply decision:", error);
-      return null;
-    }
-  }
-
-  // Mail and correspondence methods
-  async createClientMail(mail: InsertClientMail): Promise<ClientMail> {
-    try {
-      const [created] = await this.db.insert(clientMail)
-        .values({
-          ...mail,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
-      
-      return created;
-    } catch (error) {
-      console.error("Error creating client mail:", error);
-      throw error;
-    }
-  }
-
-  async createMailRegistry(registry: InsertMailRegistry): Promise<MailRegistry> {
-    try {
-      const [created] = await this.db.insert(mailRegistry)
-        .values({
-          ...registry,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
-      
-      return created;
-    } catch (error) {
-      console.error("Error creating mail registry:", error);
-      throw error;
-    }
-  }
-
-  async updateMailsForBatch(batchId: string, updates: any): Promise<void> {
-    try {
-      await this.db.update(clientMail)
-        .set({
-          ...updates,
-          updatedAt: new Date()
-        })
-        .where(eq(clientMail.batchId, batchId));
-    } catch (error) {
-      console.error("Error updating mails for batch:", error);
-      throw error;
-    }
-  }
-
-  async getMailRegistry(): Promise<MailRegistry[]> {
-    try {
-      return await this.db.select().from(mailRegistry).orderBy(desc(mailRegistry.createdAt));
-    } catch (error) {
-      console.error("Error fetching mail registry:", error);
-      return [];
-    }
-  }
-
-  async getEnvelopePrintSettings(): Promise<EnvelopePrintSettings | null> {
-    try {
-      const settings = await this.db.select()
-        .from(envelopePrintSettings)
-        .limit(1);
-      
-      return settings.length > 0 ? settings[0] : null;
-    } catch (error) {
-      console.error("Error fetching envelope print settings:", error);
-      return null;
-    }
-  }
-
-  async createEnvelopePrintSettings(settings: InsertEnvelopePrintSettings): Promise<EnvelopePrintSettings> {
-    try {
-      const [created] = await this.db.insert(envelopePrintSettings)
-        .values({
-          ...settings,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
-      
-      return created;
-    } catch (error) {
-      console.error("Error creating envelope print settings:", error);
-      throw error;
-    }
-  }
-
-  async createGroupMails(mails: InsertClientMail[]): Promise<ClientMail[]> {
-    try {
-      const results = [];
-      for (const mail of mails) {
-        const created = await this.createClientMail(mail);
-        results.push(created);
-      }
-      return results;
-    } catch (error) {
-      console.error("Error creating group mails:", error);
-      throw error;
-    }
-  }
-
-  async createThirdPartyShipment(shipment: any): Promise<any> {
-    try {
-      const [created] = await this.db.insert(shipments)
-        .values({
-          ...shipment,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
-      
-      return created;
-    } catch (error) {
-      console.error("Error creating third party shipment:", error);
-      throw error;
-    }
-  }
-
-  // Client contacts methods
-  async getClientContacts(): Promise<ClientContact[]> {
-    try {
-      return await this.db.select().from(clientContacts).orderBy(desc(clientContacts.createdAt));
-    } catch (error) {
-      console.error("Error fetching client contacts:", error);
-      return [];
-    }
-  }
-
-  async createClientContact(contact: InsertClientContact): Promise<ClientContact> {
-    try {
-      const [created] = await this.db.insert(clientContacts)
-        .values({
-          ...contact,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
-      
-      return created;
-    } catch (error) {
-      console.error("Error creating client contact:", error);
-      throw error;
-    }
-  }
-
-  async getClientContact(id: number): Promise<ClientContact | null> {
-    try {
-      const [contact] = await this.db.select()
-        .from(clientContacts)
-        .where(eq(clientContacts.id, id));
-      
-      return contact || null;
-    } catch (error) {
-      console.error("Error fetching client contact:", error);
-      return null;
-    }
-  }
-
-  async updateClientContact(id: number, contact: Partial<InsertClientContact>): Promise<ClientContact | null> {
-    try {
-      const [updated] = await this.db.update(clientContacts)
-        .set({
-          ...contact,
-          updatedAt: new Date()
-        })
-        .where(eq(clientContacts.id, id))
-        .returning();
-      
-      return updated || null;
-    } catch (error) {
-      console.error("Error updating client contact:", error);
-      return null;
-    }
-  }
-
-  async deleteClientContact(id: number): Promise<boolean> {
-    try {
-      const result = await this.db.delete(clientContacts)
-        .where(eq(clientContacts.id, id));
-      
-      return result.rowCount > 0;
-    } catch (error) {
-      console.error("Error deleting client contact:", error);
-      return false;
-    }
-  }
-
-  // Integration methods
-  async getIntegrationConfigs(): Promise<IntegrationConfig[]> {
-    try {
-      return await this.db.select().from(integrationConfigs).orderBy(desc(integrationConfigs.createdAt));
-    } catch (error) {
-      console.error("Error fetching integration configs:", error);
-      return [];
-    }
-  }
-
-  async getIntegrationConfig(id: number): Promise<IntegrationConfig | null> {
-    try {
-      const [config] = await this.db.select()
-        .from(integrationConfigs)
-        .where(eq(integrationConfigs.id, id));
-      
-      return config || null;
-    } catch (error) {
-      console.error("Error fetching integration config:", error);
-      return null;
-    }
-  }
-
-  async createIntegrationConfig(config: InsertIntegrationConfig): Promise<IntegrationConfig> {
-    try {
-      const [created] = await this.db.insert(integrationConfigs)
-        .values({
-          ...config,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
-      
-      return created;
-    } catch (error) {
-      console.error("Error creating integration config:", error);
-      throw error;
-    }
-  }
-
-  async updateIntegrationConfig(id: number, config: Partial<InsertIntegrationConfig>): Promise<IntegrationConfig | null> {
-    try {
-      const [updated] = await this.db.update(integrationConfigs)
-        .set({
-          ...config,
-          updatedAt: new Date()
-        })
-        .where(eq(integrationConfigs.id, id))
-        .returning();
-      
-      return updated || null;
-    } catch (error) {
-      console.error("Error updating integration config:", error);
-      return null;
-    }
-  }
-
-  async deleteIntegrationConfig(id: number): Promise<boolean> {
-    try {
-      const result = await this.db.delete(integrationConfigs)
-        .where(eq(integrationConfigs.id, id));
-      
-      return result.rowCount > 0;
-    } catch (error) {
-      console.error("Error deleting integration config:", error);
-      return false;
-    }
-  }
-
-  async getSyncLogs(): Promise<SyncLog[]> {
-    try {
-      return await this.db.select().from(syncLogs).orderBy(desc(syncLogs.createdAt));
-    } catch (error) {
-      console.error("Error fetching sync logs:", error);
-      return [];
-    }
-  }
-
-  // Invoice methods
-  async createInvoice(invoice: any): Promise<any> {
-    try {
-      // Stub implementation since invoices table is not defined
-      return { id: 1, ...invoice, createdAt: new Date() };
-    } catch (error) {
-      console.error("Error creating invoice:", error);
-      throw error;
-    }
-  }
-
-  async updateInvoice(id: number, invoice: any): Promise<any> {
-    try {
-      // Stub implementation
-      return { id, ...invoice, updatedAt: new Date() };
-    } catch (error) {
-      console.error("Error updating invoice:", error);
-      throw error;
-    }
-  }
-
-  async deleteInvoice(id: number): Promise<boolean> {
-    try {
-      // Stub implementation
-      return true;
-    } catch (error) {
-      console.error("Error deleting invoice:", error);
-      return false;
-    }
-  }
-
-  async createInvoiceItem(item: any): Promise<any> {
-    try {
-      // Stub implementation
-      return { id: 1, ...item, createdAt: new Date() };
-    } catch (error) {
-      console.error("Error creating invoice item:", error);
-      throw error;
-    }
-  }
-
-  async updateInvoiceItem(id: number, item: any): Promise<any> {
-    try {
-      // Stub implementation
-      return { id, ...item, updatedAt: new Date() };
-    } catch (error) {
-      console.error("Error updating invoice item:", error);
-      throw error;
-    }
-  }
-
-  async deleteInvoiceItem(id: number): Promise<boolean> {
-    try {
-      // Stub implementation
-      return true;
-    } catch (error) {
-      console.error("Error deleting invoice item:", error);
-      return false;
-    }
-  }
-
-  // Currency Rates methods
-  async getCurrencyRates(limit?: number): Promise<CurrencyRate[]> {
-    const query = db
-      .select()
-      .from(currencyRates)
-      .orderBy(desc(currencyRates.exchangeDate), currencyRates.currencyCode);
-    
-    if (limit) {
-      return await query.limit(limit);
-    }
-    return await query;
-  }
-
-  async getCurrencyRatesByDate(date: Date): Promise<CurrencyRate[]> {
-    return await db
-      .select()
-      .from(currencyRates)
-      .where(eq(currencyRates.exchangeDate, date))
-      .orderBy(currencyRates.currencyCode);
-  }
-
-  async getLatestCurrencyRates(): Promise<CurrencyRate[]> {
-    // Отримуємо останні курси для кожної валюти
-    const latestRates = await db
-      .select()
-      .from(currencyRates)
-      .where(
-        sql`exchange_date = (
-          SELECT MAX(exchange_date) 
-          FROM currency_rates cr2 
-          WHERE cr2.currency_code = currency_rates.currency_code
-        )`
-      )
-      .orderBy(currencyRates.currencyCode);
-    
-    return latestRates;
-  }
-
-  async getAllCurrencyRates(): Promise<any[]> {
-    // Отримуємо всі курси валют для відображення в таблиці НБУ
-    const allRates = await db
-      .select()
-      .from(currencyRates)
-      .orderBy(desc(currencyRates.exchangeDate), currencyRates.currencyCode);
-    
-    return allRates;
-  }
-
-  async saveCurrencyRates(rates: InsertCurrencyRate[]): Promise<CurrencyRate[]> {
-    if (rates.length === 0) return [];
-    
-    const insertedRates = await db
-      .insert(currencyRates)
-      .values(rates)
-      .onConflictDoUpdate({
-        target: [currencyRates.currencyCode, currencyRates.exchangeDate],
-        set: {
-          rate: sql`excluded.rate`,
-          txt: sql`excluded.txt`,
-          cc: sql`excluded.cc`,
-          r030: sql`excluded.r030`,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    
-    return insertedRates;
-  }
-
-  async getCurrencyUpdateSettings(): Promise<CurrencyUpdateSettings | null> {
-    const [settings] = await db
-      .select()
-      .from(currencyUpdateSettings)
-      .limit(1);
-    
-    return settings || null;
-  }
-
-  async saveCurrencyUpdateSettings(settingsData: Partial<InsertCurrencyUpdateSettings>): Promise<CurrencyUpdateSettings> {
-    // Перевіряємо чи існують налаштування
-    const existing = await this.getCurrencyUpdateSettings();
-    
-    if (existing) {
-      const [updated] = await db
-        .update(currencyUpdateSettings)
-        .set({
-          ...settingsData,
-          updatedAt: new Date(),
-        })
-        .where(eq(currencyUpdateSettings.id, existing.id))
-        .returning();
-      return updated;
-    } else {
-      const [created] = await db
-        .insert(currencyUpdateSettings)
-        .values({
-          autoUpdateEnabled: true,
-          updateTime: "09:00",
-          enabledCurrencies: ["USD", "EUR"],
-          ...settingsData,
-        })
-        .returning();
-      return created;
-    }
-  }
-
-  async updateCurrencyUpdateStatus(status: string, error?: string): Promise<void> {
-    const settings = await this.getCurrencyUpdateSettings();
-    if (settings) {
-      await db
-        .update(currencyUpdateSettings)
-        .set({
-          lastUpdateDate: new Date(),
-          lastUpdateStatus: status,
-          lastUpdateError: error || null,
-          updatedAt: new Date(),
-        })
-        .where(eq(currencyUpdateSettings.id, settings.id));
     }
   }
 }

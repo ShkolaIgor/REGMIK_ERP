@@ -3242,25 +3242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/exchange-rates/latest", async (req, res) => {
-    try {
-      const rates = await storage.getLatestExchangeRates();
-      res.json(rates);
-    } catch (error) {
-      console.error("Error fetching exchange rates:", error);
-      res.status(500).json({ error: "Failed to get exchange rates" });
-    }
-  });
-
-  app.post("/api/exchange-rates/update", async (req, res) => {
-    try {
-      const rates = await storage.updateExchangeRates();
-      res.json(rates);
-    } catch (error) {
-      console.error("Error updating exchange rates:", error);
-      res.status(500).json({ error: "Failed to update exchange rates" });
-    }
-  });
+  // Видалено exchange-rates API - використовуємо currency-rates замість них
 
   // Production analytics routes
   app.get("/api/production/analytics", async (req, res) => {
