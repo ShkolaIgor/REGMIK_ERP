@@ -3289,6 +3289,47 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async saveCurrencyRates(rates: any[]): Promise<any[]> {
+    try {
+      const savedRates = [];
+      
+      for (const rate of rates) {
+        // Перевіряємо чи курс вже існує для цієї валюти та дати
+        const existingRate = await db.select()
+          .from(currencyRates)
+          .where(
+            and(
+              eq(currencyRates.currencyCode, rate.currencyCode),
+              eq(currencyRates.exchangeDate, rate.exchangeDate)
+            )
+          )
+          .limit(1);
+
+        if (existingRate.length === 0) {
+          // Зберігаємо новий курс
+          const [newRate] = await db
+            .insert(currencyRates)
+            .values({
+              currencyCode: rate.currencyCode,
+              rate: rate.rate,
+              exchangeDate: rate.exchangeDate,
+              txt: rate.txt || '',
+              cc: rate.cc || rate.currencyCode,
+              r030: rate.r030 || 0,
+            })
+            .returning();
+          
+          savedRates.push(newRate);
+        }
+      }
+      
+      return savedRates;
+    } catch (error) {
+      console.error("Error saving currency rates:", error);
+      throw error;
+    }
+  }
+
   async getCurrencyRatesByDate(date: string): Promise<any[]> {
     try {
       const rates = await db.select()
