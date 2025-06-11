@@ -637,9 +637,9 @@ export default function Currencies() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="nbu" className="space-y-2 flex-1 flex flex-col overflow-hidden">
+          <TabsContent value="nbu" className="flex-1 flex flex-col overflow-hidden">
             {/* Оновлення курсів */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 flex-shrink-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 flex-shrink-0">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -816,9 +816,9 @@ export default function Currencies() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="settings" className="flex-1 flex flex-col space-y-4 overflow-hidden">
+          <TabsContent value="settings" className="flex-1 flex flex-col overflow-hidden">
             <Card>
-              <CardHeader className="pb-4">
+              <CardHeader>
                 <CardTitle>Налаштування автоматичного оновлення</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
