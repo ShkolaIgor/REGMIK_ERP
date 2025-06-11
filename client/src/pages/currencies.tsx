@@ -952,7 +952,6 @@ export default function Currencies() {
                   value={searchDate}
                   onChange={(e) => setSearchDate(e.target.value)}
                   className="max-w-xs"
-                  size="sm"
                 />
                 <Button
                   variant="outline"
