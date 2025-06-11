@@ -1,45 +1,35 @@
 import { useState } from "react";
-import * as React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Edit, Star, Trash2, Search, RefreshCw, Calendar, Download, TrendingUp, Pencil } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { 
+  Plus, 
+  Search, 
+  DollarSign, 
+  Edit,
+  Trash2,
+  TrendingUp,
+  Star,
+  RefreshCw,
+  Calendar,
+  ArrowUpDown,
+  Settings,
+  Download,
+  Banknote
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { uk } from "date-fns/locale";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface Currency {
   id: number;
@@ -52,6 +42,8 @@ interface Currency {
   createdAt: string;
   updatedAt: string;
 }
+
+// Видалено ExchangeRate - використовуємо currency_rates замість exchange_rates
 
 interface CurrencyWithLatestRate extends Currency {
   latestRate?: string;
@@ -85,6 +77,8 @@ export default function Currencies() {
   const [activeTab, setActiveTab] = useState("currencies");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCurrency, setEditingCurrency] = useState<Currency | null>(null);
+  const [isRateDialogOpen, setIsRateDialogOpen] = useState(false);
+  const [selectedCurrencyForRate, setSelectedCurrencyForRate] = useState<Currency | null>(null);
 
   const [currencyForm, setCurrencyForm] = useState({
     code: "",
@@ -93,6 +87,10 @@ export default function Currencies() {
     decimalPlaces: 2,
     isBase: false,
     isActive: true
+  });
+
+  const [rateForm, setRateForm] = useState({
+    rate: ""
   });
 
   // НБУ states
@@ -110,6 +108,8 @@ export default function Currencies() {
     queryKey: ["/api/currencies"],
   });
 
+  // Видалено exchange-rates - використовуємо currency_rates
+
   // НБУ queries
   const { data: nbuRates = [], isLoading: ratesLoading } = useQuery<CurrencyRate[]>({
     queryKey: ["/api/currency-rates"],
@@ -119,11 +119,8 @@ export default function Currencies() {
     queryKey: ["/api/currency-settings"],
   });
 
-  // Currency mutations
   const createCurrencyMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return await apiRequest("/api/currencies", "POST", data);
-    },
+    mutationFn: async (data: any) => apiRequest("/api/currencies", "POST", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/currencies"] });
       setIsDialogOpen(false);
@@ -133,19 +130,17 @@ export default function Currencies() {
         description: "Валюту створено",
       });
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast({
         title: "Помилка",
-        description: error.message,
+        description: "Не вдалося створити валюту",
         variant: "destructive",
       });
     },
   });
 
   const updateCurrencyMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return await apiRequest(`/api/currencies/${data.id}`, "PATCH", data);
-    },
+    mutationFn: async ({ id, ...data }: any) => apiRequest(`/api/currencies/${id}`, "PATCH", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/currencies"] });
       setIsDialogOpen(false);
@@ -156,19 +151,17 @@ export default function Currencies() {
         description: "Валюту оновлено",
       });
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast({
         title: "Помилка",
-        description: error.message,
+        description: "Не вдалося оновити валюту",
         variant: "destructive",
       });
     },
   });
 
   const deleteCurrencyMutation = useMutation({
-    mutationFn: async (id: number) => {
-      return await apiRequest(`/api/currencies/${id}`, "DELETE");
-    },
+    mutationFn: async (id: number) => apiRequest(`/api/currencies/${id}`, "DELETE"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/currencies"] });
       toast({
@@ -176,50 +169,79 @@ export default function Currencies() {
         description: "Валюту видалено",
       });
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast({
         title: "Помилка",
-        description: error.message,
+        description: "Не вдалося видалити валюту",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createExchangeRateMutation = useMutation({
+    mutationFn: async (data: any) => apiRequest("/api/exchange-rates", "POST", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/exchange-rates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/currencies"] });
+      setIsRateDialogOpen(false);
+      setRateForm({ rate: "" });
+      setSelectedCurrencyForRate(null);
+      toast({
+        title: "Успіх",
+        description: "Курс валют оновлено",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося оновити курс валют",
         variant: "destructive",
       });
     },
   });
 
   const setBaseCurrencyMutation = useMutation({
-    mutationFn: async (id: number) => {
-      return await apiRequest(`/api/currencies/${id}/set-base`, "POST");
-    },
+    mutationFn: async (currencyId: number) => apiRequest(`/api/currencies/${currencyId}/set-base`, "POST"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/currencies"] });
       toast({
         title: "Успіх",
-        description: "Базову валюту встановлено",
+        description: "Базову валюту змінено",
       });
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast({
         title: "Помилка",
-        description: error.message,
+        description: "Не вдалося змінити базову валюту",
         variant: "destructive",
       });
     },
   });
 
-  // NBU mutations
+  // НБУ mutations
   const updateCurrentRatesMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("/api/nbu/update-current-rates", "POST");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/currency-rates"] });
-      toast({
-        title: "Успіх",
-        description: "Поточні курси оновлено",
+      const response = await fetch("/api/currency-rates/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
       });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Помилка оновлення курсів");
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Курси оновлено",
+        description: data.message,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-rates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-settings"] });
     },
     onError: (error: Error) => {
       toast({
-        title: "Помилка",
+        title: "Помилка оновлення",
         description: error.message,
         variant: "destructive",
       });
@@ -227,19 +249,31 @@ export default function Currencies() {
   });
 
   const updatePeriodRatesMutation = useMutation({
-    mutationFn: async (data: { startDate: string; endDate: string }) => {
-      return await apiRequest("/api/nbu/update-period-rates", "POST", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/currency-rates"] });
-      toast({
-        title: "Успіх",
-        description: "Курси за період оновлено",
+    mutationFn: async ({ startDate, endDate }: { startDate: string; endDate: string }) => {
+      console.log('Starting period update for:', startDate, 'to', endDate);
+      const response = await fetch("/api/currency-rates/update-period", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startDate, endDate }),
       });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Помилка оновлення курсів за період");
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      console.log('Period update success:', data);
+      toast({
+        title: "Курси за період оновлено",
+        description: `${data.message}. Оновлено дат: ${data.updatedDates?.length || 0}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-rates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/currencies"] });
     },
     onError: (error: Error) => {
       toast({
-        title: "Помилка",
+        title: "Помилка оновлення за період",
         description: error.message,
         variant: "destructive",
       });
@@ -247,39 +281,28 @@ export default function Currencies() {
   });
 
   const saveNbuSettingsMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return await apiRequest("/api/currency-settings", "POST", data);
+    mutationFn: async (settingsData: Partial<CurrencySettings>) => {
+      const response = await fetch("/api/currency-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settingsData),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Помилка збереження налаштувань");
+      }
+      return response.json();
     },
     onSuccess: () => {
+      toast({
+        title: "Налаштування збережено",
+        description: "Налаштування автоматичного оновлення курсів збережено",
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/currency-settings"] });
-      toast({
-        title: "Успіх",
-        description: "Налаштування збережено",
-      });
     },
     onError: (error: Error) => {
       toast({
-        title: "Помилка",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const clearRatesMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("/api/nbu/clear-rates", "POST");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/currency-rates"] });
-      toast({
-        title: "Успіх",
-        description: "Курси очищено",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Помилка",
+        title: "Помилка збереження",
         description: error.message,
         variant: "destructive",
       });
@@ -299,30 +322,58 @@ export default function Currencies() {
 
   const handleSubmitCurrency = () => {
     if (editingCurrency) {
-      updateCurrencyMutation.mutate({ ...currencyForm, id: editingCurrency.id });
+      updateCurrencyMutation.mutate({ id: editingCurrency.id, ...currencyForm });
     } else {
       createCurrencyMutation.mutate(currencyForm);
     }
   };
 
   const handleEditCurrency = (currency: Currency) => {
+    setEditingCurrency(currency);
     setCurrencyForm({
       code: currency.code,
       name: currency.name,
-      symbol: currency.symbol,
+      symbol: currency.symbol || "",
       decimalPlaces: currency.decimalPlaces,
       isBase: currency.isBase,
       isActive: currency.isActive
     });
-    setEditingCurrency(currency);
     setIsDialogOpen(true);
   };
 
-  const handleUpdatePeriodRates = () => {
+  const handleAddRate = (currency: Currency) => {
+    setSelectedCurrencyForRate(currency);
+    setIsRateDialogOpen(true);
+  };
+
+  const handleSubmitRate = () => {
+    if (selectedCurrencyForRate) {
+      createExchangeRateMutation.mutate({
+        currencyId: selectedCurrencyForRate.id,
+        rate: rateForm.rate
+      });
+    }
+  };
+
+  // НБУ handlers
+  const handleUpdateCurrent = () => {
+    updateCurrentRatesMutation.mutate();
+  };
+
+  const handleUpdatePeriod = () => {
     if (!startDate || !endDate) {
       toast({
         title: "Помилка",
-        description: "Оберіть дати початку та кінця періоду",
+        description: "Вкажіть початкову та кінцеву дати",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (new Date(startDate) > new Date(endDate)) {
+      toast({
+        title: "Помилка",
+        description: "Початкова дата не може бути пізніше кінцевої",
         variant: "destructive",
       });
       return;
@@ -375,34 +426,12 @@ export default function Currencies() {
 
   const baseCurrency = currencies.find(c => c.isBase);
 
-  // Підготовка даних для графіка
-  const chartData = React.useMemo(() => {
-    if (!nbuRates.length) return [];
-    
-    // Групуємо курси по датах
-    const ratesByDate = nbuRates.reduce((acc, rate) => {
-      const date = rate.exchangeDate;
-      if (!acc[date]) {
-        acc[date] = { date: formatExchangeDate(date) };
-      }
-      acc[date][rate.currencyCode] = parseFloat(rate.rate);
-      return acc;
-    }, {} as Record<string, any>);
-
-    return Object.values(ratesByDate).sort((a, b) => 
-      new Date(a.date.split('.').reverse().join('-')).getTime() - 
-      new Date(b.date.split('.').reverse().join('-')).getTime()
-    );
-  }, [nbuRates]);
-
-  const currencies_for_chart = Array.from(new Set(nbuRates.map(r => r.currencyCode)));
-
   return (
-    <div className="h-screen flex flex-col p-6 overflow-hidden">
-      <div className="flex justify-between items-center mb-6 flex-shrink-0">
+    <div className="h-screen flex flex-col p-2 overflow-hidden">
+      <div className="flex justify-between items-center mb-2 flex-shrink-0">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Валюти</h1>
-          <p className="text-muted-foreground">Управління валютами та курсами обміну</p>
+          <h1 className="text-2xl font-bold mb-1">Валюти</h1>
+          <p className="text-sm text-muted-foreground">Управління валютами та курсами обміну</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -456,32 +485,38 @@ export default function Currencies() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="decimalPlaces">Десяткові знаки</Label>
-                  <Input
-                    id="decimalPlaces"
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={currencyForm.decimalPlaces}
-                    onChange={(e) => setCurrencyForm(prev => ({ ...prev, decimalPlaces: parseInt(e.target.value) || 0 }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Статус</Label>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={currencyForm.isActive}
-                      onCheckedChange={(checked) => setCurrencyForm(prev => ({ ...prev, isActive: checked }))}
-                    />
-                    <span>{currencyForm.isActive ? "Активна" : "Неактивна"}</span>
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="decimalPlaces">Знаків після коми</Label>
+                <Input
+                  id="decimalPlaces"
+                  type="number"
+                  min="0"
+                  max="6"
+                  value={currencyForm.decimalPlaces}
+                  onChange={(e) => setCurrencyForm(prev => ({ ...prev, decimalPlaces: parseInt(e.target.value) || 2 }))}
+                />
               </div>
 
-              <div className="flex justify-end space-x-2">
-                <Button
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isActive"
+                  checked={currencyForm.isActive}
+                  onCheckedChange={(checked) => setCurrencyForm(prev => ({ ...prev, isActive: checked }))}
+                />
+                <Label htmlFor="isActive">Активна валюта</Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isBase"
+                  checked={currencyForm.isBase}
+                  onCheckedChange={(checked) => setCurrencyForm(prev => ({ ...prev, isBase: checked }))}
+                />
+                <Label htmlFor="isBase">Базова валюта</Label>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button 
                   onClick={handleSubmitCurrency}
                   disabled={createCurrencyMutation.isPending || updateCurrencyMutation.isPending}
                 >
@@ -517,396 +552,541 @@ export default function Currencies() {
         </Card>
       )}
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-          <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
-            <TabsTrigger value="currencies">Валюти</TabsTrigger>
-            <TabsTrigger value="nbu">Курси НБУ</TabsTrigger>
-            <TabsTrigger value="settings">Налаштування</TabsTrigger>
-          </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="currencies">Валюти</TabsTrigger>
+          <TabsTrigger value="nbu">Курси НБУ</TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="currencies" className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex items-center space-x-2 flex-shrink-0 p-4 pb-0">
-              <div className="relative flex-1">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Пошук валют..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
+        <TabsContent value="currencies" className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Пошук валют..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
             </div>
+          </div>
 
-            <Card className="flex-1 overflow-hidden mx-4 mb-4">
-              <div className="h-full overflow-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Код</TableHead>
-                      <TableHead>Назва</TableHead>
-                      <TableHead>Символ</TableHead>
-                      <TableHead>Поточний курс</TableHead>
-                      <TableHead>Статус</TableHead>
-                      <TableHead>Дії</TableHead>
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Код</TableHead>
+                  <TableHead>Назва</TableHead>
+                  <TableHead>Символ</TableHead>
+                  <TableHead>Поточний курс</TableHead>
+                  <TableHead>Статус</TableHead>
+                  <TableHead>Дії</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center">Завантаження...</TableCell>
+                  </TableRow>
+                ) : filteredCurrencies.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center">Валюти не знайдено</TableCell>
+                  </TableRow>
+                ) : (
+                  filteredCurrencies.map((currency) => (
+                    <TableRow key={currency.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          {currency.code}
+                          {currency.isBase && <Star className="h-4 w-4 text-yellow-500" />}
+                        </div>
+                      </TableCell>
+                      <TableCell>{currency.name}</TableCell>
+                      <TableCell>{currency.symbol || "-"}</TableCell>
+                      <TableCell>
+                        {currency.isBase ? (
+                          <Badge variant="outline">Базова</Badge>
+                        ) : currency.latestRate ? (
+                          <div>
+                            <div className="font-medium">{parseFloat(currency.latestRate).toFixed(4)}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {currency.rateDate ? new Date(currency.rateDate).toLocaleDateString() : ""}
+                            </div>
+                          </div>
+                        ) : (
+                          <Badge variant="secondary">Немає курсу</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Badge variant={currency.isActive ? "default" : "secondary"}>
+                            {currency.isActive ? "Активна" : "Неактивна"}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditCurrency(currency)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          {!currency.isBase && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setBaseCurrencyMutation.mutate(currency.id)}
+                            >
+                              <Star className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {!currency.isBase && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAddRate(currency)}
+                            >
+                              <TrendingUp className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {!currency.isBase && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => deleteCurrencyMutation.mutate(currency.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoading ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8">
-                          Завантаження...
-                        </TableCell>
-                      </TableRow>
-                    ) : filteredCurrencies.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          Валюти не знайдено
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredCurrencies.map((currency) => (
-                        <TableRow key={currency.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {currency.code}
-                              {currency.isBase && <Star className="h-4 w-4 text-yellow-500" />}
-                            </div>
-                          </TableCell>
-                          <TableCell>{currency.name}</TableCell>
-                          <TableCell>{currency.symbol || "-"}</TableCell>
-                          <TableCell>
-                            {currency.isBase ? (
-                              <Badge variant="outline">Базова</Badge>
-                            ) : (() => {
-                              // Шукаємо поточний курс з таблиці currency_rates
-                              const currentRate = nbuRates.find(rate => rate.currencyCode === currency.code);
-                              return currentRate ? (
-                                <div>
-                                  <div className="font-medium">{parseFloat(currentRate.rate).toFixed(4)}</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {new Date(currentRate.exchangeDate).toLocaleDateString()}
-                                  </div>
-                                </div>
-                              ) : (
-                                <Badge variant="secondary">Немає курсу</Badge>
-                              );
-                            })()}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Badge variant={currency.isActive ? "default" : "secondary"}>
-                                {currency.isActive ? "Активна" : "Неактивна"}
-                              </Badge>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleEditCurrency(currency)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              {!currency.isBase && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setBaseCurrencyMutation.mutate(currency.id)}
-                                >
-                                  <Star className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {!currency.isBase && (
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => deleteCurrencyMutation.mutate(currency.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="nbu" className="flex-1 flex flex-col overflow-hidden">
-            {/* Оновлення курсів */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 pb-0 flex-shrink-0">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <RefreshCw className="h-5 w-5" />
-                    Оновлення поточних курсів
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Отримати актуальні курси валют НБУ на сьогоднішню дату
-                  </p>
-                  <Button 
-                    onClick={() => updateCurrentRatesMutation.mutate()}
-                    disabled={updateCurrentRatesMutation.isPending}
-                    className="w-full"
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Оновити поточні курси
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Оновлення за період
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="startDate">Від</Label>
-                      <Input
-                        id="startDate"
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="endDate">До</Label>
-                      <Input
-                        id="endDate"
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <Button 
-                    onClick={handleUpdatePeriodRates}
-                    disabled={updatePeriodRatesMutation.isPending}
-                    className="w-full"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Завантажити за період
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Графік курсів валют НБУ */}
-            <Card className="mx-4 mb-4">
-              <CardHeader>
-                <CardTitle>Динаміка зміни курсів відносно гривні</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {ratesLoading ? (
-                  <div className="text-center py-8">Завантаження даних для графіка...</div>
-                ) : chartData.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Немає даних для відображення графіка. Завантажте курси НБУ.
-                  </div>
-                ) : (
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis 
-                          dataKey="date" 
-                          tick={{ fontSize: 12 }}
-                          angle={-45}
-                          textAnchor="end"
-                          height={60}
-                        />
-                        <YAxis tick={{ fontSize: 12 }} />
-                        <Tooltip 
-                          labelFormatter={(label) => `Дата: ${label}`}
-                          formatter={(value, name) => [`${Number(value).toFixed(4)} ₴`, name]}
-                        />
-                        <Legend />
-                        {currencies_for_chart.map((currency, index) => {
-                          const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#8dd1e1', '#d084d0'];
-                          return (
-                            <Line 
-                              key={currency}
-                              type="monotone" 
-                              dataKey={currency} 
-                              stroke={colors[index % colors.length]}
-                              strokeWidth={2}
-                              dot={{ r: 3 }}
-                              name={currency}
-                            />
-                          );
-                        })}
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
+                  ))
                 )}
-              </CardContent>
-            </Card>
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
 
-            {/* Курси НБУ */}
-            <Card className="flex-1 flex flex-col overflow-hidden mx-4 mb-4">
-              <CardHeader className="flex-shrink-0">
-                <div className="flex items-center justify-between">
-                  <CardTitle>Курси валют НБУ</CardTitle>
-                  <div className="flex gap-2">
-                    <Input
-                      type="date"
-                      placeholder="Пошук за датою"
-                      value={searchDate}
-                      onChange={(e) => setSearchDate(e.target.value)}
-                      className="max-w-xs"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => clearRatesMutation.mutate()}
-                    >
-                      Очистити
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-1 overflow-auto p-0">
-                {ratesLoading ? (
-                  <div className="text-center py-8">Завантаження курсів...</div>
-                ) : nbuRates.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Курси НБУ не завантажені. Використовуйте кнопки оновлення вище.
-                  </div>
-                ) : (
-                  <div className="max-h-96 overflow-auto p-2">
-                    <Table>
-                      <TableHeader className="sticky top-0 bg-background">
-                        <TableRow>
-                          <TableHead className="text-sm">Дата курсу</TableHead>
-                          <TableHead className="text-sm">Валюта</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {nbuRates
-                          .filter(rate => !searchDate || rate.exchangeDate === searchDate)
-                          .filter(rate => enabledCurrencies.includes(rate.currencyCode))
-                          .map((rate) => (
-                            <TableRow key={rate.id} className="text-sm">
-                              <TableCell className="text-sm">{formatExchangeDate(rate.exchangeDate)}</TableCell>
-                              <TableCell className="font-medium text-sm">
-                                <div className="flex items-center justify-between">
-                                  <span>{rate.currencyCode}</span>
-                                  <span className="font-mono">{parseFloat(rate.rate).toFixed(4)}</span>
-                                </div>
-                                <div className="text-xs text-muted-foreground">{rate.txt}</div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          <TabsContent value="settings" className="flex-1 flex flex-col overflow-hidden">
-            <Card className="m-4">
+
+        <TabsContent value="nbu" className="space-y-2 flex-1 flex flex-col overflow-hidden">
+          {/* Оновлення курсів */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 flex-shrink-0">
+            <Card>
               <CardHeader>
-                <CardTitle>Налаштування автоматичного оновлення</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <RefreshCw className="h-5 w-5" />
+                  Оновлення поточних курсів
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="auto-update"
-                    checked={autoUpdateEnabled}
-                    onCheckedChange={setAutoUpdateEnabled}
-                  />
-                  <Label htmlFor="auto-update">Автоматичне оновлення курсів</Label>
-                </div>
-
-                {autoUpdateEnabled && (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="update-time">Час оновлення</Label>
-                      <Input
-                        id="update-time"
-                        type="time"
-                        value={updateTime}
-                        onChange={(e) => setUpdateTime(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Валюти для оновлення</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {["USD", "EUR", "GBP", "PLN", "CHF", "JPY", "CAD", "AUD"].map(currency => (
-                          <div key={currency} className="flex items-center space-x-2">
-                            <Switch
-                              id={currency}
-                              checked={enabledCurrencies.includes(currency)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setEnabledCurrencies(prev => [...prev, currency]);
-                                } else {
-                                  setEnabledCurrencies(prev => prev.filter(c => c !== currency));
-                                }
-                              }}
-                            />
-                            <Label htmlFor={currency}>{currency}</Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <Button onClick={handleSaveNbuSettings}>
-                  Зберегти налаштування
+                <p className="text-sm text-muted-foreground">
+                  Отримати актуальні курси валют НБУ на сьогоднішню дату
+                </p>
+                <Button 
+                  onClick={handleUpdateCurrent}
+                  disabled={updateCurrentRatesMutation.isPending}
+                  className="w-full"
+                >
+                  {updateCurrentRatesMutation.isPending ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Оновлюється...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-2" />
+                      Оновити поточні курси
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>
 
-            {nbuSettings && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Статус системи</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Останнє оновлення</Label>
-                      <p className="text-sm text-muted-foreground">
-                        {nbuSettings.lastUpdateDate ? formatDate(nbuSettings.lastUpdateDate) : "Ніколи"}
-                      </p>
-                    </div>
-                    <div>
-                      <Label>Статус</Label>
-                      <div className="mt-1">
-                        {getStatusBadge(nbuSettings.lastUpdateStatus)}
-                      </div>
-                    </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Оновлення за період
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Завантажити курси валют за обраний період
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="startDate">Від</Label>
+                    <Input
+                      id="startDate"
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                    />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="endDate">До</Label>
+                    <Input
+                      id="endDate"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <Button 
+                  onClick={handleUpdatePeriod}
+                  disabled={updatePeriodRatesMutation.isPending || !startDate || !endDate}
+                  className="w-full"
+                >
+                  {updatePeriodRatesMutation.isPending ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Завантажується...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-2" />
+                      Завантажити за період
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
 
-                  {nbuSettings.lastUpdateError && (
-                    <div>
-                      <Label>Остання помилка</Label>
-                      <p className="text-sm text-red-600">{nbuSettings.lastUpdateError}</p>
+          {/* Налаштування автоматичного оновлення */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Налаштування автоматичного оновлення
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="autoUpdate"
+                      checked={autoUpdateEnabled}
+                      onCheckedChange={setAutoUpdateEnabled}
+                    />
+                    <Label htmlFor="autoUpdate">Автоматичне оновлення</Label>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="updateTime">Час оновлення</Label>
+                  <Input
+                    id="updateTime"
+                    type="time"
+                    value={updateTime}
+                    onChange={(e) => setUpdateTime(e.target.value)}
+                    disabled={!autoUpdateEnabled}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Валюти для оновлення</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {["USD", "EUR"].map((currency) => (
+                      <div key={currency} className="flex items-center space-x-2">
+                        <Switch
+                          id={`currency-${currency}`}
+                          checked={enabledCurrencies.includes(currency)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setEnabledCurrencies(prev => [...prev, currency]);
+                            } else {
+                              setEnabledCurrencies(prev => prev.filter(c => c !== currency));
+                            }
+                          }}
+                          disabled={!autoUpdateEnabled}
+                        />
+                        <Label htmlFor={`currency-${currency}`}>{currency}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t flex justify-between items-center">
+                <div className="text-sm text-muted-foreground">
+                  {nbuSettings && (
+                    <div className="space-y-1">
+                      <div>Останнє оновлення: {nbuSettings.lastUpdateDate ? formatDate(nbuSettings.lastUpdateDate) : "Немає даних"}</div>
+                      <div className="flex items-center gap-2">
+                        Статус: {getStatusBadge(nbuSettings.lastUpdateStatus)}
+                      </div>
+                      {nbuSettings.lastUpdateError && (
+                        <div className="text-red-600 text-xs">
+                          Помилка: {nbuSettings.lastUpdateError}
+                        </div>
+                      )}
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
+                </div>
+                <Button 
+                  onClick={handleSaveNbuSettings}
+                  disabled={saveNbuSettingsMutation.isPending}
+                  size="sm"
+                >
+                  {saveNbuSettingsMutation.isPending ? "Збереження..." : "Зберегти налаштування"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Графік курсів НБУ */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Графік курсів валют НБУ
+              </CardTitle>
+              <CardDescription>
+                Динаміка зміни курсів EUR та USD відносно гривні
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {ratesLoading ? (
+                <div className="h-80 flex items-center justify-center">
+                  <div className="text-center">
+                    <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2" />
+                    <p>Завантаження даних...</p>
+                  </div>
+                </div>
+              ) : nbuRates.length === 0 ? (
+                <div className="h-80 flex items-center justify-center text-center text-muted-foreground">
+                  <div>
+                    <TrendingUp className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>Курси НБУ не завантажені</p>
+                    <p className="text-sm">Використовуйте кнопки оновлення вище</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={(() => {
+                        // Group rates by exchange date and format for chart
+                        const ratesByDate = nbuRates.reduce((acc, rate) => {
+                          const date = rate.exchangeDate;
+                          if (!acc[date]) {
+                            acc[date] = { date };
+                          }
+                          acc[date][rate.currencyCode] = parseFloat(rate.rate);
+                          return acc;
+                        }, {} as Record<string, any>);
+
+                        // Sort dates and return array
+                        return Object.values(ratesByDate)
+                          .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                          .map((item: any) => ({
+                            ...item,
+                            date: formatExchangeDate(item.date)
+                          }));
+                      })()}
+                      margin={{
+                        top: 5,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="date" 
+                        tick={{ fontSize: 12 }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis 
+                        tick={{ fontSize: 12 }}
+                        domain={['dataMin - 1', 'dataMax + 1']}
+                      />
+                      <Tooltip 
+                        labelFormatter={(label) => `Дата: ${label}`}
+                        formatter={(value: any, name: string) => [
+                          `${parseFloat(value).toFixed(4)} ₴`,
+                          name === 'EUR' ? 'Євро' : name === 'USD' ? 'Долар США' : name
+                        ]}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="EUR" 
+                        stroke="#8884d8" 
+                        strokeWidth={2}
+                        name="EUR"
+                        connectNulls={false}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="USD" 
+                        stroke="#82ca9d" 
+                        strokeWidth={2}
+                        name="USD"
+                        connectNulls={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Таблиця курсів НБУ */}
+          <Card className="flex-1 flex flex-col overflow-hidden">
+            <CardHeader className="flex-shrink-0 p-3">
+              <CardTitle className="text-lg">Курси валют НБУ</CardTitle>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  type="date"
+                  placeholder="Пошук за датою"
+                  value={searchDate}
+                  onChange={(e) => setSearchDate(e.target.value)}
+                  className="max-w-xs"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSearchDate("")}
+                  disabled={!searchDate}
+                >
+                  Очистити
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-auto p-0">
+              {ratesLoading ? (
+                <div className="text-center py-8">Завантаження курсів...</div>
+              ) : nbuRates.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Курси НБУ не завантажені. Використовуйте кнопки оновлення вище.
+                </div>
+              ) : (
+                <div className="max-h-96 overflow-auto p-2">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-background">
+                      <TableRow>
+                        <TableHead className="text-sm">Дата курсу</TableHead>
+                        <TableHead className="text-sm">EUR</TableHead>
+                        <TableHead className="text-sm">USD</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                    {(() => {
+                      // Filter rates by search date if provided
+                      const filteredRates = searchDate 
+                        ? nbuRates.filter(rate => {
+                            // Normalize both dates for comparison - handle both date string formats
+                            let rateDate;
+                            if (rate.exchangeDate.includes(' ')) {
+                              // Format: "2025-06-11 00:00:00" -> "2025-06-11"
+                              rateDate = rate.exchangeDate.split(' ')[0];
+                            } else if (rate.exchangeDate.includes('T')) {
+                              // Format: "2025-06-11T00:00:00" -> "2025-06-11" 
+                              rateDate = rate.exchangeDate.split('T')[0];
+                            } else {
+                              // Already in YYYY-MM-DD format
+                              rateDate = rate.exchangeDate;
+                            }
+
+                            return rateDate === searchDate;
+                          })
+                        : nbuRates;
+
+                      // Group rates by exchange date
+                      const ratesByDate = filteredRates.reduce((acc, rate) => {
+                        const date = rate.exchangeDate;
+                        if (!acc[date]) {
+                          acc[date] = {};
+                        }
+                        acc[date][rate.currencyCode] = rate.rate;
+                        return acc;
+                      }, {} as Record<string, Record<string, string>>);
+
+                      // Sort dates in descending order
+                      const sortedDates = Object.keys(ratesByDate).sort((a, b) => 
+                        new Date(b).getTime() - new Date(a).getTime()
+                      );
+
+                      return sortedDates.map((date) => (
+                        <TableRow key={date}>
+                          <TableCell className="font-medium">
+                            {formatExchangeDate(date)}
+                          </TableCell>
+                          <TableCell className="font-mono">
+                            {ratesByDate[date]['EUR'] || '—'}
+                          </TableCell>
+                          <TableCell className="font-mono">
+                            {ratesByDate[date]['USD'] || '—'}
+                          </TableCell>
+                        </TableRow>
+                      ));
+                    })()}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Exchange Rate Dialog */}
+      <Dialog open={isRateDialogOpen} onOpenChange={setIsRateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Оновити курс валюти {selectedCurrencyForRate?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="rate">
+                Курс відносно {baseCurrency?.name || "базової валюти"}
+              </Label>
+              <Input
+                id="rate"
+                type="number"
+                step="0.0001"
+                placeholder="1.0000"
+                value={rateForm.rate}
+                onChange={(e) => setRateForm({ rate: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                1 {baseCurrency?.code} = {rateForm.rate || "0"} {selectedCurrencyForRate?.code}
+              </p>
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button 
+                onClick={handleSubmitRate}
+                disabled={createExchangeRateMutation.isPending || !rateForm.rate}
+              >
+                Оновити курс
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setIsRateDialogOpen(false);
+                  setRateForm({ rate: "" });
+                  setSelectedCurrencyForRate(null);
+                }}
+              >
+                Скасувати
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
