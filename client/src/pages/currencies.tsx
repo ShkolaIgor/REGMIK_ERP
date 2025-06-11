@@ -848,64 +848,6 @@ export default function Currencies() {
             </CardContent>
           </Card>
 
-          {/* Таблиця курсів НБУ */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Курси валют НБУ</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {ratesLoading ? (
-                <div className="text-center py-8">Завантаження курсів...</div>
-              ) : nbuRates.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Курси НБУ не завантажені. Використовуйте кнопки оновлення вище.
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Дата курсу</TableHead>
-                      <TableHead>EUR</TableHead>
-                      <TableHead>USD</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(() => {
-                      // Group rates by exchange date
-                      const ratesByDate = nbuRates.reduce((acc, rate) => {
-                        const date = rate.exchangeDate;
-                        if (!acc[date]) {
-                          acc[date] = {};
-                        }
-                        acc[date][rate.currencyCode] = rate.rate;
-                        return acc;
-                      }, {} as Record<string, Record<string, string>>);
-
-                      // Sort dates in descending order
-                      const sortedDates = Object.keys(ratesByDate).sort((a, b) => 
-                        new Date(b).getTime() - new Date(a).getTime()
-                      );
-
-                      return sortedDates.map((date) => (
-                        <TableRow key={date}>
-                          <TableCell className="font-medium">
-                            {formatExchangeDate(date)}
-                          </TableCell>
-                          <TableCell className="font-mono">
-                            {ratesByDate[date]['EUR'] || '—'}
-                          </TableCell>
-                          <TableCell className="font-mono">
-                            {ratesByDate[date]['USD'] || '—'}
-                          </TableCell>
-                        </TableRow>
-                      ));
-                    })()}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-
           {/* Графік курсів НБУ */}
           <Card>
             <CardHeader>
@@ -1002,6 +944,64 @@ export default function Currencies() {
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Таблиця курсів НБУ */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Курси валют НБУ</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {ratesLoading ? (
+                <div className="text-center py-8">Завантаження курсів...</div>
+              ) : nbuRates.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Курси НБУ не завантажені. Використовуйте кнопки оновлення вище.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Дата курсу</TableHead>
+                      <TableHead>EUR</TableHead>
+                      <TableHead>USD</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(() => {
+                      // Group rates by exchange date
+                      const ratesByDate = nbuRates.reduce((acc, rate) => {
+                        const date = rate.exchangeDate;
+                        if (!acc[date]) {
+                          acc[date] = {};
+                        }
+                        acc[date][rate.currencyCode] = rate.rate;
+                        return acc;
+                      }, {} as Record<string, Record<string, string>>);
+
+                      // Sort dates in descending order
+                      const sortedDates = Object.keys(ratesByDate).sort((a, b) => 
+                        new Date(b).getTime() - new Date(a).getTime()
+                      );
+
+                      return sortedDates.map((date) => (
+                        <TableRow key={date}>
+                          <TableCell className="font-medium">
+                            {formatExchangeDate(date)}
+                          </TableCell>
+                          <TableCell className="font-mono">
+                            {ratesByDate[date]['EUR'] || '—'}
+                          </TableCell>
+                          <TableCell className="font-mono">
+                            {ratesByDate[date]['USD'] || '—'}
+                          </TableCell>
+                        </TableRow>
+                      ));
+                    })()}
+                  </TableBody>
+                </Table>
               )}
             </CardContent>
           </Card>
