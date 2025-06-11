@@ -525,7 +525,7 @@ export default function Currencies() {
             <TabsTrigger value="settings">Налаштування</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="currencies" className="flex-1 flex flex-col overflow-hidden p-0 mt-0 space-y-0">
+          <TabsContent value="currencies" className="flex-1 flex flex-col overflow-hidden">
             <div className="flex items-center space-x-2 flex-shrink-0 p-4 pb-0">
               <div className="relative flex-1">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -638,7 +638,7 @@ export default function Currencies() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="nbu" className="flex-1 flex flex-col overflow-hidden p-0 mt-0 space-y-0">
+          <TabsContent value="nbu" className="flex-1 flex flex-col overflow-hidden">
             {/* Оновлення курсів */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 pb-0 flex-shrink-0">
               <Card>
@@ -817,7 +817,7 @@ export default function Currencies() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="settings" className="flex-1 flex flex-col overflow-hidden p-0 mt-0 space-y-0">
+          <TabsContent value="settings" className="flex-1 flex flex-col overflow-hidden">
             <Card className="m-4">
               <CardHeader>
                 <CardTitle>Налаштування автоматичного оновлення</CardTitle>
