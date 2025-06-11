@@ -637,9 +637,9 @@ export default function Currencies() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="nbu" className="flex-1 flex flex-col overflow-hidden p-0">
+          <TabsContent value="nbu" className="flex-1 flex flex-col overflow-hidden p-0 mt-0 space-y-0">
             {/* Оновлення курсів */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 flex-shrink-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 pb-0 flex-shrink-0">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -703,7 +703,7 @@ export default function Currencies() {
             </div>
 
             {/* Графік курсів валют НБУ */}
-            <Card className="mb-4">
+            <Card className="mx-4 mb-4">
               <CardHeader>
                 <CardTitle>Динаміка зміни курсів відносно гривні</CardTitle>
               </CardHeader>
@@ -754,7 +754,7 @@ export default function Currencies() {
             </Card>
 
             {/* Курси НБУ */}
-            <Card className="flex-1 flex flex-col overflow-hidden">
+            <Card className="flex-1 flex flex-col overflow-hidden mx-4 mb-4">
               <CardHeader className="flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <CardTitle>Курси валют НБУ</CardTitle>
@@ -816,8 +816,8 @@ export default function Currencies() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="settings" className="flex-1 flex flex-col overflow-hidden">
-            <Card>
+          <TabsContent value="settings" className="flex-1 flex flex-col overflow-hidden p-0 mt-0 space-y-0">
+            <Card className="m-4">
               <CardHeader>
                 <CardTitle>Налаштування автоматичного оновлення</CardTitle>
               </CardHeader>
