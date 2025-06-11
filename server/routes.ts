@@ -200,9 +200,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Отримати базову URL з заголовків
       const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
-      const host = req.get('host');
-      const resetUrl = `${protocol}://${host}/reset-password?token=${resetToken}`;
+      const host = req.get('host') || req.get('x-forwarded-host');
       
+      // Виправляємо формування URL - видаляємо зайві слеші
+      let baseUrl = `${protocol}://${host}`;
+      if (baseUrl.includes('\\')) {
+        baseUrl = baseUrl.replace(/\\/g, '');
+      }
+      
+      const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
+      
+      console.log("Protocol:", protocol);
+      console.log("Host:", host);
+      console.log("Base URL:", baseUrl);
       console.log("Generated reset URL:", resetUrl);
 
       // Відправити email через налаштований сервіс
@@ -4198,7 +4208,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Generate reset URL
-      const resetUrl = `${req.protocol}://${req.get('host')}/reset-password?token=${resetToken}`;
+      const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
+      const host = req.get('host') || req.get('x-forwarded-host');
+      
+      // Виправляємо формування URL - видаляємо зайві слеші
+      let baseUrl = `${protocol}://${host}`;
+      if (baseUrl.includes('\\')) {
+        baseUrl = baseUrl.replace(/\\/g, '');
+      }
+      
+      const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
       
       // Generate email content
       const { html, text } = generatePasswordResetEmail(user.username, resetToken, resetUrl);
