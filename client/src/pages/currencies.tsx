@@ -559,9 +559,8 @@ export default function Currencies() {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="currencies">Валюти</TabsTrigger>
-          <TabsTrigger value="rates">Курси обміну</TabsTrigger>
           <TabsTrigger value="nbu">Курси НБУ</TabsTrigger>
         </TabsList>
 
@@ -585,7 +584,6 @@ export default function Currencies() {
                   <TableHead>Код</TableHead>
                   <TableHead>Назва</TableHead>
                   <TableHead>Символ</TableHead>
-                  <TableHead>Знаків після коми</TableHead>
                   <TableHead>Поточний курс</TableHead>
                   <TableHead>Статус</TableHead>
                   <TableHead>Дії</TableHead>
@@ -594,11 +592,11 @@ export default function Currencies() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center">Завантаження...</TableCell>
+                    <TableCell colSpan={6} className="text-center">Завантаження...</TableCell>
                   </TableRow>
                 ) : filteredCurrencies.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center">Валюти не знайдено</TableCell>
+                    <TableCell colSpan={6} className="text-center">Валюти не знайдено</TableCell>
                   </TableRow>
                 ) : (
                   filteredCurrencies.map((currency) => (
@@ -611,7 +609,6 @@ export default function Currencies() {
                       </TableCell>
                       <TableCell>{currency.name}</TableCell>
                       <TableCell>{currency.symbol || "-"}</TableCell>
-                      <TableCell>{currency.decimalPlaces}</TableCell>
                       <TableCell>
                         {currency.isBase ? (
                           <Badge variant="outline">Базова</Badge>
@@ -679,64 +676,7 @@ export default function Currencies() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="rates" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Останні курси валют</h2>
-            <Button
-              variant="outline"
-              onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/exchange-rates"] })}
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Оновити
-            </Button>
-          </div>
 
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Валюта</TableHead>
-                  <TableHead>Курс</TableHead>
-                  <TableHead>Дата оновлення</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentRates.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center">Курси валют не знайдено</TableCell>
-                  </TableRow>
-                ) : (
-                  recentRates.map((rate) => {
-                    const currency = currencies.find(c => c.id === rate.currencyId);
-                    return (
-                      <TableRow key={rate.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="font-medium">
-                              {currency?.symbol || currency?.code}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {currency?.name}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {parseFloat(rate.rate).toFixed(4)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            {new Date(rate.createdAt).toLocaleString()}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="nbu" className="space-y-4">
           {/* Оновлення курсів */}
