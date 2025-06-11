@@ -1,116 +1,89 @@
 #!/bin/bash
 
-# Скрипт для виправлення критичних помилок в продакшн-системі REGMIK ERP
-# Версія: 2.0
-# Дата: 2025-06-10
+# Спеціальний скрипт для виправлення getUserByEmail на продакшн-сервері
+# Проблема: compiled код все ще використовує стару таблицю users
 
-set -e  # Зупинка при помилці
+echo "Виправлення getUserByEmail на продакшн-сервері..."
 
-echo "🔧 Початок оновлення продакшн-системи REGMIK ERP..."
+# Функція для виконання команд на сервері
+run_remote() {
+    ssh root@192.168.0.247 "$1"
+}
 
-# Перевірка, що скрипт запущено з root правами
-if [ "$EUID" -ne 0 ]; then 
-    echo "❌ Помилка: Скрипт повинен бути запущено з правами root"
+# Перевірка доступу
+if ! run_remote "echo 'Connected'"; then
+    echo "Помилка: Немає SSH доступу до 192.168.0.247"
+    echo "Виконайте команди вручну на сервері:"
+    echo ""
+    echo "cd /opt/REGMIK_ERP"
+    echo "systemctl stop regmik-erp.service"
+    echo "cp dist/index.js dist/index.js.backup_\$(date +%Y%m%d_%H%M%S)"
+    echo ""
+    echo "# Пряме виправлення в compiled файлі:"
+    echo "sed -i 's/\\.select().from(users).where(eq(users\\.email/\\.select().from(localUsers).where(eq(localUsers.email/g' dist/index.js"
+    echo "sed -i 's/\\.from(users)/\\.from(localUsers)/g' dist/index.js"
+    echo ""
+    echo "# Виправлення бази даних:"
+    echo "sudo -u postgres psql -d regmik_erp -c \"ALTER TABLE email_settings ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;\""
+    echo ""
+    echo "systemctl start regmik-erp.service"
     exit 1
 fi
 
-# Змінні
-PROJECT_DIR="/opt/REGMIK_ERP"
-BACKUP_DIR="/opt/backups/regmik_erp"
-SERVICE_NAME="regmik-erp.service"
-DB_NAME="regmik_erp"
-DB_USER="postgres"
+echo "1. Зупинка сервісу..."
+run_remote "systemctl stop regmik-erp.service"
 
-# Створення директорії для бекапів
-mkdir -p "$BACKUP_DIR"
+echo "2. Створення бекапу..."
+run_remote "cd /opt/REGMIK_ERP && cp dist/index.js dist/index.js.backup_\$(date +%Y%m%d_%H%M%S)"
 
-echo "📁 Робоча директорія: $PROJECT_DIR"
+echo "3. Пряме виправлення getUserByEmail в compiled файлі..."
+run_remote "cd /opt/REGMIK_ERP && sed -i 's/\\.select().from(users).where(eq(users\\.email/\\.select().from(localUsers).where(eq(localUsers.email/g' dist/index.js"
 
-# Перехід в робочу директорію
-cd "$PROJECT_DIR"
+echo "4. Виправлення всіх посилань на стару таблицю users..."
+run_remote "cd /opt/REGMIK_ERP && sed -i 's/\\.from(users)/\\.from(localUsers)/g' dist/index.js"
 
-echo "⏹️  Зупинка сервісу..."
-systemctl stop "$SERVICE_NAME" || echo "⚠️  Сервіс вже зупинено"
+echo "5. Виправлення бази даних..."
+run_remote "sudo -u postgres psql -d regmik_erp -c \"ALTER TABLE email_settings ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP; UPDATE email_settings SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL;\""
 
-echo "💾 Створення бекапу поточної версії..."
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-tar -czf "$BACKUP_DIR/regmik_erp_backup_$TIMESTAMP.tar.gz" dist/ || echo "⚠️  Помилка створення бекапу"
+echo "6. Запуск сервісу..."
+run_remote "systemctl start regmik-erp.service"
 
-echo "📥 Оновлення коду з Git..."
-git fetch origin
-git pull origin main
+sleep 3
 
-echo "🔨 Компіляція проекту..."
-npm run build
-
-echo "🗄️  Виправлення схеми бази даних..."
-# Створення SQL скрипта для виправлення
-cat > fix_schema.sql << 'EOF'
--- Додаємо відсутню колонку created_at до таблиці email_settings
-ALTER TABLE email_settings 
-ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-
--- Оновлюємо існуючі записи, якщо created_at = NULL
-UPDATE email_settings 
-SET created_at = CURRENT_TIMESTAMP 
-WHERE created_at IS NULL;
-
--- Перевіряємо структуру таблиць
-\d email_settings;
-\d local_users;
-EOF
-
-# Виконання SQL скрипта
-sudo -u postgres psql -d "$DB_NAME" -f fix_schema.sql
-
-echo "🚀 Запуск сервісу..."
-systemctl start "$SERVICE_NAME"
-
-echo "⏳ Очікування запуску сервісу..."
-sleep 5
-
-echo "✅ Перевірка статусу сервісу..."
-if systemctl is-active --quiet "$SERVICE_NAME"; then
-    echo "✅ Сервіс успішно запущено"
-    systemctl status "$SERVICE_NAME" --no-pager -l
+echo "7. Перевірка статусу..."
+STATUS=$(run_remote "systemctl is-active regmik-erp.service")
+if [ "$STATUS" = "active" ]; then
+    echo "Сервіс запущено успішно"
 else
-    echo "❌ Помилка запуску сервісу"
-    echo "📋 Останні логи:"
-    journalctl -u "$SERVICE_NAME" -n 20 --no-pager
+    echo "Помилка запуску сервісу"
+    run_remote "journalctl -u regmik-erp.service -n 10 --no-pager"
     exit 1
 fi
 
-echo "🧪 Тестування API endpoints..."
+echo "8. Тестування виправлених функцій..."
 
-# Тестування basic endpoints
-echo "Тестування /api/auth/user..."
-curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/api/auth/user && echo " - OK" || echo " - Помилка"
+# Тест відновлення паролю
+echo "Тестування відновлення паролю..."
+FORGOT_TEST=$(run_remote "curl -s -X POST http://localhost:5000/api/auth/forgot-password -H 'Content-Type: application/json' -d '{\"email\":\"ihor@regmik.ua\"}' | head -1")
 
-echo "Тестування /api/products..."
-curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/api/products && echo " - OK" || echo " - Помилка"
-
-echo "🔍 Перевірка логів на помилки..."
-if journalctl -u "$SERVICE_NAME" -n 50 --no-pager | grep -i "error\|exception\|failed" | tail -5; then
-    echo "⚠️  Знайдено помилки в логах (показано останні 5)"
+if echo "$FORGOT_TEST" | grep -q "відправлено\|Якщо email"; then
+    echo "✅ Відновлення паролю працює"
 else
-    echo "✅ Критичних помилок не знайдено"
+    echo "❌ Відновлення паролю не працює: $FORGOT_TEST"
+fi
+
+# Тест demo входу
+echo "Тестування demo входу..."
+DEMO_TEST=$(run_remote "curl -s -X POST http://localhost:5000/api/auth/simple-login -H 'Content-Type: application/json' -d '{\"username\":\"demo\",\"password\":\"demo123\"}' | head -1")
+
+if echo "$DEMO_TEST" | grep -q "success.*true"; then
+    echo "✅ Demo вхід працює"
+else
+    echo "❌ Demo вхід не працює: $DEMO_TEST"
 fi
 
 echo ""
-echo "🎉 Оновлення завершено!"
-echo "📊 Статистика:"
-echo "   - Бекап збережено: $BACKUP_DIR/regmik_erp_backup_$TIMESTAMP.tar.gz"
-echo "   - Сервіс статус: $(systemctl is-active $SERVICE_NAME)"
-echo "   - Час завершення: $(date)"
-echo ""
-echo "🌐 Система доступна за адресою: http://192.168.0.247:5000"
-echo ""
-echo "📝 Для перевірки функціоналу:"
-echo "   1. Demo вхід: логін 'demo', пароль 'demo123'"
-echo "   2. Відновлення паролю: ihor@regmik.ua"
-echo "   3. Налаштування email: перевірити збереження"
-
-# Очищення тимчасових файлів
-rm -f fix_schema.sql
+echo "Виправлення завершено. Перевірте систему: http://192.168.0.247:5000"
+echo "Логи сервісу: journalctl -u regmik-erp.service -f"
 
 exit 0
