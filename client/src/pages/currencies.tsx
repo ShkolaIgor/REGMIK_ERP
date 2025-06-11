@@ -678,11 +678,39 @@ export default function Currencies() {
               </Card>
             </div>
 
+            {/* Графік курсів валют НБУ */}
+            <Card className="mb-4">
+              <CardHeader>
+                <CardTitle>Графік курсів валют НБУ</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {ratesLoading ? (
+                  <div className="text-center py-8">Завантаження даних для графіка...</div>
+                ) : nbuRates.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Немає даних для відображення графіка. Завантажте курси НБУ.
+                  </div>
+                ) : (
+                  <div className="h-64 bg-muted/20 rounded-lg flex items-center justify-center">
+                    <div className="text-center text-muted-foreground">
+                      <div className="text-lg font-medium mb-2">Графік курсів валют</div>
+                      <div className="text-sm">
+                        Знайдено {nbuRates.length} записів курсів
+                      </div>
+                      <div className="text-xs mt-2">
+                        Валюти: {Array.from(new Set(nbuRates.map(r => r.currencyCode))).join(", ")}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Курси НБУ */}
             <Card className="flex-1 flex flex-col overflow-hidden">
               <CardHeader className="flex-shrink-0">
                 <div className="flex items-center justify-between">
-                  <CardTitle>Курси НБУ</CardTitle>
+                  <CardTitle>Курси валют НБУ</CardTitle>
                   <div className="flex gap-2">
                     <Input
                       type="date"
@@ -715,21 +743,22 @@ export default function Currencies() {
                         <TableRow>
                           <TableHead className="text-sm">Дата курсу</TableHead>
                           <TableHead className="text-sm">Валюта</TableHead>
-                          <TableHead className="text-sm">Назва</TableHead>
-                          <TableHead className="text-sm">Курс</TableHead>
-                          <TableHead className="text-sm">Код</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {nbuRates
                           .filter(rate => !searchDate || rate.exchangeDate === searchDate)
+                          .filter(rate => enabledCurrencies.includes(rate.currencyCode))
                           .map((rate) => (
                             <TableRow key={rate.id} className="text-sm">
                               <TableCell className="text-sm">{formatExchangeDate(rate.exchangeDate)}</TableCell>
-                              <TableCell className="font-medium text-sm">{rate.currencyCode}</TableCell>
-                              <TableCell className="text-sm">{rate.txt}</TableCell>
-                              <TableCell className="font-mono text-sm">{parseFloat(rate.rate).toFixed(4)}</TableCell>
-                              <TableCell className="text-sm">{rate.r030}</TableCell>
+                              <TableCell className="font-medium text-sm">
+                                <div className="flex items-center justify-between">
+                                  <span>{rate.currencyCode}</span>
+                                  <span className="font-mono">{parseFloat(rate.rate).toFixed(4)}</span>
+                                </div>
+                                <div className="text-xs text-muted-foreground">{rate.txt}</div>
+                              </TableCell>
                             </TableRow>
                           ))}
                       </TableBody>
