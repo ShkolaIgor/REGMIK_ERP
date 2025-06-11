@@ -994,7 +994,22 @@ export default function Currencies() {
                     {(() => {
                       // Filter rates by search date if provided
                       const filteredRates = searchDate 
-                        ? nbuRates.filter(rate => rate.exchangeDate === searchDate)
+                        ? nbuRates.filter(rate => {
+                            // Normalize both dates for comparison - handle both date string formats
+                            let rateDate;
+                            if (rate.exchangeDate.includes(' ')) {
+                              // Format: "2025-06-11 00:00:00" -> "2025-06-11"
+                              rateDate = rate.exchangeDate.split(' ')[0];
+                            } else if (rate.exchangeDate.includes('T')) {
+                              // Format: "2025-06-11T00:00:00" -> "2025-06-11" 
+                              rateDate = rate.exchangeDate.split('T')[0];
+                            } else {
+                              // Already in YYYY-MM-DD format
+                              rateDate = rate.exchangeDate;
+                            }
+                            console.log('Filtering:', { rateDate, searchDate, match: rateDate === searchDate });
+                            return rateDate === searchDate;
+                          })
                         : nbuRates;
 
                       // Group rates by exchange date
