@@ -963,7 +963,7 @@ export default function Currencies() {
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="flex-1 overflow-auto p-0">
+            <CardContent className="p-4">
               {ratesLoading ? (
                 <div className="text-center py-8">Завантаження курсів...</div>
               ) : nbuRates.length === 0 ? (
@@ -971,14 +971,13 @@ export default function Currencies() {
                   Курси НБУ не завантажені. Використовуйте кнопки оновлення вище.
                 </div>
               ) : (
-                <div className="p-2">
+                <div className="border rounded-lg overflow-auto max-h-[500px]">
                   <Table>
                     <TableHeader className="sticky top-0 bg-background">
                       <TableRow>
                         <TableHead className="text-sm">Дата курсу</TableHead>
                         <TableHead className="text-sm">EUR</TableHead>
                         <TableHead className="text-sm">USD</TableHead>
-                        <TableHead className="text-sm">Валюта</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1003,24 +1002,31 @@ export default function Currencies() {
                           })
                         : nbuRates;
 
-                      // Sort by creation date and take only 10 latest records
-                      const latestRates = filteredRates
-                        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                      // Group rates by exchange date
+                      const ratesByDate = filteredRates.reduce((acc, rate) => {
+                        const date = rate.exchangeDate;
+                        if (!acc[date]) {
+                          acc[date] = {};
+                        }
+                        acc[date][rate.currencyCode] = rate.rate;
+                        return acc;
+                      }, {} as Record<string, Record<string, string>>);
+
+                      // Sort dates in descending order and take only 10 latest
+                      const sortedDates = Object.keys(ratesByDate)
+                        .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
                         .slice(0, 10);
 
-                      return latestRates.map((rate, index) => (
-                        <TableRow key={`${rate.id}-${index}`}>
+                      return sortedDates.map((date) => (
+                        <TableRow key={date}>
                           <TableCell className="font-medium">
-                            {formatExchangeDate(rate.exchangeDate)}
+                            {formatExchangeDate(date)}
                           </TableCell>
                           <TableCell className="font-mono">
-                            {rate.currencyCode === 'EUR' ? rate.rate : '—'}
+                            {ratesByDate[date]['EUR'] || '—'}
                           </TableCell>
                           <TableCell className="font-mono">
-                            {rate.currencyCode === 'USD' ? rate.rate : '—'}
-                          </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
-                            {rate.currencyCode}
+                            {ratesByDate[date]['USD'] || '—'}
                           </TableCell>
                         </TableRow>
                       ));
