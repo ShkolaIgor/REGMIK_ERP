@@ -494,9 +494,10 @@ export default function Currencies() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-          <TabsList className="grid w-full grid-cols-2 flex-shrink-0">
+          <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
             <TabsTrigger value="currencies">Валюти</TabsTrigger>
             <TabsTrigger value="nbu">Курси НБУ</TabsTrigger>
+            <TabsTrigger value="settings">Налаштування</TabsTrigger>
           </TabsList>
 
           <TabsContent value="currencies" className="flex-1 flex flex-col space-y-4 overflow-hidden">
@@ -737,6 +738,95 @@ export default function Currencies() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Налаштування автоматичного оновлення</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="auto-update"
+                    checked={autoUpdateEnabled}
+                    onCheckedChange={setAutoUpdateEnabled}
+                  />
+                  <Label htmlFor="auto-update">Автоматичне оновлення курсів</Label>
+                </div>
+
+                {autoUpdateEnabled && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="update-time">Час оновлення</Label>
+                      <Input
+                        id="update-time"
+                        type="time"
+                        value={updateTime}
+                        onChange={(e) => setUpdateTime(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Валюти для оновлення</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {["USD", "EUR", "GBP", "PLN", "CHF", "JPY", "CAD", "AUD"].map(currency => (
+                          <div key={currency} className="flex items-center space-x-2">
+                            <Switch
+                              id={currency}
+                              checked={enabledCurrencies.includes(currency)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setEnabledCurrencies(prev => [...prev, currency]);
+                                } else {
+                                  setEnabledCurrencies(prev => prev.filter(c => c !== currency));
+                                }
+                              }}
+                            />
+                            <Label htmlFor={currency}>{currency}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <Button onClick={handleSaveNbuSettings}>
+                  Зберегти налаштування
+                </Button>
+              </CardContent>
+            </Card>
+
+            {nbuSettings && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Статус системи</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Останнє оновлення</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {nbuSettings.lastUpdateDate ? formatDate(nbuSettings.lastUpdateDate) : "Ніколи"}
+                      </p>
+                    </div>
+                    <div>
+                      <Label>Статус</Label>
+                      <div className="mt-1">
+                        {getStatusBadge(nbuSettings.lastUpdateStatus)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {nbuSettings.lastUpdateError && (
+                    <div>
+                      <Label>Остання помилка</Label>
+                      <p className="text-sm text-red-600">{nbuSettings.lastUpdateError}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
