@@ -944,7 +944,7 @@ export default function Currencies() {
           {/* Таблиця курсів НБУ */}
           <Card className="flex-1 flex flex-col overflow-hidden">
             <CardHeader className="flex-shrink-0 p-3">
-              <CardTitle className="text-lg">Курси валют НБУ</CardTitle>
+              <CardTitle className="text-lg">Курси валют НБУ (останні 10 записів)</CardTitle>
               <div className="flex gap-2 mt-2">
                 <Input
                   type="date"
@@ -1012,10 +1012,10 @@ export default function Currencies() {
                         return acc;
                       }, {} as Record<string, Record<string, string>>);
 
-                      // Sort dates in descending order
-                      const sortedDates = Object.keys(ratesByDate).sort((a, b) => 
-                        new Date(b).getTime() - new Date(a).getTime()
-                      );
+                      // Sort dates in descending order and take only 10 latest
+                      const sortedDates = Object.keys(ratesByDate)
+                        .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+                        .slice(0, 10);
 
                       return sortedDates.map((date) => (
                         <TableRow key={date}>
