@@ -427,11 +427,11 @@ export default function Currencies() {
   const baseCurrency = currencies.find(c => c.isBase);
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="h-screen flex flex-col p-2 overflow-hidden">
+      <div className="flex justify-between items-center mb-2 flex-shrink-0">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Валюти</h1>
-          <p className="text-muted-foreground">Управління валютами та курсами обміну</p>
+          <h1 className="text-2xl font-bold mb-1">Валюти</h1>
+          <p className="text-sm text-muted-foreground">Управління валютами та курсами обміну</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -672,9 +672,9 @@ export default function Currencies() {
 
 
 
-        <TabsContent value="nbu" className="space-y-4">
+        <TabsContent value="nbu" className="space-y-2 flex-1 flex flex-col overflow-hidden">
           {/* Оновлення курсів */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 flex-shrink-0">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -942,16 +942,17 @@ export default function Currencies() {
           </Card>
 
           {/* Таблиця курсів НБУ */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Курси валют НБУ</CardTitle>
-              <div className="flex gap-2 mt-4">
+          <Card className="flex-1 flex flex-col overflow-hidden">
+            <CardHeader className="flex-shrink-0 p-3">
+              <CardTitle className="text-lg">Курси валют НБУ</CardTitle>
+              <div className="flex gap-2 mt-2">
                 <Input
                   type="date"
                   placeholder="Пошук за датою"
                   value={searchDate}
                   onChange={(e) => setSearchDate(e.target.value)}
                   className="max-w-xs"
+                  size="sm"
                 />
                 <Button
                   variant="outline"
@@ -963,7 +964,7 @@ export default function Currencies() {
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 overflow-auto p-0">
               {ratesLoading ? (
                 <div className="text-center py-8">Завантаження курсів...</div>
               ) : nbuRates.length === 0 ? (
@@ -971,15 +972,16 @@ export default function Currencies() {
                   Курси НБУ не завантажені. Використовуйте кнопки оновлення вище.
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Дата курсу</TableHead>
-                      <TableHead>EUR</TableHead>
-                      <TableHead>USD</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                <div className="max-h-96 overflow-auto p-2">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-background">
+                      <TableRow>
+                        <TableHead className="text-sm">Дата курсу</TableHead>
+                        <TableHead className="text-sm">EUR</TableHead>
+                        <TableHead className="text-sm">USD</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                     {(() => {
                       // Filter rates by search date if provided
                       const filteredRates = searchDate 
@@ -1030,8 +1032,9 @@ export default function Currencies() {
                         </TableRow>
                       ));
                     })()}
-                  </TableBody>
-                </Table>
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </CardContent>
           </Card>
