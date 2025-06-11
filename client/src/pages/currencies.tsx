@@ -105,6 +105,7 @@ export default function Currencies() {
   const [updateTime, setUpdateTime] = useState("09:00");
   const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true);
   const [enabledCurrencies, setEnabledCurrencies] = useState(["USD", "EUR"]);
+  const [searchDate, setSearchDate] = useState("");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -955,6 +956,23 @@ export default function Currencies() {
           <Card>
             <CardHeader>
               <CardTitle>Курси валют НБУ</CardTitle>
+              <div className="flex gap-2 mt-4">
+                <Input
+                  type="date"
+                  placeholder="Пошук за датою"
+                  value={searchDate}
+                  onChange={(e) => setSearchDate(e.target.value)}
+                  className="max-w-xs"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSearchDate("")}
+                  disabled={!searchDate}
+                >
+                  Очистити
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {ratesLoading ? (
@@ -974,8 +992,13 @@ export default function Currencies() {
                   </TableHeader>
                   <TableBody>
                     {(() => {
+                      // Filter rates by search date if provided
+                      const filteredRates = searchDate 
+                        ? nbuRates.filter(rate => rate.exchangeDate === searchDate)
+                        : nbuRates;
+
                       // Group rates by exchange date
-                      const ratesByDate = nbuRates.reduce((acc, rate) => {
+                      const ratesByDate = filteredRates.reduce((acc, rate) => {
                         const date = rate.exchangeDate;
                         if (!acc[date]) {
                           acc[date] = {};

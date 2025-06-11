@@ -16,15 +16,15 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'
 export default function Analytics() {
   const [period, setPeriod] = useState("month");
 
-  const { data: salesData = [], isLoading: salesLoading } = useQuery({
+  const { data: salesData = { totalSales: 0, orderCount: 0 }, isLoading: salesLoading } = useQuery({
     queryKey: ["/api/analytics/sales", period],
   });
 
-  const { data: expensesData = [], isLoading: expensesLoading } = useQuery({
+  const { data: expensesData = { totalExpenses: 0, calculationCount: 0 }, isLoading: expensesLoading } = useQuery({
     queryKey: ["/api/analytics/expenses", period],
   });
 
-  const { data: profitData = [], isLoading: profitLoading } = useQuery({
+  const { data: profitData = { totalProfit: 0, profitMargin: 0 }, isLoading: profitLoading } = useQuery({
     queryKey: ["/api/analytics/profit", period],
   });
 
@@ -37,9 +37,9 @@ export default function Analytics() {
   });
 
   // Обчислюємо загальні показники
-  const totalSales = salesData.reduce((sum: number, sale: any) => sum + parseFloat(sale.totalAmount || 0), 0);
-  const totalExpenses = expensesData.reduce((sum: number, expense: any) => sum + parseFloat(expense.amount || 0), 0);
-  const totalProfit = totalSales - totalExpenses;
+  const totalSales = salesData.totalSales || 0;
+  const totalExpenses = expensesData.totalExpenses || 0;
+  const totalProfit = profitData.totalProfit || 0;
 
   // Групуємо витрати за категоріями
   const expensesByCategory = expensesData.reduce((acc: any, expense: any) => {
