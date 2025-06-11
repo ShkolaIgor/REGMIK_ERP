@@ -8,7 +8,7 @@ import {
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes, solderingTypes,
   componentCategories, componentAlternatives, carriers, shipments, shipmentItems, customerAddresses, senderSettings,
-  manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, exchangeRateHistory, serialNumbers, serialNumberSettings, emailSettings,
+  manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, serialNumbers, serialNumberSettings, emailSettings,
   sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients, clientContacts, clientNovaPoshtaSettings,
   clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences, currencyRates, currencyUpdateSettings,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,

@@ -74,6 +74,13 @@ psql "$DATABASE_URL" -f fix-currency-column.sql
 sudo systemctl restart regmik-erp
 ```
 
+### Варіант 4: Швидке виправлення тільки ON CONFLICT помилки
+```bash
+cd /opt/REGMIK_ERP
+psql "$DATABASE_URL" -f fix-unique-constraint.sql
+sudo systemctl restart regmik-erp
+```
+
 ## Перевірка
 ```bash
 # Перевірити статус сервісу
@@ -86,4 +93,5 @@ sudo journalctl -u regmik-erp -f
 ## Причина проблем
 1. Таблиця `currency_update_settings` була додана в схему локально, але міграція не була застосована на продакшені
 2. Колонка `exchange_date` в таблиці `currency_rates` має неправильну назву або відсутня
-3. Це типова проблема при оновленні без правильного розгортання міграцій схеми бази даних
+3. Відсутнє унікальне обмеження (currency_code, exchange_date) для підтримки ON CONFLICT операцій
+4. Це типова проблема при оновленні без правильного розгортання міграцій схеми бази даних

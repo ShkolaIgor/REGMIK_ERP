@@ -26,6 +26,9 @@ psql "$DATABASE_URL" -f fix-currency-settings-table.sql
 echo "🔧 Виправляємо структуру таблиці currency_rates..."
 psql "$DATABASE_URL" -f fix-currency-column.sql
 
+echo "🔒 Додаємо унікальне обмеження для ON CONFLICT..."
+psql "$DATABASE_URL" -f fix-unique-constraint.sql
+
 if [ $? -eq 0 ]; then
     echo "✅ Таблиці успішно створено!"
     

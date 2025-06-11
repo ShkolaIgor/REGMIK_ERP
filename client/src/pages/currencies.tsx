@@ -43,13 +43,7 @@ interface Currency {
   updatedAt: string;
 }
 
-interface ExchangeRate {
-  id: number;
-  currencyId: number;
-  rate: string;
-  createdAt: string;
-  currency?: Currency;
-}
+// Видалено ExchangeRate - використовуємо currency_rates замість exchange_rates
 
 interface CurrencyWithLatestRate extends Currency {
   latestRate?: string;
@@ -114,9 +108,7 @@ export default function Currencies() {
     queryKey: ["/api/currencies"],
   });
 
-  const { data: exchangeRates = [] } = useQuery<ExchangeRate[]>({
-    queryKey: ["/api/exchange-rates"],
-  });
+  // Видалено exchange-rates - використовуємо currency_rates
 
   // НБУ queries
   const { data: nbuRates = [], isLoading: ratesLoading } = useQuery<CurrencyRate[]>({

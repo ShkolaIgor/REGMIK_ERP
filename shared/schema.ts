@@ -1507,13 +1507,7 @@ export const currencies = pgTable("currencies", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Історія курсів валют
-export const exchangeRateHistory = pgTable("exchange_rate_history", {
-  id: serial("id").primaryKey(),
-  currencyId: integer("currency_id").notNull().references(() => currencies.id, { onDelete: "cascade" }),
-  rate: decimal("rate", { precision: 15, scale: 6 }).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+
 
 // Курси валют для продуктів (можуть відрізнятися від загальних курсів)
 export const productPrices = pgTable("product_prices", {
@@ -1533,10 +1527,7 @@ export const insertCurrencySchema = createInsertSchema(currencies).omit({
   updatedAt: true
 });
 
-export const insertExchangeRateHistorySchema = createInsertSchema(exchangeRateHistory).omit({ 
-  id: true, 
-  createdAt: true 
-});
+
 
 export const insertProductPriceSchema = createInsertSchema(productPrices).omit({ 
   id: true, 
@@ -1546,8 +1537,6 @@ export const insertProductPriceSchema = createInsertSchema(productPrices).omit({
 
 export type Currency = typeof currencies.$inferSelect;
 export type InsertCurrency = z.infer<typeof insertCurrencySchema>;
-export type ExchangeRateHistory = typeof exchangeRateHistory.$inferSelect;
-export type InsertExchangeRateHistory = z.infer<typeof insertExchangeRateHistorySchema>;
 export type ProductPrice = typeof productPrices.$inferSelect;
 export type InsertProductPrice = z.infer<typeof insertProductPriceSchema>;
 
