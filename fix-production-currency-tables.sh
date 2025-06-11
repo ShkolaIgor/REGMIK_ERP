@@ -19,9 +19,12 @@ else
     exit 1
 fi
 
-# Виконуємо SQL скрипт
+# Виконуємо SQL скрипти
 echo "📊 Створюємо відсутні таблиці..."
 psql "$DATABASE_URL" -f fix-currency-settings-table.sql
+
+echo "🔧 Виправляємо структуру таблиці currency_rates..."
+psql "$DATABASE_URL" -f fix-currency-column.sql
 
 if [ $? -eq 0 ]; then
     echo "✅ Таблиці успішно створено!"

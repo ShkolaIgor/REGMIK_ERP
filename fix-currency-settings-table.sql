@@ -41,6 +41,9 @@ CREATE TABLE IF NOT EXISTS currency_rates (
 -- Створюємо індекс для швидкого пошуку по коду валюти та даті
 CREATE INDEX IF NOT EXISTS currency_rates_code_date_idx ON currency_rates(currency_code, exchange_date);
 
+-- Додаємо унікальне обмеження для підтримки ON CONFLICT операцій
+ALTER TABLE currency_rates ADD CONSTRAINT IF NOT EXISTS currency_rates_code_date_unique UNIQUE (currency_code, exchange_date);
+
 CREATE TABLE IF NOT EXISTS exchange_rates (
   id SERIAL PRIMARY KEY,
   currency_id INTEGER REFERENCES currencies(id),

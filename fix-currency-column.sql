@@ -64,3 +64,24 @@ END $$;
 
 -- Створюємо індекс якщо його немає
 CREATE INDEX IF NOT EXISTS currency_rates_code_date_idx ON currency_rates(currency_code, exchange_date);
+
+-- Додаємо унікальне обмеження для ON CONFLICT операцій
+DO $$
+BEGIN
+    -- Перевіряємо чи існує унікальне обмеження
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'currency_rates_code_date_unique'
+    ) THEN
+        -- Видаляємо дублікати перед створенням обмеження
+        DELETE FROM currency_rates a USING currency_rates b 
+        WHERE a.id < b.id 
+        AND a.currency_code = b.currency_code 
+        AND a.exchange_date = b.exchange_date;
+        
+        -- Створюємо унікальне обмеження
+        ALTER TABLE currency_rates 
+        ADD CONSTRAINT currency_rates_code_date_unique 
+        UNIQUE (currency_code, exchange_date);
+    END IF;
+END $$;
