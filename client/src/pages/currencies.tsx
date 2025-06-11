@@ -974,13 +974,9 @@ export default function Currencies() {
                   </TableHeader>
                   <TableBody>
                     {(() => {
-                      console.log('NBU rates data:', nbuRates);
-                      console.log('NBU rates count:', nbuRates.length);
-                      
                       // Group rates by exchange date
                       const ratesByDate = nbuRates.reduce((acc, rate) => {
                         const date = rate.exchangeDate;
-                        console.log('Processing rate:', rate);
                         if (!acc[date]) {
                           acc[date] = {};
                         }
@@ -988,14 +984,10 @@ export default function Currencies() {
                         return acc;
                       }, {} as Record<string, Record<string, string>>);
 
-                      console.log('Grouped rates by date:', ratesByDate);
-
                       // Sort dates in descending order
                       const sortedDates = Object.keys(ratesByDate).sort((a, b) => 
                         new Date(b).getTime() - new Date(a).getTime()
                       );
-
-                      console.log('Sorted dates:', sortedDates);
 
                       return sortedDates.map((date) => (
                         <TableRow key={date}>

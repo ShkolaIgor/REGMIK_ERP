@@ -5774,7 +5774,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Отримання останніх курсів валют
   app.get("/api/currency-rates", isSimpleAuthenticated, async (req, res) => {
     try {
-      const rates = await storage.getLatestCurrencyRates();
+      const rates = await storage.getAllCurrencyRates();
       res.json(rates);
     } catch (error) {
       console.error("Error fetching currency rates:", error);

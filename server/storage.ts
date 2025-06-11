@@ -444,6 +444,7 @@ export interface IStorage {
   setBaseCurrency(id: number): Promise<Currency | null>;
   getLatestExchangeRates(): Promise<ExchangeRateHistory[]>;
   updateExchangeRates(): Promise<ExchangeRateHistory[]>;
+  getAllCurrencyRates(): Promise<any[]>;
 
   // Order Completion and Supplier Order Creation
   completeOrderFromStock(productId: number, quantity: string, warehouseId: number): Promise<{ success: boolean; message: string }>;

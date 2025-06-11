@@ -6298,7 +6298,7 @@ export class DatabaseStorage implements IStorage {
     return latestRates;
   }
 
-  async getAllCurrencyRates(): Promise<CurrencyRate[]> {
+  async getAllCurrencyRates(): Promise<any[]> {
     // Отримуємо всі курси валют для відображення в таблиці НБУ
     const allRates = await db
       .select()
