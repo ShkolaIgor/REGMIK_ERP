@@ -5768,6 +5768,160 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Currency Rates API
+  const { currencyService } = await import("./currency-service");
+
+  // Отримання останніх курсів валют
+  app.get("/api/currency-rates", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const rates = await storage.getLatestCurrencyRates();
+      res.json(rates);
+    } catch (error) {
+      console.error("Error fetching currency rates:", error);
+      res.status(500).json({ error: "Failed to fetch currency rates" });
+    }
+  });
+
+  // Отримання курсів на конкретну дату
+  app.get("/api/currency-rates/:date", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const date = new Date(req.params.date);
+      if (isNaN(date.getTime())) {
+        return res.status(400).json({ error: "Invalid date format" });
+      }
+      
+      const rates = await storage.getCurrencyRatesByDate(date);
+      res.json(rates);
+    } catch (error) {
+      console.error("Error fetching currency rates by date:", error);
+      res.status(500).json({ error: "Failed to fetch currency rates" });
+    }
+  });
+
+  // Ручне оновлення курсів на поточну дату
+  app.post("/api/currency-rates/update", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const result = await currencyService.updateCurrentRates();
+      
+      if (result.success) {
+        res.json({
+          success: true,
+          message: result.message,
+          updatedCount: result.updatedCount
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: result.message
+        });
+      }
+    } catch (error) {
+      console.error("Error updating currency rates:", error);
+      res.status(500).json({ error: "Failed to update currency rates" });
+    }
+  });
+
+  // Ручне оновлення курсів за період
+  app.post("/api/currency-rates/update-period", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { startDate, endDate } = req.body;
+      
+      if (!startDate || !endDate) {
+        return res.status(400).json({ error: "Start date and end date are required" });
+      }
+      
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return res.status(400).json({ error: "Invalid date format" });
+      }
+      
+      if (start > end) {
+        return res.status(400).json({ error: "Start date must be before end date" });
+      }
+      
+      // Обмежуємо період до 1 року
+      const maxDays = 365;
+      const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff > maxDays) {
+        return res.status(400).json({ error: `Period cannot exceed ${maxDays} days` });
+      }
+      
+      const result = await currencyService.updateRatesForPeriod(start, end);
+      
+      res.json({
+        success: result.success,
+        message: result.message,
+        updatedDates: result.updatedDates,
+        totalUpdated: result.totalUpdated
+      });
+      
+    } catch (error) {
+      console.error("Error updating currency rates for period:", error);
+      res.status(500).json({ error: "Failed to update currency rates for period" });
+    }
+  });
+
+  // Налаштування автоматичного оновлення
+  app.get("/api/currency-settings", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const settings = await storage.getCurrencyUpdateSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching currency settings:", error);
+      res.status(500).json({ error: "Failed to fetch currency settings" });
+    }
+  });
+
+  app.post("/api/currency-settings", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const settingsData = req.body;
+      const settings = await storage.saveCurrencyUpdateSettings(settingsData);
+      
+      // Якщо автооновлення увімкнено, перезапускаємо планувальник
+      if (settingsData.autoUpdateEnabled) {
+        currencyService.initializeAutoUpdate();
+      }
+      
+      res.json(settings);
+    } catch (error) {
+      console.error("Error saving currency settings:", error);
+      res.status(500).json({ error: "Failed to save currency settings" });
+    }
+  });
+
+  // Отримання конкретного курсу валюти
+  app.get("/api/currency-rate/:code", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { code } = req.params;
+      const { date } = req.query;
+      
+      const searchDate = date ? new Date(date as string) : new Date();
+      
+      if (date && isNaN(searchDate.getTime())) {
+        return res.status(400).json({ error: "Invalid date format" });
+      }
+      
+      const rate = await currencyService.getCurrencyRate(code.toUpperCase(), searchDate);
+      
+      if (rate === null) {
+        return res.status(404).json({ error: `Currency rate for ${code} not found` });
+      }
+      
+      res.json({
+        currencyCode: code.toUpperCase(),
+        rate: rate,
+        date: searchDate.toISOString().split('T')[0]
+      });
+      
+    } catch (error) {
+      console.error("Error fetching currency rate:", error);
+      res.status(500).json({ error: "Failed to fetch currency rate" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

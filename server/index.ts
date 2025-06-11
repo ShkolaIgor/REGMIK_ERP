@@ -77,5 +77,14 @@ app.use((req, res, next) => {
     } catch (error) {
       log("Помилка ініціалізації кешу Нової Пошти:", error);
     }
+
+    // Ініціалізація автоматичного оновлення курсів валют
+    try {
+      const { currencyService } = await import("./currency-service");
+      await currencyService.initializeAutoUpdate();
+      log("Автоматичне оновлення курсів валют ініціалізовано");
+    } catch (error) {
+      log("Помилка ініціалізації автоматичного оновлення курсів:", error);
+    }
   });
 })();

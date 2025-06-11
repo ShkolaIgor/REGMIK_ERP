@@ -46,6 +46,7 @@ import Shipments from "@/pages/shipments";
 import Carriers from "@/pages/carriers";
 import Manufacturing from "@/pages/manufacturing";
 import Currencies from "@/pages/currencies";
+import CurrencyRates from "@/pages/currency-rates";
 import ProductionAnalytics from "@/pages/production-analytics";
 import ProductionPlanning from "@/pages/production-planning";
 import Companies from "@/pages/companies";
@@ -214,6 +215,7 @@ function Router() {
         <Route path="/serial-numbers" component={SerialNumbers} />
         <Route path="/serial-number-settings" component={SerialNumberSettings} />
         <Route path="/currencies" component={Currencies} />
+        <Route path="/currency-rates" component={CurrencyRates} />
         <Route path="/users" component={Users} />
         <Route path="/email-settings" component={EmailSettings} />
         <Route path="/integrations" component={Integrations} />
