@@ -1,4 +1,5 @@
 import { useState } from "react";
+import * as React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
@@ -37,6 +38,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { uk } from "date-fns/locale";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface Currency {
   id: number;
@@ -372,6 +374,28 @@ export default function Currencies() {
 
   const baseCurrency = currencies.find(c => c.isBase);
 
+  // Підготовка даних для графіка
+  const chartData = React.useMemo(() => {
+    if (!nbuRates.length) return [];
+    
+    // Групуємо курси по датах
+    const ratesByDate = nbuRates.reduce((acc, rate) => {
+      const date = rate.exchangeDate;
+      if (!acc[date]) {
+        acc[date] = { date: formatExchangeDate(date) };
+      }
+      acc[date][rate.currencyCode] = parseFloat(rate.rate);
+      return acc;
+    }, {} as Record<string, any>);
+
+    return Object.values(ratesByDate).sort((a, b) => 
+      new Date(a.date.split('.').reverse().join('-')).getTime() - 
+      new Date(b.date.split('.').reverse().join('-')).getTime()
+    );
+  }, [nbuRates]);
+
+  const currencies_for_chart = Array.from(new Set(nbuRates.map(r => r.currencyCode)));
+
   return (
     <div className="h-screen flex flex-col p-6 overflow-hidden">
       <div className="flex justify-between items-center mb-6 flex-shrink-0">
@@ -681,26 +705,49 @@ export default function Currencies() {
             {/* Графік курсів валют НБУ */}
             <Card className="mb-4">
               <CardHeader>
-                <CardTitle>Графік курсів валют НБУ</CardTitle>
+                <CardTitle>Динаміка зміни курсів відносно гривні</CardTitle>
               </CardHeader>
               <CardContent>
                 {ratesLoading ? (
                   <div className="text-center py-8">Завантаження даних для графіка...</div>
-                ) : nbuRates.length === 0 ? (
+                ) : chartData.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     Немає даних для відображення графіка. Завантажте курси НБУ.
                   </div>
                 ) : (
-                  <div className="h-64 bg-muted/20 rounded-lg flex items-center justify-center">
-                    <div className="text-center text-muted-foreground">
-                      <div className="text-lg font-medium mb-2">Графік курсів валют</div>
-                      <div className="text-sm">
-                        Знайдено {nbuRates.length} записів курсів
-                      </div>
-                      <div className="text-xs mt-2">
-                        Валюти: {Array.from(new Set(nbuRates.map(r => r.currencyCode))).join(", ")}
-                      </div>
-                    </div>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis 
+                          dataKey="date" 
+                          tick={{ fontSize: 12 }}
+                          angle={-45}
+                          textAnchor="end"
+                          height={60}
+                        />
+                        <YAxis tick={{ fontSize: 12 }} />
+                        <Tooltip 
+                          labelFormatter={(label) => `Дата: ${label}`}
+                          formatter={(value, name) => [`${Number(value).toFixed(4)} ₴`, name]}
+                        />
+                        <Legend />
+                        {currencies_for_chart.map((currency, index) => {
+                          const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#8dd1e1', '#d084d0'];
+                          return (
+                            <Line 
+                              key={currency}
+                              type="monotone" 
+                              dataKey={currency} 
+                              stroke={colors[index % colors.length]}
+                              strokeWidth={2}
+                              dot={{ r: 3 }}
+                              name={currency}
+                            />
+                          );
+                        })}
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
                 )}
               </CardContent>
@@ -769,9 +816,9 @@ export default function Currencies() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="settings" className="space-y-4">
+          <TabsContent value="settings" className="flex-1 flex flex-col space-y-4 overflow-hidden">
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-4">
                 <CardTitle>Налаштування автоматичного оновлення</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
