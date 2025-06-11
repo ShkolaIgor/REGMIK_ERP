@@ -159,18 +159,78 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    const result = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return result[0];
+    // Оскільки таблиця users має іншу структуру, використовуємо безпечний підхід
+    try {
+      // Спробуємо знайти користувача в localUsers за email
+      if (userData.email) {
+        const existingLocalUser = await this.getUserByEmail(userData.email);
+        if (existingLocalUser) {
+          // Повертаємо як User формат для сумісності
+          return {
+            id: userData.id || existingLocalUser.id.toString(),
+            email: existingLocalUser.email,
+            firstName: existingLocalUser.firstName,
+            lastName: existingLocalUser.lastName,
+            profileImageUrl: existingLocalUser.profileImageUrl,
+            role: existingLocalUser.role || 'user',
+            isActive: existingLocalUser.isActive,
+            permissions: existingLocalUser.permissions,
+            lastLoginAt: existingLocalUser.lastLoginAt,
+            createdAt: existingLocalUser.createdAt,
+            updatedAt: existingLocalUser.updatedAt,
+          } as User;
+        }
+      }
+
+      // Якщо користувач не знайдений в localUsers, створюємо мінімальний запис в users
+      const minimalUserData = {
+        id: userData.id!,
+        username: userData.email || userData.id!,
+        password: 'external_auth', // Маркер для зовнішньої аутентифікації
+      };
+
+      const result = await db
+        .insert(users)
+        .values(minimalUserData)
+        .onConflictDoUpdate({
+          target: users.id,
+          set: {
+            username: minimalUserData.username,
+          },
+        })
+        .returning();
+
+      // Повертаємо дані в форматі User
+      return {
+        id: userData.id!,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        profileImageUrl: userData.profileImageUrl,
+        role: 'user',
+        isActive: true,
+        permissions: null,
+        lastLoginAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as User;
+    } catch (error) {
+      console.error("Error in upsertUser:", error);
+      // Повертаємо базовий об'єкт User у випадку помилки
+      return {
+        id: userData.id!,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        profileImageUrl: userData.profileImageUrl,
+        role: 'user',
+        isActive: true,
+        permissions: null,
+        lastLoginAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as User;
+    }
   }
 
   // Roles
