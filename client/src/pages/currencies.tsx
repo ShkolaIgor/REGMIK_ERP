@@ -737,6 +737,219 @@ export default function Currencies() {
             </Table>
           </Card>
         </TabsContent>
+
+        <TabsContent value="nbu" className="space-y-4">
+          {/* Оновлення курсів */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <RefreshCw className="h-5 w-5" />
+                  Оновлення поточних курсів
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Отримати актуальні курси валют НБУ на сьогоднішню дату
+                </p>
+                <Button 
+                  onClick={handleUpdateCurrent}
+                  disabled={updateCurrentRatesMutation.isPending}
+                  className="w-full"
+                >
+                  {updateCurrentRatesMutation.isPending ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Оновлюється...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-2" />
+                      Оновити поточні курси
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Оновлення за період
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Завантажити курси валют за обраний період
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="startDate">Від</Label>
+                    <Input
+                      id="startDate"
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="endDate">До</Label>
+                    <Input
+                      id="endDate"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <Button 
+                  onClick={handleUpdatePeriod}
+                  disabled={updatePeriodRatesMutation.isPending || !startDate || !endDate}
+                  className="w-full"
+                >
+                  {updatePeriodRatesMutation.isPending ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Завантажується...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-2" />
+                      Завантажити за період
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Налаштування автоматичного оновлення */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Налаштування автоматичного оновлення
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="autoUpdate"
+                      checked={autoUpdateEnabled}
+                      onCheckedChange={setAutoUpdateEnabled}
+                    />
+                    <Label htmlFor="autoUpdate">Автоматичне оновлення</Label>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="updateTime">Час оновлення</Label>
+                  <Input
+                    id="updateTime"
+                    type="time"
+                    value={updateTime}
+                    onChange={(e) => setUpdateTime(e.target.value)}
+                    disabled={!autoUpdateEnabled}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Валюти для оновлення</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {["USD", "EUR"].map((currency) => (
+                      <div key={currency} className="flex items-center space-x-2">
+                        <Switch
+                          id={`currency-${currency}`}
+                          checked={enabledCurrencies.includes(currency)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setEnabledCurrencies(prev => [...prev, currency]);
+                            } else {
+                              setEnabledCurrencies(prev => prev.filter(c => c !== currency));
+                            }
+                          }}
+                          disabled={!autoUpdateEnabled}
+                        />
+                        <Label htmlFor={`currency-${currency}`}>{currency}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t flex justify-between items-center">
+                <div className="text-sm text-muted-foreground">
+                  {nbuSettings && (
+                    <div className="space-y-1">
+                      <div>Останнє оновлення: {nbuSettings.lastUpdateDate ? formatDate(nbuSettings.lastUpdateDate) : "Немає даних"}</div>
+                      <div className="flex items-center gap-2">
+                        Статус: {getStatusBadge(nbuSettings.lastUpdateStatus)}
+                      </div>
+                      {nbuSettings.lastUpdateError && (
+                        <div className="text-red-600 text-xs">
+                          Помилка: {nbuSettings.lastUpdateError}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <Button 
+                  onClick={handleSaveNbuSettings}
+                  disabled={saveNbuSettingsMutation.isPending}
+                  size="sm"
+                >
+                  {saveNbuSettingsMutation.isPending ? "Збереження..." : "Зберегти налаштування"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Таблиця курсів НБУ */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Курси валют НБУ</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {ratesLoading ? (
+                <div className="text-center py-8">Завантаження курсів...</div>
+              ) : nbuRates.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Курси НБУ не завантажені. Використовуйте кнопки оновлення вище.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Валюта</TableHead>
+                      <TableHead>Код НБУ</TableHead>
+                      <TableHead>Курс</TableHead>
+                      <TableHead>Дата курсу</TableHead>
+                      <TableHead>Завантажено</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {nbuRates.map((rate) => (
+                      <TableRow key={rate.id}>
+                        <TableCell className="font-medium">
+                          {rate.txt} ({rate.currencyCode})
+                        </TableCell>
+                        <TableCell>{rate.cc}</TableCell>
+                        <TableCell className="font-mono">{rate.rate}</TableCell>
+                        <TableCell>{formatExchangeDate(rate.exchangeDate)}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {formatDate(rate.createdAt)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Exchange Rate Dialog */}
