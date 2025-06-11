@@ -1007,7 +1007,7 @@ export default function Currencies() {
                               // Already in YYYY-MM-DD format
                               rateDate = rate.exchangeDate;
                             }
-                            console.log('Filtering:', { rateDate, searchDate, match: rateDate === searchDate });
+
                             return rateDate === searchDate;
                           })
                         : nbuRates;
