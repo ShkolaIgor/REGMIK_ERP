@@ -14,19 +14,11 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table for Replit Auth
+// User storage table (базова структура для сумісності)
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().notNull(),
-  email: varchar("email").unique(),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  profileImageUrl: varchar("profile_image_url"),
-  role: varchar("role", { length: 50 }).default("user"), // admin, manager, user, viewer
-  isActive: boolean("is_active").default(true),
-  permissions: jsonb("permissions"), // JSON з дозволами доступу до модулів
-  lastLoginAt: timestamp("last_login_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  id: serial("id").primaryKey(),
+  username: text("username").notNull(),
+  password: text("password").notNull(),
 });
 
 // Налаштування сортування для користувачів
@@ -1730,8 +1722,37 @@ export const newPasswordSchema = z.object({
 });
 
 // Типи для всіх таблиць користувачів
-export type User = typeof users.$inferSelect;
-export type UpsertUser = typeof users.$inferInsert;
+export type BasicUser = typeof users.$inferSelect;
+export type InsertBasicUser = typeof users.$inferInsert;
+
+// Розширений тип User для сумісності з Replit Auth
+export type User = {
+  id: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  profileImageUrl?: string | null;
+  role?: string | null;
+  isActive?: boolean | null;
+  permissions?: any;
+  lastLoginAt?: Date | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+};
+
+export type UpsertUser = {
+  id?: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  profileImageUrl?: string | null;
+  role?: string | null;
+  isActive?: boolean | null;
+  permissions?: any;
+  lastLoginAt?: Date | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+};
 
 export type LocalUser = typeof localUsers.$inferSelect;
 export type InsertLocalUser = z.infer<typeof insertLocalUserSchema>;

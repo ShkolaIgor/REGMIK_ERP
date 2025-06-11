@@ -152,85 +152,65 @@ export class DatabaseStorage implements IStorage {
     ]);
   }
 
-  // Users (for Replit Auth)
+  // Users (for Replit Auth compatibility)
   async getUser(id: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.id, id));
-    return result[0];
+    // Шукаємо в localUsers за email
+    if (id.includes('@')) {
+      const localUser = await this.getUserByEmail(id);
+      if (localUser) {
+        return {
+          id: localUser.id.toString(),
+          email: localUser.email,
+          firstName: localUser.firstName,
+          lastName: localUser.lastName,
+          profileImageUrl: localUser.profileImageUrl,
+          role: localUser.role || 'user',
+          isActive: localUser.isActive,
+          permissions: localUser.permissions,
+          lastLoginAt: localUser.lastLoginAt,
+          createdAt: localUser.createdAt,
+          updatedAt: localUser.updatedAt,
+        } as User;
+      }
+    }
+    return undefined;
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    // Оскільки таблиця users має іншу структуру, використовуємо безпечний підхід
-    try {
-      // Спробуємо знайти користувача в localUsers за email
-      if (userData.email) {
-        const existingLocalUser = await this.getUserByEmail(userData.email);
-        if (existingLocalUser) {
-          // Повертаємо як User формат для сумісності
-          return {
-            id: userData.id || existingLocalUser.id.toString(),
-            email: existingLocalUser.email,
-            firstName: existingLocalUser.firstName,
-            lastName: existingLocalUser.lastName,
-            profileImageUrl: existingLocalUser.profileImageUrl,
-            role: existingLocalUser.role || 'user',
-            isActive: existingLocalUser.isActive,
-            permissions: existingLocalUser.permissions,
-            lastLoginAt: existingLocalUser.lastLoginAt,
-            createdAt: existingLocalUser.createdAt,
-            updatedAt: existingLocalUser.updatedAt,
-          } as User;
-        }
+    // Безпечна реалізація без доступу до таблиці users
+    if (userData.email) {
+      const existingLocalUser = await this.getUserByEmail(userData.email);
+      if (existingLocalUser) {
+        return {
+          id: userData.id || existingLocalUser.id.toString(),
+          email: existingLocalUser.email,
+          firstName: existingLocalUser.firstName,
+          lastName: existingLocalUser.lastName,
+          profileImageUrl: existingLocalUser.profileImageUrl,
+          role: existingLocalUser.role || 'user',
+          isActive: existingLocalUser.isActive,
+          permissions: existingLocalUser.permissions,
+          lastLoginAt: existingLocalUser.lastLoginAt,
+          createdAt: existingLocalUser.createdAt,
+          updatedAt: existingLocalUser.updatedAt,
+        } as User;
       }
-
-      // Якщо користувач не знайдений в localUsers, створюємо мінімальний запис в users
-      const minimalUserData = {
-        id: userData.id!,
-        username: userData.email || userData.id!,
-        password: 'external_auth', // Маркер для зовнішньої аутентифікації
-      };
-
-      const result = await db
-        .insert(users)
-        .values(minimalUserData)
-        .onConflictDoUpdate({
-          target: users.id,
-          set: {
-            username: minimalUserData.username,
-          },
-        })
-        .returning();
-
-      // Повертаємо дані в форматі User
-      return {
-        id: userData.id!,
-        email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        profileImageUrl: userData.profileImageUrl,
-        role: 'user',
-        isActive: true,
-        permissions: null,
-        lastLoginAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as User;
-    } catch (error) {
-      console.error("Error in upsertUser:", error);
-      // Повертаємо базовий об'єкт User у випадку помилки
-      return {
-        id: userData.id!,
-        email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        profileImageUrl: userData.profileImageUrl,
-        role: 'user',
-        isActive: true,
-        permissions: null,
-        lastLoginAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as User;
     }
+
+    // Повертаємо тимчасовий об'єкт User
+    return {
+      id: userData.id || 'guest',
+      email: userData.email,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      profileImageUrl: userData.profileImageUrl,
+      role: 'user',
+      isActive: true,
+      permissions: null,
+      lastLoginAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as User;
   }
 
   // Roles
