@@ -14,12 +14,31 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table (базова структура для сумісності)
-export const users = pgTable("users", {
+// Основна таблиця користувачів (використовуємо local_users для уніфікації)
+export const users = pgTable("local_users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull(),
-  password: text("password").notNull(),
+  workerId: integer("worker_id").references(() => workers.id),
+  username: varchar("username", { length: 100 }).notNull().unique(),
+  email: varchar("email", { length: 255 }).unique(),
+  firstName: varchar("first_name", { length: 100 }),
+  lastName: varchar("last_name", { length: 100 }),
+  phone: varchar("phone", { length: 20 }),
+  profileImageUrl: text("profile_image_url"),
+  password: varchar("password", { length: 255 }).notNull(),
+  roleId: integer("role_id").references(() => roles.id),
+  role: varchar("role", { length: 50 }).default("user"),
+  isActive: boolean("is_active").default(true),
+  permissions: jsonb("permissions"),
+  systemModules: jsonb("system_modules").$type<number[]>().default([]),
+  lastLoginAt: timestamp("last_login_at"),
+  passwordResetToken: varchar("password_reset_token"),
+  passwordResetExpires: timestamp("password_reset_expires"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Аліас для сумісності з існуючим кодом
+export const localUsers = users;
 
 // Налаштування сортування для користувачів
 export const userSortPreferences = pgTable("user_sort_preferences", {
@@ -51,29 +70,6 @@ export const companies = pgTable("companies", {
   isActive: boolean("is_active").default(true),
   isDefault: boolean("is_default").default(false), // Компанія за замовчуванням
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Локальні користувачі для простої автентифікації (альтернатива Replit Auth)
-export const localUsers = pgTable("local_users", {
-  id: serial("id").primaryKey(),
-  workerId: integer("worker_id").references(() => workers.id).unique(), // Зв'язок з робітниками
-  username: varchar("username", { length: 100 }).notNull().unique(),
-  email: varchar("email", { length: 255 }).unique(), // Може відрізнятися від email робітника (для входу)
-  firstName: varchar("first_name", { length: 100 }), // Ім'я користувача
-  lastName: varchar("last_name", { length: 100 }), // Прізвище користувача
-  phone: varchar("phone", { length: 20 }), // Телефон користувача
-  profileImageUrl: text("profile_image_url"), // Аватарка користувача (base64 або URL)
-  password: varchar("password", { length: 255 }).notNull(), // хешований пароль
-  roleId: integer("role_id").references(() => roles.id), // Зв'язок з таблицею ролей
-  role: varchar("role", { length: 50 }).default("user"), // admin, manager, user, viewer (для сумісності)
-  isActive: boolean("is_active").default(true),
-  permissions: jsonb("permissions"), // JSON з дозволами доступу до модулів
-  systemModules: jsonb("system_modules").$type<number[]>().default([]), // Масив ID модулів
-  lastLoginAt: timestamp("last_login_at"),
-  passwordResetToken: varchar("password_reset_token"),
-  passwordResetExpires: timestamp("password_reset_expires"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -1721,25 +1717,11 @@ export const newPasswordSchema = z.object({
   path: ["confirmPassword"],
 });
 
-// Типи для всіх таблиць користувачів
-export type BasicUser = typeof users.$inferSelect;
-export type InsertBasicUser = typeof users.$inferInsert;
+// Типи для таблиці користувачів (тепер використовуємо єдину таблицю)
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
 
-// Розширений тип User для сумісності з Replit Auth
-export type User = {
-  id: string;
-  email?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  profileImageUrl?: string | null;
-  role?: string | null;
-  isActive?: boolean | null;
-  permissions?: any;
-  lastLoginAt?: Date | null;
-  createdAt?: Date | null;
-  updatedAt?: Date | null;
-};
-
+// Для сумісності з Replit Auth
 export type UpsertUser = {
   id?: string;
   email?: string | null;

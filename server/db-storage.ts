@@ -152,65 +152,63 @@ export class DatabaseStorage implements IStorage {
     ]);
   }
 
-  // Users (for Replit Auth compatibility)
+  // Users (тепер використовуємо єдину таблицю для всіх середовищ)
   async getUser(id: string): Promise<User | undefined> {
-    // Шукаємо в localUsers за email
-    if (id.includes('@')) {
-      const localUser = await this.getUserByEmail(id);
-      if (localUser) {
-        return {
-          id: localUser.id.toString(),
-          email: localUser.email,
-          firstName: localUser.firstName,
-          lastName: localUser.lastName,
-          profileImageUrl: localUser.profileImageUrl,
-          role: localUser.role || 'user',
-          isActive: localUser.isActive,
-          permissions: localUser.permissions,
-          lastLoginAt: localUser.lastLoginAt,
-          createdAt: localUser.createdAt,
-          updatedAt: localUser.updatedAt,
-        } as User;
-      }
+    // Конвертуємо string id в number для пошуку
+    const numericId = parseInt(id);
+    if (!isNaN(numericId)) {
+      const [user] = await db.select().from(users).where(eq(users.id, numericId));
+      return user;
     }
+    
+    // Якщо id є email, шукаємо за email
+    if (id.includes('@')) {
+      const [user] = await db.select().from(users).where(eq(users.email, id));
+      return user;
+    }
+    
     return undefined;
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    // Безпечна реалізація без доступу до таблиці users
+    // Шукаємо існуючого користувача за email
     if (userData.email) {
-      const existingLocalUser = await this.getUserByEmail(userData.email);
-      if (existingLocalUser) {
-        return {
-          id: userData.id || existingLocalUser.id.toString(),
-          email: existingLocalUser.email,
-          firstName: existingLocalUser.firstName,
-          lastName: existingLocalUser.lastName,
-          profileImageUrl: existingLocalUser.profileImageUrl,
-          role: existingLocalUser.role || 'user',
-          isActive: existingLocalUser.isActive,
-          permissions: existingLocalUser.permissions,
-          lastLoginAt: existingLocalUser.lastLoginAt,
-          createdAt: existingLocalUser.createdAt,
-          updatedAt: existingLocalUser.updatedAt,
-        } as User;
+      const [existingUser] = await db.select().from(users).where(eq(users.email, userData.email));
+      if (existingUser) {
+        // Оновлюємо дані користувача
+        const [updatedUser] = await db
+          .update(users)
+          .set({
+            firstName: userData.firstName || existingUser.firstName,
+            lastName: userData.lastName || existingUser.lastName,
+            profileImageUrl: userData.profileImageUrl || existingUser.profileImageUrl,
+            lastLoginAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, existingUser.id))
+          .returning();
+        return updatedUser;
       }
     }
 
-    // Повертаємо тимчасовий об'єкт User
-    return {
-      id: userData.id || 'guest',
-      email: userData.email,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      profileImageUrl: userData.profileImageUrl,
-      role: 'user',
-      isActive: true,
-      permissions: null,
-      lastLoginAt: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } as User;
+    // Створюємо нового користувача для Replit Auth
+    const [newUser] = await db
+      .insert(users)
+      .values({
+        username: userData.email || userData.id || 'guest',
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        profileImageUrl: userData.profileImageUrl,
+        password: 'external_auth', // Маркер зовнішньої аутентифікації
+        role: 'user',
+        isActive: true,
+        permissions: userData.permissions,
+        lastLoginAt: new Date(),
+      })
+      .returning();
+    
+    return newUser;
   }
 
   // Roles
