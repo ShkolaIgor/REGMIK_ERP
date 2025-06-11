@@ -1,4 +1,4 @@
-import { eq, sql, desc, and, gte, lte, isNull, ne, or, not } from "drizzle-orm";
+import { eq, sql, desc, and, gte, lte, isNull, ne, or, not, max } from "drizzle-orm";
 import { db } from "./db";
 import { IStorage } from "./storage";
 import {
@@ -3264,7 +3264,26 @@ export class DatabaseStorage implements IStorage {
 
   // Currency methods
   async getCurrencies(): Promise<Currency[]> {
-    return await db.select().from(currencies).orderBy(currencies.code);
+    const baseCurrencies = await db.select().from(currencies).orderBy(currencies.code);
+    
+    const currenciesWithRates = await Promise.all(
+      baseCurrencies.map(async (currency) => {
+        const [latestRate] = await db
+          .select()
+          .from(exchangeRateHistory)
+          .where(eq(exchangeRateHistory.currencyId, currency.id))
+          .orderBy(desc(exchangeRateHistory.createdAt))
+          .limit(1);
+        
+        return {
+          ...currency,
+          latestRate: latestRate?.rate || null,
+          rateDate: latestRate?.createdAt || null,
+        };
+      })
+    );
+
+    return currenciesWithRates as any;
   }
 
   async getCurrency(id: number): Promise<Currency | null> {

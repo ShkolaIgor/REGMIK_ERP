@@ -274,6 +274,7 @@ export default function Currencies() {
         description: `${data.message}. Оновлено дат: ${data.updatedDates?.length || 0}`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/currency-rates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/currencies"] });
     },
     onError: (error: Error) => {
       toast({
