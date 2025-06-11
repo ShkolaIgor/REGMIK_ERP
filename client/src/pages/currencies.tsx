@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { uk } from "date-fns/locale";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface Currency {
   id: number;
@@ -863,29 +864,144 @@ export default function Currencies() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Валюта</TableHead>
-                      <TableHead>Код НБУ</TableHead>
-                      <TableHead>Курс</TableHead>
                       <TableHead>Дата курсу</TableHead>
-                      <TableHead>Завантажено</TableHead>
+                      <TableHead>EUR</TableHead>
+                      <TableHead>USD</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {nbuRates.map((rate) => (
-                      <TableRow key={rate.id}>
-                        <TableCell className="font-medium">
-                          {rate.txt} ({rate.currencyCode})
-                        </TableCell>
-                        <TableCell>{rate.cc}</TableCell>
-                        <TableCell className="font-mono">{rate.rate}</TableCell>
-                        <TableCell>{formatExchangeDate(rate.exchangeDate)}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {formatDate(rate.createdAt)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {(() => {
+                      // Group rates by exchange date
+                      const ratesByDate = nbuRates.reduce((acc, rate) => {
+                        const date = rate.exchangeDate;
+                        if (!acc[date]) {
+                          acc[date] = {};
+                        }
+                        acc[date][rate.currencyCode] = rate.rate;
+                        return acc;
+                      }, {} as Record<string, Record<string, string>>);
+
+                      // Sort dates in descending order
+                      const sortedDates = Object.keys(ratesByDate).sort((a, b) => 
+                        new Date(b).getTime() - new Date(a).getTime()
+                      );
+
+                      return sortedDates.map((date) => (
+                        <TableRow key={date}>
+                          <TableCell className="font-medium">
+                            {formatExchangeDate(date)}
+                          </TableCell>
+                          <TableCell className="font-mono">
+                            {ratesByDate[date]['EUR'] || '—'}
+                          </TableCell>
+                          <TableCell className="font-mono">
+                            {ratesByDate[date]['USD'] || '—'}
+                          </TableCell>
+                        </TableRow>
+                      ));
+                    })()}
                   </TableBody>
                 </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Графік курсів НБУ */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Графік курсів валют НБУ
+              </CardTitle>
+              <CardDescription>
+                Динаміка зміни курсів EUR та USD відносно гривні
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {ratesLoading ? (
+                <div className="h-80 flex items-center justify-center">
+                  <div className="text-center">
+                    <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2" />
+                    <p>Завантаження даних...</p>
+                  </div>
+                </div>
+              ) : nbuRates.length === 0 ? (
+                <div className="h-80 flex items-center justify-center text-center text-muted-foreground">
+                  <div>
+                    <TrendingUp className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>Курси НБУ не завантажені</p>
+                    <p className="text-sm">Використовуйте кнопки оновлення вище</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={(() => {
+                        // Group rates by exchange date and format for chart
+                        const ratesByDate = nbuRates.reduce((acc, rate) => {
+                          const date = rate.exchangeDate;
+                          if (!acc[date]) {
+                            acc[date] = { date };
+                          }
+                          acc[date][rate.currencyCode] = parseFloat(rate.rate);
+                          return acc;
+                        }, {} as Record<string, any>);
+
+                        // Sort dates and return array
+                        return Object.values(ratesByDate)
+                          .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                          .map((item: any) => ({
+                            ...item,
+                            date: formatExchangeDate(item.date)
+                          }));
+                      })()}
+                      margin={{
+                        top: 5,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="date" 
+                        tick={{ fontSize: 12 }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis 
+                        tick={{ fontSize: 12 }}
+                        domain={['dataMin - 1', 'dataMax + 1']}
+                      />
+                      <Tooltip 
+                        labelFormatter={(label) => `Дата: ${label}`}
+                        formatter={(value: any, name: string) => [
+                          `${parseFloat(value).toFixed(4)} ₴`,
+                          name === 'EUR' ? 'Євро' : name === 'USD' ? 'Долар США' : name
+                        ]}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="EUR" 
+                        stroke="#8884d8" 
+                        strokeWidth={2}
+                        name="EUR"
+                        connectNulls={false}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="USD" 
+                        stroke="#82ca9d" 
+                        strokeWidth={2}
+                        name="USD"
+                        connectNulls={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               )}
             </CardContent>
           </Card>
