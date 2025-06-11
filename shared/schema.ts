@@ -2001,4 +2001,51 @@ export const insertUserSortPreferenceSchema = createInsertSchema(userSortPrefere
 export type UserSortPreference = typeof userSortPreferences.$inferSelect;
 export type InsertUserSortPreference = z.infer<typeof insertUserSortPreferenceSchema>;
 
+// Курси валют НБУ
+export const currencyRates = pgTable("currency_rates", {
+  id: serial("id").primaryKey(),
+  currencyCode: varchar("currency_code", { length: 3 }).notNull(), // USD, EUR тощо
+  rate: decimal("rate", { precision: 10, scale: 4 }).notNull(), // курс до гривні
+  exchangeDate: timestamp("exchange_date").notNull(), // дата курсу
+  txt: varchar("txt", { length: 100 }), // назва валюти українською
+  cc: varchar("cc", { length: 3 }), // код валюти
+  r030: integer("r030"), // цифровий код валюти
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("currency_rates_code_date_idx").on(table.currencyCode, table.exchangeDate),
+]);
+
+// Налаштування автоматичного оновлення курсів
+export const currencyUpdateSettings = pgTable("currency_update_settings", {
+  id: serial("id").primaryKey(),
+  autoUpdateEnabled: boolean("auto_update_enabled").default(true),
+  updateTime: varchar("update_time", { length: 5 }).default("09:00"), // час оновлення HH:MM
+  lastUpdateDate: timestamp("last_update_date"),
+  lastUpdateStatus: varchar("last_update_status", { length: 20 }).default("pending"), // success, error, pending
+  lastUpdateError: text("last_update_error"),
+  enabledCurrencies: jsonb("enabled_currencies").$type<string[]>().default(["USD", "EUR"]),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Схеми для валідації
+export const insertCurrencyRateSchema = createInsertSchema(currencyRates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCurrencyUpdateSettingsSchema = createInsertSchema(currencyUpdateSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CurrencyRate = typeof currencyRates.$inferSelect;
+export type InsertCurrencyRate = z.infer<typeof insertCurrencyRateSchema>;
+
+export type CurrencyUpdateSettings = typeof currencyUpdateSettings.$inferSelect;
+export type InsertCurrencyUpdateSettings = z.infer<typeof insertCurrencyUpdateSettingsSchema>;
+
 

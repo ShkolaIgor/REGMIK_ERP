@@ -10,7 +10,7 @@ import {
   componentCategories, componentAlternatives, carriers, shipments, shipmentItems, customerAddresses, senderSettings,
   manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, exchangeRateHistory, serialNumbers, serialNumberSettings, emailSettings,
   sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients, clientContacts, clientNovaPoshtaSettings,
-  clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences,
+  clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences, currencyRates, currencyUpdateSettings,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
   type Category, type InsertCategory,
@@ -39,6 +39,8 @@ import {
   type CustomerAddress, type InsertCustomerAddress,
   type SenderSettings, type InsertSenderSettings,
   type Currency, type InsertCurrency, type ExchangeRateHistory,
+  type CurrencyRate, type InsertCurrencyRate,
+  type CurrencyUpdateSettings, type InsertCurrencyUpdateSettings,
   type SerialNumber, type InsertSerialNumber,
   type SerialNumberSettings, type InsertSerialNumberSettings,
   type CostCalculation, type InsertCostCalculation,
@@ -6236,6 +6238,117 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Error deleting invoice item:", error);
       return false;
+    }
+  }
+
+  // Currency Rates methods
+  async getCurrencyRates(limit?: number): Promise<CurrencyRate[]> {
+    const query = db
+      .select()
+      .from(currencyRates)
+      .orderBy(desc(currencyRates.exchangeDate), currencyRates.currencyCode);
+    
+    if (limit) {
+      return await query.limit(limit);
+    }
+    return await query;
+  }
+
+  async getCurrencyRatesByDate(date: Date): Promise<CurrencyRate[]> {
+    return await db
+      .select()
+      .from(currencyRates)
+      .where(eq(currencyRates.exchangeDate, date))
+      .orderBy(currencyRates.currencyCode);
+  }
+
+  async getLatestCurrencyRates(): Promise<CurrencyRate[]> {
+    // Отримуємо останні курси для кожної валюти
+    const latestRates = await db
+      .select()
+      .from(currencyRates)
+      .where(
+        sql`exchange_date = (
+          SELECT MAX(exchange_date) 
+          FROM currency_rates cr2 
+          WHERE cr2.currency_code = currency_rates.currency_code
+        )`
+      )
+      .orderBy(currencyRates.currencyCode);
+    
+    return latestRates;
+  }
+
+  async saveCurrencyRates(rates: InsertCurrencyRate[]): Promise<CurrencyRate[]> {
+    if (rates.length === 0) return [];
+    
+    const insertedRates = await db
+      .insert(currencyRates)
+      .values(rates)
+      .onConflictDoUpdate({
+        target: [currencyRates.currencyCode, currencyRates.exchangeDate],
+        set: {
+          rate: sql`excluded.rate`,
+          txt: sql`excluded.txt`,
+          cc: sql`excluded.cc`,
+          r030: sql`excluded.r030`,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    
+    return insertedRates;
+  }
+
+  async getCurrencyUpdateSettings(): Promise<CurrencyUpdateSettings | null> {
+    const [settings] = await db
+      .select()
+      .from(currencyUpdateSettings)
+      .limit(1);
+    
+    return settings || null;
+  }
+
+  async saveCurrencyUpdateSettings(settingsData: Partial<InsertCurrencyUpdateSettings>): Promise<CurrencyUpdateSettings> {
+    // Перевіряємо чи існують налаштування
+    const existing = await this.getCurrencyUpdateSettings();
+    
+    if (existing) {
+      const [updated] = await db
+        .update(currencyUpdateSettings)
+        .set({
+          ...settingsData,
+          updatedAt: new Date(),
+        })
+        .where(eq(currencyUpdateSettings.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(currencyUpdateSettings)
+        .values({
+          autoUpdateEnabled: true,
+          updateTime: "09:00",
+          enabledCurrencies: ["USD", "EUR"],
+          ...settingsData,
+        })
+        .returning();
+      return created;
+    }
+  }
+
+  async updateCurrencyUpdateStatus(status: string, error?: string): Promise<void> {
+    const settings = await this.getCurrencyUpdateSettings();
+    if (settings) {
+      await db
+        .update(currencyUpdateSettings)
+        .set({
+          lastUpdateDate: new Date(),
+          lastUpdateStatus: status,
+          lastUpdateError: error || null,
+          updatedAt: new Date(),
+        })
+        .where(eq(currencyUpdateSettings.id, settings.id));
     }
   }
 }
