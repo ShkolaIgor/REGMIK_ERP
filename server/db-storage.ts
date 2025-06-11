@@ -38,7 +38,7 @@ import {
   type Shipment, type InsertShipment,
   type CustomerAddress, type InsertCustomerAddress,
   type SenderSettings, type InsertSenderSettings,
-  type Currency, type InsertCurrency, type ExchangeRateHistory,
+  type Currency, type InsertCurrency,
   type CurrencyRate, type InsertCurrencyRate,
   type CurrencyUpdateSettings, type InsertCurrencyUpdateSettings,
   type SerialNumber, type InsertSerialNumber,
@@ -3270,9 +3270,9 @@ export class DatabaseStorage implements IStorage {
       baseCurrencies.map(async (currency) => {
         const [latestRate] = await db
           .select()
-          .from(exchangeRateHistory)
-          .where(eq(exchangeRateHistory.currencyId, currency.id))
-          .orderBy(desc(exchangeRateHistory.createdAt))
+          .from(currencyRates)
+          .where(eq(currencyRates.currencyCode, currency.code))
+          .orderBy(desc(currencyRates.exchangeDate))
           .limit(1);
         
         return {
@@ -3337,29 +3337,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getLatestExchangeRates(): Promise<ExchangeRateHistory[]> {
-    // Отримуємо останні курси для кожної валюти
-    const rates = await db
-      .select()
-      .from(exchangeRateHistory)
-      .where(
-        eq(
-          exchangeRateHistory.createdAt,
-          db.select({ maxDate: sql`MAX(${exchangeRateHistory.createdAt})` })
-            .from(exchangeRateHistory)
-            .where(eq(exchangeRateHistory.currencyId, exchangeRateHistory.currencyId))
-        )
-      )
-      .orderBy(exchangeRateHistory.currencyId);
-    
-    return rates;
-  }
-
-  async updateExchangeRates(): Promise<ExchangeRateHistory[]> {
-    // У реальному додатку тут би було звернення до API для отримання актуальних курсів
-    // Наразі повертаємо поточні курси
-    return this.getLatestExchangeRates();
-  }
+  // Видалено getLatestExchangeRates - використовуємо currency_rates замість exchange_rate_history
 
   // Production analytics methods
   async getProductionAnalytics(filters: {
@@ -3997,39 +3975,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Exchange rates management
-  async getExchangeRates(): Promise<any[]> {
-    try {
-      const rates = await db.select({
-        id: exchangeRateHistory.id,
-        currencyId: exchangeRateHistory.currencyId,
-        rate: exchangeRateHistory.rate,
-        createdAt: exchangeRateHistory.createdAt,
-        currency: {
-          id: currencies.id,
-          code: currencies.code,
-          name: currencies.name,
-          symbol: currencies.symbol
-        }
-      })
-      .from(exchangeRateHistory)
-      .leftJoin(currencies, eq(exchangeRateHistory.currencyId, currencies.id))
-      .orderBy(desc(exchangeRateHistory.createdAt));
-
-      return rates;
-    } catch (error) {
-      console.error("Error getting exchange rates:", error);
-      throw error;
-    }
-  }
-
-  async createExchangeRate(rateData: any): Promise<any> {
-    try {
-      const [newRate] = await db.insert(exchangeRateHistory).values(rateData).returning();
-      return newRate;
-    } catch (error) {
-      console.error("Error creating exchange rate:", error);
-      throw error;
-    }
+  // Видалено getExchangeRates та createExchangeRate - використовуємо currency_rates
   }
 
   async completeProductOrder(productId: number, quantity: string, warehouseId: number): Promise<any> {

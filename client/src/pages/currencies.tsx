@@ -425,9 +425,6 @@ export default function Currencies() {
   );
 
   const baseCurrency = currencies.find(c => c.isBase);
-  const recentRates = exchangeRates
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 10);
 
   return (
     <div className="container mx-auto p-6">
