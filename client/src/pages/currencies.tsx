@@ -55,6 +55,28 @@ interface CurrencyWithLatestRate extends Currency {
   rateDate?: string;
 }
 
+interface CurrencyRate {
+  id: number;
+  currencyCode: string;
+  rate: string;
+  exchangeDate: string;
+  txt: string;
+  cc: string;
+  r030: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface CurrencySettings {
+  id: number;
+  autoUpdateEnabled: boolean;
+  updateTime: string;
+  lastUpdateDate: string | null;
+  lastUpdateStatus: string;
+  lastUpdateError: string | null;
+  enabledCurrencies: string[];
+}
+
 export default function Currencies() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("currencies");
@@ -76,6 +98,13 @@ export default function Currencies() {
     rate: ""
   });
 
+  // НБУ states
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [updateTime, setUpdateTime] = useState("09:00");
+  const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true);
+  const [enabledCurrencies, setEnabledCurrencies] = useState(["USD", "EUR"]);
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -85,6 +114,15 @@ export default function Currencies() {
 
   const { data: exchangeRates = [] } = useQuery<ExchangeRate[]>({
     queryKey: ["/api/exchange-rates"],
+  });
+
+  // НБУ queries
+  const { data: nbuRates = [], isLoading: ratesLoading } = useQuery<CurrencyRate[]>({
+    queryKey: ["/api/currency-rates"],
+  });
+
+  const { data: nbuSettings } = useQuery<CurrencySettings>({
+    queryKey: ["/api/currency-settings"],
   });
 
   const createCurrencyMutation = useMutation({
@@ -186,6 +224,94 @@ export default function Currencies() {
     },
   });
 
+  // НБУ mutations
+  const updateCurrentRatesMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/currency-rates/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Помилка оновлення курсів");
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Курси оновлено",
+        description: data.message,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-rates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-settings"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Помилка оновлення",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updatePeriodRatesMutation = useMutation({
+    mutationFn: async ({ startDate, endDate }: { startDate: string; endDate: string }) => {
+      const response = await fetch("/api/currency-rates/update-period", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startDate, endDate }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Помилка оновлення курсів за період");
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Курси за період оновлено",
+        description: `${data.message}. Оновлено дат: ${data.updatedDates?.length || 0}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-rates"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Помилка оновлення за період",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const saveNbuSettingsMutation = useMutation({
+    mutationFn: async (settingsData: Partial<CurrencySettings>) => {
+      const response = await fetch("/api/currency-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settingsData),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Помилка збереження налаштувань");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Налаштування збережено",
+        description: "Налаштування автоматичного оновлення курсів збережено",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-settings"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Помилка збереження",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const resetCurrencyForm = () => {
     setCurrencyForm({
       code: "",
@@ -229,6 +355,70 @@ export default function Currencies() {
         currencyId: selectedCurrencyForRate.id,
         rate: rateForm.rate
       });
+    }
+  };
+
+  // НБУ handlers
+  const handleUpdateCurrent = () => {
+    updateCurrentRatesMutation.mutate();
+  };
+
+  const handleUpdatePeriod = () => {
+    if (!startDate || !endDate) {
+      toast({
+        title: "Помилка",
+        description: "Вкажіть початкову та кінцеву дати",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (new Date(startDate) > new Date(endDate)) {
+      toast({
+        title: "Помилка",
+        description: "Початкова дата не може бути пізніше кінцевої",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updatePeriodRatesMutation.mutate({ startDate, endDate });
+  };
+
+  const handleSaveNbuSettings = () => {
+    saveNbuSettingsMutation.mutate({
+      autoUpdateEnabled,
+      updateTime,
+      enabledCurrencies,
+    });
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "success":
+        return <Badge className="bg-green-100 text-green-800">Успішно</Badge>;
+      case "error":
+        return <Badge variant="destructive">Помилка</Badge>;
+      case "pending":
+        return <Badge variant="secondary">Очікування</Badge>;
+      default:
+        return <Badge variant="outline">Невідомо</Badge>;
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "dd.MM.yyyy HH:mm", { locale: uk });
+    } catch {
+      return dateString;
+    }
+  };
+
+  const formatExchangeDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "dd.MM.yyyy", { locale: uk });
+    } catch {
+      return dateString;
     }
   };
 
@@ -369,9 +559,10 @@ export default function Currencies() {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="currencies">Валюти</TabsTrigger>
           <TabsTrigger value="rates">Курси обміну</TabsTrigger>
+          <TabsTrigger value="nbu">Курси НБУ</TabsTrigger>
         </TabsList>
 
         <TabsContent value="currencies" className="space-y-4">
