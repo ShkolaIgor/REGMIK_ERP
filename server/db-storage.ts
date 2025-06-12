@@ -5889,10 +5889,26 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async deleteCurrencyWidget(id: number): Promise<void> {
+  async deleteCurrencyWidget(id: number, userId?: number): Promise<boolean> {
     try {
-      await db.delete(currencyWidgets)
+      const conditions = [eq(currencyWidgets.id, id)];
+      
+      if (userId) {
+        // Перевіряємо, що віджет належить користувачу через панель
+        const widget = await db.select()
+          .from(currencyWidgets)
+          .innerJoin(currencyDashboards, eq(currencyWidgets.dashboardId, currencyDashboards.id))
+          .where(and(eq(currencyWidgets.id, id), eq(currencyDashboards.userId, userId)));
+        
+        if (!widget.length) {
+          return false;
+        }
+      }
+      
+      const result = await db.delete(currencyWidgets)
         .where(eq(currencyWidgets.id, id));
+      
+      return result.rowCount > 0;
     } catch (error) {
       console.error("Error deleting currency widget:", error);
       throw error;
