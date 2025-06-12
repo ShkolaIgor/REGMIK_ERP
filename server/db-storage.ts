@@ -8,7 +8,7 @@ import {
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes, solderingTypes,
   componentCategories, componentAlternatives, carriers, shipments, shipmentItems, customerAddresses, senderSettings,
-  manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, currencyRates, serialNumbers, serialNumberSettings, emailSettings,
+  manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, currencyRates, currencyUpdateSettings, serialNumbers, serialNumberSettings, emailSettings,
   sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients, clientContacts, clientNovaPoshtaSettings,
   clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
@@ -3374,13 +3374,25 @@ export class DatabaseStorage implements IStorage {
 
   async getCurrencyUpdateSettings(): Promise<any> {
     try {
-      // Повертаємо базові налаштування
-      return {
-        autoUpdate: true,
-        updateInterval: 24, // годин
-        lastUpdate: new Date(),
-        baseCurrency: 'UAH'
-      };
+      const [settings] = await db.select()
+        .from(currencyUpdateSettings)
+        .limit(1);
+
+      if (!settings) {
+        // Створюємо налаштування за замовчуванням якщо їх немає
+        const [defaultSettings] = await db
+          .insert(currencyUpdateSettings)
+          .values({
+            autoUpdateEnabled: false,
+            updateTime: "09:00",
+            enabledCurrencies: ["USD", "EUR"],
+            lastUpdateStatus: "pending"
+          })
+          .returning();
+        return defaultSettings;
+      }
+
+      return settings;
     } catch (error) {
       console.error("Error getting currency update settings:", error);
       throw error;
@@ -3389,8 +3401,36 @@ export class DatabaseStorage implements IStorage {
 
   async saveCurrencyUpdateSettings(settings: any): Promise<any> {
     try {
-      // Зберігаємо налаштування (заглушка)
-      return settings;
+      // Перевіряємо чи існує запис налаштувань
+      const [existingSettings] = await db.select()
+        .from(currencyUpdateSettings)
+        .limit(1);
+
+      if (existingSettings) {
+        // Оновлюємо існуючі налаштування
+        const [updated] = await db
+          .update(currencyUpdateSettings)
+          .set({
+            autoUpdateEnabled: settings.autoUpdateEnabled || false,
+            updateTime: settings.updateTime || "09:00",
+            enabledCurrencies: settings.enabledCurrencies || ["USD", "EUR"],
+            updatedAt: new Date()
+          })
+          .where(eq(currencyUpdateSettings.id, existingSettings.id))
+          .returning();
+        return updated;
+      } else {
+        // Створюємо нові налаштування
+        const [created] = await db
+          .insert(currencyUpdateSettings)
+          .values({
+            autoUpdateEnabled: settings.autoUpdateEnabled || false,
+            updateTime: settings.updateTime || "09:00",
+            enabledCurrencies: settings.enabledCurrencies || ["USD", "EUR"]
+          })
+          .returning();
+        return created;
+      }
     } catch (error) {
       console.error("Error saving currency update settings:", error);
       throw error;

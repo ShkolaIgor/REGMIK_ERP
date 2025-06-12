@@ -5874,6 +5874,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/currency-settings", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const settingsData = req.body;
+      const settings = await storage.saveCurrencyUpdateSettings(settingsData);
+      
+      // Якщо автооновлення увімкнено, перезапускаємо планувальник
+      if (settingsData.autoUpdateEnabled) {
+        currencyService.initializeAutoUpdate();
+      }
+      
+      res.json(settings);
+    } catch (error) {
+      console.error("Error saving currency settings:", error);
+      res.status(500).json({ error: "Failed to save currency settings" });
+    }
+  });
+
   // Отримання конкретного курсу валюти
   app.get("/api/currency-rate/:code", isSimpleAuthenticated, async (req, res) => {
     try {
