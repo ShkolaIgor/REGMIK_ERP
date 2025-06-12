@@ -5985,22 +5985,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/currency-widgets/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      console.log(`Updating widget ${id} with data:`, req.body);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid widget ID" });
+      }
+      
       const widget = await storage.updateCurrencyWidget(id, req.body);
+      console.log(`Widget ${id} updated successfully:`, widget);
       res.json(widget);
     } catch (error) {
       console.error("Error updating currency widget:", error);
-      res.status(500).json({ error: "Failed to update currency widget" });
+      res.status(500).json({ error: "Failed to update currency widget", details: error.message });
     }
   });
 
   app.delete("/api/currency-widgets/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      console.log(`Deleting widget ${id}`);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid widget ID" });
+      }
+      
       await storage.deleteCurrencyWidget(id);
+      console.log(`Widget ${id} deleted successfully`);
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting currency widget:", error);
-      res.status(500).json({ error: "Failed to delete currency widget" });
+      res.status(500).json({ error: "Failed to delete currency widget", details: error.message });
     }
   });
 

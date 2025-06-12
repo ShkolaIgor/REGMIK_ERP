@@ -261,12 +261,19 @@ export default function CurrencyDashboard() {
   const createWidgetMutation = useMutation({
     mutationFn: (data: any) => apiRequest("/api/currency-widgets", "POST", data),
     onSuccess: () => {
+      // Інвалідуємо всі пов'язані запити
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards"] });
       queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
       setIsCreateWidgetOpen(false);
       toast({ title: "Віджет створено успішно" });
     },
-    onError: () => {
-      toast({ title: "Помилка створення віджета", variant: "destructive" });
+    onError: (error: any) => {
+      console.error("Widget create error:", error);
+      toast({ 
+        title: "Помилка створення віджета", 
+        description: error.message || "Невідома помилка",
+        variant: "destructive" 
+      });
     },
   });
 
@@ -274,23 +281,37 @@ export default function CurrencyDashboard() {
     mutationFn: ({ id, data }: { id: number; data: any }) => 
       apiRequest(`/api/currency-widgets/${id}`, "PUT", data),
     onSuccess: () => {
+      // Інвалідуємо всі пов'язані запити
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards"] });
       queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
       setEditingWidget(null);
       toast({ title: "Віджет оновлено успішно" });
     },
-    onError: () => {
-      toast({ title: "Помилка оновлення віджета", variant: "destructive" });
+    onError: (error: any) => {
+      console.error("Widget update error:", error);
+      toast({ 
+        title: "Помилка оновлення віджета", 
+        description: error.message || "Невідома помилка",
+        variant: "destructive" 
+      });
     },
   });
 
   const deleteWidgetMutation = useMutation({
     mutationFn: (id: number) => apiRequest(`/api/currency-widgets/${id}`, "DELETE"),
     onSuccess: () => {
+      // Інвалідуємо всі пов'язані запити
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards"] });
       queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
       toast({ title: "Віджет видалено успішно" });
     },
-    onError: () => {
-      toast({ title: "Помилка видалення віджета", variant: "destructive" });
+    onError: (error: any) => {
+      console.error("Widget delete error:", error);
+      toast({ 
+        title: "Помилка видалення віджета", 
+        description: error.message || "Невідома помилка",
+        variant: "destructive" 
+      });
     },
   });
 
