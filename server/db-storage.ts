@@ -5754,9 +5754,9 @@ export class DatabaseStorage implements IStorage {
       // Завантажуємо віджети для кожної панелі
       for (const dashboard of dashboards) {
         const widgets = await db.select()
-          .from(currencyDashboardWidgets)
-          .where(eq(currencyDashboardWidgets.dashboardId, dashboard.id))
-          .orderBy(currencyDashboardWidgets.createdAt);
+          .from(currencyWidgets)
+          .where(eq(currencyWidgets.dashboardId, dashboard.id))
+          .orderBy(currencyWidgets.createdAt);
         
         dashboard.widgets = widgets;
       }
