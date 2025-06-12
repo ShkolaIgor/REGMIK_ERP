@@ -734,8 +734,8 @@ export default function CurrencyDashboard() {
                   <div 
                     className="grid gap-4"
                     style={{
-                      gridTemplateColumns: `repeat(${dashboard.layout?.columns || 3}, 1fr)`,
-                      gap: `${dashboard.layout?.gap || 16}px`,
+                      gridTemplateColumns: `repeat(${currentDashboard.layout?.columns || 3}, 1fr)`,
+                      gap: `${currentDashboard.layout?.gap || 16}px`,
                     }}
                   >
                     {currentDashboard.widgets.map((widget: Widget) => (
