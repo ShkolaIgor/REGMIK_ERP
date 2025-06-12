@@ -5751,6 +5751,16 @@ export class DatabaseStorage implements IStorage {
         .where(eq(currencyDashboards.userId, userId))
         .orderBy(desc(currencyDashboards.isDefault), desc(currencyDashboards.updatedAt));
       
+      // Завантажуємо віджети для кожної панелі
+      for (const dashboard of dashboards) {
+        const widgets = await db.select()
+          .from(currencyDashboardWidgets)
+          .where(eq(currencyDashboardWidgets.dashboardId, dashboard.id))
+          .orderBy(currencyDashboardWidgets.createdAt);
+        
+        dashboard.widgets = widgets;
+      }
+      
       return dashboards;
     } catch (error) {
       console.error("Error fetching currency dashboards:", error);
