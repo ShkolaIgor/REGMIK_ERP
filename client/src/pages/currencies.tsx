@@ -704,17 +704,18 @@ export default function Currencies() {
                   <TableHead>Символ</TableHead>
                   <TableHead>Поточний курс</TableHead>
                   <TableHead>Статус</TableHead>
+                  <TableHead>НБУ оновлення</TableHead>
                   <TableHead>Дії</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center">Завантаження...</TableCell>
+                    <TableCell colSpan={7} className="text-center">Завантаження...</TableCell>
                   </TableRow>
                 ) : filteredCurrencies.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center">Валюти не знайдено</TableCell>
+                    <TableCell colSpan={7} className="text-center">Валюти не знайдено</TableCell>
                   </TableRow>
                 ) : (
                   filteredCurrencies.map((currency) => (
@@ -747,6 +748,37 @@ export default function Currencies() {
                             {currency.isActive ? "Активна" : "Неактивна"}
                           </Badge>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {currency.code !== 'UAH' ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id={`nbu-${currency.code}`}
+                              checked={enabledCurrencies.includes(currency.code)}
+                              onChange={(e) => {
+                                const newEnabledCurrencies = e.target.checked
+                                  ? [...enabledCurrencies, currency.code]
+                                  : enabledCurrencies.filter(c => c !== currency.code);
+                                setEnabledCurrencies(newEnabledCurrencies);
+                                
+                                // Автоматично зберігаємо зміни
+                                saveSettingsMutation.mutate({
+                                  autoUpdateEnabled,
+                                  updateTime,
+                                  enabledCurrencies: newEnabledCurrencies
+                                });
+                              }}
+                              className="h-4 w-4"
+                              disabled={saveSettingsMutation.isPending}
+                            />
+                            {saveSettingsMutation.isPending && (
+                              <RefreshCw className="h-3 w-3 animate-spin text-muted-foreground" />
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
