@@ -53,22 +53,22 @@ SELECT
   nd."id",
   'rate_card',
   'Курс USD',
-  '{"currencies": ["USD"], "baseCurrency": "UAH", "showTrend": true, "precision": 2, "size": "medium"}',
-  '{"x": 0, "y": 0, "width": 1, "height": 1}'
+  '{"currencies": ["USD"], "baseCurrency": "UAH", "showTrend": true, "precision": 2, "size": "medium"}'::jsonb,
+  '{"x": 0, "y": 0, "width": 1, "height": 1}'::jsonb
 FROM new_dashboards nd
 UNION ALL
 SELECT 
   nd."id",
   'rate_card',
   'Курс EUR',
-  '{"currencies": ["EUR"], "baseCurrency": "UAH", "showTrend": true, "precision": 2, "size": "medium"}',
-  '{"x": 1, "y": 0, "width": 1, "height": 1}'
+  '{"currencies": ["EUR"], "baseCurrency": "UAH", "showTrend": true, "precision": 2, "size": "medium"}'::jsonb,
+  '{"x": 1, "y": 0, "width": 1, "height": 1}'::jsonb
 FROM new_dashboards nd
 UNION ALL
 SELECT 
   nd."id",
   'rate_chart',
   'Динаміка курсів за тиждень',
-  '{"currencies": ["USD", "EUR"], "timeRange": "7d", "chartType": "line", "baseCurrency": "UAH", "showPercentage": false}',
-  '{"x": 2, "y": 0, "width": 1, "height": 2}'
+  '{"currencies": ["USD", "EUR"], "timeRange": "7d", "chartType": "line", "baseCurrency": "UAH", "showPercentage": false}'::jsonb,
+  '{"x": 2, "y": 0, "width": 1, "height": 2}'::jsonb
 FROM new_dashboards nd;
