@@ -261,9 +261,19 @@ export default function CurrencyDashboard() {
   const createWidgetMutation = useMutation({
     mutationFn: (data: any) => apiRequest("/api/currency-widgets", "POST", data),
     onSuccess: async () => {
-      // Примусово оновлюємо дані та скидаємо кеш
+      // Повністю очищуємо кеш для всіх пов'язаних запитів
+      queryClient.removeQueries({ queryKey: ["/api/currency-dashboards"] });
+      queryClient.removeQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
+      queryClient.removeQueries({ queryKey: ["/api/currency-widgets"] });
+      
+      // Примусово перезавантажуємо дані
       await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards"] });
       await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
+      
+      // Інвалідуємо всі запити
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-widgets"] });
+      
       setIsCreateWidgetOpen(false);
       toast({ title: "Віджет створено успішно" });
     },
@@ -281,9 +291,19 @@ export default function CurrencyDashboard() {
     mutationFn: ({ id, data }: { id: number; data: any }) => 
       apiRequest(`/api/currency-widgets/${id}`, "PUT", data),
     onSuccess: async () => {
-      // Примусово оновлюємо дані та скидаємо кеш
+      // Повністю очищуємо кеш для всіх пов'язаних запитів
+      queryClient.removeQueries({ queryKey: ["/api/currency-dashboards"] });
+      queryClient.removeQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
+      queryClient.removeQueries({ queryKey: ["/api/currency-widgets"] });
+      
+      // Примусово перезавантажуємо дані
       await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards"] });
       await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
+      
+      // Інвалідуємо всі запити
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-widgets"] });
+      
       setEditingWidget(null);
       toast({ title: "Віджет оновлено успішно" });
     },
@@ -300,9 +320,19 @@ export default function CurrencyDashboard() {
   const deleteWidgetMutation = useMutation({
     mutationFn: (id: number) => apiRequest(`/api/currency-widgets/${id}`, "DELETE"),
     onSuccess: async () => {
-      // Примусово оновлюємо дані та скидаємо кеш
+      // Повністю очищуємо кеш для всіх пов'язаних запитів
+      queryClient.removeQueries({ queryKey: ["/api/currency-dashboards"] });
+      queryClient.removeQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
+      queryClient.removeQueries({ queryKey: ["/api/currency-widgets"] });
+      
+      // Примусово перезавантажуємо дані
       await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards"] });
       await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
+      
+      // Інвалідуємо всі запити
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-widgets"] });
+      
       toast({ title: "Віджет видалено успішно" });
     },
     onError: (error: any) => {
