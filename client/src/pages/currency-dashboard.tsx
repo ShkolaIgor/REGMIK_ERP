@@ -260,10 +260,10 @@ export default function CurrencyDashboard() {
 
   const createWidgetMutation = useMutation({
     mutationFn: (data: any) => apiRequest("/api/currency-widgets", "POST", data),
-    onSuccess: () => {
-      // Інвалідуємо всі пов'язані запити
-      queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
+    onSuccess: async () => {
+      // Примусово оновлюємо дані та скидаємо кеш
+      await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
       setIsCreateWidgetOpen(false);
       toast({ title: "Віджет створено успішно" });
     },
@@ -280,10 +280,10 @@ export default function CurrencyDashboard() {
   const updateWidgetMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: any }) => 
       apiRequest(`/api/currency-widgets/${id}`, "PUT", data),
-    onSuccess: () => {
-      // Інвалідуємо всі пов'язані запити
-      queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
+    onSuccess: async () => {
+      // Примусово оновлюємо дані та скидаємо кеш
+      await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
       setEditingWidget(null);
       toast({ title: "Віджет оновлено успішно" });
     },
@@ -299,10 +299,10 @@ export default function CurrencyDashboard() {
 
   const deleteWidgetMutation = useMutation({
     mutationFn: (id: number) => apiRequest(`/api/currency-widgets/${id}`, "DELETE"),
-    onSuccess: () => {
-      // Інвалідуємо всі пов'язані запити
-      queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
+    onSuccess: async () => {
+      // Примусово оновлюємо дані та скидаємо кеш
+      await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
       toast({ title: "Віджет видалено успішно" });
     },
     onError: (error: any) => {
