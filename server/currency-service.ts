@@ -49,29 +49,24 @@ export class CurrencyService {
   async fetchAllEnabledCurrencyRates(date?: Date): Promise<InsertCurrencyRate[]> {
     const settings = await storage.getCurrencyUpdateSettings();
     const enabledCurrencies = settings?.enabledCurrencies || ["USD", "EUR"];
-    console.log("Enabled currencies:", enabledCurrencies);
     
     const rates: InsertCurrencyRate[] = [];
     
     for (const currencyCode of enabledCurrencies) {
       const nbuData = await this.fetchCurrencyRateFromNBU(currencyCode, date);
-      console.log(`NBU data for ${currencyCode}:`, nbuData);
       
       if (nbuData) {
-        const rate = {
+        rates.push({
           currencyCode: nbuData.cc,
           rate: nbuData.rate.toString(),
           exchangeDate: new Date(nbuData.exchangedate.split('.').reverse().join('-')),
           txt: nbuData.txt,
           cc: nbuData.cc,
           r030: nbuData.r030,
-        };
-        console.log(`Prepared rate for ${currencyCode}:`, rate);
-        rates.push(rate);
+        });
       }
     }
     
-    console.log("Total rates prepared:", rates.length);
     return rates;
   }
 

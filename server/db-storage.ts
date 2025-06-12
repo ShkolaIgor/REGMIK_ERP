@@ -3291,12 +3291,9 @@ export class DatabaseStorage implements IStorage {
 
   async saveCurrencyRates(rates: any[]): Promise<any[]> {
     try {
-      console.log("Saving currency rates:", rates.length);
       const savedRates = [];
       
       for (const rate of rates) {
-        console.log(`Checking existing rate for ${rate.currencyCode} on ${rate.exchangeDate}`);
-        
         // Перевіряємо чи курс вже існує для цієї валюти та дати
         const existingRate = await db.select()
           .from(currencyRates)
@@ -3308,10 +3305,7 @@ export class DatabaseStorage implements IStorage {
           )
           .limit(1);
 
-        console.log(`Existing rates found: ${existingRate.length}`);
-
         if (existingRate.length === 0) {
-          console.log(`Inserting new rate for ${rate.currencyCode}: ${rate.rate}`);
           // Зберігаємо новий курс
           const [newRate] = await db
             .insert(currencyRates)
@@ -3326,9 +3320,7 @@ export class DatabaseStorage implements IStorage {
             .returning();
           
           savedRates.push(newRate);
-          console.log(`Successfully saved rate for ${rate.currencyCode}`);
         } else {
-          console.log(`Rate already exists for ${rate.currencyCode} on ${rate.exchangeDate}, updating...`);
           // Оновлюємо існуючий курс
           const [updatedRate] = await db
             .update(currencyRates)
@@ -3347,11 +3339,9 @@ export class DatabaseStorage implements IStorage {
             .returning();
           
           savedRates.push(updatedRate);
-          console.log(`Successfully updated rate for ${rate.currencyCode}`);
         }
       }
       
-      console.log(`Total rates saved/updated: ${savedRates.length}`);
       return savedRates;
     } catch (error) {
       console.error("Error saving currency rates:", error);

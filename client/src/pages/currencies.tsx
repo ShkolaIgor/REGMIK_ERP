@@ -428,11 +428,11 @@ export default function Currencies() {
   const baseCurrency = currencies.find(c => c.isBase);
 
   return (
-    <div className="h-screen flex flex-col p-2 overflow-hidden">
-      <div className="flex justify-between items-center mb-2 flex-shrink-0">
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold mb-1">Валюти</h1>
-          <p className="text-sm text-muted-foreground">Управління валютами та курсами обміну</p>
+          <h1 className="text-3xl font-bold">Валюти</h1>
+          <p className="text-muted-foreground">Управління валютами та курсами обміну</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -553,10 +553,10 @@ export default function Currencies() {
         </Card>
       )}
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="currencies">Валюти</TabsTrigger>
-          <TabsTrigger value="nbu">Курси НБУ</TabsTrigger>
+          <TabsTrigger value="rates">Курси НБУ</TabsTrigger>
         </TabsList>
 
         <TabsContent value="currencies" className="space-y-4">
@@ -673,7 +673,7 @@ export default function Currencies() {
 
 
 
-        <TabsContent value="nbu" className="space-y-2 flex-1 flex flex-col overflow-hidden">
+        <TabsContent value="rates" className="space-y-4">
           {/* Оновлення курсів */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 flex-shrink-0">
             <Card>
