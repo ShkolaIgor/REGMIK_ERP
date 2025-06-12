@@ -5749,7 +5749,7 @@ export class DatabaseStorage implements IStorage {
       const dashboards = await db.select()
         .from(currencyDashboards)
         .where(eq(currencyDashboards.userId, userId))
-        .orderBy(currencyDashboards.isDefault.desc(), currencyDashboards.updatedAt.desc());
+        .orderBy(desc(currencyDashboards.isDefault), desc(currencyDashboards.updatedAt));
       
       return dashboards;
     } catch (error) {
