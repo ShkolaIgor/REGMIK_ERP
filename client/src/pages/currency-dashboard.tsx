@@ -315,9 +315,7 @@ export default function CurrencyDashboard() {
     },
     onSuccess: async (data, variables) => {
       console.log(`onSuccess викликано для віджета ${variables}:`, data);
-      queryClient.removeQueries({ queryKey: ["/api/currency-dashboards"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards"] });
       console.log("Кеш оновлено після видалення віджета");
       toast({ title: "Віджет видалено успішно" });
     },
