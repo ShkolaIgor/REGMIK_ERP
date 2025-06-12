@@ -1163,30 +1163,7 @@ export default function Currencies() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Валюти для оновлення</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {availableCurrencies.map((currency) => (
-                    <div key={currency.code} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id={currency.code}
-                        checked={enabledCurrencies.includes(currency.code)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setEnabledCurrencies([...enabledCurrencies, currency.code]);
-                          } else {
-                            setEnabledCurrencies(enabledCurrencies.filter(c => c !== currency.code));
-                          }
-                        }}
-                      />
-                      <Label htmlFor={currency.code} className="text-sm">
-                        {currency.code} - {currency.name}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
+
 
               <Button 
                 onClick={handleSaveSettings}
