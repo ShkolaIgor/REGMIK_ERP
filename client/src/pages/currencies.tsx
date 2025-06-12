@@ -972,7 +972,7 @@ export default function Currencies() {
                   Курси НБУ не завантажені. Використовуйте кнопки оновлення вище.
                 </div>
               ) : (
-                <div className="border rounded-lg overflow-auto max-h-[500px]">
+                <div className="border rounded-lg">
                   <Table>
                     <TableHeader className="sticky top-0 bg-background">
                       <TableRow>
