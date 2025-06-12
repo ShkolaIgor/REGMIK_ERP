@@ -245,6 +245,14 @@ export default function CurrencyDashboard() {
     queryKey: ["/api/currency-dashboards"],
   });
 
+  // Автоматично вибираємо панель за замовчуванням при завантаженні
+  useEffect(() => {
+    if (dashboards && dashboards.length > 0 && !selectedDashboard) {
+      const defaultDashboard = dashboards.find(d => d.isDefault) || dashboards[0];
+      setSelectedDashboard(defaultDashboard.id);
+    }
+  }, [dashboards, selectedDashboard]);
+
   const { data: currentDashboard, isLoading: isDashboardLoading } = useQuery<Dashboard>({
     queryKey: ["/api/currency-dashboards", selectedDashboard],
     enabled: !!selectedDashboard,
