@@ -271,9 +271,8 @@ export default function CurrencyDashboard() {
     mutationFn: (data: any) => apiRequest("/api/currency-widgets", "POST", data),
     onSuccess: async () => {
       console.log("Widget створено успішно");
-      queryClient.removeQueries({ queryKey: ["/api/currency-dashboards"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
+      // Інвалідуємо всі пов'язані запити
+      await queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards"] });
       setIsCreateWidgetOpen(false);
       toast({ title: "Віджет створено успішно" });
     },
@@ -292,10 +291,9 @@ export default function CurrencyDashboard() {
       apiRequest(`/api/currency-widgets/${id}`, "PUT", data),
     onSuccess: async () => {
       console.log("Widget оновлено успішно");
-      queryClient.removeQueries({ queryKey: ["/api/currency-dashboards"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards"] });
       setEditingWidget(null);
+      setIsCreateWidgetOpen(false);
       toast({ title: "Віджет оновлено успішно" });
     },
     onError: (error: any) => {

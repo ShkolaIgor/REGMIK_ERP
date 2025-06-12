@@ -5758,7 +5758,7 @@ export class DatabaseStorage implements IStorage {
           .where(eq(currencyWidgets.dashboardId, dashboard.id))
           .orderBy(currencyWidgets.createdAt);
         
-        dashboard.widgets = widgets;
+        (dashboard as any).widgets = widgets;
       }
       
       return dashboards;
