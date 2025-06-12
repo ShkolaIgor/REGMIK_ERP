@@ -47,10 +47,10 @@ export function setupSimpleSession(app: Express) {
   }));
 }
 
-// Демо користувачі
+// Демо користувачі з цілочисельними ID що відповідають базі даних
 const demoUsers = [
   {
-    id: "demo-user-1",
+    id: 1,
     username: "demo",
     password: "demo123",
     email: "demo@example.com",
@@ -59,7 +59,7 @@ const demoUsers = [
     profileImageUrl: null
   },
   {
-    id: "admin-user-1", 
+    id: 2, 
     username: "admin",
     password: "admin123",
     email: "admin@regmik.com",
@@ -131,7 +131,7 @@ export function setupSimpleAuth(app: Express) {
           
           // Створюємо сесію для користувача з бази даних
           (req.session as any).user = {
-            id: dbUser.id.toString(),
+            id: dbUser.id,
             username: dbUser.username,
             email: dbUser.email,
             firstName: fullUser?.worker?.firstName || dbUser.firstName || dbUser.username,
@@ -188,7 +188,7 @@ export function setupSimpleAuth(app: Express) {
       }
 
       // Для звичайних користувачів отримуємо дані з БД
-      const userId = parseInt(sessionUser.id);
+      const userId = typeof sessionUser.id === 'number' ? sessionUser.id : parseInt(sessionUser.id);
       if (isNaN(userId)) {
         return res.status(400).json({ message: "Невірний ID користувача" });
       }
@@ -200,7 +200,7 @@ export function setupSimpleAuth(app: Express) {
 
       // Використовуємо дані з робітника, якщо доступні
       const userData = {
-        id: fullUser.id.toString(),
+        id: fullUser.id,
         username: fullUser.username,
         email: fullUser.worker?.email || fullUser.email,
         firstName: fullUser.worker?.firstName || fullUser.firstName || fullUser.username,
