@@ -1389,6 +1389,7 @@ function CurrencyWidget({ widget, onEdit, onDelete, onToggleVisibility }: {
   const renderWidget = () => {
     switch (widget.type) {
       case 'rate-display':
+      case 'rate_card':
         return (
           <div className="space-y-2">
             {widgetData.map((item) => (
@@ -1406,6 +1407,7 @@ function CurrencyWidget({ widget, onEdit, onDelete, onToggleVisibility }: {
         );
       
       case 'rate-chart':
+      case 'rate_chart':
         const chartData = widgetData.map(item => ({
           name: item.code,
           value: parseFloat(item.rate)
@@ -1424,6 +1426,7 @@ function CurrencyWidget({ widget, onEdit, onDelete, onToggleVisibility }: {
         );
         
       case 'currency-summary':
+      case 'rate_comparison':
         return (
           <div className="text-center">
             <div className="text-3xl font-bold mb-2">
@@ -1435,8 +1438,31 @@ function CurrencyWidget({ widget, onEdit, onDelete, onToggleVisibility }: {
           </div>
         );
         
+      case 'rate_trend':
+        return (
+          <div className="text-center space-y-2">
+            <div className="text-lg font-bold">Тренд валют</div>
+            <div className="flex items-center justify-center space-x-2">
+              <TrendingUp className="h-5 w-5 text-green-500" />
+              <span className="text-green-500">+2.3%</span>
+            </div>
+          </div>
+        );
+        
+      case 'rate_history':
+        return (
+          <div className="text-center">
+            <div className="text-sm text-muted-foreground mb-2">
+              Період: {widget.config.timeRange || "7д"}
+            </div>
+            <div className="h-20 bg-gradient-to-r from-blue-100 to-green-100 rounded flex items-center justify-center">
+              <BarChart3 className="h-8 w-8 text-muted-foreground" />
+            </div>
+          </div>
+        );
+        
       default:
-        return <div className="text-center text-muted-foreground">Невідомий тип віджета</div>;
+        return <div className="text-center text-muted-foreground">Невідомий тип віджета: {widget.type}</div>;
     }
   };
 
