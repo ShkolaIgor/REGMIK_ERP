@@ -113,11 +113,11 @@ function CurrencyWidget({ widget, onEdit, onDelete, onToggleVisibility }: {
   onDelete: (id: number) => void;
   onToggleVisibility: (id: number, visible: boolean) => void;
 }) {
-  const { data: rates } = useQuery({
+  const { data: rates } = useQuery<any[]>({
     queryKey: ["/api/currency-rates"],
   });
 
-  const { data: currencies } = useQuery({
+  const { data: currencies } = useQuery<any[]>({
     queryKey: ["/api/currencies"],
   });
 
@@ -232,16 +232,16 @@ export default function CurrencyDashboard() {
   const [editingWidget, setEditingWidget] = useState<Widget | null>(null);
 
   // Запити
-  const { data: dashboards, isLoading: isDashboardsLoading } = useQuery({
+  const { data: dashboards, isLoading: isDashboardsLoading } = useQuery<Dashboard[]>({
     queryKey: ["/api/currency-dashboards"],
   });
 
-  const { data: currentDashboard, isLoading: isDashboardLoading } = useQuery({
+  const { data: currentDashboard, isLoading: isDashboardLoading } = useQuery<Dashboard>({
     queryKey: ["/api/currency-dashboards", selectedDashboard],
     enabled: !!selectedDashboard,
   });
 
-  const { data: currencies } = useQuery({
+  const { data: currencies } = useQuery<any[]>({
     queryKey: ["/api/currencies"],
   });
 
@@ -356,12 +356,15 @@ export default function CurrencyDashboard() {
     },
   });
 
-  const widgetForm = useForm({
+  const widgetForm = useForm<any>({
     resolver: zodResolver(widgetSchema),
     defaultValues: {
       type: "rate_card" as const,
       title: "",
       config: {
+        currencies: [],
+        timeRange: "7d",
+        chartType: "line",
         baseCurrency: "UAH",
         showPercentage: false,
         showTrend: true,
@@ -377,7 +380,7 @@ export default function CurrencyDashboard() {
 
   // Ефекти
   useEffect(() => {
-    if (dashboards?.length > 0 && !selectedDashboard) {
+    if (dashboards && dashboards.length > 0 && !selectedDashboard) {
       const defaultDashboard = dashboards.find((d: Dashboard) => d.isDefault) || dashboards[0];
       setSelectedDashboard(defaultDashboard.id);
     }
@@ -388,7 +391,10 @@ export default function CurrencyDashboard() {
       widgetForm.reset({
         type: editingWidget.type as any,
         title: editingWidget.title,
-        config: editingWidget.config,
+        config: {
+          ...editingWidget.config,
+          size: "medium" as const,
+        },
         position: editingWidget.position,
         isVisible: editingWidget.isVisible,
       });
