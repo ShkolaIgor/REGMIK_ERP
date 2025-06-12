@@ -195,14 +195,20 @@ function CurrencyWidget({ widget, onEdit, onDelete, onToggleVisibility }: {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onToggleVisibility(widget.id, !widget.isVisible)}
+              onClick={() => {
+                console.log("Перемикання видимості віджета:", widget.id);
+                onToggleVisibility(widget.id, !widget.isVisible);
+              }}
             >
               {widget.isVisible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onEdit(widget)}
+              onClick={() => {
+                console.log("Редагування віджета:", widget);
+                onEdit(widget);
+              }}
             >
               <Edit className="h-3 w-3" />
             </Button>
@@ -264,19 +270,10 @@ export default function CurrencyDashboard() {
   const createWidgetMutation = useMutation({
     mutationFn: (data: any) => apiRequest("/api/currency-widgets", "POST", data),
     onSuccess: async () => {
-      // Повністю очищуємо кеш для всіх пов'язаних запитів
+      console.log("Widget створено успішно");
       queryClient.removeQueries({ queryKey: ["/api/currency-dashboards"] });
-      queryClient.removeQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
-      queryClient.removeQueries({ queryKey: ["/api/currency-widgets"] });
-      
-      // Примусово перезавантажуємо дані
       await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards"] });
       await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
-      
-      // Інвалідуємо всі запити
-      queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/currency-widgets"] });
-      
       setIsCreateWidgetOpen(false);
       toast({ title: "Віджет створено успішно" });
     },
@@ -294,19 +291,10 @@ export default function CurrencyDashboard() {
     mutationFn: ({ id, data }: { id: number; data: any }) => 
       apiRequest(`/api/currency-widgets/${id}`, "PUT", data),
     onSuccess: async () => {
-      // Повністю очищуємо кеш для всіх пов'язаних запитів
+      console.log("Widget оновлено успішно");
       queryClient.removeQueries({ queryKey: ["/api/currency-dashboards"] });
-      queryClient.removeQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
-      queryClient.removeQueries({ queryKey: ["/api/currency-widgets"] });
-      
-      // Примусово перезавантажуємо дані
       await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards"] });
       await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
-      
-      // Інвалідуємо всі запити
-      queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/currency-widgets"] });
-      
       setEditingWidget(null);
       toast({ title: "Віджет оновлено успішно" });
     },
@@ -329,19 +317,9 @@ export default function CurrencyDashboard() {
     },
     onSuccess: async (data, variables) => {
       console.log(`onSuccess викликано для віджета ${variables}:`, data);
-      // Повністю очищуємо кеш для всіх пов'язаних запитів
       queryClient.removeQueries({ queryKey: ["/api/currency-dashboards"] });
-      queryClient.removeQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
-      queryClient.removeQueries({ queryKey: ["/api/currency-widgets"] });
-      
-      // Примусово перезавантажуємо дані
       await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards"] });
       await queryClient.refetchQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
-      
-      // Інвалідуємо всі запити
-      queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/currency-widgets"] });
-      
       console.log("Кеш оновлено після видалення віджета");
       toast({ title: "Віджет видалено успішно" });
     },
@@ -517,9 +495,11 @@ export default function CurrencyDashboard() {
                     control={dashboardForm.control}
                     name="isDefault"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel>Панель за замовчуванням</FormLabel>
+                          <FormLabel className="text-base">
+                            Панель за замовчуванням
+                          </FormLabel>
                           <FormDescription>
                             Ця панель буде відкриватися першою
                           </FormDescription>
@@ -548,9 +528,9 @@ export default function CurrencyDashboard() {
         </div>
       </div>
 
-      {dashboards && dashboards.length > 0 && (
+      {dashboards && dashboards.length > 0 ? (
         <Tabs value={selectedDashboard?.toString()} onValueChange={(value) => setSelectedDashboard(parseInt(value))}>
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
             {dashboards.map((dashboard: Dashboard) => (
               <TabsTrigger key={dashboard.id} value={dashboard.id.toString()}>
                 {dashboard.name}
@@ -578,131 +558,76 @@ export default function CurrencyDashboard() {
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl">
                       <DialogHeader>
-                        <DialogTitle>
-                          {editingWidget ? "Редагувати віджет" : "Додати новий віджет"}
-                        </DialogTitle>
+                        <DialogTitle>Додати новий віджет</DialogTitle>
                         <DialogDescription>
-                          Налаштуйте віджет для відображення курсів валют
+                          Створіть віджет для відстеження курсів валют
                         </DialogDescription>
                       </DialogHeader>
                       <Form {...widgetForm}>
-                        <form onSubmit={widgetForm.handleSubmit(editingWidget ? handleUpdateWidget : handleCreateWidget)} className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                              control={widgetForm.control}
-                              name="type"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Тип віджета</FormLabel>
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Оберіть тип віджета" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {WIDGET_TYPES.map((type) => (
-                                        <SelectItem key={type.value} value={type.value}>
-                                          <div className="flex items-center space-x-2">
-                                            <type.icon className="h-4 w-4" />
-                                            <span>{type.label}</span>
-                                          </div>
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={widgetForm.control}
-                              name="title"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Назва віджета</FormLabel>
+                        <form onSubmit={widgetForm.handleSubmit(handleCreateWidget)} className="space-y-4">
+                          <FormField
+                            control={widgetForm.control}
+                            name="type"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Тип віджета</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
                                   <FormControl>
-                                    <Input placeholder="Курс USD" {...field} />
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Оберіть тип віджета" />
+                                    </SelectTrigger>
                                   </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
+                                  <SelectContent>
+                                    {WIDGET_TYPES.map(type => (
+                                      <SelectItem key={type.value} value={type.value}>
+                                        {type.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={widgetForm.control}
+                            name="title"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Назва віджета</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Курс USD" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                          <Separator />
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                              control={widgetForm.control}
-                              name="config.baseCurrency"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Базова валюта</FormLabel>
+                          <FormField
+                            control={widgetForm.control}
+                            name="config.currencies"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Валюти</FormLabel>
+                                <Select onValueChange={(value) => field.onChange([value])}>
                                   <FormControl>
-                                    <Input placeholder="UAH" {...field} />
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Оберіть валюту" />
+                                    </SelectTrigger>
                                   </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={widgetForm.control}
-                              name="config.precision"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Точність (знаки після коми)</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      type="number" 
-                                      min="0" 
-                                      max="6" 
-                                      {...field} 
-                                      onChange={(e) => field.onChange(parseInt(e.target.value))}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                              control={widgetForm.control}
-                              name="config.showTrend"
-                              render={({ field }) => (
-                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                                  <div className="space-y-0.5">
-                                    <FormLabel>Показувати тренд</FormLabel>
-                                  </div>
-                                  <FormControl>
-                                    <Switch
-                                      checked={field.value}
-                                      onCheckedChange={field.onChange}
-                                    />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={widgetForm.control}
-                              name="config.showPercentage"
-                              render={({ field }) => (
-                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                                  <div className="space-y-0.5">
-                                    <FormLabel>Показувати відсотки</FormLabel>
-                                  </div>
-                                  <FormControl>
-                                    <Switch
-                                      checked={field.value}
-                                      onCheckedChange={field.onChange}
-                                    />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                          </div>
+                                  <SelectContent>
+                                    {currencies?.map((currency: any) => (
+                                      <SelectItem key={currency.code} value={currency.code}>
+                                        {currency.name} ({currency.code})
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
                           <div className="flex justify-end space-x-2">
                             <Button 
@@ -730,44 +655,49 @@ export default function CurrencyDashboard() {
 
                 {isDashboardLoading ? (
                   <div className="flex items-center justify-center h-32">Завантаження...</div>
-                ) : currentDashboard?.widgets && currentDashboard.widgets.length > 0 ? (
-                  <div 
-                    className="grid gap-4"
-                    style={{
-                      gridTemplateColumns: `repeat(${currentDashboard.layout?.columns || 3}, 1fr)`,
-                      gap: `${currentDashboard.layout?.gap || 16}px`,
-                    }}
-                  >
-                    {currentDashboard.widgets.map((widget: Widget) => (
-                      <CurrencyWidget
-                        key={widget.id}
-                        widget={widget}
-                        onEdit={handleEditWidget}
-                        onDelete={handleDeleteWidget}
-                        onToggleVisibility={handleToggleWidgetVisibility}
-                      />
-                    ))}
-                  </div>
                 ) : (
-                  <Card className="p-8 text-center">
-                    <Grid className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Немає віджетів</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Додайте перший віджет для відстеження курсів валют
-                    </p>
-                    <Button onClick={() => setIsCreateWidgetOpen(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Додати віджет
-                    </Button>
-                  </Card>
+                  <div className="space-y-4">
+                    <div className="text-xs text-muted-foreground">
+                      Debug: currentDashboard = {JSON.stringify(currentDashboard, null, 2)}
+                    </div>
+                    {currentDashboard?.widgets && currentDashboard.widgets.length > 0 ? (
+                      <div 
+                        className="grid gap-4"
+                        style={{
+                          gridTemplateColumns: `repeat(${currentDashboard.layout?.columns || 3}, 1fr)`,
+                          gap: `${currentDashboard.layout?.gap || 16}px`,
+                        }}
+                      >
+                        {currentDashboard.widgets.map((widget: Widget) => (
+                          <CurrencyWidget
+                            key={widget.id}
+                            widget={widget}
+                            onEdit={handleEditWidget}
+                            onDelete={handleDeleteWidget}
+                            onToggleVisibility={handleToggleWidgetVisibility}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <Card className="p-8 text-center">
+                        <Grid className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">Немає віджетів</h3>
+                        <p className="text-muted-foreground mb-4">
+                          Додайте перший віджет для відстеження курсів валют
+                        </p>
+                        <Button onClick={() => setIsCreateWidgetOpen(true)}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Додати віджет
+                        </Button>
+                      </Card>
+                    )}
+                  </div>
                 )}
               </div>
             </TabsContent>
           ))}
         </Tabs>
-      )}
-
-      {(!dashboards || dashboards.length === 0) && (
+      ) : (
         <Card className="p-8 text-center">
           <Settings className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">Немає панелей</h3>
