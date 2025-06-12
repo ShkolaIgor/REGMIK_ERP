@@ -364,9 +364,50 @@ export default function Currencies() {
     }
   };
 
+  // Мутація для збереження налаштувань НБУ
+  const saveSettingsMutation = useMutation({
+    mutationFn: async (settings: any) => {
+      const response = await fetch("/api/currency-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          autoUpdateEnabled,
+          updateTime,
+          enabledCurrencies
+        }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Помилка збереження налаштувань");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Налаштування збережено",
+        description: "Налаштування автоматичного оновлення успішно збережено",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Помилка",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // НБУ handlers
   const handleUpdateCurrent = () => {
     updateCurrentRatesMutation.mutate();
+  };
+
+  const handleSaveSettings = () => {
+    saveSettingsMutation.mutate({
+      autoUpdateEnabled,
+      updateTime,
+      enabledCurrencies
+    });
   };
 
   const handleUpdatePeriod = () => {
@@ -414,7 +455,7 @@ export default function Currencies() {
 
   const formatDate = (dateString: string) => {
     try {
-      return format(new Date(dateString), "dd.MM.yyyy HH:mm", { locale: uk });
+      return format(new Date(dateString), "dd.MM.yyyy HH:mm");
     } catch {
       return dateString;
     }
@@ -422,7 +463,7 @@ export default function Currencies() {
 
   const formatExchangeDate = (dateString: string) => {
     try {
-      return format(new Date(dateString), "dd.MM.yyyy", { locale: uk });
+      return format(new Date(dateString), "dd.MM.yyyy");
     } catch {
       return dateString;
     }
