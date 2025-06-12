@@ -900,6 +900,62 @@ export const insertInventoryAuditItemSchema = createInsertSchema(inventoryAuditI
   createdAt: true
 });
 
+// Currency Dashboard Widgets
+export const currencyDashboards = pgTable("currency_dashboards", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  isDefault: boolean("is_default").default(false),
+  layout: jsonb("layout").$type<{
+    columns: number;
+    rows: number;
+    gap: number;
+  }>().default({ columns: 3, rows: 4, gap: 16 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const currencyWidgets = pgTable("currency_widgets", {
+  id: serial("id").primaryKey(),
+  dashboardId: integer("dashboard_id").references(() => currencyDashboards.id, { onDelete: "cascade" }).notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // rate_card, rate_chart, rate_trend, rate_comparison, rate_history
+  title: varchar("title", { length: 255 }).notNull(),
+  config: jsonb("config").$type<{
+    currencies?: string[];
+    timeRange?: string;
+    chartType?: string;
+    baseCurrency?: string;
+    showPercentage?: boolean;
+    showTrend?: boolean;
+    precision?: number;
+    refreshInterval?: number;
+    colorScheme?: string;
+    size?: 'small' | 'medium' | 'large';
+  }>().notNull(),
+  position: jsonb("position").$type<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }>().notNull(),
+  isVisible: boolean("is_visible").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertCurrencyDashboardSchema = createInsertSchema(currencyDashboards).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertCurrencyWidgetSchema = createInsertSchema(currencyWidgets).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 // Таблиця робітників
 export const workers = pgTable("workers", {
   id: serial("id").primaryKey(),

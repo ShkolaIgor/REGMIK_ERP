@@ -8,7 +8,7 @@ import {
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes, solderingTypes,
   componentCategories, componentAlternatives, carriers, shipments, shipmentItems, customerAddresses, senderSettings,
-  manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, currencyRates, currencyUpdateSettings, serialNumbers, serialNumberSettings, emailSettings,
+  manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, currencyRates, currencyUpdateSettings, currencyDashboards, currencyWidgets, serialNumbers, serialNumberSettings, emailSettings,
   sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients, clientContacts, clientNovaPoshtaSettings,
   clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
@@ -5740,6 +5740,165 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Error fetching client mails:", error);
       return [];
+    }
+  }
+
+  // Currency Dashboard methods
+  async getCurrencyDashboards(userId: number): Promise<any[]> {
+    try {
+      const dashboards = await db.select()
+        .from(currencyDashboards)
+        .where(eq(currencyDashboards.userId, userId))
+        .orderBy(currencyDashboards.isDefault.desc(), currencyDashboards.updatedAt.desc());
+      
+      return dashboards;
+    } catch (error) {
+      console.error("Error fetching currency dashboards:", error);
+      return [];
+    }
+  }
+
+  async getCurrencyDashboard(id: number): Promise<any | null> {
+    try {
+      const [dashboard] = await db.select()
+        .from(currencyDashboards)
+        .where(eq(currencyDashboards.id, id));
+      
+      if (!dashboard) return null;
+
+      const widgets = await db.select()
+        .from(currencyWidgets)
+        .where(eq(currencyWidgets.dashboardId, id))
+        .orderBy(currencyWidgets.position);
+
+      return { ...dashboard, widgets };
+    } catch (error) {
+      console.error("Error fetching currency dashboard:", error);
+      return null;
+    }
+  }
+
+  async createCurrencyDashboard(data: any): Promise<any> {
+    try {
+      // If this is being set as default, unset other defaults
+      if (data.isDefault) {
+        await db.update(currencyDashboards)
+          .set({ isDefault: false })
+          .where(eq(currencyDashboards.userId, data.userId));
+      }
+
+      const [dashboard] = await db.insert(currencyDashboards)
+        .values(data)
+        .returning();
+      
+      return dashboard;
+    } catch (error) {
+      console.error("Error creating currency dashboard:", error);
+      throw error;
+    }
+  }
+
+  async updateCurrencyDashboard(id: number, data: any): Promise<any> {
+    try {
+      // If this is being set as default, unset other defaults
+      if (data.isDefault) {
+        const [dashboard] = await db.select()
+          .from(currencyDashboards)
+          .where(eq(currencyDashboards.id, id));
+        
+        if (dashboard) {
+          await db.update(currencyDashboards)
+            .set({ isDefault: false })
+            .where(eq(currencyDashboards.userId, dashboard.userId));
+        }
+      }
+
+      const [updated] = await db.update(currencyDashboards)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(currencyDashboards.id, id))
+        .returning();
+      
+      return updated;
+    } catch (error) {
+      console.error("Error updating currency dashboard:", error);
+      throw error;
+    }
+  }
+
+  async deleteCurrencyDashboard(id: number): Promise<void> {
+    try {
+      await db.delete(currencyWidgets)
+        .where(eq(currencyWidgets.dashboardId, id));
+      
+      await db.delete(currencyDashboards)
+        .where(eq(currencyDashboards.id, id));
+    } catch (error) {
+      console.error("Error deleting currency dashboard:", error);
+      throw error;
+    }
+  }
+
+  async getCurrencyWidgets(dashboardId: number): Promise<any[]> {
+    try {
+      const widgets = await db.select()
+        .from(currencyWidgets)
+        .where(eq(currencyWidgets.dashboardId, dashboardId))
+        .orderBy(currencyWidgets.position);
+      
+      return widgets;
+    } catch (error) {
+      console.error("Error fetching currency widgets:", error);
+      return [];
+    }
+  }
+
+  async createCurrencyWidget(data: any): Promise<any> {
+    try {
+      const [widget] = await db.insert(currencyWidgets)
+        .values(data)
+        .returning();
+      
+      return widget;
+    } catch (error) {
+      console.error("Error creating currency widget:", error);
+      throw error;
+    }
+  }
+
+  async updateCurrencyWidget(id: number, data: any): Promise<any> {
+    try {
+      const [updated] = await db.update(currencyWidgets)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(currencyWidgets.id, id))
+        .returning();
+      
+      return updated;
+    } catch (error) {
+      console.error("Error updating currency widget:", error);
+      throw error;
+    }
+  }
+
+  async deleteCurrencyWidget(id: number): Promise<void> {
+    try {
+      await db.delete(currencyWidgets)
+        .where(eq(currencyWidgets.id, id));
+    } catch (error) {
+      console.error("Error deleting currency widget:", error);
+      throw error;
+    }
+  }
+
+  async updateWidgetPositions(updates: { id: number; position: any }[]): Promise<void> {
+    try {
+      for (const update of updates) {
+        await db.update(currencyWidgets)
+          .set({ position: update.position, updatedAt: new Date() })
+          .where(eq(currencyWidgets.id, update.id));
+      }
+    } catch (error) {
+      console.error("Error updating widget positions:", error);
+      throw error;
     }
   }
 }
