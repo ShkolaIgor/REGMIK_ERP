@@ -622,9 +622,10 @@ export default function Currencies() {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="currencies">Валюти</TabsTrigger>
           <TabsTrigger value="rates">Курси НБУ</TabsTrigger>
+          <TabsTrigger value="settings">Налаштування</TabsTrigger>
         </TabsList>
 
         <TabsContent value="currencies" className="space-y-4">
@@ -711,15 +712,7 @@ export default function Currencies() {
                               <Star className="h-4 w-4" />
                             </Button>
                           )}
-                          {!currency.isBase && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleAddRate(currency)}
-                            >
-                              <TrendingUp className="h-4 w-4" />
-                            </Button>
-                          )}
+
                           {!currency.isBase && (
                             <Button
                               variant="destructive"
@@ -742,90 +735,6 @@ export default function Currencies() {
 
 
         <TabsContent value="rates" className="space-y-4">
-          {/* Оновлення курсів */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 flex-shrink-0">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <RefreshCw className="h-5 w-5" />
-                  Оновлення поточних курсів
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Отримати актуальні курси валют НБУ на сьогоднішню дату
-                </p>
-                <Button 
-                  onClick={handleUpdateCurrent}
-                  disabled={updateCurrentRatesMutation.isPending}
-                  className="w-full"
-                >
-                  {updateCurrentRatesMutation.isPending ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Оновлюється...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-4 w-4 mr-2" />
-                      Оновити поточні курси
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Оновлення за період
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Завантажити курси валют за обраний період
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="startDate">Від</Label>
-                    <Input
-                      id="startDate"
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="endDate">До</Label>
-                    <Input
-                      id="endDate"
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <Button 
-                  onClick={handleUpdatePeriod}
-                  disabled={updatePeriodRatesMutation.isPending || !startDate || !endDate}
-                  className="w-full"
-                >
-                  {updatePeriodRatesMutation.isPending ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Завантажується...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-4 w-4 mr-2" />
-                      Завантажити за період
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
 
           {/* Налаштування автоматичного оновлення */}
           <Card>
@@ -1130,6 +1039,164 @@ export default function Currencies() {
                   </Table>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-4">
+          {/* Оновлення курсів */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <RefreshCw className="h-5 w-5" />
+                  Оновлення поточних курсів
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Отримати актуальні курси валют НБУ на сьогоднішню дату
+                </p>
+                <Button 
+                  onClick={handleUpdateCurrent}
+                  disabled={updateCurrentRatesMutation.isPending}
+                  className="w-full"
+                >
+                  {updateCurrentRatesMutation.isPending ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Оновлюється...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-2" />
+                      Оновити поточні курси
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Оновлення за період
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Завантажити курси валют за обраний період
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="startDate">Від</Label>
+                    <Input
+                      id="startDate"
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="endDate">До</Label>
+                    <Input
+                      id="endDate"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <Button 
+                  onClick={handleUpdatePeriod}
+                  disabled={updatePeriodRatesMutation.isPending || !startDate || !endDate}
+                  className="w-full"
+                >
+                  {updatePeriodRatesMutation.isPending ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Завантажується...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-2" />
+                      Завантажити за період
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Налаштування автоматичного оновлення */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Автоматичне оновлення
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="auto-update"
+                  checked={autoUpdateEnabled}
+                  onCheckedChange={setAutoUpdateEnabled}
+                />
+                <Label htmlFor="auto-update">Включити автоматичне оновлення</Label>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="update-time">Час оновлення</Label>
+                <Input
+                  id="update-time"
+                  type="time"
+                  value={updateTime}
+                  onChange={(e) => setUpdateTime(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Валюти для оновлення</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {["USD", "EUR", "PLN", "GBP"].map((curr) => (
+                    <div key={curr} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={curr}
+                        checked={enabledCurrencies.includes(curr)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setEnabledCurrencies([...enabledCurrencies, curr]);
+                          } else {
+                            setEnabledCurrencies(enabledCurrencies.filter(c => c !== curr));
+                          }
+                        }}
+                      />
+                      <Label htmlFor={curr}>{curr}</Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Button 
+                onClick={handleSaveSettings}
+                disabled={saveSettingsMutation.isPending}
+                className="w-full"
+              >
+                {saveSettingsMutation.isPending ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Зберігається...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Зберегти налаштування
+                  </>
+                )}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
