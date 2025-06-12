@@ -3333,9 +3333,9 @@ export class DatabaseStorage implements IStorage {
   async updateCurrencyUpdateStatus(status: string, error?: string): Promise<void> {
     try {
       // Отримуємо поточні налаштування або створюємо нові
-      let settings = await this.getCurrencySettings();
+      let settings = await this.getCurrencyUpdateSettings();
       if (!settings) {
-        await this.createCurrencySettings({
+        await this.createCurrencyUpdateSettings({
           autoUpdateEnabled: false,
           updateTime: '09:00',
           lastUpdateDate: null,
@@ -3343,11 +3343,11 @@ export class DatabaseStorage implements IStorage {
           lastUpdateError: null,
           enabledCurrencies: ['USD', 'EUR']
         });
-        settings = await this.getCurrencySettings();
+        settings = await this.getCurrencyUpdateSettings();
       }
 
       // Оновлюємо статус
-      await this.updateCurrencySettings(settings.id, {
+      await this.updateCurrencyUpdateSettings(settings.id, {
         lastUpdateDate: new Date().toISOString(),
         lastUpdateStatus: status,
         lastUpdateError: error || null,
