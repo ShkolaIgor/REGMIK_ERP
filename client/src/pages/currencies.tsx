@@ -117,6 +117,9 @@ export default function Currencies() {
     queryKey: ["/api/currencies"],
   });
 
+  // Доступні валюти для вибору в налаштуваннях (фільтруємо UAH)
+  const availableCurrencies = currencies.filter(currency => currency.code !== 'UAH');
+
   // Видалено exchange-rates - використовуємо currency_rates
 
   // НБУ queries
@@ -127,6 +130,15 @@ export default function Currencies() {
   const { data: nbuSettings } = useQuery<CurrencySettings>({
     queryKey: ["/api/currency-settings"],
   });
+
+  // Синхронізуємо локальні налаштування з даними з сервера
+  useEffect(() => {
+    if (nbuSettings) {
+      setAutoUpdateEnabled(nbuSettings.autoUpdateEnabled || false);
+      setUpdateTime(nbuSettings.updateTime || "09:00");
+      setEnabledCurrencies(nbuSettings.enabledCurrencies || ["USD", "EUR"]);
+    }
+  }, [nbuSettings]);
 
   const createCurrencyMutation = useMutation({
     mutationFn: async (data: any) => apiRequest("/api/currencies", "POST", data),
@@ -883,22 +895,21 @@ export default function Currencies() {
                         ]}
                       />
                       <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="EUR" 
-                        stroke="#8884d8" 
-                        strokeWidth={2}
-                        name="EUR"
-                        connectNulls={false}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="USD" 
-                        stroke="#82ca9d" 
-                        strokeWidth={2}
-                        name="USD"
-                        connectNulls={false}
-                      />
+                      {enabledCurrencies.map((currencyCode, index) => {
+                        const colors = ["#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#00ff00", "#ff00ff"];
+                        const currency = availableCurrencies.find(c => c.code === currencyCode);
+                        return (
+                          <Line 
+                            key={currencyCode}
+                            type="monotone" 
+                            dataKey={currencyCode} 
+                            stroke={colors[index % colors.length]} 
+                            strokeWidth={2}
+                            name={currencyCode}
+                            connectNulls={false}
+                          />
+                        );
+                      })}
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -941,8 +952,11 @@ export default function Currencies() {
                     <TableHeader className="sticky top-0 bg-background">
                       <TableRow>
                         <TableHead className="text-sm">Дата курсу</TableHead>
-                        <TableHead className="text-sm">EUR</TableHead>
-                        <TableHead className="text-sm">USD</TableHead>
+                        {enabledCurrencies.map((currencyCode) => (
+                          <TableHead key={currencyCode} className="text-sm">
+                            {currencyCode}
+                          </TableHead>
+                        ))}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -987,12 +1001,11 @@ export default function Currencies() {
                           <TableCell className="font-medium">
                             {formatExchangeDate(date)}
                           </TableCell>
-                          <TableCell className="font-mono">
-                            {ratesByDate[date]['EUR'] || '—'}
-                          </TableCell>
-                          <TableCell className="font-mono">
-                            {ratesByDate[date]['USD'] || '—'}
-                          </TableCell>
+                          {enabledCurrencies.map((currencyCode) => (
+                            <TableCell key={currencyCode} className="font-mono">
+                              {ratesByDate[date][currencyCode] || '—'}
+                            </TableCell>
+                          ))}
                         </TableRow>
                       ));
                     })()}
@@ -1121,21 +1134,23 @@ export default function Currencies() {
               <div className="space-y-2">
                 <Label>Валюти для оновлення</Label>
                 <div className="grid grid-cols-2 gap-2">
-                  {["USD", "EUR", "PLN", "GBP"].map((curr) => (
-                    <div key={curr} className="flex items-center space-x-2">
+                  {availableCurrencies.map((currency) => (
+                    <div key={currency.code} className="flex items-center space-x-2">
                       <input
                         type="checkbox"
-                        id={curr}
-                        checked={enabledCurrencies.includes(curr)}
+                        id={currency.code}
+                        checked={enabledCurrencies.includes(currency.code)}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setEnabledCurrencies([...enabledCurrencies, curr]);
+                            setEnabledCurrencies([...enabledCurrencies, currency.code]);
                           } else {
-                            setEnabledCurrencies(enabledCurrencies.filter(c => c !== curr));
+                            setEnabledCurrencies(enabledCurrencies.filter(c => c !== currency.code));
                           }
                         }}
                       />
-                      <Label htmlFor={curr}>{curr}</Label>
+                      <Label htmlFor={currency.code} className="text-sm">
+                        {currency.code} - {currency.name}
+                      </Label>
                     </div>
                   ))}
                 </div>
