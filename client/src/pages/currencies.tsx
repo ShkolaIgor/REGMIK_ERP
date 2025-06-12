@@ -1554,7 +1554,7 @@ function CurrencyDashboardTab() {
     mutationFn: (data: z.infer<typeof dashboardSchema>) =>
       apiRequest('/api/currency-dashboards', {
         method: 'POST',
-        body: JSON.stringify(data)
+        body: data
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/currency-dashboards'] });
@@ -1578,7 +1578,7 @@ function CurrencyDashboardTab() {
     mutationFn: ({ id, ...data }: { id: number } & z.infer<typeof dashboardSchema>) =>
       apiRequest(`/api/currency-dashboards/${id}`, {
         method: 'PUT',
-        body: JSON.stringify(data)
+        body: data
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/currency-dashboards'] });
@@ -1627,7 +1627,7 @@ function CurrencyDashboardTab() {
     mutationFn: (data: z.infer<typeof widgetSchema> & { dashboardId: number }) =>
       apiRequest('/api/currency-dashboard-widgets', {
         method: 'POST',
-        body: JSON.stringify(data)
+        body: data
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/currency-dashboards'] });
@@ -1651,7 +1651,7 @@ function CurrencyDashboardTab() {
     mutationFn: ({ id, ...data }: { id: number } & Partial<z.infer<typeof widgetSchema>>) =>
       apiRequest(`/api/currency-dashboard-widgets/${id}`, {
         method: 'PUT',
-        body: JSON.stringify(data)
+        body: data
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/currency-dashboards'] });
