@@ -5053,6 +5053,35 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getLocalUserWithWorker(userId: number): Promise<any> {
+    try {
+      const [user] = await db.select({
+        id: localUsers.id,
+        username: localUsers.username,
+        email: localUsers.email,
+        firstName: localUsers.firstName,
+        lastName: localUsers.lastName,
+        profileImageUrl: localUsers.profileImageUrl,
+        workerId: localUsers.workerId,
+        worker: {
+          id: workers.id,
+          firstName: workers.firstName,
+          lastName: workers.lastName,
+          photo: workers.photo
+        }
+      })
+      .from(localUsers)
+      .leftJoin(workers, eq(localUsers.workerId, workers.id))
+      .where(eq(localUsers.id, userId))
+      .limit(1);
+      
+      return user;
+    } catch (error) {
+      console.error("Error getting local user with worker:", error);
+      return null;
+    }
+  }
+
   async getUserByEmail(email: string): Promise<LocalUser | undefined> {
     const [user] = await db
       .select()
