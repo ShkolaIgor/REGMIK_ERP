@@ -209,7 +209,10 @@ function CurrencyWidget({ widget, onEdit, onDelete, onToggleVisibility }: {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onDelete(widget.id)}
+              onClick={() => {
+                console.log("Видалення віджета з ID:", widget.id);
+                onDelete(widget.id);
+              }}
             >
               <Trash2 className="h-3 w-3" />
             </Button>
@@ -318,8 +321,14 @@ export default function CurrencyDashboard() {
   });
 
   const deleteWidgetMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/currency-widgets/${id}`, "DELETE"),
-    onSuccess: async () => {
+    mutationFn: async (id: number) => {
+      console.log(`Відправляю DELETE запит для віджета ${id}`);
+      const result = await apiRequest(`/api/currency-widgets/${id}`, "DELETE");
+      console.log(`DELETE запит завершений для віджета ${id}:`, result);
+      return result;
+    },
+    onSuccess: async (data, variables) => {
+      console.log(`onSuccess викликано для віджета ${variables}:`, data);
       // Повністю очищуємо кеш для всіх пов'язаних запитів
       queryClient.removeQueries({ queryKey: ["/api/currency-dashboards"] });
       queryClient.removeQueries({ queryKey: ["/api/currency-dashboards", selectedDashboard] });
@@ -333,10 +342,11 @@ export default function CurrencyDashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/currency-dashboards"] });
       queryClient.invalidateQueries({ queryKey: ["/api/currency-widgets"] });
       
+      console.log("Кеш оновлено після видалення віджета");
       toast({ title: "Віджет видалено успішно" });
     },
-    onError: (error: any) => {
-      console.error("Widget delete error:", error);
+    onError: (error: any, variables) => {
+      console.error(`Widget delete error для віджета ${variables}:`, error);
       toast({ 
         title: "Помилка видалення віджета", 
         description: error.message || "Невідома помилка",
@@ -407,8 +417,14 @@ export default function CurrencyDashboard() {
   };
 
   const handleCreateWidget = (data: any) => {
-    if (!selectedDashboard) return;
+    console.log("handleCreateWidget викликано з даними:", data);
+    console.log("selectedDashboard:", selectedDashboard);
+    if (!selectedDashboard) {
+      console.log("Немає вибраної панелі!");
+      return;
+    }
     
+    console.log("createWidgetMutation isPending:", createWidgetMutation.isPending);
     createWidgetMutation.mutate({
       ...data,
       dashboardId: selectedDashboard,
@@ -429,6 +445,8 @@ export default function CurrencyDashboard() {
   };
 
   const handleDeleteWidget = (id: number) => {
+    console.log("handleDeleteWidget викликано з ID:", id);
+    console.log("deleteWidgetMutation isPending:", deleteWidgetMutation.isPending);
     deleteWidgetMutation.mutate(id);
   };
 
