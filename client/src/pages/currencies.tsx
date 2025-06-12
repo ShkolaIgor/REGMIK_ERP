@@ -86,6 +86,12 @@ export default function Currencies() {
   const [customEndDate, setCustomEndDate] = useState("");
   const [isRateDialogOpen, setIsRateDialogOpen] = useState(false);
   const [selectedCurrencyForRate, setSelectedCurrencyForRate] = useState<Currency | null>(null);
+  const [searchDate, setSearchDate] = useState("");
+
+  // Rate form state
+  const [rateForm, setRateForm] = useState({
+    rate: ""
+  });
 
   const [currencyForm, setCurrencyForm] = useState({
     code: "",
@@ -96,17 +102,12 @@ export default function Currencies() {
     isActive: true
   });
 
-  const [rateForm, setRateForm] = useState({
-    rate: ""
-  });
-
   // НБУ states
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [updateTime, setUpdateTime] = useState("09:00");
   const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true);
   const [enabledCurrencies, setEnabledCurrencies] = useState(["USD", "EUR"]);
-  const [searchDate, setSearchDate] = useState("");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
