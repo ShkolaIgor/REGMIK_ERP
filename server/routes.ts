@@ -3242,6 +3242,199 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Currency Dashboards API
+  app.get("/api/currency-dashboards", isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log("GET /api/currency-dashboards - User:", req.session?.user?.id);
+      const userId = req.session?.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const dashboards = await storage.getCurrencyDashboards(userId);
+      console.log("Found dashboards:", dashboards.length);
+      res.json(dashboards);
+    } catch (error) {
+      console.error("Error fetching currency dashboards:", error);
+      res.status(500).json({ error: "Failed to fetch currency dashboards" });
+    }
+  });
+
+  app.get("/api/currency-dashboards/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.session?.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const dashboard = await storage.getCurrencyDashboard(id, userId);
+      if (!dashboard) {
+        return res.status(404).json({ error: "Dashboard not found" });
+      }
+      res.json(dashboard);
+    } catch (error) {
+      console.error("Error fetching currency dashboard:", error);
+      res.status(500).json({ error: "Failed to fetch currency dashboard" });
+    }
+  });
+
+  app.post("/api/currency-dashboards", isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log("POST /api/currency-dashboards - Body:", req.body);
+      const userId = req.session?.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const dashboardData = { ...req.body, userId };
+      const dashboard = await storage.createCurrencyDashboard(dashboardData);
+      console.log("Created dashboard:", dashboard);
+      res.status(201).json(dashboard);
+    } catch (error) {
+      console.error("Error creating currency dashboard:", error);
+      res.status(500).json({ error: "Failed to create currency dashboard" });
+    }
+  });
+
+  app.put("/api/currency-dashboards/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.session?.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const dashboard = await storage.updateCurrencyDashboard(id, req.body, userId);
+      if (!dashboard) {
+        return res.status(404).json({ error: "Dashboard not found" });
+      }
+      res.json(dashboard);
+    } catch (error) {
+      console.error("Error updating currency dashboard:", error);
+      res.status(500).json({ error: "Failed to update currency dashboard" });
+    }
+  });
+
+  app.delete("/api/currency-dashboards/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.session?.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const success = await storage.deleteCurrencyDashboard(id, userId);
+      if (!success) {
+        return res.status(404).json({ error: "Dashboard not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting currency dashboard:", error);
+      res.status(500).json({ error: "Failed to delete currency dashboard" });
+    }
+  });
+
+  // Currency Widgets API
+  app.get("/api/currency-widgets", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { dashboardId } = req.query;
+      const userId = req.session?.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      if (dashboardId) {
+        const widgets = await storage.getCurrencyWidgets(parseInt(dashboardId as string), userId);
+        res.json(widgets);
+      } else {
+        const widgets = await storage.getAllCurrencyWidgets(userId);
+        res.json(widgets);
+      }
+    } catch (error) {
+      console.error("Error fetching currency widgets:", error);
+      res.status(500).json({ error: "Failed to fetch currency widgets" });
+    }
+  });
+
+  app.get("/api/currency-widgets/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.session?.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const widget = await storage.getCurrencyWidget(id, userId);
+      if (!widget) {
+        return res.status(404).json({ error: "Widget not found" });
+      }
+      res.json(widget);
+    } catch (error) {
+      console.error("Error fetching currency widget:", error);
+      res.status(500).json({ error: "Failed to fetch currency widget" });
+    }
+  });
+
+  app.post("/api/currency-widgets", isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log("POST /api/currency-widgets - Body:", req.body);
+      const userId = req.session?.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const widget = await storage.createCurrencyWidget(req.body, userId);
+      console.log("Created widget:", widget);
+      res.status(201).json(widget);
+    } catch (error) {
+      console.error("Error creating currency widget:", error);
+      res.status(500).json({ error: "Failed to create currency widget" });
+    }
+  });
+
+  app.put("/api/currency-widgets/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log("PUT /api/currency-widgets/:id - Body:", req.body);
+      const id = parseInt(req.params.id);
+      const userId = req.session?.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const widget = await storage.updateCurrencyWidget(id, req.body, userId);
+      if (!widget) {
+        return res.status(404).json({ error: "Widget not found" });
+      }
+      console.log("Updated widget:", widget);
+      res.json(widget);
+    } catch (error) {
+      console.error("Error updating currency widget:", error);
+      res.status(500).json({ error: "Failed to update currency widget" });
+    }
+  });
+
+  app.delete("/api/currency-widgets/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log("DELETE /api/currency-widgets/:id - ID:", req.params.id);
+      const id = parseInt(req.params.id);
+      const userId = req.session?.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const success = await storage.deleteCurrencyWidget(id, userId);
+      if (!success) {
+        return res.status(404).json({ error: "Widget not found" });
+      }
+      console.log("Deleted widget with ID:", id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting currency widget:", error);
+      res.status(500).json({ error: "Failed to delete currency widget" });
+    }
+  });
+
   // Видалено exchange-rates API - використовуємо currency-rates замість них
 
   // Production analytics routes
