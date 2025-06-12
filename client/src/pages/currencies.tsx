@@ -120,6 +120,16 @@ export default function Currencies() {
   // Доступні валюти для вибору в налаштуваннях (фільтруємо UAH)
   const availableCurrencies = currencies.filter(currency => currency.code !== 'UAH');
 
+  // Функція для отримання сьогоднішнього курсу валюти
+  const getTodayRate = (currencyCode: string) => {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const todayRate = nbuRates.find(rate => 
+      rate.currencyCode === currencyCode && 
+      rate.exchangeDate.startsWith(today)
+    );
+    return todayRate;
+  };
+
   // Видалено exchange-rates - використовуємо currency_rates
 
   // НБУ queries
@@ -731,16 +741,30 @@ export default function Currencies() {
                       <TableCell>
                         {currency.isBase ? (
                           <Badge variant="outline">Базова</Badge>
-                        ) : currency.latestRate ? (
-                          <div>
-                            <div className="font-medium">{parseFloat(currency.latestRate).toFixed(4)}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {currency.rateDate ? new Date(currency.rateDate).toLocaleDateString() : ""}
-                            </div>
-                          </div>
-                        ) : (
-                          <Badge variant="secondary">Немає курсу</Badge>
-                        )}
+                        ) : (() => {
+                          const todayRate = getTodayRate(currency.code);
+                          if (todayRate) {
+                            return (
+                              <div>
+                                <div className="font-medium">{parseFloat(todayRate.rate).toFixed(4)}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  Сьогодні
+                                </div>
+                              </div>
+                            );
+                          } else if (currency.latestRate) {
+                            return (
+                              <div>
+                                <div className="font-medium">{parseFloat(currency.latestRate).toFixed(4)}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {currency.rateDate ? new Date(currency.rateDate).toLocaleDateString() : ""}
+                                </div>
+                              </div>
+                            );
+                          } else {
+                            return <Badge variant="secondary">Немає курсу</Badge>;
+                          }
+                        })()}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
