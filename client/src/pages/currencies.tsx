@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Plus, 
   Search, 
@@ -78,6 +79,11 @@ export default function Currencies() {
   const [activeTab, setActiveTab] = useState("currencies");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCurrency, setEditingCurrency] = useState<Currency | null>(null);
+  
+  // Фільтри для графіку курсів
+  const [chartFilter, setChartFilter] = useState("last_month");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const [isRateDialogOpen, setIsRateDialogOpen] = useState(false);
   const [selectedCurrencyForRate, setSelectedCurrencyForRate] = useState<Currency | null>(null);
 
@@ -418,6 +424,67 @@ export default function Currencies() {
     } catch {
       return dateString;
     }
+  };
+
+  // Функції для розрахунку дат періодів
+  const getDateRange = (filter: string) => {
+    const now = new Date();
+    let startDate: Date;
+    let endDate = now;
+
+    switch (filter) {
+      case "last_week":
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case "last_month":
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+        break;
+      case "last_year":
+        startDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+        break;
+      case "custom":
+        if (customStartDate && customEndDate) {
+          startDate = new Date(customStartDate);
+          endDate = new Date(customEndDate);
+        } else {
+          startDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+        }
+        break;
+      default:
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+    }
+
+    return { startDate, endDate };
+  };
+
+  // Фільтрування даних графіку за обраним періодом
+  const getFilteredChartData = () => {
+    if (!nbuRates || nbuRates.length === 0) return [];
+
+    const { startDate, endDate } = getDateRange(chartFilter);
+    
+    const filteredRates = nbuRates.filter(rate => {
+      const rateDate = new Date(rate.exchangeDate);
+      return rateDate >= startDate && rateDate <= endDate;
+    });
+
+    // Групування курсів за датою
+    const ratesByDate = filteredRates.reduce((acc, rate) => {
+      const date = rate.exchangeDate;
+      if (!acc[date]) {
+        acc[date] = { date };
+      }
+      acc[date][rate.currencyCode] = parseFloat(rate.rate);
+      return acc;
+    }, {} as Record<string, any>);
+
+    // Сортування за датою та форматування
+    return Object.values(ratesByDate)
+      .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .map((item: any) => ({
+        ...item,
+        date: formatExchangeDate(item.date)
+      }));
   };
 
   const filteredCurrencies = currencies.filter(currency =>
@@ -854,6 +921,50 @@ export default function Currencies() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Фільтри періоду */}
+              <div className="mb-6 space-y-4">
+                <div className="flex flex-wrap gap-4 items-end">
+                  <div className="space-y-2">
+                    <Label htmlFor="chartFilter">Період</Label>
+                    <Select value={chartFilter} onValueChange={setChartFilter}>
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Оберіть період" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="last_week">Останній тиждень</SelectItem>
+                        <SelectItem value="last_month">Останній місяць</SelectItem>
+                        <SelectItem value="last_year">Останній рік</SelectItem>
+                        <SelectItem value="custom">Обраний період</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {chartFilter === "custom" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="customStartDate">Від</Label>
+                        <Input
+                          id="customStartDate"
+                          type="date"
+                          value={customStartDate}
+                          onChange={(e) => setCustomStartDate(e.target.value)}
+                          className="w-[140px]"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="customEndDate">До</Label>
+                        <Input
+                          id="customEndDate"
+                          type="date"
+                          value={customEndDate}
+                          onChange={(e) => setCustomEndDate(e.target.value)}
+                          className="w-[140px]"
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
               {ratesLoading ? (
                 <div className="h-80 flex items-center justify-center">
                   <div className="text-center">
@@ -873,25 +984,7 @@ export default function Currencies() {
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
-                      data={(() => {
-                        // Group rates by exchange date and format for chart
-                        const ratesByDate = nbuRates.reduce((acc, rate) => {
-                          const date = rate.exchangeDate;
-                          if (!acc[date]) {
-                            acc[date] = { date };
-                          }
-                          acc[date][rate.currencyCode] = parseFloat(rate.rate);
-                          return acc;
-                        }, {} as Record<string, any>);
-
-                        // Sort dates and return array
-                        return Object.values(ratesByDate)
-                          .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                          .map((item: any) => ({
-                            ...item,
-                            date: formatExchangeDate(item.date)
-                          }));
-                      })()}
+                      data={getFilteredChartData()}
                       margin={{
                         top: 5,
                         right: 30,
