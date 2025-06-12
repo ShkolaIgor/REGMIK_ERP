@@ -3397,6 +3397,69 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Email Settings methods
+  async getEmailSettings(): Promise<any> {
+    try {
+      const [settings] = await db.select()
+        .from(emailSettings)
+        .limit(1);
+      
+      if (!settings) return null;
+      
+      // Конвертуємо snake_case в camelCase для frontend
+      return {
+        id: settings.id,
+        smtpHost: settings.smtpHost,
+        smtpPort: settings.smtpPort,
+        smtpSecure: settings.smtpSecure,
+        smtpUser: settings.smtpUser,
+        smtpPassword: settings.smtpPassword,
+        fromEmail: settings.fromEmail,
+        fromName: settings.fromName,
+        isActive: settings.isActive,
+        createdAt: settings.createdAt,
+        updatedAt: settings.updatedAt,
+      };
+    } catch (error) {
+      console.error("Error getting email settings:", error);
+      return null;
+    }
+  }
+
+  async updateEmailSettings(settings: any): Promise<any> {
+    try {
+      // Спочатку перевіряємо чи є існуючі налаштування
+      const existing = await this.getEmailSettings();
+      
+      if (existing) {
+        // Оновлюємо існуючі
+        const [updated] = await db
+          .update(emailSettings)
+          .set({
+            ...settings,
+            updatedAt: new Date(),
+          })
+          .where(eq(emailSettings.id, existing.id))
+          .returning();
+        return updated;
+      } else {
+        // Створюємо нові
+        const [created] = await db
+          .insert(emailSettings)
+          .values({
+            ...settings,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .returning();
+        return created;
+      }
+    } catch (error) {
+      console.error("Error updating email settings:", error);
+      throw error;
+    }
+  }
+
   // Production analytics methods
   async getProductionAnalytics(filters: {
     from?: string;
