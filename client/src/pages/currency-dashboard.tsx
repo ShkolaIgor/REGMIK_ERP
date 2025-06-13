@@ -530,6 +530,13 @@ export default function CurrencyDashboard() {
         </div>
       </div>
 
+      <div className="text-xs text-muted-foreground border p-2 rounded mb-4">
+        Global Debug: Dashboards count: {dashboards?.length || 0} | 
+        Selected ID: {selectedDashboard} | 
+        Loading: {isDashboardsLoading} |
+        Data: {JSON.stringify(dashboards?.map(d => ({id: d.id, name: d.name, widgets: d.widgets?.length})), null, 2)}
+      </div>
+
       {dashboards && dashboards.length > 0 ? (
         <Tabs value={selectedDashboard?.toString()} onValueChange={(value) => setSelectedDashboard(parseInt(value))}>
           <TabsList className="grid w-full grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
@@ -659,6 +666,12 @@ export default function CurrencyDashboard() {
                   <div className="flex items-center justify-center h-32">Завантаження...</div>
                 ) : (
                   <div className="space-y-4">
+                    <div className="text-xs text-muted-foreground border p-2 rounded">
+                      Debug: Dashboard {dashboard.id} ({dashboard.name}) | 
+                      Selected: {selectedDashboard} | 
+                      Widgets: {dashboard.widgets?.length || 0} | 
+                      Data: {JSON.stringify(dashboard.widgets, null, 2)}
+                    </div>
                     {dashboard.widgets && dashboard.widgets.length > 0 ? (
                       <div 
                         className="grid gap-4"
