@@ -1510,40 +1510,33 @@ function CurrencyWidget({ widget, onEdit, onDelete, onToggleVisibility }: {
 }
 
 function CurrencyDashboardTab() {
+  return (
+    <Card className="p-6 text-center">
+      <CardContent>
+        <h3 className="text-lg font-semibold mb-4">Панелі валютних віджетів</h3>
+        <p className="text-muted-foreground mb-4">
+          Функціонал валютних віджетів доступний на окремій сторінці
+        </p>
+        <Button asChild>
+          <a href="/currency-dashboard" target="_blank" rel="noopener noreferrer">
+            Перейти до панелей валют
+          </a>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function Currencies() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedDashboard, setSelectedDashboard] = useState<number | null>(null);
-  const [isCreateDashboardOpen, setIsCreateDashboardOpen] = useState(false);
-  const [isCreateWidgetOpen, setIsCreateWidgetOpen] = useState(false);
-  const [editingWidget, setEditingWidget] = useState<Widget | null>(null);
 
-  // Запити
-  const { data: dashboards, isLoading: isDashboardsLoading } = useQuery<Dashboard[]>({
-    queryKey: ["/api/currency-dashboards"],
-  });
-
-  // Автоматично вибираємо панель за замовчуванням при завантаженні
-  useEffect(() => {
-    if (dashboards && dashboards.length > 0 && !selectedDashboard) {
-      const defaultDashboard = dashboards.find((d: Dashboard) => d.isDefault) || dashboards[0];
-      setSelectedDashboard(defaultDashboard.id);
-    }
-  }, [dashboards, selectedDashboard]);
-
-  // Forms
-  const dashboardForm = useForm<z.infer<typeof dashboardSchema>>({
-    resolver: zodResolver(dashboardSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      isDefault: false,
-      layout: {
-        columns: 4,
-        rows: 3,
-        gap: 4
-      }
-    }
-  });
+  const [selectedTab, setSelectedTab] = useState("list");
+  const [editingCurrency, setEditingCurrency] = useState<Currency | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isRateDialogOpen, setIsRateDialogOpen] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null);
+  const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
 
   const widgetForm = useForm<z.infer<typeof widgetSchema>>({
     resolver: zodResolver(widgetSchema),
