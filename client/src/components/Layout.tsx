@@ -42,7 +42,8 @@ import {
   Menu,
   X,
   LogOut,
-  User
+  User,
+  Wrench
 } from "lucide-react";
 
 interface LayoutProps {
@@ -75,6 +76,7 @@ const navigationItems = [
       { name: "Переміщення між складами", href: "/warehouse-transfers", icon: PackageOpen },
       { name: "Інвентаризація", href: "/inventory-audits", icon: ClipboardList },
       { name: "Серійні номери", href: "/serial-numbers", icon: QrCode },
+      { name: "Ремонти", href: "/repairs", icon: Wrench },
       { name: "Сканер штрих-кодів", href: "/scanner", icon: Scan }
     ]
   },

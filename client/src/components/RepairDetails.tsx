@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatUkrainianDate } from "@/lib/date-utils";
 import { apiRequest } from "@/lib/queryClient";
+import { RepairPartsManager } from "@/components/RepairPartsManager";
 import type { Repair, RepairPart, RepairStatusHistory, RepairDocument } from "@shared/schema";
 
 interface RepairDetailsProps {

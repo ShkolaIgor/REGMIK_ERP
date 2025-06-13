@@ -6122,6 +6122,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Додати запчастини до ремонту зі списанням зі складу
+  app.post("/api/repairs/:id/parts", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const repairId = parseInt(req.params.id);
+      if (isNaN(repairId)) {
+        return res.status(400).json({ error: "Invalid repair ID" });
+      }
+
+      const { inventoryId, quantity, description } = req.body;
+      
+      // Перевіряємо наявність товару на складі
+      const inventory = await storage.getInventory();
+      const item = inventory.find(i => i.id === inventoryId);
+      
+      if (!item) {
+        return res.status(404).json({ error: "Inventory item not found" });
+      }
+
+      if (item.quantity < quantity) {
+        return res.status(400).json({ error: "Insufficient quantity in stock" });
+      }
+
+      // Додаємо запчастину до ремонту
+      const repairPart = await storage.createRepairPart({
+        repairId,
+        inventoryId,
+        quantity,
+        description: description || item.name,
+        cost: (item.cost || 0) * quantity
+      });
+
+      // Списуємо зі складу
+      await storage.updateInventory(inventoryId, {
+        quantity: item.quantity - quantity
+      });
+
+      res.status(201).json(repairPart);
+    } catch (error) {
+      console.error("Error adding repair part:", error);
+      res.status(500).json({ error: "Failed to add repair part" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
