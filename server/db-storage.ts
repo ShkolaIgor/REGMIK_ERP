@@ -5748,6 +5748,163 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // ==================== REPAIRS METHODS ====================
+
+  async getRepairs(): Promise<Repair[]> {
+    return await this.db.select().from(repairs).orderBy(desc(repairs.createdAt));
+  }
+
+  async getRepair(id: number): Promise<Repair | null> {
+    const result = await this.db.select().from(repairs).where(eq(repairs.id, id));
+    return result[0] || null;
+  }
+
+  async createRepair(data: InsertRepair): Promise<Repair> {
+    // Генеруємо номер ремонту
+    const repairNumber = await this.generateRepairNumber();
+    
+    const result = await this.db.insert(repairs).values({
+      ...data,
+      repairNumber
+    }).returning();
+    
+    // Створюємо запис в історії статусів
+    await this.db.insert(repairStatusHistory).values({
+      repairId: result[0].id,
+      oldStatus: null,
+      newStatus: result[0].status,
+      comment: "Ремонт створено"
+    });
+    
+    return result[0];
+  }
+
+  async updateRepair(id: number, data: Partial<InsertRepair>): Promise<Repair> {
+    const result = await this.db.update(repairs)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(repairs.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteRepair(id: number): Promise<void> {
+    await this.db.delete(repairs).where(eq(repairs.id, id));
+  }
+
+  async getRepairsBySerialNumber(serialNumber: string): Promise<Repair[]> {
+    return await this.db.select().from(repairs)
+      .where(eq(repairs.serialNumber, serialNumber))
+      .orderBy(desc(repairs.createdAt));
+  }
+
+  // Методи для запчастин ремонту
+  async getRepairParts(repairId: number): Promise<RepairPart[]> {
+    return await this.db.select().from(repairParts)
+      .where(eq(repairParts.repairId, repairId))
+      .orderBy(repairParts.createdAt);
+  }
+
+  async addRepairPart(data: InsertRepairPart): Promise<RepairPart> {
+    const result = await this.db.insert(repairParts).values(data).returning();
+    return result[0];
+  }
+
+  async deleteRepairPart(partId: number): Promise<void> {
+    await this.db.delete(repairParts).where(eq(repairParts.id, partId));
+  }
+
+  // Методи для історії статусів
+  async getRepairStatusHistory(repairId: number): Promise<RepairStatusHistory[]> {
+    return await this.db.select().from(repairStatusHistory)
+      .where(eq(repairStatusHistory.repairId, repairId))
+      .orderBy(repairStatusHistory.changedAt);
+  }
+
+  async changeRepairStatus(repairId: number, newStatus: string, comment?: string, changedBy?: number): Promise<RepairStatusHistory> {
+    // Отримуємо поточний статус
+    const currentRepair = await this.getRepair(repairId);
+    if (!currentRepair) {
+      throw new Error("Ремонт не знайдено");
+    }
+
+    // Оновлюємо статус ремонту
+    await this.db.update(repairs)
+      .set({ 
+        status: newStatus, 
+        updatedAt: new Date(),
+        // Встановлюємо відповідні дати залежно від статусу
+        ...(newStatus === "diagnosed" && { diagnosisDate: new Date() }),
+        ...(newStatus === "in_repair" && { repairStartDate: new Date() }),
+        ...(newStatus === "completed" && { repairEndDate: new Date() }),
+        ...(newStatus === "returned" && { returnDate: new Date() })
+      })
+      .where(eq(repairs.id, repairId));
+
+    // Додаємо запис в історію
+    const result = await this.db.insert(repairStatusHistory).values({
+      repairId,
+      oldStatus: currentRepair.status,
+      newStatus,
+      comment,
+      changedBy
+    }).returning();
+
+    return result[0];
+  }
+
+  // Методи для документів ремонту
+  async getRepairDocuments(repairId: number): Promise<RepairDocument[]> {
+    return await this.db.select().from(repairDocuments)
+      .where(eq(repairDocuments.repairId, repairId))
+      .orderBy(repairDocuments.uploadedAt);
+  }
+
+  async addRepairDocument(data: InsertRepairDocument): Promise<RepairDocument> {
+    const result = await this.db.insert(repairDocuments).values(data).returning();
+    return result[0];
+  }
+
+  // Пошук серійних номерів для створення ремонту
+  async getSerialNumbersForRepair(search?: string): Promise<SerialNumber[]> {
+    let query = this.db.select()
+      .from(serialNumbers)
+      .where(eq(serialNumbers.status, "sold")); // Тільки продані товари можуть потребувати ремонту
+
+    if (search) {
+      query = query.where(
+        or(
+          sql`${serialNumbers.serialNumber} ILIKE ${`%${search}%`}`,
+          sql`${serialNumbers.clientShortName} ILIKE ${`%${search}%`}`
+        )
+      );
+    }
+
+    return await query.orderBy(desc(serialNumbers.saleDate)).limit(50);
+  }
+
+  // Генерація номера ремонту
+  private async generateRepairNumber(): Promise<string> {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    
+    // Отримуємо кількість ремонтів за сьогодні
+    const todayStart = new Date(year, now.getMonth(), now.getDate());
+    const todayEnd = new Date(year, now.getMonth(), now.getDate() + 1);
+    
+    const todayRepairsCount = await this.db.select({ count: sql<number>`count(*)` })
+      .from(repairs)
+      .where(and(
+        gte(repairs.createdAt, todayStart),
+        lte(repairs.createdAt, todayEnd)
+      ));
+    
+    const counter = (todayRepairsCount[0]?.count || 0) + 1;
+    
+    return `REM-${year}${month}${day}-${String(counter).padStart(3, '0')}`;
+  }
+
 
 }
 
