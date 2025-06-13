@@ -1505,27 +1505,6 @@ function CurrencyWidget({ widget, onEdit, onDelete, onToggleVisibility }: {
     </Card>
   );
 }
-
-function CurrencyDashboardTab() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
-  const [selectedDashboard, setSelectedDashboard] = useState<Dashboard | null>(null);
-  const [isDashboardDialogOpen, setIsDashboardDialogOpen] = useState(false);
-  const [isWidgetDialogOpen, setIsWidgetDialogOpen] = useState(false);
-  const [editingDashboard, setEditingDashboard] = useState<Dashboard | null>(null);
-  const [editingWidget, setEditingWidget] = useState<Widget | null>(null);
-
-  // Queries
-  const { data: dashboards = [], isLoading: dashboardsLoading } = useQuery<Dashboard[]>({
-    queryKey: ["/api/currency-dashboards"]
-  });
-
-  const { data: currencies = [] } = useQuery<Currency[]>({
-    queryKey: ["/api/currencies"]
-  });
-
-  // Set default dashboard
   useEffect(() => {
     if (dashboards.length > 0 && !selectedDashboard) {
       const defaultDashboard = dashboards.find((d: Dashboard) => d.isDefault) || dashboards[0];
