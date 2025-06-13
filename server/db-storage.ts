@@ -461,7 +461,25 @@ export class DatabaseStorage implements IStorage {
       quantity: orderItems.quantity,
       unitPrice: orderItems.unitPrice,
       totalPrice: orderItems.totalPrice,
-      product: products
+      product: {
+        id: products.id,
+        name: products.name,
+        sku: products.sku,
+        description: products.description,
+        barcode: products.barcode,
+        categoryId: products.categoryId,
+        companyId: products.companyId,
+        costPrice: products.costPrice,
+        retailPrice: products.retailPrice,
+        photo: products.photo,
+        productType: products.productType,
+        unit: products.unit,
+        minStock: products.minStock,
+        maxStock: products.maxStock,
+        hasSerialNumbers: products.hasSerialNumbers,
+        isActive: products.isActive,
+        createdAt: products.createdAt
+      }
     })
     .from(orderItems)
     .leftJoin(products, eq(orderItems.productId, products.id))
