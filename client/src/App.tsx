@@ -61,6 +61,7 @@ import Analytics from "@/pages/analytics";
 import ProductProfitability from "@/pages/product-profitability";
 import Integrations from "@/pages/integrations";
 import Profile from "@/pages/profile";
+import DateTest from "@/pages/date-test";
 
 import NotFound from "@/pages/not-found";
 
@@ -217,6 +218,7 @@ function Router() {
         <Route path="/serial-number-settings" component={SerialNumberSettings} />
         <Route path="/currencies" component={Currencies} />
         <Route path="/currency-rates" component={CurrencyRates} />
+        <Route path="/date-test" component={DateTest} />
 
         <Route path="/users" component={Users} />
         <Route path="/email-settings" component={EmailSettings} />
