@@ -5866,20 +5866,24 @@ export class DatabaseStorage implements IStorage {
 
   // Пошук серійних номерів для створення ремонту
   async getSerialNumbersForRepair(search?: string): Promise<SerialNumber[]> {
-    let query = this.db.select()
+    let baseQuery = this.db.select()
       .from(serialNumbers)
       .where(eq(serialNumbers.status, "sold")); // Тільки продані товари можуть потребувати ремонту
 
     if (search) {
-      query = query.where(
-        or(
-          sql`${serialNumbers.serialNumber} ILIKE ${`%${search}%`}`,
-          sql`${serialNumbers.clientShortName} ILIKE ${`%${search}%`}`
-        )
-      );
+      return await baseQuery
+        .where(and(
+          eq(serialNumbers.status, "sold"),
+          or(
+            sql`${serialNumbers.serialNumber} ILIKE ${`%${search}%`}`,
+            sql`${serialNumbers.clientShortName} ILIKE ${`%${search}%`}`
+          )
+        ))
+        .orderBy(desc(serialNumbers.saleDate))
+        .limit(50);
     }
 
-    return await query.orderBy(desc(serialNumbers.saleDate)).limit(50);
+    return await baseQuery.orderBy(desc(serialNumbers.saleDate)).limit(50);
   }
 
   // Генерація номера ремонту

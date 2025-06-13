@@ -55,6 +55,7 @@ import OrderedProducts from "@/pages/ordered-products";
 import Scanner from "@/pages/scanner";
 import SerialNumbers from "@/pages/serial-numbers";
 import SerialNumberSettings from "@/pages/serial-number-settings";
+import Repairs from "@/pages/repairs";
 import Users from "@/pages/users";
 import EmailSettings from "@/pages/email-settings";
 import Analytics from "@/pages/analytics";
@@ -168,6 +169,10 @@ function Router() {
                       <span className="block text-2xl mb-2">🏢</span>
                       <span className="text-sm font-medium">Компанії</span>
                     </a>
+                    <a href="/repairs" className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 text-center">
+                      <span className="block text-2xl mb-2">🔧</span>
+                      <span className="text-sm font-medium">Ремонти</span>
+                    </a>
                   </div>
                 </div>
               </div>
@@ -216,6 +221,7 @@ function Router() {
         <Route path="/ordered-products" component={OrderedProducts} />
         <Route path="/serial-numbers" component={SerialNumbers} />
         <Route path="/serial-number-settings" component={SerialNumberSettings} />
+        <Route path="/repairs" component={Repairs} />
         <Route path="/currencies" component={Currencies} />
         <Route path="/currency-rates" component={CurrencyRates} />
         <Route path="/date-test" component={DateTest} />
