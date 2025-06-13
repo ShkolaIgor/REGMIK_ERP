@@ -16,6 +16,7 @@ import { Plus, ClipboardList, Clock, CheckCircle, XCircle, Search, Calculator } 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
 
 const formSchema = z.object({
   warehouseId: z.string().min(1, "Склад обов'язковий").transform(val => parseInt(val)),

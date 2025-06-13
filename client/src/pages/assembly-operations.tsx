@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
 
 const formSchema = z.object({
   operationType: z.string().min(1, "Тип операції обов'язковий"),
@@ -350,7 +351,10 @@ export default function AssemblyOperationsPage() {
                       <FormItem>
                         <FormLabel>Планована дата</FormLabel>
                         <FormControl>
-                          <Input type="datetime-local" {...field} />
+                          <UkrainianDatePicker
+                            date={field.value ? new Date(field.value) : undefined}
+                            onDateChange={(date) => field.onChange(date ? date.toISOString() : "")}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

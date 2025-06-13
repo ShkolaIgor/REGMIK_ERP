@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { formatCurrency, getStatusColor } from "@/lib/utils";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
+import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
 import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X, Settings, Palette } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
@@ -1349,26 +1350,23 @@ export default function Orders() {
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="paymentDate">Дата оплати</Label>
-                    <Input
-                      id="paymentDate"
-                      type="datetime-local"
-                      {...form.register("paymentDate")}
+                    <UkrainianDatePicker
+                      date={form.watch("paymentDate") && form.watch("paymentDate") !== "" ? new Date(form.watch("paymentDate")!) : undefined}
+                      onDateChange={(date) => form.setValue("paymentDate", date ? date.toISOString() : "")}
                     />
                   </div>
                   <div>
                     <Label htmlFor="dueDate">Термін виконання</Label>
-                    <Input
-                      id="dueDate"
-                      type="datetime-local"
-                      {...form.register("dueDate")}
+                    <UkrainianDatePicker
+                      date={form.watch("dueDate") && form.watch("dueDate") !== "" ? new Date(form.watch("dueDate")!) : undefined}
+                      onDateChange={(date) => form.setValue("dueDate", date ? date.toISOString() : "")}
                     />
                   </div>
                   <div>
                     <Label htmlFor="shippedDate">Дата відвантаження</Label>
-                    <Input
-                      id="shippedDate"
-                      type="datetime-local"
-                      {...form.register("shippedDate")}
+                    <UkrainianDatePicker
+                      date={form.watch("shippedDate") && form.watch("shippedDate") !== "" ? new Date(form.watch("shippedDate")!) : undefined}
+                      onDateChange={(date) => form.setValue("shippedDate", date ? date.toISOString() : "")}
                     />
                   </div>
                 </div>
