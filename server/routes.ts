@@ -3625,6 +3625,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/serial-numbers/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid serial number ID" });
+      }
       const serialNumber = await storage.getSerialNumber(id);
       if (!serialNumber) {
         return res.status(404).json({ error: "Serial number not found" });

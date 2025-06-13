@@ -114,7 +114,7 @@ export function RepairForm({ repair, onSuccess, onCancel }: RepairFormProps) {
     }
   };
 
-  const handleSerialSelect = (serial: SerialNumber) => {
+  const handleSerialSelect = async (serial: SerialNumber) => {
     setSelectedSerial(serial);
     setShowSerialSearch(false);
     
@@ -124,8 +124,15 @@ export function RepairForm({ repair, onSuccess, onCancel }: RepairFormProps) {
     form.setValue("productId", serial.productId);
     form.setValue("clientName", serial.clientShortName || "");
     
-    // Знайти товар за ID для назви
-    // TODO: додати запит для отримання інформації про товар
+    // Отримати інформацію про продукт
+    try {
+      const productResponse = await apiRequest(`/api/products/${serial.productId}`);
+      if (productResponse && productResponse.name) {
+        form.setValue("productName", productResponse.name);
+      }
+    } catch (error) {
+      console.error("Помилка отримання інформації про продукт:", error);
+    }
   };
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
