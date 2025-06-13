@@ -253,10 +253,8 @@ export default function CurrencyDashboard() {
     }
   }, [dashboards, selectedDashboard]);
 
-  const { data: currentDashboard, isLoading: isDashboardLoading } = useQuery<Dashboard>({
-    queryKey: ["/api/currency-dashboards", selectedDashboard],
-    enabled: !!selectedDashboard,
-  });
+  // Знаходимо поточну панель з основного запиту
+  const currentDashboard = dashboards?.find(d => d.id === selectedDashboard);
 
   const { data: currencies } = useQuery<any[]>({
     queryKey: ["/api/currencies"],
@@ -657,22 +655,19 @@ export default function CurrencyDashboard() {
                   </Dialog>
                 </div>
 
-                {isDashboardLoading ? (
+                {isDashboardsLoading ? (
                   <div className="flex items-center justify-center h-32">Завантаження...</div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="text-xs text-muted-foreground">
-                      Debug: currentDashboard = {JSON.stringify(currentDashboard, null, 2)}
-                    </div>
-                    {currentDashboard?.widgets && currentDashboard.widgets.length > 0 ? (
+                    {dashboard.widgets && dashboard.widgets.length > 0 ? (
                       <div 
                         className="grid gap-4"
                         style={{
-                          gridTemplateColumns: `repeat(${currentDashboard.layout?.columns || 3}, 1fr)`,
-                          gap: `${currentDashboard.layout?.gap || 16}px`,
+                          gridTemplateColumns: `repeat(${dashboard.layout?.columns || 3}, 1fr)`,
+                          gap: `${dashboard.layout?.gap || 16}px`,
                         }}
                       >
-                        {currentDashboard.widgets.map((widget: Widget) => (
+                        {dashboard.widgets.map((widget: Widget) => (
                           <CurrencyWidget
                             key={widget.id}
                             widget={widget}
