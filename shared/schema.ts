@@ -1591,6 +1591,24 @@ export type InsertSerialNumberSettings = z.infer<typeof insertSerialNumberSettin
 export type SerialNumber = typeof serialNumbers.$inferSelect;
 export type InsertSerialNumber = z.infer<typeof insertSerialNumberSchema>;
 
+// Прив'язка серійних номерів до позицій замовлення
+export const orderItemSerialNumbers = pgTable("order_item_serial_numbers", {
+  id: serial("id").primaryKey(),
+  orderItemId: integer("order_item_id").references(() => orderItems.id).notNull(),
+  serialNumberId: integer("serial_number_id").references(() => serialNumbers.id).notNull(),
+  assignedAt: timestamp("assigned_at").defaultNow(),
+  assignedBy: integer("assigned_by").references(() => users.id),
+  notes: text("notes"),
+});
+
+export const insertOrderItemSerialNumberSchema = createInsertSchema(orderItemSerialNumbers).omit({ 
+  id: true, 
+  assignedAt: true 
+});
+
+export type OrderItemSerialNumber = typeof orderItemSerialNumbers.$inferSelect;
+export type InsertOrderItemSerialNumber = z.infer<typeof insertOrderItemSerialNumberSchema>;
+
 // Система ремонтів
 export const repairs = pgTable("repairs", {
   id: serial("id").primaryKey(),

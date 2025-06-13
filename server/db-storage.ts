@@ -5916,6 +5916,131 @@ export class DatabaseStorage implements IStorage {
   }
 
   // ================================
+  // МЕТОДИ ДЛЯ ПРИВ'ЯЗКИ СЕРІЙНИХ НОМЕРІВ ДО ЗАМОВЛЕНЬ
+  // ================================
+
+  async assignSerialNumbersToOrderItem(orderItemId: number, serialNumberIds: number[], assignedBy?: number): Promise<void> {
+    try {
+      // Перевіряємо, чи серійні номери доступні
+      const availableSerials = await db.select()
+        .from(serialNumbers)
+        .where(and(
+          inArray(serialNumbers.id, serialNumberIds),
+          eq(serialNumbers.status, "available")
+        ));
+
+      if (availableSerials.length !== serialNumberIds.length) {
+        throw new Error("Деякі серійні номери недоступні для прив'язки");
+      }
+
+      // Створюємо прив'язки
+      const assignments = serialNumberIds.map(serialNumberId => ({
+        orderItemId,
+        serialNumberId,
+        assignedBy
+      }));
+
+      await db.insert(orderItemSerialNumbers).values(assignments);
+
+      // Оновлюємо статус серійних номерів
+      await db.update(serialNumbers)
+        .set({ status: "reserved" })
+        .where(inArray(serialNumbers.id, serialNumberIds));
+
+    } catch (error) {
+      console.error("Error assigning serial numbers to order item:", error);
+      throw error;
+    }
+  }
+
+  async getOrderItemSerialNumbers(orderItemId: number): Promise<any[]> {
+    return await db.select({
+      id: orderItemSerialNumbers.id,
+      serialNumber: {
+        id: serialNumbers.id,
+        serialNumber: serialNumbers.serialNumber,
+        status: serialNumbers.status,
+        manufacturedDate: serialNumbers.manufacturedDate
+      },
+      assignedAt: orderItemSerialNumbers.assignedAt,
+      notes: orderItemSerialNumbers.notes
+    })
+    .from(orderItemSerialNumbers)
+    .leftJoin(serialNumbers, eq(orderItemSerialNumbers.serialNumberId, serialNumbers.id))
+    .where(eq(orderItemSerialNumbers.orderItemId, orderItemId));
+  }
+
+  async removeSerialNumberFromOrderItem(assignmentId: number): Promise<void> {
+    try {
+      // Знаходимо прив'язку
+      const [assignment] = await db.select()
+        .from(orderItemSerialNumbers)
+        .where(eq(orderItemSerialNumbers.id, assignmentId));
+
+      if (!assignment) {
+        throw new Error("Прив'язка не знайдена");
+      }
+
+      // Видаляємо прив'язку
+      await db.delete(orderItemSerialNumbers)
+        .where(eq(orderItemSerialNumbers.id, assignmentId));
+
+      // Повертаємо серійний номер у статус "available"
+      await db.update(serialNumbers)
+        .set({ status: "available" })
+        .where(eq(serialNumbers.id, assignment.serialNumberId));
+
+    } catch (error) {
+      console.error("Error removing serial number from order item:", error);
+      throw error;
+    }
+  }
+
+  async getAvailableSerialNumbersForProduct(productId: number): Promise<SerialNumber[]> {
+    return await db.select()
+      .from(serialNumbers)
+      .where(and(
+        eq(serialNumbers.productId, productId),
+        eq(serialNumbers.status, "available")
+      ))
+      .orderBy(serialNumbers.serialNumber);
+  }
+
+  async completeOrderWithSerialNumbers(orderId: number): Promise<void> {
+    try {
+      // Оновлюємо статус замовлення
+      await db.update(orders)
+        .set({ status: "completed" })
+        .where(eq(orders.id, orderId));
+
+      // Знаходимо всі серійні номери, прив'язані до цього замовлення
+      const orderItemsWithSerials = await db.select({
+        serialNumberId: orderItemSerialNumbers.serialNumberId
+      })
+      .from(orderItemSerialNumbers)
+      .leftJoin(orderItems, eq(orderItemSerialNumbers.orderItemId, orderItems.id))
+      .where(eq(orderItems.orderId, orderId));
+
+      if (orderItemsWithSerials.length > 0) {
+        const serialNumberIds = orderItemsWithSerials.map(item => item.serialNumberId);
+        
+        // Оновлюємо статус серійних номерів на "sold" та прив'язуємо до замовлення
+        await db.update(serialNumbers)
+          .set({ 
+            status: "sold",
+            orderId: orderId,
+            saleDate: new Date()
+          })
+          .where(inArray(serialNumbers.id, serialNumberIds));
+      }
+
+    } catch (error) {
+      console.error("Error completing order with serial numbers:", error);
+      throw error;
+    }
+  }
+
+  // ================================
   // МЕТОДИ ДЛЯ ЗАПЧАСТИН РЕМОНТУ
   // ================================
 
