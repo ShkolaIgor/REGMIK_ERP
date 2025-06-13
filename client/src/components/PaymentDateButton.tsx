@@ -10,8 +10,7 @@ import {
 import { Calendar, Check, X, Clock } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { uk } from "date-fns/locale";
+import { formatShortUkrainianDate } from "@/lib/date-utils";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -52,12 +51,7 @@ export function PaymentDateButton({ order, onPaymentDateChange, isLoading }: Pay
   });
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return null;
-    try {
-      return format(new Date(dateString), "dd.MM.yyyy", { locale: uk });
-    } catch {
-      return null;
-    }
+    return formatShortUkrainianDate(dateString);
   };
 
   const handleSetPaymentDate = async (date: Date | null) => {
@@ -133,7 +127,7 @@ export function PaymentDateButton({ order, onPaymentDateChange, isLoading }: Pay
                 <Calendar className="w-4 h-4 mr-2" />
                 {item.label}
                 <span className="ml-auto text-xs text-gray-500">
-                  {format(item.date, "dd.MM", { locale: uk })}
+                  {formatShortUkrainianDate(item.date)}
                 </span>
               </DropdownMenuItem>
             ))}

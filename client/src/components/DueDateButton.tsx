@@ -38,12 +38,7 @@ export default function DueDateButton({ order, onDueDateChange, isLoading }: Due
   };
 
   const formatDueDate = (dateStr: string) => {
-    try {
-      const date = new Date(dateStr);
-      return format(date, "dd.MM.yyyy", { locale: uk });
-    } catch {
-      return "Невірна дата";
-    }
+    return formatShortUkrainianDate(dateStr) || "Невірна дата";
   };
 
   return (
@@ -88,7 +83,6 @@ export default function DueDateButton({ order, onDueDateChange, isLoading }: Due
           selected={selectedDate}
           onSelect={handleDateSelect}
           initialFocus
-          locale={uk}
           className="rounded-md"
         />
         <div className="p-3 border-t">
