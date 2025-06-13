@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, X, Package } from "lucide-react";
+import { Plus, X, Package, Hash } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -58,14 +58,13 @@ export function OrderSerialNumbers({
   // Отримуємо доступні серійні номери для продукту
   const { data: availableSerials = [] } = useQuery({
     queryKey: ["/api/products", productId, "available-serial-numbers"],
-    queryFn: () => apiRequest(`/api/products/${productId}/available-serial-numbers`),
-    enabled: showAssignDialog
+    queryFn: () => apiRequest(`/api/products/${productId}/available-serial-numbers`)
   });
 
   // Мутація для прив'язки серійних номерів
   const assignMutation = useMutation({
     mutationFn: (serialNumberIds: number[]) => 
-      apiRequest(`/api/order-items/${orderItemId}/serial-numbers`, {
+      apiRequest(`/api/order-items/${orderItemId}/assign-serial-numbers`, {
         method: "POST",
         body: JSON.stringify({ serialNumberIds })
       }),
@@ -74,8 +73,8 @@ export function OrderSerialNumbers({
         title: "Успіх",
         description: "Серійні номери успішно прив'язані"
       });
-      setShowAssignDialog(false);
       setSelectedSerials([]);
+      setShowAssignDialog(false);
       refetchAssigned();
       queryClient.invalidateQueries({ 
         queryKey: ["/api/products", productId, "available-serial-numbers"] 
@@ -192,7 +191,18 @@ export function OrderSerialNumbers({
                       {filteredAvailableSerials.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                            Немає доступних серійних номерів
+                            <div className="space-y-3">
+                              <p>Немає доступних серійних номерів</p>
+                              <CreateSerialNumbersQuick 
+                                productId={productId} 
+                                productName={productName}
+                                onSuccess={() => {
+                                  queryClient.invalidateQueries({ 
+                                    queryKey: ["/api/products", productId, "available-serial-numbers"] 
+                                  });
+                                }}
+                              />
+                            </div>
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -206,7 +216,7 @@ export function OrderSerialNumbers({
                                 }
                               />
                             </TableCell>
-                            <TableCell className="font-medium">
+                            <TableCell className="font-mono">
                               {serial.serialNumber}
                             </TableCell>
                             <TableCell>
@@ -215,9 +225,9 @@ export function OrderSerialNumbers({
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              {serial.manufacturedDate 
-                                ? new Date(serial.manufacturedDate).toLocaleDateString("uk-UA")
-                                : "—"
+                              {serial.manufacturedDate ? 
+                                new Date(serial.manufacturedDate).toLocaleDateString('uk-UA') : 
+                                "-"
                               }
                             </TableCell>
                           </TableRow>
@@ -227,22 +237,22 @@ export function OrderSerialNumbers({
                   </Table>
                 </div>
 
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center pt-4">
                   <div className="text-sm text-muted-foreground">
                     Обрано: {selectedSerials.length} серійних номерів
                   </div>
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
+                    <Button 
+                      variant="outline" 
                       onClick={() => setShowAssignDialog(false)}
                     >
                       Скасувати
                     </Button>
-                    <Button
+                    <Button 
                       onClick={handleAssignSerials}
                       disabled={selectedSerials.length === 0 || assignMutation.isPending}
                     >
-                      {assignMutation.isPending ? "Додавання..." : "Додати"}
+                      {assignMutation.isPending ? "Прив'язування..." : "Прив'язати"}
                     </Button>
                   </div>
                 </div>
@@ -251,52 +261,142 @@ export function OrderSerialNumbers({
           </Dialog>
         </div>
 
-        {assignedSerials.length > 0 ? (
-          <div className="border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Серійний номер</TableHead>
-                  <TableHead>Статус</TableHead>
-                  <TableHead>Дата прив'язки</TableHead>
-                  <TableHead className="w-12">Дії</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {assignedSerials.map((assigned: AssignedSerialNumber) => (
-                  <TableRow key={assigned.id}>
-                    <TableCell className="font-medium">
+        {/* Список призначених серійних номерів */}
+        {assignedSerials.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="font-medium">Призначені серійні номери:</h4>
+            <div className="space-y-2">
+              {assignedSerials.map((assigned: AssignedSerialNumber) => (
+                <div 
+                  key={assigned.id} 
+                  className="flex items-center justify-between p-3 border rounded-lg bg-gray-50 dark:bg-gray-800"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="font-mono text-sm bg-white dark:bg-gray-700 px-2 py-1 rounded border">
                       {assigned.serialNumber.serialNumber}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {assigned.serialNumber.status === "reserved" ? "Зарезервований" : assigned.serialNumber.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(assigned.assignedAt).toLocaleDateString("uk-UA")}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeMutation.mutate(assigned.id)}
-                        disabled={removeMutation.isPending}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            Серійні номери не прив'язані
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Призначено: {new Date(assigned.assignedAt).toLocaleDateString('uk-UA')}
+                    </div>
+                    {assigned.notes && (
+                      <div className="text-xs text-muted-foreground">
+                        Примітки: {assigned.notes}
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeMutation.mutate(assigned.id)}
+                    disabled={removeMutation.isPending}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// Компонент для швидкого створення серійних номерів
+interface CreateSerialNumbersQuickProps {
+  productId: number;
+  productName: string;
+  onSuccess: () => void;
+}
+
+function CreateSerialNumbersQuick({ productId, productName, onSuccess }: CreateSerialNumbersQuickProps) {
+  const [count, setCount] = useState(5);
+  const [showDialog, setShowDialog] = useState(false);
+  const { toast } = useToast();
+
+  const createMutation = useMutation({
+    mutationFn: (count: number) => 
+      apiRequest("/api/serial-numbers/bulk-create", {
+        method: "POST",
+        body: JSON.stringify({ productId, count })
+      }),
+    onSuccess: (data) => {
+      toast({
+        title: "Успіх",
+        description: `Створено ${data.created} серійних номерів`
+      });
+      setShowDialog(false);
+      onSuccess();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Не вдалося створити серійні номери",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleCreate = () => {
+    if (count < 1 || count > 100) {
+      toast({
+        title: "Помилка",
+        description: "Кількість має бути від 1 до 100",
+        variant: "destructive"
+      });
+      return;
+    }
+    createMutation.mutate(count);
+  };
+
+  return (
+    <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Hash className="h-4 w-4 mr-2" />
+          Створити серійні номери
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Швидке створення серійних номерів</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="product">Товар</Label>
+            <div className="text-sm text-muted-foreground font-medium">{productName}</div>
+          </div>
+          <div>
+            <Label htmlFor="count">Кількість серійних номерів</Label>
+            <Input
+              id="count"
+              type="number"
+              min={1}
+              max={100}
+              value={count}
+              onChange={(e) => setCount(parseInt(e.target.value) || 1)}
+              placeholder="Введіть кількість..."
+            />
+            <div className="text-xs text-muted-foreground mt-1">
+              Від 1 до 100 серійних номерів
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDialog(false)}
+            >
+              Скасувати
+            </Button>
+            <Button 
+              onClick={handleCreate}
+              disabled={createMutation.isPending}
+            >
+              {createMutation.isPending ? "Створення..." : "Створити"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
