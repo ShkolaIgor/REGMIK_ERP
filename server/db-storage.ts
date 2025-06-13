@@ -4504,15 +4504,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createBulkSerialNumbers(productId: number, count: number): Promise<SerialNumber[]> {
-    // Динамічний імпорт генератора серійних номерів
-    const { serialNumberGenerator } = await import("./serial-number-generator");
-    
     const serialNumbersData = [];
+    const timestamp = Date.now();
     
     for (let i = 0; i < count; i++) {
-      const serialNumber = await serialNumberGenerator.generateUniqueSerialNumber({
-        productId
-      });
+      let serialNumber: string;
+      let attempts = 0;
+      const maxAttempts = 20;
+      
+      // Генеруємо унікальний серійний номер з комбінацією timestamp, productId та випадкового числа
+      do {
+        const randomPart = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        const uniqueId = `${timestamp}-${i + 1}-${randomPart}`;
+        serialNumber = `SN-P${productId}-${uniqueId}`;
+        
+        // Перевіряємо чи вже існує такий номер
+        const existing = await db
+          .select()
+          .from(serialNumbers)
+          .where(eq(serialNumbers.serialNumber, serialNumber))
+          .limit(1);
+          
+        if (existing.length === 0) break;
+        attempts++;
+        
+        // Додаємо затримку між спробами для унікальності
+        await new Promise(resolve => setTimeout(resolve, 1));
+      } while (attempts < maxAttempts);
+      
+      if (attempts >= maxAttempts) {
+        throw new Error(`Не вдалося згенерувати унікальний серійний номер після ${maxAttempts} спроб`);
+      }
       
       serialNumbersData.push({
         productId,
