@@ -6149,19 +6149,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         repairId,
         inventoryId,
         quantity,
-        description: description || item.name,
-        cost: (item.cost || 0) * quantity
+        description: description || item.product?.name || "Запчастина",
+        cost: (item.product?.price || 0) * quantity
       });
 
       // Списуємо зі складу
-      await storage.updateInventory(inventoryId, {
-        quantity: item.quantity - quantity
-      });
+      await storage.updateInventory(inventoryId, item.quantity - quantity);
 
       res.status(201).json(repairPart);
     } catch (error) {
       console.error("Error adding repair part:", error);
       res.status(500).json({ error: "Failed to add repair part" });
+    }
+  });
+
+  // Видалити запчастину з ремонту та повернути на склад
+  app.delete("/api/repair-parts/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const partId = parseInt(req.params.id);
+      if (isNaN(partId)) {
+        return res.status(400).json({ error: "Invalid part ID" });
+      }
+
+      await storage.deleteRepairPart(partId);
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("Error deleting repair part:", error);
+      res.status(500).json({ error: "Failed to delete repair part" });
     }
   });
 

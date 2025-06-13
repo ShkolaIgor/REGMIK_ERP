@@ -282,71 +282,10 @@ export function RepairDetails({ repair, onClose }: RepairDetailsProps) {
         </TabsContent>
 
         <TabsContent value="parts">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex justify-between items-center">
-                Використані запчастини
-                <Button size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Додати запчастину
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {parts.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">Запчастини не додано</p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Назва</TableHead>
-                      <TableHead>Кількість</TableHead>
-                      <TableHead>Одиниця</TableHead>
-                      <TableHead>Ціна за од.</TableHead>
-                      <TableHead>Загальна вартість</TableHead>
-                      <TableHead>Постачальник</TableHead>
-                      <TableHead>Дії</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {parts.map((part: RepairPart) => (
-                      <TableRow key={part.id}>
-                        <TableCell>{part.partName}</TableCell>
-                        <TableCell>{part.quantity}</TableCell>
-                        <TableCell>{part.unit}</TableCell>
-                        <TableCell>{part.unitPrice} ₴</TableCell>
-                        <TableCell>{part.totalPrice} ₴</TableCell>
-                        <TableCell>{part.supplier || "—"}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleDeletePart(part.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-              
-              {parts.length > 0 && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Загальна вартість запчастин:</span>
-                    <span className="font-bold">{totalPartsCost.toFixed(2)} ₴</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <RepairPartsManager 
+            repairId={repair.id} 
+            parts={parts}
+          />
         </TabsContent>
 
         <TabsContent value="history">

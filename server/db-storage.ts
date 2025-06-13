@@ -5909,6 +5909,95 @@ export class DatabaseStorage implements IStorage {
     return `REM-${year}${month}${day}-${String(counter).padStart(3, '0')}`;
   }
 
+  // ================================
+  // МЕТОДИ ДЛЯ ЗАПЧАСТИН РЕМОНТУ
+  // ================================
+
+  async createRepairPart(partData: {
+    repairId: number;
+    inventoryId: number;
+    quantity: number;
+    description?: string;
+    cost: number;
+  }): Promise<any> {
+    try {
+      const [created] = await this.db
+        .insert(repairParts)
+        .values({
+          repairId: partData.repairId,
+          inventoryId: partData.inventoryId,
+          quantity: partData.quantity,
+          description: partData.description,
+          cost: partData.cost,
+          createdAt: new Date()
+        })
+        .returning();
+
+      // Отримуємо дані запчастини з інформацією про товар
+      const [part] = await this.db
+        .select({
+          id: repairParts.id,
+          repairId: repairParts.repairId,
+          inventoryId: repairParts.inventoryId,
+          quantity: repairParts.quantity,
+          description: repairParts.description,
+          cost: repairParts.cost,
+          createdAt: repairParts.createdAt,
+          inventoryItem: {
+            id: inventory.id,
+            name: products.name,
+            sku: products.sku,
+            quantity: inventory.quantity
+          }
+        })
+        .from(repairParts)
+        .leftJoin(inventory, eq(repairParts.inventoryId, inventory.id))
+        .leftJoin(products, eq(inventory.productId, products.id))
+        .where(eq(repairParts.id, created.id));
+
+      return part;
+    } catch (error) {
+      console.error('Error creating repair part:', error);
+      throw error;
+    }
+  }
+
+  async deleteRepairPart(partId: number): Promise<void> {
+    try {
+      // Отримуємо інформацію про запчастину перед видаленням
+      const [part] = await this.db
+        .select({
+          id: repairParts.id,
+          inventoryId: repairParts.inventoryId,
+          quantity: repairParts.quantity
+        })
+        .from(repairParts)
+        .where(eq(repairParts.id, partId));
+
+      if (!part) {
+        throw new Error('Repair part not found');
+      }
+
+      // Повертаємо товар на склад
+      await this.db
+        .update(inventory)
+        .set({
+          quantity: sql`${inventory.quantity} + ${part.quantity}`,
+          updatedAt: new Date()
+        })
+        .where(eq(inventory.id, part.inventoryId));
+
+      // Видаляємо запчастину з ремонту
+      await this.db
+        .delete(repairParts)
+        .where(eq(repairParts.id, partId));
+
+    } catch (error) {
+      console.error('Error deleting repair part:', error);
+      throw error;
+    }
+  }
+
 
 }
 
