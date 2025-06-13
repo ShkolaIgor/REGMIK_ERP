@@ -1512,27 +1512,21 @@ function CurrencyWidget({ widget, onEdit, onDelete, onToggleVisibility }: {
 function CurrencyDashboardTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  const [selectedDashboard, setSelectedDashboard] = useState<Dashboard | null>(null);
-  const [isDashboardDialogOpen, setIsDashboardDialogOpen] = useState(false);
-  const [isWidgetDialogOpen, setIsWidgetDialogOpen] = useState(false);
-  const [editingDashboard, setEditingDashboard] = useState<Dashboard | null>(null);
+  const [selectedDashboard, setSelectedDashboard] = useState<number | null>(null);
+  const [isCreateDashboardOpen, setIsCreateDashboardOpen] = useState(false);
+  const [isCreateWidgetOpen, setIsCreateWidgetOpen] = useState(false);
   const [editingWidget, setEditingWidget] = useState<Widget | null>(null);
 
-  // Queries
-  const { data: dashboards = [], isLoading: dashboardsLoading } = useQuery<Dashboard[]>({
-    queryKey: ["/api/currency-dashboards"]
+  // Запити
+  const { data: dashboards, isLoading: isDashboardsLoading } = useQuery<Dashboard[]>({
+    queryKey: ["/api/currency-dashboards"],
   });
 
-  const { data: currencies = [] } = useQuery<Currency[]>({
-    queryKey: ["/api/currencies"]
-  });
-
-  // Set default dashboard
+  // Автоматично вибираємо панель за замовчуванням при завантаженні
   useEffect(() => {
-    if (dashboards.length > 0 && !selectedDashboard) {
+    if (dashboards && dashboards.length > 0 && !selectedDashboard) {
       const defaultDashboard = dashboards.find((d: Dashboard) => d.isDefault) || dashboards[0];
-      setSelectedDashboard(defaultDashboard);
+      setSelectedDashboard(defaultDashboard.id);
     }
   }, [dashboards, selectedDashboard]);
 
