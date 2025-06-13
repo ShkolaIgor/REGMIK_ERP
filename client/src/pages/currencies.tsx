@@ -447,7 +447,7 @@ export default function Currencies() {
                       )}
                     />
                     <div className="text-sm text-muted-foreground">
-                      <p>Останнє оновлення: {formatUkrainianDateTime(settings.lastUpdateDate)}</p>
+                      <p>Останнє оновлення: <DateTime date={settings.lastUpdateDate} /></p>
                       <p>Статус: {settings.lastUpdateStatus}</p>
                       {settings.lastUpdateError && (
                         <p className="text-red-500">Помилка: {settings.lastUpdateError}</p>
@@ -640,7 +640,7 @@ export default function Currencies() {
                             <span>{parseFloat(currency.latestRate).toFixed(currency.decimalPlaces)}</span>
                             {currency.rateDate && (
                               <span className="text-xs text-muted-foreground">
-                                ({formatUkrainianDate(currency.rateDate)})
+                                (<DateOnly date={currency.rateDate} />)
                               </span>
                             )}
                           </div>
@@ -658,7 +658,7 @@ export default function Currencies() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>{formatUkrainianDate(currency.createdAt)}</TableCell>
+                      <TableCell><DateOnly date={currency.createdAt} /></TableCell>
                       <TableCell>
                         <div className="flex gap-2">
                           <Button
@@ -744,7 +744,7 @@ export default function Currencies() {
                             <div className="space-y-2">
                               {currencyRates.map((rate) => (
                                 <div key={rate.id} className="flex justify-between items-center text-sm">
-                                  <span>{formatUkrainianDate(rate.exchangeDate)}</span>
+                                  <span><DateOnly date={rate.exchangeDate} /></span>
                                   <span className="font-medium">
                                     {parseFloat(rate.rate).toFixed(currency.decimalPlaces)}
                                   </span>
