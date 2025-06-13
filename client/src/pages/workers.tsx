@@ -6,7 +6,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { UkrainianDateInput } from "@/components/ui/ukrainian-date-picker";
+import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
 import {
   Table,
   TableBody,
@@ -351,7 +351,7 @@ export default function WorkersPage() {
                       <FormItem>
                         <FormLabel>Дата найму</FormLabel>
                         <FormControl>
-                          <UkrainianDateInput
+                          <UkrainianDatePicker
                             date={field.value ? new Date(field.value) : undefined}
                             onDateChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
                           />

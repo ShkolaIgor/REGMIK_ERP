@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { UkrainianDateInput } from "@/components/ui/ukrainian-date-picker";
+import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
 
 interface ManufacturingOrder {
   id: number;
@@ -560,7 +560,7 @@ export default function Manufacturing() {
 
                   <div>
                     <Label htmlFor="plannedEndDate">Планова дата завершення</Label>
-                    <UkrainianDateInput
+                    <UkrainianDatePicker
                       date={formData.plannedEndDate ? new Date(formData.plannedEndDate) : undefined}
                       onDateChange={(date) => setFormData(prev => ({ ...prev, plannedEndDate: date ? date.toISOString().split('T')[0] : '' }))}
                     />

@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { RefreshCw, Download, Settings, TrendingUp, Calendar, Banknote } from "lucide-react";
 import { format } from "date-fns";
 import { uk } from "date-fns/locale";
-import { UkrainianDateInput } from "@/components/ui/ukrainian-date-picker";
+import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
 
 interface CurrencyRate {
   id: number;
