@@ -26,6 +26,7 @@ import { ClientForm } from "@/components/ClientForm";
 import { PaymentDialog } from "@/components/PaymentDialog";
 import DueDateButton from "@/components/DueDateButton";
 import { useSorting } from "@/hooks/useSorting";
+import { OrderSerialNumbers } from "@/components/OrderSerialNumbers";
 // Типи
 type Order = {
   id: number;
@@ -1881,24 +1882,36 @@ export default function Orders() {
                               <div className="p-4">
                                 <h4 className="font-medium mb-3">Склад замовлення:</h4>
                                 {order.items && order.items.length > 0 ? (
-                                  <div className="space-y-2">
+                                  <div className="space-y-4">
                                     {order.items.map((item: any, index: number) => (
-                                      <div key={index} className="flex justify-between items-center py-2 px-3 bg-white rounded border">
-                                        <div className="flex-1">
-                                          <span className="font-medium">{item.product?.name || 'Товар не знайдено'}</span>
-                                          <span className="text-sm text-gray-500 ml-2">({item.product?.sku})</span>
+                                      <div key={index} className="bg-white rounded border p-4 space-y-4">
+                                        <div className="flex justify-between items-center">
+                                          <div className="flex-1">
+                                            <span className="font-medium">{item.product?.name || 'Товар не знайдено'}</span>
+                                            <span className="text-sm text-gray-500 ml-2">({item.product?.sku})</span>
+                                          </div>
+                                          <div className="flex items-center space-x-4">
+                                            <span className="text-sm text-gray-600">
+                                              Кількість: <span className="font-medium">{item.quantity}</span>
+                                            </span>
+                                            <span className="text-sm text-gray-600">
+                                              Ціна: <span className="font-medium">{formatCurrency(item.unitPrice)}</span>
+                                            </span>
+                                            <span className="text-sm font-medium">
+                                              Всього: {formatCurrency(item.totalPrice)}
+                                            </span>
+                                          </div>
                                         </div>
-                                        <div className="flex items-center space-x-4">
-                                          <span className="text-sm text-gray-600">
-                                            Кількість: <span className="font-medium">{item.quantity}</span>
-                                          </span>
-                                          <span className="text-sm text-gray-600">
-                                            Ціна: <span className="font-medium">{formatCurrency(item.unitPrice)}</span>
-                                          </span>
-                                          <span className="text-sm font-medium">
-                                            Всього: {formatCurrency(item.totalPrice)}
-                                          </span>
-                                        </div>
+                                        
+                                        {/* Компонент для прив'язки серійних номерів */}
+                                        {item.product?.hasSerialNumbers && (
+                                          <OrderSerialNumbers 
+                                            orderItemId={item.id}
+                                            productId={item.productId}
+                                            productName={item.product?.name || 'Невідомий товар'}
+                                            quantity={parseInt(item.quantity)}
+                                          />
+                                        )}
                                       </div>
                                     ))}
                                   </div>
