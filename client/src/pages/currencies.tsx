@@ -757,7 +757,7 @@ export default function Currencies() {
                               <div>
                                 <div className="font-medium">{parseFloat(currency.latestRate).toFixed(4)}</div>
                                 <div className="text-xs text-muted-foreground">
-                                  {currency.rateDate ? formatShortUkrainianDate(currency.rateDate) : ""}
+                                  <UkrainianDate date={currency.rateDate} format="short" />
                                 </div>
                               </div>
                             );
@@ -1055,7 +1055,7 @@ export default function Currencies() {
                       return sortedDates.map((date) => (
                         <TableRow key={date}>
                           <TableCell className="font-medium">
-                            {formatExchangeDate(date)}
+                            <UkrainianDate date={date} format="short" />
                           </TableCell>
                           {enabledCurrencies.map((currencyCode) => (
                             <TableCell key={currencyCode} className="font-mono">

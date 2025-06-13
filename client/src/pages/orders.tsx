@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
+import { formatCurrency, getStatusColor } from "@/lib/utils";
+import { UkrainianDate } from "@/components/ui/ukrainian-date";
 import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X, Settings, Palette } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
@@ -198,7 +199,7 @@ export default function Orders() {
         return (
           <div>
             <div className="font-mono font-medium">{order.orderNumber}</div>
-            <div className="text-sm text-gray-500">{formatDate(order.createdAt)}</div>
+            <div className="text-sm text-gray-500"><UkrainianDate date={order.createdAt} format="short" /></div>
           </div>
         );
       
@@ -261,7 +262,7 @@ export default function Orders() {
                           ✅ Повна оплата
                         </Badge>
                         <div className="text-xs text-green-700 font-medium flex items-center gap-1">
-                          📅 {formatDate(new Date(order.paymentDate))}
+                          📅 <UkrainianDate date={order.paymentDate} format="short" />
                         </div>
                       </div>
                     }
@@ -288,7 +289,7 @@ export default function Orders() {
                           {formatCurrency(paidAmount)} з {formatCurrency(totalAmount)}
                         </div>
                         <div className="text-xs text-yellow-700 font-medium flex items-center gap-1">
-                          📅 {formatDate(new Date(order.paymentDate))}
+                          📅 <UkrainianDate date={order.paymentDate} format="short" />
                         </div>
                       </div>
                     }
