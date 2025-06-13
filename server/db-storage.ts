@@ -4503,6 +4503,31 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
+  async createBulkSerialNumbers(productId: number, count: number): Promise<SerialNumber[]> {
+    // Динамічний імпорт генератора серійних номерів
+    const { serialNumberGenerator } = await import("./serial-number-generator");
+    
+    const serialNumbersData = [];
+    
+    for (let i = 0; i < count; i++) {
+      const serialNumber = await serialNumberGenerator.generateUniqueSerialNumber({
+        productId
+      });
+      
+      serialNumbersData.push({
+        productId,
+        serialNumber,
+        status: "available" as const,
+        warehouseId: null,
+        manufacturedDate: null,
+        notes: null
+      });
+    }
+
+    const result = await db.insert(serialNumbers).values(serialNumbersData).returning();
+    return result;
+  }
+
   async updateSerialNumber(id: number, data: Partial<InsertSerialNumber>): Promise<SerialNumber | null> {
     const [updated] = await db
       .update(serialNumbers)

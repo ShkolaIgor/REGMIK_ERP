@@ -3698,6 +3698,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/serial-numbers/bulk-create", async (req, res) => {
+    try {
+      const { productId, count } = req.body;
+      
+      if (!productId || !count || count < 1 || count > 100) {
+        return res.status(400).json({ error: "Invalid parameters" });
+      }
+
+      const result = await storage.createBulkSerialNumbers(productId, count);
+      res.json({ created: result.length, serialNumbers: result });
+    } catch (error) {
+      console.error("Error creating bulk serial numbers:", error);
+      res.status(500).json({ error: "Failed to create serial numbers" });
+    }
+  });
+
   app.patch("/api/serial-numbers/:id/reserve", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
