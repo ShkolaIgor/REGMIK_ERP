@@ -1,8 +1,7 @@
 import * as React from "react";
 import { CalendarIcon } from "lucide-react";
-import { addDays, format } from "date-fns";
-import { uk } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
+import { formatShortUkrainianDate } from "@/lib/date-utils";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -51,11 +50,11 @@ export function DatePickerWithRange({
             {selectedDate?.from ? (
               selectedDate.to ? (
                 <>
-                  {format(selectedDate.from, "dd MMM yyyy", { locale: uk })} -{" "}
-                  {format(selectedDate.to, "dd MMM yyyy", { locale: uk })}
+                  {formatShortUkrainianDate(selectedDate.from)} -{" "}
+                  {formatShortUkrainianDate(selectedDate.to)}
                 </>
               ) : (
-                format(selectedDate.from, "dd MMM yyyy", { locale: uk })
+                formatShortUkrainianDate(selectedDate.from)
               )
             ) : (
               <span>Оберіть період</span>
@@ -70,7 +69,6 @@ export function DatePickerWithRange({
             selected={selectedDate}
             onSelect={handleDateChange}
             numberOfMonths={2}
-            locale={uk}
           />
         </PopoverContent>
       </Popover>

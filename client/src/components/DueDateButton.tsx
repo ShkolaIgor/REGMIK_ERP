@@ -3,8 +3,7 @@ import { Calendar, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { uk } from "date-fns/locale";
+import { formatShortUkrainianDate } from "@/lib/date-utils";
 
 interface DueDateButtonProps {
   order: any;
