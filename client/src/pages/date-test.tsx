@@ -23,8 +23,8 @@ export default function DateTestPage() {
           </div>
 
           <div className="space-y-2">
-            <Label>Український Input Date:</Label>
-            <UkrainianDateInput
+            <Label>Український Date Picker (основний):</Label>
+            <UkrainianDatePicker
               date={inputDate}
               onDateChange={setInputDate}
             />

@@ -383,14 +383,14 @@ export default function CurrencyRates() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div className="space-y-2">
               <Label htmlFor="start-date">Початкова дата</Label>
-              <UkrainianDateInput
+              <UkrainianDatePicker
                 date={startDate ? new Date(startDate) : undefined}
                 onDateChange={(date) => setStartDate(date ? date.toISOString().split('T')[0] : '')}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="end-date">Кінцева дата</Label>
-              <UkrainianDateInput
+              <UkrainianDatePicker
                 date={endDate ? new Date(endDate) : undefined}
                 onDateChange={(date) => setEndDate(date ? date.toISOString().split('T')[0] : '')}
               />

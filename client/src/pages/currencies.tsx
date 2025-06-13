@@ -38,7 +38,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatUkrainianDate, formatShortUkrainianDate, formatShortUkrainianDateTime } from "@/lib/date-utils";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
-import { UkrainianDateInput } from "@/components/ui/ukrainian-date-picker";
+import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -883,7 +883,7 @@ export default function Currencies() {
                     <>
                       <div className="space-y-2">
                         <Label htmlFor="customStartDate">Від</Label>
-                        <UkrainianDateInput
+                        <UkrainianDatePicker
                           date={customStartDate ? new Date(customStartDate) : undefined}
                           onDateChange={(date) => setCustomStartDate(date ? date.toISOString().split('T')[0] : '')}
                           className="w-[140px]"
@@ -891,7 +891,7 @@ export default function Currencies() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="customEndDate">До</Label>
-                        <UkrainianDateInput
+                        <UkrainianDatePicker
                           date={customEndDate ? new Date(customEndDate) : undefined}
                           onDateChange={(date) => setCustomEndDate(date ? date.toISOString().split('T')[0] : '')}
                           className="w-[140px]"
@@ -975,7 +975,7 @@ export default function Currencies() {
             <CardHeader className="flex-shrink-0 p-3">
               <CardTitle className="text-lg">Курси валют НБУ (останні 10 записів)</CardTitle>
               <div className="flex gap-2 mt-2">
-                <UkrainianDateInput
+                <UkrainianDatePicker
                   date={searchDate ? new Date(searchDate) : undefined}
                   onDateChange={(date) => setSearchDate(date ? date.toISOString().split('T')[0] : '')}
                   className="max-w-xs"
@@ -1116,14 +1116,14 @@ export default function Currencies() {
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-2">
                     <Label htmlFor="startDate">Від</Label>
-                    <UkrainianDateInput
+                    <UkrainianDatePicker
                       date={startDate ? new Date(startDate) : undefined}
                       onDateChange={(date) => setStartDate(date ? date.toISOString().split('T')[0] : '')}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="endDate">До</Label>
-                    <UkrainianDateInput
+                    <UkrainianDatePicker
                       date={endDate ? new Date(endDate) : undefined}
                       onDateChange={(date) => setEndDate(date ? date.toISOString().split('T')[0] : '')}
                     />
