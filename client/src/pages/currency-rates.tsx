@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { RefreshCw, Download, Settings, TrendingUp, Calendar, Banknote } from "lucide-react";
 import { format } from "date-fns";
 import { uk } from "date-fns/locale";
+import { UkrainianDateInput } from "@/components/ui/ukrainian-date-picker";
 
 interface CurrencyRate {
   id: number;
@@ -382,20 +383,16 @@ export default function CurrencyRates() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div className="space-y-2">
               <Label htmlFor="start-date">Початкова дата</Label>
-              <Input
-                id="start-date"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+              <UkrainianDateInput
+                date={startDate ? new Date(startDate) : undefined}
+                onDateChange={(date) => setStartDate(date ? date.toISOString().split('T')[0] : '')}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="end-date">Кінцева дата</Label>
-              <Input
-                id="end-date"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+              <UkrainianDateInput
+                date={endDate ? new Date(endDate) : undefined}
+                onDateChange={(date) => setEndDate(date ? date.toISOString().split('T')[0] : '')}
               />
             </div>
             <div className="md:col-span-2">

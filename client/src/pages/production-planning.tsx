@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarDays, Factory, Package, Plus, TrendingUp, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { UkrainianDateInput } from "@/components/ui/ukrainian-date-picker";
 
 interface ProductionPlan {
   id: number;
@@ -237,18 +238,16 @@ export default function ProductionPlanning() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Початок</Label>
-                  <Input
-                    type="date"
-                    value={planData.startDate}
-                    onChange={(e) => setPlanData({ ...planData, startDate: e.target.value })}
+                  <UkrainianDateInput
+                    date={planData.startDate ? new Date(planData.startDate) : undefined}
+                    onDateChange={(date) => setPlanData({ ...planData, startDate: date ? date.toISOString().split('T')[0] : '' })}
                   />
                 </div>
                 <div>
                   <Label>Закінчення</Label>
-                  <Input
-                    type="date"
-                    value={planData.endDate}
-                    onChange={(e) => setPlanData({ ...planData, endDate: e.target.value })}
+                  <UkrainianDateInput
+                    date={planData.endDate ? new Date(planData.endDate) : undefined}
+                    onDateChange={(date) => setPlanData({ ...planData, endDate: date ? date.toISOString().split('T')[0] : '' })}
                   />
                 </div>
               </div>
