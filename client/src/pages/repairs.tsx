@@ -261,6 +261,8 @@ export default function Repairs() {
           <RepairForm
             repair={selectedRepair}
             onSuccess={() => {
+              console.log("onSuccess called in repairs.tsx");
+              console.log("Setting showCreateForm to false");
               setShowCreateForm(false);
               setSelectedRepair(null);
               queryClient.invalidateQueries({ queryKey: ["/api/repairs"] });

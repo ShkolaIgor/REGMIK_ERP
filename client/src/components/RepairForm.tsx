@@ -89,9 +89,13 @@ export function RepairForm({ repair, onSuccess, onCancel }: RepairFormProps) {
       method: "POST",
       body: JSON.stringify(data)
     }),
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log("Repair created successfully:", result);
       queryClient.invalidateQueries({ queryKey: ["/api/repairs"] });
       onSuccess();
+    },
+    onError: (error) => {
+      console.error("Error creating repair:", error);
     }
   });
 
@@ -100,16 +104,24 @@ export function RepairForm({ repair, onSuccess, onCancel }: RepairFormProps) {
       method: "PATCH",
       body: JSON.stringify(data)
     }),
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log("Repair updated successfully:", result);
       queryClient.invalidateQueries({ queryKey: ["/api/repairs"] });
       onSuccess();
+    },
+    onError: (error) => {
+      console.error("Error updating repair:", error);
     }
   });
 
   const handleSubmit = (data: FormData) => {
+    console.log("Form submitted with data:", data);
+    console.log("onSuccess function:", onSuccess);
     if (repair) {
+      console.log("Updating repair:", repair.id);
       updateMutation.mutate(data);
     } else {
+      console.log("Creating new repair");
       createMutation.mutate(data);
     }
   };

@@ -6114,7 +6114,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/serial-numbers/for-repair", isSimpleAuthenticated, async (req, res) => {
     try {
       const { search } = req.query;
+      console.log("Serial numbers search request:", { search });
+      
       const serialNumbers = await storage.getSerialNumbersForRepair(search as string);
+      console.log("Found serial numbers:", serialNumbers.length);
+      
       res.json(serialNumbers);
     } catch (error) {
       console.error("Error fetching serial numbers for repair:", error);
