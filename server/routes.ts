@@ -6196,13 +6196,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/currency-widgets/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      console.log(`Deleting widget ${id}`);
+      const userId = req.session?.user?.id;
+      
+      console.log(`DELETE /api/currency-widgets/:id - ID: ${id}`);
       
       if (isNaN(id)) {
         return res.status(400).json({ error: "Invalid widget ID" });
       }
       
-      await storage.deleteCurrencyWidget(id);
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const success = await storage.deleteCurrencyWidget(id, userId);
+      if (!success) {
+        return res.status(404).json({ error: "Widget not found" });
+      }
+      
       console.log(`Widget ${id} deleted successfully`);
       res.json({ success: true });
     } catch (error) {
