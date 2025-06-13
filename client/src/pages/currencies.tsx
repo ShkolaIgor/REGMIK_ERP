@@ -36,8 +36,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { format } from "date-fns";
-import { uk } from "date-fns/locale";
+import { formatUkrainianDate, formatShortUkrainianDate, formatShortUkrainianDateTime } from "@/lib/date-utils";
+import { UkrainianDate } from "@/components/ui/ukrainian-date";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -484,19 +484,11 @@ export default function Currencies() {
   };
 
   const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "dd.MM.yyyy HH:mm");
-    } catch {
-      return dateString;
-    }
+    return formatShortUkrainianDateTime(dateString);
   };
 
   const formatExchangeDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "dd.MM.yyyy");
-    } catch {
-      return dateString;
-    }
+    return formatShortUkrainianDate(dateString);
   };
 
   // Функції для розрахунку дат періодів
@@ -765,7 +757,7 @@ export default function Currencies() {
                               <div>
                                 <div className="font-medium">{parseFloat(currency.latestRate).toFixed(4)}</div>
                                 <div className="text-xs text-muted-foreground">
-                                  {currency.rateDate ? new Date(currency.rateDate).toLocaleDateString() : ""}
+                                  {currency.rateDate ? formatShortUkrainianDate(currency.rateDate) : ""}
                                 </div>
                               </div>
                             );
