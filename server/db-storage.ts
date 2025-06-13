@@ -1,4 +1,4 @@
-import { eq, sql, desc, and, gte, lte, isNull, ne, or, not } from "drizzle-orm";
+import { eq, sql, desc, and, gte, lte, isNull, ne, or, not, inArray } from "drizzle-orm";
 import { db } from "./db";
 import { IStorage } from "./storage";
 import {
@@ -11,7 +11,7 @@ import {
   manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, currencyRates, currencyUpdateSettings, serialNumbers, serialNumberSettings, emailSettings,
   sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients, clientContacts, clientNovaPoshtaSettings,
   clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences,
-  repairs, repairParts, repairStatusHistory, repairDocuments,
+  repairs, repairParts, repairStatusHistory, repairDocuments, orderItemSerialNumbers,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
   type Category, type InsertCategory,
@@ -6125,6 +6125,191 @@ export class DatabaseStorage implements IStorage {
 
     } catch (error) {
       console.error('Error deleting repair part:', error);
+      throw error;
+    }
+  }
+
+  // ================================
+  // МЕТОДИ ДЛЯ ПРИВ'ЯЗКИ СЕРІЙНИХ НОМЕРІВ ДО ЗАМОВЛЕНЬ
+  // ================================
+
+  async assignSerialNumbersToOrderItem(
+    orderItemId: number, 
+    serialNumberIds: number[], 
+    userId?: number
+  ): Promise<void> {
+    try {
+      // Перевіряємо доступність серійних номерів
+      const availableSerials = await this.db
+        .select()
+        .from(serialNumbers)
+        .where(
+          and(
+            inArray(serialNumbers.id, serialNumberIds),
+            eq(serialNumbers.status, "available")
+          )
+        );
+
+      if (availableSerials.length !== serialNumberIds.length) {
+        throw new Error("Деякі серійні номери недоступні для прив'язки");
+      }
+
+      // Прив'язуємо серійні номери до позиції замовлення
+      const assignments = serialNumberIds.map(serialId => ({
+        orderItemId,
+        serialNumberId: serialId,
+        assignedAt: new Date(),
+        assignedBy: userId
+      }));
+
+      await this.db.insert(orderItemSerialNumbers).values(assignments);
+
+      // Оновлюємо статус серійних номерів на "reserved"
+      await this.db
+        .update(serialNumbers)
+        .set({ 
+          status: "reserved",
+          updatedAt: new Date()
+        })
+        .where(inArray(serialNumbers.id, serialNumberIds));
+
+    } catch (error) {
+      console.error('Error assigning serial numbers to order item:', error);
+      throw error;
+    }
+  }
+
+  async getOrderItemSerialNumbers(orderItemId: number): Promise<any[]> {
+    try {
+      return await this.db
+        .select({
+          id: orderItemSerialNumbers.id,
+          serialNumber: {
+            id: serialNumbers.id,
+            serialNumber: serialNumbers.serialNumber,
+            status: serialNumbers.status,
+            manufacturedDate: serialNumbers.manufacturedDate
+          },
+          assignedAt: orderItemSerialNumbers.assignedAt,
+          notes: orderItemSerialNumbers.notes
+        })
+        .from(orderItemSerialNumbers)
+        .innerJoin(serialNumbers, eq(orderItemSerialNumbers.serialNumberId, serialNumbers.id))
+        .where(eq(orderItemSerialNumbers.orderItemId, orderItemId));
+    } catch (error) {
+      console.error('Error fetching order item serial numbers:', error);
+      throw error;
+    }
+  }
+
+  async removeSerialNumberFromOrderItem(assignmentId: number): Promise<void> {
+    try {
+      // Отримуємо інформацію про прив'язку
+      const [assignment] = await this.db
+        .select({
+          serialNumberId: orderItemSerialNumbers.serialNumberId
+        })
+        .from(orderItemSerialNumbers)
+        .where(eq(orderItemSerialNumbers.id, assignmentId));
+
+      if (!assignment) {
+        throw new Error("Assignment not found");
+      }
+
+      // Видаляємо прив'язку
+      await this.db
+        .delete(orderItemSerialNumbers)
+        .where(eq(orderItemSerialNumbers.id, assignmentId));
+
+      // Повертаємо серійний номер у статус "available"
+      await this.db
+        .update(serialNumbers)
+        .set({ 
+          status: "available",
+          updatedAt: new Date()
+        })
+        .where(eq(serialNumbers.id, assignment.serialNumberId));
+
+    } catch (error) {
+      console.error('Error removing serial number from order item:', error);
+      throw error;
+    }
+  }
+
+  async getAvailableSerialNumbersForProduct(productId: number): Promise<any[]> {
+    try {
+      return await this.db
+        .select({
+          id: serialNumbers.id,
+          serialNumber: serialNumbers.serialNumber,
+          status: serialNumbers.status,
+          manufacturedDate: serialNumbers.manufacturedDate
+        })
+        .from(serialNumbers)
+        .where(
+          and(
+            eq(serialNumbers.productId, productId),
+            eq(serialNumbers.status, "available")
+          )
+        )
+        .orderBy(serialNumbers.serialNumber);
+    } catch (error) {
+      console.error('Error fetching available serial numbers:', error);
+      throw error;
+    }
+  }
+
+  async completeOrderWithSerialNumbers(orderId: number): Promise<void> {
+    try {
+      // Отримуємо всі позиції замовлення з прив'язаними серійними номерами
+      const orderItemsData = await this.db
+        .select({
+          orderItemId: orderItems.id,
+          quantity: orderItems.quantity,
+          serialCount: sql<number>`COUNT(${orderItemSerialNumbers.id})`
+        })
+        .from(orderItems)
+        .leftJoin(orderItemSerialNumbers, eq(orderItems.id, orderItemSerialNumbers.orderItemId))
+        .where(eq(orderItems.orderId, orderId))
+        .groupBy(orderItems.id, orderItems.quantity);
+
+      // Перевіряємо, чи всі позиції мають достатньо серійних номерів
+      const incompleteItems = orderItemsData.filter(item => 
+        Number(item.serialCount) < Number(item.quantity)
+      );
+
+      if (incompleteItems.length > 0) {
+        throw new Error("Не всі позиції замовлення мають прив'язані серійні номери");
+      }
+
+      // Оновлюємо статус серійних номерів на "sold"
+      const serialIds = await this.db
+        .select({ serialId: orderItemSerialNumbers.serialNumberId })
+        .from(orderItemSerialNumbers)
+        .innerJoin(orderItems, eq(orderItemSerialNumbers.orderItemId, orderItems.id))
+        .where(eq(orderItems.orderId, orderId));
+
+      if (serialIds.length > 0) {
+        await this.db
+          .update(serialNumbers)
+          .set({ 
+            status: "sold",
+            updatedAt: new Date()
+          })
+          .where(inArray(serialNumbers.id, serialIds.map(s => s.serialId)));
+      }
+
+      // Оновлюємо статус замовлення
+      await this.db
+        .update(orders)
+        .set({ 
+          statusId: 10, // "Виконано"
+          updatedAt: new Date()
+        })
+        .where(eq(orders.id, orderId));
+
+    } catch (error) {
+      console.error('Error completing order with serial numbers:', error);
       throw error;
     }
   }

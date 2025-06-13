@@ -6183,6 +6183,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ================================
+  // API ДЛЯ ПРИВ'ЯЗКИ СЕРІЙНИХ НОМЕРІВ ДО ЗАМОВЛЕНЬ
+  // ================================
+
+  // Прив'язати серійні номери до позиції замовлення
+  app.post("/api/order-items/:id/serial-numbers", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const orderItemId = parseInt(req.params.id);
+      const { serialNumberIds, notes } = req.body;
+
+      if (!Array.isArray(serialNumberIds) || serialNumberIds.length === 0) {
+        return res.status(400).json({ error: "Необхідно вказати серійні номери" });
+      }
+
+      await storage.assignSerialNumbersToOrderItem(orderItemId, serialNumberIds, req.session?.user?.id);
+      res.status(201).json({ message: "Серійні номери успішно прив'язані" });
+    } catch (error) {
+      console.error("Error assigning serial numbers:", error);
+      res.status(500).json({ error: "Помилка прив'язки серійних номерів" });
+    }
+  });
+
+  // Отримати серійні номери позиції замовлення
+  app.get("/api/order-items/:id/serial-numbers", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const orderItemId = parseInt(req.params.id);
+      const serialNumbers = await storage.getOrderItemSerialNumbers(orderItemId);
+      res.json(serialNumbers);
+    } catch (error) {
+      console.error("Error fetching order item serial numbers:", error);
+      res.status(500).json({ error: "Помилка отримання серійних номерів" });
+    }
+  });
+
+  // Видалити прив'язку серійного номера
+  app.delete("/api/order-item-serial-numbers/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const assignmentId = parseInt(req.params.id);
+      await storage.removeSerialNumberFromOrderItem(assignmentId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error removing serial number assignment:", error);
+      res.status(500).json({ error: "Помилка видалення прив'язки" });
+    }
+  });
+
+  // Отримати доступні серійні номери для продукту
+  app.get("/api/products/:id/available-serial-numbers", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      const serialNumbers = await storage.getAvailableSerialNumbersForProduct(productId);
+      res.json(serialNumbers);
+    } catch (error) {
+      console.error("Error fetching available serial numbers:", error);
+      res.status(500).json({ error: "Помилка отримання доступних серійних номерів" });
+    }
+  });
+
+  // Завершити замовлення з прив'язаними серійними номерами
+  app.post("/api/orders/:id/complete-with-serials", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      await storage.completeOrderWithSerialNumbers(orderId);
+      res.json({ message: "Замовлення успішно завершено" });
+    } catch (error) {
+      console.error("Error completing order with serial numbers:", error);
+      res.status(500).json({ error: "Помилка завершення замовлення" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
