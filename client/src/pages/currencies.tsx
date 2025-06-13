@@ -975,11 +975,9 @@ export default function Currencies() {
             <CardHeader className="flex-shrink-0 p-3">
               <CardTitle className="text-lg">Курси валют НБУ (останні 10 записів)</CardTitle>
               <div className="flex gap-2 mt-2">
-                <Input
-                  type="date"
-                  placeholder="Пошук за датою"
-                  value={searchDate}
-                  onChange={(e) => setSearchDate(e.target.value)}
+                <UkrainianDateInput
+                  date={searchDate ? new Date(searchDate) : undefined}
+                  onDateChange={(date) => setSearchDate(date ? date.toISOString().split('T')[0] : '')}
                   className="max-w-xs"
                 />
                 <Button
@@ -1118,20 +1116,16 @@ export default function Currencies() {
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-2">
                     <Label htmlFor="startDate">Від</Label>
-                    <Input
-                      id="startDate"
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
+                    <UkrainianDateInput
+                      date={startDate ? new Date(startDate) : undefined}
+                      onDateChange={(date) => setStartDate(date ? date.toISOString().split('T')[0] : '')}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="endDate">До</Label>
-                    <Input
-                      id="endDate"
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
+                    <UkrainianDateInput
+                      date={endDate ? new Date(endDate) : undefined}
+                      onDateChange={(date) => setEndDate(date ? date.toISOString().split('T')[0] : '')}
                     />
                   </div>
                 </div>
