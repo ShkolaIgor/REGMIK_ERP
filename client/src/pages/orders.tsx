@@ -380,7 +380,7 @@ export default function Orders() {
                   </Badge>
                   {order.paymentDate && (
                     <div className="text-xs text-green-700 font-medium flex items-center gap-1">
-                      📅 {formatDate(new Date(order.paymentDate))}
+                      📅 <UkrainianDate date={order.paymentDate} format="short" />
                     </div>
                   )}
                 </div>
@@ -397,7 +397,7 @@ export default function Orders() {
                   </div>
                   {order.paymentDate && (
                     <div className="text-xs text-yellow-700 font-medium flex items-center gap-1">
-                      📅 {formatDate(new Date(order.paymentDate))}
+                      📅 <UkrainianDate date={order.paymentDate} format="short" />
                     </div>
                   )}
                 </div>

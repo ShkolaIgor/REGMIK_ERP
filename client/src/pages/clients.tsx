@@ -55,6 +55,7 @@ import { insertClientSchema, insertClientContactSchema, type Client, type Insert
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ClientForm } from "@/components/ClientForm";
+import { UkrainianDate } from "@/components/ui/ukrainian-date";
 
 // Розширена схема валідації для нової структури
 const formSchema = insertClientSchema.extend({
@@ -631,9 +632,9 @@ export default function Clients() {
               </div>
               {client.createdAt && (
                 <div className="text-xs text-muted-foreground mt-4 pt-3 border-t">
-                  Створено: {new Date(client.createdAt).toLocaleDateString("uk-UA")}
+                  Створено: <UkrainianDate date={client.createdAt} format="short" />
                   {client.updatedAt && client.updatedAt !== client.createdAt && (
-                    <span className="block mt-1">Оновлено: {new Date(client.updatedAt).toLocaleDateString("uk-UA")}</span>
+                    <span className="block mt-1">Оновлено: <UkrainianDate date={client.updatedAt} format="short" /></span>
                   )}
                 </div>
               )}

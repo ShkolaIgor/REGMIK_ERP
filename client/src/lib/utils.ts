@@ -15,12 +15,15 @@ export function formatCurrency(amount: string | number): string {
 }
 
 export function formatDate(date: Date | string): string {
+  if (!date) return '';
   const d = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat('uk-UA', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  }).format(d);
+  if (isNaN(d.getTime())) return '';
+  
+  const day = d.getDate().toString().padStart(2, '0');
+  const month = (d.getMonth() + 1).toString().padStart(2, '0');
+  const year = d.getFullYear();
+  
+  return `${day}.${month}.${year}`;
 }
 
 export function getStatusColor(status: string): string {
