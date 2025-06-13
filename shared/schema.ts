@@ -1591,6 +1591,140 @@ export type InsertSerialNumberSettings = z.infer<typeof insertSerialNumberSettin
 export type SerialNumber = typeof serialNumbers.$inferSelect;
 export type InsertSerialNumber = z.infer<typeof insertSerialNumberSchema>;
 
+// Система ремонтів
+export const repairs = pgTable("repairs", {
+  id: serial("id").primaryKey(),
+  repairNumber: varchar("repair_number", { length: 100 }).notNull().unique(),
+  serialNumberId: integer("serial_number_id").references(() => serialNumbers.id).notNull(),
+  serialNumber: text("serial_number").notNull(),
+  productId: integer("product_id").references(() => products.id).notNull(),
+  productName: varchar("product_name", { length: 255 }).notNull(),
+  
+  // Тип ремонту
+  repairType: varchar("repair_type", { length: 50 }).notNull().default("warranty"), // warranty, non_warranty
+  
+  // Інформація про клієнта
+  clientId: integer("client_id").references(() => clients.id),
+  clientName: varchar("client_name", { length: 255 }),
+  clientPhone: varchar("client_phone", { length: 50 }),
+  clientEmail: varchar("client_email", { length: 255 }),
+  
+  // Опис проблеми
+  problemDescription: text("problem_description").notNull(),
+  visualDamage: text("visual_damage"), // опис зовнішніх пошкоджень
+  accessories: text("accessories"), // комплектація
+  
+  // Статуси та дати
+  status: varchar("status", { length: 50 }).notNull().default("received"), // received, diagnosed, in_repair, testing, completed, returned, cancelled
+  receivedDate: timestamp("received_date").defaultNow(),
+  diagnosisDate: timestamp("diagnosis_date"),
+  repairStartDate: timestamp("repair_start_date"),
+  repairEndDate: timestamp("repair_end_date"),
+  returnDate: timestamp("return_date"),
+  
+  // Діагностика
+  diagnosisDescription: text("diagnosis_description"),
+  estimatedCost: decimal("estimated_cost", { precision: 10, scale: 2 }).default("0"),
+  estimatedDuration: integer("estimated_duration"), // в днях
+  
+  // Виконання ремонту
+  actualCost: decimal("actual_cost", { precision: 10, scale: 2 }).default("0"),
+  laborCost: decimal("labor_cost", { precision: 10, scale: 2 }).default("0"),
+  partsCost: decimal("parts_cost", { precision: 10, scale: 2 }).default("0"),
+  
+  // Працівники
+  receivedBy: integer("received_by").references(() => workers.id),
+  diagnosedBy: integer("diagnosed_by").references(() => workers.id),
+  repairedBy: integer("repaired_by").references(() => workers.id),
+  
+  // Гарантія
+  warrantyPeriod: integer("warranty_period").default(0), // в днях
+  warrantyStartDate: timestamp("warranty_start_date"),
+  warrantyEndDate: timestamp("warranty_end_date"),
+  
+  // Тестування після ремонту
+  testingResults: text("testing_results"),
+  qualityRating: varchar("quality_rating", { length: 20 }).default("good"), // excellent, good, acceptable, poor
+  
+  // Примітки
+  internalNotes: text("internal_notes"), // внутрішні примітки
+  clientNotes: text("client_notes"), // примітки для клієнта
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Запчастини використані в ремонті
+export const repairParts = pgTable("repair_parts", {
+  id: serial("id").primaryKey(),
+  repairId: integer("repair_id").references(() => repairs.id, { onDelete: "cascade" }).notNull(),
+  productId: integer("product_id").references(() => products.id),
+  partName: varchar("part_name", { length: 255 }).notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 4 }).notNull(),
+  unit: varchar("unit", { length: 50 }).default("шт"),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).default("0"),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).default("0"),
+  supplier: varchar("supplier", { length: 255 }),
+  partNumber: varchar("part_number", { length: 100 }),
+  isWarrantyPart: boolean("is_warranty_part").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Історія статусів ремонту
+export const repairStatusHistory = pgTable("repair_status_history", {
+  id: serial("id").primaryKey(),
+  repairId: integer("repair_id").references(() => repairs.id, { onDelete: "cascade" }).notNull(),
+  oldStatus: varchar("old_status", { length: 50 }),
+  newStatus: varchar("new_status", { length: 50 }).notNull(),
+  changedBy: integer("changed_by").references(() => workers.id),
+  comment: text("comment"),
+  changedAt: timestamp("changed_at").defaultNow(),
+});
+
+// Фото та документи ремонту
+export const repairDocuments = pgTable("repair_documents", {
+  id: serial("id").primaryKey(),
+  repairId: integer("repair_id").references(() => repairs.id, { onDelete: "cascade" }).notNull(),
+  documentType: varchar("document_type", { length: 50 }).notNull(), // photo_before, photo_after, invoice, receipt, warranty_card
+  fileName: varchar("file_name", { length: 255 }).notNull(),
+  filePath: text("file_path").notNull(),
+  fileSize: integer("file_size"),
+  description: text("description"),
+  uploadedBy: integer("uploaded_by").references(() => workers.id),
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+});
+
+export const insertRepairSchema = createInsertSchema(repairs).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true,
+  repairNumber: true 
+});
+
+export const insertRepairPartSchema = createInsertSchema(repairParts).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertRepairStatusHistorySchema = createInsertSchema(repairStatusHistory).omit({ 
+  id: true, 
+  changedAt: true 
+});
+
+export const insertRepairDocumentSchema = createInsertSchema(repairDocuments).omit({ 
+  id: true, 
+  uploadedAt: true 
+});
+
+export type Repair = typeof repairs.$inferSelect;
+export type InsertRepair = z.infer<typeof insertRepairSchema>;
+export type RepairPart = typeof repairParts.$inferSelect;
+export type InsertRepairPart = z.infer<typeof insertRepairPartSchema>;
+export type RepairStatusHistory = typeof repairStatusHistory.$inferSelect;
+export type InsertRepairStatusHistory = z.infer<typeof insertRepairStatusHistorySchema>;
+export type RepairDocument = typeof repairDocuments.$inferSelect;
+export type InsertRepairDocument = z.infer<typeof insertRepairDocumentSchema>;
+
 // Схеми валідації для листування
 export const insertClientMailSchema = createInsertSchema(clientMail).omit({ 
   id: true, 

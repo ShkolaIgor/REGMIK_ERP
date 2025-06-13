@@ -11,6 +11,7 @@ import {
   manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, currencyRates, currencyUpdateSettings, serialNumbers, serialNumberSettings, emailSettings,
   sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients, clientContacts, clientNovaPoshtaSettings,
   clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences,
+  repairs, repairParts, repairStatusHistory, repairDocuments,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
   type Category, type InsertCategory,
@@ -61,6 +62,10 @@ import {
   type ClientContact, type InsertClientContact,
   type ClientNovaPoshtaSettings, type InsertClientNovaPoshtaSettings,
   type UserSortPreference, type InsertUserSortPreference,
+  type Repair, type InsertRepair,
+  type RepairPart, type InsertRepairPart,
+  type RepairStatusHistory, type InsertRepairStatusHistory,
+  type RepairDocument, type InsertRepairDocument,
 
 } from "@shared/schema";
 

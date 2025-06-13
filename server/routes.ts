@@ -19,7 +19,8 @@ import {
   insertShipmentSchema, insertManufacturingOrderSchema, insertManufacturingOrderMaterialSchema, insertManufacturingStepSchema,
   insertCurrencySchema, insertSerialNumberSchema, insertSerialNumberSettingsSchema,
   insertLocalUserSchema, insertRoleSchema, insertSystemModuleSchema, changePasswordSchema,
-  insertEmailSettingsSchema, insertClientSchema, insertClientContactSchema, insertClientMailSchema, insertMailRegistrySchema, insertEnvelopePrintSettingsSchema
+  insertEmailSettingsSchema, insertClientSchema, insertClientContactSchema, insertClientMailSchema, insertMailRegistrySchema, insertEnvelopePrintSettingsSchema,
+  insertRepairSchema, insertRepairPartSchema, insertRepairStatusHistorySchema, insertRepairDocumentSchema
 } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -5922,6 +5923,199 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching currency rate:", error);
       res.status(500).json({ error: "Failed to fetch currency rate" });
+    }
+  });
+
+  // ==================== REPAIRS API ====================
+  
+  // Отримати всі ремонти
+  app.get("/api/repairs", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const repairs = await storage.getRepairs();
+      res.json(repairs);
+    } catch (error) {
+      console.error("Error fetching repairs:", error);
+      res.status(500).json({ error: "Failed to fetch repairs" });
+    }
+  });
+
+  // Отримати ремонт за ID
+  app.get("/api/repairs/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const repair = await storage.getRepair(parseInt(req.params.id));
+      if (!repair) {
+        return res.status(404).json({ error: "Repair not found" });
+      }
+      res.json(repair);
+    } catch (error) {
+      console.error("Error fetching repair:", error);
+      res.status(500).json({ error: "Failed to fetch repair" });
+    }
+  });
+
+  // Створити новий ремонт
+  app.post("/api/repairs", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertRepairSchema.parse(req.body);
+      const repair = await storage.createRepair(validatedData);
+      res.status(201).json(repair);
+    } catch (error) {
+      console.error("Error creating repair:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create repair" });
+    }
+  });
+
+  // Оновити ремонт
+  app.patch("/api/repairs/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const repairId = parseInt(req.params.id);
+      const validatedData = insertRepairSchema.partial().parse(req.body);
+      const repair = await storage.updateRepair(repairId, validatedData);
+      res.json(repair);
+    } catch (error) {
+      console.error("Error updating repair:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update repair" });
+    }
+  });
+
+  // Видалити ремонт
+  app.delete("/api/repairs/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteRepair(parseInt(req.params.id));
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting repair:", error);
+      res.status(500).json({ error: "Failed to delete repair" });
+    }
+  });
+
+  // Пошук ремонтів за серійним номером
+  app.get("/api/repairs/search/:serialNumber", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const repairs = await storage.getRepairsBySerialNumber(req.params.serialNumber);
+      res.json(repairs);
+    } catch (error) {
+      console.error("Error searching repairs:", error);
+      res.status(500).json({ error: "Failed to search repairs" });
+    }
+  });
+
+  // Отримати запчастини ремонту
+  app.get("/api/repairs/:id/parts", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const parts = await storage.getRepairParts(parseInt(req.params.id));
+      res.json(parts);
+    } catch (error) {
+      console.error("Error fetching repair parts:", error);
+      res.status(500).json({ error: "Failed to fetch repair parts" });
+    }
+  });
+
+  // Додати запчастину до ремонту
+  app.post("/api/repairs/:id/parts", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const repairId = parseInt(req.params.id);
+      const validatedData = insertRepairPartSchema.parse({
+        ...req.body,
+        repairId
+      });
+      const part = await storage.addRepairPart(validatedData);
+      res.status(201).json(part);
+    } catch (error) {
+      console.error("Error adding repair part:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to add repair part" });
+    }
+  });
+
+  // Видалити запчастину з ремонту
+  app.delete("/api/repairs/:repairId/parts/:partId", isSimpleAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteRepairPart(parseInt(req.params.partId));
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting repair part:", error);
+      res.status(500).json({ error: "Failed to delete repair part" });
+    }
+  });
+
+  // Отримати історію статусів ремонту
+  app.get("/api/repairs/:id/status-history", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const history = await storage.getRepairStatusHistory(parseInt(req.params.id));
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching repair status history:", error);
+      res.status(500).json({ error: "Failed to fetch repair status history" });
+    }
+  });
+
+  // Змінити статус ремонту
+  app.post("/api/repairs/:id/status", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const repairId = parseInt(req.params.id);
+      const { newStatus, comment } = req.body;
+      
+      if (!newStatus) {
+        return res.status(400).json({ error: "New status is required" });
+      }
+
+      const statusHistory = await storage.changeRepairStatus(repairId, newStatus, comment, req.user?.id);
+      res.status(201).json(statusHistory);
+    } catch (error) {
+      console.error("Error changing repair status:", error);
+      res.status(500).json({ error: "Failed to change repair status" });
+    }
+  });
+
+  // Отримати документи ремонту
+  app.get("/api/repairs/:id/documents", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const documents = await storage.getRepairDocuments(parseInt(req.params.id));
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching repair documents:", error);
+      res.status(500).json({ error: "Failed to fetch repair documents" });
+    }
+  });
+
+  // Додати документ до ремонту
+  app.post("/api/repairs/:id/documents", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const repairId = parseInt(req.params.id);
+      const validatedData = insertRepairDocumentSchema.parse({
+        ...req.body,
+        repairId,
+        uploadedBy: req.user?.id
+      });
+      const document = await storage.addRepairDocument(validatedData);
+      res.status(201).json(document);
+    } catch (error) {
+      console.error("Error adding repair document:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to add repair document" });
+    }
+  });
+
+  // Пошук серійних номерів для створення ремонту
+  app.get("/api/serial-numbers/for-repair", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { search } = req.query;
+      const serialNumbers = await storage.getSerialNumbersForRepair(search as string);
+      res.json(serialNumbers);
+    } catch (error) {
+      console.error("Error fetching serial numbers for repair:", error);
+      res.status(500).json({ error: "Failed to fetch serial numbers" });
     }
   });
 
