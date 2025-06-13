@@ -38,6 +38,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatUkrainianDate, formatShortUkrainianDate, formatShortUkrainianDateTime } from "@/lib/date-utils";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
+import { UkrainianDateInput } from "@/components/ui/ukrainian-date-picker";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -882,21 +883,17 @@ export default function Currencies() {
                     <>
                       <div className="space-y-2">
                         <Label htmlFor="customStartDate">Від</Label>
-                        <Input
-                          id="customStartDate"
-                          type="date"
-                          value={customStartDate}
-                          onChange={(e) => setCustomStartDate(e.target.value)}
+                        <UkrainianDateInput
+                          date={customStartDate ? new Date(customStartDate) : undefined}
+                          onDateChange={(date) => setCustomStartDate(date ? date.toISOString().split('T')[0] : '')}
                           className="w-[140px]"
                         />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="customEndDate">До</Label>
-                        <Input
-                          id="customEndDate"
-                          type="date"
-                          value={customEndDate}
-                          onChange={(e) => setCustomEndDate(e.target.value)}
+                        <UkrainianDateInput
+                          date={customEndDate ? new Date(customEndDate) : undefined}
+                          onDateChange={(date) => setCustomEndDate(date ? date.toISOString().split('T')[0] : '')}
                           className="w-[140px]"
                         />
                       </div>

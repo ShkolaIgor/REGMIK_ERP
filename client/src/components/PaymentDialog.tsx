@@ -21,6 +21,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { CreditCard, FileText, AlertCircle } from "lucide-react";
+import { UkrainianDateInput } from "@/components/ui/ukrainian-date-picker";
 
 interface PaymentDialogProps {
   orderId: number;
@@ -193,11 +194,9 @@ export function PaymentDialog({
           {paymentType !== 'none' && (
             <div className="space-y-2">
               <Label htmlFor="paymentDate">Дата оплати</Label>
-              <Input
-                id="paymentDate"
-                type="date"
-                value={paymentDate}
-                onChange={(e) => setPaymentDate(e.target.value)}
+              <UkrainianDateInput
+                date={paymentDate ? new Date(paymentDate) : undefined}
+                onDateChange={(date) => setPaymentDate(date ? date.toISOString().split('T')[0] : '')}
               />
             </div>
           )}
