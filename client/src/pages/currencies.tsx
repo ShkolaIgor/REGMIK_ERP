@@ -694,11 +694,10 @@ export default function Currencies() {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="currencies">Валюти</TabsTrigger>
           <TabsTrigger value="rates">Курси НБУ</TabsTrigger>
           <TabsTrigger value="settings">Налаштування</TabsTrigger>
-          <TabsTrigger value="dashboard">Панелі</TabsTrigger>
         </TabsList>
 
         <TabsContent value="currencies" className="space-y-4">
@@ -1219,9 +1218,7 @@ export default function Currencies() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="dashboard" className="space-y-4">
-          <CurrencyDashboardTab />
-        </TabsContent>
+
       </Tabs>
 
       {/* Exchange Rate Dialog */}
