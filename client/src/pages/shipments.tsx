@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
 import { Plus, Package, Truck, MapPin, Calendar, Search, Edit, Trash2 } from "lucide-react";
 
 interface Order {
@@ -650,11 +651,9 @@ export default function Shipments() {
                 </div>
                 <div>
                   <Label htmlFor="estimatedDelivery">Очікувана дата доставки</Label>
-                  <Input
-                    id="estimatedDelivery"
-                    type="datetime-local"
-                    value={formData.estimatedDelivery}
-                    onChange={(e) => setFormData(prev => ({ ...prev, estimatedDelivery: e.target.value }))}
+                  <UkrainianDatePicker
+                    date={formData.estimatedDelivery ? new Date(formData.estimatedDelivery) : undefined}
+                    onDateChange={(date) => setFormData(prev => ({ ...prev, estimatedDelivery: date ? date.toISOString() : "" }))}
                   />
                 </div>
               </div>

@@ -420,7 +420,10 @@ export default function SerialNumbers() {
                       <FormItem>
                         <FormLabel>Дата продажі</FormLabel>
                         <FormControl>
-                          <Input type="datetime-local" {...field} />
+                          <UkrainianDatePicker
+                            date={field.value ? new Date(field.value) : undefined}
+                            onDateChange={(date) => field.onChange(date ? date.toISOString() : "")}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
