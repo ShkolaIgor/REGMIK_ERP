@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Search, Edit, Trash, QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
 import { insertSerialNumberSchema, type SerialNumber, type Product, type Warehouse } from "@shared/schema";
 import { z } from "zod";
 
@@ -374,7 +375,10 @@ export default function SerialNumbers() {
                       <FormItem>
                         <FormLabel>Дата виробництва</FormLabel>
                         <FormControl>
-                          <Input type="datetime-local" {...field} />
+                          <UkrainianDatePicker
+                            date={field.value ? new Date(field.value) : undefined}
+                            onDateChange={(date) => field.onChange(date ? date.toISOString() : "")}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
