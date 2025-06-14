@@ -6587,20 +6587,24 @@ export class DatabaseStorage implements IStorage {
 
       // Use optimized SQL with proper indexing for fast search
       const searchPattern = `%${query}%`;
+      const queryLower = query.toLowerCase();
       const result = await pool.query(`
         SELECT ref, name, name_ru, area, area_ru, region, region_ru, settlement_type, delivery_city, warehouses
         FROM nova_poshta_cities 
         WHERE (name ILIKE $1 OR name_ru ILIKE $1 OR area ILIKE $1 OR area_ru ILIKE $1)
         ORDER BY 
           CASE 
-            WHEN name ILIKE $3 THEN 1
-            WHEN name_ru ILIKE $3 THEN 2
-            WHEN name ILIKE $1 THEN 3
-            WHEN name_ru ILIKE $1 THEN 4
-            ELSE 5
-          END
+            WHEN LOWER(name) = $4 THEN 1
+            WHEN LOWER(name_ru) = $4 THEN 2
+            WHEN name ILIKE $3 THEN 3
+            WHEN name_ru ILIKE $3 THEN 4
+            WHEN name ILIKE $1 THEN 5
+            WHEN name_ru ILIKE $1 THEN 6
+            ELSE 7
+          END,
+          LENGTH(name) ASC
         LIMIT $2
-      `, [searchPattern, limit, `${query}%`]);
+      `, [searchPattern, limit, `${query}%`, queryLower]);
 
       const transformedCities = result.rows.map((city: any) => ({
         Ref: city.ref,
