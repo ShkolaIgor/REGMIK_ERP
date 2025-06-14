@@ -17,9 +17,10 @@ import {
   insertWarehouseTransferSchema, insertPositionSchema, insertDepartmentSchema,
   insertPackageTypeSchema, insertSolderingTypeSchema, insertComponentAlternativeSchema, insertComponentCategorySchema,
   insertShipmentSchema, insertManufacturingOrderSchema, insertManufacturingOrderMaterialSchema, insertManufacturingStepSchema,
-  insertCurrencySchema, insertSerialNumberSchema, insertSerialNumberSettingsSchema, insertExchangeRateHistorySchema,
+  insertCurrencySchema, insertSerialNumberSchema, insertSerialNumberSettingsSchema,
   insertLocalUserSchema, insertRoleSchema, insertSystemModuleSchema, changePasswordSchema,
-  insertEmailSettingsSchema, insertClientSchema, insertClientContactSchema, insertClientMailSchema, insertMailRegistrySchema, insertEnvelopePrintSettingsSchema
+  insertEmailSettingsSchema, insertClientSchema, insertClientContactSchema, insertClientMailSchema, insertMailRegistrySchema, insertEnvelopePrintSettingsSchema,
+  insertRepairSchema, insertRepairPartSchema, insertRepairStatusHistorySchema, insertRepairDocumentSchema
 } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -199,60 +200,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Отримати базову URL з заголовків
-      const protocol = req.get('x-forwarded-proto') || req.protocol;
-      const host = req.get('host');
-      const resetUrl = `${protocol}://${host}/reset-password?token=${resetToken}`;
+      const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
+      const host = req.get('host') || req.get('x-forwarded-host');
+      
+      // Виправляємо формування URL - видаляємо зайві слеші
+      let baseUrl = `${protocol}://${host}`;
+      if (baseUrl.includes('\\')) {
+        baseUrl = baseUrl.replace(/\\/g, '');
+      }
+      
+      const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
+      
+      console.log("Protocol:", protocol);
+      console.log("Host:", host);
+      console.log("Base URL:", baseUrl);
+      console.log("Generated reset URL:", resetUrl);
 
-      // Відправити email
-      const emailSent = await sendEmail({
-        to: email,
-        from: "noreply@regmik-erp.com",
-        subject: "Відновлення паролю - REGMIK ERP",
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-              <h1 style="color: #2563eb; margin: 0; text-align: center;">REGMIK: ERP</h1>
-              <p style="color: #6b7280; margin: 5px 0 0 0; text-align: center;">Система управління виробництвом</p>
-            </div>
-            
-            <h2 style="color: #374151;">Відновлення паролю</h2>
-            
-            <p style="color: #6b7280; line-height: 1.6;">
-              Ви отримали цей лист, оскільки для вашого облікового запису був запитаний скидання паролю.
-            </p>
-            
-            <p style="color: #6b7280; line-height: 1.6;">
-              Натисніть на кнопку нижче, щоб встановити новий пароль:
-            </p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                Відновити пароль
-              </a>
-            </div>
-            
-            <p style="color: #6b7280; line-height: 1.6; font-size: 14px;">
-              Якщо кнопка не працює, скопіюйте та вставте це посилання у ваш браузер:
-            </p>
-            <p style="color: #2563eb; word-break: break-all; font-size: 14px;">
-              ${resetUrl}
-            </p>
-            
-            <p style="color: #6b7280; line-height: 1.6; font-size: 14px;">
-              Це посилання дійсне протягом 1 години. Якщо ви не запитували скидання паролю, проігноруйте цей лист.
-            </p>
-            
-            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-            
-            <p style="color: #9ca3af; font-size: 12px; text-align: center;">
-              REGMIK ERP - Система управління виробництвом
-            </p>
-          </div>
-        `
-      });
+      // Відправити email через налаштований сервіс
+      console.log("Attempting to send email to:", email);
+      
+      // Перевірити налаштування email
+      const emailSettings = await storage.getEmailSettings();
+      console.log("Email settings loaded:", emailSettings ? "Yes" : "No");
+      
+      if (!emailSettings || !emailSettings.smtpHost) {
+        console.log("Email service not configured or inactive");
+        return res.status(500).json({ message: "Помилка відправки email - сервіс не налаштований" });
+      }
+      
+      // Використовуємо nodemailer напряму з налаштуваннями
+      const nodemailer = await import('nodemailer');
+      const transportConfig = {
+        host: emailSettings.smtpHost,
+        port: emailSettings.smtpPort || 587,
+        secure: emailSettings.smtpSecure || false,
+        auth: {
+          user: emailSettings.smtpUser,
+          pass: emailSettings.smtpPassword,
+        },
+      };
+      const transporter = nodemailer.createTransport(transportConfig as any);
 
-      if (!emailSent) {
-        return res.status(500).json({ message: "Помилка відправки email" });
+      try {
+        const emailResult = await transporter.sendMail({
+          from: emailSettings.fromEmail || "noreply@regmik-erp.com",
+          to: email,
+          subject: "Відновлення паролю - REGMIK ERP",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h1 style="color: #2563eb; margin: 0; text-align: center;">REGMIK: ERP</h1>
+                <p style="color: #6b7280; margin: 5px 0 0 0; text-align: center;">Система управління виробництвом</p>
+              </div>
+              
+              <h2 style="color: #374151;">Відновлення паролю</h2>
+              
+              <p style="color: #6b7280; line-height: 1.6;">
+                Ви отримали цей лист, оскільки для вашого облікового запису був запитаний скидання паролю.
+              </p>
+              
+              <p style="color: #6b7280; line-height: 1.6;">
+                Натисніть на кнопку нижче, щоб встановити новий пароль:
+              </p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${resetUrl}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                  Відновити пароль
+                </a>
+              </div>
+              
+              <p style="color: #6b7280; line-height: 1.6; font-size: 14px;">
+                Якщо кнопка не працює, скопіюйте та вставте це посилання у ваш браузер:
+              </p>
+              <p style="color: #2563eb; word-break: break-all; font-size: 14px;">
+                ${resetUrl}
+              </p>
+              
+              <p style="color: #6b7280; line-height: 1.6; font-size: 14px;">
+                Це посилання дійсне протягом 1 години. Якщо ви не запитували скидання паролю, проігноруйте цей лист.
+              </p>
+              
+              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+              
+              <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+                REGMIK ERP - Система управління виробництвом
+              </p>
+            </div>
+          `
+        });
+        
+        console.log("Email sent successfully:", emailResult.messageId);
+      } catch (emailError) {
+        console.error("Failed to send email:", emailError);
+        return res.status(500).json({ message: "Помилка відправки email - перевірте налаштування SMTP" });
       }
 
       res.json({ message: "Якщо email існує в системі, лист буде відправлено" });
@@ -297,7 +337,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Пароль повинен містити мінімум 6 символів" });
       }
 
+      console.log("Looking for user with reset token:", token);
       const user = await storage.getUserByResetToken(token);
+      console.log("User found by reset token:", user ? `ID ${user.id}` : "None");
       
       if (!user) {
         return res.status(400).json({ message: "Недійсний або застарілий токен" });
@@ -305,9 +347,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Хешувати новий пароль
       const hashedPassword = await bcrypt.hash(password, 10);
+      console.log("Password hashed, updating for user ID:", user.id);
 
       // Оновити пароль та очистити токен скидання
       const success = await storage.confirmPasswordReset(user.id, hashedPassword);
+      console.log("Password reset result:", success);
       
       if (!success) {
         return res.status(500).json({ message: "Помилка оновлення паролю" });
@@ -317,6 +361,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error resetting password:", error);
       res.status(500).json({ message: "Внутрішня помилка сервера" });
+    }
+  });
+
+  // Оновлення профілю користувача
+  app.patch("/api/auth/profile", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const sessionUser = (req.session as any)?.user;
+      if (!sessionUser?.id) {
+        return res.status(401).json({ message: "Користувач не авторизований" });
+      }
+
+      const { firstName, lastName, email, profileImageUrl } = req.body;
+      const userId = parseInt(sessionUser.id);
+      
+      // Отримуємо повні дані користувача
+      const fullUser = await storage.getLocalUserWithWorker(userId);
+      
+      // Оновлюємо дані користувача
+      await storage.updateLocalUser(userId, {
+        firstName,
+        lastName,
+        email,
+        profileImageUrl,
+        updatedAt: new Date()
+      });
+
+      // Якщо користувач пов'язаний з робітником, оновлюємо дані робітника
+      if (fullUser?.workerId) {
+        await storage.updateWorker(fullUser.workerId, {
+          firstName,
+          lastName,
+          email,
+          photo: profileImageUrl
+        });
+      }
+
+      // Оновлюємо дані в сесії
+      if (req.session) {
+        (req.session as any).user = {
+          ...(req.session as any).user,
+          firstName,
+          lastName,
+          email,
+          profileImageUrl
+        };
+      }
+
+      res.json({ message: "Профіль успішно оновлено" });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Помилка при оновленні профілю" });
     }
   });
 
@@ -2703,9 +2798,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Nova Poshta API integration routes (з кешуванням)
   app.get("/api/nova-poshta/cities", async (req, res) => {
+    const { q } = req.query;
+    const searchQuery = q ? decodeURIComponent(q as string) : "";
+    console.log(`Nova Poshta cities API called with query: "${searchQuery}"`);
+    
+    // Відключаємо кешування на рівні HTTP
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
     try {
-      const { q } = req.query;
-      const cities = await novaPoshtaCache.getCities(q as string || "");
+      const cities = await novaPoshtaCache.getCities(searchQuery);
+      console.log(`Returning ${cities.length} cities for search: "${searchQuery}"`);
       res.json(cities);
     } catch (error) {
       console.error("Error fetching cities:", error);
@@ -2716,7 +2822,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/nova-poshta/warehouses/:cityRef", async (req, res) => {
     try {
       const { cityRef } = req.params;
-      const warehouses = await novaPoshtaCache.getWarehouses(cityRef);
+      const { q } = req.query;
+      const searchQuery = q ? decodeURIComponent(q as string) : "";
+      console.log(`Nova Poshta warehouses API called for city: "${cityRef}", query: "${searchQuery}"`);
+      
+      // Відключаємо кешування на рівні HTTP
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
+      const warehouses = await novaPoshtaCache.getWarehouses(cityRef, searchQuery);
+      console.log(`Returning ${warehouses.length} warehouses for city: "${cityRef}", search: "${searchQuery}"`);
       res.json(warehouses);
     } catch (error) {
       console.error("Error fetching warehouses:", error);
@@ -3148,25 +3266,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/exchange-rates/latest", async (req, res) => {
-    try {
-      const rates = await storage.getLatestExchangeRates();
-      res.json(rates);
-    } catch (error) {
-      console.error("Error fetching exchange rates:", error);
-      res.status(500).json({ error: "Failed to get exchange rates" });
-    }
-  });
 
-  app.post("/api/exchange-rates/update", async (req, res) => {
-    try {
-      const rates = await storage.updateExchangeRates();
-      res.json(rates);
-    } catch (error) {
-      console.error("Error updating exchange rates:", error);
-      res.status(500).json({ error: "Failed to update exchange rates" });
-    }
-  });
+
+  // Видалено exchange-rates API - використовуємо currency-rates замість них
 
   // Production analytics routes
   app.get("/api/production/analytics", async (req, res) => {
@@ -3546,6 +3648,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/serial-numbers/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid serial number ID" });
+      }
       const serialNumber = await storage.getSerialNumber(id);
       if (!serialNumber) {
         return res.status(404).json({ error: "Serial number not found" });
@@ -3613,6 +3718,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching available serial numbers:", error);
       res.status(500).json({ error: "Failed to fetch available serial numbers" });
+    }
+  });
+
+  app.post("/api/serial-numbers/bulk-create", async (req, res) => {
+    try {
+      const { productId, count } = req.body;
+      
+      if (!productId || !count || count < 1 || count > 100) {
+        return res.status(400).json({ error: "Invalid parameters" });
+      }
+
+      const result = await storage.createBulkSerialNumbers(productId, count);
+      res.json({ created: result.length, serialNumbers: result });
+    } catch (error) {
+      console.error("Error creating bulk serial numbers:", error);
+      res.status(500).json({ error: "Failed to create serial numbers" });
+    }
+  });
+
+  // API endpoints для прив'язки серійних номерів до позицій замовлень
+  app.post("/api/order-items/:orderItemId/assign-serial-numbers", async (req, res) => {
+    try {
+      const orderItemId = parseInt(req.params.orderItemId);
+      const { serialNumberIds } = req.body;
+      
+      if (!Array.isArray(serialNumberIds) || serialNumberIds.length === 0) {
+        return res.status(400).json({ error: "Serial number IDs are required" });
+      }
+
+      const result = await storage.assignSerialNumbersToOrderItem(orderItemId, serialNumberIds);
+      res.json(result);
+    } catch (error) {
+      console.error("Error assigning serial numbers:", error);
+      res.status(500).json({ error: "Failed to assign serial numbers" });
+    }
+  });
+
+  app.get("/api/order-items/:orderItemId/serial-numbers", async (req, res) => {
+    try {
+      const orderItemId = parseInt(req.params.orderItemId);
+      const assignments = await storage.getOrderItemSerialNumbers(orderItemId);
+      res.json(assignments);
+    } catch (error) {
+      console.error("Error fetching order item serial numbers:", error);
+      res.status(500).json({ error: "Failed to fetch serial numbers" });
+    }
+  });
+
+  app.delete("/api/order-item-serial-numbers/:assignmentId", async (req, res) => {
+    try {
+      const assignmentId = parseInt(req.params.assignmentId);
+      const success = await storage.removeSerialNumberAssignment(assignmentId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Assignment not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error removing serial number assignment:", error);
+      res.status(500).json({ error: "Failed to remove assignment" });
     }
   });
 
@@ -4114,7 +4280,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Generate reset URL
-      const resetUrl = `${req.protocol}://${req.get('host')}/reset-password?token=${resetToken}`;
+      const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
+      const host = req.get('host') || req.get('x-forwarded-host');
+      
+      // Виправляємо формування URL - видаляємо зайві слеші
+      let baseUrl = `${protocol}://${host}`;
+      if (baseUrl.includes('\\')) {
+        baseUrl = baseUrl.replace(/\\/g, '');
+      }
+      
+      const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
       
       // Generate email content
       const { html, text } = generatePasswordResetEmail(user.username, resetToken, resetUrl);
@@ -4344,41 +4519,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const settingsData = insertEmailSettingsSchema.parse(req.body);
       
-      // Базове тестування підключення до SMTP
-      const net = await import('net');
-      
-      const testConnection = () => {
-        return new Promise((resolve, reject) => {
-          const socket = new net.default.Socket();
-          const timeout = setTimeout(() => {
-            socket.destroy();
-            reject(new Error('Connection timeout'));
-          }, 5000);
-
-          socket.connect(settingsData.smtpPort || 587, settingsData.smtpHost, () => {
-            clearTimeout(timeout);
-            socket.destroy();
-            resolve(true);
-          });
-
-          socket.on('error', (err: any) => {
-            clearTimeout(timeout);
-            reject(err);
-          });
+      // Перевірка обов'язкових полів
+      if (!settingsData.smtpHost || !settingsData.smtpUser || !settingsData.smtpPassword) {
+        return res.status(400).json({
+          success: false,
+          message: "Заповніть усі обов'язкові поля: SMTP хост, користувач та пароль"
         });
-      };
+      }
 
-      await testConnection();
+      // Реальне тестування SMTP з автентифікацією
+      const nodemailer = await import('nodemailer');
+      
+      const transporter = nodemailer.createTransport({
+        host: settingsData.smtpHost,
+        port: settingsData.smtpPort || 587,
+        secure: settingsData.smtpSecure || false,
+        auth: {
+          user: settingsData.smtpUser,
+          pass: settingsData.smtpPassword,
+        },
+        connectionTimeout: 10000, // 10 секунд
+        greetingTimeout: 5000,   // 5 секунд
+        socketTimeout: 10000,    // 10 секунд
+      });
+
+      // Перевірка підключення та автентифікації
+      await transporter.verify();
+      
+      // Закриття з'єднання
+      transporter.close();
+      
       res.json({ 
         success: true, 
-        message: `SMTP server ${settingsData.smtpHost}:${settingsData.smtpPort} is reachable` 
+        message: `Успішне підключення до SMTP сервера ${settingsData.smtpHost}:${settingsData.smtpPort}. Автентифікація пройшла успішно.` 
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("SMTP connection test failed:", error);
+      
+      let errorMessage = "Помилка підключення до SMTP сервера";
+      
+      if (error.code === 'ENOTFOUND') {
+        errorMessage = "SMTP сервер не знайдено. Перевірте адресу хоста.";
+      } else if (error.code === 'ECONNREFUSED') {
+        errorMessage = "З'єднання відхилено. Перевірте хост та порт.";
+      } else if (error.code === 'ETIMEDOUT') {
+        errorMessage = "Тайм-аут підключення. Перевірте налаштування мережі.";
+      } else if (error.responseCode === 535) {
+        errorMessage = "Помилка автентифікації. Перевірте логін та пароль.";
+      } else if (error.responseCode === 534) {
+        errorMessage = "Потрібна двофакторна автентифікація або App Password.";
+      } else if (error.message && error.message.includes('Invalid login')) {
+        errorMessage = "Невірний логін або пароль.";
+      }
+      
       res.status(400).json({ 
         success: false, 
-        message: "SMTP connection failed", 
-        error: error instanceof Error ? error.message : String(error)
+        message: errorMessage,
+        details: error.message || "Невідома помилка"
       });
     }
   });
@@ -5640,6 +5837,563 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error approving production:", error);
       res.status(500).json({ error: "Failed to approve production" });
+    }
+  });
+
+  // Currency Rates API
+  const { currencyService } = await import("./currency-service");
+
+  // Отримання останніх курсів валют
+  app.get("/api/currency-rates", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const rates = await storage.getAllCurrencyRates();
+      res.json(rates);
+    } catch (error) {
+      console.error("Error fetching currency rates:", error);
+      res.status(500).json({ error: "Failed to fetch currency rates" });
+    }
+  });
+
+  // Отримання курсів на конкретну дату
+  app.get("/api/currency-rates/:date", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const date = new Date(req.params.date);
+      if (isNaN(date.getTime())) {
+        return res.status(400).json({ error: "Invalid date format" });
+      }
+      
+      const rates = await storage.getCurrencyRatesByDate(date);
+      res.json(rates);
+    } catch (error) {
+      console.error("Error fetching currency rates by date:", error);
+      res.status(500).json({ error: "Failed to fetch currency rates" });
+    }
+  });
+
+  // Ручне оновлення курсів на поточну дату
+  app.post("/api/currency-rates/update", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const result = await currencyService.updateCurrentRates();
+      
+      if (result.success) {
+        res.json({
+          success: true,
+          message: result.message,
+          updatedCount: result.updatedCount
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: result.message
+        });
+      }
+    } catch (error) {
+      console.error("Error updating currency rates:", error);
+      res.status(500).json({ error: "Failed to update currency rates" });
+    }
+  });
+
+  // Ручне оновлення курсів за період
+  app.post("/api/currency-rates/update-period", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { startDate, endDate } = req.body;
+      
+      if (!startDate || !endDate) {
+        return res.status(400).json({ error: "Start date and end date are required" });
+      }
+      
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return res.status(400).json({ error: "Invalid date format" });
+      }
+      
+      if (start > end) {
+        return res.status(400).json({ error: "Start date must be before end date" });
+      }
+      
+      // Обмежуємо період до 1 року
+      const maxDays = 365;
+      const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff > maxDays) {
+        return res.status(400).json({ error: `Period cannot exceed ${maxDays} days` });
+      }
+      
+      const result = await currencyService.updateRatesForPeriod(start, end);
+      
+      res.json({
+        success: result.success,
+        message: result.message,
+        updatedDates: result.updatedDates,
+        totalUpdated: result.totalUpdated
+      });
+      
+    } catch (error) {
+      console.error("Error updating currency rates for period:", error);
+      res.status(500).json({ error: "Failed to update currency rates for period" });
+    }
+  });
+
+  // Налаштування автоматичного оновлення
+  app.get("/api/currency-settings", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const settings = await storage.getCurrencyUpdateSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching currency settings:", error);
+      res.status(500).json({ error: "Failed to fetch currency settings" });
+    }
+  });
+
+  app.post("/api/currency-settings", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const settingsData = req.body;
+      const settings = await storage.saveCurrencyUpdateSettings(settingsData);
+      
+      // Якщо автооновлення увімкнено, перезапускаємо планувальник
+      if (settingsData.autoUpdateEnabled) {
+        currencyService.initializeAutoUpdate();
+      }
+      
+      res.json(settings);
+    } catch (error) {
+      console.error("Error saving currency settings:", error);
+      res.status(500).json({ error: "Failed to save currency settings" });
+    }
+  });
+
+  app.put("/api/currency-settings", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const settingsData = req.body;
+      const settings = await storage.saveCurrencyUpdateSettings(settingsData);
+      
+      // Якщо автооновлення увімкнено, перезапускаємо планувальник
+      if (settingsData.autoUpdateEnabled) {
+        currencyService.initializeAutoUpdate();
+      }
+      
+      res.json(settings);
+    } catch (error) {
+      console.error("Error saving currency settings:", error);
+      res.status(500).json({ error: "Failed to save currency settings" });
+    }
+  });
+
+
+
+  // Отримання конкретного курсу валюти
+  app.get("/api/currency-rate/:code", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { code } = req.params;
+      const { date } = req.query;
+      
+      const searchDate = date ? new Date(date as string) : new Date();
+      
+      if (date && isNaN(searchDate.getTime())) {
+        return res.status(400).json({ error: "Invalid date format" });
+      }
+      
+      const rate = await currencyService.getCurrencyRate(code.toUpperCase(), searchDate);
+      
+      if (rate === null) {
+        return res.status(404).json({ error: `Currency rate for ${code} not found` });
+      }
+      
+      res.json({
+        currencyCode: code.toUpperCase(),
+        rate: rate,
+        date: searchDate.toISOString().split('T')[0]
+      });
+      
+    } catch (error) {
+      console.error("Error fetching currency rate:", error);
+      res.status(500).json({ error: "Failed to fetch currency rate" });
+    }
+  });
+
+  // ==================== REPAIRS API ====================
+  
+  // Отримати всі ремонти
+  app.get("/api/repairs", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const repairs = await storage.getRepairs();
+      res.json(repairs);
+    } catch (error) {
+      console.error("Error fetching repairs:", error);
+      res.status(500).json({ error: "Failed to fetch repairs" });
+    }
+  });
+
+  // Отримати ремонт за ID
+  app.get("/api/repairs/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const repair = await storage.getRepair(parseInt(req.params.id));
+      if (!repair) {
+        return res.status(404).json({ error: "Repair not found" });
+      }
+      res.json(repair);
+    } catch (error) {
+      console.error("Error fetching repair:", error);
+      res.status(500).json({ error: "Failed to fetch repair" });
+    }
+  });
+
+  // Створити новий ремонт
+  app.post("/api/repairs", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertRepairSchema.parse(req.body);
+      const repair = await storage.createRepair(validatedData);
+      res.status(201).json(repair);
+    } catch (error) {
+      console.error("Error creating repair:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create repair" });
+    }
+  });
+
+  // Оновити ремонт
+  app.patch("/api/repairs/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const repairId = parseInt(req.params.id);
+      const validatedData = insertRepairSchema.partial().parse(req.body);
+      const repair = await storage.updateRepair(repairId, validatedData);
+      res.json(repair);
+    } catch (error) {
+      console.error("Error updating repair:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update repair" });
+    }
+  });
+
+  // Видалити ремонт
+  app.delete("/api/repairs/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteRepair(parseInt(req.params.id));
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting repair:", error);
+      res.status(500).json({ error: "Failed to delete repair" });
+    }
+  });
+
+  // Пошук ремонтів за серійним номером
+  app.get("/api/repairs/search/:serialNumber", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const repairs = await storage.getRepairsBySerialNumber(req.params.serialNumber);
+      res.json(repairs);
+    } catch (error) {
+      console.error("Error searching repairs:", error);
+      res.status(500).json({ error: "Failed to search repairs" });
+    }
+  });
+
+  // Отримати запчастини ремонту
+  app.get("/api/repairs/:id/parts", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const parts = await storage.getRepairParts(parseInt(req.params.id));
+      res.json(parts);
+    } catch (error) {
+      console.error("Error fetching repair parts:", error);
+      res.status(500).json({ error: "Failed to fetch repair parts" });
+    }
+  });
+
+  // Додати запчастину до ремонту
+  app.post("/api/repairs/:id/parts", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const repairId = parseInt(req.params.id);
+      const validatedData = insertRepairPartSchema.parse({
+        ...req.body,
+        repairId
+      });
+      const part = await storage.addRepairPart(validatedData);
+      res.status(201).json(part);
+    } catch (error) {
+      console.error("Error adding repair part:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to add repair part" });
+    }
+  });
+
+  // Видалити запчастину з ремонту
+  app.delete("/api/repairs/:repairId/parts/:partId", isSimpleAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteRepairPart(parseInt(req.params.partId));
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting repair part:", error);
+      res.status(500).json({ error: "Failed to delete repair part" });
+    }
+  });
+
+  // Отримати історію статусів ремонту
+  app.get("/api/repairs/:id/status-history", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const history = await storage.getRepairStatusHistory(parseInt(req.params.id));
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching repair status history:", error);
+      res.status(500).json({ error: "Failed to fetch repair status history" });
+    }
+  });
+
+  // Змінити статус ремонту
+  app.post("/api/repairs/:id/status", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const repairId = parseInt(req.params.id);
+      const { newStatus, comment } = req.body;
+      
+      if (!newStatus) {
+        return res.status(400).json({ error: "New status is required" });
+      }
+
+      const statusHistory = await storage.changeRepairStatus(repairId, newStatus, comment, req.user?.id);
+      res.status(201).json(statusHistory);
+    } catch (error) {
+      console.error("Error changing repair status:", error);
+      res.status(500).json({ error: "Failed to change repair status" });
+    }
+  });
+
+  // Отримати документи ремонту
+  app.get("/api/repairs/:id/documents", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const documents = await storage.getRepairDocuments(parseInt(req.params.id));
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching repair documents:", error);
+      res.status(500).json({ error: "Failed to fetch repair documents" });
+    }
+  });
+
+  // Додати документ до ремонту
+  app.post("/api/repairs/:id/documents", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const repairId = parseInt(req.params.id);
+      const validatedData = insertRepairDocumentSchema.parse({
+        ...req.body,
+        repairId,
+        uploadedBy: req.user?.id
+      });
+      const document = await storage.addRepairDocument(validatedData);
+      res.status(201).json(document);
+    } catch (error) {
+      console.error("Error adding repair document:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to add repair document" });
+    }
+  });
+
+  // Пошук серійних номерів для створення ремонту
+  app.get("/api/serial-numbers/for-repair", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { search } = req.query;
+      console.log("Serial numbers search request:", { search });
+      
+      const serialNumbers = await storage.getSerialNumbersForRepair(search as string);
+      console.log("Found serial numbers:", serialNumbers.length);
+      
+      res.json(serialNumbers);
+    } catch (error) {
+      console.error("Error fetching serial numbers for repair:", error);
+      res.status(500).json({ error: "Failed to fetch serial numbers" });
+    }
+  });
+
+  // Додати запчастини до ремонту зі списанням зі складу
+  app.post("/api/repairs/:id/parts", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const repairId = parseInt(req.params.id);
+      if (isNaN(repairId)) {
+        return res.status(400).json({ error: "Invalid repair ID" });
+      }
+
+      const { inventoryId, quantity, description } = req.body;
+      
+      // Перевіряємо наявність товару на складі
+      const inventory = await storage.getInventory();
+      const item = inventory.find(i => i.id === inventoryId);
+      
+      if (!item) {
+        return res.status(404).json({ error: "Inventory item not found" });
+      }
+
+      if (item.quantity < quantity) {
+        return res.status(400).json({ error: "Insufficient quantity in stock" });
+      }
+
+      // Додаємо запчастину до ремонту
+      const repairPart = await storage.createRepairPart({
+        repairId,
+        inventoryId,
+        quantity,
+        description: description || item.product?.name || "Запчастина",
+        cost: (item.product?.price || 0) * quantity
+      });
+
+      // Списуємо зі складу
+      await storage.updateInventory(inventoryId, item.quantity - quantity);
+
+      res.status(201).json(repairPart);
+    } catch (error) {
+      console.error("Error adding repair part:", error);
+      res.status(500).json({ error: "Failed to add repair part" });
+    }
+  });
+
+  // Видалити запчастину з ремонту та повернути на склад
+  app.delete("/api/repair-parts/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const partId = parseInt(req.params.id);
+      if (isNaN(partId)) {
+        return res.status(400).json({ error: "Invalid part ID" });
+      }
+
+      await storage.deleteRepairPart(partId);
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("Error deleting repair part:", error);
+      res.status(500).json({ error: "Failed to delete repair part" });
+    }
+  });
+
+  // ================================
+  // API ДЛЯ ПРИВ'ЯЗКИ СЕРІЙНИХ НОМЕРІВ ДО ЗАМОВЛЕНЬ
+  // ================================
+
+  // Прив'язати серійні номери до позиції замовлення
+  app.post("/api/order-items/:id/serial-numbers", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const orderItemId = parseInt(req.params.id);
+      const { serialNumberIds, notes } = req.body;
+
+      if (!Array.isArray(serialNumberIds) || serialNumberIds.length === 0) {
+        return res.status(400).json({ error: "Необхідно вказати серійні номери" });
+      }
+
+      await storage.assignSerialNumbersToOrderItem(orderItemId, serialNumberIds, req.session?.user?.id);
+      res.status(201).json({ message: "Серійні номери успішно прив'язані" });
+    } catch (error) {
+      console.error("Error assigning serial numbers:", error);
+      res.status(500).json({ error: "Помилка прив'язки серійних номерів" });
+    }
+  });
+
+  // Отримати серійні номери позиції замовлення
+  app.get("/api/order-items/:id/serial-numbers", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const orderItemId = parseInt(req.params.id);
+      const serialNumbers = await storage.getOrderItemSerialNumbers(orderItemId);
+      res.json(serialNumbers);
+    } catch (error) {
+      console.error("Error fetching order item serial numbers:", error);
+      res.status(500).json({ error: "Помилка отримання серійних номерів" });
+    }
+  });
+
+  // Видалити прив'язку серійного номера
+  app.delete("/api/order-item-serial-numbers/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const assignmentId = parseInt(req.params.id);
+      await storage.removeSerialNumberFromOrderItem(assignmentId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error removing serial number assignment:", error);
+      res.status(500).json({ error: "Помилка видалення прив'язки" });
+    }
+  });
+
+  // Отримати доступні серійні номери для продукту
+  app.get("/api/products/:id/available-serial-numbers", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      const serialNumbers = await storage.getAvailableSerialNumbersForProduct(productId);
+      res.json(serialNumbers);
+    } catch (error) {
+      console.error("Error fetching available serial numbers:", error);
+      res.status(500).json({ error: "Помилка отримання доступних серійних номерів" });
+    }
+  });
+
+  // Завершити замовлення з прив'язаними серійними номерами
+  app.post("/api/orders/:id/complete-with-serials", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      await storage.completeOrderWithSerialNumbers(orderId);
+      res.json({ message: "Замовлення успішно завершено" });
+    } catch (error) {
+      console.error("Error completing order with serial numbers:", error);
+      res.status(500).json({ error: "Помилка завершення замовлення" });
+    }
+  });
+
+  // Створити та прив'язати серійні номери до позиції замовлення
+  app.post("/api/order-items/:id/create-and-assign-serials", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const orderItemId = parseInt(req.params.id);
+      const { productId, serialNumbers } = req.body;
+
+      if (!Array.isArray(serialNumbers) || serialNumbers.length === 0) {
+        return res.status(400).json({ error: "Серійні номери не надані" });
+      }
+
+      if (!productId) {
+        return res.status(400).json({ error: "ID продукту не надано" });
+      }
+
+      const userId = (req.session as any).user?.id || 1;
+      const result = await storage.createAndAssignSerialNumbers(orderItemId, productId, serialNumbers, userId);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error creating and assigning serial numbers:", error);
+      res.status(500).json({ error: "Помилка створення серійних номерів" });
+    }
+  });
+
+  // Перевірити дублікати серійних номерів
+  app.post("/api/serial-numbers/check-duplicates", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { serialNumbers } = req.body;
+
+      if (!Array.isArray(serialNumbers) || serialNumbers.length === 0) {
+        return res.json({ duplicates: [] });
+      }
+
+      const duplicates = await storage.checkSerialNumberDuplicates(serialNumbers);
+      res.json({ duplicates });
+    } catch (error) {
+      console.error("Error checking duplicates:", error);
+      res.status(500).json({ error: "Помилка перевірки дублікатів" });
+    }
+  });
+
+  // Редагувати серійний номер
+  app.put("/api/serial-numbers/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const serialId = parseInt(req.params.id);
+      const { serialNumber } = req.body;
+
+      if (!serialNumber || !serialNumber.trim()) {
+        return res.status(400).json({ error: "Серійний номер не може бути пустим" });
+      }
+
+      await storage.updateSerialNumber(serialId, { serialNumber: serialNumber.trim() });
+      
+      res.json({ success: true, message: "Серійний номер оновлено" });
+    } catch (error) {
+      console.error("Error updating serial number:", error);
+      res.status(500).json({ error: "Помилка оновлення серійного номера" });
     }
   });
 

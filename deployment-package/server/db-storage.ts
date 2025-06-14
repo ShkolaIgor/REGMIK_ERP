@@ -1,5 +1,6 @@
 import { eq, sql, desc, and, gte, lte, isNull, ne, or, not } from "drizzle-orm";
 import { db } from "./db";
+import { pool } from "./db";
 import { IStorage } from "./storage";
 import {
   users, localUsers, roles, systemModules, userLoginHistory, categories, warehouses, units, products, inventory, orders, orderItems, orderStatuses,
@@ -10,7 +11,7 @@ import {
   componentCategories, componentAlternatives, carriers, shipments, shipmentItems, customerAddresses, senderSettings,
   manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, exchangeRateHistory, serialNumbers, serialNumberSettings, emailSettings,
   sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients, clientContacts, clientNovaPoshtaSettings,
-  clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences,
+  clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences, novaPoshtaCities, novaPoshtaWarehouses,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
   type Category, type InsertCategory,
@@ -5515,6 +5516,154 @@ export class DatabaseStorage implements IStorage {
       ];
     } catch (error) {
       console.error("Error fetching client mails:", error);
+      return [];
+    }
+  }
+
+  async getNovaPoshtaCities(query?: string, limit: number = 200): Promise<any[]> {
+    console.log(`Пошук міст Нової Пошти для запиту: "${query}"`);
+    
+    try {
+      if (!query || query.length < 2) {
+        // Return first cities without filtering
+        const cities = await this.db.select().from(novaPoshtaCities).limit(limit);
+        
+        const transformedCities = cities.map(city => ({
+          Ref: city.ref,
+          Description: city.name,
+          DescriptionRu: city.name,
+          AreaDescription: city.area,
+          AreaDescriptionRu: city.area,
+          RegionDescription: city.region,
+          RegionDescriptionRu: city.region,
+          SettlementTypeDescription: '',
+          DeliveryCity: '',
+          Warehouses: "0"
+        }));
+
+        console.log(`Знайдено ${transformedCities.length} міст без фільтрації`);
+        return transformedCities;
+      }
+
+      // Use optimized SQL with proper indexing for fast search
+      const searchPattern = `%${query}%`;
+      const queryLower = query.toLowerCase();
+      const result = await pool.query(`
+        SELECT ref, name, area, region
+        FROM nova_poshta_cities 
+        WHERE (name ILIKE $1 OR area ILIKE $1)
+        ORDER BY 
+          CASE 
+            WHEN LOWER(name) = $4 THEN 1
+            WHEN name ILIKE $3 THEN 3
+            WHEN name ILIKE $1 THEN 5
+            ELSE 7
+          END,
+          LENGTH(name) ASC
+        LIMIT $2
+      `, [searchPattern, limit, `${query}%`, queryLower]);
+
+      const transformedCities = result.rows.map((city: any) => ({
+        Ref: city.ref,
+        Description: city.name,
+        DescriptionRu: city.name,
+        AreaDescription: city.area,
+        AreaDescriptionRu: city.area,
+        RegionDescription: city.region,
+        RegionDescriptionRu: city.region,
+        SettlementTypeDescription: '',
+        DeliveryCity: '',
+        Warehouses: "0"
+      }));
+
+      console.log(`Знайдено ${transformedCities.length} міст для запиту: "${query}"`);
+      return transformedCities;
+    } catch (error) {
+      console.error('Error getting Nova Poshta cities from database:', error);
+      return [];
+    }
+  }
+
+  async getNovaPoshtaWarehouses(cityRef?: string, query?: string, limit: number = 200): Promise<any[]> {
+    try {
+      let sqlQuery = `
+        SELECT 
+          ref, city_ref, number, description, 
+          short_address, phone
+        FROM nova_poshta_warehouses 
+        WHERE is_active = true
+      `;
+
+      const params: any[] = [];
+      let paramIndex = 1;
+
+      if (cityRef) {
+        sqlQuery += ` AND city_ref = $${paramIndex}`;
+        params.push(cityRef);
+        paramIndex++;
+      }
+
+      if (query && query.trim()) {
+        sqlQuery += ` AND (description ILIKE $${paramIndex} OR number ILIKE $${paramIndex} OR short_address ILIKE $${paramIndex})`;
+        params.push(`%${query}%`);
+        paramIndex++;
+      }
+
+      // Add ordering for better user experience
+      sqlQuery += `
+        ORDER BY 
+          CASE 
+            WHEN number ~ '^[0-9]+$' AND $${paramIndex} ~ '^[0-9]+$' 
+              AND number::INTEGER = $${paramIndex}::INTEGER THEN 1
+            WHEN number ILIKE $${paramIndex + 1} THEN 2
+            WHEN description ILIKE $${paramIndex + 1} THEN 3
+            ELSE 4
+          END,
+          number::INTEGER ASC NULLS LAST,
+          description ASC
+        LIMIT $${paramIndex + 2}
+      `;
+      
+      const searchValue = query || '';
+      params.push(searchValue, `${searchValue}%`, limit);
+
+      const result = await pool.query(sqlQuery, params);
+
+      const transformedWarehouses = result.rows.map((warehouse: any) => ({
+        Ref: warehouse.ref,
+        CityRef: warehouse.city_ref,
+        Number: warehouse.number || '',
+        Description: warehouse.description,
+        DescriptionRu: warehouse.description,
+        ShortAddress: warehouse.short_address || '',
+        ShortAddressRu: warehouse.short_address || '',
+        Phone: warehouse.phone || '',
+        TypeOfWarehouse: '',
+        CategoryOfWarehouse: '',
+        Schedule: '',
+        Reception: '',
+        Delivery: '',
+        DistrictCode: '',
+        WardsCode: '',
+        SettlementAreaDescription: '',
+        PlaceMaxWeightAllowed: 0,
+        SendingLimitationsOnDimensions: '',
+        ReceivingLimitationsOnDimensions: '',
+        PostFinance: false,
+        BicycleParking: false,
+        PaymentAccess: false,
+        POSTerminal: false,
+        InternationalShipping: false,
+        SelfServiceWorkplacesCount: 0,
+        TotalMaxWeightAllowed: 0,
+        Longitude: '',
+        Latitude: ''
+      }));
+
+      console.log(`Знайдено ${transformedWarehouses.length} відділень для міста: "${cityRef}", запит: "${query}"`);
+      return transformedWarehouses;
+    } catch (error) {
+      console.error('Error getting Nova Poshta warehouses from database:', error);
       return [];
     }
   }
