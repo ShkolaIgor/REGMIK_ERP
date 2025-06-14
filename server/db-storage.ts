@@ -6638,6 +6638,226 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // ==================== Nova Poshta Database Methods ====================
+
+  async syncNovaPoshtaCities(cities: any[]): Promise<void> {
+    if (!cities || cities.length === 0) return;
+
+    try {
+      // Видаляємо старі дані
+      await this.db.execute(sql`DELETE FROM nova_poshta_cities`);
+
+      // Додаємо нові дані пакетами по 1000
+      const batchSize = 1000;
+      for (let i = 0; i < cities.length; i += batchSize) {
+        const batch = cities.slice(i, i + batchSize);
+        const values = batch.map(city => 
+          `('${city.Ref}', '${city.Description?.replace(/'/g, "''")}', '${city.DescriptionRu?.replace(/'/g, "''") || ''}', '${city.AreaDescription?.replace(/'/g, "''")}', '${city.AreaDescriptionRu?.replace(/'/g, "''") || ''}', '${city.RegionDescription?.replace(/'/g, "''") || ''}', '${city.RegionDescriptionRu?.replace(/'/g, "''") || ''}', '${city.SettlementTypeDescription?.replace(/'/g, "''") || ''}', '${city.DeliveryCity || ''}', ${parseInt(city.Warehouses) || 0}, true, NOW())`
+        ).join(',');
+
+        await this.db.execute(sql.raw(`
+          INSERT INTO nova_poshta_cities (ref, name, name_ru, area, area_ru, region, region_ru, settlement_type, delivery_city, warehouses, is_active, last_updated)
+          VALUES ${values}
+          ON CONFLICT (ref) DO NOTHING
+        `));
+      }
+
+      console.log(`Синхронізовано ${cities.length} міст Нової Пошти в базу даних`);
+    } catch (error) {
+      console.error('Помилка синхронізації міст Нової Пошти:', error);
+      throw error;
+    }
+  }
+
+  async syncNovaPoshtaWarehouses(warehouses: any[]): Promise<void> {
+    if (!warehouses || warehouses.length === 0) return;
+
+    try {
+      // Видаляємо старі дані
+      await this.db.delete(novaPoshtaWarehouses);
+
+      // Додаємо нові дані пакетами по 1000
+      const batchSize = 1000;
+      for (let i = 0; i < warehouses.length; i += batchSize) {
+        const batch = warehouses.slice(i, i + batchSize).map(warehouse => ({
+          ref: warehouse.Ref,
+          cityRef: warehouse.CityRef,
+          number: warehouse.Number,
+          description: warehouse.Description,
+          descriptionRu: warehouse.DescriptionRu,
+          shortAddress: warehouse.ShortAddress,
+          shortAddressRu: warehouse.ShortAddressRu,
+          phone: warehouse.Phone,
+          typeOfWarehouse: warehouse.TypeOfWarehouse,
+          categoryOfWarehouse: warehouse.CategoryOfWarehouse,
+          schedule: warehouse.Schedule ? JSON.parse(JSON.stringify(warehouse.Schedule)) : null,
+          reception: warehouse.Reception ? JSON.parse(JSON.stringify(warehouse.Reception)) : null,
+          delivery: warehouse.Delivery ? JSON.parse(JSON.stringify(warehouse.Delivery)) : null,
+          districtCode: warehouse.DistrictCode,
+          wardCode: warehouse.WardCode,
+          settlementAreaDescription: warehouse.SettlementAreaDescription,
+          placeMaxWeightAllowed: parseInt(warehouse.PlaceMaxWeightAllowed) || null,
+          sendingLimitationsOnDimensions: warehouse.SendingLimitationsOnDimensions ? 
+            JSON.parse(JSON.stringify(warehouse.SendingLimitationsOnDimensions)) : null,
+          receivingLimitationsOnDimensions: warehouse.ReceivingLimitationsOnDimensions ? 
+            JSON.parse(JSON.stringify(warehouse.ReceivingLimitationsOnDimensions)) : null,
+          postFinance: Boolean(warehouse.PostFinance),
+          bicycleParking: Boolean(warehouse.BicycleParking),
+          paymentAccess: Boolean(warehouse.PaymentAccess),
+          posTerminal: Boolean(warehouse.POSTerminal),
+          internationalShipping: Boolean(warehouse.InternationalShipping),
+          selfServiceWorkplacesCount: parseInt(warehouse.SelfServiceWorkplacesCount) || 0,
+          totalMaxWeightAllowed: parseInt(warehouse.TotalMaxWeightAllowed) || null,
+          longitude: warehouse.Longitude ? parseFloat(warehouse.Longitude) : null,
+          latitude: warehouse.Latitude ? parseFloat(warehouse.Latitude) : null,
+          isActive: true,
+          lastUpdated: new Date()
+        }));
+
+        await this.db.insert(novaPoshtaWarehouses).values(batch).onConflictDoNothing();
+      }
+
+      console.log(`Синхронізовано ${warehouses.length} відділень Нової Пошти в базу даних`);
+    } catch (error) {
+      console.error('Помилка синхронізації відділень Нової Пошти:', error);
+      throw error;
+    }
+  }
+
+  async getNovaPoshtaCities(query?: string, limit: number = 50): Promise<any[]> {
+    try {
+      let queryBuilder = this.db
+        .select()
+        .from(novaPoshtaCities)
+        .where(eq(novaPoshtaCities.isActive, true));
+
+      if (query && query.length >= 2) {
+        const searchTerm = `%${query.toLowerCase()}%`;
+        queryBuilder = queryBuilder.where(
+          or(
+            sql`LOWER(${novaPoshtaCities.name}) LIKE ${searchTerm}`,
+            sql`LOWER(${novaPoshtaCities.area}) LIKE ${searchTerm}`
+          )
+        );
+      }
+
+      const results = await queryBuilder
+        .orderBy(novaPoshtaCities.name)
+        .limit(limit);
+
+      return results.map(city => ({
+        Ref: city.ref,
+        Description: city.name,
+        DescriptionRu: city.nameRu,
+        AreaDescription: city.area,
+        AreaDescriptionRu: city.areaRu,
+        RegionDescription: city.region,
+        RegionDescriptionRu: city.regionRu,
+        SettlementTypeDescription: city.settlementType,
+        DeliveryCity: city.deliveryCity,
+        Warehouses: city.warehouses.toString()
+      }));
+    } catch (error) {
+      console.error('Помилка отримання міст Нової Пошти:', error);
+      return [];
+    }
+  }
+
+  async getNovaPoshtaWarehouses(cityRef?: string, query?: string, limit: number = 100): Promise<any[]> {
+    try {
+      let queryBuilder = this.db
+        .select()
+        .from(novaPoshtaWarehouses)
+        .where(eq(novaPoshtaWarehouses.isActive, true));
+
+      if (cityRef) {
+        queryBuilder = queryBuilder.where(eq(novaPoshtaWarehouses.cityRef, cityRef));
+      }
+
+      if (query && query.length >= 2) {
+        const searchTerm = `%${query.toLowerCase()}%`;
+        queryBuilder = queryBuilder.where(
+          sql`LOWER(${novaPoshtaWarehouses.description}) LIKE ${searchTerm}`
+        );
+      }
+
+      const results = await queryBuilder
+        .orderBy(novaPoshtaWarehouses.number)
+        .limit(limit);
+
+      return results.map(warehouse => ({
+        Ref: warehouse.ref,
+        CityRef: warehouse.cityRef,
+        Number: warehouse.number,
+        Description: warehouse.description,
+        DescriptionRu: warehouse.descriptionRu,
+        ShortAddress: warehouse.shortAddress,
+        ShortAddressRu: warehouse.shortAddressRu,
+        Phone: warehouse.phone,
+        TypeOfWarehouse: warehouse.typeOfWarehouse,
+        CategoryOfWarehouse: warehouse.categoryOfWarehouse,
+        Schedule: warehouse.schedule,
+        Reception: warehouse.reception,
+        Delivery: warehouse.delivery,
+        DistrictCode: warehouse.districtCode,
+        WardCode: warehouse.wardCode,
+        SettlementAreaDescription: warehouse.settlementAreaDescription,
+        PlaceMaxWeightAllowed: warehouse.placeMaxWeightAllowed?.toString() || '',
+        SendingLimitationsOnDimensions: warehouse.sendingLimitationsOnDimensions,
+        ReceivingLimitationsOnDimensions: warehouse.receivingLimitationsOnDimensions,
+        PostFinance: warehouse.postFinance,
+        BicycleParking: warehouse.bicycleParking,
+        PaymentAccess: warehouse.paymentAccess,
+        POSTerminal: warehouse.posTerminal,
+        InternationalShipping: warehouse.internationalShipping,
+        SelfServiceWorkplacesCount: warehouse.selfServiceWorkplacesCount.toString(),
+        TotalMaxWeightAllowed: warehouse.totalMaxWeightAllowed?.toString() || '',
+        Longitude: warehouse.longitude?.toString() || '',
+        Latitude: warehouse.latitude?.toString() || ''
+      }));
+    } catch (error) {
+      console.error('Помилка отримання відділень Нової Пошти:', error);
+      return [];
+    }
+  }
+
+  async getNovaPoshtaCitiesCount(): Promise<number> {
+    try {
+      const result = await this.db
+        .select({ count: sql<number>`count(*)` })
+        .from(novaPoshtaCities)
+        .where(eq(novaPoshtaCities.isActive, true));
+      
+      return result[0]?.count || 0;
+    } catch (error) {
+      console.error('Помилка підрахунку міст Нової Пошти:', error);
+      return 0;
+    }
+  }
+
+  async getNovaPoshtaWarehousesCount(): Promise<number> {
+    try {
+      const result = await this.db
+        .select({ count: sql<number>`count(*)` })
+        .from(novaPoshtaWarehouses)
+        .where(eq(novaPoshtaWarehouses.isActive, true));
+      
+      return result[0]?.count || 0;
+    } catch (error) {
+      console.error('Помилка підрахунку відділень Нової Пошти:', error);
+      return 0;
+    }
+  }
+
+  async isNovaPoshtaDataEmpty(): Promise<boolean> {
+    try {
+      const citiesCount = await this.getNovaPoshtaCitiesCount();
+      return citiesCount === 0;
+    } catch (error) {
+      console.error('Помилка перевірки даних Нової Пошти:', error);
+      return true;
+    }
+  }
 
 }
 
