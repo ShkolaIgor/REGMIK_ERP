@@ -1125,6 +1125,9 @@ export const carriers = pgTable("carriers", {
   lastSyncAt: timestamp("last_sync_at"), // Дата останньої синхронізації
   citiesCount: integer("cities_count").default(0), // Кількість населених пунктів
   warehousesCount: integer("warehouses_count").default(0), // Кількість відділень
+  syncTime: varchar("sync_time", { length: 5 }), // Час синхронізації у форматі HH:MM
+  syncInterval: integer("sync_interval").default(24), // Інтервал оновлення даних у годинах
+  autoSync: boolean("auto_sync").default(false), // Автоматична синхронізація
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

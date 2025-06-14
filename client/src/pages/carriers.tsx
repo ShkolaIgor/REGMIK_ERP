@@ -45,6 +45,9 @@ interface Carrier {
   lastSyncAt: Date | null;
   citiesCount: number;
   warehousesCount: number;
+  syncTime: string | null;
+  syncInterval: number | null;
+  autoSync: boolean | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 }
@@ -62,6 +65,9 @@ export default function Carriers() {
     serviceType: "",
     rating: 5,
     apiKey: "",
+    syncTime: "",
+    syncInterval: 24,
+    autoSync: false,
   });
 
   const { toast } = useToast();
@@ -164,6 +170,9 @@ export default function Carriers() {
       serviceType: "",
       rating: 5,
       apiKey: "",
+      syncTime: "",
+      syncInterval: 24,
+      autoSync: false,
     });
     setEditingCarrier(null);
   };
