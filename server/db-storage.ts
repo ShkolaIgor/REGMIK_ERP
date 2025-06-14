@@ -6588,37 +6588,40 @@ export class DatabaseStorage implements IStorage {
         }));
       }
 
-      // Use Drizzle with simple LIKE search
+      // Use PostgreSQL pool directly to bypass Drizzle issues
       const searchPattern = `%${query}%`;
-      const results = await this.db
-        .select()
-        .from(novaPoshtaCities)
-        .where(
-          and(
-            eq(novaPoshtaCities.isActive, true),
-            or(
-              sql`${novaPoshtaCities.name} ILIKE ${searchPattern}`,
-              sql`${novaPoshtaCities.area} ILIKE ${searchPattern}`
-            )
-          )
-        )
-        .orderBy(novaPoshtaCities.name)
-        .limit(limit);
-
-      console.log(`Знайдено ${results.length} міст для запиту: "${query}"`);
+      const client = await pool.connect();
       
-      return results.map((city: any) => ({
-        Ref: city.ref,
-        Description: city.name,
-        DescriptionRu: city.nameRu || city.name,
-        AreaDescription: city.area,
-        AreaDescriptionRu: city.areaRu || city.area,
-        RegionDescription: city.region,
-        RegionDescriptionRu: city.regionRu || city.region,
-        SettlementTypeDescription: city.settlementType,
-        DeliveryCity: city.deliveryCity,
-        Warehouses: city.warehouses?.toString() || '0'
-      }));
+      try {
+        const queryResult = await client.query(`
+          SELECT id, ref, name, name_ru, area, area_ru, region, region_ru, 
+                 settlement_type, delivery_city, warehouses, is_active, 
+                 last_updated, created_at
+          FROM nova_poshta_cities 
+          WHERE is_active = true 
+          AND (name ILIKE $1 OR area ILIKE $2)
+          ORDER BY name 
+          LIMIT $3
+        `, [searchPattern, searchPattern, limit]);
+        
+        const results = queryResult.rows;
+        console.log(`Знайдено ${results.length} міст для запиту: "${query}"`);
+        
+        return results.map((city: any) => ({
+          Ref: city.ref,
+          Description: city.name,
+          DescriptionRu: city.name_ru || city.name,
+          AreaDescription: city.area,
+          AreaDescriptionRu: city.area_ru || city.area,
+          RegionDescription: city.region,
+          RegionDescriptionRu: city.region_ru || city.region,
+          SettlementTypeDescription: city.settlement_type,
+          DeliveryCity: city.delivery_city,
+          Warehouses: city.warehouses?.toString() || '0'
+        }));
+      } finally {
+        client.release();
+      }
     } catch (error) {
       console.error('Помилка отримання міст Нової Пошти:', error);
       console.log('Returning 0 cities');

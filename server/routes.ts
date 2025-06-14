@@ -2800,12 +2800,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/nova-poshta/cities", async (req, res) => {
     try {
       const { q } = req.query;
-      // Decode URL-encoded query parameter to handle Ukrainian text properly
       const searchQuery = q ? decodeURIComponent(q as string) : "";
       console.log(`Nova Poshta cities API called with query: "${searchQuery}"`);
       
-      const cities = await storage.getNovaPoshtaCities(searchQuery, 50);
-      console.log(`Returning ${cities.length} cities`);
+      // Use direct SQL query to avoid Node.js/Drizzle issues
+      if (!searchQuery || searchQuery.length < 2) {
+        const result = await storage.db.execute(sql`
+          SELECT ref, name, name_ru, area, area_ru, region, region_ru, 
+                 settlement_type, delivery_city, warehouses
+          FROM nova_poshta_cities 
+          WHERE is_active = true 
+          ORDER BY name 
+          LIMIT 50
+        `);
+        const cities = (result.rows || []).map((city: any) => ({
+          Ref: city.ref,
+          Description: city.name,
+          DescriptionRu: city.name_ru || city.name,
+          AreaDescription: city.area,
+          AreaDescriptionRu: city.area_ru || city.area,
+          RegionDescription: city.region,
+          RegionDescriptionRu: city.region_ru || city.region,
+          SettlementTypeDescription: city.settlement_type,
+          DeliveryCity: city.delivery_city,
+          Warehouses: city.warehouses?.toString() || '0'
+        }));
+        console.log(`Returning ${cities.length} cities (no filter)`);
+        return res.json(cities);
+      }
+      
+      const result = await storage.db.execute(sql`
+        SELECT ref, name, name_ru, area, area_ru, region, region_ru, 
+               settlement_type, delivery_city, warehouses
+        FROM nova_poshta_cities 
+        WHERE is_active = true 
+        AND (name ILIKE ${`%${searchQuery}%`} OR area ILIKE ${`%${searchQuery}%`})
+        ORDER BY name 
+        LIMIT 50
+      `);
+      
+      const cities = (result.rows || []).map((city: any) => ({
+        Ref: city.ref,
+        Description: city.name,
+        DescriptionRu: city.name_ru || city.name,
+        AreaDescription: city.area,
+        AreaDescriptionRu: city.area_ru || city.area,
+        RegionDescription: city.region,
+        RegionDescriptionRu: city.region_ru || city.region,
+        SettlementTypeDescription: city.settlement_type,
+        DeliveryCity: city.delivery_city,
+        Warehouses: city.warehouses?.toString() || '0'
+      }));
+      
+      console.log(`Returning ${cities.length} cities for search: "${searchQuery}"`);
       res.json(cities);
     } catch (error) {
       console.error("Error fetching cities:", error);
