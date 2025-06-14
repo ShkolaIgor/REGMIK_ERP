@@ -6189,95 +6189,6 @@ export class DatabaseStorage implements IStorage {
   // МЕТОДИ ДЛЯ ПРИВ'ЯЗКИ СЕРІЙНИХ НОМЕРІВ ДО ЗАМОВЛЕНЬ
   // ================================
 
-  async assignSerialNumbersToOrderItem(
-    orderItemId: number, 
-    serialNumberIds: number[], 
-    userId?: number
-  ): Promise<void> {
-    try {
-      // Перевіряємо доступність серійних номерів (available або reserved)
-      const availableSerials = await this.db
-        .select()
-        .from(serialNumbers)
-        .where(
-          and(
-            inArray(serialNumbers.id, serialNumberIds),
-            or(
-              eq(serialNumbers.status, "available"),
-              eq(serialNumbers.status, "reserved")
-            )
-          )
-        );
-
-      // Перевіряємо чи не прив'язані вже ці серійні номери до інших замовлень
-      const existingAssignments = await this.db
-        .select()
-        .from(orderItemSerialNumbers)
-        .where(
-          and(
-            inArray(orderItemSerialNumbers.serialNumberId, serialNumberIds),
-            ne(orderItemSerialNumbers.orderItemId, orderItemId) // Виключаємо поточну позицію
-          )
-        );
-
-      const alreadyAssignedToOthers = existingAssignments.map(a => a.serialNumberId);
-      const availableForAssignment = serialNumberIds.filter(id => !alreadyAssignedToOthers.includes(id));
-
-      if (availableSerials.length !== serialNumberIds.length) {
-        throw new Error("Деякі серійні номери недоступні для прив'язки");
-      }
-
-      if (availableForAssignment.length !== serialNumberIds.length) {
-        throw new Error("Деякі серійні номери вже прив'язані до інших замовлень");
-      }
-
-      // Перевіряємо чи вже не прив'язані ці номери до поточної позиції
-      const currentAssignments = await this.db
-        .select()
-        .from(orderItemSerialNumbers)
-        .where(
-          and(
-            eq(orderItemSerialNumbers.orderItemId, orderItemId),
-            inArray(orderItemSerialNumbers.serialNumberId, serialNumberIds)
-          )
-        );
-
-      const alreadyAssignedToCurrent = currentAssignments.map(a => a.serialNumberId);
-      const newAssignments = serialNumberIds.filter(id => !alreadyAssignedToCurrent.includes(id));
-
-      // Прив'язуємо лише нові серійні номери
-      const assignments = newAssignments.map(serialId => ({
-        orderItemId,
-        serialNumberId: serialId,
-        assignedAt: new Date(),
-        assignedBy: userId
-      }));
-
-      if (assignments.length > 0) {
-        await this.db.insert(orderItemSerialNumbers).values(assignments);
-      }
-
-      // Оновлюємо статус серійних номерів на "reserved"
-      await this.db
-        .update(serialNumbers)
-        .set({ 
-          status: "reserved",
-          updatedAt: new Date()
-        })
-        .where(inArray(serialNumbers.id, serialNumberIds));
-
-      return {
-        success: true,
-        assignedCount: newAssignments.length,
-        message: `Successfully assigned ${newAssignments.length} serial numbers`
-      };
-
-    } catch (error) {
-      console.error('Error assigning serial numbers to order item:', error);
-      throw error;
-    }
-  }
-
   async createAndAssignSerialNumbers(orderItemId: number, productId: number, serialNumbersList: string[], userId: number): Promise<any> {
     try {
       const createdSerials: any[] = [];
@@ -6385,6 +6296,95 @@ export class DatabaseStorage implements IStorage {
         .where(eq(orderItemSerialNumbers.orderItemId, orderItemId));
     } catch (error) {
       console.error('Error fetching order item serial numbers:', error);
+      throw error;
+    }
+  }
+
+  async assignSerialNumbersToOrderItem(orderItemId: number, serialNumberIds: number[], userId?: number): Promise<void> {
+    try {
+      // Перевіряємо доступність серійних номерів
+      const availableSerials = await this.db
+        .select()
+        .from(serialNumbers)
+        .where(
+          and(
+            inArray(serialNumbers.id, serialNumberIds),
+            or(
+              eq(serialNumbers.status, "available"),
+              eq(serialNumbers.status, "reserved")
+            )
+          )
+        );
+
+      if (availableSerials.length !== serialNumberIds.length) {
+        throw new Error("Деякі серійні номери недоступні для прив'язки");
+      }
+
+      // Перевіряємо наявні прив'язки для цієї позиції замовлення
+      const existingAssignments = await this.db
+        .select({ serialNumberId: orderItemSerialNumbers.serialNumberId })
+        .from(orderItemSerialNumbers)
+        .where(eq(orderItemSerialNumbers.orderItemId, orderItemId));
+
+      const existingSerialIds = new Set(existingAssignments.map(a => a.serialNumberId));
+
+      // Створюємо прив'язки тільки для нових серійних номерів
+      const newAssignments = serialNumberIds
+        .filter(id => !existingSerialIds.has(id))
+        .map(serialNumberId => ({
+          orderItemId,
+          serialNumberId,
+          assignedAt: new Date(),
+          assignedBy: userId
+        }));
+
+      if (newAssignments.length > 0) {
+        await this.db.insert(orderItemSerialNumbers).values(newAssignments);
+      }
+
+      // Оновлюємо статус серійних номерів на "reserved"
+      await this.db
+        .update(serialNumbers)
+        .set({ 
+          status: "reserved",
+          updatedAt: new Date()
+        })
+        .where(inArray(serialNumbers.id, serialNumberIds));
+
+    } catch (error) {
+      console.error('Error assigning serial numbers to order item:', error);
+      throw error;
+    }
+  }
+
+  async removeSerialNumberFromOrderItem(assignmentId: number): Promise<void> {
+    try {
+      // Знаходимо прив'язку
+      const [assignment] = await this.db
+        .select()
+        .from(orderItemSerialNumbers)
+        .where(eq(orderItemSerialNumbers.id, assignmentId));
+
+      if (!assignment) {
+        throw new Error("Assignment not found");
+      }
+
+      // Видаляємо прив'язку
+      await this.db
+        .delete(orderItemSerialNumbers)
+        .where(eq(orderItemSerialNumbers.id, assignmentId));
+
+      // Повертаємо серійний номер у статус "available"
+      await this.db
+        .update(serialNumbers)
+        .set({ 
+          status: "available",
+          updatedAt: new Date()
+        })
+        .where(eq(serialNumbers.id, assignment.serialNumberId));
+
+    } catch (error) {
+      console.error('Error removing serial number from order item:', error);
       throw error;
     }
   }
@@ -6507,7 +6507,10 @@ export class DatabaseStorage implements IStorage {
     if (!cities || cities.length === 0) return;
 
     try {
-      // Видаляємо старі дані
+      // Спочатку видаляємо відділення, щоб уникнути конфліктів foreign key
+      await this.db.execute(sql`DELETE FROM nova_poshta_warehouses`);
+      
+      // Тепер видаляємо міста
       await this.db.execute(sql`DELETE FROM nova_poshta_cities`);
 
       // Додаємо нові дані пакетами по 1000
