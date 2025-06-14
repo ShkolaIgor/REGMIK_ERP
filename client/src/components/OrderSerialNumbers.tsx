@@ -75,9 +75,14 @@ export function OrderSerialNumbers({
       });
       setSelectedSerials([]);
       setShowAssignDialog(false);
+      // Оновлюємо дані
       refetchAssigned();
+      refetchAvailable();
       queryClient.invalidateQueries({ 
-        queryKey: ["/api/products", productId, "available-serial-numbers"] 
+        queryKey: [`/api/order-items/${orderItemId}/serial-numbers`] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: [`/api/products/${productId}/available-serial-numbers`] 
       });
     },
     onError: (error: any) => {
