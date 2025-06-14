@@ -6649,15 +6649,30 @@ export class DatabaseStorage implements IStorage {
         paramIndex++;
       }
 
-      if (query && query.length >= 2) {
+      if (query && query.length >= 1) {
         const searchTerm = `%${query.toLowerCase()}%`;
-        sqlQuery += ` AND (LOWER(description) LIKE $${paramIndex} OR LOWER(description_ru) LIKE $${paramIndex + 1})`;
-        params.push(searchTerm, searchTerm);
-        paramIndex += 2;
+        sqlQuery += ` AND (
+          number::text LIKE $${paramIndex} OR 
+          LOWER(description) LIKE $${paramIndex + 1} OR 
+          LOWER(description_ru) LIKE $${paramIndex + 2} OR
+          LOWER(short_address) LIKE $${paramIndex + 3}
+        )`;
+        params.push(`%${query}%`, searchTerm, searchTerm, searchTerm);
+        paramIndex += 4;
+        
+        // Сортування з пріоритетом: точне співпадіння -> починається з -> містить -> числове
+        sqlQuery += ` ORDER BY 
+          CASE WHEN number = $${paramIndex} THEN 1
+               WHEN number::text LIKE $${paramIndex + 1} THEN 2
+               WHEN number::text LIKE $${paramIndex + 2} THEN 3
+               ELSE 4 END,
+          CAST(COALESCE(NULLIF(regexp_replace(number, '[^0-9]', '', 'g'), ''), '0') AS INTEGER) ASC
+          LIMIT $${paramIndex + 3}`;
+        params.push(query, `${query}%`, `%${query}%`, limit);
+      } else {
+        sqlQuery += ` ORDER BY CAST(COALESCE(NULLIF(regexp_replace(number, '[^0-9]', '', 'g'), ''), '0') AS INTEGER) ASC LIMIT $${paramIndex}`;
+        params.push(limit);
       }
-
-      sqlQuery += ` ORDER BY number LIMIT $${paramIndex}`;
-      params.push(limit);
 
       const result = await pool.query(sqlQuery, params);
       const results = result.rows;
