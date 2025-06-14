@@ -1,4 +1,4 @@
-import { eq, sql, desc, and, gte, lte, isNull, ne, or, not, inArray } from "drizzle-orm";
+import { eq, sql, desc, and, gte, lte, isNull, ne, or, not, inArray, ilike } from "drizzle-orm";
 import { db } from "./db";
 import { IStorage } from "./storage";
 import {
@@ -6564,12 +6564,12 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`Пошук міст Нової Пошти для запиту: "${query}"`);
       
+      // Use a simplified approach without complex Drizzle queries
       if (!query || query.length < 2) {
         const results = await this.db
           .select()
           .from(novaPoshtaCities)
           .where(eq(novaPoshtaCities.isActive, true))
-          .orderBy(novaPoshtaCities.name)
           .limit(limit);
         
         console.log(`Повернуто ${results.length} міст без фільтрації`);
@@ -6577,29 +6577,24 @@ export class DatabaseStorage implements IStorage {
           Ref: city.ref,
           Description: city.name,
           DescriptionRu: city.nameRu || city.name,
-          Area: city.area,
-          AreaRu: city.areaRu || city.area,
-          Region: city.region,
-          RegionRu: city.regionRu || city.region,
-          SettlementType: city.settlementType,
-          DeliveryCity: city.deliveryCity
+          AreaDescription: city.area,
+          AreaDescriptionRu: city.areaRu || city.area,
+          RegionDescription: city.region,
+          RegionDescriptionRu: city.regionRu || city.region
         }));
       }
 
-      const searchTerm = `%${query.toLowerCase()}%`;
+      // For search, use a basic LIKE comparison with simple structure
+      const searchPattern = `%${query}%`;
       const results = await this.db
         .select()
         .from(novaPoshtaCities)
         .where(
           and(
             eq(novaPoshtaCities.isActive, true),
-            or(
-              sql`LOWER(${novaPoshtaCities.name}) LIKE ${searchTerm}`,
-              sql`LOWER(${novaPoshtaCities.area}) LIKE ${searchTerm}`
-            )
+            sql`(name ILIKE ${searchPattern} OR area ILIKE ${searchPattern})`
           )
         )
-        .orderBy(sql`CASE WHEN LOWER(${novaPoshtaCities.name}) = ${query.toLowerCase()} THEN 1 ELSE 2 END`, novaPoshtaCities.name)
         .limit(limit);
 
       console.log(`Знайдено ${results.length} міст для запиту: "${query}"`);
@@ -6609,11 +6604,11 @@ export class DatabaseStorage implements IStorage {
         Description: city.name,
         DescriptionRu: city.nameRu || city.name,
         AreaDescription: city.area,
-        AreaDescriptionRu: city.area_ru,
+        AreaDescriptionRu: city.areaRu || city.area,
         RegionDescription: city.region,
-        RegionDescriptionRu: city.region_ru,
-        SettlementTypeDescription: city.settlement_type,
-        DeliveryCity: city.delivery_city,
+        RegionDescriptionRu: city.regionRu || city.region,
+        SettlementTypeDescription: city.settlementType,
+        DeliveryCity: city.deliveryCity,
         Warehouses: city.warehouses?.toString() || '0'
       }));
     } catch (error) {
