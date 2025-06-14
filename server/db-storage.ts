@@ -6746,8 +6746,11 @@ export class DatabaseStorage implements IStorage {
       return results.map((city: any) => ({
         Ref: city.ref,
         Description: city.name,
+        DescriptionRu: city.name_ru,
         AreaDescription: city.area,
+        AreaDescriptionRu: city.area_ru,
         RegionDescription: city.region,
+        RegionDescriptionRu: city.region_ru,
         SettlementTypeDescription: city.settlement_type,
         DeliveryCity: city.delivery_city,
         Warehouses: city.warehouses?.toString() || '0'
@@ -6789,7 +6792,9 @@ export class DatabaseStorage implements IStorage {
         CityRef: warehouse.city_ref,
         Number: warehouse.number,
         Description: warehouse.description,
+        DescriptionRu: warehouse.description_ru,
         ShortAddress: warehouse.short_address,
+        ShortAddressRu: warehouse.short_address_ru,
         Phone: warehouse.phone,
         TypeOfWarehouse: warehouse.type_of_warehouse,
         CategoryOfWarehouse: warehouse.category_of_warehouse,

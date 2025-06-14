@@ -1123,9 +1123,6 @@ export const carriers = pgTable("carriers", {
   isActive: boolean("is_active").default(true).notNull(),
   apiKey: varchar("api_key", { length: 500 }), // API ключ для інтеграції
   lastSyncAt: timestamp("last_sync_at"), // Дата останньої синхронізації
-  syncInterval: integer("sync_interval").default(24), // Інтервал оновлення в годинах
-  autoSync: boolean("auto_sync").default(false), // Автоматична синхронізація
-  syncStartTime: varchar("sync_start_time", { length: 5 }).default("02:00"), // Час початку синхронізації (HH:MM)
   citiesCount: integer("cities_count").default(0), // Кількість населених пунктів
   warehousesCount: integer("warehouses_count").default(0), // Кількість відділень
   createdAt: timestamp("created_at").defaultNow(),
