@@ -6564,34 +6564,47 @@ export class DatabaseStorage implements IStorage {
     console.log(`Пошук міст Нової Пошти для запиту: "${query}"`);
     
     try {
-      let dbQuery = this.db.select().from(novaPoshtaCities);
+      if (!query || query.length < 2) {
+        // Return first 50 cities without filtering
+        const cities = await this.db.select().from(novaPoshtaCities).limit(limit);
+        
+        const transformedCities = cities.map(city => ({
+          Ref: city.ref,
+          Description: city.name,
+          DescriptionRu: city.nameRu,
+          AreaDescription: city.area,
+          AreaDescriptionRu: city.areaRu,
+          RegionDescription: city.region,
+          RegionDescriptionRu: city.regionRu,
+          SettlementTypeDescription: city.settlementType,
+          DeliveryCity: city.deliveryCity,
+          Warehouses: city.warehouses?.toString() || "0"
+        }));
 
-      if (query && query.length >= 2) {
-        // Search in multiple fields with case-insensitive matching
-        dbQuery = dbQuery.where(
-          or(
-            ilike(novaPoshtaCities.description, `%${query}%`),
-            ilike(novaPoshtaCities.descriptionRu, `%${query}%`),
-            ilike(novaPoshtaCities.areaDescription, `%${query}%`),
-            ilike(novaPoshtaCities.areaDescriptionRu, `%${query}%`)
-          )
-        );
+        console.log(`Знайдено ${transformedCities.length} міст без фільтрації`);
+        return transformedCities;
       }
 
-      const cities = await dbQuery.limit(limit);
+      // Use raw SQL to avoid Drizzle ORM parameter issues
+      const searchPattern = `%${query}%`;
+      const result = await pool.query(`
+        SELECT ref, name, name_ru, area, area_ru, region, region_ru, settlement_type, delivery_city, warehouses
+        FROM nova_poshta_cities 
+        WHERE name ILIKE $1 OR name_ru ILIKE $1 OR area ILIKE $1 OR area_ru ILIKE $1
+        LIMIT $2
+      `, [searchPattern, limit]);
 
-      // Transform database results to match API format
-      const transformedCities = cities.map(city => ({
+      const transformedCities = result.rows.map((city: any) => ({
         Ref: city.ref,
-        Description: city.description,
-        DescriptionRu: city.descriptionRu,
-        AreaDescription: city.areaDescription,
-        AreaDescriptionRu: city.areaDescriptionRu,
-        RegionDescription: city.regionDescription,
-        RegionDescriptionRu: city.regionDescriptionRu,
-        SettlementTypeDescription: city.settlementTypeDescription,
-        DeliveryCity: city.deliveryCity,
-        Warehouses: city.warehouses
+        Description: city.name,
+        DescriptionRu: city.name_ru,
+        AreaDescription: city.area,
+        AreaDescriptionRu: city.area_ru,
+        RegionDescription: city.region,
+        RegionDescriptionRu: city.region_ru,
+        SettlementTypeDescription: city.settlement_type,
+        DeliveryCity: city.delivery_city,
+        Warehouses: city.warehouses?.toString() || "0"
       }));
 
       console.log(`Знайдено ${transformedCities.length} міст для запиту: "${query}"`);
