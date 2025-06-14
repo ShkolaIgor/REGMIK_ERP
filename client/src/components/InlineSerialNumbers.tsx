@@ -316,6 +316,33 @@ export function InlineSerialNumbers({
 
   const formattedSerials = formatSerialNumbers(assignedSerials);
 
+  // Валідація кількості в реальному часі
+  const validateQuantity = (input: string, currentAssigned: number = 0) => {
+    const newSerials = parseSerialInput(input);
+    const totalAfterChanges = currentAssigned + newSerials.length;
+    return {
+      newCount: newSerials.length,
+      totalAfterChanges,
+      isExceeding: totalAfterChanges > quantity,
+      difference: totalAfterChanges - quantity
+    };
+  };
+
+  // Валідація для додавання нових серійних номерів
+  const addValidation = validateQuantity(serialInput, assignedSerials.length);
+  
+  // Валідація для редагування серійних номерів
+  const editValidation = (() => {
+    if (!editSerialInput) return { newCount: 0, totalAfterChanges: 0, isExceeding: false, difference: 0 };
+    const newSerials = parseSerialInput(editSerialInput);
+    return {
+      newCount: newSerials.length,
+      totalAfterChanges: newSerials.length,
+      isExceeding: newSerials.length > quantity,
+      difference: newSerials.length - quantity
+    };
+  })();
+
   // Функції для обробки редагування та видалення
   const handleEdit = (assigned: AssignedSerialNumber) => {
     setEditingSerial({
@@ -432,11 +459,31 @@ SN001, SN002, SN003
               </div>
 
               {serialInput && (
-                <Card>
+                <Card className={addValidation.isExceeding ? "border-red-500" : ""}>
                   <CardContent className="pt-4">
-                    <div className="text-sm text-muted-foreground mb-2">
-                      Буде створено номерів: {parseSerialInput(serialInput).length}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm text-muted-foreground">
+                        Буде створено номерів: {addValidation.newCount}
+                      </div>
+                      <div className="text-sm">
+                        Загалом: {addValidation.totalAfterChanges} / {quantity}
+                      </div>
                     </div>
+                    
+                    {addValidation.isExceeding && (
+                      <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-3">
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-red-600" />
+                          <span className="text-sm text-red-800 font-medium">
+                            Перевищення кількості на {addValidation.difference}
+                          </span>
+                        </div>
+                        <p className="text-xs text-red-600 mt-1">
+                          Замовлено тільки {quantity} шт., але буде призначено {addValidation.totalAfterChanges} серійних номерів
+                        </p>
+                      </div>
+                    )}
+                    
                     <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
                       {parseSerialInput(serialInput).slice(0, 20).map((serial, index) => (
                         <Badge key={index} variant="outline" className="text-xs">
@@ -524,8 +571,50 @@ SN001, SN002, SN003
                   setEditSerialInput(e.target.value);
                 }}
                 rows={8}
-                className="font-mono text-sm"
+                className={`font-mono text-sm ${editValidation.isExceeding ? 'border-red-500' : ''}`}
               />
+              
+              {editSerialInput && (
+                <Card className={editValidation.isExceeding ? "border-red-500" : ""}>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm text-muted-foreground">
+                        Буде номерів: {editValidation.newCount}
+                      </div>
+                      <div className="text-sm">
+                        Загалом: {editValidation.totalAfterChanges} / {quantity}
+                      </div>
+                    </div>
+                    
+                    {editValidation.isExceeding && (
+                      <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-3">
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-red-600" />
+                          <span className="text-sm text-red-800 font-medium">
+                            Перевищення кількості на {editValidation.difference}
+                          </span>
+                        </div>
+                        <p className="text-xs text-red-600 mt-1">
+                          Замовлено тільки {quantity} шт., але буде призначено {editValidation.totalAfterChanges} серійних номерів
+                        </p>
+                      </div>
+                    )}
+                    
+                    <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
+                      {parseSerialInput(editSerialInput).slice(0, 20).map((serial, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {serial}
+                        </Badge>
+                      ))}
+                      {parseSerialInput(editSerialInput).length > 20 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{parseSerialInput(editSerialInput).length - 20}
+                        </Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
               
               <div className="flex gap-2">
                 <Button 
