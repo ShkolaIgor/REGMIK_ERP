@@ -2799,7 +2799,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Nova Poshta API integration routes (з кешуванням)
   app.get("/api/nova-poshta/cities", async (req, res) => {
     const { q } = req.query;
-    const searchQuery = typeof q === 'string' ? q : "";
+    let searchQuery = typeof q === 'string' ? q : "";
+    
+    // Правильне декодування UTF-8 для кирилічних символів
+    try {
+      searchQuery = decodeURIComponent(searchQuery);
+    } catch (error) {
+      // Якщо вже декодовано або некоректний формат
+    }
     
     console.log(`Nova Poshta cities API called with query: "${searchQuery}"`);
     

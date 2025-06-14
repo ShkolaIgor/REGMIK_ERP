@@ -7,6 +7,29 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Налаштування UTF-8 для всього додатку
+app.use((req, res, next) => {
+  // Встановлюємо правильне кодування для запитів
+  if (req.method === 'GET') {
+    // Перекодування query параметрів для правильної обробки UTF-8
+    for (const [key, value] of Object.entries(req.query)) {
+      if (typeof value === 'string') {
+        try {
+          // Спробуємо декодувати якщо потрібно
+          const decoded = Buffer.from(value, 'latin1').toString('utf8');
+          if (decoded !== value && /[а-яё]/i.test(decoded)) {
+            req.query[key] = decoded;
+          }
+        } catch (e) {
+          // Залишаємо оригінальне значення якщо декодування не вдалося
+        }
+      }
+    }
+  }
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  next();
+});
+
 // Налаштування для правильної обробки UTF-8 тільки для API роутів
 app.use('/api', (req, res, next) => {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
