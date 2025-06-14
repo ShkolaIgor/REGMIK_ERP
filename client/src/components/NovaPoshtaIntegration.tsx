@@ -354,27 +354,44 @@ export function NovaPoshtaIntegration({
       (warehouse.Description && warehouse.Description.toLowerCase().includes(query))
     );
   }).sort((a, b) => {
-    if (!warehouseQuery) return 0;
+    if (!warehouseQuery) {
+      // За замовчуванням сортуємо за номером відділення
+      const aNumber = a.Number ? parseInt(a.Number) : 0;
+      const bNumber = b.Number ? parseInt(b.Number) : 0;
+      return aNumber - bNumber;
+    }
     
     const query = warehouseQuery.toLowerCase();
     
-    // Точне співпадіння номера відділення має найвищий пріоритет
-    const aNumberExact = a.Number && a.Number.toLowerCase() === query;
-    const bNumberExact = b.Number && b.Number.toLowerCase() === query;
+    // Перший пріоритет: точне співпадіння номера відділення
+    const aNumberExact = a.Number && a.Number === warehouseQuery;
+    const bNumberExact = b.Number && b.Number === warehouseQuery;
     if (aNumberExact && !bNumberExact) return -1;
     if (!aNumberExact && bNumberExact) return 1;
     
-    // Номер відділення починається з запиту
-    const aNumberStarts = a.Number && a.Number.toLowerCase().startsWith(query);
-    const bNumberStarts = b.Number && b.Number.toLowerCase().startsWith(query);
+    // Другий пріоритет: номер відділення починається з запиту
+    const aNumberStarts = a.Number && a.Number.startsWith(warehouseQuery);
+    const bNumberStarts = b.Number && b.Number.startsWith(warehouseQuery);
     if (aNumberStarts && !bNumberStarts) return -1;
     if (!aNumberStarts && bNumberStarts) return 1;
     
-    // Адреса починається з запиту
+    // Третій пріоритет: номер містить запит
+    const aNumberContains = a.Number && a.Number.includes(warehouseQuery);
+    const bNumberContains = b.Number && b.Number.includes(warehouseQuery);
+    if (aNumberContains && !bNumberContains) return -1;
+    if (!aNumberContains && bNumberContains) return 1;
+    
+    // Четвертий пріоритет: адреса починається з запиту
     const aAddressStarts = a.ShortAddress && a.ShortAddress.toLowerCase().startsWith(query);
     const bAddressStarts = b.ShortAddress && b.ShortAddress.toLowerCase().startsWith(query);
     if (aAddressStarts && !bAddressStarts) return -1;
     if (!aAddressStarts && bAddressStarts) return 1;
+    
+    // П'ятий пріоритет: адреса містить запит
+    const aAddressContains = a.ShortAddress && a.ShortAddress.toLowerCase().includes(query);
+    const bAddressContains = b.ShortAddress && b.ShortAddress.toLowerCase().includes(query);
+    if (aAddressContains && !bAddressContains) return -1;
+    if (!aAddressContains && bAddressContains) return 1;
     
     // За замовчуванням сортуємо за номером відділення
     const aNumber = a.Number ? parseInt(a.Number) : 0;
