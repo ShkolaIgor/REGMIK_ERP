@@ -6332,16 +6332,25 @@ export class DatabaseStorage implements IStorage {
     userId?: number
   ): Promise<void> {
     try {
-      // Перевіряємо доступність серійних номерів
+      // Перевіряємо доступність серійних номерів (available або reserved)
       const availableSerials = await this.db
         .select()
         .from(serialNumbers)
         .where(
           and(
             inArray(serialNumbers.id, serialNumberIds),
-            eq(serialNumbers.status, "available")
+            or(
+              eq(serialNumbers.status, "available"),
+              eq(serialNumbers.status, "reserved")
+            )
           )
         );
+
+      console.log("Serial numbers check:", {
+        requested: serialNumberIds,
+        found: availableSerials.length,
+        details: availableSerials.map(s => ({ id: s.id, status: s.status }))
+      });
 
       if (availableSerials.length !== serialNumberIds.length) {
         throw new Error("Деякі серійні номери недоступні для прив'язки");
