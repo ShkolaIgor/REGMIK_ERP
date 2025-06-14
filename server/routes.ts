@@ -2803,43 +2803,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const searchQuery = q ? decodeURIComponent(q as string) : "";
       console.log(`Nova Poshta cities API called with query: "${searchQuery}"`);
       
-      // Use direct SQL query to avoid Node.js/Drizzle issues
+      // Import pool directly for raw database access
+      const { Pool } = require('pg');
+      const dbPool = new Pool({
+        connectionString: process.env.DATABASE_URL
+      });
+      
+      let queryText: string;
+      let params: any[];
+      
       if (!searchQuery || searchQuery.length < 2) {
-        const result = await storage.db.execute(sql`
+        queryText = `
           SELECT ref, name, name_ru, area, area_ru, region, region_ru, 
                  settlement_type, delivery_city, warehouses
           FROM nova_poshta_cities 
           WHERE is_active = true 
           ORDER BY name 
           LIMIT 50
-        `);
-        const cities = (result.rows || []).map((city: any) => ({
-          Ref: city.ref,
-          Description: city.name,
-          DescriptionRu: city.name_ru || city.name,
-          AreaDescription: city.area,
-          AreaDescriptionRu: city.area_ru || city.area,
-          RegionDescription: city.region,
-          RegionDescriptionRu: city.region_ru || city.region,
-          SettlementTypeDescription: city.settlement_type,
-          DeliveryCity: city.delivery_city,
-          Warehouses: city.warehouses?.toString() || '0'
-        }));
-        console.log(`Returning ${cities.length} cities (no filter)`);
-        return res.json(cities);
+        `;
+        params = [];
+      } else {
+        queryText = `
+          SELECT ref, name, name_ru, area, area_ru, region, region_ru, 
+                 settlement_type, delivery_city, warehouses
+          FROM nova_poshta_cities 
+          WHERE is_active = true 
+          AND (name ILIKE $1 OR area ILIKE $2)
+          ORDER BY name 
+          LIMIT 50
+        `;
+        params = [`%${searchQuery}%`, `%${searchQuery}%`];
       }
       
-      const result = await storage.db.execute(sql`
-        SELECT ref, name, name_ru, area, area_ru, region, region_ru, 
-               settlement_type, delivery_city, warehouses
-        FROM nova_poshta_cities 
-        WHERE is_active = true 
-        AND (name ILIKE ${`%${searchQuery}%`} OR area ILIKE ${`%${searchQuery}%`})
-        ORDER BY name 
-        LIMIT 50
-      `);
-      
-      const cities = (result.rows || []).map((city: any) => ({
+      const result = await dbPool.query(queryText, params);
+      const cities = result.rows.map((city: any) => ({
         Ref: city.ref,
         Description: city.name,
         DescriptionRu: city.name_ru || city.name,
@@ -2851,6 +2848,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         DeliveryCity: city.delivery_city,
         Warehouses: city.warehouses?.toString() || '0'
       }));
+      
+      await dbPool.end();
       
       console.log(`Returning ${cities.length} cities for search: "${searchQuery}"`);
       res.json(cities);
