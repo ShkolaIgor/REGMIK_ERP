@@ -367,12 +367,25 @@ export function InlineSerialNumbers({
     }
   };
 
+  // Автоматично оновлюємо editSerialInput коли відкривається діалог і дані доступні
+  useEffect(() => {
+    if (showEditDialog && assignedSerials.length > 0) {
+      const currentSerials = assignedSerials.map((s: AssignedSerialNumber) => s.serialNumber.serialNumber);
+      console.log('Заповнюю форму редагування серійними номерами:', currentSerials);
+      setEditSerialInput(currentSerials.join('\n'));
+    }
+  }, [showEditDialog, assignedSerials]);
+
   // Оновлюємо editSerialInput коли відкривається діалог редагування
   const handleEditDialogOpen = (open: boolean) => {
     if (open) {
       // Заповнюємо форму наявними серійними номерами
       const currentSerials = assignedSerials.map((s: AssignedSerialNumber) => s.serialNumber.serialNumber);
+      console.log('Відкриваю діалог редагування з номерами:', currentSerials);
       setEditSerialInput(currentSerials.join('\n'));
+    } else {
+      // Очищаємо форму при закритті
+      setEditSerialInput('');
     }
     setShowEditDialog(open);
   };
