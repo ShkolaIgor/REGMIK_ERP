@@ -53,6 +53,7 @@ interface DeliveryCost {
   Cost: string;
   AssessedCost: string;
   CostRedelivery: string;
+  estimatedDeliveryDate?: string;
 }
 
 interface SenderSettings {
@@ -250,7 +251,9 @@ export function NovaPoshtaIntegration({
           });
           if (onCostCalculated) {
             onCostCalculated({
-              Cost: result.Cost || result.cost || 0,
+              Cost: result.Cost || result.cost || '0',
+              AssessedCost: result.AssessedCost || '0',
+              CostRedelivery: result.CostRedelivery || '0',
               estimatedDeliveryDate: result.EstimatedDeliveryDate || result.estimatedDeliveryDate || 'Не визначено'
             });
           }
@@ -273,7 +276,7 @@ export function NovaPoshtaIntegration({
     
     try {
       const requestData = {
-        cityRecipient: selectedCity.ref,
+        cityRecipient: selectedCity.Ref,
         warehouseRecipient: selectedWarehouse.ref,
         citySender: selectedSender?.cityRef,
         warehouseSender: selectedSender?.warehouseRef,
