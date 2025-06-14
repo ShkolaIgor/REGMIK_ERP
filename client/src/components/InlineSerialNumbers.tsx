@@ -182,30 +182,47 @@ export function InlineSerialNumbers({
     const serials: string[] = [];
     const lines = input.split(/[,\n]/).map(line => line.trim()).filter(Boolean);
     
+    console.log('Parsing input:', input);
+    console.log('Split lines:', lines);
+    
     for (const line of lines) {
       if (line.includes('-')) {
-        // Обробка діапазону: 0001-0010 або 1234-1250
-        const [start, end] = line.split('-').map(s => s.trim());
-        if (start && end) {
-          const startNum = parseInt(start);
-          const endNum = parseInt(end);
-          const length = start.length;
+        // Обробка діапазону: 00001-00010 або 00033-00045
+        const parts = line.split('-');
+        if (parts.length === 2) {
+          const start = parts[0].trim();
+          const end = parts[1].trim();
           
-          if (!isNaN(startNum) && !isNaN(endNum) && startNum <= endNum) {
-            for (let i = startNum; i <= endNum; i++) {
-              serials.push(i.toString().padStart(length, '0'));
+          console.log('Range detected:', start, 'to', end);
+          
+          if (start && end) {
+            const startNum = parseInt(start, 10);
+            const endNum = parseInt(end, 10);
+            const length = Math.max(start.length, end.length);
+            
+            console.log('Parsed numbers:', startNum, endNum, 'length:', length);
+            
+            if (!isNaN(startNum) && !isNaN(endNum) && startNum <= endNum) {
+              for (let i = startNum; i <= endNum; i++) {
+                const paddedNumber = i.toString().padStart(length, '0');
+                serials.push(paddedNumber);
+                console.log('Added serial:', paddedNumber);
+              }
+            } else {
+              // Якщо не числовий діапазон, додаємо як є
+              console.log('Non-numeric range, adding as is:', line);
+              serials.push(line);
             }
-          } else {
-            // Якщо не числовий діапазон, додаємо як є
-            serials.push(line);
           }
         }
       } else {
         // Одиночний номер
+        console.log('Single serial:', line);
         serials.push(line);
       }
     }
     
+    console.log('Final parsed serials:', serials);
     return serials;
   };
 
