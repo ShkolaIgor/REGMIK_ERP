@@ -182,9 +182,6 @@ export function InlineSerialNumbers({
     const serials: string[] = [];
     const lines = input.split(/[,\n]/).map(line => line.trim()).filter(Boolean);
     
-    console.log('Parsing input:', input);
-    console.log('Split lines:', lines);
-    
     for (const line of lines) {
       if (line.includes('-')) {
         // Обробка діапазону: 00001-00010 або 00033-00045
@@ -193,36 +190,28 @@ export function InlineSerialNumbers({
           const start = parts[0].trim();
           const end = parts[1].trim();
           
-          console.log('Range detected:', start, 'to', end);
-          
           if (start && end) {
             const startNum = parseInt(start, 10);
             const endNum = parseInt(end, 10);
             const length = Math.max(start.length, end.length);
             
-            console.log('Parsed numbers:', startNum, endNum, 'length:', length);
-            
             if (!isNaN(startNum) && !isNaN(endNum) && startNum <= endNum) {
               for (let i = startNum; i <= endNum; i++) {
                 const paddedNumber = i.toString().padStart(length, '0');
                 serials.push(paddedNumber);
-                console.log('Added serial:', paddedNumber);
               }
             } else {
               // Якщо не числовий діапазон, додаємо як є
-              console.log('Non-numeric range, adding as is:', line);
               serials.push(line);
             }
           }
         }
       } else {
         // Одиночний номер
-        console.log('Single serial:', line);
         serials.push(line);
       }
     }
     
-    console.log('Final parsed serials:', serials);
     return serials;
   };
 
@@ -375,6 +364,81 @@ export function InlineSerialNumbers({
 
   const formattedSerials = formatSerialNumbers(assignedSerials);
 
+  // Функція для конвертації серійних номерів назад у компактний формат для редагування
+  const convertSerialsToEditFormat = (serials: AssignedSerialNumber[]): string => {
+    if (serials.length === 0) return '';
+    
+    const serialNumbers = serials.map(s => s.serialNumber.serialNumber);
+    
+    // Групуємо за довжиною та типом
+    const groups: { [key: string]: string[] } = {};
+    
+    serialNumbers.forEach(serial => {
+      const isNumeric = /^\d+$/.test(serial);
+      const key = isNumeric ? `numeric_${serial.length}` : `text_${serial.length}`;
+      
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(serial);
+    });
+
+    const allRanges: string[] = [];
+
+    // Обробляємо кожну групу окремо
+    Object.values(groups).forEach(groupSerials => {
+      // Сортуємо серійні номери в групі
+      const sorted = groupSerials.sort((a, b) => {
+        const numA = parseInt(a);
+        const numB = parseInt(b);
+        
+        if (!isNaN(numA) && !isNaN(numB)) {
+          return numA - numB;
+        }
+        
+        return a.localeCompare(b);
+      });
+
+      const ranges: string[] = [];
+      let start = sorted[0];
+      let end = start;
+      
+      for (let i = 1; i < sorted.length; i++) {
+        const current = sorted[i];
+        const prevNum = parseInt(end);
+        const currentNum = parseInt(current);
+        
+        // Якщо серійні номери числові та послідовні, і мають однакову довжину
+        if (!isNaN(prevNum) && !isNaN(currentNum) && 
+            currentNum === prevNum + 1 && 
+            current.length === end.length) {
+          end = current;
+        } else {
+          // Додаємо попередній діапазон
+          if (start === end) {
+            ranges.push(start);
+          } else {
+            ranges.push(`${start}-${end}`);
+          }
+          
+          start = current;
+          end = current;
+        }
+      }
+      
+      // Додаємо останній діапазон
+      if (start === end) {
+        ranges.push(start);
+      } else {
+        ranges.push(`${start}-${end}`);
+      }
+      
+      allRanges.push(...ranges);
+    });
+    
+    return allRanges.sort().join(', ');
+  };
+
   // Валідація кількості в реальному часі
   const validateQuantity = (input: string, currentAssigned: number = 0) => {
     const newSerials = parseSerialInput(input);
@@ -429,19 +493,17 @@ export function InlineSerialNumbers({
   // Автоматично оновлюємо editSerialInput коли відкривається діалог і дані доступні
   useEffect(() => {
     if (showEditDialog && assignedSerials.length > 0) {
-      const currentSerials = assignedSerials.map((s: AssignedSerialNumber) => s.serialNumber.serialNumber);
-      console.log('Заповнюю форму редагування серійними номерами:', currentSerials);
-      setEditSerialInput(currentSerials.join('\n'));
+      const compactFormat = convertSerialsToEditFormat(assignedSerials);
+      setEditSerialInput(compactFormat);
     }
   }, [showEditDialog, assignedSerials]);
 
   // Оновлюємо editSerialInput коли відкривається діалог редагування
   const handleEditDialogOpen = (open: boolean) => {
     if (open) {
-      // Заповнюємо форму наявними серійними номерами
-      const currentSerials = assignedSerials.map((s: AssignedSerialNumber) => s.serialNumber.serialNumber);
-      console.log('Відкриваю діалог редагування з номерами:', currentSerials);
-      setEditSerialInput(currentSerials.join('\n'));
+      // Заповнюємо форму наявними серійними номерами в компактному форматі
+      const compactFormat = convertSerialsToEditFormat(assignedSerials);
+      setEditSerialInput(compactFormat);
     } else {
       // Очищаємо форму при закритті
       setEditSerialInput('');
