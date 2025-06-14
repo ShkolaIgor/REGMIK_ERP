@@ -7,8 +7,8 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Налаштування для правильної обробки UTF-8
-app.use((req, res, next) => {
+// Налаштування для правильної обробки UTF-8 тільки для API роутів
+app.use('/api', (req, res, next) => {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   next();
 });
