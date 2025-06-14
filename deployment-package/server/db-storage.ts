@@ -1,6 +1,5 @@
-import { eq, sql, desc, and, gte, lte, isNull, ne, or, not } from "drizzle-orm";
-import { db } from "./db";
-import { pool } from "./db";
+import { eq, sql, desc, and, gte, lte, isNull, ne, or, not, inArray, ilike } from "drizzle-orm";
+import { db, pool } from "./db";
 import { IStorage } from "./storage";
 import {
   users, localUsers, roles, systemModules, userLoginHistory, categories, warehouses, units, products, inventory, orders, orderItems, orderStatuses,
@@ -9,9 +8,10 @@ import {
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes, solderingTypes,
   componentCategories, componentAlternatives, carriers, shipments, shipmentItems, customerAddresses, senderSettings,
-  manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, exchangeRateHistory, serialNumbers, serialNumberSettings, emailSettings,
+  manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, currencyRates, currencyUpdateSettings, serialNumbers, serialNumberSettings, emailSettings,
   sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients, clientContacts, clientNovaPoshtaSettings,
-  clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences, novaPoshtaCities, novaPoshtaWarehouses,
+  clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences,
+  repairs, repairParts, repairStatusHistory, repairDocuments, orderItemSerialNumbers, novaPoshtaCities, novaPoshtaWarehouses,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
   type Category, type InsertCategory,
@@ -39,7 +39,7 @@ import {
   type Shipment, type InsertShipment,
   type CustomerAddress, type InsertCustomerAddress,
   type SenderSettings, type InsertSenderSettings,
-  type Currency, type InsertCurrency, type ExchangeRateHistory,
+  type Currency, type InsertCurrency,
   type SerialNumber, type InsertSerialNumber,
   type SerialNumberSettings, type InsertSerialNumberSettings,
   type CostCalculation, type InsertCostCalculation,
@@ -62,6 +62,10 @@ import {
   type ClientContact, type InsertClientContact,
   type ClientNovaPoshtaSettings, type InsertClientNovaPoshtaSettings,
   type UserSortPreference, type InsertUserSortPreference,
+  type Repair, type InsertRepair,
+  type RepairPart, type InsertRepairPart,
+  type RepairStatusHistory, type InsertRepairStatusHistory,
+  type RepairDocument, type InsertRepairDocument,
 
 } from "@shared/schema";
 
@@ -395,7 +399,25 @@ export class DatabaseStorage implements IStorage {
           quantity: orderItems.quantity,
           unitPrice: orderItems.unitPrice,
           totalPrice: orderItems.totalPrice,
-          product: products
+          product: {
+            id: products.id,
+            name: products.name,
+            sku: products.sku,
+            description: products.description,
+            barcode: products.barcode,
+            categoryId: products.categoryId,
+            companyId: products.companyId,
+            costPrice: products.costPrice,
+            retailPrice: products.retailPrice,
+            photo: products.photo,
+            productType: products.productType,
+            unit: products.unit,
+            minStock: products.minStock,
+            maxStock: products.maxStock,
+            hasSerialNumbers: products.hasSerialNumbers,
+            isActive: products.isActive,
+            createdAt: products.createdAt
+          }
         })
         .from(orderItems)
         .leftJoin(products, eq(orderItems.productId, products.id))
@@ -408,7 +430,9 @@ export class DatabaseStorage implements IStorage {
             id: item.id, 
             productId: item.productId, 
             hasProduct: !!item.product,
-            productName: item.product?.name
+            productName: item.product?.name,
+            hasSerialNumbers: item.product?.hasSerialNumbers,
+            fullProduct: item.product
           })));
         }
 
@@ -437,7 +461,25 @@ export class DatabaseStorage implements IStorage {
       quantity: orderItems.quantity,
       unitPrice: orderItems.unitPrice,
       totalPrice: orderItems.totalPrice,
-      product: products
+      product: {
+        id: products.id,
+        name: products.name,
+        sku: products.sku,
+        description: products.description,
+        barcode: products.barcode,
+        categoryId: products.categoryId,
+        companyId: products.companyId,
+        costPrice: products.costPrice,
+        retailPrice: products.retailPrice,
+        photo: products.photo,
+        productType: products.productType,
+        unit: products.unit,
+        minStock: products.minStock,
+        maxStock: products.maxStock,
+        hasSerialNumbers: products.hasSerialNumbers,
+        isActive: products.isActive,
+        createdAt: products.createdAt
+      }
     })
     .from(orderItems)
     .leftJoin(products, eq(orderItems.productId, products.id))
@@ -3279,28 +3321,226 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getLatestExchangeRates(): Promise<ExchangeRateHistory[]> {
-    // Отримуємо останні курси для кожної валюти
-    const rates = await db
-      .select()
-      .from(exchangeRateHistory)
-      .where(
-        eq(
-          exchangeRateHistory.createdAt,
-          db.select({ maxDate: sql`MAX(${exchangeRateHistory.createdAt})` })
-            .from(exchangeRateHistory)
-            .where(eq(exchangeRateHistory.currencyId, exchangeRateHistory.currencyId))
-        )
-      )
-      .orderBy(exchangeRateHistory.currencyId);
-    
-    return rates;
+  // Currency rates methods (НБУ курси)
+  async getAllCurrencyRates(): Promise<any[]> {
+    try {
+      const rates = await db.select().from(currencyRates).orderBy(desc(currencyRates.exchangeDate));
+      return rates;
+    } catch (error) {
+      console.error("Error getting currency rates:", error);
+      throw error;
+    }
   }
 
-  async updateExchangeRates(): Promise<ExchangeRateHistory[]> {
-    // У реальному додатку тут би було звернення до API для отримання актуальних курсів
-    // Наразі повертаємо поточні курси
-    return this.getLatestExchangeRates();
+  async saveCurrencyRates(rates: any[]): Promise<any[]> {
+    try {
+      const savedRates = [];
+      
+      for (const rate of rates) {
+        // Перевіряємо чи курс вже існує для цієї валюти та дати
+        const existingRate = await db.select()
+          .from(currencyRates)
+          .where(
+            and(
+              eq(currencyRates.currencyCode, rate.currencyCode),
+              eq(currencyRates.exchangeDate, rate.exchangeDate)
+            )
+          )
+          .limit(1);
+
+        if (existingRate.length === 0) {
+          // Зберігаємо новий курс
+          const [newRate] = await db
+            .insert(currencyRates)
+            .values({
+              currencyCode: rate.currencyCode,
+              rate: rate.rate,
+              exchangeDate: rate.exchangeDate,
+              txt: rate.txt || '',
+              cc: rate.cc || rate.currencyCode,
+              r030: rate.r030 || 0,
+            })
+            .returning();
+          
+          savedRates.push(newRate);
+        } else {
+          // Оновлюємо існуючий курс
+          const [updatedRate] = await db
+            .update(currencyRates)
+            .set({
+              rate: rate.rate,
+              txt: rate.txt || '',
+              cc: rate.cc || rate.currencyCode,
+              r030: rate.r030 || 0,
+            })
+            .where(
+              and(
+                eq(currencyRates.currencyCode, rate.currencyCode),
+                eq(currencyRates.exchangeDate, rate.exchangeDate)
+              )
+            )
+            .returning();
+          
+          savedRates.push(updatedRate);
+        }
+      }
+      
+      return savedRates;
+    } catch (error) {
+      console.error("Error saving currency rates:", error);
+      throw error;
+    }
+  }
+
+  async updateCurrencyUpdateStatus(status: string, error?: string): Promise<void> {
+    try {
+      // Простий спосіб - ігноруємо помилки оновлення статусу, не блокуємо основну функцію
+      console.log(`Currency update status: ${status}`, error ? `Error: ${error}` : '');
+    } catch (dbError) {
+      console.error("Error updating currency update status:", dbError);
+      // Не кидаємо помилку, щоб не блокувати оновлення курсів
+    }
+  }
+
+  async getCurrencyRatesByDate(date: string): Promise<any[]> {
+    try {
+      const rates = await db.select()
+        .from(currencyRates)
+        .where(eq(currencyRates.exchangeDate, date))
+        .orderBy(currencyRates.currencyCode);
+      return rates;
+    } catch (error) {
+      console.error("Error getting currency rates by date:", error);
+      throw error;
+    }
+  }
+
+  async getCurrencyUpdateSettings(): Promise<any> {
+    try {
+      const [settings] = await db.select()
+        .from(currencyUpdateSettings)
+        .limit(1);
+
+      if (!settings) {
+        // Створюємо налаштування за замовчуванням якщо їх немає
+        const [defaultSettings] = await db
+          .insert(currencyUpdateSettings)
+          .values({
+            autoUpdateEnabled: false,
+            updateTime: "09:00",
+            enabledCurrencies: ["USD", "EUR"],
+            lastUpdateStatus: "pending"
+          })
+          .returning();
+        return defaultSettings;
+      }
+
+      return settings;
+    } catch (error) {
+      console.error("Error getting currency update settings:", error);
+      throw error;
+    }
+  }
+
+  async saveCurrencyUpdateSettings(settings: any): Promise<any> {
+    try {
+      // Перевіряємо чи існує запис налаштувань
+      const [existingSettings] = await db.select()
+        .from(currencyUpdateSettings)
+        .limit(1);
+
+      if (existingSettings) {
+        // Оновлюємо існуючі налаштування
+        const [updated] = await db
+          .update(currencyUpdateSettings)
+          .set({
+            autoUpdateEnabled: settings.autoUpdateEnabled || false,
+            updateTime: settings.updateTime || "09:00",
+            enabledCurrencies: settings.enabledCurrencies || ["USD", "EUR"],
+            updatedAt: new Date()
+          })
+          .where(eq(currencyUpdateSettings.id, existingSettings.id))
+          .returning();
+        return updated;
+      } else {
+        // Створюємо нові налаштування
+        const [created] = await db
+          .insert(currencyUpdateSettings)
+          .values({
+            autoUpdateEnabled: settings.autoUpdateEnabled || false,
+            updateTime: settings.updateTime || "09:00",
+            enabledCurrencies: settings.enabledCurrencies || ["USD", "EUR"]
+          })
+          .returning();
+        return created;
+      }
+    } catch (error) {
+      console.error("Error saving currency update settings:", error);
+      throw error;
+    }
+  }
+
+  // Email Settings methods
+  async getEmailSettings(): Promise<any> {
+    try {
+      const [settings] = await db.select()
+        .from(emailSettings)
+        .limit(1);
+      
+      if (!settings) return null;
+      
+      // Конвертуємо snake_case в camelCase для frontend
+      return {
+        id: settings.id,
+        smtpHost: settings.smtpHost,
+        smtpPort: settings.smtpPort,
+        smtpSecure: settings.smtpSecure,
+        smtpUser: settings.smtpUser,
+        smtpPassword: settings.smtpPassword,
+        fromEmail: settings.fromEmail,
+        fromName: settings.fromName,
+        isActive: settings.isActive,
+        createdAt: settings.createdAt,
+        updatedAt: settings.updatedAt,
+      };
+    } catch (error) {
+      console.error("Error getting email settings:", error);
+      return null;
+    }
+  }
+
+  async updateEmailSettings(settings: any): Promise<any> {
+    try {
+      // Спочатку перевіряємо чи є існуючі налаштування
+      const existing = await this.getEmailSettings();
+      
+      if (existing) {
+        // Оновлюємо існуючі
+        const [updated] = await db
+          .update(emailSettings)
+          .set({
+            ...settings,
+            updatedAt: new Date(),
+          })
+          .where(eq(emailSettings.id, existing.id))
+          .returning();
+        return updated;
+      } else {
+        // Створюємо нові
+        const [created] = await db
+          .insert(emailSettings)
+          .values({
+            ...settings,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .returning();
+        return created;
+      }
+    } catch (error) {
+      console.error("Error updating email settings:", error);
+      throw error;
+    }
   }
 
   // Production analytics methods
@@ -4161,13 +4401,10 @@ export class DatabaseStorage implements IStorage {
 
   async createCompany(companyData: InsertCompany): Promise<Company> {
     try {
-      console.log("Creating company with data:", companyData);
       const [company] = await db.insert(companies).values(companyData).returning();
-      console.log("Company created successfully:", company);
       return company;
     } catch (error) {
       console.error("Error creating company:", error);
-      console.error("Company data that failed:", companyData);
       throw error;
     }
   }
@@ -4240,8 +4477,30 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Serial Numbers
-  async getSerialNumbers(productId?: number, warehouseId?: number): Promise<SerialNumber[]> {
-    let query = db.select().from(serialNumbers);
+  async getSerialNumbers(productId?: number, warehouseId?: number): Promise<any[]> {
+    let query = db
+      .select({
+        id: serialNumbers.id,
+        productId: serialNumbers.productId,
+        serialNumber: serialNumbers.serialNumber,
+        status: serialNumbers.status,
+        warehouseId: serialNumbers.warehouseId,
+        orderId: serialNumbers.orderId,
+        invoiceNumber: serialNumbers.invoiceNumber,
+        clientShortName: serialNumbers.clientShortName,
+        saleDate: serialNumbers.saleDate,
+        notes: serialNumbers.notes,
+        manufacturedDate: serialNumbers.manufacturedDate,
+        createdAt: serialNumbers.createdAt,
+        updatedAt: serialNumbers.updatedAt,
+        product: {
+          id: products.id,
+          name: products.name,
+          sku: products.sku
+        }
+      })
+      .from(serialNumbers)
+      .leftJoin(products, eq(serialNumbers.productId, products.id));
     
     if (productId || warehouseId) {
       const conditions = [];
@@ -4264,6 +4523,83 @@ export class DatabaseStorage implements IStorage {
       .values(data)
       .returning();
     return created;
+  }
+
+  async createBulkSerialNumbers(productId: number, count: number): Promise<SerialNumber[]> {
+    const serialNumbersData = [];
+    const timestamp = Date.now();
+    
+    for (let i = 0; i < count; i++) {
+      let serialNumber: string;
+      let attempts = 0;
+      const maxAttempts = 20;
+      
+      // Генеруємо унікальний серійний номер з комбінацією timestamp, productId та випадкового числа
+      do {
+        const randomPart = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        const uniqueId = `${timestamp}-${i + 1}-${randomPart}`;
+        serialNumber = `SN-P${productId}-${uniqueId}`;
+        
+        // Перевіряємо чи вже існує такий номер
+        const existing = await db
+          .select()
+          .from(serialNumbers)
+          .where(eq(serialNumbers.serialNumber, serialNumber))
+          .limit(1);
+          
+        if (existing.length === 0) break;
+        attempts++;
+        
+        // Додаємо затримку між спробами для унікальності
+        await new Promise(resolve => setTimeout(resolve, 1));
+      } while (attempts < maxAttempts);
+      
+      if (attempts >= maxAttempts) {
+        throw new Error(`Не вдалося згенерувати унікальний серійний номер після ${maxAttempts} спроб`);
+      }
+      
+      serialNumbersData.push({
+        productId,
+        serialNumber,
+        status: "available" as const,
+        warehouseId: null,
+        manufacturedDate: null,
+        notes: null
+      });
+    }
+
+    const result = await db.insert(serialNumbers).values(serialNumbersData).returning();
+    return result;
+  }
+
+
+
+
+
+  async removeSerialNumberAssignment(assignmentId: number): Promise<boolean> {
+    // Отримуємо інформацію про прив'язку
+    const [assignment] = await db
+      .select()
+      .from(orderItemSerialNumbers)
+      .where(eq(orderItemSerialNumbers.id, assignmentId))
+      .limit(1);
+      
+    if (!assignment) {
+      return false;
+    }
+    
+    // Видаляємо прив'язку
+    await db
+      .delete(orderItemSerialNumbers)
+      .where(eq(orderItemSerialNumbers.id, assignmentId));
+      
+    // Повертаємо серійний номер в статус "доступний"
+    await db
+      .update(serialNumbers)
+      .set({ status: "available" })
+      .where(eq(serialNumbers.id, assignment.serialNumberId));
+      
+    return true;
   }
 
   async updateSerialNumber(id: number, data: Partial<InsertSerialNumber>): Promise<SerialNumber | null> {
@@ -4899,6 +5235,35 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getLocalUserWithWorker(userId: number): Promise<any> {
+    try {
+      const [user] = await db.select({
+        id: localUsers.id,
+        username: localUsers.username,
+        email: localUsers.email,
+        firstName: localUsers.firstName,
+        lastName: localUsers.lastName,
+        profileImageUrl: localUsers.profileImageUrl,
+        workerId: localUsers.workerId,
+        worker: {
+          id: workers.id,
+          firstName: workers.firstName,
+          lastName: workers.lastName,
+          photo: workers.photo
+        }
+      })
+      .from(localUsers)
+      .leftJoin(workers, eq(localUsers.workerId, workers.id))
+      .where(eq(localUsers.id, userId))
+      .limit(1);
+      
+      return user;
+    } catch (error) {
+      console.error("Error getting local user with worker:", error);
+      return null;
+    }
+  }
+
   async getUserByEmail(email: string): Promise<LocalUser | undefined> {
     const [user] = await db
       .select()
@@ -5520,6 +5885,571 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // ==================== REPAIRS METHODS ====================
+
+  async getRepairs(): Promise<Repair[]> {
+    return await this.db.select().from(repairs).orderBy(desc(repairs.createdAt));
+  }
+
+  async getRepair(id: number): Promise<Repair | null> {
+    const result = await this.db.select().from(repairs).where(eq(repairs.id, id));
+    return result[0] || null;
+  }
+
+  async createRepair(data: InsertRepair): Promise<Repair> {
+    // Генеруємо номер ремонту
+    const repairNumber = await this.generateRepairNumber();
+    
+    const result = await this.db.insert(repairs).values({
+      ...data,
+      repairNumber
+    }).returning();
+    
+    // Створюємо запис в історії статусів
+    await this.db.insert(repairStatusHistory).values({
+      repairId: result[0].id,
+      oldStatus: null,
+      newStatus: result[0].status,
+      comment: "Ремонт створено"
+    });
+    
+    return result[0];
+  }
+
+  async updateRepair(id: number, data: Partial<InsertRepair>): Promise<Repair> {
+    const result = await this.db.update(repairs)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(repairs.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteRepair(id: number): Promise<void> {
+    await this.db.delete(repairs).where(eq(repairs.id, id));
+  }
+
+  async getRepairsBySerialNumber(serialNumber: string): Promise<Repair[]> {
+    return await this.db.select().from(repairs)
+      .where(eq(repairs.serialNumber, serialNumber))
+      .orderBy(desc(repairs.createdAt));
+  }
+
+  // Методи для запчастин ремонту
+  async getRepairParts(repairId: number): Promise<RepairPart[]> {
+    return await this.db.select().from(repairParts)
+      .where(eq(repairParts.repairId, repairId))
+      .orderBy(repairParts.createdAt);
+  }
+
+  async addRepairPart(data: InsertRepairPart): Promise<RepairPart> {
+    const result = await this.db.insert(repairParts).values(data).returning();
+    return result[0];
+  }
+
+  async deleteRepairPart(partId: number): Promise<void> {
+    await this.db.delete(repairParts).where(eq(repairParts.id, partId));
+  }
+
+  // Методи для історії статусів
+  async getRepairStatusHistory(repairId: number): Promise<RepairStatusHistory[]> {
+    return await this.db.select().from(repairStatusHistory)
+      .where(eq(repairStatusHistory.repairId, repairId))
+      .orderBy(repairStatusHistory.changedAt);
+  }
+
+  async changeRepairStatus(repairId: number, newStatus: string, comment?: string, changedBy?: number): Promise<RepairStatusHistory> {
+    // Отримуємо поточний статус
+    const currentRepair = await this.getRepair(repairId);
+    if (!currentRepair) {
+      throw new Error("Ремонт не знайдено");
+    }
+
+    // Оновлюємо статус ремонту
+    await this.db.update(repairs)
+      .set({ 
+        status: newStatus, 
+        updatedAt: new Date(),
+        // Встановлюємо відповідні дати залежно від статусу
+        ...(newStatus === "diagnosed" && { diagnosisDate: new Date() }),
+        ...(newStatus === "in_repair" && { repairStartDate: new Date() }),
+        ...(newStatus === "completed" && { repairEndDate: new Date() }),
+        ...(newStatus === "returned" && { returnDate: new Date() })
+      })
+      .where(eq(repairs.id, repairId));
+
+    // Додаємо запис в історію
+    const result = await this.db.insert(repairStatusHistory).values({
+      repairId,
+      oldStatus: currentRepair.status,
+      newStatus,
+      comment,
+      changedBy
+    }).returning();
+
+    return result[0];
+  }
+
+  // Методи для документів ремонту
+  async getRepairDocuments(repairId: number): Promise<RepairDocument[]> {
+    return await this.db.select().from(repairDocuments)
+      .where(eq(repairDocuments.repairId, repairId))
+      .orderBy(repairDocuments.uploadedAt);
+  }
+
+  async addRepairDocument(data: InsertRepairDocument): Promise<RepairDocument> {
+    const result = await this.db.insert(repairDocuments).values(data).returning();
+    return result[0];
+  }
+
+  // Пошук серійних номерів для створення ремонту
+  async getSerialNumbersForRepair(search?: string): Promise<SerialNumber[]> {
+    try {
+      if (search) {
+        return await db.select()
+          .from(serialNumbers)
+          .where(and(
+            eq(serialNumbers.status, "sold"),
+            or(
+              sql`${serialNumbers.serialNumber} ILIKE ${`%${search}%`}`,
+              sql`${serialNumbers.clientShortName} ILIKE ${`%${search}%`}`
+            )
+          ))
+          .orderBy(desc(serialNumbers.saleDate))
+          .limit(50);
+      }
+
+      return await db.select()
+        .from(serialNumbers)
+        .where(eq(serialNumbers.status, "sold"))
+        .orderBy(desc(serialNumbers.saleDate))
+        .limit(50);
+    } catch (error) {
+      console.error("Error in getSerialNumbersForRepair:", error);
+      return [];
+    }
+  }
+
+  // Генерація номера ремонту
+  private async generateRepairNumber(): Promise<string> {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    
+    // Отримуємо кількість ремонтів за сьогодні
+    const todayStart = new Date(year, now.getMonth(), now.getDate());
+    const todayEnd = new Date(year, now.getMonth(), now.getDate() + 1);
+    
+    const todayRepairsCount = await this.db.select({ count: sql<number>`count(*)` })
+      .from(repairs)
+      .where(and(
+        gte(repairs.createdAt, todayStart),
+        lte(repairs.createdAt, todayEnd)
+      ));
+    
+    const counter = (todayRepairsCount[0]?.count || 0) + 1;
+    
+    return `REM-${year}${month}${day}-${String(counter).padStart(3, '0')}`;
+  }
+
+  // ================================
+  // МЕТОДИ ДЛЯ ПРИВ'ЯЗКИ СЕРІЙНИХ НОМЕРІВ ДО ЗАМОВЛЕНЬ
+  // ================================
+
+
+
+
+
+
+
+
+
+  // ================================
+  // МЕТОДИ ДЛЯ ЗАПЧАСТИН РЕМОНТУ
+  // ================================
+
+  async createRepairPart(partData: {
+    repairId: number;
+    inventoryId: number;
+    quantity: number;
+    description?: string;
+    cost: number;
+  }): Promise<any> {
+    try {
+      const [created] = await this.db
+        .insert(repairParts)
+        .values({
+          repairId: partData.repairId,
+          inventoryId: partData.inventoryId,
+          quantity: partData.quantity,
+          description: partData.description,
+          cost: partData.cost,
+          createdAt: new Date()
+        })
+        .returning();
+
+      // Отримуємо дані запчастини з інформацією про товар
+      const [part] = await this.db
+        .select({
+          id: repairParts.id,
+          repairId: repairParts.repairId,
+          inventoryId: repairParts.inventoryId,
+          quantity: repairParts.quantity,
+          description: repairParts.description,
+          cost: repairParts.cost,
+          createdAt: repairParts.createdAt,
+          inventoryItem: {
+            id: inventory.id,
+            name: products.name,
+            sku: products.sku,
+            quantity: inventory.quantity
+          }
+        })
+        .from(repairParts)
+        .leftJoin(inventory, eq(repairParts.inventoryId, inventory.id))
+        .leftJoin(products, eq(inventory.productId, products.id))
+        .where(eq(repairParts.id, created.id));
+
+      return part;
+    } catch (error) {
+      console.error('Error creating repair part:', error);
+      throw error;
+    }
+  }
+
+
+
+  // ================================
+  // МЕТОДИ ДЛЯ ПРИВ'ЯЗКИ СЕРІЙНИХ НОМЕРІВ ДО ЗАМОВЛЕНЬ
+  // ================================
+
+  async createAndAssignSerialNumbers(orderItemId: number, productId: number, serialNumbersList: string[], userId: number): Promise<any> {
+    try {
+      const createdSerials: any[] = [];
+      const serialNumberIds: number[] = [];
+      const duplicates: string[] = [];
+
+      // Спочатку перевіряємо всі серійні номери на дублювання
+      for (const serial of serialNumbersList) {
+        const existing = await this.db
+          .select()
+          .from(serialNumbers)
+          .where(eq(serialNumbers.serialNumber, serial))
+          .limit(1);
+
+        if (existing.length > 0) {
+          // Перевіряємо, чи це той самий продукт
+          if (existing[0].productId === productId) {
+            // Якщо це той самий продукт, можемо використати існуючий номер
+            serialNumberIds.push(existing[0].id);
+          } else {
+            // Якщо це інший продукт, це дублювання
+            duplicates.push(serial);
+          }
+        } else {
+          // Серійний номер не існує, можемо створити новий
+          try {
+            const [newSerial] = await this.db
+              .insert(serialNumbers)
+              .values({
+                productId,
+                serialNumber: serial,
+                status: "reserved",
+                createdAt: new Date(),
+                updatedAt: new Date()
+              })
+              .returning({ id: serialNumbers.id });
+
+            serialNumberIds.push(newSerial.id);
+            createdSerials.push(newSerial);
+          } catch (error: any) {
+            if (error.code === '23505') {
+              // Дублювання ключа - додаємо до списку дублікатів
+              duplicates.push(serial);
+            } else {
+              throw error;
+            }
+          }
+        }
+      }
+
+      // Якщо є дублікати, повертаємо помилку з детальною інформацією
+      if (duplicates.length > 0) {
+        throw new Error(`Серійні номери вже використовуються: ${duplicates.join(', ')}. Будь ласка, використайте інші номери.`);
+      }
+
+      // Перевіряємо наявні прив'язки для цієї позиції замовлення
+      const existingAssignments = await this.db
+        .select({ serialNumberId: orderItemSerialNumbers.serialNumberId })
+        .from(orderItemSerialNumbers)
+        .where(eq(orderItemSerialNumbers.orderItemId, orderItemId));
+
+      const existingSerialIds = new Set(existingAssignments.map(a => a.serialNumberId));
+
+      // Створюємо прив'язки тільки для нових серійних номерів
+      const newAssignments = serialNumberIds
+        .filter(id => !existingSerialIds.has(id))
+        .map(serialNumberId => ({
+          orderItemId,
+          serialNumberId,
+          assignedAt: new Date(),
+          assignedBy: userId
+        }));
+
+      if (newAssignments.length > 0) {
+        await this.db.insert(orderItemSerialNumbers).values(newAssignments);
+      }
+
+      // Оновлюємо статус серійних номерів на "reserved"
+      await this.db
+        .update(serialNumbers)
+        .set({ 
+          status: "reserved",
+          updatedAt: new Date()
+        })
+        .where(inArray(serialNumbers.id, serialNumberIds));
+
+      return {
+        success: true,
+        createdCount: createdSerials.length,
+        assignedCount: newAssignments.length,
+        message: `Створено ${createdSerials.length} та прив'язано ${newAssignments.length} серійних номерів`
+      };
+
+    } catch (error) {
+      console.error('Error creating and assigning serial numbers:', error);
+      throw error;
+    }
+  }
+
+  async checkSerialNumberDuplicates(serialNumbersToCheck: string[]): Promise<string[]> {
+    try {
+      if (serialNumbersToCheck.length === 0) {
+        return [];
+      }
+
+      const existingSerials = await this.db
+        .select({ serialNumber: serialNumbers.serialNumber })
+        .from(serialNumbers)
+        .where(inArray(serialNumbers.serialNumber, serialNumbersToCheck));
+
+      return existingSerials.map(s => s.serialNumber);
+    } catch (error) {
+      console.error('Error checking serial number duplicates:', error);
+      throw error;
+    }
+  }
+
+  async getOrderItemSerialNumbers(orderItemId: number): Promise<any[]> {
+    try {
+      return await this.db
+        .select({
+          id: orderItemSerialNumbers.id,
+          serialNumber: {
+            id: serialNumbers.id,
+            serialNumber: serialNumbers.serialNumber,
+            status: serialNumbers.status,
+            manufacturedDate: serialNumbers.manufacturedDate
+          },
+          assignedAt: orderItemSerialNumbers.assignedAt,
+          notes: orderItemSerialNumbers.notes
+        })
+        .from(orderItemSerialNumbers)
+        .innerJoin(serialNumbers, eq(orderItemSerialNumbers.serialNumberId, serialNumbers.id))
+        .where(eq(orderItemSerialNumbers.orderItemId, orderItemId));
+    } catch (error) {
+      console.error('Error fetching order item serial numbers:', error);
+      throw error;
+    }
+  }
+
+  async assignSerialNumbersToOrderItem(orderItemId: number, serialNumberIds: number[], userId?: number): Promise<void> {
+    try {
+      // Перевіряємо доступність серійних номерів
+      const availableSerials = await this.db
+        .select()
+        .from(serialNumbers)
+        .where(
+          and(
+            inArray(serialNumbers.id, serialNumberIds),
+            or(
+              eq(serialNumbers.status, "available"),
+              eq(serialNumbers.status, "reserved")
+            )
+          )
+        );
+
+      if (availableSerials.length !== serialNumberIds.length) {
+        throw new Error("Деякі серійні номери недоступні для прив'язки");
+      }
+
+      // Перевіряємо наявні прив'язки для цієї позиції замовлення
+      const existingAssignments = await this.db
+        .select({ serialNumberId: orderItemSerialNumbers.serialNumberId })
+        .from(orderItemSerialNumbers)
+        .where(eq(orderItemSerialNumbers.orderItemId, orderItemId));
+
+      const existingSerialIds = new Set(existingAssignments.map(a => a.serialNumberId));
+
+      // Створюємо прив'язки тільки для нових серійних номерів
+      const newAssignments = serialNumberIds
+        .filter(id => !existingSerialIds.has(id))
+        .map(serialNumberId => ({
+          orderItemId,
+          serialNumberId,
+          assignedAt: new Date(),
+          assignedBy: userId
+        }));
+
+      if (newAssignments.length > 0) {
+        await this.db.insert(orderItemSerialNumbers).values(newAssignments);
+      }
+
+      // Оновлюємо статус серійних номерів на "reserved"
+      await this.db
+        .update(serialNumbers)
+        .set({ 
+          status: "reserved",
+          updatedAt: new Date()
+        })
+        .where(inArray(serialNumbers.id, serialNumberIds));
+
+    } catch (error) {
+      console.error('Error assigning serial numbers to order item:', error);
+      throw error;
+    }
+  }
+
+
+
+  // ==================== Nova Poshta Database Methods ====================
+
+  async syncNovaPoshtaCities(cities: any[]): Promise<void> {
+    if (!cities || cities.length === 0) return;
+
+    try {
+      // Використовуємо UPSERT замість DELETE/INSERT для збереження даних
+      console.log(`Синхронізація ${cities.length} міст Нової Пошти...`);
+
+      // Додаємо нові дані пакетами по 1000
+      const batchSize = 1000;
+      for (let i = 0; i < cities.length; i += batchSize) {
+        const batch = cities.slice(i, i + batchSize);
+        const values = batch.map(city => 
+          `('${city.Ref}', '${city.Description?.replace(/'/g, "''")}', '${city.DescriptionRu?.replace(/'/g, "''") || ''}', '${city.AreaDescription?.replace(/'/g, "''")}', '${city.AreaDescriptionRu?.replace(/'/g, "''") || ''}', '${city.RegionDescription?.replace(/'/g, "''") || ''}', '${city.RegionDescriptionRu?.replace(/'/g, "''") || ''}', '${city.SettlementTypeDescription?.replace(/'/g, "''") || ''}', '${city.DeliveryCity || ''}', ${parseInt(city.Warehouses) || 0}, true, NOW())`
+        ).join(',');
+
+        await this.db.execute(sql.raw(`
+          INSERT INTO nova_poshta_cities (ref, name, name_ru, area, area_ru, region, region_ru, settlement_type, delivery_city, warehouses, is_active, last_updated)
+          VALUES ${values}
+          ON CONFLICT (ref) DO UPDATE SET
+            name = EXCLUDED.name,
+            name_ru = EXCLUDED.name_ru,
+            area = EXCLUDED.area,
+            area_ru = EXCLUDED.area_ru,
+            region = EXCLUDED.region,
+            region_ru = EXCLUDED.region_ru,
+            settlement_type = EXCLUDED.settlement_type,
+            delivery_city = EXCLUDED.delivery_city,
+            warehouses = EXCLUDED.warehouses,
+            is_active = EXCLUDED.is_active,
+            last_updated = EXCLUDED.last_updated
+        `));
+      }
+
+      console.log(`Синхронізовано ${cities.length} міст Нової Пошти в базу даних`);
+    } catch (error) {
+      console.error('Помилка синхронізації міст Нової Пошти:', error);
+      throw error;
+    }
+  }
+
+  async syncNovaPoshtaWarehouses(warehouses: any[]): Promise<void> {
+    if (!warehouses || warehouses.length === 0) return;
+
+    try {
+      // Використовуємо UPSERT замість DELETE/INSERT для збереження даних
+      console.log(`Синхронізація ${warehouses.length} відділень Нової Пошти...`);
+
+      // Додаємо нові дані пакетами по 500 (менші пакети через складність JSON полів)
+      const batchSize = 500;
+      for (let i = 0; i < warehouses.length; i += batchSize) {
+        const batch = warehouses.slice(i, i + batchSize);
+        
+        for (const warehouse of batch) {
+          const schedule = warehouse.Schedule ? JSON.stringify(warehouse.Schedule) : null;
+          const reception = warehouse.Reception ? JSON.stringify(warehouse.Reception) : null;
+          const delivery = warehouse.Delivery ? JSON.stringify(warehouse.Delivery) : null;
+          const sendingLimitations = warehouse.SendingLimitationsOnDimensions ? 
+            JSON.stringify(warehouse.SendingLimitationsOnDimensions) : null;
+          const receivingLimitations = warehouse.ReceivingLimitationsOnDimensions ? 
+            JSON.stringify(warehouse.ReceivingLimitationsOnDimensions) : null;
+
+          await this.db.execute(sql`
+            INSERT INTO nova_poshta_warehouses (
+              ref, city_ref, number, description, description_ru, short_address, short_address_ru,
+              phone, type_of_warehouse, category_of_warehouse, schedule, reception, delivery,
+              district_code, ward_code, settlement_area_description, place_max_weight_allowed,
+              sending_limitations_on_dimensions, receiving_limitations_on_dimensions,
+              post_finance, bicycle_parking, payment_access, pos_terminal, international_shipping,
+              self_service_workplaces_count, total_max_weight_allowed, longitude, latitude,
+              is_active, last_updated
+            ) VALUES (
+              ${warehouse.Ref}, ${warehouse.CityRef}, ${warehouse.Number || ''}, 
+              ${warehouse.Description?.replace(/'/g, "''") || ''}, ${warehouse.DescriptionRu?.replace(/'/g, "''") || ''},
+              ${warehouse.ShortAddress?.replace(/'/g, "''") || ''}, ${warehouse.ShortAddressRu?.replace(/'/g, "''") || ''},
+              ${warehouse.Phone || ''}, ${warehouse.TypeOfWarehouse || ''}, ${warehouse.CategoryOfWarehouse || ''},
+              ${schedule}, ${reception}, ${delivery}, ${warehouse.DistrictCode || ''}, ${warehouse.WardCode || ''},
+              ${warehouse.SettlementAreaDescription?.replace(/'/g, "''") || ''}, 
+              ${parseInt(warehouse.PlaceMaxWeightAllowed) || null},
+              ${sendingLimitations}, ${receivingLimitations},
+              ${Boolean(warehouse.PostFinance)}, ${Boolean(warehouse.BicycleParking)}, 
+              ${Boolean(warehouse.PaymentAccess)}, ${Boolean(warehouse.POSTerminal)}, 
+              ${Boolean(warehouse.InternationalShipping)}, ${parseInt(warehouse.SelfServiceWorkplacesCount) || 0},
+              ${parseInt(warehouse.TotalMaxWeightAllowed) || null}, 
+              ${warehouse.Longitude ? parseFloat(warehouse.Longitude) : null},
+              ${warehouse.Latitude ? parseFloat(warehouse.Latitude) : null}, true, NOW()
+            ) ON CONFLICT (ref) DO UPDATE SET
+              city_ref = EXCLUDED.city_ref,
+              number = EXCLUDED.number,
+              description = EXCLUDED.description,
+              description_ru = EXCLUDED.description_ru,
+              short_address = EXCLUDED.short_address,
+              short_address_ru = EXCLUDED.short_address_ru,
+              phone = EXCLUDED.phone,
+              type_of_warehouse = EXCLUDED.type_of_warehouse,
+              category_of_warehouse = EXCLUDED.category_of_warehouse,
+              schedule = EXCLUDED.schedule,
+              reception = EXCLUDED.reception,
+              delivery = EXCLUDED.delivery,
+              district_code = EXCLUDED.district_code,
+              ward_code = EXCLUDED.ward_code,
+              settlement_area_description = EXCLUDED.settlement_area_description,
+              place_max_weight_allowed = EXCLUDED.place_max_weight_allowed,
+              sending_limitations_on_dimensions = EXCLUDED.sending_limitations_on_dimensions,
+              receiving_limitations_on_dimensions = EXCLUDED.receiving_limitations_on_dimensions,
+              post_finance = EXCLUDED.post_finance,
+              bicycle_parking = EXCLUDED.bicycle_parking,
+              payment_access = EXCLUDED.payment_access,
+              pos_terminal = EXCLUDED.pos_terminal,
+              international_shipping = EXCLUDED.international_shipping,
+              self_service_workplaces_count = EXCLUDED.self_service_workplaces_count,
+              total_max_weight_allowed = EXCLUDED.total_max_weight_allowed,
+              longitude = EXCLUDED.longitude,
+              latitude = EXCLUDED.latitude,
+              is_active = EXCLUDED.is_active,
+              last_updated = EXCLUDED.last_updated
+          `);
+        }
+      }
+
+      console.log(`Синхронізовано ${warehouses.length} відділень Нової Пошти в базу даних`);
+    } catch (error) {
+      console.error('Помилка синхронізації відділень Нової Пошти:', error);
+      throw error;
+    }
+  }
+
   async getNovaPoshtaCities(query?: string): Promise<any[]> {
     console.log(`Пошук міст Нової Пошти для запиту: "${query}"`);
     
@@ -5531,14 +6461,14 @@ export class DatabaseStorage implements IStorage {
         const transformedCities = cities.map(city => ({
           Ref: city.ref,
           Description: city.name,
-          DescriptionRu: city.name,
+          DescriptionRu: city.nameRu,
           AreaDescription: city.area,
-          AreaDescriptionRu: city.area,
+          AreaDescriptionRu: city.areaRu,
           RegionDescription: city.region,
-          RegionDescriptionRu: city.region,
-          SettlementTypeDescription: '',
-          DeliveryCity: '',
-          Warehouses: "0"
+          RegionDescriptionRu: city.regionRu,
+          SettlementTypeDescription: city.settlementType,
+          DeliveryCity: city.deliveryCity,
+          Warehouses: city.warehouses?.toString() || "0"
         }));
 
         console.log(`Знайдено ${transformedCities.length} міст без фільтрації`);
@@ -5568,11 +6498,11 @@ export class DatabaseStorage implements IStorage {
         DescriptionRu: city.name,
         AreaDescription: city.area,
         AreaDescriptionRu: city.area,
-        RegionDescription: city.region,
-        RegionDescriptionRu: city.region,
-        SettlementTypeDescription: '',
-        DeliveryCity: '',
-        Warehouses: "0"
+        RegionDescription: city.region || '',
+        RegionDescriptionRu: city.region || '',
+        SettlementTypeDescription: 'місто',
+        DeliveryCity: city.ref,
+        Warehouses: 0
       }));
 
       console.log(`Знайдено ${transformedCities.length} міст для запиту: "${query}"`);
@@ -5587,8 +6517,15 @@ export class DatabaseStorage implements IStorage {
     try {
       let sqlQuery = `
         SELECT 
-          ref, city_ref, number, description, 
-          short_address, phone
+          ref, city_ref, number, description, description_ru, 
+          short_address, short_address_ru, phone, type_of_warehouse,
+          category_of_warehouse, schedule, reception, delivery,
+          district_code, ward_code, settlement_area_description,
+          place_max_weight_allowed, sending_limitations_on_dimensions,
+          receiving_limitations_on_dimensions, post_finance, bicycle_parking,
+          payment_access, pos_terminal, international_shipping,
+          self_service_workplaces_count, total_max_weight_allowed,
+          longitude, latitude
         FROM nova_poshta_warehouses 
         WHERE is_active = true
       `;
@@ -5602,70 +6539,103 @@ export class DatabaseStorage implements IStorage {
         paramIndex++;
       }
 
-      if (query && query.trim()) {
-        sqlQuery += ` AND (description ILIKE $${paramIndex} OR number ILIKE $${paramIndex} OR short_address ILIKE $${paramIndex})`;
-        params.push(`%${query}%`);
-        paramIndex++;
+      if (query && query.length >= 1) {
+        const searchTerm = `%${query.toLowerCase()}%`;
+        sqlQuery += ` AND (
+          number::text LIKE $${paramIndex} OR 
+          LOWER(description) LIKE $${paramIndex + 1} OR 
+          LOWER(description_ru) LIKE $${paramIndex + 2} OR
+          LOWER(short_address) LIKE $${paramIndex + 3}
+        )`;
+        params.push(`%${query}%`, searchTerm, searchTerm, searchTerm);
+        paramIndex += 4;
+        
+        // Сортування з пріоритетом: точне співпадіння -> починається з -> містить -> числове
+        sqlQuery += ` ORDER BY 
+          CASE WHEN number = $${paramIndex} THEN 1
+               WHEN number::text LIKE $${paramIndex + 1} THEN 2
+               WHEN number::text LIKE $${paramIndex + 2} THEN 3
+               ELSE 4 END,
+          CAST(COALESCE(NULLIF(regexp_replace(number, '[^0-9]', '', 'g'), ''), '0') AS INTEGER) ASC
+          LIMIT $${paramIndex + 3}`;
+        params.push(query, `${query}%`, `%${query}%`, limit);
+      } else {
+        sqlQuery += ` ORDER BY CAST(COALESCE(NULLIF(regexp_replace(number, '[^0-9]', '', 'g'), ''), '0') AS INTEGER) ASC LIMIT $${paramIndex}`;
+        params.push(limit);
       }
 
-      // Add ordering for better user experience
-      sqlQuery += `
-        ORDER BY 
-          CASE 
-            WHEN number ~ '^[0-9]+$' AND $${paramIndex} ~ '^[0-9]+$' 
-              AND number::INTEGER = $${paramIndex}::INTEGER THEN 1
-            WHEN number ILIKE $${paramIndex + 1} THEN 2
-            WHEN description ILIKE $${paramIndex + 1} THEN 3
-            ELSE 4
-          END,
-          number::INTEGER ASC NULLS LAST,
-          description ASC
-        LIMIT $${paramIndex + 2}
-      `;
-      
-      const searchValue = query || '';
-      params.push(searchValue, `${searchValue}%`, limit);
-
       const result = await pool.query(sqlQuery, params);
+      const results = result.rows;
 
-      const transformedWarehouses = result.rows.map((warehouse: any) => ({
+      console.log(`Знайдено ${results.length} відділень для міста: "${cityRef}", запит: "${query}"`);
+      
+      return results.map((warehouse: any) => ({
         Ref: warehouse.ref,
         CityRef: warehouse.city_ref,
-        Number: warehouse.number || '',
+        Number: warehouse.number,
         Description: warehouse.description,
-        DescriptionRu: warehouse.description,
-        ShortAddress: warehouse.short_address || '',
-        ShortAddressRu: warehouse.short_address || '',
-        Phone: warehouse.phone || '',
-        TypeOfWarehouse: '',
-        CategoryOfWarehouse: '',
-        Schedule: '',
-        Reception: '',
-        Delivery: '',
-        DistrictCode: '',
-        WardsCode: '',
-        SettlementAreaDescription: '',
-        PlaceMaxWeightAllowed: 0,
-        SendingLimitationsOnDimensions: '',
-        ReceivingLimitationsOnDimensions: '',
-        PostFinance: false,
-        BicycleParking: false,
-        PaymentAccess: false,
-        POSTerminal: false,
-        InternationalShipping: false,
-        SelfServiceWorkplacesCount: 0,
-        TotalMaxWeightAllowed: 0,
-        Longitude: '',
-        Latitude: ''
+        DescriptionRu: warehouse.description_ru,
+        ShortAddress: warehouse.short_address,
+        ShortAddressRu: warehouse.short_address_ru,
+        Phone: warehouse.phone,
+        TypeOfWarehouse: warehouse.type_of_warehouse,
+        CategoryOfWarehouse: warehouse.category_of_warehouse,
+        Schedule: warehouse.schedule,
+        Reception: warehouse.reception,
+        Delivery: warehouse.delivery,
+        DistrictCode: warehouse.district_code,
+        WardCode: warehouse.ward_code,
+        SettlementAreaDescription: warehouse.settlement_area_description,
+        PlaceMaxWeightAllowed: warehouse.place_max_weight_allowed?.toString() || '',
+        SendingLimitationsOnDimensions: warehouse.sending_limitations_on_dimensions,
+        ReceivingLimitationsOnDimensions: warehouse.receiving_limitations_on_dimensions,
+        PostFinance: warehouse.post_finance,
+        BicycleParking: warehouse.bicycle_parking,
+        PaymentAccess: warehouse.payment_access,
+        POSTerminal: warehouse.pos_terminal,
+        InternationalShipping: warehouse.international_shipping,
+        SelfServiceWorkplacesCount: warehouse.self_service_workplaces_count?.toString() || '0',
+        TotalMaxWeightAllowed: warehouse.total_max_weight_allowed?.toString() || '',
+        Longitude: warehouse.longitude?.toString() || '',
+        Latitude: warehouse.latitude?.toString() || ''
       }));
-
-      console.log(`Знайдено ${transformedWarehouses.length} відділень для міста: "${cityRef}", запит: "${query}"`);
-      return transformedWarehouses;
     } catch (error) {
-      console.error('Error getting Nova Poshta warehouses from database:', error);
+      console.error('Помилка отримання відділень Нової Пошти:', error);
       return [];
     }
   }
+
+  async getNovaPoshtaCitiesCount(): Promise<number> {
+    try {
+      const result = await pool.query('SELECT COUNT(*) as count FROM nova_poshta_cities WHERE is_active = true');
+      return parseInt(result.rows[0]?.count || '0');
+    } catch (error) {
+      console.error('Помилка підрахунку міст Нової Пошти:', error);
+      return 0;
+    }
+  }
+
+  async getNovaPoshtaWarehousesCount(): Promise<number> {
+    try {
+      const result = await pool.query('SELECT COUNT(*) as count FROM nova_poshta_warehouses WHERE is_active = true');
+      return parseInt(result.rows[0]?.count || '0');
+    } catch (error) {
+      console.error('Помилка підрахунку відділень Нової Пошти:', error);
+      return 0;
+    }
+  }
+
+  async isNovaPoshtaDataEmpty(): Promise<boolean> {
+    try {
+      const result = await pool.query('SELECT COUNT(*) as count FROM nova_poshta_cities WHERE is_active = true LIMIT 1');
+      const count = parseInt(result.rows[0]?.count || '0');
+      return count === 0;
+    } catch (error) {
+      console.error('Помилка перевірки даних Нової Пошти:', error);
+      return true;
+    }
+  }
+
 }
 
 export const storage = new DatabaseStorage();
