@@ -4477,8 +4477,30 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Serial Numbers
-  async getSerialNumbers(productId?: number, warehouseId?: number): Promise<SerialNumber[]> {
-    let query = db.select().from(serialNumbers);
+  async getSerialNumbers(productId?: number, warehouseId?: number): Promise<any[]> {
+    let query = db
+      .select({
+        id: serialNumbers.id,
+        productId: serialNumbers.productId,
+        serialNumber: serialNumbers.serialNumber,
+        status: serialNumbers.status,
+        warehouseId: serialNumbers.warehouseId,
+        orderId: serialNumbers.orderId,
+        invoiceNumber: serialNumbers.invoiceNumber,
+        clientShortName: serialNumbers.clientShortName,
+        saleDate: serialNumbers.saleDate,
+        notes: serialNumbers.notes,
+        manufacturedDate: serialNumbers.manufacturedDate,
+        createdAt: serialNumbers.createdAt,
+        updatedAt: serialNumbers.updatedAt,
+        product: {
+          id: products.id,
+          name: products.name,
+          sku: products.sku
+        }
+      })
+      .from(serialNumbers)
+      .leftJoin(products, eq(serialNumbers.productId, products.id));
     
     if (productId || warehouseId) {
       const conditions = [];

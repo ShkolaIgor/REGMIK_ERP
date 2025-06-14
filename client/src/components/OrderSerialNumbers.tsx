@@ -66,7 +66,7 @@ export function OrderSerialNumbers({
     mutationFn: (serialNumberIds: number[]) => 
       apiRequest(`/api/order-items/${orderItemId}/assign-serial-numbers`, {
         method: "POST",
-        body: JSON.stringify({ serialNumberIds })
+        body: { serialNumberIds }
       }),
     onSuccess: () => {
       toast({
