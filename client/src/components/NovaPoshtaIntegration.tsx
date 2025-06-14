@@ -330,14 +330,14 @@ export function NovaPoshtaIntegration({
 
   // Отримання відділень для обраного міста
   const { data: warehouses = [], isLoading: warehousesLoading } = useQuery<Warehouse[]>({
-    queryKey: ["/api/nova-poshta/warehouses", selectedCity?.ref],
+    queryKey: ["/api/nova-poshta/warehouses", selectedCity?.Ref],
     queryFn: async () => {
-      if (!selectedCity?.ref) throw new Error('No city selected');
-      const response = await fetch(`/api/nova-poshta/warehouses/${selectedCity.ref}`);
+      if (!selectedCity?.Ref) throw new Error('No city selected');
+      const response = await fetch(`/api/nova-poshta/warehouses/${selectedCity.Ref}`);
       if (!response.ok) throw new Error('Failed to fetch warehouses');
       return response.json();
     },
-    enabled: !!selectedCity?.ref,
+    enabled: !!selectedCity?.Ref,
   });
 
   // Фільтрація відділень по номеру або адресі з пріоритизацією точних співпадінь
@@ -391,8 +391,8 @@ export function NovaPoshtaIntegration({
     const warehouse = warehouses.find(w => w.ref === warehouseRef);
     if (warehouse && selectedCity) {
       setSelectedWarehouse(warehouse);
-      const fullAddress = `${selectedCity.name}, ${warehouse.description}`;
-      onAddressSelect?.(fullAddress, selectedCity.ref, warehouse.ref);
+      const fullAddress = `${selectedCity.Description}, ${warehouse.description}`;
+      onAddressSelect?.(fullAddress, selectedCity.Ref, warehouse.ref);
     }
   };
 
@@ -469,15 +469,15 @@ export function NovaPoshtaIntegration({
                   <div className="mt-2 border border-gray-200 rounded-md bg-white max-h-48 overflow-y-auto">
                     {filteredCities.map((city) => (
                       <div
-                        key={city.ref}
+                        key={city.Ref}
                         className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
                         onClick={() => {
                           setSelectedCity(city);
-                          setCityQuery(city.name);
+                          setCityQuery(city.Description);
                         }}
                       >
-                        <div className="font-medium text-sm">{city.name}</div>
-                        <div className="text-xs text-gray-500">{city.area}</div>
+                        <div className="font-medium text-sm">{city.Description}</div>
+                        <div className="text-xs text-gray-500">{city.AreaDescription}</div>
                       </div>
                     ))}
                   </div>
@@ -495,7 +495,7 @@ export function NovaPoshtaIntegration({
           {selectedCity && (
             <div>
               <label className="text-sm font-medium">
-                Відділення в місті {selectedCity.name}
+                Відділення в місті {selectedCity.Description}
               </label>
               {warehousesLoading ? (
                 <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
