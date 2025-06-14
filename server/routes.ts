@@ -2798,59 +2798,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Nova Poshta API integration routes (з кешуванням)
   app.get("/api/nova-poshta/cities", async (req, res) => {
+    const { q } = req.query;
+    const searchQuery = q ? decodeURIComponent(q as string) : "";
+    console.log(`Nova Poshta cities API called with query: "${searchQuery}"`);
+    
     try {
-      const { q } = req.query;
-      const searchQuery = q ? decodeURIComponent(q as string) : "";
-      console.log(`Nova Poshta cities API called with query: "${searchQuery}"`);
-      
-      // Import pool directly for raw database access
-      const { Pool } = require('pg');
-      const dbPool = new Pool({
-        connectionString: process.env.DATABASE_URL
-      });
-      
-      let queryText: string;
-      let params: any[];
-      
-      if (!searchQuery || searchQuery.length < 2) {
-        queryText = `
-          SELECT ref, name, name_ru, area, area_ru, region, region_ru, 
-                 settlement_type, delivery_city, warehouses
-          FROM nova_poshta_cities 
-          WHERE is_active = true 
-          ORDER BY name 
-          LIMIT 50
-        `;
-        params = [];
-      } else {
-        queryText = `
-          SELECT ref, name, name_ru, area, area_ru, region, region_ru, 
-                 settlement_type, delivery_city, warehouses
-          FROM nova_poshta_cities 
-          WHERE is_active = true 
-          AND (name ILIKE $1 OR area ILIKE $2)
-          ORDER BY name 
-          LIMIT 50
-        `;
-        params = [`%${searchQuery}%`, `%${searchQuery}%`];
-      }
-      
-      const result = await dbPool.query(queryText, params);
-      const cities = result.rows.map((city: any) => ({
-        Ref: city.ref,
-        Description: city.name,
-        DescriptionRu: city.name_ru || city.name,
-        AreaDescription: city.area,
-        AreaDescriptionRu: city.area_ru || city.area,
-        RegionDescription: city.region,
-        RegionDescriptionRu: city.region_ru || city.region,
-        SettlementTypeDescription: city.settlement_type,
-        DeliveryCity: city.delivery_city,
-        Warehouses: city.warehouses?.toString() || '0'
-      }));
-      
-      await dbPool.end();
-      
+      const cities = await novaPoshtaCache.getCities(searchQuery);
       console.log(`Returning ${cities.length} cities for search: "${searchQuery}"`);
       res.json(cities);
     } catch (error) {
