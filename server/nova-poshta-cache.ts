@@ -56,6 +56,16 @@ class NovaPoshtaCache {
     await this.updateData();
   }
 
+  async updateApiKey(apiKey: string): Promise<void> {
+    // Оновлюємо API ключ у nova-poshta-api
+    novaPoshtaApi.updateApiKey(apiKey);
+  }
+
+  async syncData(): Promise<void> {
+    // Форсуємо оновлення всіх даних
+    await this.updateData();
+  }
+
   private async shouldUpdate(): Promise<boolean> {
     // Перевіряємо чи є дані в базі
     const isEmpty = await storage.isNovaPoshtaDataEmpty();
