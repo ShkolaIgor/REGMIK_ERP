@@ -6060,75 +6060,9 @@ export class DatabaseStorage implements IStorage {
 
 
 
-  async removeSerialNumberFromOrderItem(assignmentId: number): Promise<void> {
-    try {
-      // Знаходимо прив'язку
-      const [assignment] = await db.select()
-        .from(orderItemSerialNumbers)
-        .where(eq(orderItemSerialNumbers.id, assignmentId));
 
-      if (!assignment) {
-        throw new Error("Прив'язка не знайдена");
-      }
 
-      // Видаляємо прив'язку
-      await db.delete(orderItemSerialNumbers)
-        .where(eq(orderItemSerialNumbers.id, assignmentId));
 
-      // Повертаємо серійний номер у статус "available"
-      await db.update(serialNumbers)
-        .set({ status: "available" })
-        .where(eq(serialNumbers.id, assignment.serialNumberId));
-
-    } catch (error) {
-      console.error("Error removing serial number from order item:", error);
-      throw error;
-    }
-  }
-
-  async getAvailableSerialNumbersForProduct(productId: number): Promise<SerialNumber[]> {
-    return await db.select()
-      .from(serialNumbers)
-      .where(and(
-        eq(serialNumbers.productId, productId),
-        eq(serialNumbers.status, "available")
-      ))
-      .orderBy(serialNumbers.serialNumber);
-  }
-
-  async completeOrderWithSerialNumbers(orderId: number): Promise<void> {
-    try {
-      // Оновлюємо статус замовлення
-      await db.update(orders)
-        .set({ status: "completed" })
-        .where(eq(orders.id, orderId));
-
-      // Знаходимо всі серійні номери, прив'язані до цього замовлення
-      const orderItemsWithSerials = await db.select({
-        serialNumberId: orderItemSerialNumbers.serialNumberId
-      })
-      .from(orderItemSerialNumbers)
-      .leftJoin(orderItems, eq(orderItemSerialNumbers.orderItemId, orderItems.id))
-      .where(eq(orderItems.orderId, orderId));
-
-      if (orderItemsWithSerials.length > 0) {
-        const serialNumberIds = orderItemsWithSerials.map(item => item.serialNumberId);
-        
-        // Оновлюємо статус серійних номерів на "sold" та прив'язуємо до замовлення
-        await db.update(serialNumbers)
-          .set({ 
-            status: "sold",
-            orderId: orderId,
-            saleDate: new Date()
-          })
-          .where(inArray(serialNumbers.id, serialNumberIds));
-      }
-
-    } catch (error) {
-      console.error("Error completing order with serial numbers:", error);
-      throw error;
-    }
-  }
 
   // ================================
   // МЕТОДИ ДЛЯ ЗАПЧАСТИН РЕМОНТУ
@@ -6389,39 +6323,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async removeSerialNumberFromOrderItem(assignmentId: number): Promise<void> {
-    try {
-      // Отримуємо інформацію про прив'язку
-      const [assignment] = await this.db
-        .select({
-          serialNumberId: orderItemSerialNumbers.serialNumberId
-        })
-        .from(orderItemSerialNumbers)
-        .where(eq(orderItemSerialNumbers.id, assignmentId));
 
-      if (!assignment) {
-        throw new Error("Assignment not found");
-      }
-
-      // Видаляємо прив'язку
-      await this.db
-        .delete(orderItemSerialNumbers)
-        .where(eq(orderItemSerialNumbers.id, assignmentId));
-
-      // Повертаємо серійний номер у статус "available"
-      await this.db
-        .update(serialNumbers)
-        .set({ 
-          status: "available",
-          updatedAt: new Date()
-        })
-        .where(eq(serialNumbers.id, assignment.serialNumberId));
-
-    } catch (error) {
-      console.error('Error removing serial number from order item:', error);
-      throw error;
-    }
-  }
 
   async getAvailableSerialNumbersForProduct(productId: number): Promise<any[]> {
     try {
