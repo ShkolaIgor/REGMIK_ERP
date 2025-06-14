@@ -5,7 +5,13 @@ import { novaPoshtaCache } from "./nova-poshta-cache";
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Налаштування для правильної обробки UTF-8
+app.use((req, res, next) => {
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();
