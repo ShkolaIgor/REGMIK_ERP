@@ -6224,6 +6224,10 @@ export class DatabaseStorage implements IStorage {
 
   async checkSerialNumberDuplicates(serialNumbersToCheck: string[]): Promise<string[]> {
     try {
+      if (serialNumbersToCheck.length === 0) {
+        return [];
+      }
+
       const existingSerials = await this.db
         .select({ serialNumber: serialNumbers.serialNumber })
         .from(serialNumbers)

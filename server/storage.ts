@@ -460,6 +460,7 @@ export interface IStorage {
   reserveSerialNumber(id: number, orderId: number): Promise<boolean>;
   releaseSerialNumber(id: number): Promise<boolean>;
   markSerialNumberAsSold(id: number): Promise<boolean>;
+  checkSerialNumberDuplicates(serialNumbers: string[]): Promise<string[]>;
 
   // Production Planning
   getProductionPlans(): Promise<any[]>;
@@ -1492,6 +1493,20 @@ export class MemStorage implements IStorage {
     serialNumber.status = 'sold';
     this.serialNumbers.set(id, serialNumber);
     return true;
+  }
+
+  async checkSerialNumberDuplicates(serialNumbersToCheck: string[]): Promise<string[]> {
+    const allSerialNumbers = Array.from(this.serialNumbers.values());
+    const duplicates: string[] = [];
+    
+    for (const serialNumberToCheck of serialNumbersToCheck) {
+      const exists = allSerialNumbers.some(sn => sn.serialNumber === serialNumberToCheck);
+      if (exists) {
+        duplicates.push(serialNumberToCheck);
+      }
+    }
+    
+    return duplicates;
   }
 
   // Production Planning методи
