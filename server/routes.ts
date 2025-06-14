@@ -6338,6 +6338,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Перевірити дублікати серійних номерів
+  app.post("/api/serial-numbers/check-duplicates", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { serialNumbers } = req.body;
+
+      if (!Array.isArray(serialNumbers) || serialNumbers.length === 0) {
+        return res.json({ duplicates: [] });
+      }
+
+      const duplicates = await storage.checkSerialNumberDuplicates(serialNumbers);
+      res.json({ duplicates });
+    } catch (error) {
+      console.error("Error checking duplicates:", error);
+      res.status(500).json({ error: "Помилка перевірки дублікатів" });
+    }
+  });
+
   // Редагувати серійний номер
   app.put("/api/serial-numbers/:id", isSimpleAuthenticated, async (req, res) => {
     try {

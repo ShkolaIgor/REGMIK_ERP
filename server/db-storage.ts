@@ -6127,44 +6127,55 @@ export class DatabaseStorage implements IStorage {
     try {
       const createdSerials: any[] = [];
       const serialNumberIds: number[] = [];
+      const duplicates: string[] = [];
 
-      // Створюємо серійні номери та отримуємо їх ID
+      // Спочатку перевіряємо всі серійні номери на дублювання
       for (const serial of serialNumbersList) {
-        // Перевіряємо, чи не існує вже такий номер для цього продукту
         const existing = await this.db
           .select()
           .from(serialNumbers)
-          .where(
-            and(
-              eq(serialNumbers.productId, productId),
-              eq(serialNumbers.serialNumber, serial)
-            )
-          )
+          .where(eq(serialNumbers.serialNumber, serial))
           .limit(1);
 
-        let serialId: number;
-
         if (existing.length > 0) {
-          // Якщо номер вже існує, використовуємо його
-          serialId = existing[0].id;
+          // Перевіряємо, чи це той самий продукт
+          if (existing[0].productId === productId) {
+            // Якщо це той самий продукт, можемо використати існуючий номер
+            serialNumberIds.push(existing[0].id);
+          } else {
+            // Якщо це інший продукт, це дублювання
+            duplicates.push(serial);
+          }
         } else {
-          // Створюємо новий серійний номер
-          const [newSerial] = await this.db
-            .insert(serialNumbers)
-            .values({
-              productId,
-              serialNumber: serial,
-              status: "reserved",
-              createdAt: new Date(),
-              updatedAt: new Date()
-            })
-            .returning({ id: serialNumbers.id });
+          // Серійний номер не існує, можемо створити новий
+          try {
+            const [newSerial] = await this.db
+              .insert(serialNumbers)
+              .values({
+                productId,
+                serialNumber: serial,
+                status: "reserved",
+                createdAt: new Date(),
+                updatedAt: new Date()
+              })
+              .returning({ id: serialNumbers.id });
 
-          serialId = newSerial.id;
-          createdSerials.push(newSerial);
+            serialNumberIds.push(newSerial.id);
+            createdSerials.push(newSerial);
+          } catch (error: any) {
+            if (error.code === '23505') {
+              // Дублювання ключа - додаємо до списку дублікатів
+              duplicates.push(serial);
+            } else {
+              throw error;
+            }
+          }
         }
+      }
 
-        serialNumberIds.push(serialId);
+      // Якщо є дублікати, повертаємо помилку з детальною інформацією
+      if (duplicates.length > 0) {
+        throw new Error(`Серійні номери вже використовуються: ${duplicates.join(', ')}. Будь ласка, використайте інші номери.`);
       }
 
       // Перевіряємо наявні прив'язки для цієї позиції замовлення
@@ -6207,6 +6218,20 @@ export class DatabaseStorage implements IStorage {
 
     } catch (error) {
       console.error('Error creating and assigning serial numbers:', error);
+      throw error;
+    }
+  }
+
+  async checkSerialNumberDuplicates(serialNumbersToCheck: string[]): Promise<string[]> {
+    try {
+      const existingSerials = await this.db
+        .select({ serialNumber: serialNumbers.serialNumber })
+        .from(serialNumbers)
+        .where(inArray(serialNumbers.serialNumber, serialNumbersToCheck));
+
+      return existingSerials.map(s => s.serialNumber);
+    } catch (error) {
+      console.error('Error checking serial number duplicates:', error);
       throw error;
     }
   }

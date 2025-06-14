@@ -209,7 +209,27 @@ export function InlineSerialNumbers({
     return serials;
   };
 
-  const handleCreateAndAssign = () => {
+  // Додаємо запит для перевірки існуючих серійних номерів
+  const { data: existingSerials = [] } = useQuery({
+    queryKey: ["/api/serial-numbers/check"],
+    queryFn: () => apiRequest(`/api/serial-numbers/all`),
+    enabled: false // Викликаємо вручну
+  });
+
+  const checkForDuplicates = async (serials: string[]): Promise<string[]> => {
+    try {
+      const response = await apiRequest(`/api/serial-numbers/check-duplicates`, {
+        method: "POST",
+        body: { serialNumbers: serials }
+      });
+      return response.duplicates || [];
+    } catch (error) {
+      console.error('Error checking duplicates:', error);
+      return [];
+    }
+  };
+
+  const handleCreateAndAssign = async () => {
     if (!serialInput.trim()) {
       toast({
         title: "Помилка",
@@ -230,8 +250,30 @@ export function InlineSerialNumbers({
       return;
     }
 
+    // Перевіряємо на дублікати перед відправкою
     setIsGenerating(true);
-    createAndAssignMutation.mutate(parsedSerials);
+    try {
+      const duplicates = await checkForDuplicates(parsedSerials);
+      
+      if (duplicates.length > 0) {
+        setIsGenerating(false);
+        toast({
+          title: "Знайдено дублікати",
+          description: `Серійні номери вже використовуються: ${duplicates.join(', ')}. Використайте інші номери.`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      createAndAssignMutation.mutate(parsedSerials);
+    } catch (error) {
+      setIsGenerating(false);
+      toast({
+        title: "Помилка",
+        description: "Не вдалося перевірити серійні номери",
+        variant: "destructive"
+      });
+    }
   };
 
   const unassignedCount = quantity - assignedSerials.length;
