@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Edit, Trash2, Star, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -203,6 +204,9 @@ export default function Carriers() {
       serviceType: carrier.serviceType || "",
       rating: carrier.rating || 5,
       apiKey: carrier.apiKey || "",
+      syncTime: carrier.syncTime || "",
+      syncInterval: carrier.syncInterval || 24,
+      autoSync: carrier.autoSync || false,
     });
     setIsDialogOpen(true);
   };
@@ -330,6 +334,53 @@ export default function Carriers() {
                     onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
                   />
                 </div>
+                
+                {/* Налаштування синхронізації - показувати тільки якщо введено API ключ */}
+                {formData.apiKey && (
+                  <>
+                    <div className="col-span-2">
+                      <div className="border-t pt-4">
+                        <h4 className="text-sm font-medium mb-3">Налаштування синхронізації</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="syncTime">Час синхронізації</Label>
+                            <Input
+                              id="syncTime"
+                              type="time"
+                              placeholder="09:00"
+                              value={formData.syncTime}
+                              onChange={(e) => setFormData({ ...formData, syncTime: e.target.value })}
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Щоденний час автоматичної синхронізації</p>
+                          </div>
+                          <div>
+                            <Label htmlFor="syncInterval">Інтервал оновлення (годин)</Label>
+                            <Input
+                              id="syncInterval"
+                              type="number"
+                              min="1"
+                              max="168"
+                              value={formData.syncInterval}
+                              onChange={(e) => setFormData({ ...formData, syncInterval: Number(e.target.value) })}
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Як часто оновлювати дані (1-168 годин)</p>
+                          </div>
+                        </div>
+                        <div className="mt-4 flex items-center space-x-2">
+                          <Checkbox
+                            id="autoSync"
+                            checked={formData.autoSync}
+                            onCheckedChange={(checked) => setFormData({ ...formData, autoSync: checked as boolean })}
+                          />
+                          <Label htmlFor="autoSync" className="text-sm">
+                            Автоматична синхронізація
+                          </Label>
+                          <p className="text-xs text-gray-500">Включити регулярне оновлення даних</p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
               <div>
                 <Label htmlFor="address">Адреса</Label>
