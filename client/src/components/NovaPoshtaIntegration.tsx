@@ -14,9 +14,16 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, MapPin, Package, Truck, FileText } from "lucide-react";
 
 interface City {
-  ref: string;
-  name: string;
-  area: string;
+  Ref: string;
+  Description: string;
+  DescriptionRu: string;
+  AreaDescription: string;
+  AreaDescriptionRu: string;
+  RegionDescription: string;
+  RegionDescriptionRu: string;
+  SettlementTypeDescription: string;
+  DeliveryCity: string;
+  Warehouses: string;
 }
 
 interface Warehouse {
@@ -431,7 +438,7 @@ export function NovaPoshtaIntegration({
             <label className="text-sm font-medium">Пошук міста</label>
             {selectedCity ? (
               <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md flex items-center justify-between">
-                <span className="text-green-800">Обрано: {selectedCity.name} ({selectedCity.area})</span>
+                <span className="text-green-800">Обрано: {selectedCity.Description} ({selectedCity.AreaDescription})</span>
                 <Button 
                   variant="outline" 
                   size="sm"
