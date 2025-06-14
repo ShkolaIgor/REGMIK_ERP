@@ -236,6 +236,84 @@ export function InlineSerialNumbers({
   const isComplete = assignedSerials.length >= quantity;
   const hasExcess = assignedSerials.length > quantity;
 
+  // Функція для групування послідовних серійних номерів у діапазони
+  const formatSerialNumbers = (serials: AssignedSerialNumber[]): string[] => {
+    if (serials.length === 0) return [];
+    
+    // Групуємо серійні номери за префіксом та довжиною
+    const groups: { [key: string]: string[] } = {};
+    
+    serials.forEach(s => {
+      const serial = s.serialNumber.serialNumber;
+      
+      // Визначаємо групу за довжиною та форматом
+      const isNumeric = /^\d+$/.test(serial);
+      const key = isNumeric ? `numeric_${serial.length}` : `text_${serial.length}`;
+      
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(serial);
+    });
+
+    const allRanges: string[] = [];
+
+    // Обробляємо кожну групу окремо
+    Object.values(groups).forEach(groupSerials => {
+      // Сортуємо серійні номери в групі
+      const sorted = groupSerials.sort((a, b) => {
+        const numA = parseInt(a);
+        const numB = parseInt(b);
+        
+        if (!isNaN(numA) && !isNaN(numB)) {
+          return numA - numB;
+        }
+        
+        return a.localeCompare(b);
+      });
+
+      const ranges: string[] = [];
+      let start = sorted[0];
+      let end = start;
+      
+      for (let i = 1; i < sorted.length; i++) {
+        const current = sorted[i];
+        const prevNum = parseInt(end);
+        const currentNum = parseInt(current);
+        
+        // Якщо серійні номери числові та послідовні, і мають однакову довжину
+        if (!isNaN(prevNum) && !isNaN(currentNum) && 
+            currentNum === prevNum + 1 && 
+            current.length === end.length) {
+          end = current;
+        } else {
+          // Додаємо попередній діапазон
+          if (start === end) {
+            ranges.push(start);
+          } else {
+            ranges.push(`${start}-${end}`);
+          }
+          
+          start = current;
+          end = current;
+        }
+      }
+      
+      // Додаємо останній діапазон
+      if (start === end) {
+        ranges.push(start);
+      } else {
+        ranges.push(`${start}-${end}`);
+      }
+      
+      allRanges.push(...ranges);
+    });
+    
+    return allRanges.sort();
+  };
+
+  const formattedSerials = formatSerialNumbers(assignedSerials);
+
   // Функції для обробки редагування та видалення
   const handleEdit = (assigned: AssignedSerialNumber) => {
     setEditingSerial({
@@ -275,39 +353,29 @@ export function InlineSerialNumbers({
 
       {assignedSerials.length > 0 && (
         <div className="flex flex-wrap gap-1 max-w-md">
-          {assignedSerials.slice(0, 3).map((assigned: AssignedSerialNumber) => (
-            <div key={assigned.id} className="group relative">
-              <Badge variant="outline" className="text-xs pr-6">
-                {assigned.serialNumber.serialNumber}
-                <div className="absolute right-0 top-0 h-full flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-4 w-4 p-0 hover:bg-blue-100"
-                    onClick={() => handleEdit(assigned)}
-                  >
-                    <Edit2 className="h-3 w-3" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-4 w-4 p-0 hover:bg-red-100"
-                    onClick={() => handleRemove(assigned.id)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              </Badge>
-            </div>
+          {formattedSerials.slice(0, 3).map((range, index) => (
+            <Badge key={index} variant="outline" className="text-xs font-mono">
+              {range}
+            </Badge>
           ))}
-          {assignedSerials.length > 3 && (
+          {formattedSerials.length > 3 && (
             <Button 
               variant="outline" 
               size="sm" 
               className="h-6 px-2 text-xs"
               onClick={() => setShowEditDialog(true)}
             >
-              +{assignedSerials.length - 3} ще
+              +{formattedSerials.length - 3} ще
+            </Button>
+          )}
+          {assignedSerials.length > 0 && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 px-2 text-xs hover:bg-gray-100"
+              onClick={() => setShowEditDialog(true)}
+            >
+              <Edit2 className="h-3 w-3" />
             </Button>
           )}
         </div>
