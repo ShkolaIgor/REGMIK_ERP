@@ -8,12 +8,8 @@ class NovaPoshtaCache {
   private readonly CACHE_TTL = 24 * 60 * 60 * 1000;
 
   async getCities(query?: string): Promise<any[]> {
-    // Перевіряємо чи потрібно оновити дані
-    if (await this.shouldUpdate()) {
-      await this.updateData();
-    }
-
-    // Повертаємо результати з бази даних
+    // Відключаємо автоматичне оновлення для швидкої відповіді
+    // Повертаємо результати безпосередньо з бази даних
     console.log(`Пошук міст: "${query}"`);
     const cities = await storage.getNovaPoshtaCities(query, 50);
     console.log(`Знайдено міст: ${cities.length}`);
