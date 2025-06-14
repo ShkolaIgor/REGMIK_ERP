@@ -36,8 +36,14 @@ if (process.env.DATABASE_URL) {
 export const pool = new Pool(poolConfig);
 
 // Забезпечуємо UTF-8 кодування для всіх підключень
-pool.on('connect', (client) => {
-  client.query('SET client_encoding TO "UTF8"');
+pool.on('connect', async (client) => {
+  try {
+    await client.query('SET client_encoding TO "UTF8"');
+    await client.query('SET standard_conforming_strings TO on');
+    console.log('Database connection configured for UTF-8');
+  } catch (error) {
+    console.error('Error setting UTF-8 encoding:', error);
+  }
 });
 
 export const db = drizzle(pool, { schema });
