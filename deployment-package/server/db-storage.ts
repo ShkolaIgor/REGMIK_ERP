@@ -6475,22 +6475,45 @@ export class DatabaseStorage implements IStorage {
         return transformedCities;
       }
 
-      // Use optimized SQL with proper indexing for fast search - без ліміту для повного пошуку
+      // Use binary-compatible search for SQL_ASCII encoding
       const searchPattern = `%${query}%`;
       const queryLower = query.toLowerCase();
-      const result = await pool.query(`
+      
+      // Get all cities and filter in JavaScript to bypass SQL_ASCII encoding issues
+      const allCitiesResult = await pool.query(`
         SELECT ref, name, area, region
-        FROM nova_poshta_cities 
-        WHERE (name ILIKE $1 OR area ILIKE $1)
-        ORDER BY 
-          CASE 
-            WHEN LOWER(name) = $3 THEN 1
-            WHEN name ILIKE $2 THEN 3
-            WHEN name ILIKE $1 THEN 5
-            ELSE 7
-          END,
-          LENGTH(name) ASC
-      `, [searchPattern, `${query}%`, queryLower]);
+        FROM nova_poshta_cities
+        ORDER BY LENGTH(name) ASC
+      `);
+      
+      // Filter cities in JavaScript with proper Unicode support
+      const filteredCities = allCitiesResult.rows.filter((city: any) => {
+        const cityName = city.name?.toLowerCase() || '';
+        const cityArea = city.area?.toLowerCase() || '';
+        const searchLower = query.toLowerCase();
+        
+        return cityName.includes(searchLower) || cityArea.includes(searchLower);
+      });
+      
+      // Sort results with priority for exact matches
+      filteredCities.sort((a: any, b: any) => {
+        const aName = a.name?.toLowerCase() || '';
+        const bName = b.name?.toLowerCase() || '';
+        const searchLower = queryLower;
+        
+        // Exact match first
+        if (aName === searchLower && bName !== searchLower) return -1;
+        if (bName === searchLower && aName !== searchLower) return 1;
+        
+        // Starts with search term
+        if (aName.startsWith(searchLower) && !bName.startsWith(searchLower)) return -1;
+        if (bName.startsWith(searchLower) && !aName.startsWith(searchLower)) return 1;
+        
+        // Shorter names first
+        return aName.length - bName.length;
+      });
+      
+      const result = { rows: filteredCities };
 
       const transformedCities = result.rows.map((city: any) => ({
         Ref: city.ref,

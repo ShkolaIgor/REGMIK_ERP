@@ -29,9 +29,10 @@ echo "Applying database schema fixes..."
 # Apply the compatible SQL script
 sudo -u postgres psql -d "regmik-erp" -f fix-production-encoding-compatible.sql
 
-echo "Updating database connection handler..."
-# Copy the updated db.ts file
+echo "Updating database connection handler and search logic..."
+# Copy the updated files
 cp deployment-package/server/db.ts "$APP_DIR/server/"
+cp deployment-package/server/db-storage.ts "$APP_DIR/server/"
 
 echo "Restarting application service..."
 systemctl stop "$SERVICE_NAME"
