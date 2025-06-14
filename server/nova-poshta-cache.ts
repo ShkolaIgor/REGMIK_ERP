@@ -46,6 +46,15 @@ class NovaPoshtaCache {
     };
   }
 
+  getCacheStats() {
+    return {
+      citiesCount: 0, // Тепер працюємо тільки з БД
+      warehousesCount: 0, // Тепер працюємо тільки з БД
+      lastUpdate: this.lastUpdate,
+      cacheValid: true // Завжди валідний, бо працюємо з БД
+    };
+  }
+
   async clearCache(): Promise<void> {
     // Очищення даних здійснюється в базі даних при оновленні
     this.lastUpdate = null;
