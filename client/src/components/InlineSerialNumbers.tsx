@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -39,6 +40,7 @@ export function InlineSerialNumbers({
   const [showDialog, setShowDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [serialInput, setSerialInput] = useState("");
+  const [editSerialInput, setEditSerialInput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingSerial, setEditingSerial] = useState<{ id: number; serialNumber: string } | null>(null);
   const { toast } = useToast();
@@ -338,6 +340,14 @@ export function InlineSerialNumbers({
     }
   };
 
+  // Оновлюємо editSerialInput коли відкривається діалог редагування
+  const handleEditDialogOpen = (open: boolean) => {
+    if (open) {
+      setEditSerialInput(assignedSerials.map((s: AssignedSerialNumber) => s.serialNumber.serialNumber).join('\n'));
+    }
+    setShowEditDialog(open);
+  };
+
   return (
     <div className="flex items-center gap-2">
       <div className="flex items-center gap-1">
@@ -481,8 +491,8 @@ SN001, SN002, SN003
       )}
 
       {/* Діалог для редагування серійних номерів */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-4xl">
+      <Dialog open={showEditDialog} onOpenChange={handleEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               Управління серійними номерами для {productName}
@@ -492,99 +502,110 @@ SN001, SN002, SN003
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
-                Кількість: {assignedSerials.length} / {quantity}
+                Прив'язано: {assignedSerials.length} / {quantity}
                 {hasExcess && (
                   <span className="text-red-600 ml-2">
                     (Перевищено на {assignedSerials.length - quantity})
                   </span>
                 )}
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowDialog(true)}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Додати ще
-              </Button>
             </div>
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Серійний номер</TableHead>
-                  <TableHead>Статус</TableHead>
-                  <TableHead>Дата прив'язки</TableHead>
-                  <TableHead className="text-right">Дії</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {assignedSerials.map((assigned: AssignedSerialNumber) => (
-                  <TableRow key={assigned.id}>
-                    <TableCell className="font-mono">
-                      {editingSerial?.id === assigned.serialNumber.id ? (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            value={editingSerial.serialNumber}
-                            onChange={(e) => setEditingSerial({
-                              ...editingSerial,
-                              serialNumber: e.target.value
-                            })}
-                            className="font-mono"
-                          />
-                          <Button size="sm" onClick={handleEditSave}>
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => setEditingSerial(null)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        assigned.serialNumber.serialNumber
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {assigned.serialNumber.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(assigned.assignedAt).toLocaleDateString('uk-UA')}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(assigned)}
-                          disabled={editingSerial?.id === assigned.serialNumber.id}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemove(assigned.id)}
-                          disabled={removeMutation.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            {/* Форма редагування серійних номерів */}
+            <div className="space-y-4 p-4 border rounded-lg">
+              <Label htmlFor="editSerials">
+                Редагувати серійні номери (один на рядок або через кому)
+              </Label>
+              <Textarea
+                id="editSerials"
+                placeholder={`Введіть серійні номери:\n001233-001240\n0001, 0004-0200, 0300\nABC123\nDEF456-DEF460`}
+                value={editSerialInput}
+                onChange={(e) => {
+                  setEditSerialInput(e.target.value);
+                }}
+                rows={8}
+                className="font-mono text-sm"
+              />
+              
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => {
+                    const newSerials = parseSerialInput(editSerialInput);
+                    const currentSerials = assignedSerials.map((s: AssignedSerialNumber) => s.serialNumber.serialNumber);
+                    
+                    // Знаходимо серійні номери для видалення
+                    const toRemove = assignedSerials.filter((assigned: AssignedSerialNumber) => 
+                      !newSerials.includes(assigned.serialNumber.serialNumber)
+                    );
+                    
+                    // Знаходимо нові серійні номери для додавання
+                    const toAdd = newSerials.filter(serial => 
+                      !currentSerials.includes(serial)
+                    );
 
-            {assignedSerials.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                Серійні номери не прив'язані
+                    // Виконуємо операції послідовно
+                    const executeUpdates = async () => {
+                      try {
+                        // Спочатку видаляємо
+                        for (const assigned of toRemove) {
+                          await removeMutation.mutateAsync(assigned.id);
+                        }
+                        
+                        // Потім додаємо нові
+                        if (toAdd.length > 0) {
+                          await createAndAssignMutation.mutateAsync(toAdd);
+                        }
+                        
+                        setShowEditDialog(false);
+                        toast({
+                          title: "Успіх",
+                          description: "Серійні номери оновлено"
+                        });
+                      } catch (error) {
+                        console.error("Error updating serial numbers:", error);
+                        toast({
+                          title: "Помилка",
+                          description: "Не вдалося оновити серійні номери",
+                          variant: "destructive"
+                        });
+                      }
+                    };
+
+                    executeUpdates();
+                  }}
+                  disabled={createAndAssignMutation.isPending || removeMutation.isPending}
+                >
+                  {createAndAssignMutation.isPending || removeMutation.isPending ? (
+                    "Збереження..."
+                  ) : (
+                    "Зберегти зміни"
+                  )}
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowEditDialog(false)}
+                >
+                  Скасувати
+                </Button>
               </div>
-            )}
+            </div>
+
+            {/* Поточні серійні номери */}
+            <div className="space-y-2">
+              <Label>Поточні серійні номери:</Label>
+              <div className="flex flex-wrap gap-1 p-3 bg-gray-50 rounded border min-h-[60px]">
+                {formattedSerials.length > 0 ? (
+                  formattedSerials.map((range, index) => (
+                    <Badge key={index} variant="outline" className="text-xs font-mono">
+                      {range}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-muted-foreground text-sm">Серійні номери не прив'язані</span>
+                )}
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
