@@ -68,14 +68,16 @@ export function OrderSerialNumbers({
         method: "POST",
         body: { serialNumberIds }
       }),
-    onSuccess: () => {
-      console.log("Assignment successful, closing dialog");
+    onSuccess: (data) => {
+      console.log("Assignment successful! Response:", data);
+      console.log("Closing dialog and clearing state");
       toast({
         title: "Успіх",
         description: "Серійні номери успішно прив'язані"
       });
       setSelectedSerials([]);
       setShowAssignDialog(false);
+      console.log("Dialog should be closed now");
       // Оновлюємо дані
       refetchAssigned();
       queryClient.invalidateQueries({ 

@@ -6403,6 +6403,12 @@ export class DatabaseStorage implements IStorage {
         })
         .where(inArray(serialNumbers.id, serialNumberIds));
 
+      return {
+        success: true,
+        assignedCount: newAssignments.length,
+        message: `Successfully assigned ${newAssignments.length} serial numbers`
+      };
+
     } catch (error) {
       console.error('Error assigning serial numbers to order item:', error);
       throw error;

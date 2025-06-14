@@ -1,0 +1,184 @@
+[Error] Warning: Invalid prop `data-replit-metadata` supplied to `React.Fragment`. React.Fragment can only have `key` and `children` props.
+Orders@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/pages/orders.tsx:71:51
+Route@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:323:20
+Switch@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:379:25
+div
+main
+div
+Layout@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/components/Layout.tsx:150:34
+Router@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/App.tsx:84:49
+TooltipProviderProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js:38:52
+TooltipProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js:67:12
+QueryClientProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js:2805:9
+App
+	printWarning (react_jsx-dev-runtime.js:64)
+	error (react_jsx-dev-runtime.js:48)
+	validateFragmentProps (react_jsx-dev-runtime.js:796)
+	jsxWithValidation (react_jsx-dev-runtime.js:874)
+	map
+	Orders (orders.tsx:2955:167)
+	renderWithHooks (chunk-RPCDYKBN.js:11548)
+	updateFunctionComponent (chunk-RPCDYKBN.js:14582)
+	beginWork$1 (chunk-RPCDYKBN.js:19753)
+	performUnitOfWork (chunk-RPCDYKBN.js:19198)
+	workLoopSync (chunk-RPCDYKBN.js:19137)
+	renderRootSync (chunk-RPCDYKBN.js:19116)
+	performSyncWorkOnRoot (chunk-RPCDYKBN.js:18874)
+	flushSyncCallbacks (chunk-RPCDYKBN.js:9119)
+	(anonymous function) (chunk-RPCDYKBN.js:18627)
+[Error] Warning: Connect(Droppable): Support for defaultProps will be removed from memo components in a future major release. Use JavaScript default parameters instead.
+thead
+_c3@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/components/ui/table.tsx:46:21
+table
+div
+_c@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/components/ui/table.tsx:20:20
+Provider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-beautiful-dnd.js:911:19
+App@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-beautiful-dnd.js:7428:24
+ErrorBoundary2@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-beautiful-dnd.js:1925:40
+DragDropContext@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-beautiful-dnd.js:7548:35
+div
+_c9@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/components/ui/card.tsx:114:21
+div
+_c@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/components/ui/card.tsx:20:20
+main
+div
+Orders@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/pages/orders.tsx:71:51
+Route@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:323:20
+Switch@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:379:25
+div
+main
+div
+Layout@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/components/Layout.tsx:150:34
+Router@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/App.tsx:84:49
+TooltipProviderProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js:38:52
+TooltipProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js:67:12
+QueryClientProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js:2805:9
+App
+	printWarning (chunk-RPCDYKBN.js:521)
+	error (chunk-RPCDYKBN.js:505)
+	updateMemoComponent (chunk-RPCDYKBN.js:14382)
+	beginWork$1 (chunk-RPCDYKBN.js:19753)
+	performUnitOfWork (chunk-RPCDYKBN.js:19198)
+	workLoopSync (chunk-RPCDYKBN.js:19137)
+	renderRootSync (chunk-RPCDYKBN.js:19116)
+	performSyncWorkOnRoot (chunk-RPCDYKBN.js:18874)
+	flushSyncCallbacks (chunk-RPCDYKBN.js:9119)
+	(anonymous function) (chunk-RPCDYKBN.js:18627)
+[Error] Warning: Invalid prop `data-replit-metadata` supplied to `React.Fragment`. React.Fragment can only have `key` and `children` props.
+Orders@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/pages/orders.tsx:71:51
+Route@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:323:20
+Switch@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:379:25
+div
+main
+div
+Layout@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/components/Layout.tsx:150:34
+Router@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/App.tsx:84:49
+TooltipProviderProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js:38:52
+TooltipProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js:67:12
+QueryClientProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js:2805:9
+App
+	printWarning (react_jsx-dev-runtime.js:64)
+	error (react_jsx-dev-runtime.js:48)
+	validateFragmentProps (react_jsx-dev-runtime.js:796)
+	jsxWithValidation (react_jsx-dev-runtime.js:874)
+	map
+	Orders (orders.tsx:2955:167)
+	renderWithHooks (chunk-RPCDYKBN.js:11548)
+	updateFunctionComponent (chunk-RPCDYKBN.js:14582)
+	beginWork$1 (chunk-RPCDYKBN.js:19753)
+	performUnitOfWork (chunk-RPCDYKBN.js:19198)
+	workLoopSync (chunk-RPCDYKBN.js:19137)
+	renderRootSync (chunk-RPCDYKBN.js:19116)
+	performSyncWorkOnRoot (chunk-RPCDYKBN.js:18874)
+	flushSyncCallbacks (chunk-RPCDYKBN.js:9119)
+	(anonymous function) (chunk-RPCDYKBN.js:18627)
+[Error] Warning: Invalid prop `data-replit-metadata` supplied to `React.Fragment`. React.Fragment can only have `key` and `children` props.
+Orders@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/pages/orders.tsx:71:51
+Route@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:323:20
+Switch@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:379:25
+div
+main
+div
+Layout@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/components/Layout.tsx:150:34
+Router@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/App.tsx:84:49
+TooltipProviderProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js:38:52
+TooltipProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js:67:12
+QueryClientProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js:2805:9
+App
+	printWarning (react_jsx-dev-runtime.js:64)
+	error (react_jsx-dev-runtime.js:48)
+	validateFragmentProps (react_jsx-dev-runtime.js:796)
+	jsxWithValidation (react_jsx-dev-runtime.js:874)
+	map
+	Orders (orders.tsx:2955:167)
+	renderWithHooks (chunk-RPCDYKBN.js:11548)
+	updateFunctionComponent (chunk-RPCDYKBN.js:14582)
+	beginWork$1 (chunk-RPCDYKBN.js:19753)
+	performUnitOfWork (chunk-RPCDYKBN.js:19198)
+	workLoopSync (chunk-RPCDYKBN.js:19137)
+	renderRootSync (chunk-RPCDYKBN.js:19116)
+	performConcurrentWorkOnRoot (chunk-RPCDYKBN.js:18678:98)
+	workLoop (chunk-RPCDYKBN.js:197)
+	flushWork (chunk-RPCDYKBN.js:176)
+	performWorkUntilDeadline (chunk-RPCDYKBN.js:384)
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (chunk-G4LNAP6W.js, line 337)
+[Error] Warning: Invalid prop `data-replit-metadata` supplied to `React.Fragment`. React.Fragment can only have `key` and `children` props.
+Orders@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/pages/orders.tsx:71:51
+Route@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:323:20
+Switch@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:379:25
+div
+main
+div
+Layout@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/components/Layout.tsx:150:34
+Router@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/App.tsx:84:49
+TooltipProviderProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js:38:52
+TooltipProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js:67:12
+QueryClientProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js:2805:9
+App
+	printWarning (react_jsx-dev-runtime.js:64)
+	error (react_jsx-dev-runtime.js:48)
+	validateFragmentProps (react_jsx-dev-runtime.js:796)
+	jsxWithValidation (react_jsx-dev-runtime.js:874)
+	map
+	Orders (orders.tsx:2955:167)
+	renderWithHooks (chunk-RPCDYKBN.js:11548)
+	updateFunctionComponent (chunk-RPCDYKBN.js:14582)
+	beginWork$1 (chunk-RPCDYKBN.js:19753)
+	performUnitOfWork (chunk-RPCDYKBN.js:19198)
+	workLoopSync (chunk-RPCDYKBN.js:19137)
+	renderRootSync (chunk-RPCDYKBN.js:19116)
+	performConcurrentWorkOnRoot (chunk-RPCDYKBN.js:18678:98)
+	workLoop (chunk-RPCDYKBN.js:197)
+	flushWork (chunk-RPCDYKBN.js:176)
+	performWorkUntilDeadline (chunk-RPCDYKBN.js:384)
+[Log] Starting assignment process – {selectedSerials: [14, 13], showAssignDialog: true} (OrderSerialNumbers.tsx, line 112)
+[Log] Calling mutation with serials: – [14, 13] (2) (OrderSerialNumbers.tsx, line 121)
+[Error] Warning: Invalid prop `data-replit-metadata` supplied to `React.Fragment`. React.Fragment can only have `key` and `children` props.
+Orders@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/pages/orders.tsx:71:51
+Route@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:323:20
+Switch@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:379:25
+div
+main
+div
+Layout@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/components/Layout.tsx:150:34
+Router@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/App.tsx:84:49
+TooltipProviderProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js:38:52
+TooltipProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js:67:12
+QueryClientProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js:2805:9
+App
+	printWarning (react_jsx-dev-runtime.js:64)
+	error (react_jsx-dev-runtime.js:48)
+	validateFragmentProps (react_jsx-dev-runtime.js:796)
+	jsxWithValidation (react_jsx-dev-runtime.js:874)
+	map
+	Orders (orders.tsx:2955:167)
+	renderWithHooks (chunk-RPCDYKBN.js:11548)
+	updateFunctionComponent (chunk-RPCDYKBN.js:14582)
+	beginWork$1 (chunk-RPCDYKBN.js:19753)
+	performUnitOfWork (chunk-RPCDYKBN.js:19198)
+	workLoopSync (chunk-RPCDYKBN.js:19137)
+	renderRootSync (chunk-RPCDYKBN.js:19116)
+	performConcurrentWorkOnRoot (chunk-RPCDYKBN.js:18678:98)
+	workLoop (chunk-RPCDYKBN.js:197)
+	flushWork (chunk-RPCDYKBN.js:176)
+	performWorkUntilDeadline (chunk-RPCDYKBN.js:384)
