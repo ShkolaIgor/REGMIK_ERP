@@ -1,5 +1,5 @@
 import { eq, sql, desc, and, gte, lte, isNull, ne, or, not, inArray, ilike } from "drizzle-orm";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { IStorage } from "./storage";
 import {
   users, localUsers, roles, systemModules, userLoginHistory, categories, warehouses, units, products, inventory, orders, orderItems, orderStatuses,
@@ -6564,51 +6564,51 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`Пошук міст Нової Пошти для запиту: "${query}"`);
       
-      // Use a simplified approach without complex Drizzle queries
+      let results: any[] = [];
+      
       if (!query || query.length < 2) {
-        const results = await this.db
-          .select()
-          .from(novaPoshtaCities)
-          .where(eq(novaPoshtaCities.isActive, true))
-          .limit(limit);
-        
-        console.log(`Повернуто ${results.length} міст без фільтрації`);
-        return results.map((city: any) => ({
-          Ref: city.ref,
-          Description: city.name,
-          DescriptionRu: city.nameRu || city.name,
-          AreaDescription: city.area,
-          AreaDescriptionRu: city.areaRu || city.area,
-          RegionDescription: city.region,
-          RegionDescriptionRu: city.regionRu || city.region
-        }));
+        // Return first 50 cities without filtering
+        try {
+          const client = await pool.connect();
+          const queryResult = await client.query(
+            'SELECT * FROM nova_poshta_cities WHERE is_active = true ORDER BY name LIMIT $1',
+            [limit]
+          );
+          results = queryResult.rows;
+          client.release();
+        } catch (err) {
+          console.error('Database query error:', err);
+          return [];
+        }
+      } else {
+        // Search cities by name or area
+        try {
+          const client = await pool.connect();
+          const searchPattern = `%${query}%`;
+          const queryResult = await client.query(
+            'SELECT * FROM nova_poshta_cities WHERE is_active = true AND (name ILIKE $1 OR area ILIKE $2) ORDER BY name LIMIT $3',
+            [searchPattern, searchPattern, limit]
+          );
+          results = queryResult.rows;
+          client.release();
+        } catch (err) {
+          console.error('Database search error:', err);
+          return [];
+        }
       }
-
-      // For search, use a basic LIKE comparison with simple structure
-      const searchPattern = `%${query}%`;
-      const results = await this.db
-        .select()
-        .from(novaPoshtaCities)
-        .where(
-          and(
-            eq(novaPoshtaCities.isActive, true),
-            sql`(name ILIKE ${searchPattern} OR area ILIKE ${searchPattern})`
-          )
-        )
-        .limit(limit);
 
       console.log(`Знайдено ${results.length} міст для запиту: "${query}"`);
       
       return results.map((city: any) => ({
         Ref: city.ref,
         Description: city.name,
-        DescriptionRu: city.nameRu || city.name,
+        DescriptionRu: city.name_ru || city.name,
         AreaDescription: city.area,
-        AreaDescriptionRu: city.areaRu || city.area,
+        AreaDescriptionRu: city.area_ru || city.area,
         RegionDescription: city.region,
-        RegionDescriptionRu: city.regionRu || city.region,
-        SettlementTypeDescription: city.settlementType,
-        DeliveryCity: city.deliveryCity,
+        RegionDescriptionRu: city.region_ru || city.region,
+        SettlementTypeDescription: city.settlement_type,
+        DeliveryCity: city.delivery_city,
         Warehouses: city.warehouses?.toString() || '0'
       }));
     } catch (error) {
