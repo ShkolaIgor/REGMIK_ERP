@@ -4580,7 +4580,7 @@ export class DatabaseStorage implements IStorage {
       // Оновлюємо статус серійного номера
       await db
         .update(serialNumbers)
-        .set({ status: "assigned" })
+        .set({ status: "reserved" })
         .where(eq(serialNumbers.id, serialNumberId));
         
       assignments.push(assignment);
