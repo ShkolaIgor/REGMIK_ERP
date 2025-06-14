@@ -6415,13 +6415,13 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async createAndAssignSerialNumbers(orderItemId: number, productId: number, serialNumbers: string[], userId: number): Promise<any> {
+  async createAndAssignSerialNumbers(orderItemId: number, productId: number, serialNumbersList: string[], userId: number): Promise<any> {
     try {
       const createdSerials: any[] = [];
       const serialNumberIds: number[] = [];
 
       // Створюємо серійні номери та отримуємо їх ID
-      for (const serial of serialNumbers) {
+      for (const serial of serialNumbersList) {
         // Перевіряємо, чи не існує вже такий номер для цього продукту
         const existing = await this.db
           .select()
