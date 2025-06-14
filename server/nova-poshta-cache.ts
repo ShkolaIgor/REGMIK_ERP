@@ -13,7 +13,11 @@ class NovaPoshtaCache {
       await this.updateData();
     }
 
-    return await storage.getNovaPoshtaCities(query, 50);
+    // Повертаємо результати з бази даних
+    console.log(`Пошук міст: "${query}"`);
+    const cities = await storage.getNovaPoshtaCities(query, 50);
+    console.log(`Знайдено міст: ${cities.length}`);
+    return cities;
   }
 
   async getWarehouses(cityRef?: string, query?: string): Promise<any[]> {
