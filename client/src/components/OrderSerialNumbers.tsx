@@ -132,6 +132,7 @@ export function OrderSerialNumbers({
   };
 
   const handleAssignSerials = () => {
+    console.log("Starting assignment process", { selectedSerials, showAssignDialog });
     if (selectedSerials.length === 0) {
       toast({
         title: "Попередження",
@@ -141,6 +142,7 @@ export function OrderSerialNumbers({
       return;
     }
 
+    console.log("Calling mutation with serials:", selectedSerials);
     assignMutation.mutate(selectedSerials);
   };
 
