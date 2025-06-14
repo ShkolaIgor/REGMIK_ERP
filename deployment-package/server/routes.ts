@@ -2796,6 +2796,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Nova Poshta Service Management
+  app.get("/api/nova-poshta/status", async (req, res) => {
+    try {
+      const { novaPoshtaService } = await import("./nova-poshta-service");
+      const stats = await novaPoshtaService.getCacheStats();
+      const settings = await novaPoshtaService.getUpdateSettings();
+      const needsUpdate = await novaPoshtaService.needsUpdate();
+      
+      res.json({
+        stats,
+        settings,
+        needsUpdate
+      });
+    } catch (error) {
+      console.error("Error getting Nova Poshta status:", error);
+      res.status(500).json({ error: "Failed to get status" });
+    }
+  });
+
+  app.post("/api/nova-poshta/update", async (req, res) => {
+    try {
+      const { novaPoshtaService } = await import("./nova-poshta-service");
+      const result = await novaPoshtaService.manualUpdate();
+      res.json(result);
+    } catch (error) {
+      console.error("Error updating Nova Poshta data:", error);
+      res.status(500).json({ error: "Failed to update data" });
+    }
+  });
+
+  app.post("/api/nova-poshta/settings", async (req, res) => {
+    try {
+      const { novaPoshtaService } = await import("./nova-poshta-service");
+      await novaPoshtaService.saveUpdateSettings(req.body);
+      
+      // Перезапускаємо автоматичне оновлення з новими налаштуваннями
+      await novaPoshtaService.initializeAutoUpdate();
+      
+      res.json({ success: true, message: "Налаштування збережено" });
+    } catch (error) {
+      console.error("Error saving Nova Poshta settings:", error);
+      res.status(500).json({ error: "Failed to save settings" });
+    }
+  });
+
   // Nova Poshta API integration routes (з кешуванням)
   app.get("/api/nova-poshta/cities", async (req, res) => {
     const { q } = req.query;

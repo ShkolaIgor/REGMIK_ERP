@@ -101,10 +101,28 @@ app.use((req, res, next) => {
     try {
       log("Ініціалізація кешу Нової Пошти...");
       await novaPoshtaCache.forceUpdate();
-      const stats = novaPoshtaCache.getCacheStats();
-      log(`Кеш Нової Пошти готовий: ${stats.citiesCount} міст, ${stats.warehousesCount} відділень`);
+      const info = await novaPoshtaCache.getCacheInfo();
+      log(`Кеш Нової Пошти готовий: ${info.cities} міст, ${info.warehouses} відділень`);
     } catch (error) {
       log("Помилка ініціалізації кешу Нової Пошти:", error);
+    }
+
+    // Ініціалізація автоматичного оновлення курсів валют
+    try {
+      const { currencyService } = await import("./currency-service");
+      await currencyService.initializeAutoUpdate();
+      log("Автоматичне оновлення курсів валют ініціалізовано");
+    } catch (error) {
+      log("Помилка ініціалізації автоматичного оновлення курсів:", error);
+    }
+
+    // Ініціалізація автоматичного оновлення Nova Poshta
+    try {
+      const { novaPoshtaService } = await import("./nova-poshta-service");
+      await novaPoshtaService.initializeAutoUpdate();
+      log("Автоматичне оновлення Nova Poshta ініціалізовано");
+    } catch (error) {
+      log("Помилка ініціалізації автоматичного оновлення Nova Poshta:", error);
     }
   });
 })();
