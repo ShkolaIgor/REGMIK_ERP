@@ -6563,85 +6563,43 @@ export class DatabaseStorage implements IStorage {
   async getNovaPoshtaCities(query?: string, limit: number = 50): Promise<any[]> {
     console.log(`Пошук міст Нової Пошти для запиту: "${query}"`);
     
-    // Return mock Nova Poshta cities to fix search functionality
-    const mockCities = [
-      {
-        Ref: "8d5a980d-391c-11dd-90d9-001a92567626",
-        Description: "Київ",
-        DescriptionRu: "Киев", 
-        AreaDescription: "Київська",
-        AreaDescriptionRu: "Киевская",
-        RegionDescription: "Київська",
-        RegionDescriptionRu: "Киевская",
-        SettlementTypeDescription: "місто",
-        DeliveryCity: "8d5a980d-391c-11dd-90d9-001a92567626",
-        Warehouses: "357"
-      },
-      {
-        Ref: "db5c88e0-391c-11dd-90d9-001a92567626", 
-        Description: "Харків",
-        DescriptionRu: "Харьков",
-        AreaDescription: "Харківська",
-        AreaDescriptionRu: "Харьковская", 
-        RegionDescription: "Харківська",
-        RegionDescriptionRu: "Харьковская",
-        SettlementTypeDescription: "місто",
-        DeliveryCity: "db5c88e0-391c-11dd-90d9-001a92567626",
-        Warehouses: "158"
-      },
-      {
-        Ref: "db5c88de-391c-11dd-90d9-001a92567626",
-        Description: "Дніпро", 
-        DescriptionRu: "Днепр",
-        AreaDescription: "Дніпропетровська",
-        AreaDescriptionRu: "Днепропетровская",
-        RegionDescription: "Дніпропетровська", 
-        RegionDescriptionRu: "Днепропетровская",
-        SettlementTypeDescription: "місто",
-        DeliveryCity: "db5c88de-391c-11dd-90d9-001a92567626",
-        Warehouses: "127"
-      },
-      {
-        Ref: "db5c890d-391c-11dd-90d9-001a92567626",
-        Description: "Одеса",
-        DescriptionRu: "Одесса",
-        AreaDescription: "Одеська", 
-        AreaDescriptionRu: "Одесская",
-        RegionDescription: "Одеська",
-        RegionDescriptionRu: "Одесская",
-        SettlementTypeDescription: "місто",
-        DeliveryCity: "db5c890d-391c-11dd-90d9-001a92567626", 
-        Warehouses: "89"
-      },
-      {
-        Ref: "e221d64c-391c-11dd-90d9-001a92567626",
-        Description: "Львів",
-        DescriptionRu: "Львов",
-        AreaDescription: "Львівська",
-        AreaDescriptionRu: "Львовская",
-        RegionDescription: "Львівська", 
-        RegionDescriptionRu: "Львовская",
-        SettlementTypeDescription: "місто",
-        DeliveryCity: "e221d64c-391c-11dd-90d9-001a92567626",
-        Warehouses: "67"
+    try {
+      let dbQuery = this.db.select().from(novaPoshtaCities);
+
+      if (query && query.length >= 2) {
+        // Search in multiple fields with case-insensitive matching
+        dbQuery = dbQuery.where(
+          or(
+            ilike(novaPoshtaCities.description, `%${query}%`),
+            ilike(novaPoshtaCities.descriptionRu, `%${query}%`),
+            ilike(novaPoshtaCities.areaDescription, `%${query}%`),
+            ilike(novaPoshtaCities.areaDescriptionRu, `%${query}%`)
+          )
+        );
       }
-    ];
-    
-    if (!query || query.length < 2) {
-      console.log(`Повернуто ${mockCities.length} міст без фільтрації`);
-      return mockCities;
+
+      const cities = await dbQuery.limit(limit);
+
+      // Transform database results to match API format
+      const transformedCities = cities.map(city => ({
+        Ref: city.ref,
+        Description: city.description,
+        DescriptionRu: city.descriptionRu,
+        AreaDescription: city.areaDescription,
+        AreaDescriptionRu: city.areaDescriptionRu,
+        RegionDescription: city.regionDescription,
+        RegionDescriptionRu: city.regionDescriptionRu,
+        SettlementTypeDescription: city.settlementTypeDescription,
+        DeliveryCity: city.deliveryCity,
+        Warehouses: city.warehouses
+      }));
+
+      console.log(`Знайдено ${transformedCities.length} міст для запиту: "${query}"`);
+      return transformedCities;
+    } catch (error) {
+      console.error('Error getting Nova Poshta cities from database:', error);
+      return [];
     }
-    
-    // Filter cities based on search query
-    const filteredCities = mockCities.filter(city => 
-      city.Description.toLowerCase().includes(query.toLowerCase()) ||
-      city.DescriptionRu.toLowerCase().includes(query.toLowerCase()) ||
-      city.AreaDescription.toLowerCase().includes(query.toLowerCase()) ||
-      city.AreaDescriptionRu.toLowerCase().includes(query.toLowerCase())
-    );
-    
-    console.log(`Знайдено ${filteredCities.length} міст для запиту: "${query}"`);
-    return filteredCities;
   }
 
   async getNovaPoshtaWarehouses(cityRef?: string, query?: string, limit: number = 100): Promise<any[]> {

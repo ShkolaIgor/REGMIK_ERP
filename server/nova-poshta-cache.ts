@@ -10,85 +10,16 @@ class NovaPoshtaCache {
   async getCities(query?: string): Promise<any[]> {
     console.log(`Пошук міст: "${query}"`);
     
-    // Базовий набір українських міст для демонстрації функціональності
-    const ukrainianCities = [
-      {
-        Ref: "8d5a980d-391c-11dd-90d9-001a92567626",
-        Description: "Київ",
-        DescriptionRu: "Киев",
-        AreaDescription: "Київська",
-        AreaDescriptionRu: "Киевская",
-        RegionDescription: "Київська",
-        RegionDescriptionRu: "Киевская",
-        SettlementTypeDescription: "місто",
-        DeliveryCity: "8d5a980d-391c-11dd-90d9-001a92567626",
-        Warehouses: "357"
-      },
-      {
-        Ref: "db5c88e0-391c-11dd-90d9-001a92567626",
-        Description: "Харків",
-        DescriptionRu: "Харьков",
-        AreaDescription: "Харківська",
-        AreaDescriptionRu: "Харьковская",
-        RegionDescription: "Харківська",
-        RegionDescriptionRu: "Харьковская",
-        SettlementTypeDescription: "місто",
-        DeliveryCity: "db5c88e0-391c-11dd-90d9-001a92567626",
-        Warehouses: "158"
-      },
-      {
-        Ref: "db5c88de-391c-11dd-90d9-001a92567626",
-        Description: "Дніпро",
-        DescriptionRu: "Днепр",
-        AreaDescription: "Дніпропетровська",
-        AreaDescriptionRu: "Днепропетровская",
-        RegionDescription: "Дніпропетровська",
-        RegionDescriptionRu: "Днепропетровская",
-        SettlementTypeDescription: "місто",
-        DeliveryCity: "db5c88de-391c-11dd-90d9-001a92567626",
-        Warehouses: "127"
-      },
-      {
-        Ref: "db5c890d-391c-11dd-90d9-001a92567626",
-        Description: "Одеса",
-        DescriptionRu: "Одесса",
-        AreaDescription: "Одеська",
-        AreaDescriptionRu: "Одесская",
-        RegionDescription: "Одеська",
-        RegionDescriptionRu: "Одесская",
-        SettlementTypeDescription: "місто",
-        DeliveryCity: "db5c890d-391c-11dd-90d9-001a92567626",
-        Warehouses: "89"
-      },
-      {
-        Ref: "e221d64c-391c-11dd-90d9-001a92567626",
-        Description: "Львів",
-        DescriptionRu: "Львов",
-        AreaDescription: "Львівська",
-        AreaDescriptionRu: "Львовская",
-        RegionDescription: "Львівська",
-        RegionDescriptionRu: "Львовская",
-        SettlementTypeDescription: "місто",
-        DeliveryCity: "e221d64c-391c-11dd-90d9-001a92567626",
-        Warehouses: "67"
-      }
-    ];
-    
-    if (!query || query.length < 2) {
-      console.log(`Знайдено міст: ${ukrainianCities.length}`);
-      return ukrainianCities;
+    // Перевіряємо чи потрібно оновити дані
+    if (await this.shouldUpdate()) {
+      await this.updateData();
     }
+
+    // Отримуємо міста з бази даних
+    const cities = await storage.getNovaPoshtaCities(query, 50);
     
-    // Фільтруємо міста за запитом
-    const filteredCities = ukrainianCities.filter(city =>
-      city.Description.toLowerCase().includes(query.toLowerCase()) ||
-      city.DescriptionRu.toLowerCase().includes(query.toLowerCase()) ||
-      city.AreaDescription.toLowerCase().includes(query.toLowerCase()) ||
-      city.AreaDescriptionRu.toLowerCase().includes(query.toLowerCase())
-    );
-    
-    console.log(`Знайдено міст: ${filteredCities.length}`);
-    return filteredCities;
+    console.log(`Знайдено міст: ${cities.length}`);
+    return cities;
   }
 
   async getWarehouses(cityRef?: string, query?: string): Promise<any[]> {
