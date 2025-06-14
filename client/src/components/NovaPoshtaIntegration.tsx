@@ -326,7 +326,8 @@ export function NovaPoshtaIntegration({
       return response.json();
     },
     enabled: cityQuery.length >= 2,
-    staleTime: 5 * 60 * 1000, // Кеш на 5 хвилин
+    staleTime: 0, // Відключаємо кеш для правильного пошуку
+    cacheTime: 0, // Видаляємо кеш одразу після використання
   });
 
   // Використовуємо результати сервера без додаткової фільтрації
