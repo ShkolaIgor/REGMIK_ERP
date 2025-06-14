@@ -94,7 +94,7 @@ class NovaPoshtaCache {
       console.log('Оновлення відділень Нової Пошти...');
       const warehouses = await novaPoshtaApi.getWarehouses();
 
-      // Синхронізуємо з базою даних
+      // Синхронізуємо з базою даних - спочатку міста, потім відділення
       await storage.syncNovaPoshtaCities(cities);
       await storage.syncNovaPoshtaWarehouses(warehouses);
 

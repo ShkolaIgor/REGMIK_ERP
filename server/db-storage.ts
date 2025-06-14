@@ -6438,11 +6438,8 @@ export class DatabaseStorage implements IStorage {
     if (!cities || cities.length === 0) return;
 
     try {
-      // Спочатку видаляємо відділення, щоб уникнути конфліктів foreign key
-      await this.db.execute(sql`DELETE FROM nova_poshta_warehouses`);
-      
-      // Тепер видаляємо міста
-      await this.db.execute(sql`DELETE FROM nova_poshta_cities`);
+      // Використовуємо UPSERT замість DELETE/INSERT для збереження даних
+      console.log(`Синхронізація ${cities.length} міст Нової Пошти...`);
 
       // Додаємо нові дані пакетами по 1000
       const batchSize = 1000;
@@ -6455,7 +6452,18 @@ export class DatabaseStorage implements IStorage {
         await this.db.execute(sql.raw(`
           INSERT INTO nova_poshta_cities (ref, name, name_ru, area, area_ru, region, region_ru, settlement_type, delivery_city, warehouses, is_active, last_updated)
           VALUES ${values}
-          ON CONFLICT (ref) DO NOTHING
+          ON CONFLICT (ref) DO UPDATE SET
+            name = EXCLUDED.name,
+            name_ru = EXCLUDED.name_ru,
+            area = EXCLUDED.area,
+            area_ru = EXCLUDED.area_ru,
+            region = EXCLUDED.region,
+            region_ru = EXCLUDED.region_ru,
+            settlement_type = EXCLUDED.settlement_type,
+            delivery_city = EXCLUDED.delivery_city,
+            warehouses = EXCLUDED.warehouses,
+            is_active = EXCLUDED.is_active,
+            last_updated = EXCLUDED.last_updated
         `));
       }
 
@@ -6470,8 +6478,8 @@ export class DatabaseStorage implements IStorage {
     if (!warehouses || warehouses.length === 0) return;
 
     try {
-      // Видаляємо старі дані
-      await this.db.execute(sql`DELETE FROM nova_poshta_warehouses`);
+      // Використовуємо UPSERT замість DELETE/INSERT для збереження даних
+      console.log(`Синхронізація ${warehouses.length} відділень Нової Пошти...`);
 
       // Додаємо нові дані пакетами по 500 (менші пакети через складність JSON полів)
       const batchSize = 500;
@@ -6511,7 +6519,36 @@ export class DatabaseStorage implements IStorage {
               ${parseInt(warehouse.TotalMaxWeightAllowed) || null}, 
               ${warehouse.Longitude ? parseFloat(warehouse.Longitude) : null},
               ${warehouse.Latitude ? parseFloat(warehouse.Latitude) : null}, true, NOW()
-            ) ON CONFLICT (ref) DO NOTHING
+            ) ON CONFLICT (ref) DO UPDATE SET
+              city_ref = EXCLUDED.city_ref,
+              number = EXCLUDED.number,
+              description = EXCLUDED.description,
+              description_ru = EXCLUDED.description_ru,
+              short_address = EXCLUDED.short_address,
+              short_address_ru = EXCLUDED.short_address_ru,
+              phone = EXCLUDED.phone,
+              type_of_warehouse = EXCLUDED.type_of_warehouse,
+              category_of_warehouse = EXCLUDED.category_of_warehouse,
+              schedule = EXCLUDED.schedule,
+              reception = EXCLUDED.reception,
+              delivery = EXCLUDED.delivery,
+              district_code = EXCLUDED.district_code,
+              ward_code = EXCLUDED.ward_code,
+              settlement_area_description = EXCLUDED.settlement_area_description,
+              place_max_weight_allowed = EXCLUDED.place_max_weight_allowed,
+              sending_limitations_on_dimensions = EXCLUDED.sending_limitations_on_dimensions,
+              receiving_limitations_on_dimensions = EXCLUDED.receiving_limitations_on_dimensions,
+              post_finance = EXCLUDED.post_finance,
+              bicycle_parking = EXCLUDED.bicycle_parking,
+              payment_access = EXCLUDED.payment_access,
+              pos_terminal = EXCLUDED.pos_terminal,
+              international_shipping = EXCLUDED.international_shipping,
+              self_service_workplaces_count = EXCLUDED.self_service_workplaces_count,
+              total_max_weight_allowed = EXCLUDED.total_max_weight_allowed,
+              longitude = EXCLUDED.longitude,
+              latitude = EXCLUDED.latitude,
+              is_active = EXCLUDED.is_active,
+              last_updated = EXCLUDED.last_updated
           `);
         }
       }
