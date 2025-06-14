@@ -6560,7 +6560,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getNovaPoshtaCities(query?: string, limit: number = 50): Promise<any[]> {
+  async getNovaPoshtaCities(query?: string, limit: number = 200): Promise<any[]> {
     console.log(`Пошук міст Нової Пошти для запиту: "${query}"`);
     
     try {
@@ -6623,7 +6623,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getNovaPoshtaWarehouses(cityRef?: string, query?: string, limit: number = 100): Promise<any[]> {
+  async getNovaPoshtaWarehouses(cityRef?: string, query?: string, limit: number = 200): Promise<any[]> {
     try {
       let sqlQuery = `
         SELECT 

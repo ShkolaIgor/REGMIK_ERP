@@ -11,7 +11,7 @@ class NovaPoshtaCache {
     console.log(`Пошук міст: "${query}"`);
     
     // Отримуємо міста з бази даних без постійного оновлення кешу
-    const cities = await storage.getNovaPoshtaCities(query, 50);
+    const cities = await storage.getNovaPoshtaCities(query, 200);
     
     console.log(`Знайдено міст: ${cities.length}`);
     return cities;
@@ -19,7 +19,7 @@ class NovaPoshtaCache {
 
   async getWarehouses(cityRef?: string, query?: string): Promise<any[]> {
     // Отримуємо відділення з бази даних без постійного оновлення кешу
-    return await storage.getNovaPoshtaWarehouses(cityRef, query, 100);
+    return await storage.getNovaPoshtaWarehouses(cityRef, query, 200);
   }
 
   async getCitiesCount(): Promise<number> {
