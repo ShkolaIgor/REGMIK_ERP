@@ -6674,47 +6674,49 @@ export class DatabaseStorage implements IStorage {
 
     try {
       // Видаляємо старі дані
-      await this.db.delete(novaPoshtaWarehouses);
+      await this.db.execute(sql`DELETE FROM nova_poshta_warehouses`);
 
-      // Додаємо нові дані пакетами по 1000
-      const batchSize = 1000;
+      // Додаємо нові дані пакетами по 500 (менші пакети через складність JSON полів)
+      const batchSize = 500;
       for (let i = 0; i < warehouses.length; i += batchSize) {
-        const batch = warehouses.slice(i, i + batchSize).map(warehouse => ({
-          ref: warehouse.Ref,
-          cityRef: warehouse.CityRef,
-          number: warehouse.Number,
-          description: warehouse.Description,
-          descriptionRu: warehouse.DescriptionRu,
-          shortAddress: warehouse.ShortAddress,
-          shortAddressRu: warehouse.ShortAddressRu,
-          phone: warehouse.Phone,
-          typeOfWarehouse: warehouse.TypeOfWarehouse,
-          categoryOfWarehouse: warehouse.CategoryOfWarehouse,
-          schedule: warehouse.Schedule ? JSON.parse(JSON.stringify(warehouse.Schedule)) : null,
-          reception: warehouse.Reception ? JSON.parse(JSON.stringify(warehouse.Reception)) : null,
-          delivery: warehouse.Delivery ? JSON.parse(JSON.stringify(warehouse.Delivery)) : null,
-          districtCode: warehouse.DistrictCode,
-          wardCode: warehouse.WardCode,
-          settlementAreaDescription: warehouse.SettlementAreaDescription,
-          placeMaxWeightAllowed: parseInt(warehouse.PlaceMaxWeightAllowed) || null,
-          sendingLimitationsOnDimensions: warehouse.SendingLimitationsOnDimensions ? 
-            JSON.parse(JSON.stringify(warehouse.SendingLimitationsOnDimensions)) : null,
-          receivingLimitationsOnDimensions: warehouse.ReceivingLimitationsOnDimensions ? 
-            JSON.parse(JSON.stringify(warehouse.ReceivingLimitationsOnDimensions)) : null,
-          postFinance: Boolean(warehouse.PostFinance),
-          bicycleParking: Boolean(warehouse.BicycleParking),
-          paymentAccess: Boolean(warehouse.PaymentAccess),
-          posTerminal: Boolean(warehouse.POSTerminal),
-          internationalShipping: Boolean(warehouse.InternationalShipping),
-          selfServiceWorkplacesCount: parseInt(warehouse.SelfServiceWorkplacesCount) || 0,
-          totalMaxWeightAllowed: parseInt(warehouse.TotalMaxWeightAllowed) || null,
-          longitude: warehouse.Longitude ? parseFloat(warehouse.Longitude) : null,
-          latitude: warehouse.Latitude ? parseFloat(warehouse.Latitude) : null,
-          isActive: true,
-          lastUpdated: new Date()
-        }));
+        const batch = warehouses.slice(i, i + batchSize);
+        
+        for (const warehouse of batch) {
+          const schedule = warehouse.Schedule ? JSON.stringify(warehouse.Schedule) : null;
+          const reception = warehouse.Reception ? JSON.stringify(warehouse.Reception) : null;
+          const delivery = warehouse.Delivery ? JSON.stringify(warehouse.Delivery) : null;
+          const sendingLimitations = warehouse.SendingLimitationsOnDimensions ? 
+            JSON.stringify(warehouse.SendingLimitationsOnDimensions) : null;
+          const receivingLimitations = warehouse.ReceivingLimitationsOnDimensions ? 
+            JSON.stringify(warehouse.ReceivingLimitationsOnDimensions) : null;
 
-        await this.db.insert(novaPoshtaWarehouses).values(batch).onConflictDoNothing();
+          await this.db.execute(sql`
+            INSERT INTO nova_poshta_warehouses (
+              ref, city_ref, number, description, description_ru, short_address, short_address_ru,
+              phone, type_of_warehouse, category_of_warehouse, schedule, reception, delivery,
+              district_code, ward_code, settlement_area_description, place_max_weight_allowed,
+              sending_limitations_on_dimensions, receiving_limitations_on_dimensions,
+              post_finance, bicycle_parking, payment_access, pos_terminal, international_shipping,
+              self_service_workplaces_count, total_max_weight_allowed, longitude, latitude,
+              is_active, last_updated
+            ) VALUES (
+              ${warehouse.Ref}, ${warehouse.CityRef}, ${warehouse.Number || ''}, 
+              ${warehouse.Description?.replace(/'/g, "''") || ''}, ${warehouse.DescriptionRu?.replace(/'/g, "''") || ''},
+              ${warehouse.ShortAddress?.replace(/'/g, "''") || ''}, ${warehouse.ShortAddressRu?.replace(/'/g, "''") || ''},
+              ${warehouse.Phone || ''}, ${warehouse.TypeOfWarehouse || ''}, ${warehouse.CategoryOfWarehouse || ''},
+              ${schedule}, ${reception}, ${delivery}, ${warehouse.DistrictCode || ''}, ${warehouse.WardCode || ''},
+              ${warehouse.SettlementAreaDescription?.replace(/'/g, "''") || ''}, 
+              ${parseInt(warehouse.PlaceMaxWeightAllowed) || null},
+              ${sendingLimitations}, ${receivingLimitations},
+              ${Boolean(warehouse.PostFinance)}, ${Boolean(warehouse.BicycleParking)}, 
+              ${Boolean(warehouse.PaymentAccess)}, ${Boolean(warehouse.POSTerminal)}, 
+              ${Boolean(warehouse.InternationalShipping)}, ${parseInt(warehouse.SelfServiceWorkplacesCount) || 0},
+              ${parseInt(warehouse.TotalMaxWeightAllowed) || null}, 
+              ${warehouse.Longitude ? parseFloat(warehouse.Longitude) : null},
+              ${warehouse.Latitude ? parseFloat(warehouse.Latitude) : null}, true, NOW()
+            ) ON CONFLICT (ref) DO NOTHING
+          `);
+        }
       }
 
       console.log(`Синхронізовано ${warehouses.length} відділень Нової Пошти в базу даних`);
@@ -6726,36 +6728,32 @@ export class DatabaseStorage implements IStorage {
 
   async getNovaPoshtaCities(query?: string, limit: number = 50): Promise<any[]> {
     try {
-      let queryBuilder = this.db
-        .select()
-        .from(novaPoshtaCities)
-        .where(eq(novaPoshtaCities.isActive, true));
-
+      let sqlQuery = `
+        SELECT ref, name, name_ru, area, area_ru, region, region_ru, settlement_type, delivery_city, warehouses
+        FROM nova_poshta_cities 
+        WHERE is_active = true
+      `;
+      
       if (query && query.length >= 2) {
-        const searchTerm = `%${query.toLowerCase()}%`;
-        queryBuilder = queryBuilder.where(
-          or(
-            sql`LOWER(${novaPoshtaCities.name}) LIKE ${searchTerm}`,
-            sql`LOWER(${novaPoshtaCities.area}) LIKE ${searchTerm}`
-          )
-        );
+        const searchTerm = query.toLowerCase();
+        sqlQuery += ` AND (LOWER(name) LIKE '%${searchTerm}%' OR LOWER(area) LIKE '%${searchTerm}%')`;
       }
+      
+      sqlQuery += ` ORDER BY name LIMIT ${limit}`;
 
-      const results = await queryBuilder
-        .orderBy(novaPoshtaCities.name)
-        .limit(limit);
+      const results = await this.db.execute(sql.raw(sqlQuery));
 
-      return results.map(city => ({
+      return results.map((city: any) => ({
         Ref: city.ref,
         Description: city.name,
-        DescriptionRu: city.nameRu,
+        DescriptionRu: city.name_ru,
         AreaDescription: city.area,
-        AreaDescriptionRu: city.areaRu,
+        AreaDescriptionRu: city.area_ru,
         RegionDescription: city.region,
-        RegionDescriptionRu: city.regionRu,
-        SettlementTypeDescription: city.settlementType,
-        DeliveryCity: city.deliveryCity,
-        Warehouses: city.warehouses.toString()
+        RegionDescriptionRu: city.region_ru,
+        SettlementTypeDescription: city.settlement_type,
+        DeliveryCity: city.delivery_city,
+        Warehouses: city.warehouses?.toString() || '0'
       }));
     } catch (error) {
       console.error('Помилка отримання міст Нової Пошти:', error);
@@ -6765,53 +6763,57 @@ export class DatabaseStorage implements IStorage {
 
   async getNovaPoshtaWarehouses(cityRef?: string, query?: string, limit: number = 100): Promise<any[]> {
     try {
-      let queryBuilder = this.db
-        .select()
-        .from(novaPoshtaWarehouses)
-        .where(eq(novaPoshtaWarehouses.isActive, true));
-
+      let sqlQuery = `
+        SELECT ref, city_ref, number, description, description_ru, short_address, short_address_ru,
+               phone, type_of_warehouse, category_of_warehouse, schedule, reception, delivery,
+               district_code, ward_code, settlement_area_description, place_max_weight_allowed,
+               sending_limitations_on_dimensions, receiving_limitations_on_dimensions,
+               post_finance, bicycle_parking, payment_access, pos_terminal, international_shipping,
+               self_service_workplaces_count, total_max_weight_allowed, longitude, latitude
+        FROM nova_poshta_warehouses 
+        WHERE is_active = true
+      `;
+      
       if (cityRef) {
-        queryBuilder = queryBuilder.where(eq(novaPoshtaWarehouses.cityRef, cityRef));
+        sqlQuery += ` AND city_ref = '${cityRef}'`;
       }
-
+      
       if (query && query.length >= 2) {
-        const searchTerm = `%${query.toLowerCase()}%`;
-        queryBuilder = queryBuilder.where(
-          sql`LOWER(${novaPoshtaWarehouses.description}) LIKE ${searchTerm}`
-        );
+        const searchTerm = query.toLowerCase();
+        sqlQuery += ` AND LOWER(description) LIKE '%${searchTerm}%'`;
       }
+      
+      sqlQuery += ` ORDER BY number LIMIT ${limit}`;
 
-      const results = await queryBuilder
-        .orderBy(novaPoshtaWarehouses.number)
-        .limit(limit);
+      const results = await this.db.execute(sql.raw(sqlQuery));
 
-      return results.map(warehouse => ({
+      return results.map((warehouse: any) => ({
         Ref: warehouse.ref,
-        CityRef: warehouse.cityRef,
+        CityRef: warehouse.city_ref,
         Number: warehouse.number,
         Description: warehouse.description,
-        DescriptionRu: warehouse.descriptionRu,
-        ShortAddress: warehouse.shortAddress,
-        ShortAddressRu: warehouse.shortAddressRu,
+        DescriptionRu: warehouse.description_ru,
+        ShortAddress: warehouse.short_address,
+        ShortAddressRu: warehouse.short_address_ru,
         Phone: warehouse.phone,
-        TypeOfWarehouse: warehouse.typeOfWarehouse,
-        CategoryOfWarehouse: warehouse.categoryOfWarehouse,
+        TypeOfWarehouse: warehouse.type_of_warehouse,
+        CategoryOfWarehouse: warehouse.category_of_warehouse,
         Schedule: warehouse.schedule,
         Reception: warehouse.reception,
         Delivery: warehouse.delivery,
-        DistrictCode: warehouse.districtCode,
-        WardCode: warehouse.wardCode,
-        SettlementAreaDescription: warehouse.settlementAreaDescription,
-        PlaceMaxWeightAllowed: warehouse.placeMaxWeightAllowed?.toString() || '',
-        SendingLimitationsOnDimensions: warehouse.sendingLimitationsOnDimensions,
-        ReceivingLimitationsOnDimensions: warehouse.receivingLimitationsOnDimensions,
-        PostFinance: warehouse.postFinance,
-        BicycleParking: warehouse.bicycleParking,
-        PaymentAccess: warehouse.paymentAccess,
-        POSTerminal: warehouse.posTerminal,
-        InternationalShipping: warehouse.internationalShipping,
-        SelfServiceWorkplacesCount: warehouse.selfServiceWorkplacesCount.toString(),
-        TotalMaxWeightAllowed: warehouse.totalMaxWeightAllowed?.toString() || '',
+        DistrictCode: warehouse.district_code,
+        WardCode: warehouse.ward_code,
+        SettlementAreaDescription: warehouse.settlement_area_description,
+        PlaceMaxWeightAllowed: warehouse.place_max_weight_allowed?.toString() || '',
+        SendingLimitationsOnDimensions: warehouse.sending_limitations_on_dimensions,
+        ReceivingLimitationsOnDimensions: warehouse.receiving_limitations_on_dimensions,
+        PostFinance: warehouse.post_finance,
+        BicycleParking: warehouse.bicycle_parking,
+        PaymentAccess: warehouse.payment_access,
+        POSTerminal: warehouse.pos_terminal,
+        InternationalShipping: warehouse.international_shipping,
+        SelfServiceWorkplacesCount: warehouse.self_service_workplaces_count?.toString() || '0',
+        TotalMaxWeightAllowed: warehouse.total_max_weight_allowed?.toString() || '',
         Longitude: warehouse.longitude?.toString() || '',
         Latitude: warehouse.latitude?.toString() || ''
       }));
@@ -6823,11 +6825,7 @@ export class DatabaseStorage implements IStorage {
 
   async getNovaPoshtaCitiesCount(): Promise<number> {
     try {
-      const result = await this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(novaPoshtaCities)
-        .where(eq(novaPoshtaCities.isActive, true));
-      
+      const result = await this.db.execute(sql`SELECT COUNT(*) as count FROM nova_poshta_cities WHERE is_active = true`);
       return result[0]?.count || 0;
     } catch (error) {
       console.error('Помилка підрахунку міст Нової Пошти:', error);
@@ -6837,11 +6835,7 @@ export class DatabaseStorage implements IStorage {
 
   async getNovaPoshtaWarehousesCount(): Promise<number> {
     try {
-      const result = await this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(novaPoshtaWarehouses)
-        .where(eq(novaPoshtaWarehouses.isActive, true));
-      
+      const result = await this.db.execute(sql`SELECT COUNT(*) as count FROM nova_poshta_warehouses WHERE is_active = true`);
       return result[0]?.count || 0;
     } catch (error) {
       console.error('Помилка підрахунку відділень Нової Пошти:', error);

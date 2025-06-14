@@ -1,5 +1,5 @@
 import { storage } from './db-storage.js';
-import { NovaPoshtaAPI } from './nova-poshta-api.js';
+import { novaPoshtaApi } from './nova-poshta-api.js';
 
 class NovaPoshtaCache {
   private lastUpdate: Date | null = null;
@@ -77,14 +77,12 @@ class NovaPoshtaCache {
     console.log('Оновлення даних Нової Пошти з API...');
     
     try {
-      const api = new NovaPoshtaAPI();
-      
       // Завантажуємо дані з API
       console.log('Оновлення міст Нової Пошти...');
-      const cities = await api.getCities();
+      const cities = await novaPoshtaApi.getCities();
       
       console.log('Оновлення відділень Нової Пошти...');
-      const warehouses = await api.getWarehouses();
+      const warehouses = await novaPoshtaApi.getWarehouses();
 
       // Синхронізуємо з базою даних
       await storage.syncNovaPoshtaCities(cities);
