@@ -11,7 +11,7 @@ import {
   manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, currencyRates, currencyUpdateSettings, serialNumbers, serialNumberSettings, emailSettings,
   sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients, clientContacts, clientNovaPoshtaSettings,
   clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences,
-  repairs, repairParts, repairStatusHistory, repairDocuments, orderItemSerialNumbers,
+  repairs, repairParts, repairStatusHistory, repairDocuments, orderItemSerialNumbers, novaPoshtaCities, novaPoshtaWarehouses,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
   type Category, type InsertCategory,
@@ -6562,34 +6562,44 @@ export class DatabaseStorage implements IStorage {
 
   async getNovaPoshtaCities(query?: string, limit: number = 50): Promise<any[]> {
     try {
-      let whereConditions = [eq(novaPoshtaCities.isActive, true)];
+      console.log(`Пошук міст Нової Пошти для запиту: "${query}"`);
       
-      if (query && query.length >= 2) {
-        const searchTerm = `%${query.toLowerCase()}%`;
-        whereConditions.push(
-          or(
-            sql`LOWER(${novaPoshtaCities.name}) LIKE ${searchTerm}`,
-            sql`LOWER(${novaPoshtaCities.area}) LIKE ${searchTerm}`
-          )!
-        );
+      if (!query || query.length < 2) {
+        const results = await this.db
+          .select()
+          .from(novaPoshtaCities)
+          .where(eq(novaPoshtaCities.isActive, true))
+          .orderBy(novaPoshtaCities.name)
+          .limit(limit);
+        
+        console.log(`Повернуто ${results.length} міст без фільтрації`);
+        return results.map((city: any) => ({
+          Ref: city.ref,
+          Description: city.name,
+          DescriptionRu: city.nameRu || city.name,
+          Area: city.area,
+          AreaRu: city.areaRu || city.area,
+          Region: city.region,
+          RegionRu: city.regionRu || city.region,
+          SettlementType: city.settlementType,
+          DeliveryCity: city.deliveryCity
+        }));
       }
 
+      const searchTerm = `%${query.toLowerCase()}%`;
       const results = await this.db
-        .select({
-          ref: novaPoshtaCities.ref,
-          name: novaPoshtaCities.name,
-          name_ru: novaPoshtaCities.nameRu,
-          area: novaPoshtaCities.area,
-          area_ru: novaPoshtaCities.areaRu,
-          region: novaPoshtaCities.region,
-          region_ru: novaPoshtaCities.regionRu,
-          settlement_type: novaPoshtaCities.settlementType,
-          delivery_city: novaPoshtaCities.deliveryCity,
-          warehouses: novaPoshtaCities.warehouses
-        })
+        .select()
         .from(novaPoshtaCities)
-        .where(and(...whereConditions))
-        .orderBy(novaPoshtaCities.name)
+        .where(
+          and(
+            eq(novaPoshtaCities.isActive, true),
+            or(
+              sql`LOWER(${novaPoshtaCities.name}) LIKE ${searchTerm}`,
+              sql`LOWER(${novaPoshtaCities.area}) LIKE ${searchTerm}`
+            )
+          )
+        )
+        .orderBy(sql`CASE WHEN LOWER(${novaPoshtaCities.name}) = ${query.toLowerCase()} THEN 1 ELSE 2 END`, novaPoshtaCities.name)
         .limit(limit);
 
       console.log(`Знайдено ${results.length} міст для запиту: "${query}"`);
@@ -6597,7 +6607,7 @@ export class DatabaseStorage implements IStorage {
       return results.map((city: any) => ({
         Ref: city.ref,
         Description: city.name,
-        DescriptionRu: city.name_ru,
+        DescriptionRu: city.nameRu || city.name,
         AreaDescription: city.area,
         AreaDescriptionRu: city.area_ru,
         RegionDescription: city.region,
