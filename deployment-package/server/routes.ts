@@ -2799,7 +2799,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Nova Poshta API integration routes (з кешуванням)
   app.get("/api/nova-poshta/cities", async (req, res) => {
     const { q } = req.query;
-    const searchQuery = q ? decodeURIComponent(q as string) : "";
+    const searchQuery = typeof q === 'string' ? q : "";
     console.log(`Nova Poshta cities API called with query: "${searchQuery}"`);
     
     // Відключаємо кешування на рівні HTTP
@@ -2823,7 +2823,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { cityRef } = req.params;
       const { q } = req.query;
-      const searchQuery = q ? decodeURIComponent(q as string) : "";
+      const searchQuery = typeof q === 'string' ? q : "";
       console.log(`Nova Poshta warehouses API called for city: "${cityRef}", query: "${searchQuery}"`);
       
       // Відключаємо кешування на рівні HTTP
