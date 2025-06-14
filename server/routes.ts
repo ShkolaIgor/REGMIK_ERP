@@ -2800,10 +2800,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/nova-poshta/cities", async (req, res) => {
     try {
       const { q } = req.query;
-      console.log(`Nova Poshta cities API called with query: "${q}"`);
+      // Decode URL-encoded query parameter to handle Ukrainian text properly
+      const searchQuery = q ? decodeURIComponent(q as string) : "";
+      console.log(`Nova Poshta cities API called with query: "${searchQuery}"`);
       
-      // Прямий виклик до бази даних
-      const cities = await storage.getNovaPoshtaCities(q as string || "", 50);
+      const cities = await storage.getNovaPoshtaCities(searchQuery, 50);
       console.log(`Returning ${cities.length} cities`);
       res.json(cities);
     } catch (error) {
