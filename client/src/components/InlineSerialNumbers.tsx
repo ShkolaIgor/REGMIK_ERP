@@ -562,27 +562,9 @@ SN001, SN002, SN003
 
             {/* Форма редагування серійних номерів */}
             <div className="space-y-4 p-4 border rounded-lg">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="editSerials">
-                  Редагувати серійні номери (один на рядок або через кому)
-                </Label>
-                <div className="text-xs text-muted-foreground">
-                  Поточних номерів: {assignedSerials.length}
-                </div>
-              </div>
-              
-              {assignedSerials.length > 0 && (
-                <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-3">
-                  <div className="text-sm text-blue-800 font-medium mb-2">
-                    Поточні присвоєні серійні номери:
-                  </div>
-                  <div className="text-xs text-blue-700 space-y-1">
-                    {formattedSerials.map((range, index) => (
-                      <div key={index} className="font-mono">{range}</div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <Label htmlFor="editSerials">
+                Редагувати серійні номери (один на рядок або через кому)
+              </Label>
               <Textarea
                 id="editSerials"
                 placeholder={`Введіть серійні номери:\n001233-001240\n0001, 0004-0200, 0300\nABC123\nDEF456-DEF460`}
