@@ -6346,25 +6346,34 @@ export class DatabaseStorage implements IStorage {
           )
         );
 
-      console.log("Serial numbers check:", {
-        requested: serialNumberIds,
-        found: availableSerials.length,
-        details: availableSerials.map(s => ({ id: s.id, status: s.status }))
-      });
+      // Перевіряємо чи не прив'язані вже ці серійні номери до інших замовлень
+      const existingAssignments = await this.db
+        .select()
+        .from(orderItemSerialNumbers)
+        .where(inArray(orderItemSerialNumbers.serialNumberId, serialNumberIds));
+
+      const alreadyAssigned = existingAssignments.map(a => a.serialNumberId);
+      const availableForAssignment = serialNumberIds.filter(id => !alreadyAssigned.includes(id));
 
       if (availableSerials.length !== serialNumberIds.length) {
         throw new Error("Деякі серійні номери недоступні для прив'язки");
       }
 
-      // Прив'язуємо серійні номери до позиції замовлення
-      const assignments = serialNumberIds.map(serialId => ({
+      if (availableForAssignment.length !== serialNumberIds.length) {
+        throw new Error("Деякі серійні номери вже прив'язані до інших замовлень");
+      }
+
+      // Прив'язуємо лише ті серійні номери, які ще не прив'язані
+      const assignments = availableForAssignment.map(serialId => ({
         orderItemId,
         serialNumberId: serialId,
         assignedAt: new Date(),
         assignedBy: userId
       }));
 
-      await this.db.insert(orderItemSerialNumbers).values(assignments);
+      if (assignments.length > 0) {
+        await this.db.insert(orderItemSerialNumbers).values(assignments);
+      }
 
       // Оновлюємо статус серійних номерів на "reserved"
       await this.db
