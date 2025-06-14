@@ -6,6 +6,7 @@ import { registerSyncApiRoutes } from "./sync-api";
 import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./simple-auth";
 import { novaPoshtaApi } from "./nova-poshta-api";
 import { novaPoshtaCache } from "./nova-poshta-cache";
+import { pool } from "./db";
 import { 
   insertProductSchema, insertOrderSchema, insertRecipeSchema,
   insertProductionTaskSchema, insertCategorySchema, insertUnitSchema, insertWarehouseSchema,
@@ -2892,6 +2893,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching warehouses:", error);
       res.status(500).json({ error: "Failed to fetch warehouses" });
+    }
+  });
+
+  // Nova Poshta diagnostics endpoint
+  app.get("/api/nova-poshta/diagnostics", async (req, res) => {
+    try {
+      const { q } = req.query;
+      const searchQuery = typeof q === 'string' ? q : "че";
+      
+      // Отримуємо статистику бази даних
+      const totalCities = await storage.getNovaPoshtaCitiesCount();
+      const totalWarehouses = await storage.getNovaPoshtaWarehousesCount();
+      
+      // Тестуємо пошук через API
+      const searchResults = await storage.getNovaPoshtaCities(searchQuery);
+      
+      // Прямий SQL запит для перевірки
+      const directSqlResult = await pool.query(`
+        SELECT COUNT(*) as count 
+        FROM nova_poshta_cities 
+        WHERE (name ILIKE $1 OR area ILIKE $1)
+      `, [`%${searchQuery}%`]);
+      
+      // Перевіряємо кодування
+      const encodingResult = await pool.query(`
+        SELECT 
+          current_setting('server_encoding') as server_encoding,
+          current_setting('client_encoding') as client_encoding
+      `);
+      
+      res.json({
+        totalCities,
+        totalWarehouses,
+        searchQuery,
+        apiResults: searchResults.length,
+        directSqlResults: directSqlResult.rows[0].count,
+        encoding: encodingResult.rows[0],
+        environment: process.env.NODE_ENV || 'development',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error in Nova Poshta diagnostics:", error);
+      res.status(500).json({ error: "Failed to run diagnostics" });
     }
   });
 
