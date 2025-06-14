@@ -6338,6 +6338,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Редагувати серійний номер
+  app.put("/api/serial-numbers/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const serialId = parseInt(req.params.id);
+      const { serialNumber } = req.body;
+
+      if (!serialNumber || !serialNumber.trim()) {
+        return res.status(400).json({ error: "Серійний номер не може бути пустим" });
+      }
+
+      await storage.updateSerialNumber(serialId, { serialNumber: serialNumber.trim() });
+      
+      res.json({ success: true, message: "Серійний номер оновлено" });
+    } catch (error) {
+      console.error("Error updating serial number:", error);
+      res.status(500).json({ error: "Помилка оновлення серійного номера" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
