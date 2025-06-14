@@ -6585,14 +6585,22 @@ export class DatabaseStorage implements IStorage {
         return transformedCities;
       }
 
-      // Use raw SQL to avoid Drizzle ORM parameter issues
+      // Use optimized SQL with proper indexing for fast search
       const searchPattern = `%${query}%`;
       const result = await pool.query(`
         SELECT ref, name, name_ru, area, area_ru, region, region_ru, settlement_type, delivery_city, warehouses
         FROM nova_poshta_cities 
-        WHERE name ILIKE $1 OR name_ru ILIKE $1 OR area ILIKE $1 OR area_ru ILIKE $1
+        WHERE (name ILIKE $1 OR name_ru ILIKE $1 OR area ILIKE $1 OR area_ru ILIKE $1)
+        ORDER BY 
+          CASE 
+            WHEN name ILIKE $3 THEN 1
+            WHEN name_ru ILIKE $3 THEN 2
+            WHEN name ILIKE $1 THEN 3
+            WHEN name_ru ILIKE $1 THEN 4
+            ELSE 5
+          END
         LIMIT $2
-      `, [searchPattern, limit]);
+      `, [searchPattern, limit, `${query}%`]);
 
       const transformedCities = result.rows.map((city: any) => ({
         Ref: city.ref,

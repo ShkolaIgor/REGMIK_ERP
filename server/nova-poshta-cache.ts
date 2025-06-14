@@ -10,12 +10,7 @@ class NovaPoshtaCache {
   async getCities(query?: string): Promise<any[]> {
     console.log(`Пошук міст: "${query}"`);
     
-    // Перевіряємо чи потрібно оновити дані
-    if (await this.shouldUpdate()) {
-      await this.updateData();
-    }
-
-    // Отримуємо міста з бази даних
+    // Отримуємо міста з бази даних без постійного оновлення кешу
     const cities = await storage.getNovaPoshtaCities(query, 50);
     
     console.log(`Знайдено міст: ${cities.length}`);
