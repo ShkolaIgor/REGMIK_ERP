@@ -2815,7 +2815,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/nova-poshta/warehouses/:cityRef", async (req, res) => {
     try {
       const { cityRef } = req.params;
-      const warehouses = await novaPoshtaCache.getWarehouses(cityRef);
+      const { q } = req.query;
+      const searchQuery = q ? decodeURIComponent(q as string) : "";
+      console.log(`Nova Poshta warehouses API called for city: "${cityRef}", query: "${searchQuery}"`);
+      
+      const warehouses = await novaPoshtaCache.getWarehouses(cityRef, searchQuery);
+      console.log(`Returning ${warehouses.length} warehouses for city: "${cityRef}", search: "${searchQuery}"`);
       res.json(warehouses);
     } catch (error) {
       console.error("Error fetching warehouses:", error);

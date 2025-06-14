@@ -18,11 +18,7 @@ class NovaPoshtaCache {
   }
 
   async getWarehouses(cityRef?: string, query?: string): Promise<any[]> {
-    // Перевіряємо чи потрібно оновити дані
-    if (await this.shouldUpdate()) {
-      await this.updateData();
-    }
-
+    // Отримуємо відділення з бази даних без постійного оновлення кешу
     return await storage.getNovaPoshtaWarehouses(cityRef, query, 100);
   }
 

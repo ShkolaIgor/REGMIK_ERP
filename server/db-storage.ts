@@ -6634,7 +6634,10 @@ export class DatabaseStorage implements IStorage {
       if (query && query.length >= 2) {
         const searchTerm = `%${query.toLowerCase()}%`;
         whereConditions.push(
-          sql`LOWER(${novaPoshtaWarehouses.description}) LIKE ${searchTerm}`
+          or(
+            sql`LOWER(${novaPoshtaWarehouses.description}) LIKE ${searchTerm}`,
+            sql`LOWER(${novaPoshtaWarehouses.descriptionRu}) LIKE ${searchTerm}`
+          )
         );
       }
 
