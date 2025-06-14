@@ -6561,17 +6561,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getNovaPoshtaCities(query?: string, limit: number = 200): Promise<any[]> {
-    // Виправляємо кодування UTF-8 якщо воно пошкоджене
-    const cleanQuery = query ? decodeURIComponent(query).replace(/[^\u0000-\u007F]/g, (char) => {
-      return encodeURIComponent(char);
-    }).replace(/%([0-9A-F]{2})/g, (match, hex) => {
-      return String.fromCharCode(parseInt(hex, 16));
-    }) : query;
-    
-    console.log(`Пошук міст Нової Пошти для запиту: "${cleanQuery}" (оригінал: "${query}")`);
+    console.log(`Пошук міст Нової Пошти для запиту: "${query}"`);
     
     try {
-      if (!cleanQuery || cleanQuery.length < 2) {
+      if (!query || query.length < 2) {
         // Return first cities without filtering
         const cities = await this.db.select().from(novaPoshtaCities).limit(50);
         
@@ -6593,8 +6586,8 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Use optimized SQL with proper indexing for fast search
-      const searchPattern = `%${cleanQuery}%`;
-      const queryLower = cleanQuery.toLowerCase();
+      const searchPattern = `%${query}%`;
+      const queryLower = query.toLowerCase();
       const result = await pool.query(`
         SELECT ref, name, area, region
         FROM nova_poshta_cities 
@@ -6608,19 +6601,19 @@ export class DatabaseStorage implements IStorage {
           END,
           LENGTH(name) ASC
         LIMIT $2
-      `, [searchPattern, limit, `${cleanQuery}%`, queryLower]);
+      `, [searchPattern, limit, `${query}%`, queryLower]);
 
       const transformedCities = result.rows.map((city: any) => ({
         Ref: city.ref,
         Description: city.name,
-        DescriptionRu: city.name_ru,
+        DescriptionRu: city.name,
         AreaDescription: city.area,
-        AreaDescriptionRu: city.area_ru,
-        RegionDescription: city.region,
-        RegionDescriptionRu: city.region_ru,
-        SettlementTypeDescription: city.settlement_type,
-        DeliveryCity: city.delivery_city,
-        Warehouses: city.warehouses?.toString() || "0"
+        AreaDescriptionRu: city.area,
+        RegionDescription: city.region || '',
+        RegionDescriptionRu: city.region || '',
+        SettlementTypeDescription: 'місто',
+        DeliveryCity: city.ref,
+        Warehouses: 0
       }));
 
       console.log(`Знайдено ${transformedCities.length} міст для запиту: "${query}"`);
