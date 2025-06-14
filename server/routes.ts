@@ -3714,6 +3714,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API endpoints для прив'язки серійних номерів до позицій замовлень
+  app.post("/api/order-items/:orderItemId/assign-serial-numbers", async (req, res) => {
+    try {
+      const orderItemId = parseInt(req.params.orderItemId);
+      const { serialNumberIds } = req.body;
+      
+      if (!Array.isArray(serialNumberIds) || serialNumberIds.length === 0) {
+        return res.status(400).json({ error: "Serial number IDs are required" });
+      }
+
+      const result = await storage.assignSerialNumbersToOrderItem(orderItemId, serialNumberIds);
+      res.json(result);
+    } catch (error) {
+      console.error("Error assigning serial numbers:", error);
+      res.status(500).json({ error: "Failed to assign serial numbers" });
+    }
+  });
+
+  app.get("/api/order-items/:orderItemId/serial-numbers", async (req, res) => {
+    try {
+      const orderItemId = parseInt(req.params.orderItemId);
+      const assignments = await storage.getOrderItemSerialNumbers(orderItemId);
+      res.json(assignments);
+    } catch (error) {
+      console.error("Error fetching order item serial numbers:", error);
+      res.status(500).json({ error: "Failed to fetch serial numbers" });
+    }
+  });
+
+  app.delete("/api/order-item-serial-numbers/:assignmentId", async (req, res) => {
+    try {
+      const assignmentId = parseInt(req.params.assignmentId);
+      const success = await storage.removeSerialNumberAssignment(assignmentId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Assignment not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error removing serial number assignment:", error);
+      res.status(500).json({ error: "Failed to remove assignment" });
+    }
+  });
+
   app.patch("/api/serial-numbers/:id/reserve", async (req, res) => {
     try {
       const id = parseInt(req.params.id);

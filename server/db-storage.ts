@@ -4550,6 +4550,92 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async assignSerialNumbersToOrderItem(orderItemId: number, serialNumberIds: number[]): Promise<any[]> {
+    const assignments = [];
+    
+    for (const serialNumberId of serialNumberIds) {
+      // Перевіряємо чи серійний номер доступний
+      const [serialNumber] = await db
+        .select()
+        .from(serialNumbers)
+        .where(eq(serialNumbers.id, serialNumberId))
+        .limit(1);
+        
+      if (!serialNumber || serialNumber.status !== "available") {
+        throw new Error(`Серійний номер з ID ${serialNumberId} недоступний`);
+      }
+      
+      // Створюємо прив'язку
+      const [assignment] = await db
+        .insert(orderItemSerialNumbers)
+        .values({
+          orderItemId,
+          serialNumberId,
+          assignedAt: new Date(),
+          assignedBy: null,
+          notes: null
+        })
+        .returning();
+        
+      // Оновлюємо статус серійного номера
+      await db
+        .update(serialNumbers)
+        .set({ status: "assigned" })
+        .where(eq(serialNumbers.id, serialNumberId));
+        
+      assignments.push(assignment);
+    }
+    
+    return assignments;
+  }
+
+  async getOrderItemSerialNumbers(orderItemId: number): Promise<any[]> {
+    const result = await db
+      .select({
+        id: orderItemSerialNumbers.id,
+        assignedAt: orderItemSerialNumbers.assignedAt,
+        assignedBy: orderItemSerialNumbers.assignedBy,
+        notes: orderItemSerialNumbers.notes,
+        serialNumber: {
+          id: serialNumbers.id,
+          serialNumber: serialNumbers.serialNumber,
+          status: serialNumbers.status,
+          manufacturedDate: serialNumbers.manufacturedDate
+        }
+      })
+      .from(orderItemSerialNumbers)
+      .innerJoin(serialNumbers, eq(orderItemSerialNumbers.serialNumberId, serialNumbers.id))
+      .where(eq(orderItemSerialNumbers.orderItemId, orderItemId));
+      
+    return result;
+  }
+
+  async removeSerialNumberAssignment(assignmentId: number): Promise<boolean> {
+    // Отримуємо інформацію про прив'язку
+    const [assignment] = await db
+      .select()
+      .from(orderItemSerialNumbers)
+      .where(eq(orderItemSerialNumbers.id, assignmentId))
+      .limit(1);
+      
+    if (!assignment) {
+      return false;
+    }
+    
+    // Видаляємо прив'язку
+    await db
+      .delete(orderItemSerialNumbers)
+      .where(eq(orderItemSerialNumbers.id, assignmentId));
+      
+    // Повертаємо серійний номер в статус "доступний"
+    await db
+      .update(serialNumbers)
+      .set({ status: "available" })
+      .where(eq(serialNumbers.id, assignment.serialNumberId));
+      
+    return true;
+  }
+
   async updateSerialNumber(id: number, data: Partial<InsertSerialNumber>): Promise<SerialNumber | null> {
     const [updated] = await db
       .update(serialNumbers)
