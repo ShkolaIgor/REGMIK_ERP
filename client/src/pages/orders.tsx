@@ -26,7 +26,7 @@ import { ClientForm } from "@/components/ClientForm";
 import { PaymentDialog } from "@/components/PaymentDialog";
 import DueDateButton from "@/components/DueDateButton";
 import { useSorting } from "@/hooks/useSorting";
-import { OrderSerialNumbers } from "@/components/OrderSerialNumbers";
+import { InlineSerialNumbers } from "@/components/InlineSerialNumbers";
 // Типи
 type Order = {
   id: number;
@@ -1905,7 +1905,7 @@ export default function Orders() {
                                         
                                         {/* Компонент для прив'язки серійних номерів */}
                                         {item.product?.hasSerialNumbers && (
-                                          <OrderSerialNumbers 
+                                          <InlineSerialNumbers 
                                             orderItemId={item.id}
                                             productId={item.productId}
                                             productName={item.product?.name || 'Невідомий товар'}

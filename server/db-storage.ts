@@ -6415,6 +6415,94 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async createAndAssignSerialNumbers(orderItemId: number, productId: number, serialNumbers: string[], userId: number): Promise<any> {
+    try {
+      const createdSerials: any[] = [];
+      const serialNumberIds: number[] = [];
+
+      // Створюємо серійні номери та отримуємо їх ID
+      for (const serial of serialNumbers) {
+        // Перевіряємо, чи не існує вже такий номер для цього продукту
+        const existing = await this.db
+          .select()
+          .from(serialNumbers)
+          .where(
+            and(
+              eq(serialNumbers.productId, productId),
+              eq(serialNumbers.serialNumber, serial)
+            )
+          )
+          .limit(1);
+
+        let serialId: number;
+
+        if (existing.length > 0) {
+          // Якщо номер вже існує, використовуємо його
+          serialId = existing[0].id;
+        } else {
+          // Створюємо новий серійний номер
+          const [newSerial] = await this.db
+            .insert(serialNumbers)
+            .values({
+              productId,
+              serialNumber: serial,
+              status: "reserved",
+              createdAt: new Date(),
+              updatedAt: new Date()
+            })
+            .returning({ id: serialNumbers.id });
+
+          serialId = newSerial.id;
+          createdSerials.push(newSerial);
+        }
+
+        serialNumberIds.push(serialId);
+      }
+
+      // Перевіряємо наявні прив'язки для цієї позиції замовлення
+      const existingAssignments = await this.db
+        .select({ serialNumberId: orderItemSerialNumbers.serialNumberId })
+        .from(orderItemSerialNumbers)
+        .where(eq(orderItemSerialNumbers.orderItemId, orderItemId));
+
+      const existingSerialIds = new Set(existingAssignments.map(a => a.serialNumberId));
+
+      // Створюємо прив'язки тільки для нових серійних номерів
+      const newAssignments = serialNumberIds
+        .filter(id => !existingSerialIds.has(id))
+        .map(serialNumberId => ({
+          orderItemId,
+          serialNumberId,
+          assignedAt: new Date(),
+          assignedBy: userId
+        }));
+
+      if (newAssignments.length > 0) {
+        await this.db.insert(orderItemSerialNumbers).values(newAssignments);
+      }
+
+      // Оновлюємо статус серійних номерів на "reserved"
+      await this.db
+        .update(serialNumbers)
+        .set({ 
+          status: "reserved",
+          updatedAt: new Date()
+        })
+        .where(inArray(serialNumbers.id, serialNumberIds));
+
+      return {
+        success: true,
+        createdCount: createdSerials.length,
+        assignedCount: newAssignments.length,
+        message: `Створено ${createdSerials.length} та прив'язано ${newAssignments.length} серійних номерів`
+      };
+
+    } catch (error) {
+      console.error('Error creating and assigning serial numbers:', error);
+      throw error;
+    }
+  }
+
   async getOrderItemSerialNumbers(orderItemId: number): Promise<any[]> {
     try {
       return await this.db

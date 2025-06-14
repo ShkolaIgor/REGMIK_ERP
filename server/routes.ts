@@ -6314,6 +6314,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Створити та прив'язати серійні номери до позиції замовлення
+  app.post("/api/order-items/:id/create-and-assign-serials", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const orderItemId = parseInt(req.params.id);
+      const { productId, serialNumbers } = req.body;
+
+      if (!Array.isArray(serialNumbers) || serialNumbers.length === 0) {
+        return res.status(400).json({ error: "Серійні номери не надані" });
+      }
+
+      if (!productId) {
+        return res.status(400).json({ error: "ID продукту не надано" });
+      }
+
+      const userId = (req.session as any).user?.id || 1;
+      const result = await storage.createAndAssignSerialNumbers(orderItemId, productId, serialNumbers, userId);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error creating and assigning serial numbers:", error);
+      res.status(500).json({ error: "Помилка створення серійних номерів" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
