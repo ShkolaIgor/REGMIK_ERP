@@ -6561,12 +6561,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getNovaPoshtaCities(query?: string, limit: number = 200): Promise<any[]> {
-    console.log(`Пошук міст Нової Пошти для запиту: "${query}"`);
+    // Виправляємо кодування UTF-8 якщо воно пошкоджене
+    const cleanQuery = query ? decodeURIComponent(query).replace(/[^\u0000-\u007F]/g, (char) => {
+      return encodeURIComponent(char);
+    }).replace(/%([0-9A-F]{2})/g, (match, hex) => {
+      return String.fromCharCode(parseInt(hex, 16));
+    }) : query;
+    
+    console.log(`Пошук міст Нової Пошти для запиту: "${cleanQuery}" (оригінал: "${query}")`);
     
     try {
-      if (!query || query.length < 2) {
-        // Return first 50 cities without filtering
-        const cities = await this.db.select().from(novaPoshtaCities).limit(limit);
+      if (!cleanQuery || cleanQuery.length < 2) {
+        // Return first cities without filtering
+        const cities = await this.db.select().from(novaPoshtaCities).limit(50);
         
         const transformedCities = cities.map(city => ({
           Ref: city.ref,
@@ -6586,25 +6593,22 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Use optimized SQL with proper indexing for fast search
-      const searchPattern = `%${query}%`;
-      const queryLower = query.toLowerCase();
+      const searchPattern = `%${cleanQuery}%`;
+      const queryLower = cleanQuery.toLowerCase();
       const result = await pool.query(`
-        SELECT ref, name, name_ru, area, area_ru, region, region_ru, settlement_type, delivery_city, warehouses
+        SELECT ref, name, area, region
         FROM nova_poshta_cities 
-        WHERE (name ILIKE $1 OR name_ru ILIKE $1 OR area ILIKE $1 OR area_ru ILIKE $1)
+        WHERE (name ILIKE $1 OR area ILIKE $1)
         ORDER BY 
           CASE 
             WHEN LOWER(name) = $4 THEN 1
-            WHEN LOWER(name_ru) = $4 THEN 2
             WHEN name ILIKE $3 THEN 3
-            WHEN name_ru ILIKE $3 THEN 4
             WHEN name ILIKE $1 THEN 5
-            WHEN name_ru ILIKE $1 THEN 6
             ELSE 7
           END,
           LENGTH(name) ASC
         LIMIT $2
-      `, [searchPattern, limit, `${query}%`, queryLower]);
+      `, [searchPattern, limit, `${cleanQuery}%`, queryLower]);
 
       const transformedCities = result.rows.map((city: any) => ({
         Ref: city.ref,
