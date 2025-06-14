@@ -6562,21 +6562,38 @@ export class DatabaseStorage implements IStorage {
 
   async getNovaPoshtaCities(query?: string, limit: number = 50): Promise<any[]> {
     try {
-      let sqlQuery = `
-        SELECT ref, name, name_ru, area, area_ru, region, region_ru, settlement_type, delivery_city, warehouses
-        FROM nova_poshta_cities 
-        WHERE is_active = true
-      `;
+      let whereConditions = [eq(novaPoshtaCities.isActive, true)];
       
       if (query && query.length >= 2) {
-        const searchTerm = query.toLowerCase();
-        sqlQuery += ` AND (LOWER(name) LIKE '%${searchTerm}%' OR LOWER(area) LIKE '%${searchTerm}%')`;
+        const searchTerm = `%${query.toLowerCase()}%`;
+        whereConditions.push(
+          or(
+            sql`LOWER(${novaPoshtaCities.name}) LIKE ${searchTerm}`,
+            sql`LOWER(${novaPoshtaCities.area}) LIKE ${searchTerm}`
+          )!
+        );
       }
+
+      const results = await this.db
+        .select({
+          ref: novaPoshtaCities.ref,
+          name: novaPoshtaCities.name,
+          name_ru: novaPoshtaCities.nameRu,
+          area: novaPoshtaCities.area,
+          area_ru: novaPoshtaCities.areaRu,
+          region: novaPoshtaCities.region,
+          region_ru: novaPoshtaCities.regionRu,
+          settlement_type: novaPoshtaCities.settlementType,
+          delivery_city: novaPoshtaCities.deliveryCity,
+          warehouses: novaPoshtaCities.warehouses
+        })
+        .from(novaPoshtaCities)
+        .where(and(...whereConditions))
+        .orderBy(novaPoshtaCities.name)
+        .limit(limit);
+
+      console.log(`Знайдено ${results.length} міст для запиту: "${query}"`);
       
-      sqlQuery += ` ORDER BY name LIMIT ${limit}`;
-
-      const results = await this.db.execute(sql.raw(sqlQuery));
-
       return results.map((city: any) => ({
         Ref: city.ref,
         Description: city.name,
@@ -6597,30 +6614,57 @@ export class DatabaseStorage implements IStorage {
 
   async getNovaPoshtaWarehouses(cityRef?: string, query?: string, limit: number = 100): Promise<any[]> {
     try {
-      let sqlQuery = `
-        SELECT ref, city_ref, number, description, description_ru, short_address, short_address_ru,
-               phone, type_of_warehouse, category_of_warehouse, schedule, reception, delivery,
-               district_code, ward_code, settlement_area_description, place_max_weight_allowed,
-               sending_limitations_on_dimensions, receiving_limitations_on_dimensions,
-               post_finance, bicycle_parking, payment_access, pos_terminal, international_shipping,
-               self_service_workplaces_count, total_max_weight_allowed, longitude, latitude
-        FROM nova_poshta_warehouses 
-        WHERE is_active = true
-      `;
+      let whereConditions = [eq(novaPoshtaWarehouses.isActive, true)];
       
       if (cityRef) {
-        sqlQuery += ` AND city_ref = '${cityRef}'`;
+        whereConditions.push(eq(novaPoshtaWarehouses.cityRef, cityRef));
       }
       
       if (query && query.length >= 2) {
-        const searchTerm = query.toLowerCase();
-        sqlQuery += ` AND LOWER(description) LIKE '%${searchTerm}%'`;
+        const searchTerm = `%${query.toLowerCase()}%`;
+        whereConditions.push(
+          sql`LOWER(${novaPoshtaWarehouses.description}) LIKE ${searchTerm}`
+        );
       }
+
+      const results = await this.db
+        .select({
+          ref: novaPoshtaWarehouses.ref,
+          city_ref: novaPoshtaWarehouses.cityRef,
+          number: novaPoshtaWarehouses.number,
+          description: novaPoshtaWarehouses.description,
+          description_ru: novaPoshtaWarehouses.descriptionRu,
+          short_address: novaPoshtaWarehouses.shortAddress,
+          short_address_ru: novaPoshtaWarehouses.shortAddressRu,
+          phone: novaPoshtaWarehouses.phone,
+          type_of_warehouse: novaPoshtaWarehouses.typeOfWarehouse,
+          category_of_warehouse: novaPoshtaWarehouses.categoryOfWarehouse,
+          schedule: novaPoshtaWarehouses.schedule,
+          reception: novaPoshtaWarehouses.reception,
+          delivery: novaPoshtaWarehouses.delivery,
+          district_code: novaPoshtaWarehouses.districtCode,
+          ward_code: novaPoshtaWarehouses.wardCode,
+          settlement_area_description: novaPoshtaWarehouses.settlementAreaDescription,
+          place_max_weight_allowed: novaPoshtaWarehouses.placeMaxWeightAllowed,
+          sending_limitations_on_dimensions: novaPoshtaWarehouses.sendingLimitationsOnDimensions,
+          receiving_limitations_on_dimensions: novaPoshtaWarehouses.receivingLimitationsOnDimensions,
+          post_finance: novaPoshtaWarehouses.postFinance,
+          bicycle_parking: novaPoshtaWarehouses.bicycleParking,
+          payment_access: novaPoshtaWarehouses.paymentAccess,
+          pos_terminal: novaPoshtaWarehouses.posTerminal,
+          international_shipping: novaPoshtaWarehouses.internationalShipping,
+          self_service_workplaces_count: novaPoshtaWarehouses.selfServiceWorkplacesCount,
+          total_max_weight_allowed: novaPoshtaWarehouses.totalMaxWeightAllowed,
+          longitude: novaPoshtaWarehouses.longitude,
+          latitude: novaPoshtaWarehouses.latitude
+        })
+        .from(novaPoshtaWarehouses)
+        .where(and(...whereConditions))
+        .orderBy(novaPoshtaWarehouses.number)
+        .limit(limit);
+
+      console.log(`Знайдено ${results.length} відділень для міста: "${cityRef}", запит: "${query}"`);
       
-      sqlQuery += ` ORDER BY number LIMIT ${limit}`;
-
-      const results = await this.db.execute(sql.raw(sqlQuery));
-
       return results.map((warehouse: any) => ({
         Ref: warehouse.ref,
         CityRef: warehouse.city_ref,
