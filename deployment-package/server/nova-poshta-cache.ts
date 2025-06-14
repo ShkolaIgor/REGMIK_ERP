@@ -29,54 +29,24 @@ class NovaPoshtaCache {
   // Час життя кешу (24 години)
   private readonly CACHE_TTL = 24 * 60 * 60 * 1000;
 
-  async getCities(query?: string): Promise<CachedCity[]> {
-    // Перевіряємо чи потрібно оновити кеш
-    if (this.shouldUpdateCities()) {
-      await this.updateCities();
-    }
-
-    const allCities = Array.from(this.cities.values());
+  async getCities(query?: string): Promise<any[]> {
+    console.log(`Пошук міст: "${query}"`);
     
-    if (!query || query.length < 2) {
-      return allCities.slice(0, 50); // Обмежуємо кількість для продуктивності
-    }
-
-    const lowerQuery = query.toLowerCase();
-    const filteredCities = allCities.filter(city => 
-      city.name.toLowerCase().includes(lowerQuery) ||
-      city.area.toLowerCase().includes(lowerQuery)
-    );
-
-    // Сортуємо результати: точні співпадіння спочатку, потім за алфавітом
-    const sortedCities = filteredCities.sort((a, b) => {
-      const aNameLower = a.name.toLowerCase();
-      const bNameLower = b.name.toLowerCase();
-      
-      // Точне співпадіння з початком назви має найвищий пріоритет
-      const aStartsWith = aNameLower.startsWith(lowerQuery);
-      const bStartsWith = bNameLower.startsWith(lowerQuery);
-      
-      if (aStartsWith && !bStartsWith) return -1;
-      if (!aStartsWith && bStartsWith) return 1;
-      
-      // Серед тих, що починаються з запиту, сортуємо за довжиною (коротші зверху)
-      if (aStartsWith && bStartsWith) {
-        return a.name.length - b.name.length;
-      }
-      
-      // Інші сортуємо за алфавітом
-      return a.name.localeCompare(b.name, 'uk');
-    });
-
-    return sortedCities.slice(0, 500);
+    // Отримуємо міста з бази даних
+    const { storage } = await require('./db-storage');
+    const cities = await storage.getNovaPoshtaCities(query, 200);
+    
+    console.log(`Знайдено міст: ${cities.length}`);
+    return cities;
   }
 
-  async getWarehouses(cityRef: string): Promise<CachedWarehouse[]> {
-    if (this.shouldUpdateWarehouses()) {
-      await this.updateWarehouses();
-    }
-
-    return this.warehousesByCity.get(cityRef) || [];
+  async getWarehouses(cityRef: string, query?: string): Promise<any[]> {
+    // Отримуємо відділення з бази даних
+    const { storage } = await require('./db-storage');
+    const warehouses = await storage.getNovaPoshtaWarehouses(cityRef, query, 200);
+    
+    console.log(`Знайдено ${warehouses.length} відділень для міста: "${cityRef}", запит: "${query}"`);
+    return warehouses;
   }
 
   private shouldUpdateCities(): boolean {

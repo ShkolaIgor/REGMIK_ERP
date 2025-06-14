@@ -2802,6 +2802,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const searchQuery = q ? decodeURIComponent(q as string) : "";
     console.log(`Nova Poshta cities API called with query: "${searchQuery}"`);
     
+    // Відключаємо кешування на рівні HTTP
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
     try {
       const cities = await novaPoshtaCache.getCities(searchQuery);
       console.log(`Returning ${cities.length} cities for search: "${searchQuery}"`);
@@ -2818,6 +2825,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { q } = req.query;
       const searchQuery = q ? decodeURIComponent(q as string) : "";
       console.log(`Nova Poshta warehouses API called for city: "${cityRef}", query: "${searchQuery}"`);
+      
+      // Відключаємо кешування на рівні HTTP
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
       
       const warehouses = await novaPoshtaCache.getWarehouses(cityRef, searchQuery);
       console.log(`Returning ${warehouses.length} warehouses for city: "${cityRef}", search: "${searchQuery}"`);
