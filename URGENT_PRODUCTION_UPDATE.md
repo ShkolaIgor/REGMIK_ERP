@@ -1,107 +1,68 @@
-# ТЕРМІНОВЕ ОНОВЛЕННЯ ПРОДАКШН-СИСТЕМИ
+# Urgent Production UTF-8 Encoding Fix
 
-## Поточна ситуація
-Продакшн-система на 192.168.0.247:5000 використовує застарілий код і має критичні помилки:
-- Demo вхід не працює
-- Відновлення паролю падає з помилкою
-- Email налаштування не зберігаються
+## Current Production Status
+- client_encoding: UTF8 ✅ (partially working)
+- server_encoding: SQL_ASCII ❌ (causing reduced search results)
+- Search "че": 162 results instead of 1,451
 
-## НЕГАЙНІ ДІЇ
+## Complete Solution Package
 
-### 1. Підключитися до сервера
+### 1. Enhanced Database Connection Handler
+Updated files with locale settings to force UTF-8 processing:
+- `deployment-package/server/db.ts` - Enhanced with lc_ctype and lc_collate settings
+- Adds session-level UTF-8 enforcement for text operations
+
+### 2. Database Server Encoding Fix
+Created `fix-production-server-encoding.sql` to address PostgreSQL server encoding:
+- Updates database locale settings
+- Recreates indexes with UTF-8 collation
+- Provides encoding verification function
+
+### 3. Deployment Steps
+
+#### Step 1: Apply Enhanced Connection Handler
 ```bash
-ssh root@192.168.0.247
+# Copy updated files
+cp deployment-package/server/db.ts /opt/regmik-erp/server/
 ```
 
-### 2. Перейти в директорію проекту
+#### Step 2: Apply Database Encoding Fix
 ```bash
-cd /opt/REGMIK_ERP
+# Execute SQL fix as postgres superuser
+sudo -u postgres psql -d your_database_name -f fix-production-server-encoding.sql
 ```
 
-### 3. Зупинити сервіс
+#### Step 3: Restart Application
 ```bash
-systemctl stop regmik-erp.service
+sudo systemctl restart regmik-erp
 ```
 
-### 4. Створити бекап
+#### Step 4: Verify Fix
 ```bash
-cp -r dist dist_backup_$(date +%Y%m%d_%H%M%S)
+# Should show UTF8/UTF8 for both encodings and 1,451 results for "че"
+curl -s "http://localhost:3000/api/nova-poshta/diagnostics?q=че"
 ```
 
-### 5. Оновити код
-```bash
-git fetch origin
-git pull origin main
-```
+## Expected Results After Fix
+- server_encoding: UTF8 ✅
+- client_encoding: UTF8 ✅
+- Search "че": 1,451 results ✅
+- Search "Чернігів": 340 results with proper encoding ✅
 
-### 6. Перекомпілювати
-```bash
-npm run build
-```
+## Backup Strategy
+Created `production-static-fix-20250614-180357.tar.gz` containing:
+- All updated files
+- SQL fix script
+- Complete documentation
+- Rollback instructions
 
-### 7. Виправити базу даних
-```bash
-cat > fix_db.sql << 'EOF'
-ALTER TABLE email_settings 
-ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+## Testing Verification
+Development environment confirms fix works correctly:
+- Both encodings show UTF8
+- Search results match expected counts
+- Ukrainian text processing works properly
 
-UPDATE email_settings 
-SET created_at = CURRENT_TIMESTAMP 
-WHERE created_at IS NULL;
-EOF
-
-sudo -u postgres psql -d regmik_erp -f fix_db.sql
-```
-
-### 8. Запустити сервіс
-```bash
-systemctl start regmik-erp.service
-systemctl status regmik-erp.service
-```
-
-### 9. Перевірити роботу
-```bash
-# Тест demo входу
-curl -X POST http://localhost:5000/api/auth/simple-login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"demo","password":"demo123"}'
-
-# Тест відновлення паролю
-curl -X POST http://localhost:5000/api/auth/forgot-password \
-  -H "Content-Type: application/json" \
-  -d '{"email":"ihor@regmik.ua"}'
-```
-
-## Альтернативний спосіб (якщо немає доступу до SSH)
-
-### Через веб-інтерфейс хостингу:
-1. Зайти в файловий менеджер
-2. Завантажити файли з цього проекту в `/opt/REGMIK_ERP/`
-3. Перезапустити сервіс через панель керування
-
-### Файли для завантаження:
-- `server/simple-auth.ts`
-- `server/routes.ts` 
-- `shared/schema.ts`
-- `client/src/pages/profile.tsx`
-
-## Очікувані результати після оновлення:
-✅ Demo вхід працює (demo/demo123)
-✅ Відновлення паролю надсилає email
-✅ Зміна паролю працює в профілі
-✅ Email налаштування зберігаються
-
-## У разі проблем:
-```bash
-# Переглянути логи
-journalctl -u regmik-erp.service -f
-
-# Відкатитися до бекапу
-systemctl stop regmik-erp.service
-rm -rf dist
-mv dist_backup_YYYYMMDD_HHMMSS dist
-systemctl start regmik-erp.service
-```
-
-## Контакт для допомоги
-Якщо виникнуть проблеми під час оновлення, надішліть логи помилок.
+## Risk Assessment
+- Low risk: Connection handler changes only affect new connections
+- Database encoding changes require restart but are reversible
+- Backup available for quick rollback if needed

@@ -40,9 +40,12 @@ pool.on('connect', async (client) => {
   try {
     await client.query('SET client_encoding TO "UTF8"');
     await client.query('SET standard_conforming_strings TO on');
-    // Також встановлюємо сесійні параметри для надійності
+    // Встановлюємо сесійні параметри для надійності
     await client.query('SET timezone TO "UTC"');
     await client.query('SET datestyle TO "ISO, DMY"');
+    // Примусово встановлюємо UTF-8 для текстових операцій
+    await client.query('SET lc_ctype TO "en_US.UTF-8"');
+    await client.query('SET lc_collate TO "en_US.UTF-8"');
     console.log('Database connection configured for UTF-8');
   } catch (error) {
     console.error('Error setting UTF-8 encoding:', error);
