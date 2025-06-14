@@ -27,13 +27,13 @@ interface City {
 }
 
 interface Warehouse {
-  ref: string;
-  number: string;
-  description: string;
-  short_address: string;
-  phone: string;
-  schedule: any;
-  city_ref: string;
+  Ref: string;
+  Number: string;
+  Description: string;
+  ShortAddress: string;
+  Phone: string;
+  Schedule: any;
+  CityRef: string;
 }
 
 interface TrackingInfo {
@@ -277,7 +277,7 @@ export function NovaPoshtaIntegration({
     try {
       const requestData = {
         cityRecipient: selectedCity.Ref,
-        warehouseRecipient: selectedWarehouse.ref,
+        warehouseRecipient: selectedWarehouse.Ref,
         citySender: selectedSender?.cityRef,
         warehouseSender: selectedSender?.warehouseRef,
         senderName: selectedSender?.name,
@@ -349,9 +349,9 @@ export function NovaPoshtaIntegration({
     if (!warehouseQuery) return true;
     const query = warehouseQuery.toLowerCase();
     return (
-      (warehouse.number && warehouse.number.toLowerCase().includes(query)) ||
-      (warehouse.short_address && warehouse.short_address.toLowerCase().includes(query)) ||
-      (warehouse.description && warehouse.description.toLowerCase().includes(query))
+      (warehouse.Number && warehouse.Number.toLowerCase().includes(query)) ||
+      (warehouse.ShortAddress && warehouse.ShortAddress.toLowerCase().includes(query)) ||
+      (warehouse.Description && warehouse.Description.toLowerCase().includes(query))
     );
   }).sort((a, b) => {
     if (!warehouseQuery) return 0;
@@ -359,26 +359,26 @@ export function NovaPoshtaIntegration({
     const query = warehouseQuery.toLowerCase();
     
     // Точне співпадіння номера відділення має найвищий пріоритет
-    const aNumberExact = a.number && a.number.toLowerCase() === query;
-    const bNumberExact = b.number && b.number.toLowerCase() === query;
+    const aNumberExact = a.Number && a.Number.toLowerCase() === query;
+    const bNumberExact = b.Number && b.Number.toLowerCase() === query;
     if (aNumberExact && !bNumberExact) return -1;
     if (!aNumberExact && bNumberExact) return 1;
     
     // Номер відділення починається з запиту
-    const aNumberStarts = a.number && a.number.toLowerCase().startsWith(query);
-    const bNumberStarts = b.number && b.number.toLowerCase().startsWith(query);
+    const aNumberStarts = a.Number && a.Number.toLowerCase().startsWith(query);
+    const bNumberStarts = b.Number && b.Number.toLowerCase().startsWith(query);
     if (aNumberStarts && !bNumberStarts) return -1;
     if (!aNumberStarts && bNumberStarts) return 1;
     
     // Адреса починається з запиту
-    const aAddressStarts = a.short_address && a.short_address.toLowerCase().startsWith(query);
-    const bAddressStarts = b.short_address && b.short_address.toLowerCase().startsWith(query);
+    const aAddressStarts = a.ShortAddress && a.ShortAddress.toLowerCase().startsWith(query);
+    const bAddressStarts = b.ShortAddress && b.ShortAddress.toLowerCase().startsWith(query);
     if (aAddressStarts && !bAddressStarts) return -1;
     if (!aAddressStarts && bAddressStarts) return 1;
     
     // За замовчуванням сортуємо за номером відділення
-    const aNumber = a.number ? parseInt(a.number) : 0;
-    const bNumber = b.number ? parseInt(b.number) : 0;
+    const aNumber = a.Number ? parseInt(a.Number) : 0;
+    const bNumber = b.Number ? parseInt(b.Number) : 0;
     return aNumber - bNumber;
   });
 
@@ -394,11 +394,11 @@ export function NovaPoshtaIntegration({
 
 
   const handleWarehouseSelect = (warehouseRef: string) => {
-    const warehouse = warehouses.find(w => w.ref === warehouseRef);
+    const warehouse = warehouses.find(w => w.Ref === warehouseRef);
     if (warehouse && selectedCity) {
       setSelectedWarehouse(warehouse);
-      const fullAddress = `${selectedCity.Description}, ${warehouse.description}`;
-      onAddressSelect?.(fullAddress, selectedCity.Ref, warehouse.ref);
+      const fullAddress = `${selectedCity.Description}, ${warehouse.Description}`;
+      onAddressSelect?.(fullAddress, selectedCity.Ref, warehouse.Ref);
     }
   };
 
@@ -514,8 +514,8 @@ export function NovaPoshtaIntegration({
                     <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="font-medium">№{selectedWarehouse.number}</p>
-                          <p className="text-sm text-gray-600">{selectedWarehouse.short_address}</p>
+                          <p className="font-medium">№{selectedWarehouse.Number}</p>
+                          <p className="text-sm text-gray-600">{selectedWarehouse.ShortAddress}</p>
                         </div>
                         <Button
                           variant="outline"
@@ -541,29 +541,29 @@ export function NovaPoshtaIntegration({
                         <div className="mt-2 border border-gray-200 rounded-md bg-white max-h-64 overflow-y-auto">
                           {filteredWarehouses.map((warehouse) => (
                             <div
-                              key={warehouse.ref}
+                              key={warehouse.Ref}
                               className="px-3 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
                               onClick={() => {
                                 setSelectedWarehouse(warehouse);
                                 setWarehouseQuery('');
                                 if (onAddressSelect) {
                                   onAddressSelect(
-                                    warehouse.short_address,
+                                    warehouse.ShortAddress,
                                     selectedCity?.Ref || '',
-                                    warehouse.ref
+                                    warehouse.Ref
                                   );
                                 }
                               }}
                             >
                               <div className="font-medium text-sm">
-                                №{warehouse.number}
+                                №{warehouse.Number}
                               </div>
                               <div className="text-xs text-gray-600">
-                                {warehouse.short_address}
+                                {warehouse.ShortAddress}
                               </div>
-                              {warehouse.phone && (
+                              {warehouse.Phone && (
                                 <div className="text-xs text-gray-500">
-                                  {warehouse.phone}
+                                  {warehouse.Phone}
                                 </div>
                               )}
                             </div>
