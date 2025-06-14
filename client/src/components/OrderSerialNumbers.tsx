@@ -69,6 +69,7 @@ export function OrderSerialNumbers({
         body: { serialNumberIds }
       }),
     onSuccess: () => {
+      console.log("Assignment successful, closing dialog");
       toast({
         title: "Успіх",
         description: "Серійні номери успішно прив'язані"
@@ -77,12 +78,11 @@ export function OrderSerialNumbers({
       setShowAssignDialog(false);
       // Оновлюємо дані
       refetchAssigned();
-      refetchAvailable();
       queryClient.invalidateQueries({ 
-        queryKey: [`/api/order-items/${orderItemId}/serial-numbers`] 
+        queryKey: ["/api/order-items", orderItemId, "serial-numbers"] 
       });
       queryClient.invalidateQueries({ 
-        queryKey: [`/api/products/${productId}/available-serial-numbers`] 
+        queryKey: ["/api/products", productId, "available-serial-numbers"] 
       });
     },
     onError: (error: any) => {
