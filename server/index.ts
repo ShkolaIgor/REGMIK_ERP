@@ -115,5 +115,14 @@ app.use((req, res, next) => {
     } catch (error) {
       log("Помилка ініціалізації автоматичного оновлення курсів:", error);
     }
+
+    // Ініціалізація автоматичного оновлення Nova Poshta
+    try {
+      const { novaPoshtaService } = await import("./nova-poshta-service");
+      await novaPoshtaService.initializeAutoUpdate();
+      log("Автоматичне оновлення Nova Poshta ініціалізовано");
+    } catch (error) {
+      log("Помилка ініціалізації автоматичного оновлення Nova Poshta:", error);
+    }
   });
 })();
