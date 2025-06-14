@@ -1,84 +1,94 @@
-# Виправлення UTF-8 пошуку Nova Poshta на продакшн
+# UTF-8 Search Fix Instructions
 
 ## Проблема
-Пошук міст Nova Poshta не працює з кирилічними символами на продакшн сервері через проблеми з UTF-8 кодуванням.
+Production система має `client_encoding: SQL_ASCII` замість `UTF8`, що призводить до неправильних результатів пошуку українських міст:
+- Пошук "че": повертає 162 міста замість 1,451
+- Пошук "Чернігів": працює некоректно
 
 ## Рішення
-Додано правильну обробку UTF-8 кодування в Express сервері та API маршрутах.
+Виправлено database connection handler для примусового встановлення UTF-8 кодування.
 
-## Інструкції для оновлення продакшн
-
-### 1. Підключіться до продакшн сервера
-```bash
-ssh your-production-server
+## Виправлення впроваджено в код:
+```javascript
+// server/db.ts та deployment-package/server/db.ts
+pool.on('connect', async (client) => {
+  try {
+    await client.query('SET client_encoding TO "UTF8"');
+    await client.query('SET standard_conforming_strings TO on');
+    console.log('Database connection configured for UTF-8');
+  } catch (error) {
+    console.error('Error setting UTF-8 encoding:', error);
+  }
+});
 ```
 
-### 2. Зупиніть сервіс
+## Розгортання виправлень в production
+
+### Крок 1: Backup поточної системи
+```bash
+# На production сервері
+sudo systemctl stop regmik-erp
+tar -czf production-backup-$(date +%Y%m%d-%H%M%S).tar.gz /opt/regmik-erp/
+```
+
+### Крок 2: Розгортання виправлень
+```bash
+# Копіювання файлів з deployment-package
+cp deployment-package/server/db.ts /opt/regmik-erp/server/
+cp deployment-package/server/routes.ts /opt/regmik-erp/server/
+sudo chown -R regmik:regmik /opt/regmik-erp/
+```
+
+### Крок 3: Перезапуск системи
+```bash
+sudo systemctl start regmik-erp
+sudo systemctl status regmik-erp
+```
+
+### Крок 4: Верифікація виправлень
+```bash
+# Перевірка діагностичного endpoint
+curl -s "http://localhost:3000/api/nova-poshta/diagnostics?q=че"
+
+# Очікуваний результат:
+# {
+#   "totalCities": 10558,
+#   "totalWarehouses": 40443,
+#   "searchQuery": "че",
+#   "apiResults": 1451,
+#   "directSqlResults": "1451",
+#   "encoding": {
+#     "server_encoding": "UTF8",
+#     "client_encoding": "UTF8"
+#   },
+#   "environment": "production"
+# }
+```
+
+### Крок 5: Тестування пошуку
+```bash
+# Тест пошуку "Чернігів"
+curl -s "http://localhost:3000/api/nova-poshta/cities?q=Чернігів"
+
+# Очікуваний результат: 340 міст з правильним UTF-8 кодуванням
+```
+
+## Очікувані результати після виправлення:
+- ✅ `client_encoding` зміниться з `SQL_ASCII` на `UTF8`
+- ✅ Пошук "че" повертатиме 1,451 міст (як у development)
+- ✅ Пошук "Чернігів" працюватиме коректно
+- ✅ Діагностичний endpoint показуватиме правильне кодування
+
+## Моніторинг
+Використовуйте діагностичний endpoint для регулярної перевірки UTF-8 статусу:
+```bash
+curl -s "http://localhost:3000/api/nova-poshta/diagnostics" | grep client_encoding
+```
+
+## Rollback інструкції
+У разі проблем:
 ```bash
 sudo systemctl stop regmik-erp
-```
-
-### 3. Скопіюйте виправлені файли
-Замініть файли в deployment-package наступними виправленнями:
-
-**deployment-package/server/index.ts** - додайте після рядка 8:
-```javascript
-// Налаштування UTF-8 для всього додатку
-app.use((req, res, next) => {
-  // Встановлюємо правильне кодування для запитів
-  if (req.method === 'GET') {
-    // Перекодування query параметрів для правильної обробки UTF-8
-    for (const [key, value] of Object.entries(req.query)) {
-      if (typeof value === 'string') {
-        try {
-          // Спробуємо декодувати якщо потрібно
-          const decoded = Buffer.from(value, 'latin1').toString('utf8');
-          if (decoded !== value && /[а-яё]/i.test(decoded)) {
-            req.query[key] = decoded;
-          }
-        } catch (e) {
-          // Залишаємо оригінальне значення якщо декодування не вдалося
-        }
-      }
-    }
-  }
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  next();
-});
-```
-
-**deployment-package/server/routes.ts** - замініть маршрут cities:
-```javascript
-app.get("/api/nova-poshta/cities", async (req, res) => {
-  const { q } = req.query;
-  let searchQuery = typeof q === 'string' ? q : "";
-  
-  // Правильне декодування UTF-8 для кирилічних символів
-  try {
-    searchQuery = decodeURIComponent(searchQuery);
-  } catch (error) {
-    // Якщо вже декодовано або некоректний формат
-  }
-  
-  console.log(`Nova Poshta cities API called with query: "${searchQuery}"`);
-  // ... решта коду
-});
-```
-
-### 4. Перебудуйте та запустіть
-```bash
-cd /opt/regmik-erp/deployment-package
-npm run build
+tar -xzf production-backup-[timestamp].tar.gz -C /
 sudo systemctl start regmik-erp
 ```
-
-### 5. Перевірте роботу
-```bash
-curl "http://localhost:5000/api/nova-poshta/cities?q=чернігів"
-```
-
-## Результат
-Після оновлення пошук міст працюватиме з кирилічними символами:
-- "чернігів" поверне ~340 міст
-- "київ" поверне ~150 міст
-- "львів" поверне ~100 міст
