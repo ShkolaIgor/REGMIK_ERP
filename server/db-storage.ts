@@ -6350,10 +6350,15 @@ export class DatabaseStorage implements IStorage {
       const existingAssignments = await this.db
         .select()
         .from(orderItemSerialNumbers)
-        .where(inArray(orderItemSerialNumbers.serialNumberId, serialNumberIds));
+        .where(
+          and(
+            inArray(orderItemSerialNumbers.serialNumberId, serialNumberIds),
+            ne(orderItemSerialNumbers.orderItemId, orderItemId) // Виключаємо поточну позицію
+          )
+        );
 
-      const alreadyAssigned = existingAssignments.map(a => a.serialNumberId);
-      const availableForAssignment = serialNumberIds.filter(id => !alreadyAssigned.includes(id));
+      const alreadyAssignedToOthers = existingAssignments.map(a => a.serialNumberId);
+      const availableForAssignment = serialNumberIds.filter(id => !alreadyAssignedToOthers.includes(id));
 
       if (availableSerials.length !== serialNumberIds.length) {
         throw new Error("Деякі серійні номери недоступні для прив'язки");
@@ -6363,8 +6368,22 @@ export class DatabaseStorage implements IStorage {
         throw new Error("Деякі серійні номери вже прив'язані до інших замовлень");
       }
 
-      // Прив'язуємо лише ті серійні номери, які ще не прив'язані
-      const assignments = availableForAssignment.map(serialId => ({
+      // Перевіряємо чи вже не прив'язані ці номери до поточної позиції
+      const currentAssignments = await this.db
+        .select()
+        .from(orderItemSerialNumbers)
+        .where(
+          and(
+            eq(orderItemSerialNumbers.orderItemId, orderItemId),
+            inArray(orderItemSerialNumbers.serialNumberId, serialNumberIds)
+          )
+        );
+
+      const alreadyAssignedToCurrent = currentAssignments.map(a => a.serialNumberId);
+      const newAssignments = serialNumberIds.filter(id => !alreadyAssignedToCurrent.includes(id));
+
+      // Прив'язуємо лише нові серійні номери
+      const assignments = newAssignments.map(serialId => ({
         orderItemId,
         serialNumberId: serialId,
         assignedAt: new Date(),
