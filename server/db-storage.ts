@@ -6625,84 +6625,72 @@ export class DatabaseStorage implements IStorage {
 
   async getNovaPoshtaWarehouses(cityRef?: string, query?: string, limit: number = 100): Promise<any[]> {
     try {
-      let whereConditions = [eq(novaPoshtaWarehouses.isActive, true)];
-      
+      let sqlQuery = `
+        SELECT 
+          ref, city_ref, number, description, description_ru, 
+          short_address, short_address_ru, phone, type_of_warehouse,
+          category_of_warehouse, schedule, reception, delivery,
+          district_code, ward_code, settlement_area_description,
+          place_max_weight_allowed, sending_limitations_on_dimensions,
+          receiving_limitations_on_dimensions, post_finance, bicycle_parking,
+          payment_access, pos_terminal, international_shipping,
+          self_service_workplaces_count, total_max_weight_allowed,
+          longitude, latitude
+        FROM nova_poshta_warehouses 
+        WHERE is_active = true
+      `;
+
+      const params: any[] = [];
+      let paramIndex = 1;
+
       if (cityRef) {
-        whereConditions.push(eq(novaPoshtaWarehouses.cityRef, cityRef));
-      }
-      
-      if (query && query.length >= 2) {
-        const searchTerm = `%${query.toLowerCase()}%`;
-        whereConditions.push(
-          sql`(LOWER(${novaPoshtaWarehouses.description}) LIKE ${searchTerm} OR LOWER(${novaPoshtaWarehouses.descriptionRu}) LIKE ${searchTerm})`
-        );
+        sqlQuery += ` AND city_ref = $${paramIndex}`;
+        params.push(cityRef);
+        paramIndex++;
       }
 
-      const results = await this.db
-        .select({
-          ref: novaPoshtaWarehouses.ref,
-          cityRef: novaPoshtaWarehouses.cityRef,
-          number: novaPoshtaWarehouses.number,
-          description: novaPoshtaWarehouses.description,
-          descriptionRu: novaPoshtaWarehouses.descriptionRu,
-          shortAddress: novaPoshtaWarehouses.shortAddress,
-          shortAddressRu: novaPoshtaWarehouses.shortAddressRu,
-          phone: novaPoshtaWarehouses.phone,
-          typeOfWarehouse: novaPoshtaWarehouses.typeOfWarehouse,
-          categoryOfWarehouse: novaPoshtaWarehouses.categoryOfWarehouse,
-          schedule: novaPoshtaWarehouses.schedule,
-          reception: novaPoshtaWarehouses.reception,
-          delivery: novaPoshtaWarehouses.delivery,
-          districtCode: novaPoshtaWarehouses.districtCode,
-          wardCode: novaPoshtaWarehouses.wardCode,
-          settlementAreaDescription: novaPoshtaWarehouses.settlementAreaDescription,
-          placeMaxWeightAllowed: novaPoshtaWarehouses.placeMaxWeightAllowed,
-          sendingLimitationsOnDimensions: novaPoshtaWarehouses.sendingLimitationsOnDimensions,
-          receivingLimitationsOnDimensions: novaPoshtaWarehouses.receivingLimitationsOnDimensions,
-          postFinance: novaPoshtaWarehouses.postFinance,
-          bicycleParking: novaPoshtaWarehouses.bicycleParking,
-          paymentAccess: novaPoshtaWarehouses.paymentAccess,
-          posTerminal: novaPoshtaWarehouses.posTerminal,
-          internationalShipping: novaPoshtaWarehouses.internationalShipping,
-          selfServiceWorkplacesCount: novaPoshtaWarehouses.selfServiceWorkplacesCount,
-          totalMaxWeightAllowed: novaPoshtaWarehouses.totalMaxWeightAllowed,
-          longitude: novaPoshtaWarehouses.longitude,
-          latitude: novaPoshtaWarehouses.latitude
-        })
-        .from(novaPoshtaWarehouses)
-        .where(and(...whereConditions))
-        .orderBy(novaPoshtaWarehouses.number)
-        .limit(limit);
+      if (query && query.length >= 2) {
+        const searchTerm = `%${query.toLowerCase()}%`;
+        sqlQuery += ` AND (LOWER(description) LIKE $${paramIndex} OR LOWER(description_ru) LIKE $${paramIndex + 1})`;
+        params.push(searchTerm, searchTerm);
+        paramIndex += 2;
+      }
+
+      sqlQuery += ` ORDER BY number LIMIT $${paramIndex}`;
+      params.push(limit);
+
+      const result = await pool.query(sqlQuery, params);
+      const results = result.rows;
 
       console.log(`Знайдено ${results.length} відділень для міста: "${cityRef}", запит: "${query}"`);
       
       return results.map((warehouse: any) => ({
         Ref: warehouse.ref,
-        CityRef: warehouse.cityRef,
+        CityRef: warehouse.city_ref,
         Number: warehouse.number,
         Description: warehouse.description,
-        DescriptionRu: warehouse.descriptionRu,
-        ShortAddress: warehouse.shortAddress,
-        ShortAddressRu: warehouse.shortAddressRu,
+        DescriptionRu: warehouse.description_ru,
+        ShortAddress: warehouse.short_address,
+        ShortAddressRu: warehouse.short_address_ru,
         Phone: warehouse.phone,
-        TypeOfWarehouse: warehouse.typeOfWarehouse,
-        CategoryOfWarehouse: warehouse.categoryOfWarehouse,
+        TypeOfWarehouse: warehouse.type_of_warehouse,
+        CategoryOfWarehouse: warehouse.category_of_warehouse,
         Schedule: warehouse.schedule,
         Reception: warehouse.reception,
         Delivery: warehouse.delivery,
-        DistrictCode: warehouse.districtCode,
-        WardCode: warehouse.wardCode,
-        SettlementAreaDescription: warehouse.settlementAreaDescription,
-        PlaceMaxWeightAllowed: warehouse.placeMaxWeightAllowed?.toString() || '',
-        SendingLimitationsOnDimensions: warehouse.sendingLimitationsOnDimensions,
-        ReceivingLimitationsOnDimensions: warehouse.receivingLimitationsOnDimensions,
-        PostFinance: warehouse.postFinance,
-        BicycleParking: warehouse.bicycleParking,
-        PaymentAccess: warehouse.paymentAccess,
-        POSTerminal: warehouse.posTerminal,
-        InternationalShipping: warehouse.internationalShipping,
-        SelfServiceWorkplacesCount: warehouse.selfServiceWorkplacesCount?.toString() || '0',
-        TotalMaxWeightAllowed: warehouse.totalMaxWeightAllowed?.toString() || '',
+        DistrictCode: warehouse.district_code,
+        WardCode: warehouse.ward_code,
+        SettlementAreaDescription: warehouse.settlement_area_description,
+        PlaceMaxWeightAllowed: warehouse.place_max_weight_allowed?.toString() || '',
+        SendingLimitationsOnDimensions: warehouse.sending_limitations_on_dimensions,
+        ReceivingLimitationsOnDimensions: warehouse.receiving_limitations_on_dimensions,
+        PostFinance: warehouse.post_finance,
+        BicycleParking: warehouse.bicycle_parking,
+        PaymentAccess: warehouse.payment_access,
+        POSTerminal: warehouse.pos_terminal,
+        InternationalShipping: warehouse.international_shipping,
+        SelfServiceWorkplacesCount: warehouse.self_service_workplaces_count?.toString() || '0',
+        TotalMaxWeightAllowed: warehouse.total_max_weight_allowed?.toString() || '',
         Longitude: warehouse.longitude?.toString() || '',
         Latitude: warehouse.latitude?.toString() || ''
       }));
@@ -6714,8 +6702,8 @@ export class DatabaseStorage implements IStorage {
 
   async getNovaPoshtaCitiesCount(): Promise<number> {
     try {
-      const result = await this.db.execute(sql`SELECT COUNT(*) as count FROM nova_poshta_cities WHERE is_active = true`);
-      return result[0]?.count || 0;
+      const result = await pool.query('SELECT COUNT(*) as count FROM nova_poshta_cities WHERE is_active = true');
+      return parseInt(result.rows[0]?.count || '0');
     } catch (error) {
       console.error('Помилка підрахунку міст Нової Пошти:', error);
       return 0;
@@ -6724,8 +6712,8 @@ export class DatabaseStorage implements IStorage {
 
   async getNovaPoshtaWarehousesCount(): Promise<number> {
     try {
-      const result = await this.db.execute(sql`SELECT COUNT(*) as count FROM nova_poshta_warehouses WHERE is_active = true`);
-      return result[0]?.count || 0;
+      const result = await pool.query('SELECT COUNT(*) as count FROM nova_poshta_warehouses WHERE is_active = true');
+      return parseInt(result.rows[0]?.count || '0');
     } catch (error) {
       console.error('Помилка підрахунку відділень Нової Пошти:', error);
       return 0;
@@ -6734,8 +6722,9 @@ export class DatabaseStorage implements IStorage {
 
   async isNovaPoshtaDataEmpty(): Promise<boolean> {
     try {
-      const citiesCount = await this.getNovaPoshtaCitiesCount();
-      return citiesCount === 0;
+      const result = await pool.query('SELECT COUNT(*) as count FROM nova_poshta_cities WHERE is_active = true LIMIT 1');
+      const count = parseInt(result.rows[0]?.count || '0');
+      return count === 0;
     } catch (error) {
       console.error('Помилка перевірки даних Нової Пошти:', error);
       return true;
