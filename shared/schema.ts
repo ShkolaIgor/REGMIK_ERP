@@ -51,6 +51,8 @@ export const userSortPreferences = pgTable("user_sort_preferences", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+
+
 // Таблиця компаній/фірм для мультифірмового режиму
 export const companies = pgTable("companies", {
   id: serial("id").primaryKey(),
