@@ -6560,7 +6560,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getNovaPoshtaCities(query?: string, limit: number = 200): Promise<any[]> {
+  async getNovaPoshtaCities(query?: string): Promise<any[]> {
     console.log(`Пошук міст Нової Пошти для запиту: "${query}"`);
     
     try {
@@ -6585,7 +6585,7 @@ export class DatabaseStorage implements IStorage {
         return transformedCities;
       }
 
-      // Use optimized SQL with proper indexing for fast search
+      // Use optimized SQL with proper indexing for fast search - без ліміту для повного пошуку
       const searchPattern = `%${query}%`;
       const queryLower = query.toLowerCase();
       const result = await pool.query(`
@@ -6594,14 +6594,13 @@ export class DatabaseStorage implements IStorage {
         WHERE (name ILIKE $1 OR area ILIKE $1)
         ORDER BY 
           CASE 
-            WHEN LOWER(name) = $4 THEN 1
-            WHEN name ILIKE $3 THEN 3
+            WHEN LOWER(name) = $3 THEN 1
+            WHEN name ILIKE $2 THEN 3
             WHEN name ILIKE $1 THEN 5
             ELSE 7
           END,
           LENGTH(name) ASC
-        LIMIT $2
-      `, [searchPattern, limit, `${query}%`, queryLower]);
+      `, [searchPattern, `${query}%`, queryLower]);
 
       const transformedCities = result.rows.map((city: any) => ({
         Ref: city.ref,
