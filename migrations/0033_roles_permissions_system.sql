@@ -166,7 +166,10 @@ INSERT INTO roles (name, display_name, description, is_system_role) VALUES
 ('manager', 'Менеджер', 'Управління замовленнями та клієнтами', true),
 ('operator', 'Оператор', 'Обробка замовлень та основні операції', true),
 ('user', 'Користувач', 'Базовий доступ для перегляду', true)
-ON CONFLICT (name) DO NOTHING;
+ON CONFLICT (name) DO UPDATE SET
+  display_name = EXCLUDED.display_name,
+  description = EXCLUDED.description,
+  is_system_role = EXCLUDED.is_system_role;
 
 -- Assign all permissions to super_admin
 INSERT INTO role_permissions (role_id, permission_id, granted)
