@@ -3087,6 +3087,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Creating invoice with data:', JSON.stringify(invoiceData, null, 2));
       const invoice = await novaPoshtaApi.createInternetDocument(invoiceData);
       console.log('Invoice created successfully:', invoice);
+      
+      // Якщо є orderId, оновлюємо замовлення з трек-номером
+      if (orderId && invoice.Number) {
+        try {
+          console.log('Updating order with tracking number:', invoice.Number);
+          await storage.updateOrderTrackingNumber(parseInt(orderId), invoice.Number);
+          console.log('Order updated with tracking number successfully');
+        } catch (error) {
+          console.error('Error updating order with tracking number:', error);
+        }
+      }
+      
       res.json(invoice);
     } catch (error) {
       console.error("Detailed error creating invoice:", error);

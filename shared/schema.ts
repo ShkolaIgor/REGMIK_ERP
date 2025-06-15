@@ -197,6 +197,7 @@ export const orders = pgTable("orders", {
   productionApprovedAt: timestamp("production_approved_at"), // коли дали дозвіл
   dueDate: timestamp("due_date"), // термін виконання
   shippedDate: timestamp("shipped_date"), // дата відвантаження
+  trackingNumber: text("tracking_number"), // номер відстеження Nova Poshta
   createdAt: timestamp("created_at").defaultNow(),
 });
 
