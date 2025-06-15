@@ -878,6 +878,46 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+
+  async changeUserPassword(userId: number, hashedPassword: string): Promise<boolean> {
+    try {
+      const result = await db
+        .update(localUsers)
+        .set({ 
+          password: hashedPassword,
+          passwordResetToken: null,
+          passwordResetExpires: null,
+          updatedAt: new Date() 
+        })
+        .where(eq(localUsers.id, userId))
+        .returning();
+      
+      console.log(`Пароль для користувача ${userId} змінено успішно`);
+      return result.length > 0;
+    } catch (error) {
+      console.error('Помилка зміни пароля:', error);
+      return false;
+    }
+  }
+
+  async getUserByResetToken(token: string): Promise<LocalUser | undefined> {
+    try {
+      const [user] = await db
+        .select()
+        .from(localUsers)
+        .where(
+          and(
+            eq(localUsers.passwordResetToken, token),
+            gte(localUsers.passwordResetExpires, new Date())
+          )
+        );
+      
+      return user;
+    } catch (error) {
+      console.error('Помилка пошуку користувача за токеном:', error);
+      return undefined;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
