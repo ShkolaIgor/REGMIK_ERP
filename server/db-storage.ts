@@ -3059,6 +3059,90 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  async getShipmentDetails(id: number): Promise<any> {
+    // Get basic shipment information
+    const shipmentResult = await db
+      .select()
+      .from(shipments)
+      .leftJoin(orders, eq(shipments.orderId, orders.id))
+      .leftJoin(carriers, eq(shipments.carrierId, carriers.id))
+      .where(eq(shipments.id, id));
+
+    if (shipmentResult.length === 0) return undefined;
+
+    const shipmentRow = shipmentResult[0];
+    const shipment = shipmentRow.shipments;
+    const order = shipmentRow.orders;
+    const carrier = shipmentRow.carriers;
+
+    // Get shipment items with product details
+    const itemsResult = await db
+      .select({
+        id: shipmentItems.id,
+        shipmentId: shipmentItems.shipmentId,
+        productId: shipmentItems.productId,
+        quantity: shipmentItems.quantity,
+        unitPrice: shipmentItems.unitPrice,
+        productName: products.name,
+        productSku: products.sku,
+      })
+      .from(shipmentItems)
+      .leftJoin(products, eq(shipmentItems.productId, products.id))
+      .where(eq(shipmentItems.shipmentId, id));
+
+    // Get serial numbers for this shipment
+    const serialNumbersResult = await db
+      .select({
+        productId: serialNumbers.productId,
+        serialNumber: serialNumbers.serialNumber,
+      })
+      .from(serialNumbers)
+      .where(and(
+        eq(serialNumbers.shipmentId, id),
+        eq(serialNumbers.status, 'shipped')
+      ));
+
+    // Group serial numbers by product ID
+    const serialNumbersByProduct = serialNumbersResult.reduce((acc, serial) => {
+      if (!acc[serial.productId]) {
+        acc[serial.productId] = [];
+      }
+      acc[serial.productId].push(serial.serialNumber);
+      return acc;
+    }, {} as Record<number, string[]>);
+
+    // Build items array with serial numbers
+    const items = itemsResult.map(item => ({
+      id: item.id,
+      shipmentId: item.shipmentId,
+      productId: item.productId,
+      quantity: item.quantity,
+      productName: item.productName || 'Unknown Product',
+      productSku: item.productSku || 'N/A',
+      unitPrice: item.unitPrice || '0',
+      serialNumbers: serialNumbersByProduct[item.productId] || []
+    }));
+
+    return {
+      id: shipment.id,
+      shipmentNumber: shipment.shipmentNumber,
+      status: shipment.status,
+      trackingNumber: shipment.trackingNumber,
+      weight: shipment.weight,
+      shippingAddress: shipment.recipientWarehouseAddress || '',
+      recipientName: shipment.recipientName,
+      recipientPhone: shipment.recipientPhone,
+      notes: shipment.notes,
+      shippedAt: shipment.shippedAt,
+      carrier: carrier ? { name: carrier.name } : null,
+      order: order ? {
+        orderNumber: order.orderNumber,
+        customerName: order.customerName
+      } : null,
+      items: items
+    };
+  }
+
   async createShipment(shipmentData: InsertShipment): Promise<Shipment> {
     const shipmentNumber = `SH-${Date.now()}`;
     const [created] = await db
