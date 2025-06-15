@@ -968,6 +968,214 @@ export class DatabaseStorage implements IStorage {
       return undefined;
     }
   }
+
+  // Клієнти
+  async getClients(): Promise<any[]> {
+    try {
+      const result = await db.select().from(clients);
+      return result;
+    } catch (error) {
+      console.error('Помилка отримання клієнтів:', error);
+      return [];
+    }
+  }
+
+  async getClient(id: number): Promise<any> {
+    try {
+      const [client] = await db.select().from(clients).where(eq(clients.id, id));
+      return client;
+    } catch (error) {
+      console.error('Помилка отримання клієнта:', error);
+      return undefined;
+    }
+  }
+
+  async createClient(data: any): Promise<any> {
+    try {
+      const [client] = await db.insert(clients).values(data).returning();
+      return client;
+    } catch (error) {
+      console.error('Помилка створення клієнта:', error);
+      throw error;
+    }
+  }
+
+  async updateClient(id: number, data: any): Promise<any> {
+    try {
+      const [client] = await db
+        .update(clients)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(clients.id, id))
+        .returning();
+      return client;
+    } catch (error) {
+      console.error('Помилка оновлення клієнта:', error);
+      throw error;
+    }
+  }
+
+  async deleteClient(id: number): Promise<boolean> {
+    try {
+      await db.delete(clients).where(eq(clients.id, id));
+      return true;
+    } catch (error) {
+      console.error('Помилка видалення клієнта:', error);
+      return false;
+    }
+  }
+
+  // Продукти
+  async getProducts(): Promise<any[]> {
+    try {
+      const result = await db.select().from(products);
+      return result;
+    } catch (error) {
+      console.error('Помилка отримання продуктів:', error);
+      return [];
+    }
+  }
+
+  async getProduct(id: number): Promise<any> {
+    try {
+      const [product] = await db.select().from(products).where(eq(products.id, id));
+      return product;
+    } catch (error) {
+      console.error('Помилка отримання продукта:', error);
+      return undefined;
+    }
+  }
+
+  async createProduct(data: any): Promise<any> {
+    try {
+      const [product] = await db.insert(products).values(data).returning();
+      return product;
+    } catch (error) {
+      console.error('Помилка створення продукта:', error);
+      throw error;
+    }
+  }
+
+  async updateProduct(id: number, data: any): Promise<any> {
+    try {
+      const [product] = await db
+        .update(products)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(products.id, id))
+        .returning();
+      return product;
+    } catch (error) {
+      console.error('Помилка оновлення продукта:', error);
+      throw error;
+    }
+  }
+
+  async deleteProduct(id: number): Promise<boolean> {
+    try {
+      await db.delete(products).where(eq(products.id, id));
+      return true;
+    } catch (error) {
+      console.error('Помилка видалення продукта:', error);
+      return false;
+    }
+  }
+
+  // Замовлення
+  async getOrders(): Promise<any[]> {
+    try {
+      const result = await db
+        .select()
+        .from(orders)
+        .leftJoin(orderItems, eq(orders.id, orderItems.orderId))
+        .leftJoin(products, eq(orderItems.productId, products.id));
+      
+      // Групуємо замовлення з їх елементами
+      const ordersMap = new Map();
+      
+      for (const row of result) {
+        const order = row.orders;
+        const item = row.order_items;
+        const product = row.products;
+        
+        if (!ordersMap.has(order.id)) {
+          ordersMap.set(order.id, {
+            ...order,
+            items: []
+          });
+        }
+        
+        if (item) {
+          ordersMap.get(order.id).items.push({
+            ...item,
+            product: product
+          });
+        }
+      }
+      
+      return Array.from(ordersMap.values());
+    } catch (error) {
+      console.error('Помилка отримання замовлень:', error);
+      return [];
+    }
+  }
+
+  async getOrder(id: number): Promise<any> {
+    try {
+      const [order] = await db.select().from(orders).where(eq(orders.id, id));
+      if (!order) return undefined;
+      
+      const items = await db
+        .select()
+        .from(orderItems)
+        .leftJoin(products, eq(orderItems.productId, products.id))
+        .where(eq(orderItems.orderId, id));
+      
+      return {
+        ...order,
+        items: items.map(row => ({
+          ...row.order_items,
+          product: row.products
+        }))
+      };
+    } catch (error) {
+      console.error('Помилка отримання замовлення:', error);
+      return undefined;
+    }
+  }
+
+  async createOrder(data: any): Promise<any> {
+    try {
+      const [order] = await db.insert(orders).values(data).returning();
+      return order;
+    } catch (error) {
+      console.error('Помилка створення замовлення:', error);
+      throw error;
+    }
+  }
+
+  async updateOrder(id: number, data: any): Promise<any> {
+    try {
+      const [order] = await db
+        .update(orders)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(orders.id, id))
+        .returning();
+      return order;
+    } catch (error) {
+      console.error('Помилка оновлення замовлення:', error);
+      throw error;
+    }
+  }
+
+  async deleteOrder(id: number): Promise<boolean> {
+    try {
+      await db.delete(orderItems).where(eq(orderItems.orderId, id));
+      await db.delete(orders).where(eq(orders.id, id));
+      return true;
+    } catch (error) {
+      console.error('Помилка видалення замовлення:', error);
+      return false;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
