@@ -62,6 +62,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Temporary login bypass for system recovery
+  app.post("/api/auth/temp-login", async (req, res) => {
+    try {
+      // Create a temporary user session for emergency access
+      const tempUser = {
+        id: "temp-admin",
+        email: "admin@temp.local",
+        firstName: "Temp",
+        lastName: "Admin",
+        profileImageUrl: null
+      };
+      
+      // Store user in database if not exists
+      await storage.upsertUser(tempUser);
+      
+      // Set session manually
+      (req as any).session.user = tempUser;
+      
+      res.json({ success: true, user: tempUser });
+    } catch (error) {
+      console.error("Temp login error:", error);
+      res.status(500).json({ error: "Failed to create temp session" });
+    }
+  });
+
+  // Check auth status
+  app.get("/api/auth/status", (req, res) => {
+    const user = (req as any).session?.user;
+    if (user) {
+      res.json({ authenticated: true, user });
+    } else {
+      res.json({ authenticated: false });
+    }
+  });
+
   // Basic endpoint for testing
   app.get("/api/health", (req, res) => {
     res.json({ status: "OK", timestamp: new Date().toISOString() });

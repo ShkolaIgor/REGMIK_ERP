@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
 import SimpleLogin from "@/pages/simple-login";
+import TempLogin from "@/pages/temp-login";
 import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
 import Home from "@/pages/home";
@@ -80,7 +81,7 @@ function Router() {
       <Switch>
         <Route path="/forgot-password" component={ForgotPassword} />
         <Route path="/reset-password" component={ResetPassword} />
-        <Route component={SimpleLogin} />
+        <Route component={TempLogin} />
       </Switch>
     );
   }
