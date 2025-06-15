@@ -3118,7 +3118,8 @@ export class DatabaseStorage implements IStorage {
           shipmentId: shipmentItems.shipmentId,
           productId: shipmentItems.productId,
           quantity: shipmentItems.quantity,
-          unitPrice: shipmentItems.unitPrice
+          orderItemId: shipmentItems.orderItemId,
+          serialNumbers: shipmentItems.serialNumbers
         })
         .from(shipmentItems)
         .where(eq(shipmentItems.shipmentId, id));
@@ -3127,6 +3128,8 @@ export class DatabaseStorage implements IStorage {
       const items = [];
       for (const item of itemsResult) {
         let product = null;
+        let orderItem = null;
+        
         if (item.productId) {
           const productResult = await db
             .select({
@@ -3139,17 +3142,20 @@ export class DatabaseStorage implements IStorage {
           product = productResult[0] || null;
         }
 
-        // Get serial numbers for this product in this shipment
-        const serialNumbersResult = await db
-          .select({
-            serialNumber: serialNumbers.serialNumber
-          })
-          .from(serialNumbers)
-          .where(and(
-            eq(serialNumbers.shipmentId, id),
-            eq(serialNumbers.productId, item.productId || 0),
-            eq(serialNumbers.status, 'shipped')
-          ));
+        // Get order item details for unit price
+        if (item.orderItemId) {
+          const orderItemResult = await db
+            .select({
+              id: orderItems.id,
+              unitPrice: orderItems.unitPrice
+            })
+            .from(orderItems)
+            .where(eq(orderItems.id, item.orderItemId));
+          orderItem = orderItemResult[0] || null;
+        }
+
+        // Get serial numbers for this product in this shipment - using item.serialNumbers from schema
+        const itemSerialNumbers = item.serialNumbers || [];
 
         items.push({
           id: item.id,
@@ -3158,8 +3164,8 @@ export class DatabaseStorage implements IStorage {
           quantity: item.quantity,
           productName: product?.name || 'Unknown Product',
           productSku: product?.sku || 'N/A',
-          unitPrice: item.unitPrice || '0',
-          serialNumbers: serialNumbersResult.map(s => s.serialNumber)
+          unitPrice: orderItem?.unitPrice || '0',
+          serialNumbers: itemSerialNumbers
         });
       }
 
