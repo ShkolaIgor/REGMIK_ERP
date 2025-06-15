@@ -257,8 +257,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteSystemModule(id: number): Promise<boolean> {
-    const result = await db.delete(systemModules).where(eq(systemModules.id, id));
-    return result.rowCount !== null && result.rowCount > 0;
+    try {
+      const result = await db.delete(systemModules).where(eq(systemModules.id, id));
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      console.error('Помилка видалення модуля системи:', error);
+      return false;
+    }
   }
 
   // Categories
@@ -6952,15 +6957,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async deleteSystemModule(id: number): Promise<boolean> {
-    try {
-      const result = await db.delete(systemModules).where(eq(systemModules.id, id));
-      return result.rowCount > 0;
-    } catch (error) {
-      console.error('Помилка видалення модуля системи:', error);
-      return false;
-    }
-  }
+
 
   async getPermissions(): Promise<Permission[]> {
     try {
