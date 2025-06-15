@@ -31,6 +31,12 @@ import { sendEmail } from "./email-service";
 export async function registerRoutes(app: Express): Promise<Server> {
   
   // ================================
+  // НАЛАШТУВАННЯ СЕСІЙ
+  // ================================
+  setupSimpleSession(app);
+  setupSimpleAuth(app);
+  
+  // ================================
   // МАРШРУТИ ДЛЯ АУТЕНТИФІКАЦІЇ
   // ================================
 
@@ -132,9 +138,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("Auth check - User authenticated:", session.user.username);
     res.json(session.user);
   });
-  // Simple auth setup
-  setupSimpleSession(app);
-  setupSimpleAuth(app);
+
 
   // Register simple integration routes
   registerSimpleIntegrationRoutes(app);
