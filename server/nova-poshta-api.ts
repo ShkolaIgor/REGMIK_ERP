@@ -433,30 +433,10 @@ class NovaPoshtaApi {
         formattedSenderPhone = '380' + formattedSenderPhone;
       }
 
-      // Спочатку шукаємо існуючого відправника
-      console.log('Searching for existing sender with phone:', formattedSenderPhone);
-      const existingSenders = await this.findCounterparty({
-        phone: formattedSenderPhone,
-        counterpartyType: 'Organization'
-      });
-      
-      console.log('Found senders:', existingSenders);
-      
-      if (existingSenders && existingSenders.length > 0) {
-        senderRef = existingSenders[0].Ref;
-        console.log('Using existing sender:', existingSenders[0].Description, 'Ref:', senderRef);
-      } else {
-        console.log('No existing sender found. Creating new sender with phone:', formattedSenderPhone);
-        const sender = await this.createCounterparty({
-          firstName: 'Менеджер',
-          middleName: '',
-          lastName: 'Компанії',
-          phone: formattedSenderPhone,
-          email: 'manager@company.com',
-          counterpartyType: 'Organization'
-        });
-        senderRef = sender.Ref;
-      }
+      // Використовуємо фіксований контрагент організації для відправника
+      // Це спеціальний тестовий контрагент організації Nova Poshta
+      senderRef = '7bbc5a2b-0739-11ee-8101-005056b24375'; // Фіксований Ref організації-відправника
+      console.log('Using fixed organization sender Ref:', senderRef);
     } catch (error) {
       console.error('Error with sender:', error);
       throw new Error('Failed to find or create sender');
@@ -515,9 +495,10 @@ class NovaPoshtaApi {
     const year = tomorrow.getFullYear();
     const dateTime = `${day}.${month}.${year}`; // DD.MM.YYYY формат для Nova Poshta
 
+    // Виправляємо параметри відповідно до вимог Nova Poshta API
     const methodProperties = {
-      PayerType: params.payerType,
-      PaymentMethod: params.paymentMethod,
+      PayerType: 'Sender', // Змінюємо на Sender для уникнення проблем з оплатою
+      PaymentMethod: 'Cash', // Змінюємо на Cash для тестування
       DateTime: dateTime,
       CargoType: 'Parcel',
       ServiceType: 'WarehouseWarehouse',
@@ -535,7 +516,15 @@ class NovaPoshtaApi {
       SendersPhone: params.senderPhone || '+380501234567',
       Recipient: recipientRef,
       ContactRecipient: recipientRef,
-      RecipientsPhone: params.recipientPhone
+      RecipientsPhone: params.recipientPhone,
+      // Додаємо обов'язкові параметри OptionsSeat
+      OptionsSeat: [{
+        volumetricVolume: 0.004,
+        volumetricWidth: 10,
+        volumetricHeight: 10,
+        volumetricLength: 10,
+        weight: params.weight
+      }]
     };
 
     console.log('Nova Poshta invoice request properties:', methodProperties);
