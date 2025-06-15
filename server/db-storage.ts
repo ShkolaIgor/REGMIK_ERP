@@ -2,7 +2,7 @@ import { eq, sql, desc, and, gte, lte, isNull, ne, or, not, inArray, ilike } fro
 import { db, pool } from "./db";
 import { IStorage } from "./storage";
 import {
-  users, localUsers, roles, systemModules, userLoginHistory, categories, warehouses, units, products, inventory, orders, orderItems, orderStatuses,
+  users, localUsers, roles, systemModules, permissions, userRoles, rolePermissions, userLoginHistory, categories, warehouses, units, products, inventory, orders, orderItems, orderStatuses,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   components, productComponents, costCalculations, materialShortages, supplierOrders, supplierOrderItems,
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
@@ -13,7 +13,9 @@ import {
   clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences,
   repairs, repairParts, repairStatusHistory, repairDocuments, orderItemSerialNumbers, novaPoshtaCities, novaPoshtaWarehouses,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
-  type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
+  type SystemModule, type InsertSystemModule, type Permission, type InsertPermission,
+  type UserRole, type InsertUserRole, type RolePermission, type InsertRolePermission,
+  type UserLoginHistory, type InsertUserLoginHistory,
   type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
   type Product, type InsertProduct,
@@ -98,47 +100,188 @@ export class DatabaseStorage implements IStorage {
       description: "Основний склад"
     });
 
-    // Додаємо базові ролі
-    await db.insert(roles).values([
-      {
-        name: "Адміністратор",
-        description: "Повний доступ до системи",
-        permissions: "admin"
-      },
-      {
-        name: "Менеджер",
-        description: "Управління замовленнями та клієнтами",
-        permissions: "manager"
-      },
-      {
-        name: "Працівник склadu",
-        description: "Робота зі складськими операціями",
-        permissions: "warehouse"
-      }
-    ]);
-
     // Додаємо системні модулі
-    await db.insert(systemModules).values([
-      {
-        name: "Управління продукцією",
-        description: "Товари, складські залишки, категорії",
+    const modulesList = [
+      { name: "dashboard", displayName: "Панель управління", description: "Головна панель управління системою", icon: "LayoutDashboard", route: "/" },
+      { name: "sales", displayName: "Продажі", description: "Модуль управління продажами", icon: "ShoppingCart", route: "/orders" },
+      { name: "inventory", displayName: "Склад", description: "Управління складськими запасами", icon: "Package", route: "/inventory" },
+      { name: "production", displayName: "Виробництво", description: "Планування та контроль виробництва", icon: "Factory", route: "/production" },
+      { name: "clients", displayName: "Клієнти", description: "Управління клієнтською базою", icon: "Users", route: "/clients" },
+      { name: "reports", displayName: "Звіти", description: "Звітність та аналітика", icon: "BarChart", route: "/reports" },
+      { name: "administration", displayName: "Адміністрування", description: "Системне адміністрування", icon: "Settings", route: "/users" },
+      { name: "shipments", displayName: "Відвантаження", description: "Управління відвантаженнями", icon: "Truck", route: "/shipments" },
+      { name: "repairs", displayName: "Ремонти", description: "Управління ремонтами", icon: "Wrench", route: "/repairs" },
+      { name: "serial_numbers", displayName: "Серійні номери", description: "Управління серійними номерами", icon: "QrCode", route: "/serial-numbers" }
+    ];
+
+    const insertedModules = await db.insert(systemModules).values(
+      modulesList.map((module, index) => ({
+        ...module,
         isActive: true,
-        order: 1
+        sortOrder: index + 1
+      }))
+    ).returning();
+
+    // Додаємо базові дозволи для кожного модуля
+    const permissionsList = [];
+    
+    for (const module of insertedModules) {
+      const basePermissions = [
+        { action: "view", displayName: "Перегляд", description: `Переглядати дані модуля ${module.displayName}` },
+        { action: "create", displayName: "Створення", description: `Створювати записи в модулі ${module.displayName}` },
+        { action: "edit", displayName: "Редагування", description: `Редагувати записи в модулі ${module.displayName}` },
+        { action: "delete", displayName: "Видалення", description: `Видаляти записи в модулі ${module.displayName}` }
+      ];
+
+      for (const perm of basePermissions) {
+        permissionsList.push({
+          name: `${module.name}_${perm.action}`,
+          displayName: `${module.displayName}: ${perm.displayName}`,
+          description: perm.description,
+          moduleId: module.id,
+          action: perm.action,
+          resourceType: module.name,
+          isSystemPermission: true
+        });
+      }
+    }
+
+    // Додаємо спеціальні дозволи для адміністрування
+    const adminModule = insertedModules.find(m => m.name === "administration");
+    if (adminModule) {
+      permissionsList.push(
+        {
+          name: "admin_user_management",
+          displayName: "Адміністрування: Управління користувачами",
+          description: "Повне управління користувачами системи",
+          moduleId: adminModule.id,
+          action: "manage",
+          resourceType: "users",
+          isSystemPermission: true
+        },
+        {
+          name: "admin_roles_management",
+          displayName: "Адміністрування: Управління ролями",
+          description: "Управління ролями та дозволами",
+          moduleId: adminModule.id,
+          action: "manage",
+          resourceType: "roles",
+          isSystemPermission: true
+        },
+        {
+          name: "admin_system_settings",
+          displayName: "Адміністрування: Налаштування системи",
+          description: "Управління налаштуваннями системи",
+          moduleId: adminModule.id,
+          action: "manage",
+          resourceType: "settings",
+          isSystemPermission: true
+        }
+      );
+    }
+
+    await db.insert(permissions).values(permissionsList);
+
+    // Створюємо базові ролі
+    const rolesList = [
+      {
+        name: "super_admin",
+        displayName: "Супер адміністратор",
+        description: "Повний доступ до всіх функцій системи",
+        permissions: {},
+        isSystemRole: true
       },
       {
-        name: "Замовлення клієнтів",
-        description: "Обробка замовлень, статуси, відвантаження",
-        isActive: true,
-        order: 2
+        name: "admin",
+        displayName: "Адміністратор",
+        description: "Адміністративний доступ до основних функцій",
+        permissions: {},
+        isSystemRole: true
       },
       {
-        name: "База клієнтів",
-        description: "Контактна інформація, історія співпраці",
-        isActive: true,
-        order: 3
+        name: "manager",
+        displayName: "Менеджер",
+        description: "Доступ до управління продажами та клієнтами",
+        permissions: {},
+        isSystemRole: false
       },
       {
-        name: "Виробництво",
+        name: "operator",
+        displayName: "Оператор",
+        description: "Базовий доступ до операційних функцій",
+        permissions: {},
+        isSystemRole: false
+      }
+    ];
+
+    const insertedRoles = await db.insert(roles).values(rolesList).returning();
+
+    // Призначаємо всі дозволи для супер адміністратора
+    const superAdminRole = insertedRoles.find(r => r.name === "super_admin");
+    const allPermissions = await db.select().from(permissions);
+    
+    if (superAdminRole && allPermissions.length > 0) {
+      const superAdminPermissions = allPermissions.map(perm => ({
+        roleId: superAdminRole.id,
+        permissionId: perm.id,
+        granted: true
+      }));
+      
+      await db.insert(rolePermissions).values(superAdminPermissions);
+    }
+  }
+
+  async getUsers(): Promise<User[]> {
+    try {
+      const result = await db.select().from(users).orderBy(users.createdAt);
+      return result;
+    } catch (error) {
+      console.error('Помилка отримання користувачів:', error);
+      return [];
+    }
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    try {
+      const [user] = await db
+        .insert(users)
+        .values(userData)
+        .onConflictDoUpdate({
+          target: users.id,
+          set: {
+            ...userData,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
+      return user;
+    } catch (error) {
+      console.error('Помилка створення/оновлення користувача:', error);
+      throw error;
+    }
+  }
+
+  async getUser(id: string): Promise<User | undefined> {
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, id));
+      return user;
+    } catch (error) {
+      console.error('Помилка отримання користувача:', error);
+      return undefined;
+    }
+  }
+
+
+  // Додамо методи для ролей та дозволів
+  async getRoles(): Promise<Role[]> {
+    try {
+      const result = await db.select().from(roles).orderBy(roles.displayName);
+      return result;
+    } catch (error) {
+      console.error('Помилка отримання ролей:', error);
+      return [];
+    }
+  }
         description: "Технологічні карти, завдання виробництва",
         isActive: true,
         order: 4
