@@ -2039,7 +2039,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/workers", async (req, res) => {
     try {
       const workers = await storage.getWorkers();
-      res.json(workers);
+      // Додаємо поле name для сумісності з формами
+      const workersWithName = workers.map(worker => ({
+        ...worker,
+        name: `${worker.firstName} ${worker.lastName}`
+      }));
+      res.json(workersWithName);
     } catch (error) {
       console.error("Failed to get workers:", error);
       res.status(500).json({ error: "Failed to get workers" });
