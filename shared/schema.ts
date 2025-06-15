@@ -973,6 +973,13 @@ export const workers = pgTable("workers", {
   departmentId: integer("department_id").references(() => departments.id),
   email: varchar("email", { length: 255 }),
   phone: varchar("phone", { length: 20 }),
+  
+  // Нові поля
+  birthDate: timestamp("birth_date"), // дата народження
+  address: text("address"), // адреса проживання
+  contactPhone: varchar("contact_phone", { length: 20 }), // контактний телефон
+  terminationDate: timestamp("termination_date"), // дата звільнення
+  
   hireDate: timestamp("hire_date"),
   hourlyRate: decimal("hourly_rate", { precision: 8, scale: 2 }),
   photo: text("photo"), // URL або base64 рядок фото
@@ -988,7 +995,9 @@ export const insertWorkerSchema = createInsertSchema(workers).omit({
   updatedAt: true 
 }).extend({
   hourlyRate: z.union([z.string(), z.number()]).transform((val) => val?.toString()).optional().nullable(),
-  hireDate: z.union([z.string(), z.date()]).transform((val) => val ? new Date(val) : null).optional().nullable()
+  hireDate: z.union([z.string(), z.date()]).transform((val) => val ? new Date(val) : null).optional().nullable(),
+  birthDate: z.union([z.string(), z.date()]).transform((val) => val ? new Date(val) : null).optional().nullable(),
+  terminationDate: z.union([z.string(), z.date()]).transform((val) => val ? new Date(val) : null).optional().nullable()
 });
 
 // Таблиця прогнозування виробництва
