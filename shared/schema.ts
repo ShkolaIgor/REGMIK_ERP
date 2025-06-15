@@ -151,7 +151,8 @@ export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  // Налаштування серійних номерів
+  // Налаштування серійних номерів для групи товарів
+  hasSerialNumbers: boolean("has_serial_numbers").default(false), // чи має ця категорія серійні номери
   serialNumberTemplate: text("serial_number_template"), // шаблон серійного номера, наприклад: "{prefix}-{year}-{counter:4}"
   serialNumberPrefix: text("serial_number_prefix"), // префікс для серійних номерів
   serialNumberStartNumber: integer("serial_number_start_number").default(1), // початковий номер
@@ -193,7 +194,6 @@ export const products = pgTable("products", {
   unit: text("unit").notNull().default("шт"), // одиниця виміру
   minStock: integer("min_stock").default(0),
   maxStock: integer("max_stock").default(1000),
-  hasSerialNumbers: boolean("has_serial_numbers").default(false), // чи використовує серійні номери
   isActive: boolean("is_active").default(true), // статус активності товару
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -1636,6 +1636,7 @@ export const serialNumberSettings = pgTable("serial_number_settings", {
 export const serialNumbers = pgTable("serial_numbers", {
   id: serial("id").primaryKey(),
   productId: integer("product_id").references(() => products.id).notNull(),
+  categoryId: integer("category_id").references(() => categories.id), // посилання на категорію для групового управління
   serialNumber: text("serial_number").notNull().unique(),
   status: text("status").notNull().default("available"), // available, reserved, sold, defective
   warehouseId: integer("warehouse_id").references(() => warehouses.id),

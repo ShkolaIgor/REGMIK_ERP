@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { serialNumbers, products, categories, serialNumberSettings } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 interface SerialGenerationOptions {
   productId: number;
@@ -9,43 +9,61 @@ interface SerialGenerationOptions {
   useGlobalCounter?: boolean;
 }
 
-// Налаштування шаблонів для різних категорій (можна винести в конфіг)
-const CATEGORY_TEMPLATES = {
-  1: "ELE-{YYYY}-{####}", // Електроніка
-  2: "MEC-{YYYY}-{####}", // Механіка
-  3: "CHE-{YYYY}-{####}", // Хімія
-  // Додавайте інші категорії за потребою
-};
-
 export class SerialNumberGenerator {
   
   /**
-   * Генерує серійний номер для продукту
+   * Генерує серійний номер для продукту на основі налаштувань категорії
    */
   async generateSerialNumber(options: SerialGenerationOptions): Promise<string> {
     const { productId, categoryId, template, useGlobalCounter = false } = options;
 
+    // Спочатку отримуємо категорію продукту
+    let actualCategoryId = categoryId;
+    if (!actualCategoryId) {
+      const product = await db.select({ categoryId: products.categoryId })
+        .from(products)
+        .where(eq(products.id, productId))
+        .limit(1);
+      
+      if (product.length > 0 && product[0].categoryId) {
+        actualCategoryId = product[0].categoryId;
+      }
+    }
+
+    // Отримуємо налаштування серійних номерів для категорії
+    if (actualCategoryId) {
+      const category = await db.select()
+        .from(categories)
+        .where(eq(categories.id, actualCategoryId))
+        .limit(1);
+
+      if (category.length > 0 && category[0].hasSerialNumbers) {
+        const categorySettings = category[0];
+        
+        // Якщо є шаблон для категорії, використовуємо його
+        if (categorySettings.serialNumberTemplate) {
+          return await this.generateFromTemplate(
+            categorySettings.serialNumberTemplate, 
+            actualCategoryId,
+            categorySettings.serialNumberPrefix
+          );
+        }
+      }
+    }
+
     // Якщо вказано шаблон, використовуємо його
     if (template) {
-      return await this.generateFromTemplate(template, categoryId || 0);
+      return await this.generateFromTemplate(template, actualCategoryId || 0);
     }
 
-    // Якщо є категорія, перевіряємо чи є для неї шаблон
-    if (categoryId && CATEGORY_TEMPLATES[categoryId as keyof typeof CATEGORY_TEMPLATES]) {
-      return await this.generateFromTemplate(
-        CATEGORY_TEMPLATES[categoryId as keyof typeof CATEGORY_TEMPLATES], 
-        categoryId
-      );
-    }
-
-    // Базова генерація: простий послідовний номер
-    return await this.generateSequentialNumber(productId);
+    // Базова генерація: простий послідовний номер для категорії
+    return await this.generateSequentialNumber(productId, actualCategoryId);
   }
 
   /**
-   * Генерує серійний номер за шаблоном
+   * Генерує серійний номер за шаблоном з префіксом
    */
-  private async generateFromTemplate(template: string, categoryId: number): Promise<string> {
+  private async generateFromTemplate(template: string, categoryId: number, prefix?: string | null): Promise<string> {
     const now = new Date();
     let result = template;
 
