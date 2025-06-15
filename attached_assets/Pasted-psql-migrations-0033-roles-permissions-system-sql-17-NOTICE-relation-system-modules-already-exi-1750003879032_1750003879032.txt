@@ -1,0 +1,34 @@
+psql:migrations/0033_roles_permissions_system.sql:17: NOTICE:  relation "system_modules" already exists, skipping
+CREATE TABLE
+psql:migrations/0033_roles_permissions_system.sql:30: NOTICE:  relation "permissions" already exists, skipping
+CREATE TABLE
+psql:migrations/0033_roles_permissions_system.sql:42: NOTICE:  relation "roles" already exists, skipping
+CREATE TABLE
+psql:migrations/0033_roles_permissions_system.sql:52: NOTICE:  relation "role_permissions" already exists, skipping
+CREATE TABLE
+DO
+psql:migrations/0033_roles_permissions_system.sql:64: NOTICE:  relation "idx_permissions_module_id" already exists, skipping
+CREATE INDEX
+psql:migrations/0033_roles_permissions_system.sql:65: NOTICE:  relation "idx_role_permissions_role_id" already exists, skipping
+CREATE INDEX
+psql:migrations/0033_roles_permissions_system.sql:66: NOTICE:  relation "idx_role_permissions_permission_id" already exists, skipping
+CREATE INDEX
+psql:migrations/0033_roles_permissions_system.sql:67: ERROR:  cannot create index on relation "users"
+DETAIL:  This operation is not supported for views.
+INSERT 0 11
+INSERT 0 0
+psql:migrations/0033_roles_permissions_system.sql:172: ERROR:  null value in column "permissions" of relation "roles" violates not-null constraint
+DETAIL:  Failing row contains (4, super_admin, Супер адміністратор, Повний доступ до всіх функцій сист..., null, t, 2025-06-15 16:11:05.673774, 2025-06-15 16:11:05.673774).
+psql:migrations/0033_roles_permissions_system.sql:181: ERROR:  null value in column "role_id" of relation "role_permissions" violates not-null constraint
+DETAIL:  Failing row contains (11, null, 1, t, 2025-06-15 16:11:05.674047).
+psql:migrations/0033_roles_permissions_system.sql:191: ERROR:  null value in column "role_id" of relation "role_permissions" violates not-null constraint
+DETAIL:  Failing row contains (12, null, 1, t, 2025-06-15 16:11:05.674426).
+psql:migrations/0033_roles_permissions_system.sql:211: ERROR:  null value in column "role_id" of relation "role_permissions" violates not-null constraint
+DETAIL:  Failing row contains (13, null, 1, t, 2025-06-15 16:11:05.67477).
+psql:migrations/0033_roles_permissions_system.sql:229: ERROR:  null value in column "role_id" of relation "role_permissions" violates not-null constraint
+DETAIL:  Failing row contains (14, null, 1, t, 2025-06-15 16:11:05.675027).
+psql:migrations/0033_roles_permissions_system.sql:246: ERROR:  null value in column "role_id" of relation "role_permissions" violates not-null constraint
+DETAIL:  Failing row contains (15, null, 1, t, 2025-06-15 16:11:05.675217).
+UPDATE 1
+CREATE FUNCTION
+DO
