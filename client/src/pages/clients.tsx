@@ -48,6 +48,7 @@ import {
   Edit, 
   Trash2, 
   Truck,
+  Package,
   Percent,
   Search
 } from "lucide-react";
@@ -573,9 +574,18 @@ export default function Clients() {
                     size="sm" 
                     onClick={() => window.location.href = `/clients/${client.id}/nova-poshta-settings`}
                     className="text-green-600 hover:text-green-700 h-8 w-8 p-0"
-                    title="Налаштування Нової Пошти"
+                    title="API налаштування Нової Пошти"
                   >
                     <Truck className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => window.location.href = `/clients/${client.id}/delivery-settings`}
+                    className="text-purple-600 hover:text-purple-700 h-8 w-8 p-0"
+                    title="Налаштування доставки"
+                  >
+                    <Package className="h-4 w-4" />
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => handleEdit(client)} className="h-8 w-8 p-0">
                     <Edit className="h-4 w-4" />

@@ -16,6 +16,7 @@ import Orders from "@/pages/orders";
 import Clients from "@/pages/clients";
 import ClientContacts from "@/pages/client-contacts";
 import ClientNovaPoshtaSettings from "@/pages/client-nova-poshta-settings";
+import ClientDeliverySettings from "@/pages/client-delivery-settings";
 import ClientMail from "@/pages/client-mail-corrected";
 import Recipes from "@/pages/recipes";
 import TechCards from "@/pages/tech-cards";
@@ -186,6 +187,7 @@ function Router() {
         <Route path="/clients" component={Clients} />
         <Route path="/client-contacts" component={ClientContacts} />
         <Route path="/clients/:id/nova-poshta-settings" component={ClientNovaPoshtaSettings} />
+        <Route path="/clients/:id/delivery-settings" component={ClientDeliverySettings} />
         <Route path="/client-mail" component={ClientMail} />
         <Route path="/recipes" component={Recipes} />
         <Route path="/tech-cards" component={TechCards} />
