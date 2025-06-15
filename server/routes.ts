@@ -4969,6 +4969,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Client Nova Poshta API Settings Routes
+  app.get("/api/clients/:clientId/nova-poshta-api-settings", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      const settings = await storage.getClientNovaPoshtaApiSettings(clientId);
+      res.json(settings);
+    } catch (error) {
+      console.error("Failed to fetch Nova Poshta API settings:", error);
+      res.status(500).json({ error: "Failed to fetch Nova Poshta API settings" });
+    }
+  });
+
+  app.get("/api/nova-poshta-api-settings/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const settings = await storage.getClientNovaPoshtaApiSetting(id);
+      if (!settings) {
+        return res.status(404).json({ error: "Nova Poshta API settings not found" });
+      }
+      res.json(settings);
+    } catch (error) {
+      console.error("Failed to fetch Nova Poshta API settings:", error);
+      res.status(500).json({ error: "Failed to fetch Nova Poshta API settings" });
+    }
+  });
+
+  app.post("/api/clients/:clientId/nova-poshta-api-settings", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      const settingsData = { ...req.body, clientId };
+      const settings = await storage.createClientNovaPoshtaApiSettings(settingsData);
+      res.status(201).json(settings);
+    } catch (error) {
+      console.error("Failed to create Nova Poshta API settings:", error);
+      res.status(500).json({ error: "Failed to create Nova Poshta API settings" });
+    }
+  });
+
+  app.patch("/api/nova-poshta-api-settings/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const settings = await storage.updateClientNovaPoshtaApiSettings(id, req.body);
+      if (!settings) {
+        return res.status(404).json({ error: "Nova Poshta API settings not found" });
+      }
+      res.json(settings);
+    } catch (error) {
+      console.error("Failed to update Nova Poshta API settings:", error);
+      res.status(500).json({ error: "Failed to update Nova Poshta API settings" });
+    }
+  });
+
+  app.delete("/api/nova-poshta-api-settings/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteClientNovaPoshtaApiSettings(id);
+      if (!success) {
+        return res.status(404).json({ error: "Nova Poshta API settings not found" });
+      }
+      res.json({ message: "Nova Poshta API settings deleted successfully" });
+    } catch (error) {
+      console.error("Failed to delete Nova Poshta API settings:", error);
+      res.status(500).json({ error: "Failed to delete Nova Poshta API settings" });
+    }
+  });
+
+  app.patch("/api/clients/:clientId/nova-poshta-api-settings/:id/set-primary", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      const settingsId = parseInt(req.params.id);
+      const success = await storage.setPrimaryClientNovaPoshtaApiSettings(clientId, settingsId);
+      if (!success) {
+        return res.status(404).json({ error: "Failed to set primary Nova Poshta API settings" });
+      }
+      res.json({ message: "Primary Nova Poshta API settings updated successfully" });
+    } catch (error) {
+      console.error("Failed to set primary Nova Poshta API settings:", error);
+      res.status(500).json({ error: "Failed to set primary Nova Poshta API settings" });
+    }
+  });
+
   // Group mail creation API
   app.post("/api/client-mail/group-create", async (req, res) => {
     try {

@@ -48,6 +48,7 @@ import {
   type Client, type InsertClient,
   type ClientContact, type InsertClientContact,
   type ClientNovaPoshtaSettings, type InsertClientNovaPoshtaSettings,
+  type ClientNovaPoshtaApiSettings, type InsertClientNovaPoshtaApiSettings,
 
   type ClientMail, type InsertClientMail,
   type MailRegistry, type InsertMailRegistry,
@@ -478,6 +479,14 @@ export interface IStorage {
   deleteClientNovaPoshtaSettings(id: number): Promise<boolean>;
   setPrimaryClientNovaPoshtaSettings(clientId: number, settingsId: number): Promise<boolean>;
 
+  // Client Nova Poshta API Settings
+  getClientNovaPoshtaApiSettings(clientId: number): Promise<ClientNovaPoshtaApiSettings[]>;
+  getClientNovaPoshtaApiSetting(id: number): Promise<ClientNovaPoshtaApiSettings | undefined>;
+  createClientNovaPoshtaApiSettings(settings: InsertClientNovaPoshtaApiSettings): Promise<ClientNovaPoshtaApiSettings>;
+  updateClientNovaPoshtaApiSettings(id: number, settings: Partial<InsertClientNovaPoshtaApiSettings>): Promise<ClientNovaPoshtaApiSettings | undefined>;
+  deleteClientNovaPoshtaApiSettings(id: number): Promise<boolean>;
+  setPrimaryClientNovaPoshtaApiSettings(clientId: number, settingsId: number): Promise<boolean>;
+
   // Email Settings
   getEmailSettings(): Promise<EmailSettings | null>;
   updateEmailSettings(settings: InsertEmailSettings): Promise<EmailSettings>;
@@ -556,6 +565,7 @@ export class MemStorage implements IStorage {
   private syncQueue: Map<number, SyncQueue> = new Map();
   private fieldMappings: Map<number, FieldMapping> = new Map();
   private emailSettings: Map<number, EmailSettings> = new Map();
+  private clientNovaPoshtaApiSettings: Map<number, ClientNovaPoshtaApiSettings> = new Map();
 
   private currentUserId = 1;
   private currentCategoryId = 1;
@@ -1805,6 +1815,66 @@ export class MemStorage implements IStorage {
     
     this.emailSettings.set(updated.id, updated);
     return updated;
+  }
+
+  // Client Nova Poshta API Settings Implementation
+  async getClientNovaPoshtaApiSettings(clientId: number): Promise<ClientNovaPoshtaApiSettings[]> {
+    return Array.from(this.clientNovaPoshtaApiSettings.values())
+      .filter(settings => settings.clientId === clientId);
+  }
+
+  async getClientNovaPoshtaApiSetting(id: number): Promise<ClientNovaPoshtaApiSettings | undefined> {
+    return this.clientNovaPoshtaApiSettings.get(id);
+  }
+
+  async createClientNovaPoshtaApiSettings(settings: InsertClientNovaPoshtaApiSettings): Promise<ClientNovaPoshtaApiSettings> {
+    const id = this.getNextId();
+    const newSettings: ClientNovaPoshtaApiSettings = {
+      id,
+      ...settings,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.clientNovaPoshtaApiSettings.set(id, newSettings);
+    return newSettings;
+  }
+
+  async updateClientNovaPoshtaApiSettings(id: number, settings: Partial<InsertClientNovaPoshtaApiSettings>): Promise<ClientNovaPoshtaApiSettings | undefined> {
+    const existing = this.clientNovaPoshtaApiSettings.get(id);
+    if (!existing) return undefined;
+
+    const updated: ClientNovaPoshtaApiSettings = {
+      ...existing,
+      ...settings,
+      updatedAt: new Date()
+    };
+    this.clientNovaPoshtaApiSettings.set(id, updated);
+    return updated;
+  }
+
+  async deleteClientNovaPoshtaApiSettings(id: number): Promise<boolean> {
+    return this.clientNovaPoshtaApiSettings.delete(id);
+  }
+
+  async setPrimaryClientNovaPoshtaApiSettings(clientId: number, settingsId: number): Promise<boolean> {
+    // Знімаємо прапорець isPrimary з усіх налаштувань клієнта
+    const clientSettings = Array.from(this.clientNovaPoshtaApiSettings.values())
+      .filter(settings => settings.clientId === clientId);
+    
+    for (const settings of clientSettings) {
+      if (settings.isPrimary) {
+        const updated = { ...settings, isPrimary: false, updatedAt: new Date() };
+        this.clientNovaPoshtaApiSettings.set(settings.id, updated);
+      }
+    }
+
+    // Встановлюємо нові основні налаштування
+    const targetSettings = this.clientNovaPoshtaApiSettings.get(settingsId);
+    if (!targetSettings || targetSettings.clientId !== clientId) return false;
+
+    const updated = { ...targetSettings, isPrimary: true, updatedAt: new Date() };
+    this.clientNovaPoshtaApiSettings.set(settingsId, updated);
+    return true;
   }
 
   // Manufacturing automation methods
