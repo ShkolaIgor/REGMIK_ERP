@@ -2,7 +2,7 @@ import { eq, sql, desc, and, gte, lte, isNull, ne, or, not, inArray, ilike } fro
 import { db, pool } from "./db";
 import { IStorage } from "./storage";
 import {
-  users, localUsers, roles, systemModules, permissions, userRoles, rolePermissions, userLoginHistory, categories, warehouses, units, products, inventory, orders, orderItems, orderStatuses,
+  users, localUsers, roles, systemModules, permissions, userRoles, rolePermissions, userPermissions, userLoginHistory, categories, warehouses, units, products, inventory, orders, orderItems, orderStatuses,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   components, productComponents, costCalculations, materialShortages, supplierOrders, supplierOrderItems,
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
@@ -15,6 +15,7 @@ import {
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type Permission, type InsertPermission,
   type UserRole, type InsertUserRole, type RolePermission, type InsertRolePermission,
+  type UserPermission, type InsertUserPermission, userPermissions,
   type UserLoginHistory, type InsertUserLoginHistory,
   type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
@@ -777,13 +778,13 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async updateLocalUserPermissions(userId: number, permissions: Record<string, any>): Promise<void> {
+  async updateLocalUserPermissions(userId: number, permissionsData: Record<string, any>): Promise<LocalUser | undefined> {
     try {
       // Видаляємо старі дозволи користувача
       await db.delete(userPermissions).where(eq(userPermissions.userId, userId));
       
       // Додаємо нові дозволи
-      for (const [moduleName, access] of Object.entries(permissions)) {
+      for (const [moduleName, access] of Object.entries(permissionsData)) {
         if (access === true || access === 'read' || access === 'write' || access === 'delete') {
           // Знаходимо всі дозволи для цього модуля
           const modulePermissions = await db
@@ -815,6 +816,9 @@ export class DatabaseStorage implements IStorage {
       }
       
       console.log(`Дозволи користувача ${userId} оновлено успішно`);
+      
+      // Повертаємо оновленого користувача
+      return await this.getLocalUser(userId);
     } catch (error) {
       console.error('Помилка оновлення дозволів користувача:', error);
       throw error;
