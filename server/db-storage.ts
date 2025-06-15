@@ -3060,87 +3060,131 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getShipmentDetails(id: number): Promise<any> {
-    // Get basic shipment information
-    const shipmentResult = await db
-      .select()
-      .from(shipments)
-      .leftJoin(orders, eq(shipments.orderId, orders.id))
-      .leftJoin(carriers, eq(shipments.carrierId, carriers.id))
-      .where(eq(shipments.id, id));
+    try {
+      // Get basic shipment information
+      const shipmentResult = await db
+        .select({
+          id: shipments.id,
+          shipmentNumber: shipments.shipmentNumber,
+          status: shipments.status,
+          trackingNumber: shipments.trackingNumber,
+          weight: shipments.weight,
+          recipientWarehouseAddress: shipments.recipientWarehouseAddress,
+          recipientName: shipments.recipientName,
+          recipientPhone: shipments.recipientPhone,
+          notes: shipments.notes,
+          shippedAt: shipments.shippedAt,
+          orderId: shipments.orderId,
+          carrierId: shipments.carrierId
+        })
+        .from(shipments)
+        .where(eq(shipments.id, id));
 
-    if (shipmentResult.length === 0) return undefined;
+      if (shipmentResult.length === 0) return undefined;
 
-    const row = shipmentResult[0];
-    const shipment = row.shipments;
-    const order = row.orders;
-    const carrier = row.carriers;
+      const shipment = shipmentResult[0];
 
-    // Get shipment items with product details
-    const itemsResult = await db
-      .select({
-        id: shipmentItems.id,
-        shipmentId: shipmentItems.shipmentId,
-        productId: shipmentItems.productId,
-        quantity: shipmentItems.quantity,
-        unitPrice: shipmentItems.unitPrice,
-        productName: products.name,
-        productSku: products.sku,
-      })
-      .from(shipmentItems)
-      .leftJoin(products, eq(shipmentItems.productId, products.id))
-      .where(eq(shipmentItems.shipmentId, id));
-
-    // Get serial numbers for this shipment
-    const serialNumbersResult = await db
-      .select({
-        productId: serialNumbers.productId,
-        serialNumber: serialNumbers.serialNumber,
-      })
-      .from(serialNumbers)
-      .where(and(
-        eq(serialNumbers.shipmentId, id),
-        eq(serialNumbers.status, 'shipped')
-      ));
-
-    // Group serial numbers by product ID
-    const serialNumbersByProduct = serialNumbersResult.reduce((acc, serial) => {
-      if (!acc[serial.productId!]) {
-        acc[serial.productId!] = [];
+      // Get order details if orderId exists
+      let order = null;
+      if (shipment.orderId) {
+        const orderResult = await db
+          .select({
+            id: orders.id,
+            orderNumber: orders.orderNumber,
+            customerName: orders.customerName
+          })
+          .from(orders)
+          .where(eq(orders.id, shipment.orderId));
+        order = orderResult[0] || null;
       }
-      acc[serial.productId!].push(serial.serialNumber);
-      return acc;
-    }, {} as Record<number, string[]>);
 
-    // Build items array with serial numbers
-    const items = itemsResult.map(item => ({
-      id: item.id,
-      shipmentId: item.shipmentId,
-      productId: item.productId,
-      quantity: item.quantity,
-      productName: item.productName || 'Unknown Product',
-      productSku: item.productSku || 'N/A',
-      unitPrice: item.unitPrice || '0',
-      serialNumbers: serialNumbersByProduct[item.productId!] || []
-    }));
+      // Get carrier details if carrierId exists
+      let carrier = null;
+      if (shipment.carrierId) {
+        const carrierResult = await db
+          .select({
+            id: carriers.id,
+            name: carriers.name
+          })
+          .from(carriers)
+          .where(eq(carriers.id, shipment.carrierId));
+        carrier = carrierResult[0] || null;
+      }
 
-    return {
-      id: shipment.id,
-      shipmentNumber: shipment.shipmentNumber,
-      status: shipment.status,
-      trackingNumber: shipment.trackingNumber,
-      weight: shipment.weight,
-      shippingAddress: shipment.recipientWarehouseAddress || '',
-      recipientName: shipment.recipientName,
-      recipientPhone: shipment.recipientPhone,
-      notes: shipment.notes,
-      shippedAt: shipment.shippedAt,
-      carrier: carrier ? { name: carrier.name } : null,
-      order: order ? {
-        orderNumber: order.orderNumber,
-        customerName: order.customerName
-      } : null,
-      items: items
-    };
+      // Get shipment items
+      const itemsResult = await db
+        .select({
+          id: shipmentItems.id,
+          shipmentId: shipmentItems.shipmentId,
+          productId: shipmentItems.productId,
+          quantity: shipmentItems.quantity,
+          unitPrice: shipmentItems.unitPrice
+        })
+        .from(shipmentItems)
+        .where(eq(shipmentItems.shipmentId, id));
+
+      // Get product details for each item
+      const items = [];
+      for (const item of itemsResult) {
+        let product = null;
+        if (item.productId) {
+          const productResult = await db
+            .select({
+              id: products.id,
+              name: products.name,
+              sku: products.sku
+            })
+            .from(products)
+            .where(eq(products.id, item.productId));
+          product = productResult[0] || null;
+        }
+
+        // Get serial numbers for this product in this shipment
+        const serialNumbersResult = await db
+          .select({
+            serialNumber: serialNumbers.serialNumber
+          })
+          .from(serialNumbers)
+          .where(and(
+            eq(serialNumbers.shipmentId, id),
+            eq(serialNumbers.productId, item.productId || 0),
+            eq(serialNumbers.status, 'shipped')
+          ));
+
+        items.push({
+          id: item.id,
+          shipmentId: item.shipmentId,
+          productId: item.productId,
+          quantity: item.quantity,
+          productName: product?.name || 'Unknown Product',
+          productSku: product?.sku || 'N/A',
+          unitPrice: item.unitPrice || '0',
+          serialNumbers: serialNumbersResult.map(s => s.serialNumber)
+        });
+      }
+
+      return {
+        id: shipment.id,
+        shipmentNumber: shipment.shipmentNumber,
+        status: shipment.status,
+        trackingNumber: shipment.trackingNumber,
+        weight: shipment.weight,
+        shippingAddress: shipment.recipientWarehouseAddress || '',
+        recipientName: shipment.recipientName,
+        recipientPhone: shipment.recipientPhone,
+        notes: shipment.notes,
+        shippedAt: shipment.shippedAt,
+        carrier: carrier ? { name: carrier.name } : null,
+        order: order ? {
+          orderNumber: order.orderNumber,
+          customerName: order.customerName
+        } : null,
+        items: items
+      };
+    } catch (error) {
+      console.error("Error getting shipment details:", error);
+      throw error;
+    }
   }
 
   async createShipment(shipmentData: InsertShipment): Promise<Shipment> {
