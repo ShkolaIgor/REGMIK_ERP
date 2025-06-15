@@ -9,7 +9,7 @@ import {
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes, solderingTypes,
   componentCategories, componentAlternatives, carriers, shipments, shipmentItems, customerAddresses, senderSettings,
   manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, currencyRates, currencyUpdateSettings, serialNumbers, serialNumberSettings, emailSettings,
-  sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients, clientContacts, clientNovaPoshtaSettings,
+  sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients, clientContacts, clientNovaPoshtaSettings, clientNovaPoshtaApiSettings,
   clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences,
   repairs, repairParts, repairStatusHistory, repairDocuments, orderItemSerialNumbers, novaPoshtaCities, novaPoshtaWarehouses,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
@@ -61,6 +61,7 @@ import {
   type EmailSettings, type InsertEmailSettings,
   type ClientContact, type InsertClientContact,
   type ClientNovaPoshtaSettings, type InsertClientNovaPoshtaSettings,
+  type ClientNovaPoshtaApiSettings, type InsertClientNovaPoshtaApiSettings,
   type UserSortPreference, type InsertUserSortPreference,
   type Repair, type InsertRepair,
   type RepairPart, type InsertRepairPart,
@@ -4744,6 +4745,95 @@ export class DatabaseStorage implements IStorage {
       return !!updated;
     } catch (error) {
       console.error("Error setting primary Nova Poshta settings:", error);
+      return false;
+    }
+  }
+
+  // Client Nova Poshta API Settings Implementation
+  async getClientNovaPoshtaApiSettings(clientId: number): Promise<ClientNovaPoshtaApiSettings[]> {
+    try {
+      const settings = await db
+        .select()
+        .from(clientNovaPoshtaApiSettings)
+        .where(eq(clientNovaPoshtaApiSettings.clientId, clientId))
+        .orderBy(desc(clientNovaPoshtaApiSettings.isPrimary), desc(clientNovaPoshtaApiSettings.createdAt));
+      return settings;
+    } catch (error) {
+      console.error("Error fetching Nova Poshta API settings:", error);
+      return [];
+    }
+  }
+
+  async getClientNovaPoshtaApiSetting(id: number): Promise<ClientNovaPoshtaApiSettings | undefined> {
+    try {
+      const [settings] = await db
+        .select()
+        .from(clientNovaPoshtaApiSettings)
+        .where(eq(clientNovaPoshtaApiSettings.id, id));
+      return settings;
+    } catch (error) {
+      console.error("Error fetching Nova Poshta API setting:", error);
+      return undefined;
+    }
+  }
+
+  async createClientNovaPoshtaApiSettings(settings: InsertClientNovaPoshtaApiSettings): Promise<ClientNovaPoshtaApiSettings> {
+    const [created] = await db
+      .insert(clientNovaPoshtaApiSettings)
+      .values({
+        ...settings,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return created;
+  }
+
+  async updateClientNovaPoshtaApiSettings(id: number, settings: Partial<InsertClientNovaPoshtaApiSettings>): Promise<ClientNovaPoshtaApiSettings | undefined> {
+    try {
+      const [updated] = await db
+        .update(clientNovaPoshtaApiSettings)
+        .set({ ...settings, updatedAt: new Date() })
+        .where(eq(clientNovaPoshtaApiSettings.id, id))
+        .returning();
+      return updated;
+    } catch (error) {
+      console.error("Error updating Nova Poshta API settings:", error);
+      return undefined;
+    }
+  }
+
+  async deleteClientNovaPoshtaApiSettings(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(clientNovaPoshtaApiSettings).where(eq(clientNovaPoshtaApiSettings.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error("Error deleting Nova Poshta API settings:", error);
+      return false;
+    }
+  }
+
+  async setPrimaryClientNovaPoshtaApiSettings(clientId: number, settingsId: number): Promise<boolean> {
+    try {
+      // Спочатку знімаємо прапорець isPrimary з усіх API налаштувань клієнта
+      await db
+        .update(clientNovaPoshtaApiSettings)
+        .set({ isPrimary: false, updatedAt: new Date() })
+        .where(eq(clientNovaPoshtaApiSettings.clientId, clientId));
+
+      // Потім встановлюємо обрані API налаштування як основні
+      const [updated] = await db
+        .update(clientNovaPoshtaApiSettings)
+        .set({ isPrimary: true, updatedAt: new Date() })
+        .where(and(
+          eq(clientNovaPoshtaApiSettings.id, settingsId),
+          eq(clientNovaPoshtaApiSettings.clientId, clientId)
+        ))
+        .returning();
+
+      return !!updated;
+    } catch (error) {
+      console.error("Error setting primary Nova Poshta API settings:", error);
       return false;
     }
   }
