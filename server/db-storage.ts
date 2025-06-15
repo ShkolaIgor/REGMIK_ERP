@@ -2,7 +2,7 @@ import { eq, sql, desc, and, gte, lte, isNull, ne, or, not, inArray, ilike } fro
 import { db, pool } from "./db";
 import { IStorage } from "./storage";
 import {
-  users, localUsers, roles, systemModules, userLoginHistory, categories, warehouses, units, products, inventory, orders, orderItems, orderStatuses,
+  users, localUsers, roles, systemModules, permissions, rolePermissions, userPermissions, userLoginHistory, categories, warehouses, units, products, inventory, orders, orderItems, orderStatuses,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   components, productComponents, costCalculations, materialShortages, supplierOrders, supplierOrderItems,
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
@@ -13,7 +13,9 @@ import {
   clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences,
   repairs, repairParts, repairStatusHistory, repairDocuments, orderItemSerialNumbers, novaPoshtaCities, novaPoshtaWarehouses,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
-  type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
+  type SystemModule, type InsertSystemModule, type Permission, type InsertPermission,
+  type RolePermission, type InsertRolePermission, type UserPermission, type InsertUserPermission,
+  type UserLoginHistory, type InsertUserLoginHistory,
   type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
   type Product, type InsertProduct,
