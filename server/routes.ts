@@ -4685,20 +4685,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user permissions
-  app.patch("/api/users/:id/permissions", (req, res, next) => {
-    console.log("Pre-auth - Raw body:", req.body);
-    console.log("Pre-auth - Body type:", typeof req.body);
-    console.log("Pre-auth - Headers:", req.headers['content-type']);
-    next();
-  }, isSimpleAuthenticated, async (req, res) => {
+  app.patch("/api/users/:id/permissions", isSimpleAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const permissions = req.body;
-      
-      console.log("Post-auth - Request body:", req.body);
-      console.log("Post-auth - Updating permissions for user ID:", id);
-      console.log("Post-auth - New permissions data:", permissions);
-      console.log("Post-auth - Permissions type:", typeof permissions);
       
       if (!permissions || typeof permissions !== 'object') {
         return res.status(400).json({ error: "Invalid permissions data" });
@@ -4709,7 +4699,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
       
-      console.log("Updated user with permissions:", user);
       res.json(user);
     } catch (error) {
       console.error("Error updating user permissions:", error);
