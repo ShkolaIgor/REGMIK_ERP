@@ -102,6 +102,39 @@ export const systemModules = pgTable("system_modules", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Дозволи для детального управління доступом
+export const permissions = pgTable("permissions", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+  displayName: varchar("display_name", { length: 255 }).notNull(),
+  description: text("description"),
+  moduleId: integer("module_id").references(() => systemModules.id),
+  action: varchar("action", { length: 50 }).notNull(), // read, write, delete, execute
+  resourceType: varchar("resource_type", { length: 100 }), // orders, products, clients тощо
+  isSystemPermission: boolean("is_system_permission").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Зв'язок ролей з дозволами
+export const rolePermissions = pgTable("role_permissions", {
+  id: serial("id").primaryKey(),
+  roleId: integer("role_id").references(() => roles.id).notNull(),
+  permissionId: integer("permission_id").references(() => permissions.id).notNull(),
+  granted: boolean("granted").default(true), // дозволено чи заборонено
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Персональні дозволи користувачів (перевизначають ролі)
+export const userPermissions = pgTable("user_permissions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  permissionId: integer("permission_id").references(() => permissions.id).notNull(),
+  granted: boolean("granted").default(true),
+  grantor: integer("grantor").references(() => users.id), // хто надав дозвіл
+  expiresAt: timestamp("expires_at"), // термін дії дозволу
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Історія входів користувачів
 export const userLoginHistory = pgTable("user_login_history", {
   id: serial("id").primaryKey(),
@@ -2223,5 +2256,114 @@ export type InsertCurrencyRate = z.infer<typeof insertCurrencyRateSchema>;
 
 export type CurrencyUpdateSettings = typeof currencyUpdateSettings.$inferSelect;
 export type InsertCurrencyUpdateSettings = z.infer<typeof insertCurrencyUpdateSettingsSchema>;
+
+// Релації для системи ролей та дозволів
+export const rolesRelations = relations(roles, ({ many }) => ({
+  users: many(users),
+  rolePermissions: many(rolePermissions),
+}));
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+  role: one(roles, {
+    fields: [users.roleId],
+    references: [roles.id],
+  }),
+  worker: one(workers, {
+    fields: [users.workerId],
+    references: [workers.id],
+  }),
+  userPermissions: many(userPermissions),
+  grantedPermissions: many(userPermissions, { relationName: "grantor" }),
+  loginHistory: many(userLoginHistory),
+  sortPreferences: many(userSortPreferences),
+}));
+
+export const systemModulesRelations = relations(systemModules, ({ one, many }) => ({
+  parentModule: one(systemModules, {
+    fields: [systemModules.parentModuleId],
+    references: [systemModules.id],
+  }),
+  childModules: many(systemModules),
+  permissions: many(permissions),
+}));
+
+export const permissionsRelations = relations(permissions, ({ one, many }) => ({
+  module: one(systemModules, {
+    fields: [permissions.moduleId],
+    references: [systemModules.id],
+  }),
+  rolePermissions: many(rolePermissions),
+  userPermissions: many(userPermissions),
+}));
+
+export const rolePermissionsRelations = relations(rolePermissions, ({ one }) => ({
+  role: one(roles, {
+    fields: [rolePermissions.roleId],
+    references: [roles.id],
+  }),
+  permission: one(permissions, {
+    fields: [rolePermissions.permissionId],
+    references: [permissions.id],
+  }),
+}));
+
+export const userPermissionsRelations = relations(userPermissions, ({ one }) => ({
+  user: one(users, {
+    fields: [userPermissions.userId],
+    references: [users.id],
+  }),
+  permission: one(permissions, {
+    fields: [userPermissions.permissionId],
+    references: [permissions.id],
+  }),
+  grantor: one(users, {
+    fields: [userPermissions.grantor],
+    references: [users.id],
+    relationName: "grantor",
+  }),
+}));
+
+// Схеми для валідації дозволів
+export const insertPermissionSchema = createInsertSchema(permissions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertRolePermissionSchema = createInsertSchema(rolePermissions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUserPermissionSchema = createInsertSchema(userPermissions).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Типи для ролей та дозволів
+export type Role = typeof roles.$inferSelect;
+export type InsertRole = z.infer<typeof insertRoleSchema>;
+
+export type SystemModule = typeof systemModules.$inferSelect;
+export type InsertSystemModule = z.infer<typeof insertSystemModuleSchema>;
+
+export type Permission = typeof permissions.$inferSelect;
+export type InsertPermission = z.infer<typeof insertPermissionSchema>;
+
+export type RolePermission = typeof rolePermissions.$inferSelect;
+export type InsertRolePermission = z.infer<typeof insertRolePermissionSchema>;
+
+export type UserPermission = typeof userPermissions.$inferSelect;
+export type InsertUserPermission = z.infer<typeof insertUserPermissionSchema>;
+
+// Оновлені типи користувачів з урахуванням ролей
+export const insertUpdatedUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastLoginAt: true,
+});
+
+export type User = typeof users.$inferSelect;
+export type InsertUpdatedUser = z.infer<typeof insertUpdatedUserSchema>;
 
 
