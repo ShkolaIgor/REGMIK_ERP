@@ -918,6 +918,56 @@ export class DatabaseStorage implements IStorage {
       return undefined;
     }
   }
+
+  async getLocalUserWithWorker(userId: number): Promise<any> {
+    try {
+      const [user] = await db
+        .select({
+          id: localUsers.id,
+          username: localUsers.username,
+          email: localUsers.email,
+          firstName: localUsers.firstName,
+          lastName: localUsers.lastName,
+          profileImageUrl: localUsers.profileImageUrl,
+          workerId: localUsers.workerId,
+          role: localUsers.role,
+          isActive: localUsers.isActive,
+          worker: {
+            id: workers.id,
+            firstName: workers.firstName,
+            lastName: workers.lastName,
+            email: workers.email,
+            photo: workers.photo
+          }
+        })
+        .from(localUsers)
+        .leftJoin(workers, eq(localUsers.workerId, workers.id))
+        .where(eq(localUsers.id, userId));
+      
+      return user;
+    } catch (error) {
+      console.error('Помилка отримання користувача з робітником:', error);
+      return undefined;
+    }
+  }
+
+  async updateWorker(workerId: number, data: any): Promise<any> {
+    try {
+      const [worker] = await db
+        .update(workers)
+        .set({
+          ...data,
+          updatedAt: new Date()
+        })
+        .where(eq(workers.id, workerId))
+        .returning();
+      
+      return worker;
+    } catch (error) {
+      console.error('Помилка оновлення робітника:', error);
+      return undefined;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();

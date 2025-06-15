@@ -134,9 +134,10 @@ export function setupSimpleAuth(app: Express) {
             id: dbUser.id,
             username: dbUser.username,
             email: dbUser.email,
-            firstName: fullUser?.worker?.firstName || dbUser.firstName || dbUser.username,
-            lastName: fullUser?.worker?.lastName || dbUser.lastName || "",
-            profileImageUrl: fullUser?.worker?.photo || dbUser.profileImageUrl || null
+            firstName: dbUser.firstName || dbUser.username,
+            lastName: dbUser.lastName || "",
+            profileImageUrl: dbUser.profileImageUrl || null,
+            role: dbUser.role || null
           };
           
           // Оновлюємо час останнього входу
@@ -205,7 +206,8 @@ export function setupSimpleAuth(app: Express) {
         email: fullUser.email,
         firstName: fullUser.firstName || fullUser.username,
         lastName: fullUser.lastName || "",
-        profileImageUrl: fullUser.profileImageUrl
+        profileImageUrl: fullUser.profileImageUrl,
+        role: fullUser.role || null
       };
 
       res.json(userData);
