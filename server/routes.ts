@@ -6814,7 +6814,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const roleId = parseInt(req.params.roleId);
       const permissionId = parseInt(req.params.permissionId);
-      const { granted = true } = req.body;
+      
+      console.log("Request body:", req.body);
+      console.log("Request body type:", typeof req.body);
+      
+      let granted = true;
+      if (req.body && typeof req.body === 'object') {
+        granted = req.body.granted !== undefined ? Boolean(req.body.granted) : true;
+      }
+      
+      console.log("Parsed granted value:", granted);
       
       const rolePermission = await storage.assignPermissionToRole(roleId, permissionId, granted);
       res.status(201).json(rolePermission);

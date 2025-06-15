@@ -101,7 +101,7 @@ export default function RolesPage() {
     mutationFn: async (data: RoleFormData) => {
       return await apiRequest(`/api/roles`, {
         method: "POST",
-        body: JSON.stringify(data),
+        body: data,
       });
     },
     onSuccess: () => {
@@ -173,7 +173,7 @@ export default function RolesPage() {
     mutationFn: async ({ roleId, permissionId, granted }: { roleId: number; permissionId: number; granted: boolean }) => {
       return await apiRequest(`/api/roles/${roleId}/permissions/${permissionId}`, {
         method: "POST",
-        body: JSON.stringify({ granted }),
+        body: { granted },
       });
     },
     onSuccess: () => {
