@@ -34,6 +34,7 @@ import { useToast } from "@/hooks/use-toast";
 interface Carrier {
   id: number;
   name: string;
+  alternativeNames: string[] | null;
   contactPerson: string | null;
   email: string | null;
   phone: string | null;
@@ -58,6 +59,7 @@ export default function Carriers() {
   const [editingCarrier, setEditingCarrier] = useState<Carrier | null>(null);
   const [formData, setFormData] = useState({
     name: "",
+    alternativeNames: "",
     contactPerson: "",
     email: "",
     phone: "",
@@ -163,6 +165,7 @@ export default function Carriers() {
   const resetForm = () => {
     setFormData({
       name: "",
+      alternativeNames: "",
       contactPerson: "",
       email: "",
       phone: "",
@@ -183,6 +186,9 @@ export default function Carriers() {
     const data = {
       ...formData,
       rating: Number(formData.rating),
+      alternativeNames: formData.alternativeNames ? 
+        formData.alternativeNames.split(',').map(name => name.trim()).filter(name => name) : 
+        null,
     };
 
     if (editingCarrier) {
@@ -196,6 +202,7 @@ export default function Carriers() {
     setEditingCarrier(carrier);
     setFormData({
       name: carrier.name,
+      alternativeNames: carrier.alternativeNames ? carrier.alternativeNames.join(', ') : "",
       contactPerson: carrier.contactPerson || "",
       email: carrier.email || "",
       phone: carrier.phone || "",
@@ -270,6 +277,18 @@ export default function Carriers() {
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                   />
+                </div>
+                <div>
+                  <Label htmlFor="alternativeNames">Альтернативні назви</Label>
+                  <Input
+                    id="alternativeNames"
+                    value={formData.alternativeNames}
+                    onChange={(e) => setFormData({ ...formData, alternativeNames: e.target.value })}
+                    placeholder="Нова пошта, Nova Poshta (розділити комами)"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Додаткові назви для розпізнавання перевізника, розділені комами
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="contactPerson">Контактна особа</Label>
