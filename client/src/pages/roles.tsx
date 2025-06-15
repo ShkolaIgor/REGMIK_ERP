@@ -177,7 +177,7 @@ export default function RolesPage() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/roles/${selectedRole?.id}/permissions`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/roles", selectedRole?.id, "permissions"] });
     },
     onError: (error: any) => {
       toast({
@@ -195,7 +195,7 @@ export default function RolesPage() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/roles/${selectedRole?.id}/permissions`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/roles", selectedRole?.id, "permissions"] });
     },
     onError: (error: any) => {
       toast({
