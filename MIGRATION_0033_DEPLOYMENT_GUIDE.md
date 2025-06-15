@@ -72,7 +72,7 @@ This migration implements a comprehensive roles and permissions system for the R
 ### Option 1: Automated Deployment (Recommended)
 ```bash
 # 1. Transfer files to production server
-scp migrations/0033_roles_permissions_system.sql production-server:/opt/regmik-erp/migrations/
+scp migrations/0033_roles_permissions_system_fixed.sql production-server:/opt/regmik-erp/migrations/
 scp run-migration-0033.sh production-server:/opt/regmik-erp/
 
 # 2. Connect to production server
