@@ -27,8 +27,8 @@ export function setupSimpleSession(app: Express) {
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
-    createTableIfMissing: true,
-    ttl: sessionTtl / 1000, // ttl в секундах
+    createTableIfMissing: false,
+    ttl: sessionTtl,
     tableName: "sessions",
   });
 
@@ -126,18 +126,17 @@ export function setupSimpleAuth(app: Express) {
         if (isPasswordValid) {
           console.log("Database user authenticated successfully");
           
-          // Отримуємо повні дані користувача
-          const fullUser = await storage.getLocalUser(dbUser.id);
+          // Отримуємо повні дані користувача з робітником
+          const fullUser = await storage.getLocalUserWithWorker(dbUser.id);
           
           // Створюємо сесію для користувача з бази даних
           (req.session as any).user = {
             id: dbUser.id,
             username: dbUser.username,
             email: dbUser.email,
-            firstName: dbUser.firstName || dbUser.username,
-            lastName: dbUser.lastName || "",
-            profileImageUrl: dbUser.profileImageUrl || null,
-            role: dbUser.role || null
+            firstName: fullUser?.worker?.firstName || dbUser.firstName || dbUser.username,
+            lastName: fullUser?.worker?.lastName || dbUser.lastName || "",
+            profileImageUrl: fullUser?.worker?.photo || dbUser.profileImageUrl || null
           };
           
           // Оновлюємо час останнього входу
@@ -194,20 +193,19 @@ export function setupSimpleAuth(app: Express) {
         return res.status(400).json({ message: "Невірний ID користувача" });
       }
 
-      const fullUser = await storage.getLocalUser(userId);
+      const fullUser = await storage.getLocalUserWithWorker(userId);
       if (!fullUser) {
         return res.status(404).json({ message: "Користувач не знайдений" });
       }
 
-      // Використовуємо дані користувача
+      // Використовуємо дані з робітника, якщо доступні
       const userData = {
         id: fullUser.id,
         username: fullUser.username,
-        email: fullUser.email,
-        firstName: fullUser.firstName || fullUser.username,
-        lastName: fullUser.lastName || "",
-        profileImageUrl: fullUser.profileImageUrl,
-        role: fullUser.role || null
+        email: fullUser.worker?.email || fullUser.email,
+        firstName: fullUser.worker?.firstName || fullUser.firstName || fullUser.username,
+        lastName: fullUser.worker?.lastName || fullUser.lastName || "",
+        profileImageUrl: fullUser.worker?.photo || fullUser.profileImageUrl
       };
 
       res.json(userData);

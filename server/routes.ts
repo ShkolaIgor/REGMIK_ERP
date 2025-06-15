@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage } from "./db-storage";
 import { registerSimpleIntegrationRoutes } from "./integrations-simple";
 import { registerSyncApiRoutes } from "./sync-api";
 import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./simple-auth";
@@ -29,131 +29,9 @@ import crypto from "crypto";
 import { sendEmail } from "./email-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  
-  // ================================
-  // НАЛАШТУВАННЯ СЕСІЙ
-  // ================================
+  // Simple auth setup
   setupSimpleSession(app);
   setupSimpleAuth(app);
-  
-  // ================================
-  // МАРШРУТИ ДЛЯ АУТЕНТИФІКАЦІЇ
-  // ================================
-
-  // Login endpoint for simple authentication
-  app.post("/api/auth/login", async (req, res) => {
-    try {
-      console.log("Login attempt received:", req.body);
-      const { username, password } = req.body;
-      
-      if (!username || !password) {
-        return res.status(400).json({ message: "Ім'я користувача та пароль обов'язкові" });
-      }
-      
-      // Find user by username
-      const user = await storage.getLocalUserByUsername(username);
-      console.log("User found:", user ? user.username : "none");
-      
-      if (!user) {
-        return res.status(401).json({ message: "Невірний логін або пароль" });
-      }
-      
-      if (!user.isActive) {
-        return res.status(401).json({ message: "Обліковий запис деактивовано" });
-      }
-      
-      // Verify password
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      console.log("Password valid:", isPasswordValid);
-      
-      if (!isPasswordValid) {
-        return res.status(401).json({ message: "Невірний логін або пароль" });
-      }
-      
-      // Create session - force session creation
-      if (!req.session) {
-        console.error("Session middleware not working properly");
-        return res.status(500).json({ message: "Помилка ініціалізації сесії" });
-      }
-      
-      // Ensure session is saved
-      req.session.regenerate((err) => {
-        if (err) {
-          console.error("Session regeneration error:", err);
-          return res.status(500).json({ message: "Помилка створення сесії" });
-        }
-        
-          (req.session as any).user = {
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            role: user.role,
-            profileImageUrl: user.profileImageUrl
-          };
-          
-          // Save session explicitly
-          req.session.save((saveErr) => {
-            if (saveErr) {
-              console.error("Session save error:", saveErr);
-              return res.status(500).json({ message: "Помилка збереження сесії" });
-            }
-            
-            console.log("Login successful for user:", user.username, "Session ID:", req.sessionID);
-            
-            // Update last login time
-            storage.updateLastLoginTime(user.id).then(() => {
-              res.json({ 
-                message: "Успішний вхід в систему",
-                user: {
-                  id: user.id,
-                  username: user.username,
-                  email: user.email,
-                  firstName: user.firstName,
-                  lastName: user.lastName,
-                  role: user.role,
-                  profileImageUrl: user.profileImageUrl
-                }
-              });
-            }).catch((updateErr) => {
-              console.error("Last login update error:", updateErr);
-              // Still return success even if last login update fails
-              res.json({ 
-                message: "Успішний вхід в систему",
-                user: {
-                  id: user.id,
-                  username: user.username,
-                  email: user.email,
-                  firstName: user.firstName,
-                  lastName: user.lastName,
-                  role: user.role,
-                  profileImageUrl: user.profileImageUrl
-                }
-              });
-            });
-          });
-        });
-    } catch (error) {
-      console.error("Login error:", error);
-      res.status(500).json({ message: "Внутрішня помилка сервера" });
-    }
-  });
-
-  // Logout endpoint
-  app.post("/api/auth/logout", (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        console.error("Logout error:", err);
-        return res.status(500).json({ message: "Помилка виходу з системи" });
-      }
-      res.clearCookie('connect.sid');
-      res.json({ message: "Успішний вихід з системи" });
-    });
-  });
-
-
-
 
   // Register simple integration routes
   registerSimpleIntegrationRoutes(app);
@@ -4672,17 +4550,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/users/:id/permissions", isSimpleAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const permissions = req.body;
+      const { permissions } = req.body;
       
-      if (!permissions || typeof permissions !== 'object') {
-        return res.status(400).json({ error: "Invalid permissions data" });
-      }
+      console.log("Updating permissions for user ID:", id);
+      console.log("New permissions data:", permissions);
       
       const user = await storage.updateLocalUserPermissions(id, permissions);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
       
+      console.log("Updated user with permissions:", user);
       res.json(user);
     } catch (error) {
       console.error("Error updating user permissions:", error);
