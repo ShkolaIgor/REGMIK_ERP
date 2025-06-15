@@ -749,13 +749,6 @@ export const clients = pgTable("clients", {
   
   notes: text("notes"),
   
-  // Налаштування Нової Пошти
-  novaPoshtaApiKey: varchar("nova_poshta_api_key", { length: 255 }),
-  novaPoshtaSenderRef: varchar("nova_poshta_sender_ref", { length: 255 }),
-  novaPoshtaContactRef: varchar("nova_poshta_contact_ref", { length: 255 }),
-  novaPoshtaAddressRef: varchar("nova_poshta_address_ref", { length: 255 }),
-  enableThirdPartyShipping: boolean("enable_third_party_shipping").default(false),
-  
   // Поля для синхронізації з зовнішніми системами
   externalId: varchar("external_id", { length: 100 }),
   source: varchar("source", { length: 20 }).default("manual"), // bitrix24, 1c, manual
@@ -797,31 +790,76 @@ export const clientContacts = pgTable("client_contacts", {
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
-// Налаштування Нової Пошти для клієнтів
-export const clientNovaPoshtaSettings = pgTable("client_nova_poshta_settings", {
+// API налаштування Nova Poshta для клієнтів - для відправлення від імені клієнтів
+export const clientNovaPoshtaApiSettings = pgTable("client_nova_poshta_api_settings", {
   id: serial("id").primaryKey(),
   clientId: integer("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  
+  // Назва конфігурації для ідентифікації
+  settingsName: varchar("settings_name", { length: 255 }).notNull(),
   
   // API налаштування
   apiKey: varchar("api_key", { length: 255 }).notNull(),
   
   // Налаштування відправника
   senderRef: varchar("sender_ref", { length: 255 }), // Референс відправника в НП
-  senderAddress: varchar("sender_address", { length: 255 }), // Адреса відправника
-  senderCityRef: varchar("sender_city_ref", { length: 255 }), // Референс міста відправника
+  senderContactRef: varchar("sender_contact_ref", { length: 255 }), // Референс контакту відправника
+  senderAddressRef: varchar("sender_address_ref", { length: 255 }), // Референс адреси відправника
+  
+  // Інформація про відправника
+  senderCompanyName: varchar("sender_company_name", { length: 255 }),
+  senderFirstName: varchar("sender_first_name", { length: 255 }),
+  senderLastName: varchar("sender_last_name", { length: 255 }),
   senderPhone: varchar("sender_phone", { length: 50 }),
-  senderContact: varchar("sender_contact", { length: 255 }),
+  senderEmail: varchar("sender_email", { length: 255 }),
+  
+  // Адреса відправника
+  senderCityRef: varchar("sender_city_ref", { length: 255 }),
+  senderCityName: varchar("sender_city_name", { length: 255 }),
+  senderWarehouseRef: varchar("sender_warehouse_ref", { length: 255 }),
+  senderWarehouseAddress: text("sender_warehouse_address"),
   
   // Налаштування за замовчуванням
-  defaultServiceType: varchar("default_service_type", { length: 100 }).default("WarehouseWarehouse"), // WarehouseWarehouse, WarehouseDoors, DoorsWarehouse, DoorsDoors
-  defaultCargoType: varchar("default_cargo_type", { length: 100 }).default("Parcel"), // Parcel, Cargo
-  defaultPaymentMethod: varchar("default_payment_method", { length: 100 }).default("Cash"), // Cash, NonCash
-  defaultPayer: varchar("default_payer", { length: 100 }).default("Sender"), // Sender, Recipient, ThirdPerson
+  defaultServiceType: varchar("default_service_type", { length: 100 }).default("WarehouseWarehouse"),
+  defaultCargoType: varchar("default_cargo_type", { length: 100 }).default("Parcel"),
+  defaultPaymentMethod: varchar("default_payment_method", { length: 100 }).default("Cash"),
+  defaultPayer: varchar("default_payer", { length: 100 }).default("Sender"),
   
   // Додаткові налаштування
   description: text("description"),
   isActive: boolean("is_active").default(true),
   isPrimary: boolean("is_primary").default(false), // основні налаштування для клієнта
+  enableThirdPartyShipping: boolean("enable_third_party_shipping").default(true),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+// Налаштування доставки Nova Poshta для клієнтів - для зберігання адрес та преференцій доставки
+export const clientNovaPoshtaSettings = pgTable("client_nova_poshta_settings", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  
+  // Налаштування отримувача
+  recipientName: varchar("recipient_name", { length: 255 }),
+  recipientPhone: varchar("recipient_phone", { length: 50 }),
+  recipientEmail: varchar("recipient_email", { length: 255 }),
+  
+  // Адреса доставки
+  deliveryCityRef: varchar("delivery_city_ref", { length: 255 }),
+  deliveryCityName: varchar("delivery_city_name", { length: 255 }),
+  deliveryWarehouseRef: varchar("delivery_warehouse_ref", { length: 255 }),
+  deliveryWarehouseAddress: text("delivery_warehouse_address"),
+  
+  // Налаштування доставки за замовчуванням
+  preferredServiceType: varchar("preferred_service_type", { length: 100 }).default("WarehouseWarehouse"),
+  preferredPaymentMethod: varchar("preferred_payment_method", { length: 100 }).default("Cash"),
+  preferredPayer: varchar("preferred_payer", { length: 100 }).default("Recipient"),
+  
+  // Додаткові налаштування
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  isPrimary: boolean("is_primary").default(false), // основні налаштування доставки для клієнта
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
@@ -851,11 +889,23 @@ export const insertClientContactSchema = createInsertSchema(clientContacts).omit
   updatedAt: true
 });
 
+export const insertClientNovaPoshtaApiSettingsSchema = createInsertSchema(clientNovaPoshtaApiSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 export const insertClientNovaPoshtaSettingsSchema = createInsertSchema(clientNovaPoshtaSettings).omit({
   id: true,
   createdAt: true,
   updatedAt: true
 });
+
+// Types для нових таблиць
+export type ClientNovaPoshtaApiSettings = typeof clientNovaPoshtaApiSettings.$inferSelect;
+export type InsertClientNovaPoshtaApiSettings = z.infer<typeof insertClientNovaPoshtaApiSettingsSchema>;
+export type ClientNovaPoshtaSettings = typeof clientNovaPoshtaSettings.$inferSelect;
+export type InsertClientNovaPoshtaSettings = z.infer<typeof insertClientNovaPoshtaSettingsSchema>;
 
 // Inventory Audits
 export const inventoryAudits = pgTable("inventory_audits", {
