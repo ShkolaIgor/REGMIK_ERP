@@ -218,6 +218,7 @@ export class DatabaseStorage implements IStorage {
 
     // Призначаємо всі дозволи для супер адміністратора
     const superAdminRole = insertedRoles.find(r => r.name === "super_admin");
+    const adminRole = insertedRoles.find(r => r.name === "admin");
     const allPermissions = await db.select().from(permissions);
     
     if (superAdminRole && allPermissions.length > 0) {
@@ -228,6 +229,38 @@ export class DatabaseStorage implements IStorage {
       }));
       
       await db.insert(rolePermissions).values(superAdminPermissions);
+    }
+
+    // Призначаємо всі дозволи для звичайного адміністратора
+    if (adminRole && allPermissions.length > 0) {
+      const adminPermissions = allPermissions.map(perm => ({
+        roleId: adminRole.id,
+        permissionId: perm.id,
+        granted: true
+      }));
+      
+      await db.insert(rolePermissions).values(adminPermissions);
+    }
+
+    // Створюємо демо адміністратора
+    const adminUser = await db.insert(localUsers).values({
+      username: "admin",
+      email: "admin@example.com",
+      password: "$2a$10$N9qo8uLOickgx2ZMRZoMye.R8Xd8e9hY/./F9LvSTqjsZNECGQP2m", // пароль: admin123
+      firstName: "Адмін",
+      lastName: "Системи",
+      isActive: true,
+      role: "admin",
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+
+    // Призначаємо роль адміністратора користувачу
+    if (adminUser.length > 0 && adminRole) {
+      await db.insert(userRoles).values({
+        userId: adminUser[0].id,
+        roleId: adminRole.id
+      });
     }
   }
 
@@ -537,6 +570,86 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Помилка перевірки дозволу користувача:', error);
       return false;
+    }
+  }
+
+  // Додаємо відсутні методи для користувачів та працівників
+  async getLocalUsersWithWorkers(): Promise<any[]> {
+    try {
+      const result = await db
+        .select()
+        .from(localUsers)
+        .leftJoin(workers, eq(localUsers.workerId, workers.id))
+        .orderBy(localUsers.username);
+      
+      return result.map(row => ({
+        ...row.local_users,
+        worker: row.workers
+      }));
+    } catch (error) {
+      console.error('Помилка отримання локальних користувачів з працівниками:', error);
+      return [];
+    }
+  }
+
+  async getWorkersAvailableForUsers(): Promise<any[]> {
+    try {
+      const result = await db
+        .select()
+        .from(workers)
+        .leftJoin(localUsers, eq(workers.id, localUsers.workerId))
+        .where(isNull(localUsers.workerId))
+        .orderBy(workers.firstName, workers.lastName);
+      
+      return result.map(row => row.workers);
+    } catch (error) {
+      console.error('Помилка отримання доступних працівників:', error);
+      return [];
+    }
+  }
+
+  // Додаємо методи для зв'язку користувачів з ролями
+  async assignRoleToUser(userId: number, roleId: number): Promise<UserRole> {
+    try {
+      const [userRole] = await db
+        .insert(userRoles)
+        .values({ userId, roleId })
+        .onConflictDoNothing()
+        .returning();
+      return userRole;
+    } catch (error) {
+      console.error('Помилка призначення ролі користувачу:', error);
+      throw error;
+    }
+  }
+
+  async removeRoleFromUser(userId: number, roleId: number): Promise<boolean> {
+    try {
+      await db
+        .delete(userRoles)
+        .where(and(
+          eq(userRoles.userId, userId),
+          eq(userRoles.roleId, roleId)
+        ));
+      return true;
+    } catch (error) {
+      console.error('Помилка видалення ролі від користувача:', error);
+      return false;
+    }
+  }
+
+  async getUserRoles(userId: number): Promise<Role[]> {
+    try {
+      const result = await db
+        .select()
+        .from(userRoles)
+        .innerJoin(roles, eq(userRoles.roleId, roles.id))
+        .where(eq(userRoles.userId, userId));
+      
+      return result.map(row => row.roles);
+    } catch (error) {
+      console.error('Помилка отримання ролей користувача:', error);
+      return [];
     }
   }
 }

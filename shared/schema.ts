@@ -115,6 +115,15 @@ export const permissions = pgTable("permissions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Зв'язок користувачів з ролями
+export const userRoles = pgTable("user_roles", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  roleId: integer("role_id").references(() => roles.id).notNull(),
+  assignedBy: integer("assigned_by").references(() => users.id),
+  assignedAt: timestamp("assigned_at").defaultNow(),
+});
+
 // Зв'язок ролей з дозволами
 export const rolePermissions = pgTable("role_permissions", {
   id: serial("id").primaryKey(),
