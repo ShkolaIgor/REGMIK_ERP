@@ -749,13 +749,6 @@ export const clients = pgTable("clients", {
   
   notes: text("notes"),
   
-  // Налаштування Нової Пошти
-  novaPoshtaApiKey: varchar("nova_poshta_api_key", { length: 255 }),
-  novaPoshtaSenderRef: varchar("nova_poshta_sender_ref", { length: 255 }),
-  novaPoshtaContactRef: varchar("nova_poshta_contact_ref", { length: 255 }),
-  novaPoshtaAddressRef: varchar("nova_poshta_address_ref", { length: 255 }),
-  enableThirdPartyShipping: boolean("enable_third_party_shipping").default(false),
-  
   // Поля для синхронізації з зовнішніми системами
   externalId: varchar("external_id", { length: 100 }),
   source: varchar("source", { length: 20 }).default("manual"), // bitrix24, 1c, manual
