@@ -59,7 +59,7 @@ interface Shipment {
   trackingNumber: string | null;
   carrierId: number | null;
   carrier?: Carrier;
-  shippingAddress: string;
+  recipientWarehouseAddress: string | null;
   recipientName: string | null;
   recipientPhone: string | null;
   weight: string | null;
@@ -389,7 +389,7 @@ export default function Shipments() {
     };
 
     if (formData.carrierId) cleanData.carrierId = parseInt(formData.carrierId);
-    if (formData.shippingAddress) cleanData.shippingAddress = formData.shippingAddress;
+    if (formData.shippingAddress) cleanData.recipientWarehouseAddress = formData.shippingAddress;
     if (formData.recipientName) cleanData.recipientName = formData.recipientName;
     if (formData.recipientPhone) cleanData.recipientPhone = formData.recipientPhone;
     if (formData.weight) cleanData.weight = formData.weight;
@@ -896,7 +896,7 @@ export default function Shipments() {
                             setFormData({
                               orderId: shipment.orderId.toString(),
                               carrierId: shipment.carrierId?.toString() || "",
-                              shippingAddress: shipment.shippingAddress,
+                              shippingAddress: shipment.recipientWarehouseAddress || "",
                               recipientName: shipment.recipientName || "",
                               recipientPhone: shipment.recipientPhone || "",
                               weight: shipment.weight || "",
