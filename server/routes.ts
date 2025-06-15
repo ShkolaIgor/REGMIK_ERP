@@ -152,23 +152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Get current user endpoint
-  app.get("/api/auth/user", (req, res) => {
-    const session = req.session as any;
-    
-    console.log("Auth check - Session exists:", !!req.session);
-    console.log("Auth check - User in session:", !!session?.user);
-    console.log("Auth check - Session ID:", req.sessionID);
-    console.log("Auth check - Session data:", req.session);
-    
-    if (!session?.user) {
-      console.log("Auth check - User NOT authenticated");
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    
-    console.log("Auth check - User authenticated:", session.user.username);
-    res.json(session.user);
-  });
+
 
 
   // Register simple integration routes
