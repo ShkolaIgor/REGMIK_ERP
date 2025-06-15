@@ -48,8 +48,33 @@ interface Order {
 interface Carrier {
   id: number;
   name: string;
-  serviceType: string | null;
-  isActive: boolean;
+}
+
+interface ShipmentItem {
+  id: number;
+  shipmentId: number;
+  productId: number;
+  quantity: number;
+  productName: string;
+  productSku: string;
+  unitPrice: string;
+  serialNumbers?: string[];
+}
+
+interface ShipmentDetails {
+  id: number;
+  shipmentNumber: string;
+  status: string;
+  trackingNumber: string | null;
+  weight: string | null;
+  shippingAddress: string;
+  recipientName: string;
+  recipientPhone: string;
+  notes: string | null;
+  shippedAt: Date | null;
+  carrier: { name: string } | null;
+  order: { orderNumber: string; customerName: string } | null;
+  items: ShipmentItem[];
 }
 
 interface Shipment {
@@ -99,6 +124,8 @@ export default function Shipments() {
   const [calculatedShippingCost, setCalculatedShippingCost] = useState<number | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
   const [showSavedAddresses, setShowSavedAddresses] = useState(false);
+  const [selectedShipmentDetails, setSelectedShipmentDetails] = useState<ShipmentDetails | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -340,6 +367,31 @@ export default function Shipments() {
       ...prev, 
       shippingCost: cost.toString() 
     }));
+  };
+
+  // Функція для отримання деталей відвантаження
+  const handleViewDetails = async (shipmentId: number) => {
+    try {
+      const response = await fetch(`/api/shipments/${shipmentId}/details`);
+      if (response.ok) {
+        const details = await response.json();
+        setSelectedShipmentDetails(details);
+        setShowDetailsDialog(true);
+      } else {
+        toast({
+          title: "Помилка",
+          description: "Не вдалося завантажити деталі відвантаження",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching shipment details:", error);
+      toast({
+        title: "Помилка",
+        description: "Помилка при завантаженні деталей",
+        variant: "destructive",
+      });
+    }
   };
 
   // Функція для перевірки чи є перевізник Nova Poshta
@@ -895,7 +947,11 @@ export default function Shipments() {
                 </TableRow>
               ) : (
                 filteredShipments.map((shipment: Shipment) => (
-                  <TableRow key={shipment.id}>
+                  <TableRow 
+                    key={shipment.id}
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleViewDetails(shipment.id)}
+                  >
                     <TableCell className="font-medium">
                       {shipment.shipmentNumber}
                     </TableCell>
@@ -992,6 +1048,151 @@ export default function Shipments() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Модальне вікно деталей відвантаження */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Деталі відвантаження {selectedShipmentDetails?.shipmentNumber}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedShipmentDetails && (
+            <div className="space-y-6">
+              {/* Основна інформація */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-semibold mb-2">Інформація про відвантаження</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Статус:</span>
+                      <Badge className={statusColors[selectedShipmentDetails.status] || "bg-gray-100 text-gray-800"}>
+                        {getStatusLabel(selectedShipmentDetails.status)}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Трек-номер:</span>
+                      <span>{selectedShipmentDetails.trackingNumber || 'Не вказано'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Вага:</span>
+                      <span>{selectedShipmentDetails.weight ? `${selectedShipmentDetails.weight} кг` : 'Не вказано'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Перевізник:</span>
+                      <span>{selectedShipmentDetails.carrier?.name || 'Не вказано'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Дата відправки:</span>
+                      <span>
+                        {selectedShipmentDetails.shippedAt 
+                          ? new Date(selectedShipmentDetails.shippedAt).toLocaleDateString('uk-UA')
+                          : 'Не відправлено'
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold mb-2">Отримувач</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Ім'я:</span>
+                      <span>{selectedShipmentDetails.recipientName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Телефон:</span>
+                      <span>{selectedShipmentDetails.recipientPhone}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Адреса:</span>
+                      <span className="text-right max-w-[200px]">{selectedShipmentDetails.shippingAddress}</span>
+                    </div>
+                    {selectedShipmentDetails.order && (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Замовлення:</span>
+                          <span>{selectedShipmentDetails.order.orderNumber}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Клієнт:</span>
+                          <span>{selectedShipmentDetails.order.customerName}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Примітки */}
+              {selectedShipmentDetails.notes && (
+                <div>
+                  <h3 className="font-semibold mb-2">Примітки</h3>
+                  <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded">
+                    {selectedShipmentDetails.notes}
+                  </p>
+                </div>
+              )}
+
+              {/* Товари у відвантаженні */}
+              <div>
+                <h3 className="font-semibold mb-3">Товари у відвантаженні</h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Товар</TableHead>
+                      <TableHead>SKU</TableHead>
+                      <TableHead className="text-right">Кількість</TableHead>
+                      <TableHead className="text-right">Ціна за од.</TableHead>
+                      <TableHead className="text-right">Сума</TableHead>
+                      <TableHead>Серійні номери</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {selectedShipmentDetails.items.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium">{item.productName}</TableCell>
+                        <TableCell>{item.productSku}</TableCell>
+                        <TableCell className="text-right">{item.quantity}</TableCell>
+                        <TableCell className="text-right">{parseFloat(item.unitPrice).toLocaleString('uk-UA')} ₴</TableCell>
+                        <TableCell className="text-right">
+                          {(parseFloat(item.unitPrice) * item.quantity).toLocaleString('uk-UA')} ₴
+                        </TableCell>
+                        <TableCell>
+                          {item.serialNumbers && item.serialNumbers.length > 0 ? (
+                            <div className="space-y-1">
+                              {item.serialNumbers.map((serial, index) => (
+                                <Badge key={index} variant="outline" className="text-xs">
+                                  {serial}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-gray-500 text-sm">Без серійних номерів</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                
+                {/* Підсумок */}
+                <div className="mt-4 flex justify-end">
+                  <div className="bg-gray-50 p-3 rounded">
+                    <div className="font-semibold">
+                      Загальна сума: {selectedShipmentDetails.items.reduce((total, item) => 
+                        total + (parseFloat(item.unitPrice) * item.quantity), 0
+                      ).toLocaleString('uk-UA')} ₴
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
