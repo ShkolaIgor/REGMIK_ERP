@@ -134,6 +134,8 @@ export default function Clients() {
       addressesMatch: false,
       discount: "0.00",
       notes: "",
+      novaPoshtaApiKey: "",
+      enableThirdPartyShipping: false,
       isActive: true,
     },
   });

@@ -14,31 +14,20 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// Основна таблиця користувачів (використовуємо local_users для уніфікації)
-export const users = pgTable("local_users", {
-  id: serial("id").primaryKey(),
-  workerId: integer("worker_id").references(() => workers.id),
-  username: varchar("username", { length: 100 }).notNull().unique(),
-  email: varchar("email", { length: 255 }).unique(),
-  firstName: varchar("first_name", { length: 100 }),
-  lastName: varchar("last_name", { length: 100 }),
-  phone: varchar("phone", { length: 20 }),
-  profileImageUrl: text("profile_image_url"),
-  password: varchar("password", { length: 255 }).notNull(),
-  roleId: integer("role_id").references(() => roles.id),
-  role: varchar("role", { length: 50 }).default("user"),
+// User storage table for Replit Auth
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().notNull(),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  role: varchar("role", { length: 50 }).default("user"), // admin, manager, user, viewer
   isActive: boolean("is_active").default(true),
-  permissions: jsonb("permissions"),
-  systemModules: jsonb("system_modules").$type<number[]>().default([]),
+  permissions: jsonb("permissions"), // JSON з дозволами доступу до модулів
   lastLoginAt: timestamp("last_login_at"),
-  passwordResetToken: varchar("password_reset_token"),
-  passwordResetExpires: timestamp("password_reset_expires"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
-
-// Аліас для сумісності з існуючим кодом
-export const localUsers = users;
 
 // Налаштування сортування для користувачів
 export const userSortPreferences = pgTable("user_sort_preferences", {
@@ -50,8 +39,6 @@ export const userSortPreferences = pgTable("user_sort_preferences", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
-
-
 
 // Таблиця компаній/фірм для мультифірмового режиму
 export const companies = pgTable("companies", {
@@ -72,6 +59,25 @@ export const companies = pgTable("companies", {
   isActive: boolean("is_active").default(true),
   isDefault: boolean("is_default").default(false), // Компанія за замовчуванням
   notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Локальні користувачі для простої автентифікації (альтернатива Replit Auth)
+export const localUsers = pgTable("local_users", {
+  id: serial("id").primaryKey(),
+  workerId: integer("worker_id").references(() => workers.id).unique(), // Зв'язок з робітниками
+  username: varchar("username", { length: 100 }).notNull().unique(),
+  email: varchar("email", { length: 255 }).unique(), // Може відрізнятися від email робітника (для входу)
+  password: varchar("password", { length: 255 }).notNull(), // хешований пароль
+  roleId: integer("role_id").references(() => roles.id), // Зв'язок з таблицею ролей
+  role: varchar("role", { length: 50 }).default("user"), // admin, manager, user, viewer (для сумісності)
+  isActive: boolean("is_active").default(true),
+  permissions: jsonb("permissions"), // JSON з дозволами доступу до модулів
+  systemModules: jsonb("system_modules").$type<number[]>().default([]), // Масив ID модулів
+  lastLoginAt: timestamp("last_login_at"),
+  passwordResetToken: varchar("password_reset_token"),
+  passwordResetExpires: timestamp("password_reset_expires"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -726,7 +732,6 @@ export const emailSettings = pgTable("email_settings", {
   fromEmail: varchar("from_email", { length: 255 }),
   fromName: varchar("from_name", { length: 255 }).default("REGMIK ERP"),
   isActive: boolean("is_active").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   updatedBy: varchar("updated_by", { length: 50 })
 });
@@ -901,8 +906,6 @@ export const insertInventoryAuditItemSchema = createInsertSchema(inventoryAuditI
   id: true, 
   createdAt: true
 });
-
-
 
 // Таблиця робітників
 export const workers = pgTable("workers", {
@@ -1125,9 +1128,6 @@ export const carriers = pgTable("carriers", {
   lastSyncAt: timestamp("last_sync_at"), // Дата останньої синхронізації
   citiesCount: integer("cities_count").default(0), // Кількість населених пунктів
   warehousesCount: integer("warehouses_count").default(0), // Кількість відділень
-  syncTime: varchar("sync_time", { length: 5 }), // Час синхронізації у форматі HH:MM
-  syncInterval: integer("sync_interval").default(24), // Інтервал оновлення даних у годинах
-  autoSync: boolean("auto_sync").default(false), // Автоматична синхронізація
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -1514,7 +1514,13 @@ export const currencies = pgTable("currencies", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-
+// Історія курсів валют
+export const exchangeRateHistory = pgTable("exchange_rate_history", {
+  id: serial("id").primaryKey(),
+  currencyId: integer("currency_id").notNull().references(() => currencies.id, { onDelete: "cascade" }),
+  rate: decimal("rate", { precision: 15, scale: 6 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 // Курси валют для продуктів (можуть відрізнятися від загальних курсів)
 export const productPrices = pgTable("product_prices", {
@@ -1534,7 +1540,10 @@ export const insertCurrencySchema = createInsertSchema(currencies).omit({
   updatedAt: true
 });
 
-
+export const insertExchangeRateHistorySchema = createInsertSchema(exchangeRateHistory).omit({ 
+  id: true, 
+  createdAt: true 
+});
 
 export const insertProductPriceSchema = createInsertSchema(productPrices).omit({ 
   id: true, 
@@ -1544,6 +1553,8 @@ export const insertProductPriceSchema = createInsertSchema(productPrices).omit({
 
 export type Currency = typeof currencies.$inferSelect;
 export type InsertCurrency = z.infer<typeof insertCurrencySchema>;
+export type ExchangeRateHistory = typeof exchangeRateHistory.$inferSelect;
+export type InsertExchangeRateHistory = z.infer<typeof insertExchangeRateHistorySchema>;
 export type ProductPrice = typeof productPrices.$inferSelect;
 export type InsertProductPrice = z.infer<typeof insertProductPriceSchema>;
 
@@ -1595,158 +1606,6 @@ export type SerialNumberSettings = typeof serialNumberSettings.$inferSelect;
 export type InsertSerialNumberSettings = z.infer<typeof insertSerialNumberSettingsSchema>;
 export type SerialNumber = typeof serialNumbers.$inferSelect;
 export type InsertSerialNumber = z.infer<typeof insertSerialNumberSchema>;
-
-// Прив'язка серійних номерів до позицій замовлення
-export const orderItemSerialNumbers = pgTable("order_item_serial_numbers", {
-  id: serial("id").primaryKey(),
-  orderItemId: integer("order_item_id").references(() => orderItems.id).notNull(),
-  serialNumberId: integer("serial_number_id").references(() => serialNumbers.id).notNull(),
-  assignedAt: timestamp("assigned_at").defaultNow(),
-  assignedBy: integer("assigned_by").references(() => users.id),
-  notes: text("notes"),
-});
-
-export const insertOrderItemSerialNumberSchema = createInsertSchema(orderItemSerialNumbers).omit({ 
-  id: true, 
-  assignedAt: true 
-});
-
-export type OrderItemSerialNumber = typeof orderItemSerialNumbers.$inferSelect;
-export type InsertOrderItemSerialNumber = z.infer<typeof insertOrderItemSerialNumberSchema>;
-
-// Система ремонтів
-export const repairs = pgTable("repairs", {
-  id: serial("id").primaryKey(),
-  repairNumber: varchar("repair_number", { length: 100 }).notNull().unique(),
-  serialNumberId: integer("serial_number_id").references(() => serialNumbers.id).notNull(),
-  serialNumber: text("serial_number").notNull(),
-  productId: integer("product_id").references(() => products.id).notNull(),
-  productName: varchar("product_name", { length: 255 }).notNull(),
-  
-  // Тип ремонту
-  repairType: varchar("repair_type", { length: 50 }).notNull().default("warranty"), // warranty, non_warranty
-  
-  // Інформація про клієнта
-  clientId: integer("client_id").references(() => clients.id),
-  clientName: varchar("client_name", { length: 255 }),
-  clientPhone: varchar("client_phone", { length: 50 }),
-  clientEmail: varchar("client_email", { length: 255 }),
-  
-  // Опис проблеми
-  problemDescription: text("problem_description").notNull(),
-  visualDamage: text("visual_damage"), // опис зовнішніх пошкоджень
-  accessories: text("accessories"), // комплектація
-  
-  // Статуси та дати
-  status: varchar("status", { length: 50 }).notNull().default("received"), // received, diagnosed, in_repair, testing, completed, returned, cancelled
-  receivedDate: timestamp("received_date").defaultNow(),
-  diagnosisDate: timestamp("diagnosis_date"),
-  repairStartDate: timestamp("repair_start_date"),
-  repairEndDate: timestamp("repair_end_date"),
-  returnDate: timestamp("return_date"),
-  
-  // Діагностика
-  diagnosisDescription: text("diagnosis_description"),
-  estimatedCost: decimal("estimated_cost", { precision: 10, scale: 2 }).default("0"),
-  estimatedDuration: integer("estimated_duration"), // в днях
-  
-  // Виконання ремонту
-  actualCost: decimal("actual_cost", { precision: 10, scale: 2 }).default("0"),
-  laborCost: decimal("labor_cost", { precision: 10, scale: 2 }).default("0"),
-  partsCost: decimal("parts_cost", { precision: 10, scale: 2 }).default("0"),
-  
-  // Працівники
-  receivedBy: integer("received_by").references(() => workers.id),
-  diagnosedBy: integer("diagnosed_by").references(() => workers.id),
-  repairedBy: integer("repaired_by").references(() => workers.id),
-  
-  // Гарантія
-  warrantyPeriod: integer("warranty_period").default(0), // в днях
-  warrantyStartDate: timestamp("warranty_start_date"),
-  warrantyEndDate: timestamp("warranty_end_date"),
-  
-  // Тестування після ремонту
-  testingResults: text("testing_results"),
-  qualityRating: varchar("quality_rating", { length: 20 }).default("good"), // excellent, good, acceptable, poor
-  
-  // Примітки
-  internalNotes: text("internal_notes"), // внутрішні примітки
-  clientNotes: text("client_notes"), // примітки для клієнта
-  
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Запчастини використані в ремонті
-export const repairParts = pgTable("repair_parts", {
-  id: serial("id").primaryKey(),
-  repairId: integer("repair_id").references(() => repairs.id, { onDelete: "cascade" }).notNull(),
-  productId: integer("product_id").references(() => products.id),
-  partName: varchar("part_name", { length: 255 }).notNull(),
-  quantity: decimal("quantity", { precision: 10, scale: 4 }).notNull(),
-  unit: varchar("unit", { length: 50 }).default("шт"),
-  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).default("0"),
-  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).default("0"),
-  supplier: varchar("supplier", { length: 255 }),
-  partNumber: varchar("part_number", { length: 100 }),
-  isWarrantyPart: boolean("is_warranty_part").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-// Історія статусів ремонту
-export const repairStatusHistory = pgTable("repair_status_history", {
-  id: serial("id").primaryKey(),
-  repairId: integer("repair_id").references(() => repairs.id, { onDelete: "cascade" }).notNull(),
-  oldStatus: varchar("old_status", { length: 50 }),
-  newStatus: varchar("new_status", { length: 50 }).notNull(),
-  changedBy: integer("changed_by").references(() => workers.id),
-  comment: text("comment"),
-  changedAt: timestamp("changed_at").defaultNow(),
-});
-
-// Фото та документи ремонту
-export const repairDocuments = pgTable("repair_documents", {
-  id: serial("id").primaryKey(),
-  repairId: integer("repair_id").references(() => repairs.id, { onDelete: "cascade" }).notNull(),
-  documentType: varchar("document_type", { length: 50 }).notNull(), // photo_before, photo_after, invoice, receipt, warranty_card
-  fileName: varchar("file_name", { length: 255 }).notNull(),
-  filePath: text("file_path").notNull(),
-  fileSize: integer("file_size"),
-  description: text("description"),
-  uploadedBy: integer("uploaded_by").references(() => workers.id),
-  uploadedAt: timestamp("uploaded_at").defaultNow(),
-});
-
-export const insertRepairSchema = createInsertSchema(repairs).omit({ 
-  id: true, 
-  createdAt: true, 
-  updatedAt: true,
-  repairNumber: true 
-});
-
-export const insertRepairPartSchema = createInsertSchema(repairParts).omit({ 
-  id: true, 
-  createdAt: true 
-});
-
-export const insertRepairStatusHistorySchema = createInsertSchema(repairStatusHistory).omit({ 
-  id: true, 
-  changedAt: true 
-});
-
-export const insertRepairDocumentSchema = createInsertSchema(repairDocuments).omit({ 
-  id: true, 
-  uploadedAt: true 
-});
-
-export type Repair = typeof repairs.$inferSelect;
-export type InsertRepair = z.infer<typeof insertRepairSchema>;
-export type RepairPart = typeof repairParts.$inferSelect;
-export type InsertRepairPart = z.infer<typeof insertRepairPartSchema>;
-export type RepairStatusHistory = typeof repairStatusHistory.$inferSelect;
-export type InsertRepairStatusHistory = z.infer<typeof insertRepairStatusHistorySchema>;
-export type RepairDocument = typeof repairDocuments.$inferSelect;
-export type InsertRepairDocument = z.infer<typeof insertRepairDocumentSchema>;
 
 // Схеми валідації для листування
 export const insertClientMailSchema = createInsertSchema(clientMail).omit({ 
@@ -1865,24 +1724,9 @@ export const newPasswordSchema = z.object({
   path: ["confirmPassword"],
 });
 
-// Типи для таблиці користувачів (тепер використовуємо єдину таблицю)
+// Типи для всіх таблиць користувачів
 export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
-
-// Для сумісності з Replit Auth
-export type UpsertUser = {
-  id?: string;
-  email?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  profileImageUrl?: string | null;
-  role?: string | null;
-  isActive?: boolean | null;
-  permissions?: any;
-  lastLoginAt?: Date | null;
-  createdAt?: Date | null;
-  updatedAt?: Date | null;
-};
+export type UpsertUser = typeof users.$inferInsert;
 
 export type LocalUser = typeof localUsers.$inferSelect;
 export type InsertLocalUser = z.infer<typeof insertLocalUserSchema>;
@@ -2148,52 +1992,5 @@ export const insertUserSortPreferenceSchema = createInsertSchema(userSortPrefere
 
 export type UserSortPreference = typeof userSortPreferences.$inferSelect;
 export type InsertUserSortPreference = z.infer<typeof insertUserSortPreferenceSchema>;
-
-// Курси валют НБУ
-export const currencyRates = pgTable("currency_rates", {
-  id: serial("id").primaryKey(),
-  currencyCode: varchar("currency_code", { length: 3 }).notNull(), // USD, EUR тощо
-  rate: decimal("rate", { precision: 10, scale: 4 }).notNull(), // курс до гривні
-  exchangeDate: timestamp("exchange_date").notNull(), // дата курсу
-  txt: varchar("txt", { length: 100 }), // назва валюти українською
-  cc: varchar("cc", { length: 3 }), // код валюти
-  r030: integer("r030"), // цифровий код валюти
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => [
-  index("currency_rates_code_date_idx").on(table.currencyCode, table.exchangeDate),
-]);
-
-// Налаштування автоматичного оновлення курсів
-export const currencyUpdateSettings = pgTable("currency_update_settings", {
-  id: serial("id").primaryKey(),
-  autoUpdateEnabled: boolean("auto_update_enabled").default(true),
-  updateTime: varchar("update_time", { length: 5 }).default("09:00"), // час оновлення HH:MM
-  lastUpdateDate: timestamp("last_update_date"),
-  lastUpdateStatus: varchar("last_update_status", { length: 20 }).default("pending"), // success, error, pending
-  lastUpdateError: text("last_update_error"),
-  enabledCurrencies: jsonb("enabled_currencies").$type<string[]>().default(["USD", "EUR"]),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Схеми для валідації
-export const insertCurrencyRateSchema = createInsertSchema(currencyRates).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertCurrencyUpdateSettingsSchema = createInsertSchema(currencyUpdateSettings).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type CurrencyRate = typeof currencyRates.$inferSelect;
-export type InsertCurrencyRate = z.infer<typeof insertCurrencyRateSchema>;
-
-export type CurrencyUpdateSettings = typeof currencyUpdateSettings.$inferSelect;
-export type InsertCurrencyUpdateSettings = z.infer<typeof insertCurrencyUpdateSettingsSchema>;
 
 
