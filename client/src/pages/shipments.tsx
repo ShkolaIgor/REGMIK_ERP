@@ -286,12 +286,47 @@ export default function Shipments() {
   // Функція для заповнення форми з обраної адреси
   const fillFormFromAddress = (address: any) => {
     console.log("Заповнення форми з адреси:", address);
+    
+    // Пошук правильного перевізника по carrierId або за назвою
+    let selectedCarrierId = "";
+    if (address.carrierId && carriers) {
+      // Спробуємо знайти перевізника за ID
+      const carrierFound = (carriers as Carrier[]).find(c => c.id === address.carrierId);
+      if (carrierFound) {
+        selectedCarrierId = address.carrierId.toString();
+      } else if (address.carrierName) {
+        // Якщо не знайшли за ID, шукаємо за назвою включаючи альтернативні назви
+        const carrierByName = (carriers as Carrier[]).find(c => {
+          const carrierName = c.name.toLowerCase();
+          const addressCarrierName = address.carrierName.toLowerCase();
+          
+          // Перевіряємо основну назву
+          if (carrierName.includes(addressCarrierName) || addressCarrierName.includes(carrierName)) {
+            return true;
+          }
+          
+          // Перевіряємо альтернативні назви
+          const alternativeNames = (c as any).alternativeNames || [];
+          return alternativeNames.some((altName: string) => 
+            altName && (
+              altName.toLowerCase().includes(addressCarrierName) || 
+              addressCarrierName.includes(altName.toLowerCase())
+            )
+          );
+        });
+        
+        if (carrierByName) {
+          selectedCarrierId = carrierByName.id.toString();
+        }
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       recipientName: address.recipientName || address.customerName || "",
       recipientPhone: address.recipientPhone || address.customerPhone || "",
       shippingAddress: `${address.recipientName || address.customerName}\n${address.cityName} - ${address.warehouseAddress}`,
-      carrierId: address.carrierId ? address.carrierId.toString() : prev.carrierId
+      carrierId: selectedCarrierId || prev.carrierId
     }));
     
     setShowSavedAddresses(false);
@@ -307,11 +342,29 @@ export default function Shipments() {
     }));
   };
 
+  // Функція для перевірки чи є перевізник Nova Poshta
+  const isNovaPoshtaCarrier = (carrier: Carrier) => {
+    if (!carrier) return false;
+    
+    const nameToCheck = carrier.name.toLowerCase();
+    const alternativeNames = (carrier as any).alternativeNames || [];
+    
+    // Перевіряємо основну назву
+    if (nameToCheck.includes('нова пошта') || nameToCheck.includes('nova poshta')) {
+      return true;
+    }
+    
+    // Перевіряємо альтернативні назви
+    return alternativeNames.some((altName: string) => 
+      altName && altName.toLowerCase().includes('пошта')
+    );
+  };
+
   // Функція валідації обов'язкових полів для Nova Poshta
   const validateNovaPoshtaFields = () => {
     const errors: Record<string, boolean> = {};
     const selectedCarrier = (carriers as Carrier[])?.find((c: Carrier) => c.id.toString() === formData.carrierId);
-    const isNovaPoshta = selectedCarrier && (selectedCarrier.name.toLowerCase().includes('нова пошта') || selectedCarrier.name.toLowerCase().includes('nova poshta'));
+    const isNovaPoshta = selectedCarrier && isNovaPoshtaCarrier(selectedCarrier);
     
     if (isNovaPoshta) {
       if (!formData.weight) errors.weight = true;

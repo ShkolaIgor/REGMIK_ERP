@@ -1140,6 +1140,7 @@ export const insertProductionOutputSchema = createInsertSchema(productionOutput)
 export const carriers = pgTable("carriers", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
+  alternativeNames: text("alternative_names").array(), // альтернативні назви для розпізнавання
   contactPerson: varchar("contact_person", { length: 255 }),
   email: varchar("email", { length: 255 }),
   phone: varchar("phone", { length: 50 }),
