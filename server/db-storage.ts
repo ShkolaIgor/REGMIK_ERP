@@ -183,36 +183,68 @@ export class DatabaseStorage implements IStorage {
 
   // Roles
   async getRoles(): Promise<Role[]> {
-    return await db.select().from(roles);
+    try {
+      const result = await db.select().from(roles).orderBy(roles.name);
+      return result;
+    } catch (error) {
+      console.error('Помилка отримання ролей:', error);
+      return [];
+    }
   }
 
   async createRole(insertRole: InsertRole): Promise<Role> {
-    const result = await db.insert(roles).values(insertRole).returning();
-    return result[0];
+    try {
+      const result = await db.insert(roles).values(insertRole).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка створення ролі:', error);
+      throw error;
+    }
   }
 
   async updateRole(id: number, roleData: Partial<InsertRole>): Promise<Role | undefined> {
-    const result = await db
-      .update(roles)
-      .set(roleData)
-      .where(eq(roles.id, id))
-      .returning();
-    return result[0];
+    try {
+      const result = await db
+        .update(roles)
+        .set({ ...roleData, updatedAt: new Date() })
+        .where(eq(roles.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка оновлення ролі:', error);
+      return undefined;
+    }
   }
 
   async deleteRole(id: number): Promise<boolean> {
-    const result = await db.delete(roles).where(eq(roles.id, id));
-    return result.rowCount !== null && result.rowCount > 0;
+    try {
+      const result = await db.delete(roles).where(eq(roles.id, id));
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      console.error('Помилка видалення ролі:', error);
+      return false;
+    }
   }
 
   // System Modules
   async getSystemModules(): Promise<SystemModule[]> {
-    return await db.select().from(systemModules);
+    try {
+      const result = await db.select().from(systemModules).orderBy(systemModules.sortOrder);
+      return result;
+    } catch (error) {
+      console.error('Помилка отримання модулів системи:', error);
+      return [];
+    }
   }
 
   async createSystemModule(insertSystemModule: InsertSystemModule): Promise<SystemModule> {
-    const result = await db.insert(systemModules).values(insertSystemModule).returning();
-    return result[0];
+    try {
+      const result = await db.insert(systemModules).values(insertSystemModule).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка створення модуля системи:', error);
+      throw error;
+    }
   }
 
   async updateSystemModule(id: number, moduleData: Partial<InsertSystemModule>): Promise<SystemModule | undefined> {
@@ -6899,17 +6931,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Roles and permissions implementation
-  async getRoles(): Promise<Role[]> {
-    try {
-      const result = await db.select().from(roles).orderBy(roles.name);
-      return result;
-    } catch (error) {
-      console.error('Помилка отримання ролей:', error);
-      return [];
-    }
-  }
-
+  // Additional role methods
   async getRole(id: number): Promise<Role | undefined> {
     try {
       const result = await db.select().from(roles).where(eq(roles.id, id));
@@ -6920,80 +6942,12 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async createRole(data: InsertRole): Promise<Role> {
-    try {
-      const result = await db.insert(roles).values(data).returning();
-      return result[0];
-    } catch (error) {
-      console.error('Помилка створення ролі:', error);
-      throw error;
-    }
-  }
-
-  async updateRole(id: number, data: Partial<InsertRole>): Promise<Role | undefined> {
-    try {
-      const result = await db
-        .update(roles)
-        .set({ ...data, updatedAt: new Date() })
-        .where(eq(roles.id, id))
-        .returning();
-      return result[0];
-    } catch (error) {
-      console.error('Помилка оновлення ролі:', error);
-      return undefined;
-    }
-  }
-
-  async deleteRole(id: number): Promise<boolean> {
-    try {
-      const result = await db.delete(roles).where(eq(roles.id, id));
-      return result.rowCount > 0;
-    } catch (error) {
-      console.error('Помилка видалення ролі:', error);
-      return false;
-    }
-  }
-
-  async getSystemModules(): Promise<SystemModule[]> {
-    try {
-      const result = await db.select().from(systemModules).orderBy(systemModules.sortOrder);
-      return result;
-    } catch (error) {
-      console.error('Помилка отримання модулів системи:', error);
-      return [];
-    }
-  }
-
   async getSystemModule(id: number): Promise<SystemModule | undefined> {
     try {
       const result = await db.select().from(systemModules).where(eq(systemModules.id, id));
       return result[0];
     } catch (error) {
       console.error('Помилка отримання модуля системи:', error);
-      return undefined;
-    }
-  }
-
-  async createSystemModule(data: InsertSystemModule): Promise<SystemModule> {
-    try {
-      const result = await db.insert(systemModules).values(data).returning();
-      return result[0];
-    } catch (error) {
-      console.error('Помилка створення модуля системи:', error);
-      throw error;
-    }
-  }
-
-  async updateSystemModule(id: number, data: Partial<InsertSystemModule>): Promise<SystemModule | undefined> {
-    try {
-      const result = await db
-        .update(systemModules)
-        .set(data)
-        .where(eq(systemModules.id, id))
-        .returning();
-      return result[0];
-    } catch (error) {
-      console.error('Помилка оновлення модуля системи:', error);
       return undefined;
     }
   }
