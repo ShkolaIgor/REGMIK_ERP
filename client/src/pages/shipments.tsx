@@ -98,6 +98,7 @@ export default function Shipments() {
   const [selectedOrder, setSelectedOrder] = useState<string>("");
   const [calculatedShippingCost, setCalculatedShippingCost] = useState<number | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
+  const [showSavedAddresses, setShowSavedAddresses] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -137,6 +138,12 @@ export default function Shipments() {
   // Завантаження перевізників
   const { data: carriers = [] } = useQuery({
     queryKey: ["/api/carriers"],
+  });
+
+  // Завантаження збережених адрес клієнтів
+  const { data: savedAddresses = [] } = useQuery({
+    queryKey: ["/api/customer-addresses"],
+    enabled: showSavedAddresses,
   });
 
   // Мутація створення відвантаження
@@ -273,6 +280,21 @@ export default function Shipments() {
     });
     setEditingShipment(null);
     setCalculatedShippingCost(null);
+    setShowSavedAddresses(false);
+  };
+
+  // Функція для заповнення форми з обраної адреси
+  const fillFormFromAddress = (address: any) => {
+    console.log("Заповнення форми з адреси:", address);
+    setFormData(prev => ({
+      ...prev,
+      recipientName: address.recipientName || address.customerName || "",
+      recipientPhone: address.recipientPhone || address.customerPhone || "",
+      shippingAddress: `${address.recipientName || address.customerName}\n${address.cityName} - ${address.warehouseAddress}`,
+      carrierId: address.carrierId ? address.carrierId.toString() : prev.carrierId
+    }));
+    
+    setShowSavedAddresses(false);
   };
 
   // Функція для обробки розрахованої вартості доставки
@@ -554,6 +576,56 @@ export default function Shipments() {
                   />
                 </div>
               </div>
+
+              {/* Кнопка для показу збережених адрес */}
+              <div className="flex justify-between items-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowSavedAddresses(!showSavedAddresses)}
+                  className="text-sm"
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  {showSavedAddresses ? "Приховати збережені адреси" : "Вибрати збережену адресу"}
+                </Button>
+              </div>
+
+              {/* Список збережених адрес */}
+              {showSavedAddresses && (
+                <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900">
+                  <h4 className="font-medium mb-3">Збережені адреси доставки</h4>
+                  {savedAddresses.length > 0 ? (
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {savedAddresses.map((address: any) => (
+                        <div
+                          key={address.id}
+                          className="flex items-center justify-between p-2 border rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                          onClick={() => fillFormFromAddress(address)}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">
+                              {address.recipientName || address.customerName} ({address.recipientPhone || address.customerPhone})
+                            </div>
+                            <div className="text-sm text-muted-foreground truncate">
+                              {address.cityName} - {address.warehouseAddress}
+                            </div>
+                            <div className="text-xs text-muted-foreground flex justify-between">
+                              <span>Використано: {address.usageCount} раз</span>
+                              {address.carrierId && (
+                                <span className="text-blue-600 dark:text-blue-400">
+                                  Перевізник: {address.carrierName || `ID ${address.carrierId}`}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Збережені адреси не знайдені</p>
+                  )}
+                </div>
+              )}
 
               <div className="grid grid-cols-4 gap-4">
                 <div>
