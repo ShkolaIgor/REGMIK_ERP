@@ -125,7 +125,7 @@ export default function RolesPage() {
     mutationFn: async ({ id, data }: { id: number; data: Partial<RoleFormData> }) => {
       return await apiRequest(`/api/roles/${id}`, {
         method: "PUT",
-        body: JSON.stringify(data),
+        body: data,
       });
     },
     onSuccess: () => {
