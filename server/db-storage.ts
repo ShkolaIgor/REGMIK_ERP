@@ -1359,6 +1359,226 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
   }
+
+  // Позиції
+  async getPositions(): Promise<any[]> {
+    try {
+      return await db.select().from(positions);
+    } catch (error) {
+      console.error('Помилка отримання позицій:', error);
+      return [];
+    }
+  }
+
+  // Відділи
+  async getDepartments(): Promise<any[]> {
+    try {
+      return await db.select().from(departments);
+    } catch (error) {
+      console.error('Помилка отримання відділів:', error);
+      return [];
+    }
+  }
+
+  // Техкарти
+  async getTechCards(): Promise<any[]> {
+    try {
+      const result = await db
+        .select()
+        .from(techCards)
+        .leftJoin(products, eq(techCards.productId, products.id));
+      
+      return result.map(row => ({
+        ...row.tech_cards,
+        product: row.products
+      }));
+    } catch (error) {
+      console.error('Помилка отримання техкарт:', error);
+      return [];
+    }
+  }
+
+  // Склади
+  async getWarehouses(): Promise<any[]> {
+    try {
+      return await db.select().from(warehouses);
+    } catch (error) {
+      console.error('Помилка отримання складів:', error);
+      return [];
+    }
+  }
+
+  // Інвентар
+  async getInventory(): Promise<any[]> {
+    try {
+      const result = await db
+        .select()
+        .from(inventory)
+        .leftJoin(products, eq(inventory.productId, products.id))
+        .leftJoin(warehouses, eq(inventory.warehouseId, warehouses.id));
+      
+      return result.map(row => ({
+        ...row.inventory,
+        product: row.products,
+        warehouse: row.warehouses
+      }));
+    } catch (error) {
+      console.error('Помилка отримання інвентарю:', error);
+      return [];
+    }
+  }
+
+  // Постачальники
+  async getSuppliers(): Promise<any[]> {
+    try {
+      return await db.select().from(suppliers);
+    } catch (error) {
+      console.error('Помилка отримання постачальників:', error);
+      return [];
+    }
+  }
+
+  // Замовлення постачальникам
+  async getSupplierOrders(): Promise<any[]> {
+    try {
+      const result = await db
+        .select()
+        .from(supplierOrders)
+        .leftJoin(suppliers, eq(supplierOrders.supplierId, suppliers.id));
+      
+      return result.map(row => ({
+        ...row.supplier_orders,
+        supplier: row.suppliers
+      }));
+    } catch (error) {
+      console.error('Помилка отримання замовлень постачальникам:', error);
+      return [];
+    }
+  }
+
+  // Виробничі завдання
+  async getProductionTasks(): Promise<any[]> {
+    try {
+      const result = await db
+        .select()
+        .from(productionTasks)
+        .leftJoin(orders, eq(productionTasks.orderId, orders.id))
+        .leftJoin(products, eq(productionTasks.productId, products.id));
+      
+      return result.map(row => ({
+        ...row.production_tasks,
+        order: row.orders,
+        product: row.products
+      }));
+    } catch (error) {
+      console.error('Помилка отримання виробничих завдань:', error);
+      return [];
+    }
+  }
+
+  // Нестачі матеріалів
+  async getMaterialShortages(): Promise<any[]> {
+    try {
+      const result = await db
+        .select()
+        .from(materialShortages)
+        .leftJoin(products, eq(materialShortages.productId, products.id));
+      
+      return result.map(row => ({
+        ...row.material_shortages,
+        product: row.products
+      }));
+    } catch (error) {
+      console.error('Помилка отримання нестач матеріалів:', error);
+      return [];
+    }
+  }
+
+  // Розрахунки собівартості
+  async getCostCalculations(): Promise<any[]> {
+    try {
+      const result = await db
+        .select()
+        .from(costCalculations)
+        .leftJoin(products, eq(costCalculations.productId, products.id));
+      
+      return result.map(row => ({
+        ...row.cost_calculations,
+        product: row.products
+      }));
+    } catch (error) {
+      console.error('Помилка отримання розрахунків собівартості:', error);
+      return [];
+    }
+  }
+
+  // Складальні операції
+  async getAssemblyOperations(): Promise<any[]> {
+    try {
+      const result = await db
+        .select()
+        .from(assemblyOperations)
+        .leftJoin(orders, eq(assemblyOperations.orderId, orders.id));
+      
+      return result.map(row => ({
+        ...row.assembly_operations,
+        order: row.orders
+      }));
+    } catch (error) {
+      console.error('Помилка отримання складальних операцій:', error);
+      return [];
+    }
+  }
+
+  // Статуси замовлень
+  async getOrderStatuses(): Promise<any[]> {
+    try {
+      return await db.select().from(orderStatuses);
+    } catch (error) {
+      console.error('Помилка отримання статусів замовлень:', error);
+      return [];
+    }
+  }
+
+  // Налаштування сортування користувачів
+  async getUserSortPreferences(userId: string, tableName: string): Promise<any> {
+    try {
+      const [preference] = await db
+        .select()
+        .from(userSortPreferences)
+        .where(and(
+          eq(userSortPreferences.userId, userId),
+          eq(userSortPreferences.tableName, tableName)
+        ));
+      return preference;
+    } catch (error) {
+      console.error('Помилка отримання налаштувань сортування:', error);
+      return null;
+    }
+  }
+
+  async saveUserSortPreferences(userId: string, tableName: string, sortField: string, sortDirection: string): Promise<void> {
+    try {
+      await db
+        .insert(userSortPreferences)
+        .values({
+          userId,
+          tableName,
+          sortField,
+          sortDirection
+        })
+        .onConflictDoUpdate({
+          target: [userSortPreferences.userId, userSortPreferences.tableName],
+          set: {
+            sortField,
+            sortDirection,
+            createdAt: new Date()
+          }
+        });
+    } catch (error) {
+      console.error('Помилка збереження налаштувань сортування:', error);
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
