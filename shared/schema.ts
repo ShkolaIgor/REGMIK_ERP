@@ -795,41 +795,17 @@ export const clientNovaPoshtaApiSettings = pgTable("client_nova_poshta_api_setti
   id: serial("id").primaryKey(),
   clientId: integer("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
   
-  // Назва конфігурації для ідентифікації
-  settingsName: varchar("settings_name", { length: 255 }).notNull(),
-  
   // API налаштування
-  apiKey: varchar("api_key", { length: 255 }).notNull(),
-  
-  // Налаштування відправника
-  senderRef: varchar("sender_ref", { length: 255 }), // Референс відправника в НП
-  senderContactRef: varchar("sender_contact_ref", { length: 255 }), // Референс контакту відправника
-  senderAddressRef: varchar("sender_address_ref", { length: 255 }), // Референс адреси відправника
+  apiKey: text("api_key").notNull(),
   
   // Інформація про відправника
-  senderCompanyName: varchar("sender_company_name", { length: 255 }),
-  senderFirstName: varchar("sender_first_name", { length: 255 }),
-  senderLastName: varchar("sender_last_name", { length: 255 }),
-  senderPhone: varchar("sender_phone", { length: 50 }),
-  senderEmail: varchar("sender_email", { length: 255 }),
+  senderPhone: text("sender_phone"),
+  senderContactPerson: text("sender_contact_person"),
+  senderAddress: text("sender_address"),
   
-  // Адреса відправника
-  senderCityRef: varchar("sender_city_ref", { length: 255 }),
-  senderCityName: varchar("sender_city_name", { length: 255 }),
-  senderWarehouseRef: varchar("sender_warehouse_ref", { length: 255 }),
-  senderWarehouseAddress: text("sender_warehouse_address"),
-  
-  // Налаштування за замовчуванням
-  defaultServiceType: varchar("default_service_type", { length: 100 }).default("WarehouseWarehouse"),
-  defaultCargoType: varchar("default_cargo_type", { length: 100 }).default("Parcel"),
-  defaultPaymentMethod: varchar("default_payment_method", { length: 100 }).default("Cash"),
-  defaultPayer: varchar("default_payer", { length: 100 }).default("Sender"),
-  
-  // Додаткові налаштування
-  description: text("description"),
+  // Налаштування
+  isPrimary: boolean("is_primary").default(false),
   isActive: boolean("is_active").default(true),
-  isPrimary: boolean("is_primary").default(false), // основні налаштування для клієнта
-  enableThirdPartyShipping: boolean("enable_third_party_shipping").default(true),
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
