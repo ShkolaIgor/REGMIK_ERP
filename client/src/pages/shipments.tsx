@@ -57,7 +57,6 @@ interface ShipmentItem {
   quantity: number;
   productName: string;
   productSku: string;
-  unitPrice: string;
   serialNumbers?: string[];
 }
 
@@ -1156,8 +1155,6 @@ export default function Shipments() {
                       <TableHead>Товар</TableHead>
                       <TableHead>SKU</TableHead>
                       <TableHead className="text-right">Кількість</TableHead>
-                      <TableHead className="text-right">Ціна за од.</TableHead>
-                      <TableHead className="text-right">Сума</TableHead>
                       <TableHead>Серійні номери</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1167,10 +1164,6 @@ export default function Shipments() {
                         <TableCell className="font-medium">{item.productName}</TableCell>
                         <TableCell>{item.productSku}</TableCell>
                         <TableCell className="text-right">{item.quantity}</TableCell>
-                        <TableCell className="text-right">{parseFloat(item.unitPrice).toLocaleString('uk-UA')} ₴</TableCell>
-                        <TableCell className="text-right">
-                          {(parseFloat(item.unitPrice) * item.quantity).toLocaleString('uk-UA')} ₴
-                        </TableCell>
                         <TableCell>
                           {item.serialNumbers && item.serialNumbers.length > 0 ? (
                             <div className="space-y-1">
@@ -1188,17 +1181,6 @@ export default function Shipments() {
                     ))}
                   </TableBody>
                 </Table>
-                
-                {/* Підсумок */}
-                <div className="mt-4 flex justify-end">
-                  <div className="bg-gray-50 p-3 rounded">
-                    <div className="font-semibold">
-                      Загальна сума: {selectedShipmentDetails.items.reduce((total, item) => 
-                        total + (parseFloat(item.unitPrice) * item.quantity), 0
-                      ).toLocaleString('uk-UA')} ₴
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           )}
