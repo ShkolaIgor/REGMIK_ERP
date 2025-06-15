@@ -1176,6 +1176,189 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
   }
+
+  // Елементи замовлень
+  async getOrderItemsWithShipmentInfo(orderId: number): Promise<any[]> {
+    try {
+      const items = await db
+        .select()
+        .from(orderItems)
+        .leftJoin(products, eq(orderItems.productId, products.id))
+        .where(eq(orderItems.orderId, orderId));
+      
+      return items.map(row => ({
+        ...row.order_items,
+        product: row.products
+      }));
+    } catch (error) {
+      console.error('Помилка отримання елементів замовлення:', error);
+      return [];
+    }
+  }
+
+  async getOrderItemSerialNumbers(orderItemId: number): Promise<any[]> {
+    try {
+      return await db.select().from(orderItemSerialNumbers).where(eq(orderItemSerialNumbers.orderItemId, orderItemId));
+    } catch (error) {
+      console.error('Помилка отримання серійних номерів:', error);
+      return [];
+    }
+  }
+
+  // Перевізники
+  async getCarriers(): Promise<any[]> {
+    try {
+      return await db.select().from(carriers);
+    } catch (error) {
+      console.error('Помилка отримання перевізників:', error);
+      return [];
+    }
+  }
+
+  async getCarrier(id: number): Promise<any> {
+    try {
+      const [carrier] = await db.select().from(carriers).where(eq(carriers.id, id));
+      return carrier;
+    } catch (error) {
+      console.error('Помилка отримання перевізника:', error);
+      return undefined;
+    }
+  }
+
+  async createCarrier(data: any): Promise<any> {
+    try {
+      const [carrier] = await db.insert(carriers).values(data).returning();
+      return carrier;
+    } catch (error) {
+      console.error('Помилка створення перевізника:', error);
+      throw error;
+    }
+  }
+
+  async updateCarrier(id: number, data: any): Promise<any> {
+    try {
+      const [carrier] = await db
+        .update(carriers)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(carriers.id, id))
+        .returning();
+      return carrier;
+    } catch (error) {
+      console.error('Помилка оновлення перевізника:', error);
+      throw error;
+    }
+  }
+
+  async deleteCarrier(id: number): Promise<boolean> {
+    try {
+      await db.delete(carriers).where(eq(carriers.id, id));
+      return true;
+    } catch (error) {
+      console.error('Помилка видалення перевізника:', error);
+      return false;
+    }
+  }
+
+  // Відвантаження
+  async getShipments(): Promise<any[]> {
+    try {
+      const result = await db
+        .select()
+        .from(shipments)
+        .leftJoin(shipmentItems, eq(shipments.id, shipmentItems.shipmentId))
+        .leftJoin(products, eq(shipmentItems.productId, products.id))
+        .leftJoin(orders, eq(shipments.orderId, orders.id));
+      
+      // Групуємо відвантаження з їх елементами
+      const shipmentsMap = new Map();
+      
+      for (const row of result) {
+        const shipment = row.shipments;
+        const item = row.shipment_items;
+        const product = row.products;
+        const order = row.orders;
+        
+        if (!shipmentsMap.has(shipment.id)) {
+          shipmentsMap.set(shipment.id, {
+            ...shipment,
+            order: order,
+            items: []
+          });
+        }
+        
+        if (item) {
+          shipmentsMap.get(shipment.id).items.push({
+            ...item,
+            product: product
+          });
+        }
+      }
+      
+      return Array.from(shipmentsMap.values());
+    } catch (error) {
+      console.error('Помилка отримання відвантажень:', error);
+      return [];
+    }
+  }
+
+  async getShipment(id: number): Promise<any> {
+    try {
+      const [shipment] = await db.select().from(shipments).where(eq(shipments.id, id));
+      if (!shipment) return undefined;
+      
+      const items = await db
+        .select()
+        .from(shipmentItems)
+        .leftJoin(products, eq(shipmentItems.productId, products.id))
+        .where(eq(shipmentItems.shipmentId, id));
+      
+      return {
+        ...shipment,
+        items: items.map(row => ({
+          ...row.shipment_items,
+          product: row.products
+        }))
+      };
+    } catch (error) {
+      console.error('Помилка отримання відвантаження:', error);
+      return undefined;
+    }
+  }
+
+  async createShipment(data: any): Promise<any> {
+    try {
+      const [shipment] = await db.insert(shipments).values(data).returning();
+      return shipment;
+    } catch (error) {
+      console.error('Помилка створення відвантаження:', error);
+      throw error;
+    }
+  }
+
+  async updateShipment(id: number, data: any): Promise<any> {
+    try {
+      const [shipment] = await db
+        .update(shipments)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(shipments.id, id))
+        .returning();
+      return shipment;
+    } catch (error) {
+      console.error('Помилка оновлення відвантаження:', error);
+      throw error;
+    }
+  }
+
+  async deleteShipment(id: number): Promise<boolean> {
+    try {
+      await db.delete(shipmentItems).where(eq(shipmentItems.shipmentId, id));
+      await db.delete(shipments).where(eq(shipments.id, id));
+      return true;
+    } catch (error) {
+      console.error('Помилка видалення відвантаження:', error);
+      return false;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();

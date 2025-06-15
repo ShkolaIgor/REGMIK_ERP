@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage } from "./db-storage";
 import { registerSimpleIntegrationRoutes } from "./integrations-simple";
 import { registerSyncApiRoutes } from "./sync-api";
 import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./simple-auth";
