@@ -61,12 +61,20 @@ CREATE INDEX IF NOT EXISTS idx_serial_numbers_category_status
 ON serial_numbers(category_id, status);
 
 -- Step 8: Add constraints for data integrity
-ALTER TABLE categories 
-ADD CONSTRAINT IF NOT EXISTS chk_categories_serial_settings_consistency 
-CHECK (
-    (has_serial_numbers = false) OR 
-    (has_serial_numbers = true AND use_serial_numbers = true)
-);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.constraint_column_usage 
+        WHERE constraint_name = 'chk_categories_serial_settings_consistency'
+    ) THEN
+        ALTER TABLE categories 
+        ADD CONSTRAINT chk_categories_serial_settings_consistency 
+        CHECK (
+            (has_serial_numbers = false) OR 
+            (has_serial_numbers = true AND use_serial_numbers = true)
+        );
+    END IF;
+END $$;
 
 -- Step 9: Update comments for documentation
 COMMENT ON COLUMN categories.has_serial_numbers IS 'Чи використовує ця категорія серійні номери';
