@@ -83,6 +83,7 @@ interface NovaPoshtaIntegrationProps {
   onCostCalculated?: (cost: DeliveryCost) => void;
   onTrackingNumberCreated?: (trackingNumber: string) => void;
   orderId?: string;
+  shipmentId?: string;
   trackingNumber?: string;
   weight?: string;
   length?: string;

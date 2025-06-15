@@ -3062,7 +3062,11 @@ export class DatabaseStorage implements IStorage {
   async getShipmentDetails(id: number): Promise<any> {
     // Get basic shipment information
     const shipmentResult = await db
-      .select()
+      .select({
+        shipment: shipments,
+        order: orders,
+        carrier: carriers
+      })
       .from(shipments)
       .leftJoin(orders, eq(shipments.orderId, orders.id))
       .leftJoin(carriers, eq(shipments.carrierId, carriers.id))
@@ -3070,10 +3074,7 @@ export class DatabaseStorage implements IStorage {
 
     if (shipmentResult.length === 0) return undefined;
 
-    const shipmentRow = shipmentResult[0];
-    const shipment = shipmentRow.shipments;
-    const order = shipmentRow.orders;
-    const carrier = shipmentRow.carriers;
+    const { shipment, order, carrier } = shipmentResult[0];
 
     // Get shipment items with product details
     const itemsResult = await db
@@ -3104,10 +3105,10 @@ export class DatabaseStorage implements IStorage {
 
     // Group serial numbers by product ID
     const serialNumbersByProduct = serialNumbersResult.reduce((acc, serial) => {
-      if (!acc[serial.productId]) {
-        acc[serial.productId] = [];
+      if (!acc[serial.productId!]) {
+        acc[serial.productId!] = [];
       }
-      acc[serial.productId].push(serial.serialNumber);
+      acc[serial.productId!].push(serial.serialNumber);
       return acc;
     }, {} as Record<number, string[]>);
 
@@ -3120,7 +3121,7 @@ export class DatabaseStorage implements IStorage {
       productName: item.productName || 'Unknown Product',
       productSku: item.productSku || 'N/A',
       unitPrice: item.unitPrice || '0',
-      serialNumbers: serialNumbersByProduct[item.productId] || []
+      serialNumbers: serialNumbersByProduct[item.productId!] || []
     }));
 
     return {

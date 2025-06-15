@@ -3036,7 +3036,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         warehouseSender,
         senderName,
         senderPhone,
-        orderId
+        orderId,
+        shipmentId
       } = req.body;
 
       const invoiceData = {
@@ -3110,6 +3111,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('Order updated with tracking number successfully');
         } catch (error) {
           console.error('Error updating order with tracking number:', error);
+        }
+      }
+      
+      // Якщо є shipmentId, оновлюємо відвантаження з трек-номером та статусом "відправлено"
+      if (shipmentId && invoice.Number) {
+        try {
+          console.log('Updating shipment with tracking number and status:', invoice.Number);
+          const currentDate = new Date();
+          
+          // Оновлюємо трек-номер
+          await storage.updateShipment(parseInt(shipmentId), {
+            trackingNumber: invoice.Number,
+            status: 'shipped',
+            shippedAt: currentDate
+          });
+          
+          console.log('Shipment updated with tracking number and shipped status successfully');
+        } catch (error) {
+          console.error('Error updating shipment with tracking number and status:', error);
         }
       }
       
