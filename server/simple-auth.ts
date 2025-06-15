@@ -126,8 +126,8 @@ export function setupSimpleAuth(app: Express) {
         if (isPasswordValid) {
           console.log("Database user authenticated successfully");
           
-          // Отримуємо повні дані користувача з робітником
-          const fullUser = await storage.getLocalUserWithWorker(dbUser.id);
+          // Отримуємо повні дані користувача
+          const fullUser = await storage.getLocalUser(dbUser.id);
           
           // Створюємо сесію для користувача з бази даних
           (req.session as any).user = {
@@ -193,19 +193,19 @@ export function setupSimpleAuth(app: Express) {
         return res.status(400).json({ message: "Невірний ID користувача" });
       }
 
-      const fullUser = await storage.getLocalUserWithWorker(userId);
+      const fullUser = await storage.getLocalUser(userId);
       if (!fullUser) {
         return res.status(404).json({ message: "Користувач не знайдений" });
       }
 
-      // Використовуємо дані з робітника, якщо доступні
+      // Використовуємо дані користувача
       const userData = {
         id: fullUser.id,
         username: fullUser.username,
-        email: fullUser.worker?.email || fullUser.email,
-        firstName: fullUser.worker?.firstName || fullUser.firstName || fullUser.username,
-        lastName: fullUser.worker?.lastName || fullUser.lastName || "",
-        profileImageUrl: fullUser.worker?.photo || fullUser.profileImageUrl
+        email: fullUser.email,
+        firstName: fullUser.firstName || fullUser.username,
+        lastName: fullUser.lastName || "",
+        profileImageUrl: fullUser.profileImageUrl
       };
 
       res.json(userData);

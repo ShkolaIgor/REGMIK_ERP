@@ -70,39 +70,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Невірний логін або пароль" });
       }
       
-      // Create session
+      // Create session - force session creation
       if (!req.session) {
-        console.error("Session not initialized");
+        console.error("Session middleware not working properly");
         return res.status(500).json({ message: "Помилка ініціалізації сесії" });
       }
       
-      (req.session as any).user = {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        profileImageUrl: user.profileImageUrl
-      };
-      
-      console.log("Login successful for user:", user.username);
-      
-      // Update last login time
-      await storage.updateLastLoginTime(user.id);
-      
-      res.json({ 
-        message: "Успішний вхід в систему",
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role,
-          profileImageUrl: user.profileImageUrl
+      // Ensure session is saved
+      req.session.regenerate((err) => {
+        if (err) {
+          console.error("Session regeneration error:", err);
+          return res.status(500).json({ message: "Помилка створення сесії" });
         }
-      });
+        
+          (req.session as any).user = {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.role,
+            profileImageUrl: user.profileImageUrl
+          };
+          
+          // Save session explicitly
+          req.session.save((saveErr) => {
+            if (saveErr) {
+              console.error("Session save error:", saveErr);
+              return res.status(500).json({ message: "Помилка збереження сесії" });
+            }
+            
+            console.log("Login successful for user:", user.username, "Session ID:", req.sessionID);
+            
+            // Update last login time
+            storage.updateLastLoginTime(user.id).then(() => {
+              res.json({ 
+                message: "Успішний вхід в систему",
+                user: {
+                  id: user.id,
+                  username: user.username,
+                  email: user.email,
+                  firstName: user.firstName,
+                  lastName: user.lastName,
+                  role: user.role,
+                  profileImageUrl: user.profileImageUrl
+                }
+              });
+            }).catch((updateErr) => {
+              console.error("Last login update error:", updateErr);
+              // Still return success even if last login update fails
+              res.json({ 
+                message: "Успішний вхід в систему",
+                user: {
+                  id: user.id,
+                  username: user.username,
+                  email: user.email,
+                  firstName: user.firstName,
+                  lastName: user.lastName,
+                  role: user.role,
+                  profileImageUrl: user.profileImageUrl
+                }
+              });
+            });
+          });
+        });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ message: "Внутрішня помилка сервера" });

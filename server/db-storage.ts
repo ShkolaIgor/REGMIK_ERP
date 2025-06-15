@@ -698,6 +698,16 @@ export class DatabaseStorage implements IStorage {
       console.error('Помилка збереження токену скидання пароля:', error);
     }
   }
+
+  async getLocalUser(id: number): Promise<LocalUser | undefined> {
+    try {
+      const [user] = await db.select().from(localUsers).where(eq(localUsers.id, id));
+      return user;
+    } catch (error) {
+      console.error('Помилка отримання локального користувача:', error);
+      return undefined;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
