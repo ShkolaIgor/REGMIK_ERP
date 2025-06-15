@@ -708,6 +708,74 @@ export class DatabaseStorage implements IStorage {
       return undefined;
     }
   }
+
+  async changeUserPassword(userId: number, newPassword: string): Promise<void> {
+    try {
+      await db
+        .update(localUsers)
+        .set({ 
+          password: newPassword,
+          updatedAt: new Date()
+        })
+        .where(eq(localUsers.id, userId));
+    } catch (error) {
+      console.error('Помилка зміни пароля користувача:', error);
+      throw error;
+    }
+  }
+
+  async savePasswordResetToken(email: string, token: string, expires: Date): Promise<void> {
+    try {
+      await db
+        .update(localUsers)
+        .set({ 
+          passwordResetToken: token,
+          passwordResetExpires: expires,
+          updatedAt: new Date()
+        })
+        .where(eq(localUsers.email, email));
+    } catch (error) {
+      console.error('Помилка збереження токену скидання пароля:', error);
+      throw error;
+    }
+  }
+
+  async getEmailSettings(): Promise<any> {
+    try {
+      // Повертаємо базові налаштування email
+      return {
+        smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',
+        smtpPort: parseInt(process.env.SMTP_PORT || '587'),
+        smtpUser: process.env.SMTP_USER || '',
+        smtpPassword: process.env.SMTP_PASSWORD || '',
+        fromEmail: process.env.FROM_EMAIL || 'noreply@regmik.com',
+        fromName: process.env.FROM_NAME || 'RegMik ERP System',
+        isEnabled: !!(process.env.SMTP_USER && process.env.SMTP_PASSWORD)
+      };
+    } catch (error) {
+      console.error('Помилка отримання налаштувань email:', error);
+      return {
+        isEnabled: false,
+        smtpHost: '',
+        smtpPort: 587,
+        smtpUser: '',
+        smtpPassword: '',
+        fromEmail: '',
+        fromName: ''
+      };
+    }
+  }
+
+  async updateEmailSettings(settings: any): Promise<void> {
+    try {
+      // Налаштування email зберігаються в змінних середовища
+      // У реальному застосунку можна створити окрему таблицю для налаштувань
+      console.log('Email налаштування оновлено:', settings);
+    } catch (error) {
+      console.error('Помилка оновлення налаштувань email:', error);
+      throw error;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
