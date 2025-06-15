@@ -98,6 +98,11 @@ export function PartialShipmentDialog({
     enabled: showSavedAddresses,
   });
 
+  // Запит для отримання перевізників
+  const { data: carriers = [] } = useQuery({
+    queryKey: ["/api/carriers"],
+  });
+
   const addresses = (savedAddresses as any[]) || [];
 
   // Функція для заповнення форми з обраної адреси
@@ -110,12 +115,45 @@ export function PartialShipmentDialog({
     form.setValue("recipientCityRef", address.cityRef || "");
     form.setValue("recipientWarehouseRef", address.warehouseRef || "");
     
-    // Автоматично заповнюємо перевізника, якщо він збережений в адресі
-    if (address.carrierId) {
-      console.log("Встановлюю перевізника:", address.carrierId, address.carrierName);
-      form.setValue("carrierId", address.carrierId.toString());
+    // Пошук правильного перевізника по carrierId або за назвою з урахуванням альтернативних назв
+    let selectedCarrierId = "";
+    if (address.carrierId && carriers) {
+      // Спробуємо знайти перевізника за ID
+      const carrierFound = (carriers as any[]).find(c => c.id === address.carrierId);
+      if (carrierFound) {
+        selectedCarrierId = address.carrierId.toString();
+        console.log("Знайдено перевізника за ID:", carrierFound.name);
+      } else if (address.carrierName) {
+        // Якщо не знайшли за ID, шукаємо за назвою включаючи альтернативні назви
+        const carrierByName = (carriers as any[]).find(c => {
+          const carrierName = c.name.toLowerCase();
+          const addressCarrierName = address.carrierName.toLowerCase();
+          
+          // Перевіряємо основну назву
+          if (carrierName.includes(addressCarrierName) || addressCarrierName.includes(carrierName)) {
+            return true;
+          }
+          
+          // Перевіряємо альтернативні назви
+          const alternativeNames = c.alternativeNames || [];
+          return alternativeNames.some((altName: string) => {
+            const altNameLower = altName.toLowerCase();
+            return altNameLower.includes(addressCarrierName) || addressCarrierName.includes(altNameLower);
+          });
+        });
+        
+        if (carrierByName) {
+          selectedCarrierId = carrierByName.id.toString();
+          console.log("Знайдено перевізника за назвою/альтернативною назвою:", carrierByName.name);
+        }
+      }
+    }
+    
+    if (selectedCarrierId) {
+      form.setValue("carrierId", selectedCarrierId);
+      console.log("Встановлено перевізника:", selectedCarrierId);
     } else {
-      console.log("Перевізник не вказаний в адресі");
+      console.log("Перевізник не знайдено для адреси");
     }
     
     setShowSavedAddresses(false);
