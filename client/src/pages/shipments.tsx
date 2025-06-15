@@ -877,6 +877,7 @@ export default function Shipments() {
                         }));
                       }}
                       orderId={formData.orderId}
+                      shipmentId={editingShipment?.id?.toString()}
                       trackingNumber={formData.trackingNumber}
                       weight={formData.weight}
                       length={formData.length}

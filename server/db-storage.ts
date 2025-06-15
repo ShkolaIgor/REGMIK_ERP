@@ -3062,11 +3062,7 @@ export class DatabaseStorage implements IStorage {
   async getShipmentDetails(id: number): Promise<any> {
     // Get basic shipment information
     const shipmentResult = await db
-      .select({
-        shipment: shipments,
-        order: orders,
-        carrier: carriers
-      })
+      .select()
       .from(shipments)
       .leftJoin(orders, eq(shipments.orderId, orders.id))
       .leftJoin(carriers, eq(shipments.carrierId, carriers.id))
@@ -3074,7 +3070,10 @@ export class DatabaseStorage implements IStorage {
 
     if (shipmentResult.length === 0) return undefined;
 
-    const { shipment, order, carrier } = shipmentResult[0];
+    const row = shipmentResult[0];
+    const shipment = row.shipments;
+    const order = row.orders;
+    const carrier = row.carriers;
 
     // Get shipment items with product details
     const itemsResult = await db

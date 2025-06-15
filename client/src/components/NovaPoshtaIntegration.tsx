@@ -99,6 +99,7 @@ export function NovaPoshtaIntegration({
   onCostCalculated,
   onTrackingNumberCreated,
   orderId,
+  shipmentId,
   trackingNumber,
   weight: externalWeight,
   length: externalLength,
@@ -294,7 +295,8 @@ export function NovaPoshtaIntegration({
         seatsAmount: parseInt(seatsAmount),
         paymentMethod,
         payerType,
-        orderId
+        orderId,
+        shipmentId
       };
       
       console.log('Sending create invoice request:', JSON.stringify(requestData, null, 2));
