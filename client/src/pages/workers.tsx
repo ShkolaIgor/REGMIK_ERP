@@ -618,7 +618,10 @@ export default function WorkersPage() {
                   <div className="text-sm">
                     {worker.email && <div>{worker.email}</div>}
                     {worker.phone && <div>{worker.phone}</div>}
-                    {!worker.email && !worker.phone && "—"}
+                    {worker.contactPhone && worker.contactPhone !== worker.phone && (
+                      <div className="text-muted-foreground">Контакт: {worker.contactPhone}</div>
+                    )}
+                    {!worker.email && !worker.phone && !worker.contactPhone && "—"}
                   </div>
                 </TableCell>
                 <TableCell>
