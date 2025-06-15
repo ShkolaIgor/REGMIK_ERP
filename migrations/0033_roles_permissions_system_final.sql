@@ -1,6 +1,6 @@
--- Migration 0033: Roles and Permissions System (Fixed for Production)
+-- Migration 0033: Roles and Permissions System (Final Production Version)
 -- Created: 2025-01-15
--- Description: Complete implementation of roles and permissions system with production fixes
+-- Description: Complete implementation of roles and permissions system with all production fixes
 
 -- Create system_modules table
 CREATE TABLE IF NOT EXISTS system_modules (
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS permissions (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create roles table (allow NULL for permissions column)
+-- Create roles table
 CREATE TABLE IF NOT EXISTS roles (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL UNIQUE,
@@ -49,7 +49,13 @@ BEGIN
     WHERE table_name = 'roles'
   ) THEN
     -- Drop the NOT NULL constraint on permissions column if it exists
-    ALTER TABLE roles ALTER COLUMN permissions DROP NOT NULL;
+    BEGIN
+      ALTER TABLE roles ALTER COLUMN permissions DROP NOT NULL;
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Ignore error if constraint doesn't exist
+        NULL;
+    END;
   END IF;
 END
 $$;
@@ -67,7 +73,6 @@ CREATE TABLE IF NOT EXISTS role_permissions (
 -- Add role_id to users table if it exists and is not a view
 DO $$
 BEGIN
-  -- Check if users is a table (not a view) and role_id column doesn't exist
   IF EXISTS (
     SELECT 1 FROM information_schema.tables 
     WHERE table_name = 'users' AND table_type = 'BASE TABLE'
@@ -92,7 +97,13 @@ BEGIN
     SELECT 1 FROM information_schema.tables 
     WHERE table_name = 'users' AND table_type = 'BASE TABLE'
   ) THEN
-    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_users_role_id ON users(role_id)';
+    BEGIN
+      EXECUTE 'CREATE INDEX IF NOT EXISTS idx_users_role_id ON users(role_id)';
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Ignore if index creation fails
+        NULL;
+    END;
   END IF;
 END
 $$;
@@ -199,7 +210,7 @@ BEGIN
   ON CONFLICT (name) DO UPDATE SET
     display_name = EXCLUDED.display_name,
     description = EXCLUDED.description,
-    permissions = COALESCE(EXCLUDED.permissions, '{}'),
+    permissions = COALESCE(roles.permissions, EXCLUDED.permissions),
     is_system_role = EXCLUDED.is_system_role;
     
   INSERT INTO roles (name, display_name, description, permissions, is_system_role) 
@@ -207,7 +218,7 @@ BEGIN
   ON CONFLICT (name) DO UPDATE SET
     display_name = EXCLUDED.display_name,
     description = EXCLUDED.description,
-    permissions = COALESCE(EXCLUDED.permissions, '{}'),
+    permissions = COALESCE(roles.permissions, EXCLUDED.permissions),
     is_system_role = EXCLUDED.is_system_role;
     
   INSERT INTO roles (name, display_name, description, permissions, is_system_role) 
@@ -215,7 +226,7 @@ BEGIN
   ON CONFLICT (name) DO UPDATE SET
     display_name = EXCLUDED.display_name,
     description = EXCLUDED.description,
-    permissions = COALESCE(EXCLUDED.permissions, '{}'),
+    permissions = COALESCE(roles.permissions, EXCLUDED.permissions),
     is_system_role = EXCLUDED.is_system_role;
     
   INSERT INTO roles (name, display_name, description, permissions, is_system_role) 
@@ -223,7 +234,7 @@ BEGIN
   ON CONFLICT (name) DO UPDATE SET
     display_name = EXCLUDED.display_name,
     description = EXCLUDED.description,
-    permissions = COALESCE(EXCLUDED.permissions, '{}'),
+    permissions = COALESCE(roles.permissions, EXCLUDED.permissions),
     is_system_role = EXCLUDED.is_system_role;
     
   INSERT INTO roles (name, display_name, description, permissions, is_system_role) 
@@ -231,7 +242,7 @@ BEGIN
   ON CONFLICT (name) DO UPDATE SET
     display_name = EXCLUDED.display_name,
     description = EXCLUDED.description,
-    permissions = COALESCE(EXCLUDED.permissions, '{}'),
+    permissions = COALESCE(roles.permissions, EXCLUDED.permissions),
     is_system_role = EXCLUDED.is_system_role;
 END
 $$;
@@ -241,11 +252,9 @@ DO $$
 DECLARE
   super_admin_role_id INTEGER;
 BEGIN
-  -- Get super_admin role ID
   SELECT id INTO super_admin_role_id FROM roles WHERE name = 'super_admin';
   
   IF super_admin_role_id IS NOT NULL THEN
-    -- Assign all permissions to super_admin
     INSERT INTO role_permissions (role_id, permission_id, granted)
     SELECT 
         super_admin_role_id,

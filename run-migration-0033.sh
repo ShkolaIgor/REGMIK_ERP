@@ -76,7 +76,11 @@ fi
 
 # Apply migration
 echo "Applying migration 0033..."
-if [ -f "./migrations/0033_roles_permissions_system_fixed.sql" ]; then
+if [ -f "./migrations/0033_roles_permissions_system_final.sql" ]; then
+    MIGRATION_FILE="./migrations/0033_roles_permissions_system_final.sql"
+elif [ -f "/opt/regmik-erp/migrations/0033_roles_permissions_system_final.sql" ]; then
+    MIGRATION_FILE="/opt/regmik-erp/migrations/0033_roles_permissions_system_final.sql"
+elif [ -f "./migrations/0033_roles_permissions_system_fixed.sql" ]; then
     MIGRATION_FILE="./migrations/0033_roles_permissions_system_fixed.sql"
 elif [ -f "/opt/regmik-erp/migrations/0033_roles_permissions_system_fixed.sql" ]; then
     MIGRATION_FILE="/opt/regmik-erp/migrations/0033_roles_permissions_system_fixed.sql"
@@ -87,6 +91,8 @@ elif [ -f "/opt/regmik-erp/migrations/0033_roles_permissions_system.sql" ]; then
 else
     echo "Error: Migration file not found!"
     echo "Looked in:"
+    echo "  - ./migrations/0033_roles_permissions_system_final.sql"
+    echo "  - /opt/regmik-erp/migrations/0033_roles_permissions_system_final.sql"
     echo "  - ./migrations/0033_roles_permissions_system_fixed.sql"
     echo "  - /opt/regmik-erp/migrations/0033_roles_permissions_system_fixed.sql"
     echo "  - ./migrations/0033_roles_permissions_system.sql"
