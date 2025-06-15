@@ -65,6 +65,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Create session
+      if (!req.session) {
+        console.error("Session not initialized");
+        return res.status(500).json({ message: "Помилка ініціалізації сесії" });
+      }
+      
       (req.session as any).user = {
         id: user.id,
         username: user.username,
