@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Switch } from "@/components/ui/switch";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { generateSKU } from "@/lib/utils";
@@ -37,11 +37,11 @@ export function ProductForm({ isOpen, onClose, product, isViewMode = false }: Pr
       retailPrice: product?.retailPrice || "0",
       photo: product?.photo || null,
       isActive: product?.isActive !== undefined ? product.isActive : true,
-      hasSerialNumbers: product?.hasSerialNumbers !== undefined ? product.hasSerialNumbers : false,
+
     },
   });
 
-  const { data: categories } = useQuery({
+  const { data: categories = [] } = useQuery({
     queryKey: ["/api/categories"],
   });
 
@@ -59,7 +59,7 @@ export function ProductForm({ isOpen, onClose, product, isViewMode = false }: Pr
         retailPrice: product.retailPrice || "0",
         photo: product.photo || null,
         isActive: product.isActive !== undefined ? product.isActive : true,
-        hasSerialNumbers: product.hasSerialNumbers !== undefined ? product.hasSerialNumbers : false,
+
       });
     } else {
       form.reset({
@@ -72,7 +72,7 @@ export function ProductForm({ isOpen, onClose, product, isViewMode = false }: Pr
         retailPrice: "0",
         photo: null,
         isActive: true,
-        hasSerialNumbers: false,
+
       });
     }
   }, [product, form]);
@@ -356,27 +356,7 @@ export function ProductForm({ isOpen, onClose, product, isViewMode = false }: Pr
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="hasSerialNumbers"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Має серійні номери</FormLabel>
-                    <div className="text-sm text-muted-foreground">
-                      {field.value ? "Товар використовує серійні номери для відстеження" : "Товар не потребує серійних номерів"}
-                    </div>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      disabled={isViewMode}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+
 
             <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
               <Button type="button" variant="outline" onClick={onClose}>
