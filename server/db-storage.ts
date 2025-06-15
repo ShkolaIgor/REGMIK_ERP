@@ -651,6 +651,20 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async updateOrderTrackingNumber(id: number, trackingNumber: string): Promise<boolean> {
+    try {
+      const result = await db.update(orders)
+        .set({ trackingNumber })
+        .where(eq(orders.id, id))
+        .returning();
+      
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error updating order tracking number:', error);
+      return false;
+    }
+  }
+
   async deleteOrder(id: number): Promise<boolean> {
     try {
       // Спочатку видаляємо всі товари з замовлення
