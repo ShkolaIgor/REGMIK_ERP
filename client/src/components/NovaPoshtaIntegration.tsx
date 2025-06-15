@@ -81,6 +81,7 @@ interface CustomerAddress {
 interface NovaPoshtaIntegrationProps {
   onAddressSelect?: (address: string, cityRef: string, warehouseRef: string) => void;
   onCostCalculated?: (cost: DeliveryCost) => void;
+  onTrackingNumberCreated?: (trackingNumber: string) => void;
   orderId?: string;
   trackingNumber?: string;
   weight?: string;
@@ -95,6 +96,7 @@ interface NovaPoshtaIntegrationProps {
 export function NovaPoshtaIntegration({
   onAddressSelect,
   onCostCalculated,
+  onTrackingNumberCreated,
   orderId,
   trackingNumber,
   weight: externalWeight,
@@ -308,6 +310,11 @@ export function NovaPoshtaIntegration({
           number: result.Number,
           cost: result.Cost
         });
+        
+        // Викликаємо callback для збереження номера накладної як трек-номер
+        if (onTrackingNumberCreated && result.Number) {
+          onTrackingNumberCreated(result.Number);
+        }
       } else {
         const errorData = await response.json();
         console.error('Помилка API:', errorData);

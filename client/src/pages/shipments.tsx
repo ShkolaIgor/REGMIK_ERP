@@ -808,6 +808,12 @@ export default function Shipments() {
                         }));
                       }}
                       onCostCalculated={handleCostCalculated}
+                      onTrackingNumberCreated={(trackingNumber) => {
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          trackingNumber: trackingNumber 
+                        }));
+                      }}
                       orderId={formData.orderId}
                       trackingNumber={formData.trackingNumber}
                       weight={formData.weight}
