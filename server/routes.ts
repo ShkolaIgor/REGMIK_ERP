@@ -29,6 +29,104 @@ import crypto from "crypto";
 import { sendEmail } from "./email-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // ================================
+  // МАРШРУТИ ДЛЯ АУТЕНТИФІКАЦІЇ
+  // ================================
+
+  // Login endpoint for simple authentication
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      console.log("Login attempt received:", req.body);
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: "Ім'я користувача та пароль обов'язкові" });
+      }
+      
+      // Find user by username
+      const user = await storage.getLocalUserByUsername(username);
+      console.log("User found:", user ? user.username : "none");
+      
+      if (!user) {
+        return res.status(401).json({ message: "Невірний логін або пароль" });
+      }
+      
+      if (!user.isActive) {
+        return res.status(401).json({ message: "Обліковий запис деактивовано" });
+      }
+      
+      // Verify password
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      console.log("Password valid:", isPasswordValid);
+      
+      if (!isPasswordValid) {
+        return res.status(401).json({ message: "Невірний логін або пароль" });
+      }
+      
+      // Create session
+      (req.session as any).user = {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        profileImageUrl: user.profileImageUrl
+      };
+      
+      console.log("Login successful for user:", user.username);
+      
+      // Update last login time
+      await storage.updateLastLoginTime(user.id);
+      
+      res.json({ 
+        message: "Успішний вхід в систему",
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          profileImageUrl: user.profileImageUrl
+        }
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Внутрішня помилка сервера" });
+    }
+  });
+
+  // Logout endpoint
+  app.post("/api/auth/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Logout error:", err);
+        return res.status(500).json({ message: "Помилка виходу з системи" });
+      }
+      res.clearCookie('connect.sid');
+      res.json({ message: "Успішний вихід з системи" });
+    });
+  });
+
+  // Get current user endpoint
+  app.get("/api/auth/user", (req, res) => {
+    const session = req.session as any;
+    
+    console.log("Auth check - Session exists:", !!req.session);
+    console.log("Auth check - User in session:", !!session?.user);
+    console.log("Auth check - Session ID:", req.sessionID);
+    console.log("Auth check - Session data:", req.session);
+    
+    if (!session?.user) {
+      console.log("Auth check - User NOT authenticated");
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    console.log("Auth check - User authenticated:", session.user.username);
+    res.json(session.user);
+  });
   // Simple auth setup
   setupSimpleSession(app);
   setupSimpleAuth(app);

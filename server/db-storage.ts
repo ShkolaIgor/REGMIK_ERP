@@ -652,6 +652,52 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
   }
+
+  // Додаємо методи для роботи з локальними користувачами
+  async getLocalUserByUsername(username: string): Promise<LocalUser | undefined> {
+    try {
+      const [user] = await db.select().from(localUsers).where(eq(localUsers.username, username));
+      return user;
+    } catch (error) {
+      console.error('Помилка отримання користувача за username:', error);
+      return undefined;
+    }
+  }
+
+  async getLocalUserByEmail(email: string): Promise<LocalUser | undefined> {
+    try {
+      const [user] = await db.select().from(localUsers).where(eq(localUsers.email, email));
+      return user;
+    } catch (error) {
+      console.error('Помилка отримання користувача за email:', error);
+      return undefined;
+    }
+  }
+
+  async updateLastLoginTime(userId: number): Promise<void> {
+    try {
+      await db
+        .update(localUsers)
+        .set({ lastLoginAt: new Date() })
+        .where(eq(localUsers.id, userId));
+    } catch (error) {
+      console.error('Помилка оновлення часу входу:', error);
+    }
+  }
+
+  async setPasswordResetToken(userId: number, token: string, expires: Date): Promise<void> {
+    try {
+      await db
+        .update(localUsers)
+        .set({ 
+          passwordResetToken: token, 
+          passwordResetExpires: expires 
+        })
+        .where(eq(localUsers.id, userId));
+    } catch (error) {
+      console.error('Помилка збереження токену скидання пароля:', error);
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
