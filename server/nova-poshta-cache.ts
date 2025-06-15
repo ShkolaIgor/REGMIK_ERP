@@ -1,4 +1,4 @@
-import { storage } from './db-storage.js';
+import { storage } from './storage.js';
 import { novaPoshtaApi } from './nova-poshta-api.js';
 
 class NovaPoshtaCache {

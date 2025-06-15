@@ -38,7 +38,7 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: false,  // Для розробки на localhost
       maxAge: sessionTtl,
     },
   });
