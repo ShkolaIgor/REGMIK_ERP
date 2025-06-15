@@ -113,7 +113,7 @@ export function PartialShipmentDialog({
     // Автоматично заповнюємо перевізника, якщо він збережений в адресі
     if (address.carrierId) {
       console.log("Встановлюю перевізника:", address.carrierId, address.carrierName);
-      form.setValue("carrierId", address.carrierId);
+      form.setValue("carrierId", address.carrierId.toString());
     } else {
       console.log("Перевізник не вказаний в адресі");
     }
@@ -171,6 +171,7 @@ export function PartialShipmentDialog({
           cityName: data.recipientCityName,
           warehouseRef: data.recipientWarehouseRef || '',
           warehouseAddress: data.recipientWarehouseAddress,
+          carrierId: data.carrierId ? parseInt(data.carrierId) : null,
         }
       });
 
