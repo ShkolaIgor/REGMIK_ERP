@@ -1579,6 +1579,310 @@ export class DatabaseStorage implements IStorage {
       console.error('Помилка збереження налаштувань сортування:', error);
     }
   }
+
+  // Компоненти та категорії
+  async getComponents(): Promise<any[]> {
+    try {
+      const result = await db
+        .select()
+        .from(components)
+        .leftJoin(componentCategories, eq(components.categoryId, componentCategories.id));
+      
+      return result.map(row => ({
+        ...row.components,
+        category: row.component_categories
+      }));
+    } catch (error) {
+      console.error('Помилка отримання компонентів:', error);
+      return [];
+    }
+  }
+
+  async getComponentCategories(): Promise<any[]> {
+    try {
+      return await db.select().from(componentCategories);
+    } catch (error) {
+      console.error('Помилка отримання категорій компонентів:', error);
+      return [];
+    }
+  }
+
+  // Типи корпусів
+  async getPackageTypes(): Promise<any[]> {
+    try {
+      return await db.select().from(packageTypes);
+    } catch (error) {
+      console.error('Помилка отримання типів корпусів:', error);
+      return [];
+    }
+  }
+
+  // Типи пайки
+  async getSolderingTypes(): Promise<any[]> {
+    try {
+      return await db.select().from(solderingTypes);
+    } catch (error) {
+      console.error('Помилка отримання типів пайки:', error);
+      return [];
+    }
+  }
+
+  // Компанії
+  async getCompanies(): Promise<any[]> {
+    try {
+      return await db.select().from(companies);
+    } catch (error) {
+      console.error('Помилка отримання компаній:', error);
+      return [];
+    }
+  }
+
+  async getCompany(id: number): Promise<any> {
+    try {
+      const [company] = await db.select().from(companies).where(eq(companies.id, id));
+      return company;
+    } catch (error) {
+      console.error('Помилка отримання компанії:', error);
+      return null;
+    }
+  }
+
+  async createCompany(data: any): Promise<any> {
+    try {
+      const [company] = await db.insert(companies).values(data).returning();
+      return company;
+    } catch (error) {
+      console.error('Помилка створення компанії:', error);
+      throw error;
+    }
+  }
+
+  async updateCompany(id: number, data: any): Promise<any> {
+    try {
+      const [company] = await db
+        .update(companies)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(companies.id, id))
+        .returning();
+      return company;
+    } catch (error) {
+      console.error('Помилка оновлення компанії:', error);
+      throw error;
+    }
+  }
+
+  async deleteCompany(id: number): Promise<boolean> {
+    try {
+      await db.delete(companies).where(eq(companies.id, id));
+      return true;
+    } catch (error) {
+      console.error('Помилка видалення компанії:', error);
+      return false;
+    }
+  }
+
+  // Nova Poshta синхронізація
+  async syncNovaPoshtaCities(apiKey: string, cities: any[]): Promise<void> {
+    try {
+      await db.delete(novaPoshtaCities);
+      if (cities.length > 0) {
+        await db.insert(novaPoshtaCities).values(cities);
+      }
+    } catch (error) {
+      console.error('Помилка синхронізації міст Нової Пошти:', error);
+    }
+  }
+
+  async syncNovaPoshtaWarehouses(apiKey: string, warehouses: any[]): Promise<void> {
+    try {
+      await db.delete(novaPoshtaWarehouses);
+      if (warehouses.length > 0) {
+        await db.insert(novaPoshtaWarehouses).values(warehouses);
+      }
+    } catch (error) {
+      console.error('Помилка синхронізації відділень Нової Пошти:', error);
+    }
+  }
+
+  // Налаштування валют
+  async getCurrencyUpdateSettings(): Promise<any> {
+    try {
+      const [settings] = await db.select().from(currencyUpdateSettings).limit(1);
+      return settings || { 
+        isEnabled: false, 
+        updateTime: '09:00', 
+        updateDays: [1,2,3,4,5] 
+      };
+    } catch (error) {
+      console.error('Помилка отримання налаштувань валют:', error);
+      return { 
+        isEnabled: false, 
+        updateTime: '09:00', 
+        updateDays: [1,2,3,4,5] 
+      };
+    }
+  }
+
+  // Контакти клієнтів та зовнішні зв'язки
+  async getClientContacts(): Promise<any[]> {
+    try {
+      return await db.select().from(clientContacts);
+    } catch (error) {
+      console.error('Помилка отримання контактів клієнтів:', error);
+      return [];
+    }
+  }
+
+  async getClientByExternalId(externalId: string): Promise<any> {
+    try {
+      const [client] = await db.select().from(clients).where(eq(clients.externalId, externalId));
+      return client;
+    } catch (error) {
+      console.error('Помилка пошуку клієнта за зовнішнім ID:', error);
+      return null;
+    }
+  }
+
+  async getClientByTaxCode(taxCode: string): Promise<any> {
+    try {
+      const [client] = await db.select().from(clients).where(eq(clients.taxCode, taxCode));
+      return client;
+    } catch (error) {
+      console.error('Помилка пошуку клієнта за податковим кодом:', error);
+      return null;
+    }
+  }
+
+  async updateClientSyncInfo(id: number, syncData: any): Promise<void> {
+    try {
+      await db
+        .update(clients)
+        .set({ 
+          ...syncData, 
+          lastSyncAt: new Date(),
+          updatedAt: new Date() 
+        })
+        .where(eq(clients.id, id));
+    } catch (error) {
+      console.error('Помилка оновлення синхронізації клієнта:', error);
+    }
+  }
+
+  async getClientContactByExternalId(externalId: string): Promise<any> {
+    try {
+      const [contact] = await db.select().from(clientContacts).where(eq(clientContacts.externalId, externalId));
+      return contact;
+    } catch (error) {
+      console.error('Помилка пошуку контакту за зовнішнім ID:', error);
+      return null;
+    }
+  }
+
+  async updateClientContact(id: number, data: any): Promise<any> {
+    try {
+      const [contact] = await db
+        .update(clientContacts)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(clientContacts.id, id))
+        .returning();
+      return contact;
+    } catch (error) {
+      console.error('Помилка оновлення контакту клієнта:', error);
+      throw error;
+    }
+  }
+
+  async createClientContact(data: any): Promise<any> {
+    try {
+      const [contact] = await db.insert(clientContacts).values(data).returning();
+      return contact;
+    } catch (error) {
+      console.error('Помилка створення контакту клієнта:', error);
+      throw error;
+    }
+  }
+
+  async getCompanyByExternalId(externalId: string): Promise<any> {
+    try {
+      const [company] = await db.select().from(companies).where(eq(companies.externalId, externalId));
+      return company;
+    } catch (error) {
+      console.error('Помилка пошуку компанії за зовнішнім ID:', error);
+      return null;
+    }
+  }
+
+  // Рахунки та фактури
+  async getInvoices(): Promise<any[]> {
+    try {
+      const result = await db
+        .select()
+        .from(invoices)
+        .leftJoin(clients, eq(invoices.clientId, clients.id));
+      
+      return result.map(row => ({
+        ...row.invoices,
+        client: row.clients
+      }));
+    } catch (error) {
+      console.error('Помилка отримання рахунків:', error);
+      return [];
+    }
+  }
+
+  async getInvoice(id: number): Promise<any> {
+    try {
+      const [invoice] = await db.select().from(invoices).where(eq(invoices.id, id));
+      return invoice;
+    } catch (error) {
+      console.error('Помилка отримання рахунку:', error);
+      return null;
+    }
+  }
+
+  async getInvoiceByExternalId(externalId: string): Promise<any> {
+    try {
+      const [invoice] = await db.select().from(invoices).where(eq(invoices.externalId, externalId));
+      return invoice;
+    } catch (error) {
+      console.error('Помилка пошуку рахунку за зовнішнім ID:', error);
+      return null;
+    }
+  }
+
+  async createInvoice(data: any): Promise<any> {
+    try {
+      const [invoice] = await db.insert(invoices).values(data).returning();
+      return invoice;
+    } catch (error) {
+      console.error('Помилка створення рахунку:', error);
+      throw error;
+    }
+  }
+
+  async updateInvoice(id: number, data: any): Promise<any> {
+    try {
+      const [invoice] = await db
+        .update(invoices)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(invoices.id, id))
+        .returning();
+      return invoice;
+    } catch (error) {
+      console.error('Помилка оновлення рахунку:', error);
+      throw error;
+    }
+  }
+
+  async createInvoiceItem(data: any): Promise<any> {
+    try {
+      const [item] = await db.insert(invoiceItems).values(data).returning();
+      return item;
+    } catch (error) {
+      console.error('Помилка створення позиції рахунку:', error);
+      throw error;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
