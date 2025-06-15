@@ -6897,6 +6897,340 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Roles and permissions implementation
+  async getRoles(): Promise<Role[]> {
+    try {
+      const result = await db.select().from(roles).orderBy(roles.name);
+      return result;
+    } catch (error) {
+      console.error('Помилка отримання ролей:', error);
+      return [];
+    }
+  }
+
+  async getRole(id: number): Promise<Role | undefined> {
+    try {
+      const result = await db.select().from(roles).where(eq(roles.id, id));
+      return result[0];
+    } catch (error) {
+      console.error('Помилка отримання ролі:', error);
+      return undefined;
+    }
+  }
+
+  async createRole(data: InsertRole): Promise<Role> {
+    try {
+      const result = await db.insert(roles).values(data).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка створення ролі:', error);
+      throw error;
+    }
+  }
+
+  async updateRole(id: number, data: Partial<InsertRole>): Promise<Role | undefined> {
+    try {
+      const result = await db
+        .update(roles)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(roles.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка оновлення ролі:', error);
+      return undefined;
+    }
+  }
+
+  async deleteRole(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(roles).where(eq(roles.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Помилка видалення ролі:', error);
+      return false;
+    }
+  }
+
+  async getSystemModules(): Promise<SystemModule[]> {
+    try {
+      const result = await db.select().from(systemModules).orderBy(systemModules.sortOrder);
+      return result;
+    } catch (error) {
+      console.error('Помилка отримання модулів системи:', error);
+      return [];
+    }
+  }
+
+  async getSystemModule(id: number): Promise<SystemModule | undefined> {
+    try {
+      const result = await db.select().from(systemModules).where(eq(systemModules.id, id));
+      return result[0];
+    } catch (error) {
+      console.error('Помилка отримання модуля системи:', error);
+      return undefined;
+    }
+  }
+
+  async createSystemModule(data: InsertSystemModule): Promise<SystemModule> {
+    try {
+      const result = await db.insert(systemModules).values(data).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка створення модуля системи:', error);
+      throw error;
+    }
+  }
+
+  async updateSystemModule(id: number, data: Partial<InsertSystemModule>): Promise<SystemModule | undefined> {
+    try {
+      const result = await db
+        .update(systemModules)
+        .set(data)
+        .where(eq(systemModules.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка оновлення модуля системи:', error);
+      return undefined;
+    }
+  }
+
+  async deleteSystemModule(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(systemModules).where(eq(systemModules.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Помилка видалення модуля системи:', error);
+      return false;
+    }
+  }
+
+  async getPermissions(): Promise<Permission[]> {
+    try {
+      const result = await db.select().from(permissions).orderBy(permissions.name);
+      return result;
+    } catch (error) {
+      console.error('Помилка отримання дозволів:', error);
+      return [];
+    }
+  }
+
+  async getPermission(id: number): Promise<Permission | undefined> {
+    try {
+      const result = await db.select().from(permissions).where(eq(permissions.id, id));
+      return result[0];
+    } catch (error) {
+      console.error('Помилка отримання дозволу:', error);
+      return undefined;
+    }
+  }
+
+  async createPermission(data: InsertPermission): Promise<Permission> {
+    try {
+      const result = await db.insert(permissions).values(data).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка створення дозволу:', error);
+      throw error;
+    }
+  }
+
+  async updatePermission(id: number, data: Partial<InsertPermission>): Promise<Permission | undefined> {
+    try {
+      const result = await db
+        .update(permissions)
+        .set(data)
+        .where(eq(permissions.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка оновлення дозволу:', error);
+      return undefined;
+    }
+  }
+
+  async deletePermission(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(permissions).where(eq(permissions.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Помилка видалення дозволу:', error);
+      return false;
+    }
+  }
+
+  async getRolePermissions(roleId: number): Promise<RolePermission[]> {
+    try {
+      const result = await db.select().from(rolePermissions).where(eq(rolePermissions.roleId, roleId));
+      return result;
+    } catch (error) {
+      console.error('Помилка отримання дозволів ролі:', error);
+      return [];
+    }
+  }
+
+  async assignPermissionToRole(roleId: number, permissionId: number, granted: boolean = true): Promise<RolePermission> {
+    try {
+      const result = await db
+        .insert(rolePermissions)
+        .values({ roleId, permissionId, granted })
+        .onConflictDoUpdate({
+          target: [rolePermissions.roleId, rolePermissions.permissionId],
+          set: { granted, createdAt: new Date() }
+        })
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка призначення дозволу ролі:', error);
+      throw error;
+    }
+  }
+
+  async removePermissionFromRole(roleId: number, permissionId: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(rolePermissions)
+        .where(and(eq(rolePermissions.roleId, roleId), eq(rolePermissions.permissionId, permissionId)));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Помилка видалення дозволу ролі:', error);
+      return false;
+    }
+  }
+
+  async getUserPermissions(userId: number): Promise<UserPermission[]> {
+    try {
+      const result = await db.select().from(userPermissions).where(eq(userPermissions.userId, userId));
+      return result;
+    } catch (error) {
+      console.error('Помилка отримання дозволів користувача:', error);
+      return [];
+    }
+  }
+
+  async assignPermissionToUser(userId: number, permissionId: number, granted: boolean = true, grantor?: number, expiresAt?: Date): Promise<UserPermission> {
+    try {
+      const result = await db
+        .insert(userPermissions)
+        .values({ userId, permissionId, granted, grantor, expiresAt })
+        .onConflictDoUpdate({
+          target: [userPermissions.userId, userPermissions.permissionId],
+          set: { granted, grantor, expiresAt, createdAt: new Date() }
+        })
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка призначення дозволу користувачу:', error);
+      throw error;
+    }
+  }
+
+  async removePermissionFromUser(userId: number, permissionId: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(userPermissions)
+        .where(and(eq(userPermissions.userId, userId), eq(userPermissions.permissionId, permissionId)));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Помилка видалення дозволу користувача:', error);
+      return false;
+    }
+  }
+
+  async checkUserPermission(userId: number, moduleName: string, action: string): Promise<boolean> {
+    try {
+      // Отримуємо користувача з роллю
+      const user = await db.select().from(localUsers).where(eq(localUsers.id, userId));
+      if (!user[0]) return false;
+
+      const roleId = user[0].roleId;
+      if (!roleId) return false;
+
+      // Перевіряємо роль супер адміністратора
+      const role = await db.select().from(roles).where(eq(roles.id, roleId));
+      if (role[0]?.name === 'super_admin') return true;
+
+      // Отримуємо модуль
+      const module = await db.select().from(systemModules).where(eq(systemModules.name, moduleName));
+      if (!module[0]) return false;
+
+      // Отримуємо дозвіл
+      const permission = await db.select().from(permissions)
+        .where(and(
+          eq(permissions.moduleId, module[0].id),
+          eq(permissions.action, action)
+        ));
+      if (!permission[0]) return false;
+
+      // Перевіряємо персональні дозволи користувача
+      const userPermission = await db.select().from(userPermissions)
+        .where(and(
+          eq(userPermissions.userId, userId),
+          eq(userPermissions.permissionId, permission[0].id)
+        ));
+
+      if (userPermission[0]) {
+        // Перевіряємо термін дії
+        if (userPermission[0].expiresAt && userPermission[0].expiresAt < new Date()) {
+          return false;
+        }
+        return userPermission[0].granted;
+      }
+
+      // Перевіряємо дозволи ролі
+      const rolePermission = await db.select().from(rolePermissions)
+        .where(and(
+          eq(rolePermissions.roleId, roleId),
+          eq(rolePermissions.permissionId, permission[0].id)
+        ));
+
+      return rolePermission[0]?.granted || false;
+    } catch (error) {
+      console.error('Помилка перевірки дозволу користувача:', error);
+      return false;
+    }
+  }
+
+  async getUserAccessibleModules(userId: number): Promise<SystemModule[]> {
+    try {
+      // Отримуємо користувача з роллю
+      const user = await db.select().from(localUsers).where(eq(localUsers.id, userId));
+      if (!user[0]) return [];
+
+      const roleId = user[0].roleId;
+      if (!roleId) return [];
+
+      // Перевіряємо роль супер адміністратора
+      const role = await db.select().from(roles).where(eq(roles.id, roleId));
+      if (role[0]?.name === 'super_admin') {
+        return await db.select().from(systemModules).where(eq(systemModules.isActive, true)).orderBy(systemModules.sortOrder);
+      }
+
+      // Отримуємо всі модулі з дозволами користувача
+      const query = `
+        SELECT DISTINCT sm.* 
+        FROM system_modules sm
+        JOIN permissions p ON p.module_id = sm.id
+        LEFT JOIN user_permissions up ON up.permission_id = p.id AND up.user_id = $1
+        LEFT JOIN role_permissions rp ON rp.permission_id = p.id AND rp.role_id = $2
+        WHERE sm.is_active = true 
+        AND (
+          (up.granted = true AND (up.expires_at IS NULL OR up.expires_at > NOW()))
+          OR (up.id IS NULL AND rp.granted = true)
+        )
+        AND p.action = 'read'
+        ORDER BY sm.sort_order
+      `;
+
+      const result = await pool.query(query, [userId, roleId]);
+      return result.rows;
+    } catch (error) {
+      console.error('Помилка отримання доступних модулів користувача:', error);
+      return [];
+    }
+  }
+
 }
 
 export const storage = new DatabaseStorage();

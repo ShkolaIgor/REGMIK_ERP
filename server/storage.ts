@@ -1935,6 +1935,36 @@ export class MemStorage implements IStorage {
 
   // Manufacturing automation methods
   processOrderPayment(orderId: number): Promise<void>;
+
+  // Roles and permissions methods
+  getRoles(): Promise<Role[]>;
+  getRole(id: number): Promise<Role | undefined>;
+  createRole(data: InsertRole): Promise<Role>;
+  updateRole(id: number, data: Partial<InsertRole>): Promise<Role | undefined>;
+  deleteRole(id: number): Promise<boolean>;
+  
+  getSystemModules(): Promise<SystemModule[]>;
+  getSystemModule(id: number): Promise<SystemModule | undefined>;
+  createSystemModule(data: InsertSystemModule): Promise<SystemModule>;
+  updateSystemModule(id: number, data: Partial<InsertSystemModule>): Promise<SystemModule | undefined>;
+  deleteSystemModule(id: number): Promise<boolean>;
+  
+  getPermissions(): Promise<Permission[]>;
+  getPermission(id: number): Promise<Permission | undefined>;
+  createPermission(data: InsertPermission): Promise<Permission>;
+  updatePermission(id: number, data: Partial<InsertPermission>): Promise<Permission | undefined>;
+  deletePermission(id: number): Promise<boolean>;
+  
+  getRolePermissions(roleId: number): Promise<RolePermission[]>;
+  assignPermissionToRole(roleId: number, permissionId: number, granted?: boolean): Promise<RolePermission>;
+  removePermissionFromRole(roleId: number, permissionId: number): Promise<boolean>;
+  
+  getUserPermissions(userId: number): Promise<UserPermission[]>;
+  assignPermissionToUser(userId: number, permissionId: number, granted?: boolean, grantor?: number, expiresAt?: Date): Promise<UserPermission>;
+  removePermissionFromUser(userId: number, permissionId: number): Promise<boolean>;
+  
+  checkUserPermission(userId: number, moduleName: string, action: string): Promise<boolean>;
+  getUserAccessibleModules(userId: number): Promise<SystemModule[]>;
 }
 
 import { DatabaseStorage } from "./db-storage";

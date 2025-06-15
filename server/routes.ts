@@ -6632,6 +6632,299 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========================================
+  // Roles and Permissions API Routes
+  // ========================================
+
+  // Get all roles
+  app.get("/api/roles", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const roles = await storage.getRoles();
+      res.json(roles);
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+      res.status(500).json({ error: "Помилка отримання ролей" });
+    }
+  });
+
+  // Get role by ID
+  app.get("/api/roles/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const roleId = parseInt(req.params.id);
+      const role = await storage.getRole(roleId);
+      
+      if (!role) {
+        return res.status(404).json({ error: "Роль не знайдена" });
+      }
+      
+      res.json(role);
+    } catch (error) {
+      console.error("Error fetching role:", error);
+      res.status(500).json({ error: "Помилка отримання ролі" });
+    }
+  });
+
+  // Create new role
+  app.post("/api/roles", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertRoleSchema.parse(req.body);
+      const role = await storage.createRole(validatedData);
+      res.status(201).json(role);
+    } catch (error) {
+      console.error("Error creating role:", error);
+      res.status(500).json({ error: "Помилка створення ролі" });
+    }
+  });
+
+  // Update role
+  app.put("/api/roles/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const roleId = parseInt(req.params.id);
+      const validatedData = insertRoleSchema.partial().parse(req.body);
+      const role = await storage.updateRole(roleId, validatedData);
+      
+      if (!role) {
+        return res.status(404).json({ error: "Роль не знайдена" });
+      }
+      
+      res.json(role);
+    } catch (error) {
+      console.error("Error updating role:", error);
+      res.status(500).json({ error: "Помилка оновлення ролі" });
+    }
+  });
+
+  // Delete role
+  app.delete("/api/roles/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const roleId = parseInt(req.params.id);
+      const success = await storage.deleteRole(roleId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Роль не знайдена" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting role:", error);
+      res.status(500).json({ error: "Помилка видалення ролі" });
+    }
+  });
+
+  // Get all system modules
+  app.get("/api/system-modules", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const modules = await storage.getSystemModules();
+      res.json(modules);
+    } catch (error) {
+      console.error("Error fetching system modules:", error);
+      res.status(500).json({ error: "Помилка отримання модулів системи" });
+    }
+  });
+
+  // Get system module by ID
+  app.get("/api/system-modules/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const moduleId = parseInt(req.params.id);
+      const module = await storage.getSystemModule(moduleId);
+      
+      if (!module) {
+        return res.status(404).json({ error: "Модуль не знайдено" });
+      }
+      
+      res.json(module);
+    } catch (error) {
+      console.error("Error fetching system module:", error);
+      res.status(500).json({ error: "Помилка отримання модуля системи" });
+    }
+  });
+
+  // Create new system module
+  app.post("/api/system-modules", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertSystemModuleSchema.parse(req.body);
+      const module = await storage.createSystemModule(validatedData);
+      res.status(201).json(module);
+    } catch (error) {
+      console.error("Error creating system module:", error);
+      res.status(500).json({ error: "Помилка створення модуля системи" });
+    }
+  });
+
+  // Update system module
+  app.put("/api/system-modules/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const moduleId = parseInt(req.params.id);
+      const validatedData = insertSystemModuleSchema.partial().parse(req.body);
+      const module = await storage.updateSystemModule(moduleId, validatedData);
+      
+      if (!module) {
+        return res.status(404).json({ error: "Модуль не знайдено" });
+      }
+      
+      res.json(module);
+    } catch (error) {
+      console.error("Error updating system module:", error);
+      res.status(500).json({ error: "Помилка оновлення модуля системи" });
+    }
+  });
+
+  // Delete system module
+  app.delete("/api/system-modules/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const moduleId = parseInt(req.params.id);
+      const success = await storage.deleteSystemModule(moduleId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Модуль не знайдено" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting system module:", error);
+      res.status(500).json({ error: "Помилка видалення модуля системи" });
+    }
+  });
+
+  // Get all permissions
+  app.get("/api/permissions", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const permissions = await storage.getPermissions();
+      res.json(permissions);
+    } catch (error) {
+      console.error("Error fetching permissions:", error);
+      res.status(500).json({ error: "Помилка отримання дозволів" });
+    }
+  });
+
+  // Get role permissions
+  app.get("/api/roles/:id/permissions", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const roleId = parseInt(req.params.id);
+      const permissions = await storage.getRolePermissions(roleId);
+      res.json(permissions);
+    } catch (error) {
+      console.error("Error fetching role permissions:", error);
+      res.status(500).json({ error: "Помилка отримання дозволів ролі" });
+    }
+  });
+
+  // Assign permission to role
+  app.post("/api/roles/:roleId/permissions/:permissionId", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const roleId = parseInt(req.params.roleId);
+      const permissionId = parseInt(req.params.permissionId);
+      const { granted = true } = req.body;
+      
+      const rolePermission = await storage.assignPermissionToRole(roleId, permissionId, granted);
+      res.status(201).json(rolePermission);
+    } catch (error) {
+      console.error("Error assigning permission to role:", error);
+      res.status(500).json({ error: "Помилка призначення дозволу ролі" });
+    }
+  });
+
+  // Remove permission from role
+  app.delete("/api/roles/:roleId/permissions/:permissionId", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const roleId = parseInt(req.params.roleId);
+      const permissionId = parseInt(req.params.permissionId);
+      
+      const success = await storage.removePermissionFromRole(roleId, permissionId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Дозвіл не знайдено" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error removing permission from role:", error);
+      res.status(500).json({ error: "Помилка видалення дозволу ролі" });
+    }
+  });
+
+  // Get user permissions
+  app.get("/api/users/:id/permissions", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const permissions = await storage.getUserPermissions(userId);
+      res.json(permissions);
+    } catch (error) {
+      console.error("Error fetching user permissions:", error);
+      res.status(500).json({ error: "Помилка отримання дозволів користувача" });
+    }
+  });
+
+  // Assign permission to user
+  app.post("/api/users/:userId/permissions/:permissionId", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const permissionId = parseInt(req.params.permissionId);
+      const { granted = true, grantor, expiresAt } = req.body;
+      
+      const userPermission = await storage.assignPermissionToUser(
+        userId, 
+        permissionId, 
+        granted, 
+        grantor, 
+        expiresAt ? new Date(expiresAt) : undefined
+      );
+      res.status(201).json(userPermission);
+    } catch (error) {
+      console.error("Error assigning permission to user:", error);
+      res.status(500).json({ error: "Помилка призначення дозволу користувачу" });
+    }
+  });
+
+  // Remove permission from user
+  app.delete("/api/users/:userId/permissions/:permissionId", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const permissionId = parseInt(req.params.permissionId);
+      
+      const success = await storage.removePermissionFromUser(userId, permissionId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Дозвіл не знайдено" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error removing permission from user:", error);
+      res.status(500).json({ error: "Помилка видалення дозволу користувача" });
+    }
+  });
+
+  // Check user permission
+  app.get("/api/users/:id/check-permission", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { module, action } = req.query;
+      
+      if (!module || !action) {
+        return res.status(400).json({ error: "Параметри module та action обов'язкові" });
+      }
+      
+      const hasPermission = await storage.checkUserPermission(userId, module as string, action as string);
+      res.json({ hasPermission });
+    } catch (error) {
+      console.error("Error checking user permission:", error);
+      res.status(500).json({ error: "Помилка перевірки дозволу користувача" });
+    }
+  });
+
+  // Get user accessible modules
+  app.get("/api/users/:id/accessible-modules", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const modules = await storage.getUserAccessibleModules(userId);
+      res.json(modules);
+    } catch (error) {
+      console.error("Error fetching user accessible modules:", error);
+      res.status(500).json({ error: "Помилка отримання доступних модулів користувача" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

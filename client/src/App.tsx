@@ -58,6 +58,7 @@ import SerialNumbers from "@/pages/serial-numbers";
 import SerialNumberSettings from "@/pages/serial-number-settings";
 import Repairs from "@/pages/repairs";
 import Users from "@/pages/users";
+import Roles from "@/pages/roles";
 import EmailSettings from "@/pages/email-settings";
 import Analytics from "@/pages/analytics";
 import ProductProfitability from "@/pages/product-profitability";
@@ -229,6 +230,7 @@ function Router() {
         <Route path="/date-test" component={DateTest} />
 
         <Route path="/users" component={Users} />
+        <Route path="/roles" component={Roles} />
         <Route path="/email-settings" component={EmailSettings} />
         <Route path="/integrations" component={Integrations} />
         <Route path="/companies" component={Companies} />
