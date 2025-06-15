@@ -10,14 +10,14 @@ interface User {
 }
 
 export function useAuth() {
-  const { data: authStatus, isLoading } = useQuery({
-    queryKey: ["/api/auth/status"],
+  const { data: user, isLoading } = useQuery<User>({
+    queryKey: ["/api/auth/user"],
     retry: false,
   });
 
   return {
-    user: authStatus?.user,
+    user,
     isLoading,
-    isAuthenticated: authStatus?.authenticated || false,
+    isAuthenticated: !!user,
   };
 }
