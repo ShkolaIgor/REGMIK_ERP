@@ -842,6 +842,42 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+
+  async updateUserLastLogin(userId: number): Promise<void> {
+    try {
+      await db
+        .update(localUsers)
+        .set({ 
+          lastLoginAt: new Date(),
+          updatedAt: new Date() 
+        })
+        .where(eq(localUsers.id, userId));
+      
+      console.log(`Час останнього входу для користувача ${userId} оновлено`);
+    } catch (error) {
+      console.error('Помилка оновлення часу останнього входу:', error);
+      throw error;
+    }
+  }
+
+  async updateUserPassword(userId: number, hashedPassword: string): Promise<void> {
+    try {
+      await db
+        .update(localUsers)
+        .set({ 
+          password: hashedPassword,
+          passwordResetToken: null,
+          passwordResetExpires: null,
+          updatedAt: new Date() 
+        })
+        .where(eq(localUsers.id, userId));
+      
+      console.log(`Пароль для користувача ${userId} оновлено`);
+    } catch (error) {
+      console.error('Помилка оновлення пароля:', error);
+      throw error;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
