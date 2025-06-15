@@ -3086,10 +3086,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Creating invoice with data:', JSON.stringify(invoiceData, null, 2));
       const invoice = await novaPoshtaApi.createInternetDocument(invoiceData);
+      console.log('Invoice created successfully:', invoice);
       res.json(invoice);
     } catch (error) {
-      console.error("Error creating invoice:", error);
-      res.status(500).json({ error: "Failed to create invoice" });
+      console.error("Detailed error creating invoice:", error);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+      res.status(500).json({ 
+        error: "Failed to create invoice",
+        details: error.message 
+      });
     }
   });
 
