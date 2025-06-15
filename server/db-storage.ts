@@ -776,6 +776,68 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+
+  async updateLocalUserPermissions(userId: number, permissions: Record<string, any>): Promise<void> {
+    try {
+      // Видаляємо старі дозволи користувача
+      await db.delete(userPermissions).where(eq(userPermissions.userId, userId));
+      
+      // Додаємо нові дозволи
+      for (const [moduleName, access] of Object.entries(permissions)) {
+        if (access === true || access === 'read' || access === 'write' || access === 'delete') {
+          // Знаходимо всі дозволи для цього модуля
+          const modulePermissions = await db
+            .select()
+            .from(permissions)
+            .where(eq(permissions.resourceType, moduleName));
+
+          for (const permission of modulePermissions) {
+            let shouldGrant = false;
+            
+            if (access === true) {
+              // Повний доступ - надаємо всі дозволи
+              shouldGrant = true;
+            } else if (access === permission.action) {
+              // Конкретний тип доступу
+              shouldGrant = true;
+            }
+
+            if (shouldGrant) {
+              await db.insert(userPermissions).values({
+                userId,
+                permissionId: permission.id,
+                granted: true,
+                grantedAt: new Date()
+              }).onConflictDoNothing();
+            }
+          }
+        }
+      }
+      
+      console.log(`Дозволи користувача ${userId} оновлено успішно`);
+    } catch (error) {
+      console.error('Помилка оновлення дозволів користувача:', error);
+      throw error;
+    }
+  }
+
+  async updateLocalUser(userId: number, userData: Partial<LocalUser>): Promise<LocalUser | undefined> {
+    try {
+      const [updatedUser] = await db
+        .update(localUsers)
+        .set({ 
+          ...userData,
+          updatedAt: new Date()
+        })
+        .where(eq(localUsers.id, userId))
+        .returning();
+      
+      return updatedUser;
+    } catch (error) {
+      console.error('Помилка оновлення локального користувача:', error);
+      throw error;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
