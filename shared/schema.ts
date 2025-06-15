@@ -2266,6 +2266,36 @@ export type InsertCurrencyRate = z.infer<typeof insertCurrencyRateSchema>;
 export type CurrencyUpdateSettings = typeof currencyUpdateSettings.$inferSelect;
 export type InsertCurrencyUpdateSettings = z.infer<typeof insertCurrencyUpdateSettingsSchema>;
 
+// Схеми для системи ролей та дозволів
+export const insertUserRoleSchema = createInsertSchema(userRoles).omit({ 
+  id: true, 
+  assignedAt: true 
+});
+
+export const insertRolePermissionSchema = createInsertSchema(rolePermissions).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertUserPermissionSchema = createInsertSchema(userPermissions).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertPermissionSchema = createInsertSchema(permissions).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export type UserRole = typeof userRoles.$inferSelect;
+export type InsertUserRole = z.infer<typeof insertUserRoleSchema>;
+export type RolePermission = typeof rolePermissions.$inferSelect;
+export type InsertRolePermission = z.infer<typeof insertRolePermissionSchema>;
+export type UserPermission = typeof userPermissions.$inferSelect;
+export type InsertUserPermission = z.infer<typeof insertUserPermissionSchema>;
+export type Permission = typeof permissions.$inferSelect;
+export type InsertPermission = z.infer<typeof insertPermissionSchema>;
+
 // Релації для системи ролей та дозволів
 export const rolesRelations = relations(roles, ({ many }) => ({
   users: many(users),
@@ -2333,36 +2363,6 @@ export const userPermissionsRelations = relations(userPermissions, ({ one }) => 
 }));
 
 // Схеми для валідації дозволів
-export const insertPermissionSchema = createInsertSchema(permissions).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertRolePermissionSchema = createInsertSchema(rolePermissions).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertUserPermissionSchema = createInsertSchema(userPermissions).omit({
-  id: true,
-  createdAt: true,
-});
-
-// Типи для ролей та дозволів
-export type Role = typeof roles.$inferSelect;
-export type InsertRole = z.infer<typeof insertRoleSchema>;
-
-export type SystemModule = typeof systemModules.$inferSelect;
-export type InsertSystemModule = z.infer<typeof insertSystemModuleSchema>;
-
-export type Permission = typeof permissions.$inferSelect;
-export type InsertPermission = z.infer<typeof insertPermissionSchema>;
-
-export type RolePermission = typeof rolePermissions.$inferSelect;
-export type InsertRolePermission = z.infer<typeof insertRolePermissionSchema>;
-
-export type UserPermission = typeof userPermissions.$inferSelect;
-export type InsertUserPermission = z.infer<typeof insertUserPermissionSchema>;
 
 // Оновлені типи користувачів з урахуванням ролей
 export const insertUpdatedUserSchema = createInsertSchema(users).omit({
