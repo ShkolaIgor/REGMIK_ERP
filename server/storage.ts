@@ -356,6 +356,7 @@ export interface IStorage {
   // Shipments
   getShipments(): Promise<any[]>;
   getShipment(id: number): Promise<any>;
+  getShipmentDetails(id: number): Promise<any>;
   createShipment(shipment: any): Promise<any>;
   updateShipment(id: number, shipment: any): Promise<any>;
   updateShipmentStatus(id: number, status: string): Promise<any>;
@@ -1344,6 +1345,60 @@ export class MemStorage implements IStorage {
     return {
       ...shipment,
       order
+    };
+  }
+
+  async getShipmentDetails(id: number): Promise<any> {
+    const shipment = this.shipments.get(id);
+    if (!shipment) return undefined;
+    
+    const order = this.orders.get(shipment.orderId);
+    const carrier = this.carriers.get(shipment.carrierId);
+    
+    // Get shipment items with product details and serial numbers
+    const shipmentItems = Array.from(this.shipmentItems.values())
+      .filter(item => item.shipmentId === id)
+      .map(item => {
+        const product = this.products.get(item.productId);
+        
+        // Get serial numbers for this shipment item
+        const itemSerialNumbers = Array.from(this.serialNumbers.values())
+          .filter(serial => 
+            serial.productId === item.productId && 
+            serial.shipmentId === id &&
+            serial.status === 'shipped'
+          )
+          .map(serial => serial.serialNumber);
+        
+        return {
+          id: item.id,
+          shipmentId: item.shipmentId,
+          productId: item.productId,
+          quantity: item.quantity,
+          productName: product?.name || 'Unknown Product',
+          productSku: product?.sku || 'N/A',
+          unitPrice: item.unitPrice || '0',
+          serialNumbers: itemSerialNumbers
+        };
+      });
+    
+    return {
+      id: shipment.id,
+      shipmentNumber: shipment.shipmentNumber,
+      status: shipment.status,
+      trackingNumber: shipment.trackingNumber,
+      weight: shipment.weight,
+      shippingAddress: shipment.recipientWarehouseAddress || '',
+      recipientName: shipment.recipientName,
+      recipientPhone: shipment.recipientPhone,
+      notes: shipment.notes,
+      shippedAt: shipment.shippedAt,
+      carrier: carrier ? { name: carrier.name } : null,
+      order: order ? {
+        orderNumber: order.orderNumber,
+        customerName: order.customerName
+      } : null,
+      items: shipmentItems
     };
   }
 

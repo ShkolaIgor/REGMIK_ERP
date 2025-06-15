@@ -2632,6 +2632,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/shipments/:id/details", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const shipmentDetails = await storage.getShipmentDetails(id);
+      if (!shipmentDetails) {
+        return res.status(404).json({ error: "Shipment not found" });
+      }
+      res.json(shipmentDetails);
+    } catch (error) {
+      console.error("Failed to get shipment details:", error);
+      res.status(500).json({ error: "Failed to get shipment details" });
+    }
+  });
+
   app.post("/api/shipments", async (req, res) => {
     try {
       console.log("Creating shipment with data:", JSON.stringify(req.body, null, 2));

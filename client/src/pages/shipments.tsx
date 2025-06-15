@@ -116,6 +116,16 @@ const statusColors: Record<string, string> = {
   delivered: "bg-green-100 text-green-800"
 };
 
+const getStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    preparing: "Підготовка",
+    shipped: "Відправлено",
+    in_transit: "В дорозі",
+    delivered: "Доставлено"
+  };
+  return labels[status] || status;
+};
+
 export default function Shipments() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
