@@ -67,6 +67,11 @@ export class SerialNumberGenerator {
     const now = new Date();
     let result = template;
 
+    // Додаємо префікс якщо він є
+    if (prefix) {
+      result = `${prefix}-${result}`;
+    }
+
     // Заміна змінних дати
     result = result.replace(/{YYYY}/g, now.getFullYear().toString());
     result = result.replace(/{YY}/g, now.getFullYear().toString().slice(-2));
@@ -75,7 +80,7 @@ export class SerialNumberGenerator {
     result = result.replace(/{HH}/g, now.getHours().toString().padStart(2, '0'));
     result = result.replace(/{mm}/g, now.getMinutes().toString().padStart(2, '0'));
 
-    // Заміна лічильників
+    // Заміна лічільників
     const counterPattern = /{#+}/g;
     const matches = result.match(counterPattern);
     
@@ -93,17 +98,28 @@ export class SerialNumberGenerator {
   }
 
   /**
-   * Отримує наступний лічильник на основі існуючих серійних номерів
+   * Отримує наступний лічільник на основі існуючих серійних номерів для категорії
    */
   private async getNextCounter(categoryId?: number): Promise<number> {
     try {
-      // Підраховуємо кількість існуючих серійних номерів
-      const existingSerials = await db.select()
-        .from(serialNumbers)
-        .orderBy(desc(serialNumbers.id))
-        .limit(1);
+      if (categoryId) {
+        // Підраховуємо кількість існуючих серійних номерів для категорії
+        const existingSerials = await db.select()
+          .from(serialNumbers)
+          .where(eq(serialNumbers.categoryId, categoryId))
+          .orderBy(desc(serialNumbers.id))
+          .limit(1);
 
-      return existingSerials.length + 1;
+        return existingSerials.length + 1;
+      } else {
+        // Глобальний лічільник
+        const existingSerials = await db.select()
+          .from(serialNumbers)
+          .orderBy(desc(serialNumbers.id))
+          .limit(1);
+
+        return existingSerials.length + 1;
+      }
     } catch (error) {
       console.error('Error getting next counter:', error);
       return Date.now() % 10000; // Fallback
@@ -111,32 +127,53 @@ export class SerialNumberGenerator {
   }
 
   /**
-   * Генерує простий послідовний номер
+   * Генерує простий послідовний номер для категорії
    */
-  private async generateSequentialNumber(productId: number): Promise<string> {
+  private async generateSequentialNumber(productId: number, categoryId?: number): Promise<string> {
     try {
-      // Знаходимо останній серійний номер для цього продукту
-      const lastSerial = await db.select()
-        .from(serialNumbers)
-        .where(eq(serialNumbers.productId, productId))
-        .orderBy(desc(serialNumbers.id))
-        .limit(1);
-
       let nextNumber = 1;
       
-      if (lastSerial.length > 0) {
-        const lastNumber = lastSerial[0].serialNumber;
-        // Спробуємо витягти число з кінця серійного номера
-        const match = lastNumber.match(/(\d+)$/);
-        if (match) {
-          nextNumber = parseInt(match[1]) + 1;
+      if (categoryId) {
+        // Знаходимо останній серійний номер для цієї категорії
+        const lastSerial = await db.select()
+          .from(serialNumbers)
+          .where(eq(serialNumbers.categoryId, categoryId))
+          .orderBy(desc(serialNumbers.id))
+          .limit(1);
+
+        if (lastSerial.length > 0) {
+          const lastNumber = lastSerial[0].serialNumber;
+          // Спробуємо витягти число з кінця серійного номера
+          const match = lastNumber.match(/(\d+)$/);
+          if (match) {
+            nextNumber = parseInt(match[1]) + 1;
+          }
+        }
+      } else {
+        // Знаходимо останній серійний номер для цього продукту
+        const lastSerial = await db.select()
+          .from(serialNumbers)
+          .where(eq(serialNumbers.productId, productId))
+          .orderBy(desc(serialNumbers.id))
+          .limit(1);
+
+        if (lastSerial.length > 0) {
+          const lastNumber = lastSerial[0].serialNumber;
+          // Спробуємо витягти число з кінця серійного номера
+          const match = lastNumber.match(/(\d+)$/);
+          if (match) {
+            nextNumber = parseInt(match[1]) + 1;
+          }
         }
       }
 
       const today = new Date();
       const datePrefix = `${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}`;
       
-      return `SN-${datePrefix}-${nextNumber.toString().padStart(4, '0')}`;
+      // Включаємо ID категорії в серійний номер якщо є
+      const categoryPrefix = categoryId ? `C${categoryId}` : 'P';
+      
+      return `SN-${categoryPrefix}-${datePrefix}-${nextNumber.toString().padStart(4, '0')}`;
     } catch (error) {
       console.error('Error generating sequential number:', error);
       // Fallback
@@ -188,6 +225,73 @@ export class SerialNumberGenerator {
     // Fallback
     const timestamp = Date.now();
     return `SN-${timestamp}`;
+  }
+
+  /**
+   * Створює серійний номер в базі даних
+   */
+  async createSerialNumber(
+    productId: number, 
+    serialNumber: string, 
+    warehouseId?: number,
+    categoryId?: number
+  ): Promise<void> {
+    try {
+      // Якщо не передано categoryId, отримуємо його з продукту
+      let actualCategoryId = categoryId;
+      if (!actualCategoryId) {
+        const product = await db.select({ categoryId: products.categoryId })
+          .from(products)
+          .where(eq(products.id, productId))
+          .limit(1);
+        
+        if (product.length > 0 && product[0].categoryId) {
+          actualCategoryId = product[0].categoryId;
+        }
+      }
+
+      await db.insert(serialNumbers).values({
+        productId,
+        categoryId: actualCategoryId,
+        serialNumber,
+        warehouseId,
+        status: 'available'
+      });
+    } catch (error) {
+      console.error('Error creating serial number:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Отримує серійні номери для категорії
+   */
+  async getSerialNumbersForCategory(categoryId: number): Promise<any[]> {
+    try {
+      return await db.select()
+        .from(serialNumbers)
+        .where(eq(serialNumbers.categoryId, categoryId));
+    } catch (error) {
+      console.error('Error getting serial numbers for category:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Перевіряє чи використовує категорія серійні номери
+   */
+  async categoryUsesSerialNumbers(categoryId: number): Promise<boolean> {
+    try {
+      const category = await db.select({ hasSerialNumbers: categories.hasSerialNumbers })
+        .from(categories)
+        .where(eq(categories.id, categoryId))
+        .limit(1);
+
+      return category.length > 0 && category[0].hasSerialNumbers === true;
+    } catch (error) {
+      console.error('Error checking if category uses serial numbers:', error);
+      return false;
+    }
   }
 }
 
