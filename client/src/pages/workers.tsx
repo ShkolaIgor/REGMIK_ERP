@@ -46,6 +46,8 @@ import { insertWorkerSchema, type Worker, type InsertWorker, type Position, type
 const formSchema = insertWorkerSchema.extend({
   hireDate: z.string().optional(),
   hourlyRate: z.string().optional(),
+  birthDate: z.string().optional(),
+  terminationDate: z.string().optional(),
   positionId: z.coerce.number().optional(),
   departmentId: z.coerce.number().optional(),
 });
@@ -77,6 +79,8 @@ export default function WorkersPage() {
         body: {
           ...data,
           hireDate: data.hireDate ? new Date(data.hireDate).toISOString() : null,
+          birthDate: data.birthDate ? new Date(data.birthDate).toISOString() : null,
+          terminationDate: data.terminationDate ? new Date(data.terminationDate).toISOString() : null,
           hourlyRate: data.hourlyRate ? parseFloat(data.hourlyRate) : null,
           positionId: data.positionId || null,
           departmentId: data.departmentId || null,
@@ -100,6 +104,8 @@ export default function WorkersPage() {
         body: {
           ...data,
           hireDate: data.hireDate ? new Date(data.hireDate).toISOString() : null,
+          birthDate: data.birthDate ? new Date(data.birthDate).toISOString() : null,
+          terminationDate: data.terminationDate ? new Date(data.terminationDate).toISOString() : null,
           hourlyRate: data.hourlyRate ? parseFloat(data.hourlyRate) : null,
           positionId: data.positionId || null,
           departmentId: data.departmentId || null,
@@ -131,6 +137,10 @@ export default function WorkersPage() {
       departmentId: undefined,
       email: "",
       phone: "",
+      birthDate: "",
+      address: "",
+      contactPhone: "",
+      terminationDate: "",
       hireDate: "",
       hourlyRate: "",
       isActive: true,
@@ -156,6 +166,10 @@ export default function WorkersPage() {
       departmentId: worker.departmentId || undefined,
       email: worker.email || "",
       phone: worker.phone || "",
+      birthDate: worker.birthDate ? new Date(worker.birthDate).toISOString().split('T')[0] : "",
+      address: worker.address || "",
+      contactPhone: worker.contactPhone || "",
+      terminationDate: worker.terminationDate ? new Date(worker.terminationDate).toISOString().split('T')[0] : "",
       hireDate: worker.hireDate ? new Date(worker.hireDate).toISOString().split('T')[0] : "",
       hourlyRate: worker.hourlyRate ? worker.hourlyRate.toString() : "",
       isActive: worker.isActive,
@@ -343,6 +357,57 @@ export default function WorkersPage() {
                   />
                 </div>
 
+                {/* Personal Information Section */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Особиста інформація</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="birthDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Дата народження</FormLabel>
+                          <FormControl>
+                            <UkrainianDatePicker
+                              date={field.value ? new Date(field.value) : undefined}
+                              onDateChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="contactPhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Контактний телефон</FormLabel>
+                          <FormControl>
+                            <Input {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Адреса проживання</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -373,6 +438,26 @@ export default function WorkersPage() {
                       </FormItem>
                     )}
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="terminationDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Дата звільнення</FormLabel>
+                        <FormControl>
+                          <UkrainianDatePicker
+                            date={field.value ? new Date(field.value) : undefined}
+                            onDateChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div></div> {/* Empty grid item for alignment */}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
