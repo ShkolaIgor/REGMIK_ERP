@@ -104,11 +104,10 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
   // Load city by Ref for editing
   const loadCityByRef = React.useCallback(async (cityRef: string) => {
     try {
-      const response = await fetch(`/api/nova-poshta/cities?ref=${cityRef}`);
+      const response = await fetch(`/api/nova-poshta/city/${cityRef}`);
       if (response.ok) {
-        const cities = await response.json();
-        if (cities.length > 0) {
-          const city = cities[0];
+        const city = await response.json();
+        if (city) {
           setSelectedCity(city);
           setCityQuery(city.Description);
         }
