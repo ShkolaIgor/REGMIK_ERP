@@ -5337,11 +5337,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           job.skipped++;
           return;
-        } else if (existingCreatedAt < newCreatedAt) {
-          // Existing client is older - deactivate it and continue with import
+        } else if (existingCreatedAt > newCreatedAt) {
+          // Existing client is newer - deactivate it and continue with import
           try {
             await storage.updateClient(existingClient.id, { isActive: false });
-            console.log(`Deactivated older client with taxCode ${taxCode}, id: ${existingClient.id}`);
+            console.log(`Deactivated newer client with taxCode ${taxCode}, id: ${existingClient.id}`);
           } catch (updateError) {
             console.error('Error deactivating existing client:', updateError);
             job.details.push({
@@ -5353,11 +5353,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return;
           }
         } else {
-          // New client would be older - skip
+          // New client would be newer - skip
           job.details.push({
             name: row.PREDPR,
             status: 'skipped',
-            message: `Існує новіший клієнт з ЄДРПОУ/ІПН ${taxCode}`
+            message: `Існує старіший клієнт з ЄДРПОУ/ІПН ${taxCode}`
           });
           job.skipped++;
           return;
@@ -5399,7 +5399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message = `Linked to carrier: ${carriers.find(c => c.id === carrierId)?.name}`;
       }
       
-      // Check if we deactivated an older client
+      // Check if we deactivated an existing client
       if (taxCode && existingClient && existingClient.taxCode === taxCode) {
         message += '. Попередній клієнт деактивовано';
       }
