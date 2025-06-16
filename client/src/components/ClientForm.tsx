@@ -27,7 +27,7 @@ import { insertClientSchema, type Client } from "@shared/schema";
 // Розширена схема валідації
 const formSchema = insertClientSchema.extend({
   taxCode: z.string().min(1, "ЄДРПОУ/ІПН обов'язковий").max(50, "Максимум 50 символів"),
-  type: z.enum(["individual", "organization"]),
+  clientTypeId: z.number().min(1, "Тип клієнта обов'язковий"),
   name: z.string().min(1, "Скорочена назва обов'язкова"),
   fullName: z.string().optional(),
   legalAddress: z.string().optional(),
@@ -97,12 +97,16 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
     }
   });
 
+  // Відслідковуємо зміни типу клієнта
+  const watchedClientTypeId = form.watch("clientTypeId");
+  const selectedClientType = (clientTypes as any[])?.find((type: any) => type.id === watchedClientTypeId);
+  
   // Автоматичне фокусування на повній назві при зміні типу на організацію
   useEffect(() => {
-    if (form.watch("type") === "organization" && fullNameInputRef.current) {
+    if (selectedClientType?.name === "Юридична особа" && fullNameInputRef.current) {
       fullNameInputRef.current.focus();
     }
-  }, [form.watch("type")]);
+  }, [watchedClientTypeId, selectedClientType]);
 
   // Автоматичне копіювання адреси
   const handleAddressMatch = (checked: boolean) => {
@@ -155,19 +159,22 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
 
           <FormField
             control={form.control}
-            name="type"
+            name="clientTypeId"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Тип клієнта *</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Оберіть тип" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="organization">Юридична особа</SelectItem>
-                    <SelectItem value="individual">Фізична особа</SelectItem>
+                    {(clientTypes as any[])?.map((type: any) => (
+                      <SelectItem key={type.id} value={type.id.toString()}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -197,11 +204,11 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  {form.watch("type") === "organization" ? "Повна назва" : "Повне ім'я"}
+                  {selectedClientType?.name === "Юридична особа" ? "Повна назва" : "Повне ім'я"}
                 </FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder={form.watch("type") === "organization" 
+                    placeholder={selectedClientType?.name === "Юридична особа" 
                       ? "Товариство з обмеженою відповідальністю 'Компанія'" 
                       : "Іванов Іван Іванович"
                     } 
