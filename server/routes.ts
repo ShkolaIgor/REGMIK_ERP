@@ -5062,17 +5062,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
 
-          // Find carrier by transport name and extract warehouse number
+          // Initialize variables
           let carrierId: number | null = null;
           let warehouseRef: string | null = null;
           let carrierNote = '';
+          let warehouseNumber: string | null = null;
           
+          // Find carrier by transport name and extract warehouse number
           if (row.NAME_TRANSPORT) {
             const transportName = row.NAME_TRANSPORT.toLowerCase();
             
             // Extract warehouse number from patterns like "Нова пошта №178"
             const warehouseMatch = row.NAME_TRANSPORT.match(/№(\d+)/);
-            const warehouseNumber = warehouseMatch ? warehouseMatch[1] : null;
+            warehouseNumber = warehouseMatch ? warehouseMatch[1] : null;
             
             const foundCarrier = carriers.find(carrier => {
               const carrierName = carrier.name.toLowerCase();
@@ -5086,23 +5088,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             if (foundCarrier) {
               carrierId = foundCarrier.id;
-              
-              // If Nova Poshta carrier and warehouse number found, lookup warehouse ref in specific city
-              if (foundCarrier.name.toLowerCase().includes('пошта') && warehouseNumber && cityRef) {
-                try {
-                  const warehouseQuery = `
-                    SELECT ref FROM nova_poshta_warehouses 
-                    WHERE city_ref = $1 AND description ILIKE $2 
-                    LIMIT 1
-                  `;
-                  const warehouseResult = await pool.query(warehouseQuery, [cityRef, `%№${warehouseNumber}%`]);
-                  if (warehouseResult.rows.length > 0) {
-                    warehouseRef = warehouseResult.rows[0].ref as string;
-                  }
-                } catch (error) {
-                  console.error('Error searching warehouse:', error);
-                }
-              }
             } else {
               // If carrier not found, add transport info to notes
               carrierNote = `Перевізник: ${row.NAME_TRANSPORT}`;
