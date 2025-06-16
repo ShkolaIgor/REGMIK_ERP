@@ -25,24 +25,24 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { insertClientSchema, type Client } from "@shared/schema";
 
-// Функція для визначення типу клієнта за кодом
-const getClientTypeByTaxCode = (taxCode: string): number | null => {
+// Функція для визначення можливих типів клієнта за кодом
+const getPossibleClientTypes = (taxCode: string): number[] => {
   const cleanCode = taxCode.replace(/\D/g, ''); // Видаляємо всі не-цифри
   if (cleanCode.length === 8) {
-    return 1; // Юридична особа (ЄДРПОУ)
+    return [1, 3]; // Юридична особа або Відокремлений підрозділ (ЄДРПОУ)
   } else if (cleanCode.length === 10) {
-    return 2; // Фізична особа (ІПН)
+    return [2]; // Фізична особа (ІПН)
   }
-  return null;
+  return [];
 };
 
 // Функція для валідації відповідності коду та типу клієнта
 const validateTaxCodeAndType = (taxCode: string, clientTypeId: number): string | null => {
-  const expectedType = getClientTypeByTaxCode(taxCode);
-  if (expectedType && expectedType !== clientTypeId) {
+  const possibleTypes = getPossibleClientTypes(taxCode);
+  if (possibleTypes.length > 0 && !possibleTypes.includes(clientTypeId)) {
     const cleanCode = taxCode.replace(/\D/g, '');
     if (cleanCode.length === 8) {
-      return "8-значний код (ЄДРПОУ) відповідає юридичній особі";
+      return "8-значний код (ЄДРПОУ) відповідає юридичній особі або відокремленому підрозділу";
     } else if (cleanCode.length === 10) {
       return "10-значний код (ІПН) відповідає фізичній особі";
     }
@@ -93,6 +93,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
   const fullNameInputRef = useRef<HTMLInputElement>(null);
   const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>(editingClient?.carrierId || undefined);
   const [selectedCityRef, setSelectedCityRef] = useState<string | undefined>(editingClient?.cityRef || undefined);
+  const { toast } = useToast();
   
   // Завантаження перевізників
   const { data: carriers = [] } = useQuery({
@@ -135,9 +136,34 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
     }
   });
 
-  // Відслідковуємо зміни типу клієнта
+  // Відслідковуємо зміни типу клієнта та коду
   const watchedClientTypeId = form.watch("clientTypeId");
+  const watchedTaxCode = form.watch("taxCode");
   const selectedClientType = (clientTypes as any[])?.find((type: any) => type.id === watchedClientTypeId);
+  
+  // Автоматичне визначення типу клієнта за кодом
+  useEffect(() => {
+    if (watchedTaxCode && clientTypes.length > 0) {
+      const possibleTypes = getPossibleClientTypes(watchedTaxCode);
+      const currentTypeId = form.getValues("clientTypeId");
+      
+      if (possibleTypes.length > 0 && !possibleTypes.includes(currentTypeId)) {
+        // Автоматично встановлюємо перший можливий тип
+        const suggestedType = possibleTypes[0];
+        form.setValue("clientTypeId", suggestedType);
+        
+        // Показуємо сповіщення про автоматичну зміну
+        const clientType = (clientTypes as any[])?.find((type: any) => type.id === suggestedType);
+        const cleanCode = watchedTaxCode.replace(/\D/g, '');
+        
+        toast({
+          title: "Тип клієнта змінено автоматично",
+          description: `${cleanCode.length === 8 ? '8-значний код (ЄДРПОУ)' : '10-значний код (ІПН)'} відповідає типу: ${clientType?.name}`,
+          duration: 4000,
+        });
+      }
+    }
+  }, [watchedTaxCode, clientTypes, form, toast]);
   
   // Автоматичне фокусування на повній назві при зміні типу на організацію
   useEffect(() => {

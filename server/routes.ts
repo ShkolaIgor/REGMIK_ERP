@@ -5113,9 +5113,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             taxCode = `IMPORT_${Date.now()}_${processed}`;
           }
 
-          // Determine client type based on EDRPOU presence
-          const hasValidEdrpou = row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '';
-          const clientTypeId = hasValidEdrpou ? 1 : 2; // 1 = Юридична особа, 2 = Фізична особа
+          // Determine client type based on tax code length
+          let clientTypeId = 1; // Default to Юридична особа
+          if (row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '') {
+            const cleanCode = row.EDRPOU.replace(/\D/g, '');
+            if (cleanCode.length === 8) {
+              clientTypeId = 1; // Юридична особа (8 digits ЄДРПОУ)
+            } else if (cleanCode.length === 10) {
+              clientTypeId = 2; // Фізична особа (10 digits ІПН)
+            } else {
+              clientTypeId = 1; // Default to Юридична особа for other cases
+            }
+          } else {
+            clientTypeId = 2; // No valid EDRPOU - assume Фізична особа
+          }
 
           const clientData = {
             taxCode: taxCode,
