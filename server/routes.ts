@@ -5338,19 +5338,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           job.skipped++;
           return;
         } else if (existingCreatedAt < newCreatedAt) {
-          // Existing client is older - deactivate it and continue with import
+          // Existing client is older - remove taxCode and add note, then continue with import
           try {
-            await storage.updateClient(existingClient.id, { isActive: false });
-            console.log(`Deactivated older client with taxCode ${taxCode}, id: ${existingClient.id}`);
-            // Continue with import to create new active client
+            const existingNotes = existingClient.notes || '';
+            const taxCodeNote = `ЄДРПОУ: ${taxCode}`;
+            const updatedNotes = existingNotes ? `${existingNotes}. ${taxCodeNote}` : taxCodeNote;
+            
+            await storage.updateClient(existingClient.id, { 
+              taxCode: null,
+              notes: updatedNotes
+            });
+            console.log(`Removed taxCode from older client and added note, taxCode ${taxCode}, id: ${existingClient.id}`);
+            // Continue with import to create new client with this taxCode
           } catch (updateError) {
-            console.error('Error deactivating existing client:', updateError);
+            console.error('Error updating existing client:', updateError);
             job.details.push({
               name: row.PREDPR,
               status: 'error',
-              message: `Помилка при деактивації існуючого клієнта: ${updateError instanceof Error ? updateError.message : String(updateError)}`
+              message: `Помилка при оновленні існуючого клієнта: ${updateError instanceof Error ? updateError.message : String(updateError)}`
             });
-            job.errors.push(`Row ${job.processed + 1} (${row.PREDPR}): Error deactivating existing client`);
+            job.errors.push(`Row ${job.processed + 1} (${row.PREDPR}): Error updating existing client`);
             return;
           }
         } else {
@@ -5400,9 +5407,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message = `Linked to carrier: ${carriers.find(c => c.id === carrierId)?.name}`;
       }
       
-      // Check if we deactivated an existing client
+      // Check if we removed taxCode from existing client
       if (taxCode && existingClient && existingClient.taxCode === taxCode) {
-        message += '. Попередній клієнт деактивовано';
+        message += '. ЄДРПОУ видалено у старого клієнта';
       }
       
       job.details.push({
