@@ -5114,13 +5114,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (row.CITY) {
             try {
               const cityQuery = `
-                SELECT "Ref" FROM nova_poshta_cities 
-                WHERE "Description" ILIKE $1 
+                SELECT ref FROM nova_poshta_cities 
+                WHERE description ILIKE $1 
                 LIMIT 1
               `;
               const cityResult = await pool.query(cityQuery, [row.CITY.trim()]);
               if (cityResult.rows.length > 0) {
-                cityRef = cityResult.rows[0].Ref as string;
+                cityRef = cityResult.rows[0].ref as string;
               }
             } catch (error) {
               console.error('Error searching city:', error);
@@ -5144,9 +5144,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
 
-          // Check for existing clients with same tax code (only if tax code is not empty)
+          // Check for existing clients with same tax code or external_id
           const existingClients = await storage.getClients();
           let existingClient = null;
+          
+          // Check for duplicate external_id first (always prevent duplicates)
+          if (row.ID_PREDPR) {
+            existingClient = existingClients.find(client => 
+              client.externalId === row.ID_PREDPR
+            );
+            
+            if (existingClient) {
+              details.push({
+                name: row.PREDPR,
+                status: 'skipped',
+                message: `Клієнт з external_id ${row.ID_PREDPR} вже існує`
+              });
+              skipped++;
+              continue;
+            }
+          }
           
           if (taxCode) {
             // If tax code provided, check for duplicates
