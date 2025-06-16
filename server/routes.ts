@@ -7,6 +7,7 @@ import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./si
 import { novaPoshtaApi } from "./nova-poshta-api";
 import { novaPoshtaCache } from "./nova-poshta-cache";
 import { pool, db } from "./db";
+import { eq } from "drizzle-orm";
 import { 
   insertProductSchema, insertOrderSchema, insertRecipeSchema,
   insertProductionTaskSchema, insertCategorySchema, insertUnitSchema, insertWarehouseSchema,
