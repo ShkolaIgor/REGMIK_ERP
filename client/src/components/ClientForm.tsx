@@ -207,7 +207,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
         
         toast({
           title: "Тип клієнта встановлено автоматично",
-          description: `${cleanCode.length === 8 ? '8-значний код (ЄДРПОУ)' : '10-значний код (ІПН)'} відповідає типу: ${clientType?.name}`,
+          description: `10-значний код (ІПН) відповідає типу: ${clientType?.name}`,
           duration: 4000,
         });
       }
@@ -221,7 +221,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
         
         toast({
           title: "Можлива невідповідність типу клієнта",
-          description: `${cleanCode.length === 8 ? '8-значний код (ЄДРПОУ)' : '10-значний код (ІПН)'} зазвичай відповідає іншому типу клієнта`,
+          description: `10-значний код (ІПН) зазвичай відповідає іншому типу клієнта`,
           variant: "destructive",
           duration: 5000,
         });
