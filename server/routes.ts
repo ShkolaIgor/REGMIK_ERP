@@ -27,11 +27,28 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import crypto from "crypto";
 import { sendEmail } from "./email-service";
+import multer from "multer";
+import xml2js from "xml2js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Simple auth setup
   setupSimpleSession(app);
   setupSimpleAuth(app);
+
+  // Multer configuration for file uploads
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype === 'text/xml' || file.originalname.endsWith('.xml')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only XML files are allowed'));
+      }
+    },
+  });
 
   // Register simple integration routes
   registerSimpleIntegrationRoutes(app);
@@ -4942,6 +4959,150 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Failed to delete client:", error);
       res.status(500).json({ error: "Failed to delete client" });
+    }
+  });
+
+  // XML Import endpoint for clients
+  app.post("/api/clients/import-xml", upload.single('xmlFile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "No XML file provided" 
+        });
+      }
+
+      const xmlContent = req.file.buffer.toString('utf-8');
+      const parser = new xml2js.Parser({ explicitArray: false });
+      
+      const result = await parser.parseStringPromise(xmlContent);
+      
+      if (!result.DATAPACKET || !result.DATAPACKET.ROWDATA || !result.DATAPACKET.ROWDATA.ROW) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Invalid XML format. Expected DATAPACKET structure." 
+        });
+      }
+
+      const rows = Array.isArray(result.DATAPACKET.ROWDATA.ROW) 
+        ? result.DATAPACKET.ROWDATA.ROW 
+        : [result.DATAPACKET.ROWDATA.ROW];
+
+      let imported = 0;
+      let skipped = 0;
+      let processed = 0;
+      const errors: string[] = [];
+      const details: Array<{
+        name: string;
+        status: 'imported' | 'updated' | 'skipped' | 'error';
+        message?: string;
+      }> = [];
+
+      // Get all carriers for matching by name
+      const carriers = await storage.getCarriers();
+
+      for (const row of rows) {
+        processed++;
+        
+        try {
+          if (!row.NAME) {
+            details.push({
+              name: row.PREDPR || 'Unknown',
+              status: 'error',
+              message: 'Missing required NAME field'
+            });
+            errors.push(`Row ${processed}: Missing required NAME field`);
+            continue;
+          }
+
+          // Find carrier by transport name
+          let carrierId: number | null = null;
+          if (row.NAME_TRANSPORT) {
+            const transportName = row.NAME_TRANSPORT.toLowerCase();
+            const foundCarrier = carriers.find(carrier => {
+              const carrierName = carrier.name.toLowerCase();
+              const altNames = carrier.alternativeNames || [];
+              
+              return carrierName.includes(transportName) || 
+                     transportName.includes(carrierName) ||
+                     altNames.some(alt => alt.toLowerCase().includes(transportName) || 
+                                         transportName.includes(alt.toLowerCase()));
+            });
+            
+            if (foundCarrier) {
+              carrierId = foundCarrier.id;
+            }
+          }
+
+          // Check if client already exists by tax code or name
+          const existingClients = await storage.getClients();
+          const existingClient = existingClients.find(client => 
+            (row.EDRPOU && client.taxCode === row.EDRPOU) ||
+            client.name === row.NAME
+          );
+
+          const clientData = {
+            taxCode: row.EDRPOU || `IMPORT_${Date.now()}_${processed}`,
+            name: row.NAME,
+            fullName: row.PREDPR || row.NAME,
+            type: (row.EDRPOU && row.EDRPOU.length > 0) ? 'organization' : 'individual',
+            physicalAddress: row.ADDRESS_PHYS || null,
+            notes: row.COMMENT || null,
+            isActive: row.ACTUAL === 'T' || row.ACTUAL === 'true',
+            source: 'xml_import',
+            carrierId: carrierId,
+            discount: row.SKIT ? parseFloat(row.SKIT.replace(',', '.')) : 0,
+          };
+
+          if (existingClient) {
+            // Update existing client
+            await storage.updateClient(existingClient.id.toString(), clientData);
+            details.push({
+              name: row.NAME,
+              status: 'updated',
+              message: carrierId ? `Updated with carrier: ${carriers.find(c => c.id === carrierId)?.name}` : 'Updated'
+            });
+            imported++;
+          } else {
+            // Create new client
+            await storage.createClient(clientData);
+            details.push({
+              name: row.NAME,
+              status: 'imported',
+              message: carrierId ? `Linked to carrier: ${carriers.find(c => c.id === carrierId)?.name}` : 'Imported'
+            });
+            imported++;
+          }
+
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          details.push({
+            name: row.NAME || 'Unknown',
+            status: 'error',
+            message: errorMessage
+          });
+          errors.push(`Row ${processed} (${row.NAME}): ${errorMessage}`);
+        }
+      }
+
+      skipped = processed - imported - errors.length;
+
+      res.json({
+        success: errors.length === 0,
+        processed,
+        imported,
+        skipped,
+        errors,
+        details
+      });
+
+    } catch (error) {
+      console.error("XML import error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to process XML file",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
