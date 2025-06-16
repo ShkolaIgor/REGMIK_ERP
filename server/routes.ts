@@ -5154,6 +5154,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             notes = notes ? `${notes}. ${carrierNote}` : carrierNote;
           }
 
+          // Parse DATE_CREATE if provided
+          let createdAt = null;
+          if (row.DATE_CREATE) {
+            try {
+              createdAt = new Date(row.DATE_CREATE);
+              // Validate the date
+              if (isNaN(createdAt.getTime())) {
+                createdAt = null;
+              }
+            } catch (error) {
+              createdAt = null;
+            }
+          }
+
           const clientData = {
             taxCode: taxCode,
             name: row.PREDPR,
@@ -5167,6 +5181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             discount: row.SKIT ? parseFloat(row.SKIT.replace(',', '.')) : 0,
             externalId: row.ID_PREDPR || null,
             warehouseRef: warehouseRef,
+            createdAt: createdAt,
           };
 
           if (existingClient) {
