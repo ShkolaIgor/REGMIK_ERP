@@ -265,9 +265,50 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
     }
   }, [watchedClientTypeId, selectedClientType]);
 
+  // Handler functions (defined after form)
+  const handleAddressMatch = (checked: boolean) => {
+    if (checked) {
+      const legalAddress = form.getValues("legalAddress");
+      form.setValue("physicalAddress", legalAddress);
+    }
+  };
 
+  const handleCarrierChange = (carrierId: string) => {
+    const id = parseInt(carrierId);
+    setSelectedCarrierId(id);
+    form.setValue("carrierId", id);
+    // Clear Nova Poshta selections when changing carrier
+    setSelectedCity(null);
+    setSelectedWarehouse(null);
+    setSelectedCityRef(undefined);
+    setCityQuery('');
+    setWarehouseQuery('');
+    form.setValue("cityRef", "");
+    form.setValue("warehouseRef", "");
+  };
 
+  const handleCityChange = (cityRef: string) => {
+    const city = (cities as any[])?.find((c: any) => c.Ref === cityRef);
+    if (city) {
+      setSelectedCity(city);
+      setSelectedCityRef(cityRef);
+      setCityQuery(city.Description);
+      form.setValue("cityRef", cityRef);
+      // Clear warehouse selection when changing city
+      setSelectedWarehouse(null);
+      setWarehouseQuery('');
+      form.setValue("warehouseRef", "");
+    }
+  };
 
+  const handleWarehouseChange = (warehouseRef: string) => {
+    const warehouse = (warehouses as any[])?.find((w: any) => w.Ref === warehouseRef);
+    if (warehouse) {
+      setSelectedWarehouse(warehouse);
+      setWarehouseQuery(warehouse.Description);
+      form.setValue("warehouseRef", warehouseRef);
+    }
+  };
 
   const handleFormSubmit = (data: FormData) => {
     onSubmit(data);
