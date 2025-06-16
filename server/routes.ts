@@ -5115,7 +5115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             try {
               const cityQuery = `
                 SELECT ref FROM nova_poshta_cities 
-                WHERE description ILIKE $1 
+                WHERE name ILIKE $1 
                 LIMIT 1
               `;
               const cityResult = await pool.query(cityQuery, [row.CITY.trim()]);
