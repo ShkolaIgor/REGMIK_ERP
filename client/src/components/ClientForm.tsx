@@ -485,6 +485,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
                     handleCarrierChange(carrierId);
                   }} 
                   value={field.value?.toString()}
+                  key={`carrier-${field.value}`}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -492,11 +493,14 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {(carriers as any[])?.map((carrier: any) => (
-                      <SelectItem key={carrier.id} value={carrier.id.toString()}>
-                        {carrier.name}
-                      </SelectItem>
-                    ))}
+                    {(carriers as any[])?.map((carrier: any) => {
+                      console.log('Rendering carrier:', carrier.id, carrier.name, 'Selected:', field.value);
+                      return (
+                        <SelectItem key={carrier.id} value={carrier.id.toString()}>
+                          {carrier.name}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
                 <FormMessage />
