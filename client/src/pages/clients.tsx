@@ -564,26 +564,27 @@ export default function Clients() {
         {filteredClients.map((client: Client) => (
           <Card key={client.id}>
             <CardHeader className="pb-3">
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-start space-x-3 flex-1 min-w-0">
+              <div className="flex items-start space-x-3 mb-3">
+                {(() => {
+                  const clientType = (clientTypes as any[])?.find((type: any) => type.id === client.clientTypeId);
+                  return clientType?.name === "Юридична особа" ? (
+                    <Building2 className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  ) : (
+                    <User className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  );
+                })()}
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="text-lg leading-tight">{client.name}</CardTitle>
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center mb-3">
+                <CardDescription className="text-sm">
                   {(() => {
                     const clientType = (clientTypes as any[])?.find((type: any) => type.id === client.clientTypeId);
-                    return clientType?.name === "Юридична особа" ? (
-                      <Building2 className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    ) : (
-                      <User className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    );
-                  })()}
-                  <div className="min-w-0 flex-1">
-                    <CardTitle className="text-lg leading-tight truncate">{client.name}</CardTitle>
-                    <CardDescription className="text-sm mt-1">
-                      {(() => {
-                        const clientType = (clientTypes as any[])?.find((type: any) => type.id === client.clientTypeId);
-                        return clientType?.name === "Фізична особа" ? "ІПН" : "ЄДРПОУ";
-                      })()}: <span className="font-bold text-base text-foreground">{client.taxCode}</span>
-                    </CardDescription>
-                  </div>
-                </div>
+                    return clientType?.name === "Фізична особа" ? "ІПН" : "ЄДРПОУ";
+                  })()}: <span className="font-bold text-base text-foreground">{client.taxCode}</span>
+                </CardDescription>
                 <div className="flex space-x-1 flex-shrink-0">
                   <Button 
                     variant="outline" 
@@ -614,14 +615,6 @@ export default function Clients() {
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => handleEdit(client)} className="h-8 w-8 p-0">
                     <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(client.id.toString())}
-                    className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
-                  >
-                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>

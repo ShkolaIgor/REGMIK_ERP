@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useRef, useState } from "react";
-import { Loader2, MapPin } from "lucide-react";
+import { Loader2, MapPin, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Схема валідації з оновленими правилами для taxCode
@@ -42,11 +42,12 @@ interface ClientFormProps {
   editingClient?: any | null;
   onSubmit: (data: FormData) => void;
   onCancel: () => void;
+  onDelete?: (id: string) => void;
   isLoading?: boolean;
   prefillName?: string;
 }
 
-export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefillName }: ClientFormProps) {
+export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoading, prefillName }: ClientFormProps) {
   const { toast } = useToast();
   const fullNameInputRef = useRef<HTMLInputElement>(null);
 
@@ -614,6 +615,20 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
             </FormItem>
           )}
         />
+
+        {editingClient && onDelete && (
+          <div className="flex justify-center py-4">
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => onDelete(editingClient.id.toString())}
+              className="flex items-center space-x-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>Видалити клієнта</span>
+            </Button>
+          </div>
+        )}
 
         <FormField
           control={form.control}
