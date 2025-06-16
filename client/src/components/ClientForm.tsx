@@ -52,7 +52,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
 
   // Queries
   const { data: clientTypes } = useQuery({ queryKey: ["/api/client-types"] });
-  const { data: carriers } = useQuery({ queryKey: ["/api/carriers"] });
+  const { data: carriers, isLoading: carriersLoading } = useQuery({ queryKey: ["/api/carriers"] });
 
   // Nova Poshta state
   const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>();
@@ -159,24 +159,31 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Initialize city from editing client
+  // Initialize city from editing client with proper loading state check
   useEffect(() => {
-    if (cityByRef && editingClient?.cityRef) {
+    if (cityByRef && editingClient?.cityRef && !isCityByRefLoading) {
       console.log("Ініціалізація міста:", cityByRef.Description);
       setSelectedCity(cityByRef);
       setCityQuery(cityByRef.Description);
     }
-  }, [cityByRef, editingClient?.cityRef]);
+  }, [cityByRef, editingClient?.cityRef, isCityByRefLoading]);
 
+  // Initialize warehouse from editing client with proper loading state check
   useEffect(() => {
-    if (editingClient?.warehouseRef && warehouses) {
+    if (editingClient?.warehouseRef && warehouses && warehouses.length > 0 && !warehousesLoading) {
+      console.log("Пошук відділення:", editingClient.warehouseRef, "серед", warehouses.length, "відділень");
       const warehouse = (warehouses as any[])?.find((w: any) => w.Ref === editingClient.warehouseRef);
       if (warehouse) {
+        console.log("Знайдено відділення:", warehouse.ShortAddress);
         setSelectedWarehouse(warehouse);
         setWarehouseQuery(warehouse.ShortAddress || warehouse.Description);
+      } else {
+        console.log("Відділення не знайдено");
       }
     }
-  }, [editingClient?.warehouseRef, warehouses]);
+  }, [editingClient?.warehouseRef, warehouses, warehousesLoading]);
+
+
 
   // Watch form values
   const watchedClientTypeId = form.watch("clientTypeId");
@@ -431,10 +438,11 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
                 <Select 
                   onValueChange={(value) => handleCarrierChange(parseInt(value))}
                   value={field.value?.toString() || ""}
+                  disabled={carriersLoading}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Оберіть перевізника" />
+                      <SelectValue placeholder={carriersLoading ? "Завантаження перевізників..." : "Оберіть перевізника"} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
