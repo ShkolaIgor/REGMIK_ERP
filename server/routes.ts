@@ -2936,6 +2936,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get city by Ref for editing
+  app.get("/api/nova-poshta/city/:ref", async (req, res) => {
+    const cityRef = req.params.ref;
+    
+    try {
+      console.log(`Nova Poshta city by ref API called: "${cityRef}"`);
+      const city = await storage.getCityByRef(cityRef);
+      if (!city) {
+        return res.status(404).json({ error: 'City not found' });
+      }
+      res.json(city);
+    } catch (error) {
+      console.error('Error getting city by ref:', error);
+      res.status(500).json({ error: 'Failed to get city' });
+    }
+  });
+
   app.get("/api/nova-poshta/warehouses/:cityRef", async (req, res) => {
     try {
       const { cityRef } = req.params;

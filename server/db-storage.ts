@@ -6601,6 +6601,23 @@ export class DatabaseStorage implements IStorage {
 
   // ==================== Nova Poshta Database Methods ====================
 
+  async getCityByRef(cityRef: string): Promise<any | null> {
+    try {
+      const result = await this.db.execute(sql`
+        SELECT ref as "Ref", name as "Description", name_ru as "DescriptionRu", 
+               area as "AreaDescription", region as "RegionDescription"
+        FROM nova_poshta_cities 
+        WHERE ref = ${cityRef} AND is_active = true
+        LIMIT 1
+      `);
+      
+      return result.rows.length > 0 ? result.rows[0] : null;
+    } catch (error) {
+      console.error('Error getting city by ref:', error);
+      return null;
+    }
+  }
+
   async syncNovaPoshtaCities(cities: any[]): Promise<void> {
     if (!cities || cities.length === 0) return;
 

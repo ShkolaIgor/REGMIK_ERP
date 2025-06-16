@@ -146,12 +146,12 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
     }
   }, [editingClient, form]);
 
-  // Load all cities for editing client
-  const { data: allCitiesForEditing } = useQuery({
-    queryKey: ["/api/nova-poshta/cities-all"],
+  // Load city by Ref for editing client
+  const { data: cityByRef } = useQuery({
+    queryKey: ["/api/nova-poshta/city", editingClient?.cityRef],
     queryFn: async () => {
-      // Get all cities with minimal query to find any city by ref
-      const response = await fetch(`/api/nova-poshta/cities?q=а`);
+      if (!editingClient?.cityRef) return null;
+      const response = await fetch(`/api/nova-poshta/city/${editingClient.cityRef}`);
       if (!response.ok) return null;
       return response.json();
     },
@@ -159,16 +159,14 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Initialize city and warehouse from editing client
+  // Initialize city from editing client
   useEffect(() => {
-    if (allCitiesForEditing && editingClient?.cityRef) {
-      const city = (allCitiesForEditing as any[])?.find((c: any) => c.Ref === editingClient.cityRef);
-      if (city) {
-        setSelectedCity(city);
-        setCityQuery(city.Description);
-      }
+    if (cityByRef && editingClient?.cityRef) {
+      console.log("Ініціалізація міста:", cityByRef.Description);
+      setSelectedCity(cityByRef);
+      setCityQuery(cityByRef.Description);
     }
-  }, [allCitiesForEditing, editingClient?.cityRef]);
+  }, [cityByRef, editingClient?.cityRef]);
 
   useEffect(() => {
     if (editingClient?.warehouseRef && warehouses) {
