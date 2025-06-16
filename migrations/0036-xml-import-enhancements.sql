@@ -27,11 +27,7 @@ CREATE INDEX IF NOT EXISTS idx_clients_external_id ON clients(external_id);
 -- Add index on tax_code for faster duplicate checking (only for non-NULL values)
 CREATE INDEX IF NOT EXISTS idx_clients_tax_code ON clients(tax_code) WHERE tax_code IS NOT NULL;
 
--- Add index on cityRef for faster Nova Poshta city lookups
-CREATE INDEX IF NOT EXISTS idx_clients_city_ref ON clients(city_ref);
-
--- Add index on warehouseRef for faster Nova Poshta warehouse lookups  
-CREATE INDEX IF NOT EXISTS idx_clients_warehouse_ref ON clients(warehouse_ref);
+-- Note: city_ref and warehouse_ref columns will be added in future migrations when needed
 
 -- Add index on source field for filtering imported clients
 CREATE INDEX IF NOT EXISTS idx_clients_source ON clients(source);

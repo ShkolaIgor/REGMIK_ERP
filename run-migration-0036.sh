@@ -53,6 +53,7 @@ if [ $? -eq 0 ]; then
     echo "- ✓ Added performance indexes for XML import"
     echo "- ✓ Updated Nova Poshta lookup indexes"
     echo "- ✓ Cleaned up existing data consistency"
+    echo "- ✓ Removed references to non-existent city_ref/warehouse_ref columns"
     echo ""
     echo "XML import functionality is now enhanced!"
     
