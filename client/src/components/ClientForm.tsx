@@ -143,23 +143,36 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
     }
   }, [editingClient, form]);
 
+  // Load city data for editing client by searching with a common character
+  const { data: allCitiesForEditing } = useQuery({
+    queryKey: ["/api/nova-poshta/cities-for-editing", editingClient?.cityRef],
+    queryFn: async () => {
+      if (!editingClient?.cityRef) return null;
+      // Search with a common character to get all cities, then filter client-side
+      const response = await fetch(`/api/nova-poshta/cities?q=а`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!editingClient?.cityRef && selectedCarrierId === 4,
+  });
+
   // Initialize city and warehouse from editing client
   useEffect(() => {
-    if (editingClient?.cityRef && cities) {
-      const city = (cities as any[])?.find((c: any) => c.Ref === editingClient.cityRef);
+    if (allCitiesForEditing && editingClient?.cityRef) {
+      const city = (allCitiesForEditing as any[])?.find((c: any) => c.Ref === editingClient.cityRef);
       if (city) {
         setSelectedCity(city);
         setCityQuery(city.Description);
       }
     }
-  }, [editingClient?.cityRef, cities]);
+  }, [allCitiesForEditing, editingClient?.cityRef]);
 
   useEffect(() => {
     if (editingClient?.warehouseRef && warehouses) {
       const warehouse = (warehouses as any[])?.find((w: any) => w.Ref === editingClient.warehouseRef);
       if (warehouse) {
         setSelectedWarehouse(warehouse);
-        setWarehouseQuery(warehouse.Description);
+        setWarehouseQuery(warehouse.ShortAddress || warehouse.Description);
       }
     }
   }, [editingClient?.warehouseRef, warehouses]);
