@@ -86,6 +86,11 @@ export default function ClientContacts() {
     queryKey: ["/api/clients"],
   });
 
+  // Fetch client types for tax code labeling
+  const { data: clientTypes = [] } = useQuery({
+    queryKey: ["/api/client-types"],
+  });
+
   // Create mutation
   const createMutation = useMutation({
     mutationFn: (data: FormData) => {
