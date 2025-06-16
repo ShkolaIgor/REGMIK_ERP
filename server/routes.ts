@@ -5068,7 +5068,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Check if client already exists by tax code or name
           const existingClients = await storage.getClients();
           const existingClient = existingClients.find(client => 
-            (row.EDRPOU && client.taxCode === row.EDRPOU) ||
+            (row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '' && client.taxCode === row.EDRPOU.trim()) ||
             client.name === row.NAME
           );
 
@@ -5078,11 +5078,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             notes = notes ? `${notes}. ${carrierNote}` : carrierNote;
           }
 
+          // Handle EDRPOU field - skip if it's "0" or empty, generate unique ID if missing
+          let taxCode;
+          if (row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '') {
+            taxCode = row.EDRPOU.trim();
+          } else {
+            taxCode = `IMPORT_${Date.now()}_${processed}`;
+          }
+
           const clientData = {
-            taxCode: row.EDRPOU || `IMPORT_${Date.now()}_${processed}`,
+            taxCode: taxCode,
             name: row.NAME,
             fullName: row.PREDPR || row.NAME,
-            type: (row.EDRPOU && row.EDRPOU.length > 0 && row.EDRPOU !== '0') ? 'organization' : 'individual',
+            type: (row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '') ? 'organization' : 'individual',
             physicalAddress: row.ADDRESS_PHYS || null,
             notes: notes || null,
             isActive: row.ACTUAL === 'T' || row.ACTUAL === 'true',
