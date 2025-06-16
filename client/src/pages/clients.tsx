@@ -534,6 +534,7 @@ export default function Clients() {
                 setIsDialogOpen(false);
                 setEditingClient(null);
               }}
+              onDelete={handleDelete}
               isLoading={createMutation.isPending || updateMutation.isPending}
             />
           </DialogContent>
