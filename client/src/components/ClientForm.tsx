@@ -189,16 +189,22 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
         // Set Nova Poshta selections if editing
         if (editingClient.carrierId) {
           setSelectedCarrierId(editingClient.carrierId);
+          // Explicitly set form value to ensure it's reflected in the UI
+          form.setValue("carrierId", editingClient.carrierId);
         }
         
         // Load city data from API if cityRef exists
         if (editingClient.cityRef) {
           await loadCityByRef(editingClient.cityRef);
+          // Explicitly set form value after loading
+          form.setValue("cityRef", editingClient.cityRef);
         }
         
         // Load warehouse data from API if warehouseRef exists (after city is loaded)
         if (editingClient.warehouseRef && editingClient.cityRef) {
           await loadWarehouseByRef(editingClient.warehouseRef, editingClient.cityRef);
+          // Explicitly set form value after loading
+          form.setValue("warehouseRef", editingClient.warehouseRef);
         }
       }
     };
