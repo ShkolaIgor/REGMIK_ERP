@@ -26,7 +26,7 @@ import { insertClientSchema, type Client } from "@shared/schema";
 
 // Розширена схема валідації
 const formSchema = insertClientSchema.extend({
-  taxCode: z.string().min(1, "ЄДРПОУ/ІПН обов'язковий").max(20, "Максимум 20 символів"),
+  taxCode: z.string().min(1, "ЄДРПОУ/ІПН обов'язковий").max(50, "Максимум 50 символів"),
   type: z.enum(["individual", "organization"]),
   name: z.string().min(1, "Скорочена назва обов'язкова"),
   fullName: z.string().optional(),
@@ -37,6 +37,7 @@ const formSchema = insertClientSchema.extend({
   notes: z.string().optional(),
   isActive: z.boolean().default(true),
   carrierId: z.number().optional(),
+  cityRef: z.string().optional(),
   warehouseRef: z.string().optional()
 });
 
@@ -53,16 +54,23 @@ interface ClientFormProps {
 export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefillName }: ClientFormProps) {
   const fullNameInputRef = useRef<HTMLInputElement>(null);
   const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>(editingClient?.carrierId || undefined);
+  const [selectedCityRef, setSelectedCityRef] = useState<string | undefined>(editingClient?.cityRef || undefined);
   
   // Завантаження перевізників
   const { data: carriers = [] } = useQuery({
     queryKey: ['/api/carriers'],
   });
 
-  // Завантаження відділень Нової Пошти для обраного перевізника
+  // Завантаження міст Нової Пошти
+  const { data: cities = [] } = useQuery({
+    queryKey: ['/api/nova-poshta/cities'],
+    enabled: !!selectedCarrierId && (carriers as any[])?.some((c: any) => c.id === selectedCarrierId && c.name.toLowerCase().includes('пошта'))
+  });
+
+  // Завантаження відділень Нової Пошти для обраного міста
   const { data: warehouses = [] } = useQuery({
-    queryKey: ['/api/nova-poshta/warehouses'],
-    enabled: !!selectedCarrierId && carriers.some(c => c.id === selectedCarrierId && c.name.toLowerCase().includes('пошта'))
+    queryKey: ['/api/nova-poshta/warehouses', selectedCityRef],
+    enabled: !!selectedCarrierId && !!selectedCityRef && (carriers as any[])?.some((c: any) => c.id === selectedCarrierId && c.name.toLowerCase().includes('пошта'))
   });
   
   const form = useForm<FormData>({
@@ -79,6 +87,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
       notes: editingClient?.notes || "",
       isActive: editingClient?.isActive ?? true,
       carrierId: editingClient?.carrierId || undefined,
+      cityRef: editingClient?.cityRef || "",
       warehouseRef: editingClient?.warehouseRef || ""
     }
   });
@@ -103,7 +112,17 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
     const id = parseInt(carrierId);
     setSelectedCarrierId(id);
     form.setValue("carrierId", id);
-    // Очистити вибір відділення при зміні перевізника
+    // Очистити вибір міста та відділення при зміні перевізника
+    setSelectedCityRef(undefined);
+    form.setValue("cityRef", "");
+    form.setValue("warehouseRef", "");
+  };
+
+  // Обробка зміни міста
+  const handleCityChange = (cityRef: string) => {
+    setSelectedCityRef(cityRef);
+    form.setValue("cityRef", cityRef);
+    // Очистити вибір відділення при зміні міста
     form.setValue("warehouseRef", "");
   };
 
@@ -263,61 +282,91 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
           )}
         />
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="carrierId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Перевізник</FormLabel>
-                <Select onValueChange={handleCarrierChange} value={field.value?.toString() || ""}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Оберіть перевізника" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {(carriers as any[])?.map((carrier: any) => (
-                      <SelectItem key={carrier.id} value={carrier.id.toString()}>
-                        {carrier.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <FormField
+          control={form.control}
+          name="carrierId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Перевізник</FormLabel>
+              <Select onValueChange={handleCarrierChange} value={field.value?.toString() || ""}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Оберіть перевізника" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {(carriers as any[])?.map((carrier: any) => (
+                    <SelectItem key={carrier.id} value={carrier.id.toString()}>
+                      {carrier.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-          <FormField
-            control={form.control}
-            name="warehouseRef"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Відділення</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  value={field.value || ""}
-                  disabled={!selectedCarrierId || !(carriers as any[])?.some((c: any) => c.id === selectedCarrierId && c.name.toLowerCase().includes('пошта'))}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Оберіть відділення" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {(warehouses as any[])?.map((warehouse: any) => (
-                      <SelectItem key={warehouse.ref} value={warehouse.ref}>
-                        {warehouse.description}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        {selectedCarrierId && (carriers as any[])?.some((c: any) => c.id === selectedCarrierId && c.name.toLowerCase().includes('пошта')) && (
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="cityRef"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Місто</FormLabel>
+                  <Select 
+                    onValueChange={handleCityChange} 
+                    value={field.value || ""}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Оберіть місто" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {(cities as any[])?.map((city: any) => (
+                        <SelectItem key={city.ref} value={city.ref}>
+                          {city.description}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="warehouseRef"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Відділення</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value || ""}
+                    disabled={!selectedCityRef}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Оберіть відділення" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {(warehouses as any[])?.map((warehouse: any) => (
+                        <SelectItem key={warehouse.ref} value={warehouse.ref}>
+                          {warehouse.description}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
 
         <FormField
           control={form.control}

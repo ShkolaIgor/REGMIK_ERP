@@ -768,7 +768,7 @@ export const emailSettings = pgTable("email_settings", {
 // Таблиця клієнтів з налаштуваннями Нової Пошти
 export const clients = pgTable("clients", {
   id: serial("id").primaryKey(), // Автоматично генерований унікальний ID
-  taxCode: varchar("tax_code", { length: 20 }).notNull().unique(), // ЄДРПОУ або ІПН
+  taxCode: varchar("tax_code", { length: 50 }).notNull().unique(), // ЄДРПОУ або ІПН
   name: varchar("name", { length: 255 }).notNull(), // Скорочена назва
   fullName: varchar("full_name", { length: 500 }),  // Повна назва
   type: varchar("type", { length: 50 }).notNull().default("individual"), // individual, organization
@@ -787,6 +787,7 @@ export const clients = pgTable("clients", {
   externalId: varchar("external_id", { length: 100 }),
   source: varchar("source", { length: 20 }).default("manual"), // bitrix24, 1c, manual
   carrierId: integer("carrier_id").references(() => carriers.id), // зв'язок з перевізником
+  cityRef: varchar("city_ref", { length: 255 }), // ref міста Нової Пошти
   warehouseRef: varchar("warehouse_ref", { length: 255 }), // ref відділення Нової Пошти
   
   isActive: boolean("is_active").default(true),
