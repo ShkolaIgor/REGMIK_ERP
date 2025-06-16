@@ -134,23 +134,30 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
         warehouseRef: editingClient.warehouseRef || ""
       });
 
-      // Set Nova Poshta state immediately
+      // Set carrier state and check if it's Nova Poshta
       console.log("Ініціалізація перевізника:", editingClient.carrierId);
-      if (editingClient.carrierId === 4) { // Nova Poshta carrier ID
-        setSelectedCarrierId(4);
-        if (editingClient.cityRef) {
-          // Initialize with empty query first, will be set by cityByRef query
-          setCityQuery("");
-        }
+      setSelectedCarrierId(editingClient.carrierId || undefined);
+      
+      // Check if selected carrier is Nova Poshta
+      const carrier = (carriers as any[])?.find((c: any) => c.id === editingClient.carrierId);
+      const isNovaPoshta = carrier ? 
+        carrier.name.toLowerCase().includes('пошта') || 
+        carrier.name.toLowerCase().includes('nova poshta') ||
+        (carrier.alternativeNames || []).some((altName: string) => 
+          altName && altName.toLowerCase().includes('пошта')
+        ) : false;
+        
+      if (isNovaPoshta && editingClient.cityRef) {
+        // Initialize with empty query first, will be set by cityByRef query
+        setCityQuery("");
       } else {
-        setSelectedCarrierId(editingClient.carrierId || undefined);
         setSelectedCity(null);
         setSelectedWarehouse(null);
         setCityQuery('');
         setWarehouseQuery('');
       }
     }
-  }, [editingClient, form]);
+  }, [editingClient, form, carriers]);
 
   // Load city by Ref for editing client
   const { data: cityByRef, isLoading: isCityByRefLoading } = useQuery({
@@ -278,7 +285,14 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
     onSubmit(data);
   };
 
-  const isNovaPoshtaCarrier = selectedCarrierId === 4;
+  // Determine if Nova Poshta carrier is selected
+  const selectedCarrier = (carriers as any[])?.find((carrier: any) => carrier.id === selectedCarrierId);
+  const isNovaPoshtaCarrier = selectedCarrier ? 
+    selectedCarrier.name.toLowerCase().includes('пошта') || 
+    selectedCarrier.name.toLowerCase().includes('nova poshta') ||
+    (selectedCarrier.alternativeNames || []).some((altName: string) => 
+      altName && altName.toLowerCase().includes('пошта')
+    ) : false;
 
   return (
     <Form {...form}>
