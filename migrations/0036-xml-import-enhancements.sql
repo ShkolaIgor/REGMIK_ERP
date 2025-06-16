@@ -21,6 +21,11 @@ BEGIN
     END IF;
 END $$;
 
+-- Add missing columns for Nova Poshta integration if they don't exist
+ALTER TABLE clients 
+ADD COLUMN IF NOT EXISTS city_ref VARCHAR(255),
+ADD COLUMN IF NOT EXISTS warehouse_ref VARCHAR(255);
+
 -- Add index on external_id for faster lookups during XML import
 CREATE INDEX IF NOT EXISTS idx_clients_external_id ON clients(external_id);
 

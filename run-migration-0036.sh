@@ -50,10 +50,10 @@ if [ $? -eq 0 ]; then
     echo "Migration 0036 Summary:"
     echo "- ✓ Allowed NULL values for tax_code field"
     echo "- ✓ Added unique constraint for external_id"
+    echo "- ✓ Added city_ref and warehouse_ref columns if missing"
     echo "- ✓ Added performance indexes for XML import"
     echo "- ✓ Updated Nova Poshta lookup indexes"
     echo "- ✓ Cleaned up existing data consistency"
-    echo "- ✓ Removed references to non-existent city_ref/warehouse_ref columns"
     echo ""
     echo "XML import functionality is now enhanced!"
     
