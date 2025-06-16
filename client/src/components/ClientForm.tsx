@@ -33,7 +33,7 @@ const formSchema = z.object({
   email: z.string().optional(),
   website: z.string().optional(),
   discount: z.string().optional(),
-  carrierId: z.number().optional(),
+  carrierId: z.string().optional(),
   cityRef: z.string().optional(),
   warehouseRef: z.string().optional(),
   notes: z.string().optional(),
@@ -176,7 +176,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
           physicalAddress: editingClient.physicalAddress || "",
           addressesMatch: editingClient.addressesMatch || false,
           discount: editingClient.discount || "0.00",
-          carrierId: editingClient.carrierId || undefined,
+          carrierId: editingClient.carrierId?.toString() || undefined,
           cityRef: editingClient.cityRef || "",
           warehouseRef: editingClient.warehouseRef || "",
           contactPerson: editingClient.contactPerson || "",
@@ -191,7 +191,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
           console.log("Setting carrierId:", editingClient.carrierId);
           setSelectedCarrierId(editingClient.carrierId);
           // Explicitly set form value to ensure it's reflected in the UI
-          form.setValue("carrierId", editingClient.carrierId);
+          form.setValue("carrierId", editingClient.carrierId.toString());
           console.log("Form carrierId value after setValue:", form.getValues("carrierId"));
         }
         
@@ -215,8 +215,9 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
   }, [editingClient, form, loadCityByRef, loadWarehouseByRef]);
 
   // Handle carrier changes
-  const handleCarrierChange = (carrierId: number) => {
-    setSelectedCarrierId(carrierId);
+  const handleCarrierChange = (carrierId: string) => {
+    const numericCarrierId = parseInt(carrierId);
+    setSelectedCarrierId(numericCarrierId);
     form.setValue("carrierId", carrierId);
     
     // Clear Nova Poshta selections when changing carrier
@@ -474,8 +475,11 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
               <FormItem>
                 <FormLabel>Перевізник</FormLabel>
                 <Select 
-                  onValueChange={(value) => handleCarrierChange(parseInt(value))} 
-                  value={field.value?.toString()}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    handleCarrierChange(value);
+                  }} 
+                  value={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
