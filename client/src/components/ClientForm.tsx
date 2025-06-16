@@ -190,6 +190,25 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
       setSelectedCarrierId(editingClient.carrierId || undefined);
       setSelectedCityRef(editingClient.cityRef || undefined);
       
+      // Initialize Nova Poshta state for editing
+      if (editingClient.cityRef && editingClient.carrierId) {
+        // Find the city from the loaded cities
+        const city = (cities as any[])?.find((c: any) => c.Ref === editingClient.cityRef);
+        if (city) {
+          setSelectedCity(city);
+          setCityQuery(city.Description);
+        }
+        
+        // Initialize warehouse if available
+        if (editingClient.warehouseRef && warehouses) {
+          const warehouse = (warehouses as any[])?.find((w: any) => w.Ref === editingClient.warehouseRef);
+          if (warehouse) {
+            setSelectedWarehouse(warehouse);
+            setWarehouseQuery(warehouse.Description);
+          }
+        }
+      }
+      
       // Reset form with editing client data
       form.reset({
         taxCode: editingClient.taxCode || "",
@@ -207,7 +226,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
         warehouseRef: editingClient.warehouseRef || ""
       });
     }
-  }, [editingClient, form]);
+  }, [editingClient, form, cities]);
 
   // Відслідковуємо зміни типу клієнта та коду
   const watchedClientTypeId = form.watch("clientTypeId");
@@ -295,6 +314,16 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
       setSelectedWarehouse(null);
       setWarehouseQuery('');
       form.setValue("warehouseRef", "");
+    }
+  };
+
+  // Обробка зміни відділення
+  const handleWarehouseChange = (warehouseRef: string) => {
+    const warehouse = (warehouses as any[])?.find((w: any) => w.Ref === warehouseRef);
+    if (warehouse) {
+      setSelectedWarehouse(warehouse);
+      setWarehouseQuery(warehouse.Description);
+      form.setValue("warehouseRef", warehouseRef);
     }
   };
 
