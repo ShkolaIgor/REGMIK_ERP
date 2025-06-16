@@ -82,7 +82,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
       if (!response.ok) throw new Error('Failed to fetch cities');
       return response.json();
     },
-    enabled: cityQuery.length >= 2 && isNovaPoshtaCarrier && selectedCarrierId,
+    enabled: cityQuery.length >= 2 && isNovaPoshtaCarrier && !!selectedCarrierId,
     staleTime: 0,
     gcTime: 0,
   });
@@ -90,7 +90,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
   const { data: warehouses, isLoading: warehousesLoading } = useQuery({
     queryKey: ["/api/nova-poshta/warehouses", selectedCity?.Ref],
     queryFn: () => fetch(`/api/nova-poshta/warehouses/${selectedCity?.Ref}`).then(res => res.json()),
-    enabled: !!selectedCity?.Ref && isNovaPoshtaCarrier && selectedCarrierId,
+    enabled: !!selectedCity?.Ref && isNovaPoshtaCarrier && !!selectedCarrierId,
   });
 
   // Використовуємо результати сервера без додаткової фільтрації
