@@ -5109,38 +5109,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
 
-          // Check if client already exists by tax code or name
-          const existingClients = await storage.getClients();
-          const existingClient = existingClients.find(client => 
-            (row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '' && client.taxCode === row.EDRPOU.trim()) ||
-            client.name === row.PREDPR
-          );
-
-          // Build notes combining existing comment and carrier info
-          let notes = row.COMMENT || '';
-          if (carrierNote) {
-            notes = notes ? `${notes}. ${carrierNote}` : carrierNote;
-          }
-
           // Handle EDRPOU field - leave empty if it's "0" or empty
           let taxCode = '';
           if (row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '') {
             taxCode = row.EDRPOU.trim();
           }
 
-          // Determine client type based on tax code length
+          // Determine client type - default to Юридична особа if no ЄДРПОУ
           let clientTypeId = 1; // Default to Юридична особа
-          if (row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '') {
-            const cleanCode = row.EDRPOU.replace(/\D/g, '');
+          if (taxCode) {
+            const cleanCode = taxCode.replace(/\D/g, '');
             if (cleanCode.length === 8) {
               clientTypeId = 1; // Юридична особа (8 digits ЄДРПОУ)
             } else if (cleanCode.length === 10) {
               clientTypeId = 2; // Фізична особа (10 digits ІПН)
-            } else {
-              clientTypeId = 1; // Default to Юридична особа for other cases
+            }
+          }
+
+          // Check for existing clients with same tax code (only if tax code is not empty)
+          const existingClients = await storage.getClients();
+          let existingClient = null;
+          
+          if (taxCode) {
+            // If tax code provided, check for duplicates
+            existingClient = existingClients.find(client => 
+              client.taxCode === taxCode
+            );
+            
+            if (existingClient) {
+              details.push({
+                name: row.PREDPR,
+                status: 'skipped',
+                message: `Клієнт з ЄДРПОУ/ІПН ${taxCode} вже існує`
+              });
+              skipped++;
+              continue;
             }
           } else {
-            clientTypeId = 2; // No valid EDRPOU - assume Фізична особа
+            // If no tax code, allow multiple entries (don't check for duplicates)
+            // Only check by exact name match for update possibility
+            existingClient = existingClients.find(client => 
+              client.name === row.PREDPR && !client.taxCode
+            );
+          }
+
+          // Build notes combining existing comment and carrier info
+          let notes = row.COMMENT || '';
+          if (carrierNote) {
+            notes = notes ? `${notes}. ${carrierNote}` : carrierNote;
           }
 
           const clientData = {
