@@ -6,7 +6,7 @@ import { registerSyncApiRoutes } from "./sync-api";
 import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./simple-auth";
 import { novaPoshtaApi } from "./nova-poshta-api";
 import { novaPoshtaCache } from "./nova-poshta-cache";
-import { pool } from "./db";
+import { pool, db } from "./db";
 import { 
   insertProductSchema, insertOrderSchema, insertRecipeSchema,
   insertProductionTaskSchema, insertCategorySchema, insertUnitSchema, insertWarehouseSchema,
@@ -5018,11 +5018,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
 
-          // Find carrier by transport name
+          // Find carrier by transport name and extract warehouse number
           let carrierId: number | null = null;
+          let warehouseRef: string | null = null;
           let carrierNote = '';
+          
           if (row.NAME_TRANSPORT) {
             const transportName = row.NAME_TRANSPORT.toLowerCase();
+            
+            // Extract warehouse number from patterns like "Нова пошта №178"
+            const warehouseMatch = row.NAME_TRANSPORT.match(/№(\d+)/);
+            const warehouseNumber = warehouseMatch ? warehouseMatch[1] : null;
+            
             const foundCarrier = carriers.find(carrier => {
               const carrierName = carrier.name.toLowerCase();
               const altNames = carrier.alternativeNames || [];
@@ -5035,6 +5042,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             if (foundCarrier) {
               carrierId = foundCarrier.id;
+              
+              // If Nova Poshta carrier and warehouse number found, lookup warehouse ref
+              if (foundCarrier.name.toLowerCase().includes('пошта') && warehouseNumber) {
+                try {
+                  const warehouseQuery = `
+                    SELECT ref FROM nova_poshta_warehouses 
+                    WHERE description ILIKE $1 
+                    LIMIT 1
+                  `;
+                  const warehouseResult = await pool.query(warehouseQuery, [`%№${warehouseNumber}%`]);
+                  if (warehouseResult.rows.length > 0) {
+                    warehouseRef = warehouseResult.rows[0].ref as string;
+                  }
+                } catch (error) {
+                  console.error('Error searching warehouse:', error);
+                }
+              }
             } else {
               // If carrier not found, add transport info to notes
               carrierNote = `Перевізник: ${row.NAME_TRANSPORT}`;
@@ -5066,6 +5090,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             carrierId: carrierId,
             discount: row.SKIT ? parseFloat(row.SKIT.replace(',', '.')) : 0,
             externalId: row.ID_PREDPR || null,
+            warehouseRef: warehouseRef,
           };
 
           if (existingClient) {
