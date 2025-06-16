@@ -18,10 +18,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { insertClientSchema, type Client } from "@shared/schema";
 
@@ -93,6 +108,10 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
   const fullNameInputRef = useRef<HTMLInputElement>(null);
   const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>(editingClient?.carrierId || undefined);
   const [selectedCityRef, setSelectedCityRef] = useState<string | undefined>(editingClient?.cityRef || undefined);
+  const [citySearchOpen, setCitySearchOpen] = useState(false);
+  const [warehouseSearchOpen, setWarehouseSearchOpen] = useState(false);
+  const [citySearchValue, setCitySearchValue] = useState("");
+  const [warehouseSearchValue, setWarehouseSearchValue] = useState("");
   const { toast } = useToast();
   
   // Завантаження перевізників
@@ -100,9 +119,9 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
     queryKey: ['/api/carriers'],
   });
 
-  // Завантаження міст Нової Пошти
+  // Завантаження міст Нової Пошти з пошуком
   const { data: cities = [] } = useQuery({
-    queryKey: ['/api/nova-poshta/cities'],
+    queryKey: ['/api/nova-poshta/cities', citySearchValue],
     enabled: !!selectedCarrierId && (carriers as any[])?.some((c: any) => c.id === selectedCarrierId && c.name.toLowerCase().includes('пошта'))
   });
 
@@ -111,9 +130,14 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
     queryKey: ['/api/client-types'],
   });
 
-  // Завантаження відділень Нової Пошти для обраного міста
+  // Завантаження відділень Нової Пошти для обраного міста з пошуком
   const { data: warehouses = [] } = useQuery({
-    queryKey: ['/api/nova-poshta/warehouses', selectedCityRef],
+    queryKey: ['/api/nova-poshta/warehouses', selectedCityRef, warehouseSearchValue],
+    queryFn: () => {
+      if (!selectedCityRef) return Promise.resolve([]);
+      const searchParam = warehouseSearchValue ? `?q=${encodeURIComponent(warehouseSearchValue)}` : '';
+      return fetch(`/api/nova-poshta/warehouses/${selectedCityRef}${searchParam}`).then(res => res.json());
+    },
     enabled: !!selectedCarrierId && !!selectedCityRef && (carriers as any[])?.some((c: any) => c.id === selectedCarrierId && c.name.toLowerCase().includes('пошта'))
   });
   
@@ -135,6 +159,31 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
       warehouseRef: editingClient?.warehouseRef || ""
     }
   });
+
+  // Ініціалізація форми для редагування клієнта
+  useEffect(() => {
+    if (editingClient) {
+      setSelectedCarrierId(editingClient.carrierId || undefined);
+      setSelectedCityRef(editingClient.cityRef || undefined);
+      
+      // Reset form with editing client data
+      form.reset({
+        taxCode: editingClient.taxCode || "",
+        clientTypeId: editingClient.clientTypeId || 1,
+        name: editingClient.name || "",
+        fullName: editingClient.fullName || "",
+        legalAddress: editingClient.legalAddress || "",
+        physicalAddress: editingClient.physicalAddress || "",
+        addressesMatch: editingClient.addressesMatch || false,
+        discount: editingClient.discount || "0.00",
+        notes: editingClient.notes || "",
+        isActive: editingClient.isActive ?? true,
+        carrierId: editingClient.carrierId || undefined,
+        cityRef: editingClient.cityRef || "",
+        warehouseRef: editingClient.warehouseRef || ""
+      });
+    }
+  }, [editingClient, form]);
 
   // Відслідковуємо зміни типу клієнта та коду
   const watchedClientTypeId = form.watch("clientTypeId");
@@ -404,25 +453,61 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
               control={form.control}
               name="cityRef"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Місто</FormLabel>
-                  <Select 
-                    onValueChange={handleCityChange} 
-                    value={field.value || ""}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Оберіть місто" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {(cities as any[])?.map((city: any) => (
-                        <SelectItem key={city.ref} value={city.ref}>
-                          {city.description}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <FormItem className="flex flex-col">
+                  <FormLabel>Місто Нової Пошти</FormLabel>
+                  <Popover open={citySearchOpen} onOpenChange={setCitySearchOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={citySearchOpen}
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value
+                            ? (cities as any[])?.find((city: any) => city.Ref === field.value)?.Description
+                            : "Пошук міста..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput 
+                          placeholder="Введіть назву міста..." 
+                          value={citySearchValue}
+                          onValueChange={setCitySearchValue}
+                        />
+                        <CommandList>
+                          <CommandEmpty>Міст не знайдено.</CommandEmpty>
+                          <CommandGroup>
+                            {(cities as any[])?.slice(0, 50).map((city: any) => (
+                              <CommandItem
+                                key={city.Ref}
+                                value={city.Description}
+                                onSelect={() => {
+                                  handleCityChange(city.Ref);
+                                  setCitySearchOpen(false);
+                                  setCitySearchValue("");
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    field.value === city.Ref ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {city.Description}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
@@ -432,26 +517,62 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
               control={form.control}
               name="warehouseRef"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Відділення</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    value={field.value || ""}
-                    disabled={!selectedCityRef}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Оберіть відділення" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {(warehouses as any[])?.map((warehouse: any) => (
-                        <SelectItem key={warehouse.ref} value={warehouse.ref}>
-                          {warehouse.description}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <FormItem className="flex flex-col">
+                  <FormLabel>Відділення Нової Пошти</FormLabel>
+                  <Popover open={warehouseSearchOpen} onOpenChange={setWarehouseSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={warehouseSearchOpen}
+                          disabled={!selectedCityRef}
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value
+                            ? (warehouses as any[])?.find((warehouse: any) => warehouse.Ref === field.value)?.Description
+                            : selectedCityRef ? "Пошук відділення..." : "Спершу оберіть місто"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput 
+                          placeholder="Введіть номер відділення..." 
+                          value={warehouseSearchValue}
+                          onValueChange={setWarehouseSearchValue}
+                        />
+                        <CommandList>
+                          <CommandEmpty>Відділень не знайдено.</CommandEmpty>
+                          <CommandGroup>
+                            {(warehouses as any[])?.slice(0, 50).map((warehouse: any) => (
+                              <CommandItem
+                                key={warehouse.Ref}
+                                value={warehouse.Description}
+                                onSelect={() => {
+                                  field.onChange(warehouse.Ref);
+                                  setWarehouseSearchOpen(false);
+                                  setWarehouseSearchValue("");
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    field.value === warehouse.Ref ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {warehouse.Description}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
