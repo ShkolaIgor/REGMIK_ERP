@@ -5276,6 +5276,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
 
+    // Parse DATE_CREATE once for all checks
+    let createdAt = null;
+    if (row.DATE_CREATE) {
+      try {
+        const dateStr = row.DATE_CREATE.trim();
+        const dateParts = dateStr.split('.');
+        if (dateParts.length === 3) {
+          const day = parseInt(dateParts[0], 10);
+          const month = parseInt(dateParts[1], 10) - 1;
+          const year = parseInt(dateParts[2], 10);
+          
+          createdAt = new Date(year, month, day, 8, 0, 0);
+          
+          if (isNaN(createdAt.getTime())) {
+            createdAt = null;
+          }
+        }
+      } catch (error) {
+        createdAt = null;
+      }
+    }
+
     // Check for existing clients
     let existingClient = null;
     
@@ -5302,13 +5324,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       if (existingClient) {
-        job.details.push({
-          name: row.PREDPR,
-          status: 'skipped',
-          message: `Клієнт з ЄДРПОУ/ІПН ${taxCode} вже існує`
-        });
-        job.skipped++;
-        return;
+        // Use parsed date or current date for comparison
+        const newCreatedAt = createdAt || new Date();
+        const existingCreatedAt = new Date(existingClient.createdAt);
+        
+        if (existingCreatedAt.getTime() === newCreatedAt.getTime()) {
+          // Same creation time - skip
+          job.details.push({
+            name: row.PREDPR,
+            status: 'skipped',
+            message: `Клієнт з ЄДРПОУ/ІПН ${taxCode} вже існує з однаковою датою створення`
+          });
+          job.skipped++;
+          return;
+        } else if (existingCreatedAt < newCreatedAt) {
+          // Existing client is older - deactivate it and continue with import
+          try {
+            await storage.updateClient(existingClient.id, { isActive: false });
+            console.log(`Deactivated older client with taxCode ${taxCode}, id: ${existingClient.id}`);
+          } catch (updateError) {
+            console.error('Error deactivating existing client:', updateError);
+            job.details.push({
+              name: row.PREDPR,
+              status: 'error',
+              message: `Помилка при деактивації існуючого клієнта: ${updateError instanceof Error ? updateError.message : String(updateError)}`
+            });
+            job.errors.push(`Row ${job.processed + 1} (${row.PREDPR}): Error deactivating existing client`);
+            return;
+          }
+        } else {
+          // New client would be older - skip
+          job.details.push({
+            name: row.PREDPR,
+            status: 'skipped',
+            message: `Існує новіший клієнт з ЄДРПОУ/ІПН ${taxCode}`
+          });
+          job.skipped++;
+          return;
+        }
       }
     }
 
@@ -5318,27 +5371,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       notes = notes ? `${notes}. ${carrierNote}` : carrierNote;
     }
 
-    // Parse DATE_CREATE
-    let createdAt = null;
-    if (row.DATE_CREATE) {
-      try {
-        const dateStr = row.DATE_CREATE.trim();
-        const dateParts = dateStr.split('.');
-        if (dateParts.length === 3) {
-          const day = parseInt(dateParts[0], 10);
-          const month = parseInt(dateParts[1], 10) - 1;
-          const year = parseInt(dateParts[2], 10);
-          
-          createdAt = new Date(year, month, day, 8, 0, 0);
-          
-          if (isNaN(createdAt.getTime())) {
-            createdAt = null;
-          }
-        }
-      } catch (error) {
-        createdAt = null;
-      }
-    }
+
 
     const clientData = {
       taxCode: taxCode,
@@ -5359,10 +5392,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       await storage.createClient(clientData);
+      
+      // Determine the message based on whether an older client was deactivated
+      let message = 'Imported';
+      if (carrierId) {
+        message = `Linked to carrier: ${carriers.find(c => c.id === carrierId)?.name}`;
+      }
+      
+      // Check if we deactivated an older client
+      if (taxCode && existingClient && existingClient.taxCode === taxCode) {
+        message += '. Попередній клієнт деактивовано';
+      }
+      
       job.details.push({
         name: row.PREDPR,
         status: 'imported',
-        message: carrierId ? `Linked to carrier: ${carriers.find(c => c.id === carrierId)?.name}` : 'Imported'
+        message: message
       });
       job.imported++;
     } catch (createError) {
