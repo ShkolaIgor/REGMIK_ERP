@@ -63,20 +63,16 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
   const [selectedWarehouse, setSelectedWarehouse] = useState<any>(null);
 
   // Nova Poshta data queries
-  const { data: cities, isLoading: citiesLoading } = useQuery({
+  const { data: cities = [], isLoading: citiesLoading } = useQuery({
     queryKey: ["/api/nova-poshta/cities", cityQuery],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (cityQuery) {
-        params.set('q', cityQuery);
-      }
-      const response = await fetch(`/api/nova-poshta/cities?${params}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch cities');
-      }
+      const response = await fetch(`/api/nova-poshta/cities?q=${encodeURIComponent(cityQuery)}`);
+      if (!response.ok) throw new Error('Failed to fetch cities');
       return response.json();
     },
     enabled: cityQuery.length >= 2 && selectedCarrierId === 4,
+    staleTime: 0, // Відключаємо кеш для правильного пошуку
+    cacheTime: 0, // Видаляємо кеш одразу після використання
   });
 
   const { data: warehouses, isLoading: warehousesLoading } = useQuery({
@@ -86,9 +82,8 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
   });
 
   // Filter cities and warehouses
-  const filteredCities = cityQuery.length >= 2 ? (cities as any[])?.filter((city: any) =>
-    city.Description.toLowerCase().includes(cityQuery.toLowerCase())
-  ) || [] : [];
+  // Використовуємо результати сервера без додаткової фільтрації (як у відвантаженнях)
+  const filteredCities = cities;
 
   const filteredWarehouses = warehouseQuery ? (warehouses as any[])?.filter((warehouse: any) =>
     warehouse.Number.toString().includes(warehouseQuery) ||
