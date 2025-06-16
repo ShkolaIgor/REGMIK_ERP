@@ -47,7 +47,9 @@ export function ClientXmlImport() {
     if (selectedFile) {
       if (selectedFile.type === 'text/xml' || selectedFile.name.endsWith('.xml')) {
         setFile(selectedFile);
-        setResult(null);
+        setJob(null);
+        setJobId(null);
+        setProgress(0);
       } else {
         toast({
           title: "Помилка файлу",
@@ -55,6 +57,46 @@ export function ClientXmlImport() {
           variant: "destructive",
         });
       }
+    }
+  };
+
+  // Poll job status
+  const pollJobStatus = async (jobId: string) => {
+    try {
+      const response = await apiRequest(`/api/clients/import-xml/${jobId}/status`);
+      if (response.success && response.job) {
+        setJob(response.job);
+        setProgress(response.job.progress);
+        
+        if (response.job.status === 'completed') {
+          setIsImporting(false);
+          // Оновлюємо список клієнтів
+          await queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
+          
+          toast({
+            title: "Імпорт завершено",
+            description: `Імпортовано ${response.job.imported} клієнтів, пропущено ${response.job.skipped} з ${response.job.totalRows}`,
+          });
+        } else if (response.job.status === 'failed') {
+          setIsImporting(false);
+          toast({
+            title: "Помилка імпорту",
+            description: "Імпорт завершився з помилкою",
+            variant: "destructive",
+          });
+        } else if (response.job.status === 'processing') {
+          // Continue polling
+          setTimeout(() => pollJobStatus(jobId), 1000);
+        }
+      }
+    } catch (error) {
+      console.error('Error polling job status:', error);
+      setIsImporting(false);
+      toast({
+        title: "Помилка перевірки статусу",
+        description: "Не вдалося отримати статус імпорту",
+        variant: "destructive",
+      });
     }
   };
 
@@ -70,58 +112,49 @@ export function ClientXmlImport() {
 
     setIsImporting(true);
     setProgress(0);
+    setJob(null);
 
     try {
       const formData = new FormData();
       formData.append('xmlFile', file);
 
-      // Симуляція прогресу
-      const progressInterval = setInterval(() => {
-        setProgress(prev => Math.min(prev + 10, 90));
-      }, 200);
-
-      const response = await apiRequest('/api/clients/import-xml', {
+      const response: ImportResponse = await apiRequest('/api/clients/import-xml', {
         method: 'POST',
         body: formData,
       });
 
-      clearInterval(progressInterval);
-      setProgress(100);
-
-      setResult(response);
-      
-      // Оновлюємо список клієнтів
-      await queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
-      
-      if (response.success) {
+      if (response.success && response.jobId) {
+        setJobId(response.jobId);
         toast({
-          title: "Імпорт успішний",
-          description: `Імпортовано ${response.imported} клієнтів, пропущено ${response.skipped}`,
+          title: "Імпорт розпочато",
+          description: "Файл завантажено, обробка в процесі...",
         });
+        
+        // Start polling for status
+        setTimeout(() => pollJobStatus(response.jobId!), 1000);
       } else {
+        setIsImporting(false);
         toast({
-          title: "Імпорт завершений з помилками",
-          description: `Обробано ${response.processed} записів`,
+          title: "Помилка запуску імпорту",
+          description: response.error || "Не вдалося розпочати імпорт",
           variant: "destructive",
         });
       }
     } catch (error) {
       console.error('Import error:', error);
+      setIsImporting(false);
       toast({
         title: "Помилка імпорту",
-        description: "Не вдалося імпортувати дані з XML файлу",
+        description: "Не вдалося розпочати імпорт XML файлу",
         variant: "destructive",
       });
-      setResult(null);
-    } finally {
-      setIsImporting(false);
-      setProgress(0);
     }
   };
 
   const resetImport = () => {
     setFile(null);
-    setResult(null);
+    setJob(null);
+    setJobId(null);
     setProgress(0);
     setIsImporting(false);
   };
@@ -172,7 +205,7 @@ export function ClientXmlImport() {
         </DialogHeader>
         
         <div className="space-y-4">
-          {!result && (
+          {!job && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm">Виберіть XML файл</CardTitle>
@@ -206,7 +239,21 @@ export function ClientXmlImport() {
                     <div className="space-y-2">
                       <Label>Прогрес імпорту</Label>
                       <Progress value={progress} className="w-full" />
-                      <p className="text-sm text-gray-500">Обробка даних...</p>
+                      <div className="text-sm text-gray-500">
+                        {job ? (
+                          <div className="space-y-1">
+                            <div>Обробка даних... {progress}%</div>
+                            {job.totalRows > 0 && (
+                              <div>Оброблено {job.processed} з {job.totalRows} записів</div>
+                            )}
+                            {job.imported > 0 && (
+                              <div>Імпортовано: {job.imported}, Пропущено: {job.skipped}</div>
+                            )}
+                          </div>
+                        ) : (
+                          <div>Завантаження файлу...</div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -233,11 +280,11 @@ export function ClientXmlImport() {
             </Card>
           )}
 
-          {result && (
+          {job && job.status === 'completed' && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  {result.success ? (
+                  {job.errors.length === 0 ? (
                     <CheckCircle className="h-5 w-5 text-green-500" />
                   ) : (
                     <XCircle className="h-5 w-5 text-red-500" />
@@ -249,26 +296,26 @@ export function ClientXmlImport() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-3 gap-4">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">{result.imported}</div>
+                      <div className="text-2xl font-bold text-green-600">{job.imported}</div>
                       <div className="text-sm text-gray-500">Імпортовано</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-yellow-600">{result.skipped}</div>
+                      <div className="text-2xl font-bold text-yellow-600">{job.skipped}</div>
                       <div className="text-sm text-gray-500">Пропущено</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">{result.processed}</div>
+                      <div className="text-2xl font-bold text-blue-600">{job.processed}</div>
                       <div className="text-sm text-gray-500">Всього оброблено</div>
                     </div>
                   </div>
 
-                  {result.errors.length > 0 && (
+                  {job.errors.length > 0 && (
                     <Alert variant="destructive">
                       <XCircle className="h-4 w-4" />
                       <AlertDescription>
                         <div className="font-semibold">Помилки під час імпорту:</div>
                         <ul className="mt-2 list-disc list-inside">
-                          {result.errors.map((error, index) => (
+                          {job.errors.map((error, index) => (
                             <li key={index} className="text-sm">{error}</li>
                           ))}
                         </ul>
@@ -276,11 +323,11 @@ export function ClientXmlImport() {
                     </Alert>
                   )}
 
-                  {result.details.length > 0 && (
+                  {job.details.length > 0 && (
                     <div className="space-y-2">
                       <Label>Детальний звіт</Label>
                       <div className="max-h-60 overflow-y-auto border rounded-md p-2">
-                        {result.details.map((detail, index) => (
+                        {job.details.map((detail, index) => (
                           <div key={index} className="flex items-center gap-2 py-1">
                             {getStatusIcon(detail.status)}
                             <span className="font-medium">{detail.name}</span>
@@ -299,6 +346,38 @@ export function ClientXmlImport() {
                 <Button onClick={resetImport} className="gap-2">
                   <Upload className="h-4 w-4" />
                   Імпортувати інший файл
+                </Button>
+              </CardFooter>
+            </Card>
+          )}
+
+          {job && job.status === 'failed' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <XCircle className="h-5 w-5 text-red-500" />
+                  Помилка імпорту
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Alert variant="destructive">
+                  <XCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <div className="font-semibold">Імпорт завершився з помилкою</div>
+                    {job.errors.length > 0 && (
+                      <ul className="mt-2 list-disc list-inside">
+                        {job.errors.map((error, index) => (
+                          <li key={index} className="text-sm">{error}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+              <CardFooter>
+                <Button onClick={resetImport} className="gap-2">
+                  <Upload className="h-4 w-4" />
+                  Спробувати знову
                 </Button>
               </CardFooter>
             </Card>
