@@ -5087,15 +5087,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (foundCarrier) {
               carrierId = foundCarrier.id;
               
-              // If Nova Poshta carrier and warehouse number found, lookup warehouse ref
-              if (foundCarrier.name.toLowerCase().includes('пошта') && warehouseNumber) {
+              // If Nova Poshta carrier and warehouse number found, lookup warehouse ref in specific city
+              if (foundCarrier.name.toLowerCase().includes('пошта') && warehouseNumber && cityRef) {
                 try {
                   const warehouseQuery = `
                     SELECT ref FROM nova_poshta_warehouses 
-                    WHERE description ILIKE $1 
+                    WHERE city_ref = $1 AND description ILIKE $2 
                     LIMIT 1
                   `;
-                  const warehouseResult = await pool.query(warehouseQuery, [`%№${warehouseNumber}%`]);
+                  const warehouseResult = await pool.query(warehouseQuery, [cityRef, `%№${warehouseNumber}%`]);
                   if (warehouseResult.rows.length > 0) {
                     warehouseRef = warehouseResult.rows[0].ref as string;
                   }
@@ -5124,6 +5124,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
             } catch (error) {
               console.error('Error searching city:', error);
+            }
+          }
+
+          // Now search for warehouse in the found city (after cityRef is determined)
+          if (carrierId && warehouseNumber && cityRef) {
+            const carriers = await storage.getCarriers();
+            const foundCarrier = carriers.find(carrier => carrier.id === carrierId);
+            
+            if (foundCarrier && foundCarrier.name.toLowerCase().includes('пошта')) {
+              try {
+                const warehouseQuery = `
+                  SELECT ref FROM nova_poshta_warehouses 
+                  WHERE city_ref = $1 AND description ILIKE $2 
+                  LIMIT 1
+                `;
+                const warehouseResult = await pool.query(warehouseQuery, [cityRef, `%№${warehouseNumber}%`]);
+                if (warehouseResult.rows.length > 0) {
+                  warehouseRef = warehouseResult.rows[0].ref as string;
+                }
+              } catch (error) {
+                console.error('Error searching warehouse in city:', error);
+              }
             }
           }
 
