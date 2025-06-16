@@ -262,11 +262,17 @@ export default function Clients() {
     },
   });
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = (data: any) => {
+    // Ensure taxCode is properly handled as optional
+    const cleanData = {
+      ...data,
+      taxCode: data.taxCode || undefined
+    };
+    
     if (editingClient) {
-      updateMutation.mutate(data);
+      updateMutation.mutate(cleanData);
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(cleanData);
     }
   };
 

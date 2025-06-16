@@ -141,7 +141,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
   // Завантаження типів клієнтів
   const { data: clientTypes = [] } = useQuery({
     queryKey: ['/api/client-types'],
-  });
+  }) as { data: any[] };
 
   // Завантаження відділень Нової Пошти для обраного міста
   const { data: warehouses = [], isLoading: warehousesLoading } = useQuery({
@@ -151,8 +151,19 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
       const searchParam = warehouseSearchValue ? `?q=${encodeURIComponent(warehouseSearchValue)}` : '';
       return fetch(`/api/nova-poshta/warehouses/${selectedCityRef}${searchParam}`).then(res => res.json());
     },
-    enabled: !!selectedCarrierId && !!selectedCityRef && (carriers as any[])?.some((c: any) => c.id === selectedCarrierId && c.name.toLowerCase().includes('пошта'))
+    enabled: !!selectedCarrierId && !!selectedCity?.Ref && (carriers as any[])?.some((c: any) => c.id === selectedCarrierId && c.name.toLowerCase().includes('пошта'))
   });
+
+  // Filter functions for Nova Poshta
+  const filteredCities = (cities as any[])?.filter((city: any) =>
+    city.Description.toLowerCase().includes(cityQuery.toLowerCase())
+  ) || [];
+
+  const filteredWarehouses = (warehouses as any[])?.filter((warehouse: any) =>
+    warehouseQuery === '' || 
+    warehouse.Number.toString().includes(warehouseQuery) ||
+    warehouse.ShortAddress.toLowerCase().includes(warehouseQuery.toLowerCase())
+  ) || [];
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -215,7 +226,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
         form.setValue("clientTypeId", suggestedType);
         
         // Показуємо сповіщення про автоматичну зміну
-        const clientType = (clientTypes as any[])?.find((type: any) => type.id === suggestedType);
+        const clientType = clientTypes?.find((type: any) => type.id === suggestedType);
         const cleanCode = watchedTaxCode.replace(/\D/g, '');
         
         toast({
@@ -263,18 +274,31 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
     setSelectedCarrierId(id);
     form.setValue("carrierId", id);
     // Очистити вибір міста та відділення при зміні перевізника
+    setSelectedCity(null);
+    setSelectedWarehouse(null);
     setSelectedCityRef(undefined);
+    setCityQuery('');
+    setWarehouseQuery('');
     form.setValue("cityRef", "");
     form.setValue("warehouseRef", "");
   };
 
   // Обробка зміни міста
   const handleCityChange = (cityRef: string) => {
-    setSelectedCityRef(cityRef);
-    form.setValue("cityRef", cityRef);
-    // Очистити вибір відділення при зміні міста
-    form.setValue("warehouseRef", "");
+    const city = (cities as any[])?.find((c: any) => c.Ref === cityRef);
+    if (city) {
+      setSelectedCity(city);
+      setSelectedCityRef(cityRef);
+      setCityQuery(city.Description);
+      form.setValue("cityRef", cityRef);
+      // Очистити вибір відділення при зміні міста
+      setSelectedWarehouse(null);
+      setWarehouseQuery('');
+      form.setValue("warehouseRef", "");
+    }
   };
+
+
 
   const handleFormSubmit = (data: FormData) => {
     onSubmit(data);
