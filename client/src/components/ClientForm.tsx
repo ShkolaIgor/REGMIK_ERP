@@ -28,12 +28,15 @@ const formSchema = z.object({
   legalAddress: z.string().optional(),
   physicalAddress: z.string().optional(), 
   addressesMatch: z.boolean().default(false),
-  discount: z.string().optional().transform(val => val || "0.00"),
-  notes: z.string().optional(),
-  isActive: z.boolean().default(true),
+  contactPerson: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().optional(),
+  website: z.string().optional(),
+  discount: z.string().optional(),
   carrierId: z.number().optional(),
   cityRef: z.string().optional(),
-  warehouseRef: z.string().optional()
+  warehouseRef: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -49,11 +52,11 @@ interface ClientFormProps {
 
 export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoading, prefillName }: ClientFormProps) {
   const { toast } = useToast();
-  const fullNameInputRef = useRef<HTMLInputElement>(null);
+  const fullNameRef = useRef<HTMLInputElement>(null);
 
-  // Queries
-  const { data: clientTypes } = useQuery({ queryKey: ["/api/client-types"] });
-  const { data: carriers, isLoading: carriersLoading } = useQuery({ queryKey: ["/api/carriers"] });
+  // Data queries
+  const { data: clientTypes } = useQuery({ queryKey: ['/api/client-types'] });
+  const { data: carriers } = useQuery({ queryKey: ['/api/carriers'] });
 
   // Nova Poshta state
   const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>();
@@ -71,7 +74,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
       altName && altName.toLowerCase().includes('пошта')
     ) : false;
 
-  // Nova Poshta data queries
+  // Nova Poshta data queries - робоча логіка з відвантажень
   const { data: cities = [], isLoading: citiesLoading } = useQuery({
     queryKey: ["/api/nova-poshta/cities", cityQuery],
     queryFn: async () => {
@@ -80,8 +83,8 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
       return response.json();
     },
     enabled: cityQuery.length >= 2 && isNovaPoshtaCarrier && selectedCarrierId,
-    staleTime: 0, // Відключаємо кеш для правильного пошуку
-    gcTime: 0, // Видаляємо кеш одразу після використання
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: warehouses, isLoading: warehousesLoading } = useQuery({
@@ -90,8 +93,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
     enabled: !!selectedCity?.Ref && isNovaPoshtaCarrier && selectedCarrierId,
   });
 
-  // Filter cities and warehouses
-  // Використовуємо результати сервера без додаткової фільтрації (як у відвантаженнях)
+  // Використовуємо результати сервера без додаткової фільтрації
   const filteredCities = cities;
 
   const filteredWarehouses = warehouseQuery ? (warehouses as any[])?.filter((warehouse: any) =>
@@ -111,15 +113,24 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
       physicalAddress: "",
       addressesMatch: false,
       discount: "0.00",
-      notes: "",
-      isActive: true,
       carrierId: undefined,
       cityRef: "",
-      warehouseRef: ""
-    }
+      warehouseRef: "",
+      contactPerson: "",
+      phone: "",
+      email: "",
+      website: "",
+      notes: "",
+    },
   });
 
-  // Initialize form for editing
+  // Watch form values for auto-suggestions
+  const watchedTaxCode = form.watch("taxCode");
+  const watchedClientTypeId = form.watch("clientTypeId");
+  const watchedAddressesMatch = form.watch("addressesMatch");
+  const watchedLegalAddress = form.watch("legalAddress");
+
+  // Load existing client data
   useEffect(() => {
     if (editingClient) {
       form.reset({
@@ -131,126 +142,32 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
         physicalAddress: editingClient.physicalAddress || "",
         addressesMatch: editingClient.addressesMatch || false,
         discount: editingClient.discount || "0.00",
-        notes: editingClient.notes || "",
-        isActive: editingClient.isActive ?? true,
         carrierId: editingClient.carrierId || undefined,
         cityRef: editingClient.cityRef || "",
-        warehouseRef: editingClient.warehouseRef || ""
+        warehouseRef: editingClient.warehouseRef || "",
+        contactPerson: editingClient.contactPerson || "",
+        phone: editingClient.phone || "",
+        email: editingClient.email || "",
+        website: editingClient.website || "",
+        notes: editingClient.notes || "",
       });
 
-      // Set carrier state and check if it's Nova Poshta
-      console.log("Ініціалізація перевізника:", editingClient.carrierId);
-      setSelectedCarrierId(editingClient.carrierId || undefined);
-      
-      // Check if selected carrier is Nova Poshta
-      const carrier = (carriers as any[])?.find((c: any) => c.id === editingClient.carrierId);
-      const isNovaPoshta = carrier ? 
-        carrier.name.toLowerCase().includes('пошта') || 
-        carrier.name.toLowerCase().includes('nova poshta') ||
-        (carrier.alternativeNames || []).some((altName: string) => 
-          altName && altName.toLowerCase().includes('пошта')
-        ) : false;
-        
-      if (isNovaPoshta && editingClient.cityRef) {
-        // Initialize with empty query first, will be set by cityByRef query
-        setCityQuery("");
-      } else {
-        setSelectedCity(null);
-        setSelectedWarehouse(null);
-        setCityQuery('');
-        setWarehouseQuery('');
+      // Set Nova Poshta selections if editing
+      if (editingClient.carrierId) {
+        setSelectedCarrierId(editingClient.carrierId);
+      }
+      if (editingClient.cityRef) {
+        // Find city by Ref (simplified)
+        setSelectedCity({ Ref: editingClient.cityRef });
+      }
+      if (editingClient.warehouseRef) {
+        // Find warehouse by Ref (simplified)
+        setSelectedWarehouse({ Ref: editingClient.warehouseRef });
       }
     }
-  }, [editingClient, form, carriers]);
+  }, [editingClient, form]);
 
-  // Load city by Ref for editing client
-  const { data: cityByRef, isLoading: isCityByRefLoading } = useQuery({
-    queryKey: ["/api/nova-poshta/city", editingClient?.cityRef],
-    queryFn: async () => {
-      if (!editingClient?.cityRef) return null;
-      const response = await fetch(`/api/nova-poshta/city/${editingClient.cityRef}`);
-      if (!response.ok) return null;
-      return response.json();
-    },
-    enabled: !!editingClient?.cityRef && selectedCarrierId === 4,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  });
-
-  // Initialize city from editing client
-  useEffect(() => {
-    if (cityByRef && editingClient?.cityRef) {
-      console.log("Ініціалізація міста:", cityByRef.Description);
-      setSelectedCity(cityByRef);
-      setCityQuery(cityByRef.Description);
-    }
-  }, [cityByRef, editingClient?.cityRef]);
-
-  // Initialize warehouse from editing client
-  useEffect(() => {
-    if (editingClient?.warehouseRef && warehouses && warehouses.length > 0) {
-      console.log("Пошук відділення:", editingClient.warehouseRef, "серед", warehouses.length, "відділень");
-      const warehouse = (warehouses as any[])?.find((w: any) => w.Ref === editingClient.warehouseRef);
-      if (warehouse) {
-        console.log("Знайдено відділення:", warehouse.ShortAddress);
-        setSelectedWarehouse(warehouse);
-        setWarehouseQuery(warehouse.ShortAddress || warehouse.Description);
-      } else {
-        console.log("Відділення не знайдено");
-      }
-    }
-  }, [editingClient?.warehouseRef, warehouses]);
-
-
-
-  // Watch form values
-  const watchedClientTypeId = form.watch("clientTypeId");
-  const watchedTaxCode = form.watch("taxCode");
-
-  // Get selected client type
-  const selectedClientType = clientTypes?.find((type: any) => type.id === watchedClientTypeId);
-
-  // Auto-suggest client type based on tax code
-  useEffect(() => {
-    if (watchedTaxCode && !editingClient) {
-      const cleanCode = watchedTaxCode.replace(/\D/g, '');
-      
-      if (cleanCode.length === 8 || cleanCode.length === 10) {
-        const possibleTypes = (clientTypes as any[])?.filter((type: any) => {
-          if (cleanCode.length === 8) return type.name === "Юридична особа";
-          if (cleanCode.length === 10) return type.name === "Фізична особа";
-          return false;
-        }).map((type: any) => type.id) || [];
-
-        if (possibleTypes.length > 0 && possibleTypes[0] !== watchedClientTypeId) {
-          const suggestedType = possibleTypes[0];
-          form.setValue("clientTypeId", suggestedType);
-          
-          const clientType = clientTypes?.find((type: any) => type.id === suggestedType);
-          toast({
-            title: "Тип клієнта встановлено автоматично",
-            description: `${cleanCode.length === 8 ? '8-значний код (ЄДРПОУ)' : '10-значний код (ІПН)'} відповідає типу: ${clientType?.name}`,
-            duration: 4000,
-          });
-        }
-      }
-    }
-  }, [watchedTaxCode, clientTypes, form, toast, editingClient, watchedClientTypeId]);
-
-  // Auto-focus full name for legal entities
-  useEffect(() => {
-    if (selectedClientType?.name === "Юридична особа" && fullNameInputRef.current) {
-      fullNameInputRef.current.focus();
-    }
-  }, [watchedClientTypeId, selectedClientType]);
-
-  // Handlers
-  const handleAddressMatch = (checked: boolean) => {
-    if (checked) {
-      const legalAddress = form.getValues("legalAddress");
-      form.setValue("physicalAddress", legalAddress);
-    }
-  };
-
+  // Handle carrier changes
   const handleCarrierChange = (carrierId: number) => {
     setSelectedCarrierId(carrierId);
     form.setValue("carrierId", carrierId);
@@ -288,15 +205,6 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
     console.log("Form submitted with data:", data);
     onSubmit(data);
   };
-
-  // Determine if Nova Poshta carrier is selected
-  const selectedCarrier = (carriers as any[])?.find((carrier: any) => carrier.id === selectedCarrierId);
-  const isNovaPoshtaCarrier = selectedCarrier ? 
-    selectedCarrier.name.toLowerCase().includes('пошта') || 
-    selectedCarrier.name.toLowerCase().includes('nova poshta') ||
-    (selectedCarrier.alternativeNames || []).some((altName: string) => 
-      altName && altName.toLowerCase().includes('пошта')
-    ) : false;
 
   return (
     <Form {...form}>
@@ -343,9 +251,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
               </FormItem>
             )}
           />
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
             name="name"
@@ -353,7 +259,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
               <FormItem>
                 <FormLabel>Скорочена назва *</FormLabel>
                 <FormControl>
-                  <Input placeholder="ТОВ Приклад" {...field} />
+                  <Input placeholder="ТОВ Компанія" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -368,18 +274,16 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
                 <FormLabel>Повна назва</FormLabel>
                 <FormControl>
                   <Input 
-                    ref={fullNameInputRef}
-                    placeholder="Товариство з обмеженою відповідальністю Приклад" 
-                    {...field} 
+                    placeholder="Товариство з обмеженою відповідальністю 'Компанія'" 
+                    {...field}
+                    ref={fullNameRef}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
             name="legalAddress"
@@ -388,8 +292,9 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
                 <FormLabel>Юридична адреса</FormLabel>
                 <FormControl>
                   <Textarea 
-                    placeholder="вул. Хрещатик 1, м. Київ, 01001"
-                    {...field} 
+                    placeholder="Вкажіть юридичну адресу" 
+                    {...field}
+                    className="min-h-[80px]"
                   />
                 </FormControl>
                 <FormMessage />
@@ -402,11 +307,13 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
             name="physicalAddress"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Фізична адреса</FormLabel>
+                <FormLabel>Фактична адреса</FormLabel>
                 <FormControl>
                   <Textarea 
-                    placeholder="вул. Хрещатик 1, м. Київ, 01001"
-                    {...field} 
+                    placeholder="Вкажіть фактичну адресу" 
+                    {...field}
+                    className="min-h-[80px]"
+                    disabled={watchedAddressesMatch}
                   />
                 </FormControl>
                 <FormMessage />
@@ -423,15 +330,12 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
               <FormControl>
                 <Checkbox
                   checked={field.value}
-                  onCheckedChange={(checked) => {
-                    field.onChange(checked);
-                    handleAddressMatch(checked as boolean);
-                  }}
+                  onCheckedChange={field.onChange}
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
                 <FormLabel>
-                  Фізична адреса збігається з юридичною
+                  Фактична адреса збігається з юридичною
                 </FormLabel>
               </div>
             </FormItem>
@@ -441,12 +345,75 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
+            name="contactPerson"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Контактна особа</FormLabel>
+                <FormControl>
+                  <Input placeholder="Іван Іванович" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Телефон</FormLabel>
+                <FormControl>
+                  <Input placeholder="+380671234567" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input placeholder="company@example.com" type="email" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="website"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Веб-сайт</FormLabel>
+                <FormControl>
+                  <Input placeholder="https://company.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="discount"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Знижка (%)</FormLabel>
                 <FormControl>
-                  <Input placeholder="0.00" {...field} />
+                  <Input 
+                    placeholder="0.00" 
+                    type="number" 
+                    step="0.01" 
+                    min="0" 
+                    max="100" 
+                    {...field} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -460,13 +427,12 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
               <FormItem>
                 <FormLabel>Перевізник</FormLabel>
                 <Select 
-                  onValueChange={(value) => handleCarrierChange(parseInt(value))}
-                  value={field.value?.toString() || ""}
-                  disabled={carriersLoading}
+                  onValueChange={(value) => handleCarrierChange(parseInt(value))} 
+                  value={field.value?.toString()}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder={carriersLoading ? "Завантаження перевізників..." : "Оберіть перевізника"} />
+                      <SelectValue placeholder="Оберіть перевізника" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -483,144 +449,96 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
           />
         </div>
 
+        {/* Nova Poshta Integration */}
         {isNovaPoshtaCarrier && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="h-5 w-5" />
-                Вибір адреси доставки
+                Інтеграція з Новою Поштою
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Пошук міста</label>
-                {selectedCity ? (
-                  <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md flex items-center justify-between">
-                    <span className="text-green-800">Обрано: {selectedCity.Description} ({selectedCity.AreaDescription})</span>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setSelectedCity(null);
-                        setSelectedWarehouse(null);
-                        setCityQuery('');
-                        form.setValue("cityRef", "");
-                        form.setValue("warehouseRef", "");
-                      }}
-                    >
-                      Змінити
-                    </Button>
-                  </div>
-                ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* City Selection */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Місто</label>
                   <div className="relative">
                     <Input
-                      placeholder="Введіть назву міста..."
+                      placeholder="Почніть вводити назву міста..."
                       value={cityQuery}
                       onChange={(e) => setCityQuery(e.target.value)}
-                      className="mt-2"
+                      className="w-full"
                     />
                     {citiesLoading && (
-                      <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Пошук міст...
-                      </div>
-                    )}
-                    {filteredCities && filteredCities.length > 0 && cityQuery.length >= 2 && !selectedCity && (
-                      <div className="mt-2 border border-gray-200 rounded-md bg-white max-h-48 overflow-y-auto">
-                        {filteredCities.map((city: any) => (
-                          <div
-                            key={city.Ref}
-                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
-                            onClick={() => handleCitySelect(city)}
-                          >
-                            <div className="font-medium text-sm">{city.Description}</div>
-                            <div className="text-xs text-gray-500">{city.AreaDescription}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {cityQuery.length >= 2 && !citiesLoading && (
-                      <div className="mt-2 text-xs text-gray-400">
-                        Знайдено: {filteredCities?.length || 0} міст для "{cityQuery}"
-                      </div>
+                      <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />
                     )}
                   </div>
-                )}
-              </div>
-
-              {selectedCity && (
-                <div>
-                  <label className="text-sm font-medium">
-                    Відділення в місті {selectedCity.Description}
-                  </label>
-                  {warehousesLoading ? (
-                    <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Завантаження відділень...
+                  
+                  {/* Cities dropdown */}
+                  {cityQuery.length >= 2 && filteredCities.length > 0 && (
+                    <div className="border rounded-md max-h-48 overflow-y-auto bg-white z-10">
+                      {filteredCities.slice(0, 10).map((city: any) => (
+                        <div
+                          key={city.Ref}
+                          className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                          onClick={() => handleCitySelect(city)}
+                        >
+                          <div className="font-medium">{city.Description}</div>
+                          <div className="text-sm text-gray-500">
+                            {city.AreaDescription}, {city.RegionDescription}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ) : (
-                    <div>
-                      {selectedWarehouse ? (
-                        <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-medium">№{selectedWarehouse.Number}</p>
-                              <p className="text-sm text-gray-600">{selectedWarehouse.ShortAddress}</p>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedWarehouse(null);
-                                setWarehouseQuery('');
-                                form.setValue("warehouseRef", "");
-                              }}
-                            >
-                              Змінити
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="relative">
-                          <Input
-                            placeholder="Пошук по номеру відділення або адресі..."
-                            value={warehouseQuery}
-                            onChange={(e) => setWarehouseQuery(e.target.value)}
-                            className="mt-2"
-                          />
-                          {filteredWarehouses && filteredWarehouses.length > 0 && (
-                            <div className="mt-2 border border-gray-200 rounded-md bg-white max-h-64 overflow-y-auto">
-                              {filteredWarehouses.map((warehouse: any) => (
-                                <div
-                                  key={warehouse.Ref}
-                                  className="px-3 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
-                                  onClick={() => handleWarehouseSelect(warehouse)}
-                                >
-                                  <div className="font-medium text-sm">
-                                    №{warehouse.Number}
-                                  </div>
-                                  <div className="text-xs text-gray-600">
-                                    {warehouse.ShortAddress}
-                                  </div>
-                                  {warehouse.Phone && (
-                                    <div className="text-xs text-gray-500">
-                                      {warehouse.Phone}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          <div className="mt-2 text-xs text-gray-400">
-                            Всього відділень: {warehouses?.length || 0}
-                            {warehouseQuery && ` | Знайдено: ${filteredWarehouses?.length || 0}`}
-                          </div>
-                        </div>
-                      )}
+                  )}
+
+                  {selectedCity && (
+                    <div className="text-sm text-green-600">
+                      Обрано: {selectedCity.Description}
                     </div>
                   )}
                 </div>
-              )}
+
+                {/* Warehouse Selection */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Відділення</label>
+                  <div className="relative">
+                    <Input
+                      placeholder={selectedCity ? "Номер відділення або адреса" : "Спочатку оберіть місто"}
+                      value={warehouseQuery}
+                      onChange={(e) => setWarehouseQuery(e.target.value)}
+                      disabled={!selectedCity}
+                      className="w-full"
+                    />
+                    {warehousesLoading && (
+                      <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />
+                    )}
+                  </div>
+
+                  {/* Warehouses dropdown */}
+                  {selectedCity && filteredWarehouses.length > 0 && (
+                    <div className="border rounded-md max-h-48 overflow-y-auto bg-white z-10">
+                      {filteredWarehouses.slice(0, 10).map((warehouse: any) => (
+                        <div
+                          key={warehouse.Ref}
+                          className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                          onClick={() => handleWarehouseSelect(warehouse)}
+                        >
+                          <div className="font-medium">№{warehouse.Number}</div>
+                          <div className="text-sm text-gray-500">{warehouse.ShortAddress}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {selectedWarehouse && (
+                    <div className="text-sm text-green-600">
+                      Обрано: №{selectedWarehouse.Number} - {selectedWarehouse.ShortAddress}
+                    </div>
+                  )}
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -632,57 +550,43 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
             <FormItem>
               <FormLabel>Примітки</FormLabel>
               <FormControl>
-                <Textarea placeholder="Додаткова інформація про клієнта..." {...field} />
+                <Textarea 
+                  placeholder="Додаткова інформація про клієнта" 
+                  {...field}
+                  className="min-h-[100px]"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-
-
-        <FormField
-          control={form.control}
-          name="isActive"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>
-                  Активний клієнт
-                </FormLabel>
-              </div>
-            </FormItem>
-          )}
-        />
-
         <div className="flex justify-between">
-          <div>
-            {editingClient && onDelete && (
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => onDelete(editingClient.id.toString())}
-                className="flex items-center space-x-2"
-              >
-                <Trash2 className="h-4 w-4" />
-                <span>Видалити</span>
-              </Button>
-            )}
-          </div>
-          <div className="flex space-x-2">
-            <Button variant="outline" onClick={onCancel} type="button">
+          <div className="flex gap-2">
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Збереження...
+                </>
+              ) : (
+                editingClient ? "Оновити" : "Створити"
+              )}
+            </Button>
+            <Button type="button" variant="outline" onClick={onCancel}>
               Скасувати
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Збереження..." : editingClient ? "Оновити" : "Створити"}
-            </Button>
           </div>
+          {editingClient && onDelete && (
+            <Button 
+              type="button" 
+              variant="destructive" 
+              onClick={() => onDelete(editingClient.id)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Видалити
+            </Button>
+          )}
         </div>
       </form>
     </Form>
