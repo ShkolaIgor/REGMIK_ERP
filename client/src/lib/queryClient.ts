@@ -49,10 +49,13 @@ export async function apiRequest(
     console.log("apiRequest - Status update:", { url, method, data });
   }
 
+  // Визначаємо чи це FormData для файлових завантажень
+  const isFormData = data instanceof FormData;
+  
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
+    headers: !isFormData && data ? { "Content-Type": "application/json" } : {},
+    body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
     credentials: "include",
     cache: "no-cache", // Примусово відключаємо кеш браузера для всіх запитів
   });
