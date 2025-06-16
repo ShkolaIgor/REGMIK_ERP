@@ -167,9 +167,6 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
   useEffect(() => {
     const loadClientData = async () => {
       if (editingClient) {
-        console.log('Loading client data:', editingClient);
-        console.log('Client carrierId:', editingClient.carrierId);
-        
         form.reset({
           taxCode: editingClient.taxCode || "",
           clientTypeId: editingClient.clientTypeId || 1,
@@ -189,15 +186,11 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
           notes: editingClient.notes || "",
         });
 
-        console.log('Form reset with carrierId:', editingClient.carrierId);
-
         // Set Nova Poshta selections if editing
         if (editingClient.carrierId) {
-          console.log('Setting carrierId:', editingClient.carrierId);
           setSelectedCarrierId(editingClient.carrierId);
           // Explicitly set form value to ensure it's reflected in the UI
           form.setValue("carrierId", editingClient.carrierId);
-          console.log('Form value set, current form carrierId:', form.getValues('carrierId'));
         }
         
         // Load city data from API if cityRef exists
@@ -493,14 +486,11 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {(carriers as any[])?.map((carrier: any) => {
-                      console.log('Rendering carrier:', carrier.id, carrier.name, 'Selected:', field.value);
-                      return (
-                        <SelectItem key={carrier.id} value={carrier.id.toString()}>
-                          {carrier.name}
-                        </SelectItem>
-                      );
-                    })}
+                    {(carriers as any[])?.map((carrier: any) => (
+                      <SelectItem key={carrier.id} value={carrier.id.toString()}>
+                        {carrier.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />

@@ -5140,19 +5140,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
 
-          // Handle EDRPOU field - convert "0" and empty to null/undefined for tax_code
+          // Handle EDRPOU field - validate length and convert incorrect to null
           let taxCode = null;
           if (row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '') {
-            taxCode = row.EDRPOU.trim();
+            const cleanCode = row.EDRPOU.trim().replace(/\D/g, '');
+            // Only accept codes with exactly 8 or 10 digits
+            if (cleanCode.length === 8 || cleanCode.length === 10) {
+              taxCode = cleanCode;
+            }
+            // If length is incorrect, taxCode remains null (imported as empty)
           }
 
-          // Determine client type - default to Юридична особа if no ЄДРПОУ
+          // Determine client type - default to Юридична особа if no valid ЄДРПОУ
           let clientTypeId = 1; // Default to Юридична особа
           if (taxCode) {
-            const cleanCode = taxCode.replace(/\D/g, '');
-            if (cleanCode.length === 8) {
+            if (taxCode.length === 8) {
               clientTypeId = 1; // Юридична особа (8 digits ЄДРПОУ)
-            } else if (cleanCode.length === 10) {
+            } else if (taxCode.length === 10) {
               clientTypeId = 2; // Фізична особа (10 digits ІПН)
             }
           }
