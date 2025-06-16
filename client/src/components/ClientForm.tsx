@@ -122,6 +122,10 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
   // Завантаження міст Нової Пошти з пошуком
   const { data: cities = [] } = useQuery({
     queryKey: ['/api/nova-poshta/cities', citySearchValue],
+    queryFn: () => {
+      const searchParam = citySearchValue ? `?q=${encodeURIComponent(citySearchValue)}` : '';
+      return fetch(`/api/nova-poshta/cities${searchParam}`).then(res => res.json());
+    },
     enabled: !!selectedCarrierId && (carriers as any[])?.some((c: any) => c.id === selectedCarrierId && c.name.toLowerCase().includes('пошта'))
   });
 
