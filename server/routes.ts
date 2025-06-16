@@ -5342,6 +5342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             await storage.updateClient(existingClient.id, { isActive: false });
             console.log(`Deactivated older client with taxCode ${taxCode}, id: ${existingClient.id}`);
+            // Continue with import to create new active client
           } catch (updateError) {
             console.error('Error deactivating existing client:', updateError);
             job.details.push({
