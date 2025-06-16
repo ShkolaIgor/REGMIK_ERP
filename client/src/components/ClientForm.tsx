@@ -67,6 +67,11 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
     enabled: !!selectedCarrierId && (carriers as any[])?.some((c: any) => c.id === selectedCarrierId && c.name.toLowerCase().includes('пошта'))
   });
 
+  // Завантаження типів клієнтів
+  const { data: clientTypes = [] } = useQuery({
+    queryKey: ['/api/client-types'],
+  });
+
   // Завантаження відділень Нової Пошти для обраного міста
   const { data: warehouses = [] } = useQuery({
     queryKey: ['/api/nova-poshta/warehouses', selectedCityRef],
@@ -77,7 +82,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
     resolver: zodResolver(formSchema),
     defaultValues: {
       taxCode: editingClient?.taxCode || "",
-      type: (editingClient?.type as "individual" | "organization") || "organization",
+      clientTypeId: editingClient?.clientTypeId || 1, // Default to "Юридична особа"
       name: editingClient?.name || prefillName || "",
       fullName: editingClient?.fullName || "",
       legalAddress: editingClient?.legalAddress || "",

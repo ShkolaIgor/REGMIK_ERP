@@ -21,7 +21,8 @@ import {
   insertCurrencySchema, insertSerialNumberSchema, insertSerialNumberSettingsSchema,
   insertLocalUserSchema, insertRoleSchema, insertSystemModuleSchema, changePasswordSchema,
   insertEmailSettingsSchema, insertClientSchema, insertClientContactSchema, insertClientMailSchema, insertMailRegistrySchema, insertEnvelopePrintSettingsSchema,
-  insertRepairSchema, insertRepairPartSchema, insertRepairStatusHistorySchema, insertRepairDocumentSchema
+  insertRepairSchema, insertRepairPartSchema, insertRepairStatusHistorySchema, insertRepairDocumentSchema,
+  clientTypes, insertClientTypeSchema
 } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -2878,6 +2879,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Client Types API routes
+  app.get("/api/client-types", async (req, res) => {
+    try {
+      const clientTypes = await db.select().from(clientTypes).where(eq(clientTypes.isActive, true));
+      res.json(clientTypes);
+    } catch (error) {
+      console.error("Error fetching client types:", error);
+      res.status(500).json({ error: "Failed to fetch client types" });
+    }
+  });
+
+  app.post("/api/client-types", async (req, res) => {
+    try {
+      const validatedData = insertClientTypeSchema.parse(req.body);
+      const [clientType] = await db
+        .insert(clientTypes)
+        .values(validatedData)
+        .returning();
+      res.json(clientType);
+    } catch (error) {
+      console.error("Error creating client type:", error);
+      res.status(500).json({ error: "Failed to create client type" });
+    }
+  });
+
   // Nova Poshta API integration routes (з кешуванням)
   app.get("/api/nova-poshta/cities", async (req, res) => {
     const { q } = req.query;
@@ -5086,11 +5112,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             taxCode = `IMPORT_${Date.now()}_${processed}`;
           }
 
+          // Determine client type based on EDRPOU presence
+          const hasValidEdrpou = row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '';
+          const clientTypeId = hasValidEdrpou ? 1 : 2; // 1 = Юридична особа, 2 = Фізична особа
+
           const clientData = {
             taxCode: taxCode,
             name: row.NAME,
             fullName: row.PREDPR || row.NAME,
-            type: (row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '') ? 'organization' : 'individual',
+            clientTypeId: clientTypeId,
             physicalAddress: row.ADDRESS_PHYS || null,
             notes: notes || null,
             isActive: row.ACTUAL === 'T' || row.ACTUAL === 'true',
