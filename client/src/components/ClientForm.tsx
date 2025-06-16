@@ -146,17 +146,17 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
     }
   }, [editingClient, form]);
 
-  // Load city data for editing client by searching with a common character
+  // Load all cities for editing client
   const { data: allCitiesForEditing } = useQuery({
-    queryKey: ["/api/nova-poshta/cities-for-editing", editingClient?.cityRef],
+    queryKey: ["/api/nova-poshta/cities-all"],
     queryFn: async () => {
-      if (!editingClient?.cityRef) return null;
-      // Search with a common character to get all cities, then filter client-side
+      // Get all cities with minimal query to find any city by ref
       const response = await fetch(`/api/nova-poshta/cities?q=а`);
       if (!response.ok) return null;
       return response.json();
     },
     enabled: !!editingClient?.cityRef && selectedCarrierId === 4,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   // Initialize city and warehouse from editing client
