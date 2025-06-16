@@ -62,6 +62,17 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
   // Nova Poshta data queries
   const { data: cities, isLoading: citiesLoading } = useQuery({
     queryKey: ["/api/nova-poshta/cities", cityQuery],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (cityQuery) {
+        params.set('q', cityQuery);
+      }
+      const response = await fetch(`/api/nova-poshta/cities?${params}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch cities');
+      }
+      return response.json();
+    },
     enabled: cityQuery.length >= 2 && selectedCarrierId === 4,
   });
 
