@@ -141,14 +141,14 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
   const watchedTaxCode = form.watch("taxCode");
   const selectedClientType = (clientTypes as any[])?.find((type: any) => type.id === watchedClientTypeId);
   
-  // Автоматичне визначення типу клієнта за кодом
+  // Автоматичне визначення типу клієнта за кодом (тільки для нових клієнтів)
   useEffect(() => {
-    if (watchedTaxCode && clientTypes.length > 0) {
+    if (watchedTaxCode && clientTypes.length > 0 && !editingClient) {
       const possibleTypes = getPossibleClientTypes(watchedTaxCode);
       const currentTypeId = form.getValues("clientTypeId");
       
       if (possibleTypes.length > 0 && !possibleTypes.includes(currentTypeId)) {
-        // Автоматично встановлюємо перший можливий тип
+        // Автоматично встановлюємо перший можливий тип тільки для нових клієнтів
         const suggestedType = possibleTypes[0];
         form.setValue("clientTypeId", suggestedType);
         
@@ -157,13 +157,28 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
         const cleanCode = watchedTaxCode.replace(/\D/g, '');
         
         toast({
-          title: "Тип клієнта змінено автоматично",
+          title: "Тип клієнта встановлено автоматично",
           description: `${cleanCode.length === 8 ? '8-значний код (ЄДРПОУ)' : '10-значний код (ІПН)'} відповідає типу: ${clientType?.name}`,
           duration: 4000,
         });
       }
+    } else if (watchedTaxCode && clientTypes.length > 0 && editingClient) {
+      // Для існуючих клієнтів показуємо тільки попередження про невідповідність
+      const possibleTypes = getPossibleClientTypes(watchedTaxCode);
+      const currentTypeId = form.getValues("clientTypeId");
+      
+      if (possibleTypes.length > 0 && !possibleTypes.includes(currentTypeId)) {
+        const cleanCode = watchedTaxCode.replace(/\D/g, '');
+        
+        toast({
+          title: "Можлива невідповідність типу клієнта",
+          description: `${cleanCode.length === 8 ? '8-значний код (ЄДРПОУ)' : '10-значний код (ІПН)'} зазвичай відповідає іншому типу клієнта`,
+          variant: "destructive",
+          duration: 5000,
+        });
+      }
     }
-  }, [watchedTaxCode, clientTypes, form, toast]);
+  }, [watchedTaxCode, clientTypes, form, toast, editingClient]);
   
   // Автоматичне фокусування на повній назві при зміні типу на організацію
   useEffect(() => {
