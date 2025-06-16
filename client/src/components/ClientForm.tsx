@@ -633,34 +633,6 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
           </Card>
         )}
 
-        <div className="flex justify-between">
-          <div className="flex gap-2">
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Збереження...
-                </>
-              ) : (
-                editingClient ? "Оновити" : "Створити"
-              )}
-            </Button>
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Скасувати
-            </Button>
-          </div>
-          {editingClient && onDelete && (
-            <Button 
-              type="button" 
-              variant="destructive" 
-              onClick={() => onDelete(editingClient.id)}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Видалити
-            </Button>
-          )}
-        </div>
-
         <FormField
           control={form.control}
           name="notes"
@@ -678,6 +650,37 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
             </FormItem>
           )}
         />
+
+        <div className="flex justify-between items-center pt-4">
+          {editingClient && onDelete ? (
+            <Button 
+              type="button" 
+              variant="destructive" 
+              onClick={() => onDelete(editingClient.id)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Видалити
+            </Button>
+          ) : (
+            <div></div>
+          )}
+          
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Скасувати
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Збереження...
+                </>
+              ) : (
+                editingClient ? "Оновити" : "Створити"
+              )}
+            </Button>
+          </div>
+        </div>
       </form>
     </Form>
   );
