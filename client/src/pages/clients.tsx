@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -105,6 +105,11 @@ export default function Clients() {
   const fullNameInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Стабільний обробник зміни пошуку
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  }, []);
 
   // Дебаунс для пошуку
   useEffect(() => {
@@ -572,8 +577,9 @@ export default function Clients() {
             type="text"
             placeholder="Пошук клієнтів за назвою, ЄДРПОУ або повним ім'ям..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
             className="pl-10"
+            autoComplete="off"
           />
         </div>
         {debouncedSearch && (
