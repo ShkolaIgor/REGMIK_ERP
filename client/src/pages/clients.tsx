@@ -70,7 +70,10 @@ const formSchema = insertClientSchema.extend({
   addressesMatch: z.boolean().default(false),
   discount: z.string().optional().transform(val => val || "0.00"),
   notes: z.string().optional(),
-  isActive: z.boolean().default(true)
+  isActive: z.boolean().default(true),
+  carrierId: z.number().optional(),
+  cityRef: z.string().optional(),
+  warehouseRef: z.string().optional()
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -266,8 +269,13 @@ export default function Clients() {
     // Ensure taxCode is properly handled as optional
     const cleanData = {
       ...data,
-      taxCode: data.taxCode || undefined
+      taxCode: data.taxCode || undefined,
+      carrierId: data.carrierId || null,
+      cityRef: data.cityRef || null,
+      warehouseRef: data.warehouseRef || null
     };
+    
+    console.log("Submitting client data:", cleanData);
     
     if (editingClient) {
       updateMutation.mutate(cleanData);
