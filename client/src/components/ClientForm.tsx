@@ -108,8 +108,8 @@ interface ClientFormProps {
 
 export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefillName }: ClientFormProps) {
   const fullNameInputRef = useRef<HTMLInputElement>(null);
-  const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>(editingClient?.carrierId || undefined);
-  const [selectedCityRef, setSelectedCityRef] = useState<string | undefined>(editingClient?.cityRef || undefined);
+  const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>(undefined);
+  const [selectedCityRef, setSelectedCityRef] = useState<string | undefined>(undefined);
   const [citySearchOpen, setCitySearchOpen] = useState(false);
   const [warehouseSearchOpen, setWarehouseSearchOpen] = useState(false);
   const [citySearchValue, setCitySearchValue] = useState("");
@@ -127,11 +127,6 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
   const { data: carriers = [] } = useQuery({
     queryKey: ['/api/carriers'],
   });
-  
-  // Debug logging
-  console.log('Carriers loaded:', carriers);
-  console.log('Selected carrier ID:', selectedCarrierId);
-  console.log('Form carrier value:', form.watch("carrierId"));
 
   // Завантаження міст Нової Пошти з пошуком
   const { data: cities = [], isLoading: citiesLoading } = useQuery({
@@ -170,6 +165,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
     warehouse.ShortAddress.toLowerCase().includes(warehouseQuery.toLowerCase())
   ) || [];
   
+  // Initialize form first before using it in handlers
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -269,53 +265,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
     }
   }, [watchedClientTypeId, selectedClientType]);
 
-  // Автоматичне копіювання адреси
-  const handleAddressMatch = (checked: boolean) => {
-    if (checked) {
-      const legalAddress = form.getValues("legalAddress");
-      form.setValue("physicalAddress", legalAddress);
-    }
-  };
 
-  // Обробка зміни перевізника
-  const handleCarrierChange = (carrierId: string) => {
-    const id = parseInt(carrierId);
-    setSelectedCarrierId(id);
-    form.setValue("carrierId", id);
-    // Очистити вибір міста та відділення при зміні перевізника
-    setSelectedCity(null);
-    setSelectedWarehouse(null);
-    setSelectedCityRef(undefined);
-    setCityQuery('');
-    setWarehouseQuery('');
-    form.setValue("cityRef", "");
-    form.setValue("warehouseRef", "");
-  };
-
-  // Обробка зміни міста
-  const handleCityChange = (cityRef: string) => {
-    const city = (cities as any[])?.find((c: any) => c.Ref === cityRef);
-    if (city) {
-      setSelectedCity(city);
-      setSelectedCityRef(cityRef);
-      setCityQuery(city.Description);
-      form.setValue("cityRef", cityRef);
-      // Очистити вибір відділення при зміні міста
-      setSelectedWarehouse(null);
-      setWarehouseQuery('');
-      form.setValue("warehouseRef", "");
-    }
-  };
-
-  // Обробка зміни відділення
-  const handleWarehouseChange = (warehouseRef: string) => {
-    const warehouse = (warehouses as any[])?.find((w: any) => w.Ref === warehouseRef);
-    if (warehouse) {
-      setSelectedWarehouse(warehouse);
-      setWarehouseQuery(warehouse.Description);
-      form.setValue("warehouseRef", warehouseRef);
-    }
-  };
 
 
 
