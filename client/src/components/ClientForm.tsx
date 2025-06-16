@@ -33,7 +33,7 @@ const formSchema = z.object({
   email: z.string().optional(),
   website: z.string().optional(),
   discount: z.string().optional(),
-  carrierId: z.string().optional(),
+  carrierId: z.number().optional(),
   cityRef: z.string().optional(),
   warehouseRef: z.string().optional(),
   notes: z.string().optional(),
@@ -176,7 +176,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
           physicalAddress: editingClient.physicalAddress || "",
           addressesMatch: editingClient.addressesMatch || false,
           discount: editingClient.discount || "0.00",
-          carrierId: editingClient.carrierId?.toString() || undefined,
+          carrierId: editingClient.carrierId || undefined,
           cityRef: editingClient.cityRef || "",
           warehouseRef: editingClient.warehouseRef || "",
           contactPerson: editingClient.contactPerson || "",
@@ -189,7 +189,8 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
         // Set Nova Poshta selections if editing
         if (editingClient.carrierId) {
           setSelectedCarrierId(editingClient.carrierId);
-          form.setValue("carrierId", editingClient.carrierId.toString());
+          // Explicitly set form value to ensure it's reflected in the UI
+          form.setValue("carrierId", editingClient.carrierId);
         }
         
         // Load city data from API if cityRef exists
@@ -211,18 +212,9 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
     loadClientData();
   }, [editingClient, form, loadCityByRef, loadWarehouseByRef]);
 
-  // Handle carrier selection after carriers are loaded
-  useEffect(() => {
-    if (editingClient?.carrierId && carriers) {
-      form.setValue("carrierId", editingClient.carrierId.toString());
-      setSelectedCarrierId(editingClient.carrierId);
-    }
-  }, [carriers, editingClient?.carrierId, form]);
-
   // Handle carrier changes
-  const handleCarrierChange = (carrierId: string) => {
-    const numericCarrierId = parseInt(carrierId);
-    setSelectedCarrierId(numericCarrierId);
+  const handleCarrierChange = (carrierId: number) => {
+    setSelectedCarrierId(carrierId);
     form.setValue("carrierId", carrierId);
     
     // Clear Nova Poshta selections when changing carrier
@@ -480,11 +472,8 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
               <FormItem>
                 <FormLabel>Перевізник</FormLabel>
                 <Select 
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    handleCarrierChange(value);
-                  }} 
-                  value={field.value}
+                  onValueChange={(value) => handleCarrierChange(parseInt(value))} 
+                  value={field.value?.toString()}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -557,7 +546,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
                       )}
                       {filteredCities.length > 0 && cityQuery.length >= 2 && !selectedCity && (
                         <div className="mt-2 border border-gray-200 rounded-md bg-white max-h-48 overflow-y-auto">
-                          {filteredCities.map((city: any) => (
+                          {filteredCities.map((city) => (
                             <div
                               key={city.Ref}
                               className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
