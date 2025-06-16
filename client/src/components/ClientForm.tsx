@@ -88,12 +88,6 @@ const formSchema = insertClientSchema.extend({
   carrierId: z.number().optional(),
   cityRef: z.string().optional(),
   warehouseRef: z.string().optional()
-}).refine((data) => {
-  const validationError = validateTaxCodeAndType(data.taxCode, data.clientTypeId);
-  return !validationError;
-}, {
-  message: "Невідповідність між кодом та типом клієнта",
-  path: ["clientTypeId"]
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -108,8 +102,8 @@ interface ClientFormProps {
 
 export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefillName }: ClientFormProps) {
   const fullNameInputRef = useRef<HTMLInputElement>(null);
-  const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>(undefined);
-  const [selectedCityRef, setSelectedCityRef] = useState<string | undefined>(undefined);
+  const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>(editingClient?.carrierId || undefined);
+  const [selectedCityRef, setSelectedCityRef] = useState<string | undefined>(editingClient?.cityRef || undefined);
   const [citySearchOpen, setCitySearchOpen] = useState(false);
   const [warehouseSearchOpen, setWarehouseSearchOpen] = useState(false);
   const [citySearchValue, setCitySearchValue] = useState("");
@@ -151,7 +145,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
       const searchParam = warehouseSearchValue ? `?q=${encodeURIComponent(warehouseSearchValue)}` : '';
       return fetch(`/api/nova-poshta/warehouses/${selectedCityRef}${searchParam}`).then(res => res.json());
     },
-    enabled: !!selectedCarrierId && !!selectedCity?.Ref && (carriers as any[])?.some((c: any) => c.id === selectedCarrierId && c.name.toLowerCase().includes('пошта'))
+    enabled: !!selectedCarrierId && !!selectedCityRef && (carriers as any[])?.some((c: any) => c.id === selectedCarrierId && c.name.toLowerCase().includes('пошта'))
   });
 
   // Filter functions for Nova Poshta
