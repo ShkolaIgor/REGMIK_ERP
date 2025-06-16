@@ -661,17 +661,16 @@ export default function Clients() {
                       updateMutation.mutate({
                         taxCode: client.taxCode || "",
                         name: client.name,
-                        fullName: client.fullName,
+                        fullName: client.fullName ?? undefined,
                         clientTypeId: client.clientTypeId,
-                        legalAddress: client.legalAddress,
-                        physicalAddress: client.physicalAddress,
-                        addressesMatch: client.addressesMatch,
+                        legalAddress: client.legalAddress ?? undefined,
+                        physicalAddress: client.physicalAddress ?? undefined,
+                        addressesMatch: client.addressesMatch ?? false,
                         discount: client.discount || "0",
-                        notes: client.notes,
+                        notes: client.notes ?? undefined,
                         isActive: checked,
-                        carrierRef: client.carrierRef,
-                        cityRef: client.cityRef,
-                        warehouseRef: client.warehouseRef
+                        cityRef: client.cityRef ?? undefined,
+                        warehouseRef: client.warehouseRef ?? undefined
                       });
                     }}
                     disabled={updateMutation.isPending}
