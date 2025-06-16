@@ -5121,10 +5121,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               try {
                 const warehouseQuery = `
                   SELECT ref FROM nova_poshta_warehouses 
-                  WHERE city_ref = $1 AND description ILIKE $2 
+                  WHERE city_ref = $1 AND description LIKE $2 
                   LIMIT 1
                 `;
-                const warehouseResult = await pool.query(warehouseQuery, [cityRef, `%№${warehouseNumber}%`]);
+                const warehouseResult = await pool.query(warehouseQuery, [cityRef, `%№${warehouseNumber}:%`]);
                 if (warehouseResult.rows.length > 0) {
                   warehouseRef = warehouseResult.rows[0].ref as string;
                 }
