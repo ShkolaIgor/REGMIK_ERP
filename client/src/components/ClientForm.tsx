@@ -147,7 +147,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
   }, [editingClient, form]);
 
   // Load city by Ref for editing client
-  const { data: cityByRef } = useQuery({
+  const { data: cityByRef, isLoading: isCityByRefLoading } = useQuery({
     queryKey: ["/api/nova-poshta/city", editingClient?.cityRef],
     queryFn: async () => {
       if (!editingClient?.cityRef) return null;
@@ -159,18 +159,18 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Initialize city from editing client with proper loading state check
+  // Initialize city from editing client
   useEffect(() => {
-    if (cityByRef && editingClient?.cityRef && !isCityByRefLoading) {
+    if (cityByRef && editingClient?.cityRef) {
       console.log("Ініціалізація міста:", cityByRef.Description);
       setSelectedCity(cityByRef);
       setCityQuery(cityByRef.Description);
     }
-  }, [cityByRef, editingClient?.cityRef, isCityByRefLoading]);
+  }, [cityByRef, editingClient?.cityRef]);
 
-  // Initialize warehouse from editing client with proper loading state check
+  // Initialize warehouse from editing client
   useEffect(() => {
-    if (editingClient?.warehouseRef && warehouses && warehouses.length > 0 && !warehousesLoading) {
+    if (editingClient?.warehouseRef && warehouses && warehouses.length > 0) {
       console.log("Пошук відділення:", editingClient.warehouseRef, "серед", warehouses.length, "відділень");
       const warehouse = (warehouses as any[])?.find((w: any) => w.Ref === editingClient.warehouseRef);
       if (warehouse) {
@@ -181,7 +181,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
         console.log("Відділення не знайдено");
       }
     }
-  }, [editingClient?.warehouseRef, warehouses, warehousesLoading]);
+  }, [editingClient?.warehouseRef, warehouses]);
 
 
 
