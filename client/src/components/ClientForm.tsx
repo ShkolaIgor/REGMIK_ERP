@@ -138,7 +138,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
       if (editingClient.carrierId) {
         setSelectedCarrierId(editingClient.carrierId);
       } else {
-        setSelectedCarrierId(null);
+        setSelectedCarrierId(undefined);
       }
       if (editingClient.cityRef) {
         setCityQuery(""); // Will be set when cities load
