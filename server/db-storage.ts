@@ -6829,7 +6829,7 @@ export class DatabaseStorage implements IStorage {
       filteredCities.sort((a: any, b: any) => {
         const aName = a.name?.toLowerCase() || '';
         const bName = b.name?.toLowerCase() || '';
-        const searchLower = queryLower;
+        const searchLower = query.toLowerCase();
         
         // Exact match first
         if (aName === searchLower && bName !== searchLower) return -1;

@@ -2,18 +2,20 @@ import { eq, sql, desc, and, gte, lte, isNull, ne, or, not, inArray, ilike } fro
 import { db, pool } from "./db";
 import { IStorage } from "./storage";
 import {
-  users, localUsers, roles, systemModules, userLoginHistory, categories, warehouses, units, products, inventory, orders, orderItems, orderStatuses,
+  users, localUsers, roles, systemModules, permissions, rolePermissions, userPermissions, userLoginHistory, categories, warehouses, units, products, inventory, orders, orderItems, orderStatuses,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   components, productComponents, costCalculations, materialShortages, supplierOrders, supplierOrderItems,
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes, solderingTypes,
   componentCategories, componentAlternatives, carriers, shipments, shipmentItems, customerAddresses, senderSettings,
   manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, currencyRates, currencyUpdateSettings, serialNumbers, serialNumberSettings, emailSettings,
-  sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients, clientContacts, clientNovaPoshtaSettings,
+  sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients, clientContacts, clientNovaPoshtaSettings, clientNovaPoshtaApiSettings,
   clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences,
   repairs, repairParts, repairStatusHistory, repairDocuments, orderItemSerialNumbers, novaPoshtaCities, novaPoshtaWarehouses,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
-  type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
+  type SystemModule, type InsertSystemModule, type Permission, type InsertPermission,
+  type RolePermission, type InsertRolePermission, type UserPermission, type InsertUserPermission,
+  type UserLoginHistory, type InsertUserLoginHistory,
   type Category, type InsertCategory,
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
   type Product, type InsertProduct,
@@ -61,6 +63,7 @@ import {
   type EmailSettings, type InsertEmailSettings,
   type ClientContact, type InsertClientContact,
   type ClientNovaPoshtaSettings, type InsertClientNovaPoshtaSettings,
+  type ClientNovaPoshtaApiSettings, type InsertClientNovaPoshtaApiSettings,
   type UserSortPreference, type InsertUserSortPreference,
   type Repair, type InsertRepair,
   type RepairPart, type InsertRepairPart,
@@ -180,36 +183,68 @@ export class DatabaseStorage implements IStorage {
 
   // Roles
   async getRoles(): Promise<Role[]> {
-    return await db.select().from(roles);
+    try {
+      const result = await db.select().from(roles).orderBy(roles.name);
+      return result;
+    } catch (error) {
+      console.error('Помилка отримання ролей:', error);
+      return [];
+    }
   }
 
   async createRole(insertRole: InsertRole): Promise<Role> {
-    const result = await db.insert(roles).values(insertRole).returning();
-    return result[0];
+    try {
+      const result = await db.insert(roles).values(insertRole).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка створення ролі:', error);
+      throw error;
+    }
   }
 
   async updateRole(id: number, roleData: Partial<InsertRole>): Promise<Role | undefined> {
-    const result = await db
-      .update(roles)
-      .set(roleData)
-      .where(eq(roles.id, id))
-      .returning();
-    return result[0];
+    try {
+      const result = await db
+        .update(roles)
+        .set({ ...roleData, updatedAt: new Date() })
+        .where(eq(roles.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка оновлення ролі:', error);
+      return undefined;
+    }
   }
 
   async deleteRole(id: number): Promise<boolean> {
-    const result = await db.delete(roles).where(eq(roles.id, id));
-    return result.rowCount !== null && result.rowCount > 0;
+    try {
+      const result = await db.delete(roles).where(eq(roles.id, id));
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      console.error('Помилка видалення ролі:', error);
+      return false;
+    }
   }
 
   // System Modules
   async getSystemModules(): Promise<SystemModule[]> {
-    return await db.select().from(systemModules);
+    try {
+      const result = await db.select().from(systemModules).orderBy(systemModules.sortOrder);
+      return result;
+    } catch (error) {
+      console.error('Помилка отримання модулів системи:', error);
+      return [];
+    }
   }
 
   async createSystemModule(insertSystemModule: InsertSystemModule): Promise<SystemModule> {
-    const result = await db.insert(systemModules).values(insertSystemModule).returning();
-    return result[0];
+    try {
+      const result = await db.insert(systemModules).values(insertSystemModule).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка створення модуля системи:', error);
+      throw error;
+    }
   }
 
   async updateSystemModule(id: number, moduleData: Partial<InsertSystemModule>): Promise<SystemModule | undefined> {
@@ -222,8 +257,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteSystemModule(id: number): Promise<boolean> {
-    const result = await db.delete(systemModules).where(eq(systemModules.id, id));
-    return result.rowCount !== null && result.rowCount > 0;
+    try {
+      const result = await db.delete(systemModules).where(eq(systemModules.id, id));
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      console.error('Помилка видалення модуля системи:', error);
+      return false;
+    }
   }
 
   // Categories
@@ -648,6 +688,20 @@ export class DatabaseStorage implements IStorage {
       .where(eq(orders.id, id))
       .returning();
     return result[0];
+  }
+
+  async updateOrderTrackingNumber(id: number, trackingNumber: string): Promise<boolean> {
+    try {
+      const result = await db.update(orders)
+        .set({ trackingNumber })
+        .where(eq(orders.id, id))
+        .returning();
+      
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error updating order tracking number:', error);
+      return false;
+    }
   }
 
   async deleteOrder(id: number): Promise<boolean> {
@@ -3044,6 +3098,140 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  async getShipmentDetails(id: number): Promise<any> {
+    try {
+      // Get basic shipment information
+      const shipmentResult = await db
+        .select({
+          id: shipments.id,
+          shipmentNumber: shipments.shipmentNumber,
+          status: shipments.status,
+          trackingNumber: shipments.trackingNumber,
+          weight: shipments.weight,
+          recipientWarehouseAddress: shipments.recipientWarehouseAddress,
+          recipientName: shipments.recipientName,
+          recipientPhone: shipments.recipientPhone,
+          notes: shipments.notes,
+          shippedAt: shipments.shippedAt,
+          orderId: shipments.orderId,
+          carrierId: shipments.carrierId
+        })
+        .from(shipments)
+        .where(eq(shipments.id, id));
+
+      if (shipmentResult.length === 0) return undefined;
+
+      const shipment = shipmentResult[0];
+
+      // Get order details if orderId exists
+      let order = null;
+      if (shipment.orderId) {
+        const orderResult = await db
+          .select({
+            id: orders.id,
+            orderNumber: orders.orderNumber,
+            customerName: orders.customerName
+          })
+          .from(orders)
+          .where(eq(orders.id, shipment.orderId));
+        order = orderResult[0] || null;
+      }
+
+      // Get carrier details if carrierId exists
+      let carrier = null;
+      if (shipment.carrierId) {
+        const carrierResult = await db
+          .select({
+            id: carriers.id,
+            name: carriers.name
+          })
+          .from(carriers)
+          .where(eq(carriers.id, shipment.carrierId));
+        carrier = carrierResult[0] || null;
+      }
+
+      // Get shipment items
+      const itemsResult = await db
+        .select({
+          id: shipmentItems.id,
+          shipmentId: shipmentItems.shipmentId,
+          productId: shipmentItems.productId,
+          quantity: shipmentItems.quantity,
+          orderItemId: shipmentItems.orderItemId,
+          serialNumbers: shipmentItems.serialNumbers
+        })
+        .from(shipmentItems)
+        .where(eq(shipmentItems.shipmentId, id));
+
+      // Get product details for each item
+      const items = [];
+      for (const item of itemsResult) {
+        let product = null;
+        let orderItem = null;
+        
+        if (item.productId) {
+          const productResult = await db
+            .select({
+              id: products.id,
+              name: products.name,
+              sku: products.sku
+            })
+            .from(products)
+            .where(eq(products.id, item.productId));
+          product = productResult[0] || null;
+        }
+
+        // Get order item details for unit price
+        if (item.orderItemId) {
+          const orderItemResult = await db
+            .select({
+              id: orderItems.id,
+              unitPrice: orderItems.unitPrice
+            })
+            .from(orderItems)
+            .where(eq(orderItems.id, item.orderItemId));
+          orderItem = orderItemResult[0] || null;
+        }
+
+        // Get serial numbers for this product in this shipment - using item.serialNumbers from schema
+        const itemSerialNumbers = item.serialNumbers || [];
+
+        items.push({
+          id: item.id,
+          shipmentId: item.shipmentId,
+          productId: item.productId,
+          quantity: item.quantity,
+          productName: product?.name || 'Unknown Product',
+          productSku: product?.sku || 'N/A',
+          unitPrice: orderItem?.unitPrice || '0',
+          serialNumbers: itemSerialNumbers
+        });
+      }
+
+      return {
+        id: shipment.id,
+        shipmentNumber: shipment.shipmentNumber,
+        status: shipment.status,
+        trackingNumber: shipment.trackingNumber,
+        weight: shipment.weight,
+        shippingAddress: shipment.recipientWarehouseAddress || '',
+        recipientName: shipment.recipientName,
+        recipientPhone: shipment.recipientPhone,
+        notes: shipment.notes,
+        shippedAt: shipment.shippedAt,
+        carrier: carrier ? { name: carrier.name } : null,
+        order: order ? {
+          orderNumber: order.orderNumber,
+          customerName: order.customerName
+        } : null,
+        items: items
+      };
+    } catch (error) {
+      console.error("Error getting shipment details:", error);
+      throw error;
+    }
+  }
+
   async createShipment(shipmentData: InsertShipment): Promise<Shipment> {
     const shipmentNumber = `SH-${Date.now()}`;
     const [created] = await db
@@ -4748,6 +4936,95 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Client Nova Poshta API Settings Implementation
+  async getClientNovaPoshtaApiSettings(clientId: number): Promise<ClientNovaPoshtaApiSettings[]> {
+    try {
+      const settings = await db
+        .select()
+        .from(clientNovaPoshtaApiSettings)
+        .where(eq(clientNovaPoshtaApiSettings.clientId, clientId))
+        .orderBy(desc(clientNovaPoshtaApiSettings.isPrimary), desc(clientNovaPoshtaApiSettings.createdAt));
+      return settings;
+    } catch (error) {
+      console.error("Error fetching Nova Poshta API settings:", error);
+      return [];
+    }
+  }
+
+  async getClientNovaPoshtaApiSetting(id: number): Promise<ClientNovaPoshtaApiSettings | undefined> {
+    try {
+      const [settings] = await db
+        .select()
+        .from(clientNovaPoshtaApiSettings)
+        .where(eq(clientNovaPoshtaApiSettings.id, id));
+      return settings;
+    } catch (error) {
+      console.error("Error fetching Nova Poshta API setting:", error);
+      return undefined;
+    }
+  }
+
+  async createClientNovaPoshtaApiSettings(settings: InsertClientNovaPoshtaApiSettings): Promise<ClientNovaPoshtaApiSettings> {
+    const [created] = await db
+      .insert(clientNovaPoshtaApiSettings)
+      .values({
+        ...settings,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return created;
+  }
+
+  async updateClientNovaPoshtaApiSettings(id: number, settings: Partial<InsertClientNovaPoshtaApiSettings>): Promise<ClientNovaPoshtaApiSettings | undefined> {
+    try {
+      const [updated] = await db
+        .update(clientNovaPoshtaApiSettings)
+        .set({ ...settings, updatedAt: new Date() })
+        .where(eq(clientNovaPoshtaApiSettings.id, id))
+        .returning();
+      return updated;
+    } catch (error) {
+      console.error("Error updating Nova Poshta API settings:", error);
+      return undefined;
+    }
+  }
+
+  async deleteClientNovaPoshtaApiSettings(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(clientNovaPoshtaApiSettings).where(eq(clientNovaPoshtaApiSettings.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error("Error deleting Nova Poshta API settings:", error);
+      return false;
+    }
+  }
+
+  async setPrimaryClientNovaPoshtaApiSettings(clientId: number, settingsId: number): Promise<boolean> {
+    try {
+      // Спочатку знімаємо прапорець isPrimary з усіх API налаштувань клієнта
+      await db
+        .update(clientNovaPoshtaApiSettings)
+        .set({ isPrimary: false, updatedAt: new Date() })
+        .where(eq(clientNovaPoshtaApiSettings.clientId, clientId));
+
+      // Потім встановлюємо обрані API налаштування як основні
+      const [updated] = await db
+        .update(clientNovaPoshtaApiSettings)
+        .set({ isPrimary: true, updatedAt: new Date() })
+        .where(and(
+          eq(clientNovaPoshtaApiSettings.id, settingsId),
+          eq(clientNovaPoshtaApiSettings.clientId, clientId)
+        ))
+        .returning();
+
+      return !!updated;
+    } catch (error) {
+      console.error("Error setting primary Nova Poshta API settings:", error);
+      return false;
+    }
+  }
+
   // Partial Shipment Methods
   async getOrderItemsWithShipmentInfo(orderId: number): Promise<any[]> {
     try {
@@ -6324,6 +6601,23 @@ export class DatabaseStorage implements IStorage {
 
   // ==================== Nova Poshta Database Methods ====================
 
+  async getCityByRef(cityRef: string): Promise<any | null> {
+    try {
+      const result = await this.db.execute(sql`
+        SELECT ref as "Ref", name as "Description", name_ru as "DescriptionRu", 
+               area as "AreaDescription", region as "RegionDescription"
+        FROM nova_poshta_cities 
+        WHERE ref = ${cityRef} AND is_active = true
+        LIMIT 1
+      `);
+      
+      return result.rows.length > 0 ? result.rows[0] : null;
+    } catch (error) {
+      console.error('Error getting city by ref:', error);
+      return null;
+    }
+  }
+
   async syncNovaPoshtaCities(cities: any[]): Promise<void> {
     if (!cities || cities.length === 0) return;
 
@@ -6451,7 +6745,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getNovaPoshtaCities(query?: string): Promise<any[]> {
-    console.log(`Пошук міст Нової Пошти для запиту: "${query}"`);
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] Пошук міст Нової Пошти для запиту: "${query}"`);
     
     try {
       if (!query || query.length < 2) {
@@ -6461,45 +6756,80 @@ export class DatabaseStorage implements IStorage {
         const transformedCities = cities.map(city => ({
           Ref: city.ref,
           Description: city.name,
-          DescriptionRu: city.nameRu,
+          DescriptionRu: city.name,
           AreaDescription: city.area,
-          AreaDescriptionRu: city.areaRu,
-          RegionDescription: city.region,
-          RegionDescriptionRu: city.regionRu,
-          SettlementTypeDescription: city.settlementType,
-          DeliveryCity: city.deliveryCity,
-          Warehouses: city.warehouses?.toString() || "0"
+          AreaDescriptionRu: city.area,
+          RegionDescription: city.region || '',
+          RegionDescriptionRu: city.region || '',
+          SettlementTypeDescription: 'місто',
+          DeliveryCity: city.ref,
+          Warehouses: 0
         }));
 
-        console.log(`Знайдено ${transformedCities.length} міст без фільтрації`);
+        console.log(`[${timestamp}] Знайдено ${transformedCities.length} міст без фільтрації`);
         return transformedCities;
       }
 
-      // Use binary-compatible search for SQL_ASCII encoding
-      const searchPattern = `%${query}%`;
-      const queryLower = query.toLowerCase();
-      
-      // Get all cities and filter in JavaScript to bypass SQL_ASCII encoding issues
-      const allCitiesResult = await pool.query(`
-        SELECT ref, name, area, region
-        FROM nova_poshta_cities
-        ORDER BY LENGTH(name) ASC
-      `);
-      
-      // Filter cities in JavaScript with proper Unicode support
-      const filteredCities = allCitiesResult.rows.filter((city: any) => {
-        const cityName = city.name?.toLowerCase() || '';
-        const cityArea = city.area?.toLowerCase() || '';
-        const searchLower = query.toLowerCase();
-        
-        return cityName.includes(searchLower) || cityArea.includes(searchLower);
+      // Log search parameters for debugging
+      console.log(`[${timestamp}] Параметри пошуку:`, {
+        originalQuery: query,
+        queryLength: query.length,
+        queryEncoding: Buffer.from(query, 'utf8').toString('hex')
       });
+      
+      // Use multiple search strategies for better compatibility
+      let filteredCities: any[] = [];
+      
+      try {
+        // First try SQL ILIKE search (works well with UTF-8)
+        const sqlResult = await pool.query(`
+          SELECT ref, name, area, region
+          FROM nova_poshta_cities
+          WHERE LOWER(name) LIKE LOWER($1) OR LOWER(area) LIKE LOWER($1)
+          ORDER BY 
+            CASE WHEN LOWER(name) = LOWER($2) THEN 1 ELSE 2 END,
+            CASE WHEN LOWER(name) LIKE LOWER($3) THEN 1 ELSE 2 END,
+            LENGTH(name) ASC
+          LIMIT 1000
+        `, [`%${query}%`, query, `${query}%`]);
+        
+        filteredCities = sqlResult.rows;
+        console.log(`[${timestamp}] SQL пошук знайшов ${filteredCities.length} міст для "${query}"`);
+        
+        // Log first few results for debugging
+        if (filteredCities.length > 0) {
+          console.log(`[${timestamp}] Перші результати:`, filteredCities.slice(0, 3).map(c => c.name));
+        }
+      } catch (sqlError) {
+        console.log(`[${timestamp}] SQL пошук не вдався для "${query}":`, sqlError);
+        
+        // Fallback to JavaScript filtering if SQL fails
+        console.log(`[${timestamp}] Використовую JavaScript фільтрацію`);
+        const allCitiesResult = await pool.query(`
+          SELECT ref, name, area, region
+          FROM nova_poshta_cities
+          ORDER BY LENGTH(name) ASC
+        `);
+        
+        console.log(`[${timestamp}] Завантажено ${allCitiesResult.rows.length} міст для фільтрації`);
+        
+        // Filter cities in JavaScript with proper Unicode support
+        filteredCities = allCitiesResult.rows.filter((city: any) => {
+          const cityName = city.name?.toLowerCase() || '';
+          const cityArea = city.area?.toLowerCase() || '';
+          const searchLower = query.toLowerCase();
+          
+          return cityName.includes(searchLower) || cityArea.includes(searchLower);
+        });
+        
+        console.log(`[${timestamp}] JavaScript фільтрація знайшла ${filteredCities.length} міст`);
+      }
       
       // Sort results with priority for exact matches
       filteredCities.sort((a: any, b: any) => {
         const aName = a.name?.toLowerCase() || '';
         const bName = b.name?.toLowerCase() || '';
-        const searchLower = queryLower;
+        const searchLower = query.toLowerCase();
         
         // Exact match first
         if (aName === searchLower && bName !== searchLower) return -1;
@@ -6656,6 +6986,254 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Помилка перевірки даних Нової Пошти:', error);
       return true;
+    }
+  }
+
+  // Additional role methods
+  async getRole(id: number): Promise<Role | undefined> {
+    try {
+      const result = await db.select().from(roles).where(eq(roles.id, id));
+      return result[0];
+    } catch (error) {
+      console.error('Помилка отримання ролі:', error);
+      return undefined;
+    }
+  }
+
+  async getSystemModule(id: number): Promise<SystemModule | undefined> {
+    try {
+      const result = await db.select().from(systemModules).where(eq(systemModules.id, id));
+      return result[0];
+    } catch (error) {
+      console.error('Помилка отримання модуля системи:', error);
+      return undefined;
+    }
+  }
+
+
+
+  async getPermissions(): Promise<Permission[]> {
+    try {
+      const result = await db.select().from(permissions).orderBy(permissions.name);
+      return result;
+    } catch (error) {
+      console.error('Помилка отримання дозволів:', error);
+      return [];
+    }
+  }
+
+  async getPermission(id: number): Promise<Permission | undefined> {
+    try {
+      const result = await db.select().from(permissions).where(eq(permissions.id, id));
+      return result[0];
+    } catch (error) {
+      console.error('Помилка отримання дозволу:', error);
+      return undefined;
+    }
+  }
+
+  async createPermission(data: InsertPermission): Promise<Permission> {
+    try {
+      const result = await db.insert(permissions).values(data).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка створення дозволу:', error);
+      throw error;
+    }
+  }
+
+  async updatePermission(id: number, data: Partial<InsertPermission>): Promise<Permission | undefined> {
+    try {
+      const result = await db
+        .update(permissions)
+        .set(data)
+        .where(eq(permissions.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка оновлення дозволу:', error);
+      return undefined;
+    }
+  }
+
+  async deletePermission(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(permissions).where(eq(permissions.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Помилка видалення дозволу:', error);
+      return false;
+    }
+  }
+
+  async getRolePermissions(roleId: number): Promise<RolePermission[]> {
+    try {
+      const result = await db.select().from(rolePermissions).where(eq(rolePermissions.roleId, roleId));
+      return result;
+    } catch (error) {
+      console.error('Помилка отримання дозволів ролі:', error);
+      return [];
+    }
+  }
+
+  async assignPermissionToRole(roleId: number, permissionId: number, granted: boolean = true): Promise<RolePermission> {
+    try {
+      const result = await db
+        .insert(rolePermissions)
+        .values({ roleId, permissionId, granted })
+        .onConflictDoUpdate({
+          target: [rolePermissions.roleId, rolePermissions.permissionId],
+          set: { granted, createdAt: new Date() }
+        })
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка призначення дозволу ролі:', error);
+      throw error;
+    }
+  }
+
+  async removePermissionFromRole(roleId: number, permissionId: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(rolePermissions)
+        .where(and(eq(rolePermissions.roleId, roleId), eq(rolePermissions.permissionId, permissionId)));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Помилка видалення дозволу ролі:', error);
+      return false;
+    }
+  }
+
+  async getUserPermissions(userId: number): Promise<UserPermission[]> {
+    try {
+      const result = await db.select().from(userPermissions).where(eq(userPermissions.userId, userId));
+      return result;
+    } catch (error) {
+      console.error('Помилка отримання дозволів користувача:', error);
+      return [];
+    }
+  }
+
+  async assignPermissionToUser(userId: number, permissionId: number, granted: boolean = true, grantor?: number, expiresAt?: Date): Promise<UserPermission> {
+    try {
+      const result = await db
+        .insert(userPermissions)
+        .values({ userId, permissionId, granted, grantor, expiresAt })
+        .onConflictDoUpdate({
+          target: [userPermissions.userId, userPermissions.permissionId],
+          set: { granted, grantor, expiresAt, createdAt: new Date() }
+        })
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка призначення дозволу користувачу:', error);
+      throw error;
+    }
+  }
+
+  async removePermissionFromUser(userId: number, permissionId: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(userPermissions)
+        .where(and(eq(userPermissions.userId, userId), eq(userPermissions.permissionId, permissionId)));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Помилка видалення дозволу користувача:', error);
+      return false;
+    }
+  }
+
+  async checkUserPermission(userId: number, moduleName: string, action: string): Promise<boolean> {
+    try {
+      // Отримуємо користувача з роллю
+      const user = await db.select().from(localUsers).where(eq(localUsers.id, userId));
+      if (!user[0]) return false;
+
+      const roleId = user[0].roleId;
+      if (!roleId) return false;
+
+      // Перевіряємо роль супер адміністратора
+      const role = await db.select().from(roles).where(eq(roles.id, roleId));
+      if (role[0]?.name === 'super_admin') return true;
+
+      // Отримуємо модуль
+      const module = await db.select().from(systemModules).where(eq(systemModules.name, moduleName));
+      if (!module[0]) return false;
+
+      // Отримуємо дозвіл
+      const permission = await db.select().from(permissions)
+        .where(and(
+          eq(permissions.moduleId, module[0].id),
+          eq(permissions.action, action)
+        ));
+      if (!permission[0]) return false;
+
+      // Перевіряємо персональні дозволи користувача
+      const userPermission = await db.select().from(userPermissions)
+        .where(and(
+          eq(userPermissions.userId, userId),
+          eq(userPermissions.permissionId, permission[0].id)
+        ));
+
+      if (userPermission[0]) {
+        // Перевіряємо термін дії
+        if (userPermission[0].expiresAt && userPermission[0].expiresAt < new Date()) {
+          return false;
+        }
+        return userPermission[0].granted;
+      }
+
+      // Перевіряємо дозволи ролі
+      const rolePermission = await db.select().from(rolePermissions)
+        .where(and(
+          eq(rolePermissions.roleId, roleId),
+          eq(rolePermissions.permissionId, permission[0].id)
+        ));
+
+      return rolePermission[0]?.granted || false;
+    } catch (error) {
+      console.error('Помилка перевірки дозволу користувача:', error);
+      return false;
+    }
+  }
+
+  async getUserAccessibleModules(userId: number): Promise<SystemModule[]> {
+    try {
+      // Отримуємо користувача з роллю
+      const user = await db.select().from(localUsers).where(eq(localUsers.id, userId));
+      if (!user[0]) return [];
+
+      const roleId = user[0].roleId;
+      if (!roleId) return [];
+
+      // Перевіряємо роль супер адміністратора
+      const role = await db.select().from(roles).where(eq(roles.id, roleId));
+      if (role[0]?.name === 'super_admin') {
+        return await db.select().from(systemModules).where(eq(systemModules.isActive, true)).orderBy(systemModules.sortOrder);
+      }
+
+      // Отримуємо всі модулі з дозволами користувача
+      const query = `
+        SELECT DISTINCT sm.* 
+        FROM system_modules sm
+        JOIN permissions p ON p.module_id = sm.id
+        LEFT JOIN user_permissions up ON up.permission_id = p.id AND up.user_id = $1
+        LEFT JOIN role_permissions rp ON rp.permission_id = p.id AND rp.role_id = $2
+        WHERE sm.is_active = true 
+        AND (
+          (up.granted = true AND (up.expires_at IS NULL OR up.expires_at > NOW()))
+          OR (up.id IS NULL AND rp.granted = true)
+        )
+        AND p.action = 'read'
+        ORDER BY sm.sort_order
+      `;
+
+      const result = await pool.query(query, [userId, roleId]);
+      return result.rows;
+    } catch (error) {
+      console.error('Помилка отримання доступних модулів користувача:', error);
+      return [];
     }
   }
 

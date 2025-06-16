@@ -6,7 +6,8 @@ import { registerSyncApiRoutes } from "./sync-api";
 import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./simple-auth";
 import { novaPoshtaApi } from "./nova-poshta-api";
 import { novaPoshtaCache } from "./nova-poshta-cache";
-import { pool } from "./db";
+import { pool, db } from "./db";
+import { eq } from "drizzle-orm";
 import { 
   insertProductSchema, insertOrderSchema, insertRecipeSchema,
   insertProductionTaskSchema, insertCategorySchema, insertUnitSchema, insertWarehouseSchema,
@@ -21,17 +22,35 @@ import {
   insertCurrencySchema, insertSerialNumberSchema, insertSerialNumberSettingsSchema,
   insertLocalUserSchema, insertRoleSchema, insertSystemModuleSchema, changePasswordSchema,
   insertEmailSettingsSchema, insertClientSchema, insertClientContactSchema, insertClientMailSchema, insertMailRegistrySchema, insertEnvelopePrintSettingsSchema,
-  insertRepairSchema, insertRepairPartSchema, insertRepairStatusHistorySchema, insertRepairDocumentSchema
+  insertRepairSchema, insertRepairPartSchema, insertRepairStatusHistorySchema, insertRepairDocumentSchema,
+  clientTypes, insertClientTypeSchema
 } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import crypto from "crypto";
 import { sendEmail } from "./email-service";
+import multer from "multer";
+import xml2js from "xml2js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Simple auth setup
   setupSimpleSession(app);
   setupSimpleAuth(app);
+
+  // Multer configuration for file uploads
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype === 'text/xml' || file.originalname.endsWith('.xml')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only XML files are allowed'));
+      }
+    },
+  });
 
   // Register simple integration routes
   registerSimpleIntegrationRoutes(app);
@@ -2039,7 +2058,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/workers", async (req, res) => {
     try {
       const workers = await storage.getWorkers();
-      res.json(workers);
+      // Додаємо поле name для сумісності з формами
+      const workersWithName = workers.map(worker => ({
+        ...worker,
+        name: `${worker.firstName} ${worker.lastName}`
+      }));
+      res.json(workersWithName);
     } catch (error) {
       console.error("Failed to get workers:", error);
       res.status(500).json({ error: "Failed to get workers" });
@@ -2627,6 +2651,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/shipments/:id/details", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const shipmentDetails = await storage.getShipmentDetails(id);
+      if (!shipmentDetails) {
+        return res.status(404).json({ error: "Shipment not found" });
+      }
+      res.json(shipmentDetails);
+    } catch (error) {
+      console.error("Failed to get shipment details:", error);
+      res.status(500).json({ error: "Failed to get shipment details" });
+    }
+  });
+
   app.post("/api/shipments", async (req, res) => {
     try {
       console.log("Creating shipment with data:", JSON.stringify(req.body, null, 2));
@@ -2842,6 +2880,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Client Types API routes
+  app.get("/api/client-types", async (req, res) => {
+    try {
+      const clientTypesList = await db.select().from(clientTypes).where(eq(clientTypes.isActive, true));
+      res.json(clientTypesList);
+    } catch (error) {
+      console.error("Error fetching client types:", error);
+      res.status(500).json({ error: "Failed to fetch client types" });
+    }
+  });
+
+  app.post("/api/client-types", async (req, res) => {
+    try {
+      const validatedData = insertClientTypeSchema.parse(req.body);
+      const [clientType] = await db
+        .insert(clientTypes)
+        .values(validatedData)
+        .returning();
+      res.json(clientType);
+    } catch (error) {
+      console.error("Error creating client type:", error);
+      res.status(500).json({ error: "Failed to create client type" });
+    }
+  });
+
   // Nova Poshta API integration routes (з кешуванням)
   app.get("/api/nova-poshta/cities", async (req, res) => {
     const { q } = req.query;
@@ -2856,11 +2919,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     console.log(`Nova Poshta cities API called with query: "${searchQuery}"`);
     
-    // Відключаємо кешування на рівні HTTP
+    // Відключаємо всі види кешування
     res.set({
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
       'Pragma': 'no-cache',
-      'Expires': '0'
+      'Expires': '0',
+      'Last-Modified': new Date().toUTCString(),
+      'ETag': `"${Date.now()}-${Math.random()}"`,
+      'Vary': '*'
     });
     
     try {
@@ -2873,6 +2939,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get city by Ref for editing
+  app.get("/api/nova-poshta/city/:ref", async (req, res) => {
+    const cityRef = req.params.ref;
+    
+    try {
+      console.log(`Nova Poshta city by ref API called: "${cityRef}"`);
+      const city = await storage.getCityByRef(cityRef);
+      if (!city) {
+        return res.status(404).json({ error: 'City not found' });
+      }
+      res.json(city);
+    } catch (error) {
+      console.error('Error getting city by ref:', error);
+      res.status(500).json({ error: 'Failed to get city' });
+    }
+  });
+
   app.get("/api/nova-poshta/warehouses/:cityRef", async (req, res) => {
     try {
       const { cityRef } = req.params;
@@ -2880,11 +2963,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const searchQuery = typeof q === 'string' ? q : "";
       console.log(`Nova Poshta warehouses API called for city: "${cityRef}", query: "${searchQuery}"`);
       
-      // Відключаємо кешування на рівні HTTP
+      // Відключаємо всі види кешування
       res.set({
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
         'Pragma': 'no-cache',
-        'Expires': '0'
+        'Expires': '0',
+        'Last-Modified': new Date().toUTCString(),
+        'ETag': `"${Date.now()}-${Math.random()}"`,
+        'Vary': '*'
       });
       
       const warehouses = await novaPoshtaCache.getWarehouses(cityRef, searchQuery);
@@ -3017,7 +3103,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         warehouseSender,
         senderName,
         senderPhone,
-        orderId
+        orderId,
+        shipmentId
       } = req.body;
 
       const invoiceData = {
@@ -3081,10 +3168,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Creating invoice with data:', JSON.stringify(invoiceData, null, 2));
       const invoice = await novaPoshtaApi.createInternetDocument(invoiceData);
+      console.log('Invoice created successfully:', invoice);
+      
+      // Якщо є orderId, оновлюємо замовлення з трек-номером
+      if (orderId && invoice.Number) {
+        try {
+          console.log('Updating order with tracking number:', invoice.Number);
+          await storage.updateOrderTrackingNumber(parseInt(orderId), invoice.Number);
+          console.log('Order updated with tracking number successfully');
+        } catch (error) {
+          console.error('Error updating order with tracking number:', error);
+        }
+      }
+      
+      // Якщо є shipmentId, оновлюємо відвантаження з трек-номером та статусом "відправлено"
+      if (shipmentId && invoice.Number) {
+        try {
+          console.log('Updating shipment with tracking number and status:', invoice.Number);
+          const currentDate = new Date();
+          
+          // Оновлюємо трек-номер
+          await storage.updateShipment(parseInt(shipmentId), {
+            trackingNumber: invoice.Number,
+            status: 'shipped',
+            shippedAt: currentDate
+          });
+          
+          console.log('Shipment updated with tracking number and shipped status successfully');
+        } catch (error) {
+          console.error('Error updating shipment with tracking number and status:', error);
+        }
+      }
+      
       res.json(invoice);
     } catch (error) {
-      console.error("Error creating invoice:", error);
-      res.status(500).json({ error: "Failed to create invoice" });
+      console.error("Detailed error creating invoice:", error);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+      res.status(500).json({ 
+        error: "Failed to create invoice",
+        details: error.message 
+      });
     }
   });
 
@@ -4888,6 +5012,327 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // XML Import endpoint for clients
+  app.post("/api/clients/import-xml", upload.single('xmlFile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "No XML file provided" 
+        });
+      }
+
+      const xmlContent = req.file.buffer.toString('utf-8');
+      const parser = new xml2js.Parser({ 
+        explicitArray: false,
+        mergeAttrs: true  // This merges attributes into the element object
+      });
+      
+      const result = await parser.parseStringPromise(xmlContent);
+      
+      if (!result.DATAPACKET || !result.DATAPACKET.ROWDATA || !result.DATAPACKET.ROWDATA.ROW) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Invalid XML format. Expected DATAPACKET structure." 
+        });
+      }
+
+      const rows = Array.isArray(result.DATAPACKET.ROWDATA.ROW) 
+        ? result.DATAPACKET.ROWDATA.ROW 
+        : [result.DATAPACKET.ROWDATA.ROW];
+
+      let imported = 0;
+      let skipped = 0;
+      let processed = 0;
+      const errors: string[] = [];
+      const details: Array<{
+        name: string;
+        status: 'imported' | 'updated' | 'skipped' | 'error';
+        message?: string;
+      }> = [];
+
+      // Get all carriers for matching by name
+      const carriers = await storage.getCarriers();
+
+      for (const row of rows) {
+        processed++;
+        
+        try {
+          if (!row.PREDPR) {
+            details.push({
+              name: row.NAME || 'Unknown',
+              status: 'error',
+              message: 'Missing required PREDPR field'
+            });
+            errors.push(`Row ${processed}: Missing required PREDPR field`);
+            continue;
+          }
+
+          // Initialize variables
+          let carrierId: number | null = null;
+          let warehouseRef: string | null = null;
+          let carrierNote = '';
+          let warehouseNumber: string | null = null;
+          
+          // Find carrier by transport name and extract warehouse number
+          if (row.NAME_TRANSPORT) {
+            const transportName = row.NAME_TRANSPORT.toLowerCase();
+            
+            // Extract warehouse number from patterns like "Нова пошта №178"
+            const warehouseMatch = row.NAME_TRANSPORT.match(/№(\d+)/);
+            warehouseNumber = warehouseMatch ? warehouseMatch[1] : null;
+            
+            const foundCarrier = carriers.find(carrier => {
+              const carrierName = carrier.name.toLowerCase();
+              const altNames = carrier.alternativeNames || [];
+              
+              return carrierName.includes(transportName) || 
+                     transportName.includes(carrierName) ||
+                     altNames.some(alt => alt.toLowerCase().includes(transportName) || 
+                                         transportName.includes(alt.toLowerCase()));
+            });
+            
+            if (foundCarrier) {
+              carrierId = foundCarrier.id;
+            } else {
+              // If carrier not found, add transport info to notes
+              carrierNote = `Перевізник: ${row.NAME_TRANSPORT}`;
+            }
+          }
+
+          // Handle CITY field - find city_ref based on city name
+          let cityRef = null;
+          if (row.CITY) {
+            try {
+              const cityQuery = `
+                SELECT ref FROM nova_poshta_cities 
+                WHERE name ILIKE $1 
+                LIMIT 1
+              `;
+              const cityResult = await pool.query(cityQuery, [row.CITY.trim()]);
+              if (cityResult.rows.length > 0) {
+                cityRef = cityResult.rows[0].ref as string;
+              }
+            } catch (error) {
+              console.error('Error searching city:', error);
+            }
+          }
+
+          // Now search for warehouse in the found city (after cityRef is determined)
+          if (carrierId && warehouseNumber && cityRef) {
+            const carriers = await storage.getCarriers();
+            const foundCarrier = carriers.find(carrier => carrier.id === carrierId);
+            
+            if (foundCarrier && foundCarrier.name.toLowerCase().includes('пошта')) {
+              try {
+                const warehouseQuery = `
+                  SELECT ref FROM nova_poshta_warehouses 
+                  WHERE city_ref = $1 AND description LIKE $2 
+                  LIMIT 1
+                `;
+                const warehouseResult = await pool.query(warehouseQuery, [cityRef, `%№${warehouseNumber}:%`]);
+                if (warehouseResult.rows.length > 0) {
+                  warehouseRef = warehouseResult.rows[0].ref as string;
+                }
+              } catch (error) {
+                console.error('Error searching warehouse in city:', error);
+              }
+            }
+          }
+
+          // Handle EDRPOU field - convert "0" and empty to null/undefined for tax_code
+          let taxCode = null;
+          if (row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '') {
+            taxCode = row.EDRPOU.trim();
+          }
+
+          // Determine client type - default to Юридична особа if no ЄДРПОУ
+          let clientTypeId = 1; // Default to Юридична особа
+          if (taxCode) {
+            const cleanCode = taxCode.replace(/\D/g, '');
+            if (cleanCode.length === 8) {
+              clientTypeId = 1; // Юридична особа (8 digits ЄДРПОУ)
+            } else if (cleanCode.length === 10) {
+              clientTypeId = 2; // Фізична особа (10 digits ІПН)
+            }
+          }
+
+          // Check for existing clients with same tax code or external_id
+          const existingClients = await storage.getClients();
+          let existingClient = null;
+          
+          // Check for duplicate external_id first (always prevent duplicates)
+          if (row.ID_PREDPR) {
+            existingClient = existingClients.find(client => 
+              client.externalId === row.ID_PREDPR
+            );
+            
+            if (existingClient) {
+              details.push({
+                name: row.PREDPR,
+                status: 'skipped',
+                message: `Клієнт з external_id ${row.ID_PREDPR} вже існує`
+              });
+              skipped++;
+              continue;
+            }
+          }
+          
+          if (taxCode) {
+            // If tax code provided, check for duplicates
+            existingClient = existingClients.find(client => 
+              client.taxCode === taxCode
+            );
+            
+            if (existingClient) {
+              details.push({
+                name: row.PREDPR,
+                status: 'skipped',
+                message: `Клієнт з ЄДРПОУ/ІПН ${taxCode} вже існує`
+              });
+              skipped++;
+              continue;
+            }
+          }
+          // For empty tax_code, allow duplicates - don't check for existing clients
+
+          // Build notes combining existing comment and carrier info
+          let notes = row.COMMENT || '';
+          if (carrierNote) {
+            notes = notes ? `${notes}. ${carrierNote}` : carrierNote;
+          }
+
+          // Parse DATE_CREATE if provided (format: "04.06.2025")
+          let createdAt = null;
+          if (row.DATE_CREATE) {
+            try {
+              const dateStr = row.DATE_CREATE.trim();
+              // Parse Ukrainian date format DD.MM.YYYY
+              const dateParts = dateStr.split('.');
+              if (dateParts.length === 3) {
+                const day = parseInt(dateParts[0], 10);
+                const month = parseInt(dateParts[1], 10) - 1; // JavaScript months are 0-indexed
+                const year = parseInt(dateParts[2], 10);
+                
+                // Create date with time set to 8:00 AM
+                createdAt = new Date(year, month, day, 8, 0, 0);
+                
+                // Validate the date
+                if (isNaN(createdAt.getTime())) {
+                  createdAt = null;
+                }
+              }
+            } catch (error) {
+              createdAt = null;
+            }
+          }
+
+          const clientData = {
+            taxCode: taxCode,
+            name: row.PREDPR,
+            fullName: row.NAME || row.PREDPR,
+            clientTypeId: clientTypeId,
+            physicalAddress: row.ADDRESS_PHYS || null,
+            notes: notes || null,
+            isActive: row.ACTUAL === 'T' || row.ACTUAL === 'true',
+            source: 'xml_import',
+            carrierId: carrierId,
+            discount: row.SKIT ? parseFloat(row.SKIT.replace(',', '.')) : 0,
+            externalId: row.ID_PREDPR || null,
+            warehouseRef: warehouseRef,
+            cityRef: cityRef,
+            createdAt: createdAt,
+          };
+
+          if (existingClient) {
+            // Update existing client
+            try {
+              await storage.updateClient(existingClient.id.toString(), clientData);
+              details.push({
+                name: row.PREDPR,
+                status: 'updated',
+                message: carrierId ? `Updated with carrier: ${carriers.find(c => c.id === carrierId)?.name}` : 'Updated'
+              });
+              imported++;
+            } catch (updateError) {
+              const updateErrorMessage = updateError instanceof Error ? updateError.message : 'Unknown update error';
+              if (updateErrorMessage.includes('duplicate key value violates unique constraint')) {
+                details.push({
+                  name: row.PREDPR,
+                  status: 'skipped',
+                  message: 'Duplicate tax code - skipped'
+                });
+              } else {
+                details.push({
+                  name: row.PREDPR,
+                  status: 'error',
+                  message: updateErrorMessage
+                });
+                errors.push(`Row ${processed} (${row.PREDPR}): ${updateErrorMessage}`);
+              }
+            }
+          } else {
+            // Create new client - always create for empty tax_code, check duplicates only for non-empty tax_code
+            try {
+              await storage.createClient(clientData);
+              details.push({
+                name: row.PREDPR,
+                status: 'imported',
+                message: carrierId ? `Linked to carrier: ${carriers.find(c => c.id === carrierId)?.name}` : 'Imported'
+              });
+              imported++;
+            } catch (createError) {
+              const createErrorMessage = createError instanceof Error ? createError.message : 'Unknown create error';
+              // Only show duplicate error for non-empty tax codes
+              if (createErrorMessage.includes('duplicate key value violates unique constraint') && taxCode) {
+                details.push({
+                  name: row.PREDPR,
+                  status: 'skipped',
+                  message: 'Duplicate tax code - skipped'
+                });
+              } else {
+                details.push({
+                  name: row.PREDPR,
+                  status: 'error',
+                  message: createErrorMessage
+                });
+                errors.push(`Row ${processed} (${row.PREDPR}): ${createErrorMessage}`);
+              }
+            }
+          }
+
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          details.push({
+            name: row.PREDPR || 'Unknown',
+            status: 'error',
+            message: errorMessage
+          });
+          errors.push(`Row ${processed} (${row.PREDPR}): ${errorMessage}`);
+        }
+      }
+
+      skipped = processed - imported - errors.length;
+
+      res.json({
+        success: errors.length === 0,
+        processed,
+        imported,
+        skipped,
+        errors,
+        details
+      });
+
+    } catch (error) {
+      console.error("XML import error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to process XML file",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Client Nova Poshta Settings API
   app.get("/api/clients/:clientId/nova-poshta-settings", async (req, res) => {
     try {
@@ -4966,6 +5411,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Failed to set primary Nova Poshta settings:", error);
       res.status(500).json({ error: "Failed to set primary Nova Poshta settings" });
+    }
+  });
+
+  // Client Nova Poshta API Settings Routes
+  app.get("/api/clients/:clientId/nova-poshta-api-settings", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      const settings = await storage.getClientNovaPoshtaApiSettings(clientId);
+      res.json(settings);
+    } catch (error) {
+      console.error("Failed to fetch Nova Poshta API settings:", error);
+      res.status(500).json({ error: "Failed to fetch Nova Poshta API settings" });
+    }
+  });
+
+  app.get("/api/nova-poshta-api-settings/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const settings = await storage.getClientNovaPoshtaApiSetting(id);
+      if (!settings) {
+        return res.status(404).json({ error: "Nova Poshta API settings not found" });
+      }
+      res.json(settings);
+    } catch (error) {
+      console.error("Failed to fetch Nova Poshta API settings:", error);
+      res.status(500).json({ error: "Failed to fetch Nova Poshta API settings" });
+    }
+  });
+
+  app.post("/api/clients/:clientId/nova-poshta-api-settings", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      const settingsData = { ...req.body, clientId };
+      const settings = await storage.createClientNovaPoshtaApiSettings(settingsData);
+      res.status(201).json(settings);
+    } catch (error) {
+      console.error("Failed to create Nova Poshta API settings:", error);
+      res.status(500).json({ error: "Failed to create Nova Poshta API settings" });
+    }
+  });
+
+  app.patch("/api/nova-poshta-api-settings/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const settings = await storage.updateClientNovaPoshtaApiSettings(id, req.body);
+      if (!settings) {
+        return res.status(404).json({ error: "Nova Poshta API settings not found" });
+      }
+      res.json(settings);
+    } catch (error) {
+      console.error("Failed to update Nova Poshta API settings:", error);
+      res.status(500).json({ error: "Failed to update Nova Poshta API settings" });
+    }
+  });
+
+  app.delete("/api/nova-poshta-api-settings/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteClientNovaPoshtaApiSettings(id);
+      if (!success) {
+        return res.status(404).json({ error: "Nova Poshta API settings not found" });
+      }
+      res.json({ message: "Nova Poshta API settings deleted successfully" });
+    } catch (error) {
+      console.error("Failed to delete Nova Poshta API settings:", error);
+      res.status(500).json({ error: "Failed to delete Nova Poshta API settings" });
+    }
+  });
+
+  app.patch("/api/clients/:clientId/nova-poshta-api-settings/:id/set-primary", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      const settingsId = parseInt(req.params.id);
+      const success = await storage.setPrimaryClientNovaPoshtaApiSettings(clientId, settingsId);
+      if (!success) {
+        return res.status(404).json({ error: "Failed to set primary Nova Poshta API settings" });
+      }
+      res.json({ message: "Primary Nova Poshta API settings updated successfully" });
+    } catch (error) {
+      console.error("Failed to set primary Nova Poshta API settings:", error);
+      res.status(500).json({ error: "Failed to set primary Nova Poshta API settings" });
     }
   });
 
@@ -6491,6 +7017,308 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating serial number:", error);
       res.status(500).json({ error: "Помилка оновлення серійного номера" });
+    }
+  });
+
+  // ========================================
+  // Roles and Permissions API Routes
+  // ========================================
+
+  // Get all roles
+  app.get("/api/roles", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const roles = await storage.getRoles();
+      res.json(roles);
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+      res.status(500).json({ error: "Помилка отримання ролей" });
+    }
+  });
+
+  // Get role by ID
+  app.get("/api/roles/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const roleId = parseInt(req.params.id);
+      const role = await storage.getRole(roleId);
+      
+      if (!role) {
+        return res.status(404).json({ error: "Роль не знайдена" });
+      }
+      
+      res.json(role);
+    } catch (error) {
+      console.error("Error fetching role:", error);
+      res.status(500).json({ error: "Помилка отримання ролі" });
+    }
+  });
+
+  // Create new role
+  app.post("/api/roles", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertRoleSchema.parse(req.body);
+      const role = await storage.createRole(validatedData);
+      res.status(201).json(role);
+    } catch (error) {
+      console.error("Error creating role:", error);
+      res.status(500).json({ error: "Помилка створення ролі" });
+    }
+  });
+
+  // Update role
+  app.put("/api/roles/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const roleId = parseInt(req.params.id);
+      const validatedData = insertRoleSchema.partial().parse(req.body);
+      const role = await storage.updateRole(roleId, validatedData);
+      
+      if (!role) {
+        return res.status(404).json({ error: "Роль не знайдена" });
+      }
+      
+      res.json(role);
+    } catch (error) {
+      console.error("Error updating role:", error);
+      res.status(500).json({ error: "Помилка оновлення ролі" });
+    }
+  });
+
+  // Delete role
+  app.delete("/api/roles/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const roleId = parseInt(req.params.id);
+      const success = await storage.deleteRole(roleId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Роль не знайдена" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting role:", error);
+      res.status(500).json({ error: "Помилка видалення ролі" });
+    }
+  });
+
+  // Get all system modules
+  app.get("/api/system-modules", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const modules = await storage.getSystemModules();
+      res.json(modules);
+    } catch (error) {
+      console.error("Error fetching system modules:", error);
+      res.status(500).json({ error: "Помилка отримання модулів системи" });
+    }
+  });
+
+  // Get system module by ID
+  app.get("/api/system-modules/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const moduleId = parseInt(req.params.id);
+      const module = await storage.getSystemModule(moduleId);
+      
+      if (!module) {
+        return res.status(404).json({ error: "Модуль не знайдено" });
+      }
+      
+      res.json(module);
+    } catch (error) {
+      console.error("Error fetching system module:", error);
+      res.status(500).json({ error: "Помилка отримання модуля системи" });
+    }
+  });
+
+  // Create new system module
+  app.post("/api/system-modules", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertSystemModuleSchema.parse(req.body);
+      const module = await storage.createSystemModule(validatedData);
+      res.status(201).json(module);
+    } catch (error) {
+      console.error("Error creating system module:", error);
+      res.status(500).json({ error: "Помилка створення модуля системи" });
+    }
+  });
+
+  // Update system module
+  app.put("/api/system-modules/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const moduleId = parseInt(req.params.id);
+      const validatedData = insertSystemModuleSchema.partial().parse(req.body);
+      const module = await storage.updateSystemModule(moduleId, validatedData);
+      
+      if (!module) {
+        return res.status(404).json({ error: "Модуль не знайдено" });
+      }
+      
+      res.json(module);
+    } catch (error) {
+      console.error("Error updating system module:", error);
+      res.status(500).json({ error: "Помилка оновлення модуля системи" });
+    }
+  });
+
+  // Delete system module
+  app.delete("/api/system-modules/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const moduleId = parseInt(req.params.id);
+      const success = await storage.deleteSystemModule(moduleId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Модуль не знайдено" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting system module:", error);
+      res.status(500).json({ error: "Помилка видалення модуля системи" });
+    }
+  });
+
+  // Get all permissions
+  app.get("/api/permissions", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const permissions = await storage.getPermissions();
+      res.json(permissions);
+    } catch (error) {
+      console.error("Error fetching permissions:", error);
+      res.status(500).json({ error: "Помилка отримання дозволів" });
+    }
+  });
+
+  // Get role permissions
+  app.get("/api/roles/:id/permissions", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const roleId = parseInt(req.params.id);
+      const permissions = await storage.getRolePermissions(roleId);
+      res.json(permissions);
+    } catch (error) {
+      console.error("Error fetching role permissions:", error);
+      res.status(500).json({ error: "Помилка отримання дозволів ролі" });
+    }
+  });
+
+  // Assign permission to role
+  app.post("/api/roles/:roleId/permissions/:permissionId", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const roleId = parseInt(req.params.roleId);
+      const permissionId = parseInt(req.params.permissionId);
+      
+      console.log("Request body:", req.body);
+      console.log("Request body type:", typeof req.body);
+      
+      let granted = true;
+      if (req.body && typeof req.body === 'object') {
+        granted = req.body.granted !== undefined ? Boolean(req.body.granted) : true;
+      }
+      
+      console.log("Parsed granted value:", granted);
+      
+      const rolePermission = await storage.assignPermissionToRole(roleId, permissionId, granted);
+      res.status(201).json(rolePermission);
+    } catch (error) {
+      console.error("Error assigning permission to role:", error);
+      res.status(500).json({ error: "Помилка призначення дозволу ролі" });
+    }
+  });
+
+  // Remove permission from role
+  app.delete("/api/roles/:roleId/permissions/:permissionId", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const roleId = parseInt(req.params.roleId);
+      const permissionId = parseInt(req.params.permissionId);
+      
+      const success = await storage.removePermissionFromRole(roleId, permissionId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Дозвіл не знайдено" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error removing permission from role:", error);
+      res.status(500).json({ error: "Помилка видалення дозволу ролі" });
+    }
+  });
+
+  // Get user permissions
+  app.get("/api/users/:id/permissions", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const permissions = await storage.getUserPermissions(userId);
+      res.json(permissions);
+    } catch (error) {
+      console.error("Error fetching user permissions:", error);
+      res.status(500).json({ error: "Помилка отримання дозволів користувача" });
+    }
+  });
+
+  // Assign permission to user
+  app.post("/api/users/:userId/permissions/:permissionId", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const permissionId = parseInt(req.params.permissionId);
+      const { granted = true, grantor, expiresAt } = req.body;
+      
+      const userPermission = await storage.assignPermissionToUser(
+        userId, 
+        permissionId, 
+        granted, 
+        grantor, 
+        expiresAt ? new Date(expiresAt) : undefined
+      );
+      res.status(201).json(userPermission);
+    } catch (error) {
+      console.error("Error assigning permission to user:", error);
+      res.status(500).json({ error: "Помилка призначення дозволу користувачу" });
+    }
+  });
+
+  // Remove permission from user
+  app.delete("/api/users/:userId/permissions/:permissionId", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const permissionId = parseInt(req.params.permissionId);
+      
+      const success = await storage.removePermissionFromUser(userId, permissionId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Дозвіл не знайдено" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error removing permission from user:", error);
+      res.status(500).json({ error: "Помилка видалення дозволу користувача" });
+    }
+  });
+
+  // Check user permission
+  app.get("/api/users/:id/check-permission", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { module, action } = req.query;
+      
+      if (!module || !action) {
+        return res.status(400).json({ error: "Параметри module та action обов'язкові" });
+      }
+      
+      const hasPermission = await storage.checkUserPermission(userId, module as string, action as string);
+      res.json({ hasPermission });
+    } catch (error) {
+      console.error("Error checking user permission:", error);
+      res.status(500).json({ error: "Помилка перевірки дозволу користувача" });
+    }
+  });
+
+  // Get user accessible modules
+  app.get("/api/users/:id/accessible-modules", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const modules = await storage.getUserAccessibleModules(userId);
+      res.json(modules);
+    } catch (error) {
+      console.error("Error fetching user accessible modules:", error);
+      res.status(500).json({ error: "Помилка отримання доступних модулів користувача" });
     }
   });
 
