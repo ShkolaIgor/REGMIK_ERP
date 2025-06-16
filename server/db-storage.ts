@@ -5709,6 +5709,54 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(clients).orderBy(clients.name);
   }
 
+  async getClientsPaginated(page: number, limit: number, search?: string): Promise<{
+    clients: any[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const offset = (page - 1) * limit;
+    
+    // Базовий запит
+    let query = db.select().from(clients);
+    let countQuery = db.select({ count: sql<number>`count(*)` }).from(clients);
+    
+    // Додаємо пошук якщо є
+    if (search && search.trim()) {
+      const searchTerm = `%${search.trim()}%`;
+      const searchCondition = or(
+        ilike(clients.name, searchTerm),
+        ilike(clients.fullName, searchTerm),
+        ilike(clients.taxCode, searchTerm),
+        ilike(clients.phone, searchTerm),
+        ilike(clients.email, searchTerm)
+      );
+      
+      query = query.where(searchCondition);
+      countQuery = countQuery.where(searchCondition);
+    }
+    
+    // Отримуємо загальну кількість
+    const [{ count: total }] = await countQuery;
+    
+    // Отримуємо записи з пагінацією
+    const clientsData = await query
+      .orderBy(clients.name)
+      .limit(limit)
+      .offset(offset);
+    
+    const totalPages = Math.ceil(total / limit);
+    
+    return {
+      clients: clientsData,
+      total,
+      page,
+      limit,
+      totalPages
+    };
+  }
+
   async createClient(clientData: any): Promise<any> {
     const [client] = await db
       .insert(clients)

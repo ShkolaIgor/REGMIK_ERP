@@ -390,6 +390,13 @@ export interface IStorage {
 
   // Clients
   getClients(): Promise<Client[]>;
+  getClientsPaginated(page: number, limit: number, search?: string): Promise<{
+    clients: Client[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }>;
   getClient(id: number): Promise<Client | undefined>;
   createClient(client: InsertClient): Promise<Client>;
   updateClient(id: number, client: Partial<InsertClient>): Promise<Client | undefined>;

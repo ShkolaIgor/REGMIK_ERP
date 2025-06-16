@@ -99,13 +99,41 @@ export default function Clients() {
   const [selectedClientForContact, setSelectedClientForContact] = useState<string>("");
   const [isGlobalContactAdd, setIsGlobalContactAdd] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const fullNameInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: clients = [], isLoading } = useQuery<Client[]>({
-    queryKey: ["/api/clients"],
+  // Дебаунс для пошуку
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1); // Скидаємо на першу сторінку при пошуку
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const { data: clientsData, isLoading } = useQuery({
+    queryKey: ["/api/clients", currentPage, pageSize, debouncedSearch],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: pageSize.toString(),
+      });
+      if (debouncedSearch) {
+        params.append('search', debouncedSearch);
+      }
+      const response = await fetch(`/api/clients?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch clients');
+      return response.json();
+    },
   });
+
+  const clients = clientsData?.clients || [];
+  const totalPages = clientsData?.totalPages || 1;
+  const total = clientsData?.total || 0;
 
   // Завантаження типів клієнтів
   const { data: clientTypes = [] } = useQuery({

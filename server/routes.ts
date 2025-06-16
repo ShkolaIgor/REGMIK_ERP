@@ -4943,8 +4943,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Clients API
   app.get("/api/clients", async (req, res) => {
     try {
-      const clients = await storage.getClients();
-      res.json(clients);
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const search = req.query.search as string || '';
+      
+      const result = await storage.getClientsPaginated(page, limit, search);
+      res.json(result);
     } catch (error) {
       console.error("Failed to get clients:", error);
       res.status(500).json({ error: "Failed to get clients" });
