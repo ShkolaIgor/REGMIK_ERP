@@ -56,6 +56,7 @@ import { insertClientSchema, insertClientContactSchema, type Client, type Insert
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ClientForm } from "@/components/ClientForm";
+import { ClientXmlImport } from "@/components/ClientXmlImport";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
 
 // Розширена схема валідації для нової структури
@@ -317,6 +318,7 @@ export default function Clients() {
           </p>
         </div>
         <div className="flex gap-2">
+          <ClientXmlImport />
           <Dialog open={isContactDialogOpen} onOpenChange={setIsContactDialogOpen}>
             <DialogTrigger asChild>
               <Button

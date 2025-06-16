@@ -786,6 +786,7 @@ export const clients = pgTable("clients", {
   // Поля для синхронізації з зовнішніми системами
   externalId: varchar("external_id", { length: 100 }),
   source: varchar("source", { length: 20 }).default("manual"), // bitrix24, 1c, manual
+  carrierId: integer("carrier_id").references(() => carriers.id), // зв'язок з перевізником
   
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
@@ -916,6 +917,22 @@ export type ClientNovaPoshtaApiSettings = typeof clientNovaPoshtaApiSettings.$in
 export type InsertClientNovaPoshtaApiSettings = z.infer<typeof insertClientNovaPoshtaApiSettingsSchema>;
 export type ClientNovaPoshtaSettings = typeof clientNovaPoshtaSettings.$inferSelect;
 export type InsertClientNovaPoshtaSettings = z.infer<typeof insertClientNovaPoshtaSettingsSchema>;
+
+// XML Import schema для клієнтів
+export const xmlClientImportSchema = z.object({
+  CITY: z.string().optional(),
+  EDRPOU: z.string().optional(),
+  SKIT: z.string().optional(),
+  PREDPR: z.string().optional(),
+  NAME: z.string(),
+  DATE_CREATE: z.string().optional(),
+  ADDRESS_PHYS: z.string().optional(),
+  COMMENT: z.string().optional(),
+  ACTUAL: z.string().optional(),
+  NAME_TRANSPORT: z.string().optional(),
+});
+
+export type XmlClientImport = z.infer<typeof xmlClientImportSchema>;
 
 // Inventory Audits
 export const inventoryAudits = pgTable("inventory_audits", {
