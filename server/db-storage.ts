@@ -5728,9 +5728,7 @@ export class DatabaseStorage implements IStorage {
       const searchCondition = or(
         ilike(clients.name, searchTerm),
         ilike(clients.fullName, searchTerm),
-        ilike(clients.taxCode, searchTerm),
-        ilike(clients.phone, searchTerm),
-        ilike(clients.email, searchTerm)
+        ilike(clients.taxCode, searchTerm)
       );
       
       query = query.where(searchCondition);

@@ -576,15 +576,15 @@ export default function Clients() {
             className="pl-10"
           />
         </div>
-        {searchQuery && (
+        {debouncedSearch && (
           <p className="text-sm text-muted-foreground mt-2">
-            Знайдено: {filteredClients.length} з {clients.length} клієнтів
+            Знайдено: {total} клієнтів за запитом "{debouncedSearch}"
           </p>
         )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        {filteredClients.map((client: Client) => (
+        {clients.map((client: Client) => (
           <Card key={client.id}>
             <CardHeader className="pb-3">
               <div className="flex items-start space-x-3 mb-3">
