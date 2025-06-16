@@ -216,28 +216,13 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
 
   // Separate effect to handle carrier selection after carriers are loaded
   useEffect(() => {
-    console.log("Carriers effect triggered:", { 
-      carrierId: editingClient?.carrierId, 
-      carriersCount: Array.isArray(carriers) ? carriers.length : 0,
-      carriersData: carriers
-    });
-    
     if (editingClient?.carrierId && carriers && Array.isArray(carriers) && carriers.length > 0) {
       const carrierExists = carriers.find((c: any) => c.id === editingClient.carrierId);
-      console.log("Carrier exists:", carrierExists);
       
       if (carrierExists) {
-        console.log("Setting carrier after carriers loaded:", editingClient.carrierId);
         const carrierIdString = editingClient.carrierId.toString();
         form.setValue("carrierId", carrierIdString);
         setSelectedCarrierId(editingClient.carrierId);
-        console.log("Current form value after setting:", form.getValues("carrierId"));
-        
-        // Force trigger form update
-        setTimeout(() => {
-          form.setValue("carrierId", carrierIdString);
-          console.log("Force updated form value:", form.getValues("carrierId"));
-        }, 100);
       }
     }
   }, [carriers, editingClient?.carrierId, form]);
