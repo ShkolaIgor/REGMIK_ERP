@@ -5109,8 +5109,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
 
-          // Handle EDRPOU field - leave empty if it's "0" or empty
-          let taxCode = '';
+          // Handle EDRPOU field - convert "0" and empty to null/undefined for tax_code
+          let taxCode = null;
           if (row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '') {
             taxCode = row.EDRPOU.trim();
           }
@@ -5145,13 +5145,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               skipped++;
               continue;
             }
-          } else {
-            // If no tax code, allow multiple entries (don't check for duplicates)
-            // Only check by exact name match for update possibility
-            existingClient = existingClients.find(client => 
-              client.name === row.PREDPR && !client.taxCode
-            );
           }
+          // For empty tax_code, allow duplicates - don't check for existing clients
 
           // Build notes combining existing comment and carrier info
           let notes = row.COMMENT || '';
@@ -5202,7 +5197,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
             }
           } else {
-            // Create new client
+            // Create new client - always create for empty tax_code, check duplicates only for non-empty tax_code
             try {
               await storage.createClient(clientData);
               details.push({
@@ -5213,7 +5208,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               imported++;
             } catch (createError) {
               const createErrorMessage = createError instanceof Error ? createError.message : 'Unknown create error';
-              if (createErrorMessage.includes('duplicate key value violates unique constraint')) {
+              // Only show duplicate error for non-empty tax codes
+              if (createErrorMessage.includes('duplicate key value violates unique constraint') && taxCode) {
                 details.push({
                   name: row.PREDPR,
                   status: 'skipped',
