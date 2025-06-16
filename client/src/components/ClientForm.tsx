@@ -188,9 +188,11 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
 
         // Set Nova Poshta selections if editing
         if (editingClient.carrierId) {
+          console.log("Setting carrierId:", editingClient.carrierId);
           setSelectedCarrierId(editingClient.carrierId);
           // Explicitly set form value to ensure it's reflected in the UI
           form.setValue("carrierId", editingClient.carrierId);
+          console.log("Form carrierId value after setValue:", form.getValues("carrierId"));
         }
         
         // Load city data from API if cityRef exists
