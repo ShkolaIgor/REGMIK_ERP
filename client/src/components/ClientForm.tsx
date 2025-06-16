@@ -463,81 +463,135 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
                 {/* City Selection */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Місто</label>
-                  <div className="relative">
-                    <Input
-                      placeholder="Почніть вводити назву міста..."
-                      value={cityQuery}
-                      onChange={(e) => setCityQuery(e.target.value)}
-                      className="w-full"
-                    />
-                    {citiesLoading && (
-                      <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />
-                    )}
-                  </div>
-                  
-                  {/* Cities dropdown */}
-                  {cityQuery.length >= 2 && filteredCities.length > 0 && (
-                    <div className="border rounded-md max-h-48 overflow-y-auto bg-white z-10">
-                      {filteredCities.slice(0, 10).map((city: any) => (
-                        <div
-                          key={city.Ref}
-                          className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
-                          onClick={() => handleCitySelect(city)}
-                        >
-                          <div className="font-medium">{city.Description}</div>
-                          <div className="text-sm text-gray-500">
-                            {city.AreaDescription}, {city.RegionDescription}
-                          </div>
+                  {selectedCity ? (
+                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium">{selectedCity.Description}</p>
+                          <p className="text-sm text-gray-600">{selectedCity.AreaDescription}</p>
                         </div>
-                      ))}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedCity(null);
+                            setSelectedWarehouse(null);
+                            setCityQuery('');
+                            form.setValue("cityRef", "");
+                            form.setValue("warehouseRef", "");
+                          }}
+                        >
+                          Змінити
+                        </Button>
+                      </div>
                     </div>
-                  )}
-
-                  {selectedCity && (
-                    <div className="text-sm text-green-600">
-                      Обрано: {selectedCity.Description}
+                  ) : (
+                    <div className="relative">
+                      <Input
+                        placeholder="Введіть назву міста..."
+                        value={cityQuery}
+                        onChange={(e) => setCityQuery(e.target.value)}
+                        className="mt-2"
+                      />
+                      {citiesLoading && (
+                        <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Пошук міст...
+                        </div>
+                      )}
+                      {filteredCities.length > 0 && cityQuery.length >= 2 && !selectedCity && (
+                        <div className="mt-2 border border-gray-200 rounded-md bg-white max-h-48 overflow-y-auto">
+                          {filteredCities.map((city) => (
+                            <div
+                              key={city.Ref}
+                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                              onClick={() => handleCitySelect(city)}
+                            >
+                              <div className="font-medium text-sm">{city.Description}</div>
+                              <div className="text-xs text-gray-500">{city.AreaDescription}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {/* Дебагінг інформація */}
+                      {cityQuery.length >= 2 && !citiesLoading && (
+                        <div className="mt-2 text-xs text-gray-400">
+                          Знайдено: {filteredCities.length} міст для "{cityQuery}"
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
 
                 {/* Warehouse Selection */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Відділення</label>
-                  <div className="relative">
-                    <Input
-                      placeholder={selectedCity ? "Номер відділення або адреса" : "Спочатку оберіть місто"}
-                      value={warehouseQuery}
-                      onChange={(e) => setWarehouseQuery(e.target.value)}
-                      disabled={!selectedCity}
-                      className="w-full"
-                    />
-                    {warehousesLoading && (
-                      <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />
+                {selectedCity && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Відділення в місті {selectedCity.Description}
+                    </label>
+                    {warehousesLoading ? (
+                      <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Завантаження відділень...
+                      </div>
+                    ) : (
+                      <div>
+                        {selectedWarehouse ? (
+                          <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="font-medium">№{selectedWarehouse.Number}</p>
+                                <p className="text-sm text-gray-600">{selectedWarehouse.ShortAddress}</p>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedWarehouse(null);
+                                  setWarehouseQuery('');
+                                  form.setValue("warehouseRef", "");
+                                }}
+                              >
+                                Змінити
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="relative">
+                            <Input
+                              placeholder="Пошук по номеру відділення або адресі..."
+                              value={warehouseQuery}
+                              onChange={(e) => setWarehouseQuery(e.target.value)}
+                              className="mt-2"
+                            />
+                            {filteredWarehouses.length > 0 && (
+                              <div className="mt-2 border border-gray-200 rounded-md bg-white max-h-64 overflow-y-auto">
+                                {filteredWarehouses.map((warehouse: any) => (
+                                  <div
+                                    key={warehouse.Ref}
+                                    className="px-3 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                                    onClick={() => {
+                                      setSelectedWarehouse(warehouse);
+                                      setWarehouseQuery('');
+                                      form.setValue("warehouseRef", warehouse.Ref);
+                                    }}
+                                  >
+                                    <div className="flex justify-between">
+                                      <div>
+                                        <div className="font-medium">№{warehouse.Number}</div>
+                                        <div className="text-sm text-gray-600">{warehouse.ShortAddress}</div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
-
-                  {/* Warehouses dropdown */}
-                  {selectedCity && filteredWarehouses.length > 0 && (
-                    <div className="border rounded-md max-h-48 overflow-y-auto bg-white z-10">
-                      {filteredWarehouses.slice(0, 10).map((warehouse: any) => (
-                        <div
-                          key={warehouse.Ref}
-                          className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
-                          onClick={() => handleWarehouseSelect(warehouse)}
-                        >
-                          <div className="font-medium">№{warehouse.Number}</div>
-                          <div className="text-sm text-gray-500">{warehouse.ShortAddress}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {selectedWarehouse && (
-                    <div className="text-sm text-green-600">
-                      Обрано: №{selectedWarehouse.Number} - {selectedWarehouse.ShortAddress}
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
