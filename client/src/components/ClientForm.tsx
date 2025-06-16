@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 
 // Схема валідації з оновленими правилами для taxCode
 const formSchema = z.object({
@@ -467,7 +468,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
                   />
                   {citiesLoading && cityQuery.length >= 2 && (
                     <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                       Пошук міст...
                     </div>
                   )}
@@ -500,7 +501,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
                 </label>
                 {warehousesLoading ? (
                   <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     Завантаження відділень...
                   </div>
                 ) : (
