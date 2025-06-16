@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Loader2, MapPin, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -156,13 +156,15 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
       if (editingClient.carrierId) {
         setSelectedCarrierId(editingClient.carrierId);
       }
+      
+      // Load city data from API if cityRef exists
       if (editingClient.cityRef) {
-        // Find city by Ref (simplified)
-        setSelectedCity({ Ref: editingClient.cityRef });
+        loadCityByRef(editingClient.cityRef);
       }
-      if (editingClient.warehouseRef) {
-        // Find warehouse by Ref (simplified)
-        setSelectedWarehouse({ Ref: editingClient.warehouseRef });
+      
+      // Load warehouse data from API if warehouseRef exists
+      if (editingClient.warehouseRef && editingClient.cityRef) {
+        loadWarehouseByRef(editingClient.warehouseRef, editingClient.cityRef);
       }
     }
   }, [editingClient, form]);
@@ -597,24 +599,6 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
           </Card>
         )}
 
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Примітки</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Додаткова інформація про клієнта" 
-                  {...field}
-                  className="min-h-[100px]"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <div className="flex justify-between">
           <div className="flex gap-2">
             <Button type="submit" disabled={isLoading}>
@@ -642,6 +626,24 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
             </Button>
           )}
         </div>
+
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Примітки</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="Додаткова інформація про клієнта" 
+                  {...field}
+                  className="min-h-[100px]"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </form>
     </Form>
   );
