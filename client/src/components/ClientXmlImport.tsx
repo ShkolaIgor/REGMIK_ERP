@@ -10,8 +10,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Upload, FileText, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
-interface ImportResult {
-  success: boolean;
+interface ImportJob {
+  id: string;
+  status: 'processing' | 'completed' | 'failed';
+  progress: number;
   processed: number;
   imported: number;
   skipped: number;
@@ -21,14 +23,23 @@ interface ImportResult {
     status: 'imported' | 'updated' | 'skipped' | 'error';
     message?: string;
   }>;
+  totalRows: number;
+}
+
+interface ImportResponse {
+  success: boolean;
+  jobId?: string;
+  message?: string;
+  error?: string;
 }
 
 export function ClientXmlImport() {
   const [file, setFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState<ImportResult | null>(null);
+  const [job, setJob] = useState<ImportJob | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [jobId, setJobId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {

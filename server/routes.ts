@@ -5017,6 +5017,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // XML Import endpoint for clients
+  // Store import jobs in memory (in production, use Redis or database)
+  const importJobs = new Map<string, {
+    id: string;
+    status: 'processing' | 'completed' | 'failed';
+    progress: number;
+    processed: number;
+    imported: number;
+    skipped: number;
+    errors: string[];
+    details: Array<{
+      name: string;
+      status: 'imported' | 'updated' | 'skipped' | 'error';
+      message?: string;
+    }>;
+    totalRows: number;
+  }>();
+
+  // Generate unique job ID
+  function generateJobId(): string {
+    return `import_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  // Start XML import (returns job ID immediately)
   app.post("/api/clients/import-xml", upload.single('xmlFile'), async (req, res) => {
     try {
       if (!req.file) {
@@ -5026,320 +5049,341 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const xmlContent = req.file.buffer.toString('utf-8');
+      const jobId = generateJobId();
+      
+      // Initialize job
+      importJobs.set(jobId, {
+        id: jobId,
+        status: 'processing',
+        progress: 0,
+        processed: 0,
+        imported: 0,
+        skipped: 0,
+        errors: [],
+        details: [],
+        totalRows: 0
+      });
+
+      // Return job ID immediately
+      res.json({
+        success: true,
+        jobId,
+        message: "Import job started. Use the job ID to check progress."
+      });
+
+      // Process import asynchronously
+      processXmlImportAsync(jobId, req.file.buffer);
+
+    } catch (error) {
+      console.error("XML import error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to start XML import",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Check import job status
+  app.get("/api/clients/import-xml/:jobId/status", (req, res) => {
+    const { jobId } = req.params;
+    const job = importJobs.get(jobId);
+    
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        error: "Job not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      job
+    });
+  });
+
+  // Async import processing function
+  async function processXmlImportAsync(jobId: string, fileBuffer: Buffer) {
+    const job = importJobs.get(jobId);
+    if (!job) return;
+
+    try {
+      const xmlContent = fileBuffer.toString('utf-8');
       const parser = new xml2js.Parser({ 
         explicitArray: false,
-        mergeAttrs: true  // This merges attributes into the element object
+        mergeAttrs: true
       });
       
       const result = await parser.parseStringPromise(xmlContent);
       
       if (!result.DATAPACKET || !result.DATAPACKET.ROWDATA || !result.DATAPACKET.ROWDATA.ROW) {
-        return res.status(400).json({ 
-          success: false, 
-          error: "Invalid XML format. Expected DATAPACKET structure." 
-        });
+        job.status = 'failed';
+        job.errors.push("Invalid XML format. Expected DATAPACKET structure.");
+        return;
       }
 
       const rows = Array.isArray(result.DATAPACKET.ROWDATA.ROW) 
         ? result.DATAPACKET.ROWDATA.ROW 
         : [result.DATAPACKET.ROWDATA.ROW];
 
-      let imported = 0;
-      let skipped = 0;
-      let processed = 0;
-      const errors: string[] = [];
-      const details: Array<{
-        name: string;
-        status: 'imported' | 'updated' | 'skipped' | 'error';
-        message?: string;
-      }> = [];
-
-      // Get all carriers for matching by name
+      job.totalRows = rows.length;
+      
+      // Get all carriers for matching by name (once at start)
       const carriers = await storage.getCarriers();
+      const existingClients = await storage.getClients();
 
-      for (const row of rows) {
-        processed++;
+      // Process in batches to avoid memory issues and allow progress updates
+      const BATCH_SIZE = 50;
+      
+      for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+        const batch = rows.slice(i, i + BATCH_SIZE);
         
-        try {
-          if (!row.PREDPR) {
-            details.push({
-              name: row.NAME || 'Unknown',
+        for (const row of batch) {
+          try {
+            await processClientRow(row, job, carriers, existingClients);
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            job.details.push({
+              name: row.PREDPR || 'Unknown',
               status: 'error',
-              message: 'Missing required PREDPR field'
+              message: errorMessage
             });
-            errors.push(`Row ${processed}: Missing required PREDPR field`);
-            continue;
-          }
-
-          // Initialize variables
-          let carrierId: number | null = null;
-          let warehouseRef: string | null = null;
-          let carrierNote = '';
-          let warehouseNumber: string | null = null;
-          
-          // Find carrier by transport name and extract warehouse number
-          if (row.NAME_TRANSPORT) {
-            const transportName = row.NAME_TRANSPORT.toLowerCase();
-            
-            // Extract warehouse number from patterns like "Нова пошта №178"
-            const warehouseMatch = row.NAME_TRANSPORT.match(/№(\d+)/);
-            warehouseNumber = warehouseMatch ? warehouseMatch[1] : null;
-            
-            const foundCarrier = carriers.find(carrier => {
-              const carrierName = carrier.name.toLowerCase();
-              const altNames = carrier.alternativeNames || [];
-              
-              return carrierName.includes(transportName) || 
-                     transportName.includes(carrierName) ||
-                     altNames.some(alt => alt.toLowerCase().includes(transportName) || 
-                                         transportName.includes(alt.toLowerCase()));
-            });
-            
-            if (foundCarrier) {
-              carrierId = foundCarrier.id;
-            } else {
-              // If carrier not found, add transport info to notes
-              carrierNote = `Перевізник: ${row.NAME_TRANSPORT}`;
-            }
-          }
-
-          // Handle CITY field - find city_ref based on city name
-          let cityRef = null;
-          if (row.CITY) {
-            try {
-              const cityQuery = `
-                SELECT ref FROM nova_poshta_cities 
-                WHERE name ILIKE $1 
-                LIMIT 1
-              `;
-              const cityResult = await pool.query(cityQuery, [row.CITY.trim()]);
-              if (cityResult.rows.length > 0) {
-                cityRef = cityResult.rows[0].ref as string;
-              }
-            } catch (error) {
-              console.error('Error searching city:', error);
-            }
-          }
-
-          // Now search for warehouse in the found city (after cityRef is determined)
-          if (carrierId && warehouseNumber && cityRef) {
-            const carriers = await storage.getCarriers();
-            const foundCarrier = carriers.find(carrier => carrier.id === carrierId);
-            
-            if (foundCarrier && foundCarrier.name.toLowerCase().includes('пошта')) {
-              try {
-                const warehouseQuery = `
-                  SELECT ref FROM nova_poshta_warehouses 
-                  WHERE city_ref = $1 AND description LIKE $2 
-                  LIMIT 1
-                `;
-                const warehouseResult = await pool.query(warehouseQuery, [cityRef, `%№${warehouseNumber}:%`]);
-                if (warehouseResult.rows.length > 0) {
-                  warehouseRef = warehouseResult.rows[0].ref as string;
-                }
-              } catch (error) {
-                console.error('Error searching warehouse in city:', error);
-              }
-            }
-          }
-
-          // Handle EDRPOU field - validate length and convert incorrect to null
-          let taxCode = null;
-          if (row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '') {
-            const cleanCode = row.EDRPOU.trim().replace(/\D/g, '');
-            // Only accept codes with exactly 8 or 10 digits
-            if (cleanCode.length === 8 || cleanCode.length === 10) {
-              taxCode = cleanCode;
-            }
-            // If length is incorrect, taxCode remains null (imported as empty)
-          }
-
-          // Determine client type - default to Юридична особа if no valid ЄДРПОУ
-          let clientTypeId = 1; // Default to Юридична особа
-          if (taxCode) {
-            if (taxCode.length === 8) {
-              clientTypeId = 1; // Юридична особа (8 digits ЄДРПОУ)
-            } else if (taxCode.length === 10) {
-              clientTypeId = 2; // Фізична особа (10 digits ІПН)
-            }
-          }
-
-          // Check for existing clients with same tax code or external_id
-          const existingClients = await storage.getClients();
-          let existingClient = null;
-          
-          // Check for duplicate external_id first (always prevent duplicates)
-          if (row.ID_PREDPR) {
-            existingClient = existingClients.find(client => 
-              client.externalId === row.ID_PREDPR
-            );
-            
-            if (existingClient) {
-              details.push({
-                name: row.PREDPR,
-                status: 'skipped',
-                message: `Клієнт з external_id ${row.ID_PREDPR} вже існує`
-              });
-              skipped++;
-              continue;
-            }
+            job.errors.push(`Row ${job.processed + 1} (${row.PREDPR}): ${errorMessage}`);
           }
           
-          if (taxCode) {
-            // If tax code provided, check for duplicates
-            existingClient = existingClients.find(client => 
-              client.taxCode === taxCode
-            );
-            
-            if (existingClient) {
-              details.push({
-                name: row.PREDPR,
-                status: 'skipped',
-                message: `Клієнт з ЄДРПОУ/ІПН ${taxCode} вже існує`
-              });
-              skipped++;
-              continue;
-            }
-          }
-          // For empty tax_code, allow duplicates - don't check for existing clients
-
-          // Build notes combining existing comment and carrier info
-          let notes = row.COMMENT || '';
-          if (carrierNote) {
-            notes = notes ? `${notes}. ${carrierNote}` : carrierNote;
-          }
-
-          // Parse DATE_CREATE if provided (format: "04.06.2025")
-          let createdAt = null;
-          if (row.DATE_CREATE) {
-            try {
-              const dateStr = row.DATE_CREATE.trim();
-              // Parse Ukrainian date format DD.MM.YYYY
-              const dateParts = dateStr.split('.');
-              if (dateParts.length === 3) {
-                const day = parseInt(dateParts[0], 10);
-                const month = parseInt(dateParts[1], 10) - 1; // JavaScript months are 0-indexed
-                const year = parseInt(dateParts[2], 10);
-                
-                // Create date with time set to 8:00 AM
-                createdAt = new Date(year, month, day, 8, 0, 0);
-                
-                // Validate the date
-                if (isNaN(createdAt.getTime())) {
-                  createdAt = null;
-                }
-              }
-            } catch (error) {
-              createdAt = null;
-            }
-          }
-
-          const clientData = {
-            taxCode: taxCode,
-            name: row.PREDPR,
-            fullName: row.NAME || row.PREDPR,
-            clientTypeId: clientTypeId,
-            physicalAddress: row.ADDRESS_PHYS || null,
-            notes: notes || null,
-            isActive: row.ACTUAL === 'T' || row.ACTUAL === 'true',
-            source: 'xml_import',
-            carrierId: carrierId,
-            discount: row.SKIT ? parseFloat(row.SKIT.replace(',', '.')) : 0,
-            externalId: row.ID_PREDPR || null,
-            warehouseRef: warehouseRef,
-            cityRef: cityRef,
-            createdAt: createdAt,
-          };
-
-          if (existingClient) {
-            // Update existing client
-            try {
-              await storage.updateClient(existingClient.id.toString(), clientData);
-              details.push({
-                name: row.PREDPR,
-                status: 'updated',
-                message: carrierId ? `Updated with carrier: ${carriers.find(c => c.id === carrierId)?.name}` : 'Updated'
-              });
-              imported++;
-            } catch (updateError) {
-              const updateErrorMessage = updateError instanceof Error ? updateError.message : 'Unknown update error';
-              if (updateErrorMessage.includes('duplicate key value violates unique constraint')) {
-                details.push({
-                  name: row.PREDPR,
-                  status: 'skipped',
-                  message: 'Duplicate tax code - skipped'
-                });
-              } else {
-                details.push({
-                  name: row.PREDPR,
-                  status: 'error',
-                  message: updateErrorMessage
-                });
-                errors.push(`Row ${processed} (${row.PREDPR}): ${updateErrorMessage}`);
-              }
-            }
-          } else {
-            // Create new client - always create for empty tax_code, check duplicates only for non-empty tax_code
-            try {
-              await storage.createClient(clientData);
-              details.push({
-                name: row.PREDPR,
-                status: 'imported',
-                message: carrierId ? `Linked to carrier: ${carriers.find(c => c.id === carrierId)?.name}` : 'Imported'
-              });
-              imported++;
-            } catch (createError) {
-              const createErrorMessage = createError instanceof Error ? createError.message : 'Unknown create error';
-              // Only show duplicate error for non-empty tax codes
-              if (createErrorMessage.includes('duplicate key value violates unique constraint') && taxCode) {
-                details.push({
-                  name: row.PREDPR,
-                  status: 'skipped',
-                  message: 'Duplicate tax code - skipped'
-                });
-              } else {
-                details.push({
-                  name: row.PREDPR,
-                  status: 'error',
-                  message: createErrorMessage
-                });
-                errors.push(`Row ${processed} (${row.PREDPR}): ${createErrorMessage}`);
-              }
-            }
-          }
-
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          details.push({
-            name: row.PREDPR || 'Unknown',
-            status: 'error',
-            message: errorMessage
-          });
-          errors.push(`Row ${processed} (${row.PREDPR}): ${errorMessage}`);
+          job.processed++;
+          job.progress = Math.round((job.processed / job.totalRows) * 100);
         }
+
+        // Small delay between batches to prevent blocking
+        await new Promise(resolve => setTimeout(resolve, 10));
       }
 
-      skipped = processed - imported - errors.length;
+      job.skipped = job.processed - job.imported - job.errors.length;
+      job.status = 'completed';
+      job.progress = 100;
 
-      res.json({
-        success: errors.length === 0,
-        processed,
-        imported,
-        skipped,
-        errors,
-        details
-      });
+      // Clean up job after 5 minutes
+      setTimeout(() => {
+        importJobs.delete(jobId);
+      }, 5 * 60 * 1000);
 
     } catch (error) {
-      console.error("XML import error:", error);
-      res.status(500).json({ 
-        success: false, 
-        error: "Failed to process XML file",
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
+      console.error("Async XML import error:", error);
+      job.status = 'failed';
+      job.errors.push(error instanceof Error ? error.message : 'Unknown error');
     }
-  });
+  }
+
+  // Process individual client row
+  async function processClientRow(row: any, job: any, carriers: any[], existingClients: any[]) {
+    if (!row.PREDPR) {
+      job.details.push({
+        name: row.NAME || 'Unknown',
+        status: 'error',
+        message: 'Missing required PREDPR field'
+      });
+      job.errors.push(`Row ${job.processed + 1}: Missing required PREDPR field`);
+      return;
+    }
+
+    // Initialize variables
+    let carrierId: number | null = null;
+    let warehouseRef: string | null = null;
+    let carrierNote = '';
+    let warehouseNumber: string | null = null;
+    
+    // Find carrier by transport name and extract warehouse number
+    if (row.NAME_TRANSPORT) {
+      const transportName = row.NAME_TRANSPORT.toLowerCase();
+      
+      // Extract warehouse number from patterns like "Нова пошта №178"
+      const warehouseMatch = row.NAME_TRANSPORT.match(/№(\d+)/);
+      warehouseNumber = warehouseMatch ? warehouseMatch[1] : null;
+      
+      const foundCarrier = carriers.find(carrier => {
+        const carrierName = carrier.name.toLowerCase();
+        const altNames = carrier.alternativeNames || [];
+        
+        return carrierName.includes(transportName) || 
+               transportName.includes(carrierName) ||
+               altNames.some(alt => alt.toLowerCase().includes(transportName) || 
+                                   transportName.includes(alt.toLowerCase()));
+      });
+      
+      if (foundCarrier) {
+        carrierId = foundCarrier.id;
+      } else {
+        carrierNote = `Перевізник: ${row.NAME_TRANSPORT}`;
+      }
+    }
+
+    // Handle CITY field - find city_ref based on city name
+    let cityRef = null;
+    if (row.CITY) {
+      try {
+        const cityQuery = `
+          SELECT ref FROM nova_poshta_cities 
+          WHERE name ILIKE $1 
+          LIMIT 1
+        `;
+        const cityResult = await pool.query(cityQuery, [row.CITY.trim()]);
+        if (cityResult.rows.length > 0) {
+          cityRef = cityResult.rows[0].ref as string;
+        }
+      } catch (error) {
+        console.error('Error searching city:', error);
+      }
+    }
+
+    // Search for warehouse in the found city
+    if (carrierId && warehouseNumber && cityRef) {
+      const foundCarrier = carriers.find(carrier => carrier.id === carrierId);
+      
+      if (foundCarrier && foundCarrier.name.toLowerCase().includes('пошта')) {
+        try {
+          const warehouseQuery = `
+            SELECT ref FROM nova_poshta_warehouses 
+            WHERE city_ref = $1 AND description LIKE $2 
+            LIMIT 1
+          `;
+          const warehouseResult = await pool.query(warehouseQuery, [cityRef, `%№${warehouseNumber}:%`]);
+          if (warehouseResult.rows.length > 0) {
+            warehouseRef = warehouseResult.rows[0].ref as string;
+          }
+        } catch (error) {
+          console.error('Error searching warehouse in city:', error);
+        }
+      }
+    }
+
+    // Handle EDRPOU field - validate length and convert incorrect to null
+    let taxCode = null;
+    if (row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '') {
+      const cleanCode = row.EDRPOU.trim().replace(/\D/g, '');
+      if (cleanCode.length === 8 || cleanCode.length === 10) {
+        taxCode = cleanCode;
+      }
+    }
+
+    // Determine client type
+    let clientTypeId = 1; // Default to Юридична особа
+    if (taxCode) {
+      if (taxCode.length === 8) {
+        clientTypeId = 1; // Юридична особа
+      } else if (taxCode.length === 10) {
+        clientTypeId = 2; // Фізична особа
+      }
+    }
+
+    // Check for existing clients
+    let existingClient = null;
+    
+    // Check for duplicate external_id first
+    if (row.ID_PREDPR) {
+      existingClient = existingClients.find(client => 
+        client.externalId === row.ID_PREDPR
+      );
+      
+      if (existingClient) {
+        job.details.push({
+          name: row.PREDPR,
+          status: 'skipped',
+          message: `Клієнт з external_id ${row.ID_PREDPR} вже існує`
+        });
+        job.skipped++;
+        return;
+      }
+    }
+    
+    if (taxCode) {
+      existingClient = existingClients.find(client => 
+        client.taxCode === taxCode
+      );
+      
+      if (existingClient) {
+        job.details.push({
+          name: row.PREDPR,
+          status: 'skipped',
+          message: `Клієнт з ЄДРПОУ/ІПН ${taxCode} вже існує`
+        });
+        job.skipped++;
+        return;
+      }
+    }
+
+    // Build notes
+    let notes = row.COMMENT || '';
+    if (carrierNote) {
+      notes = notes ? `${notes}. ${carrierNote}` : carrierNote;
+    }
+
+    // Parse DATE_CREATE
+    let createdAt = null;
+    if (row.DATE_CREATE) {
+      try {
+        const dateStr = row.DATE_CREATE.trim();
+        const dateParts = dateStr.split('.');
+        if (dateParts.length === 3) {
+          const day = parseInt(dateParts[0], 10);
+          const month = parseInt(dateParts[1], 10) - 1;
+          const year = parseInt(dateParts[2], 10);
+          
+          createdAt = new Date(year, month, day, 8, 0, 0);
+          
+          if (isNaN(createdAt.getTime())) {
+            createdAt = null;
+          }
+        }
+      } catch (error) {
+        createdAt = null;
+      }
+    }
+
+    const clientData = {
+      taxCode: taxCode,
+      name: row.PREDPR,
+      fullName: row.NAME || row.PREDPR,
+      clientTypeId: clientTypeId,
+      physicalAddress: row.ADDRESS_PHYS || null,
+      notes: notes || null,
+      isActive: row.ACTUAL === 'T' || row.ACTUAL === 'true',
+      source: 'xml_import',
+      carrierId: carrierId,
+      discount: row.SKIT ? parseFloat(row.SKIT.replace(',', '.')) : 0,
+      externalId: row.ID_PREDPR || null,
+      warehouseRef: warehouseRef,
+      cityRef: cityRef,
+      createdAt: createdAt,
+    };
+
+    try {
+      await storage.createClient(clientData);
+      job.details.push({
+        name: row.PREDPR,
+        status: 'imported',
+        message: carrierId ? `Linked to carrier: ${carriers.find(c => c.id === carrierId)?.name}` : 'Imported'
+      });
+      job.imported++;
+    } catch (createError) {
+      const createErrorMessage = createError instanceof Error ? createError.message : 'Unknown create error';
+      if (createErrorMessage.includes('duplicate key value violates unique constraint') && taxCode) {
+        job.details.push({
+          name: row.PREDPR,
+          status: 'skipped',
+          message: 'Duplicate tax code - skipped'
+        });
+        job.skipped++;
+      } else {
+        job.details.push({
+          name: row.PREDPR,
+          status: 'error',
+          message: createErrorMessage
+        });
+        job.errors.push(`Row ${job.processed + 1} (${row.PREDPR}): ${createErrorMessage}`);
+      }
+    }
+  }
 
   // Client Nova Poshta Settings API
   app.get("/api/clients/:clientId/nova-poshta-settings", async (req, res) => {
