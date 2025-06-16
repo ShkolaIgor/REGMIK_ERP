@@ -62,15 +62,6 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
   const [selectedCity, setSelectedCity] = useState<any>(null);
   const [selectedWarehouse, setSelectedWarehouse] = useState<any>(null);
 
-  // Determine if Nova Poshta carrier is selected
-  const selectedCarrier = (carriers as any[])?.find((carrier: any) => carrier.id === selectedCarrierId);
-  const isNovaPoshtaCarrier = selectedCarrier ? 
-    selectedCarrier.name.toLowerCase().includes('пошта') || 
-    selectedCarrier.name.toLowerCase().includes('nova poshta') ||
-    (selectedCarrier.alternativeNames || []).some((altName: string) => 
-      altName && altName.toLowerCase().includes('пошта')
-    ) : false;
-
   // Nova Poshta data queries
   const { data: cities = [], isLoading: citiesLoading } = useQuery({
     queryKey: ["/api/nova-poshta/cities", cityQuery],
@@ -79,7 +70,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
       if (!response.ok) throw new Error('Failed to fetch cities');
       return response.json();
     },
-    enabled: cityQuery.length >= 2 && isNovaPoshtaCarrier && selectedCarrierId,
+    enabled: cityQuery.length >= 2 && selectedCarrierId === 4,
     staleTime: 0, // Відключаємо кеш для правильного пошуку
     gcTime: 0, // Видаляємо кеш одразу після використання
   });
@@ -87,7 +78,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
   const { data: warehouses, isLoading: warehousesLoading } = useQuery({
     queryKey: ["/api/nova-poshta/warehouses", selectedCity?.Ref],
     queryFn: () => fetch(`/api/nova-poshta/warehouses/${selectedCity?.Ref}`).then(res => res.json()),
-    enabled: !!selectedCity?.Ref && isNovaPoshtaCarrier && selectedCarrierId,
+    enabled: !!selectedCity?.Ref && selectedCarrierId === 4,
   });
 
   // Filter cities and warehouses
