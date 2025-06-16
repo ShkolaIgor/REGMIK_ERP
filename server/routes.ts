@@ -5035,13 +5035,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         processed++;
         
         try {
-          if (!row.NAME) {
+          if (!row.PREDPR) {
             details.push({
-              name: row.PREDPR || 'Unknown',
+              name: row.NAME || 'Unknown',
               status: 'error',
-              message: 'Missing required NAME field'
+              message: 'Missing required PREDPR field'
             });
-            errors.push(`Row ${processed}: Missing required NAME field`);
+            errors.push(`Row ${processed}: Missing required PREDPR field`);
             continue;
           }
 
@@ -5096,7 +5096,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const existingClients = await storage.getClients();
           const existingClient = existingClients.find(client => 
             (row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '' && client.taxCode === row.EDRPOU.trim()) ||
-            client.name === row.NAME
+            client.name === row.PREDPR
           );
 
           // Build notes combining existing comment and carrier info
@@ -5105,12 +5105,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             notes = notes ? `${notes}. ${carrierNote}` : carrierNote;
           }
 
-          // Handle EDRPOU field - skip if it's "0" or empty, generate unique ID if missing
-          let taxCode;
+          // Handle EDRPOU field - leave empty if it's "0" or empty
+          let taxCode = '';
           if (row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '') {
             taxCode = row.EDRPOU.trim();
-          } else {
-            taxCode = `IMPORT_${Date.now()}_${processed}`;
           }
 
           // Determine client type based on tax code length
@@ -5130,8 +5128,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           const clientData = {
             taxCode: taxCode,
-            name: row.NAME,
-            fullName: row.PREDPR || row.NAME,
+            name: row.PREDPR,
+            fullName: row.NAME || row.PREDPR,
             clientTypeId: clientTypeId,
             physicalAddress: row.ADDRESS_PHYS || null,
             notes: notes || null,
@@ -5147,7 +5145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Update existing client
             await storage.updateClient(existingClient.id.toString(), clientData);
             details.push({
-              name: row.NAME,
+              name: row.PREDPR,
               status: 'updated',
               message: carrierId ? `Updated with carrier: ${carriers.find(c => c.id === carrierId)?.name}` : 'Updated'
             });
@@ -5156,7 +5154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Create new client
             await storage.createClient(clientData);
             details.push({
-              name: row.NAME,
+              name: row.PREDPR,
               status: 'imported',
               message: carrierId ? `Linked to carrier: ${carriers.find(c => c.id === carrierId)?.name}` : 'Imported'
             });
@@ -5166,11 +5164,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           details.push({
-            name: row.NAME || 'Unknown',
+            name: row.PREDPR || 'Unknown',
             status: 'error',
             message: errorMessage
           });
-          errors.push(`Row ${processed} (${row.NAME}): ${errorMessage}`);
+          errors.push(`Row ${processed} (${row.PREDPR}): ${errorMessage}`);
         }
       }
 
