@@ -227,6 +227,9 @@ export default function Clients() {
         title: "Успіх",
         description: "Клієнта видалено успішно",
       });
+      // Закриваємо форму після успішного видалення
+      setIsDialogOpen(false);
+      setEditingClient(null);
     },
     onError: (error: any) => {
       toast({

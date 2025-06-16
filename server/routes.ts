@@ -5176,22 +5176,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           if (existingClient) {
             // Update existing client
-            await storage.updateClient(existingClient.id.toString(), clientData);
-            details.push({
-              name: row.PREDPR,
-              status: 'updated',
-              message: carrierId ? `Updated with carrier: ${carriers.find(c => c.id === carrierId)?.name}` : 'Updated'
-            });
-            imported++;
+            try {
+              await storage.updateClient(existingClient.id.toString(), clientData);
+              details.push({
+                name: row.PREDPR,
+                status: 'updated',
+                message: carrierId ? `Updated with carrier: ${carriers.find(c => c.id === carrierId)?.name}` : 'Updated'
+              });
+              imported++;
+            } catch (updateError) {
+              const updateErrorMessage = updateError instanceof Error ? updateError.message : 'Unknown update error';
+              if (updateErrorMessage.includes('duplicate key value violates unique constraint')) {
+                details.push({
+                  name: row.PREDPR,
+                  status: 'skipped',
+                  message: 'Duplicate tax code - skipped'
+                });
+              } else {
+                details.push({
+                  name: row.PREDPR,
+                  status: 'error',
+                  message: updateErrorMessage
+                });
+                errors.push(`Row ${processed} (${row.PREDPR}): ${updateErrorMessage}`);
+              }
+            }
           } else {
             // Create new client
-            await storage.createClient(clientData);
-            details.push({
-              name: row.PREDPR,
-              status: 'imported',
-              message: carrierId ? `Linked to carrier: ${carriers.find(c => c.id === carrierId)?.name}` : 'Imported'
-            });
-            imported++;
+            try {
+              await storage.createClient(clientData);
+              details.push({
+                name: row.PREDPR,
+                status: 'imported',
+                message: carrierId ? `Linked to carrier: ${carriers.find(c => c.id === carrierId)?.name}` : 'Imported'
+              });
+              imported++;
+            } catch (createError) {
+              const createErrorMessage = createError instanceof Error ? createError.message : 'Unknown create error';
+              if (createErrorMessage.includes('duplicate key value violates unique constraint')) {
+                details.push({
+                  name: row.PREDPR,
+                  status: 'skipped',
+                  message: 'Duplicate tax code - skipped'
+                });
+              } else {
+                details.push({
+                  name: row.PREDPR,
+                  status: 'error',
+                  message: createErrorMessage
+                });
+                errors.push(`Row ${processed} (${row.PREDPR}): ${createErrorMessage}`);
+              }
+            }
           }
 
         } catch (error) {

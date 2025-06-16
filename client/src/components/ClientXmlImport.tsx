@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, FileText, CheckCircle, XCircle, AlertCircle } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface ImportResult {
   success: boolean;
@@ -78,6 +78,9 @@ export function ClientXmlImport() {
       setProgress(100);
 
       setResult(response);
+      
+      // Оновлюємо список клієнтів
+      await queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
       
       if (response.success) {
         toast({
