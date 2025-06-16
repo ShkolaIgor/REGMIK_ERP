@@ -134,15 +134,20 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
         warehouseRef: editingClient.warehouseRef || ""
       });
 
-      // Set Nova Poshta state
+      // Set Nova Poshta state immediately
       console.log("Ініціалізація перевізника:", editingClient.carrierId);
-      if (editingClient.carrierId) {
-        setSelectedCarrierId(editingClient.carrierId);
+      if (editingClient.carrierId === 4) { // Nova Poshta carrier ID
+        setSelectedCarrierId(4);
+        if (editingClient.cityRef) {
+          // Initialize with empty query first, will be set by cityByRef query
+          setCityQuery("");
+        }
       } else {
-        setSelectedCarrierId(undefined);
-      }
-      if (editingClient.cityRef) {
-        setCityQuery(""); // Will be set when cities load
+        setSelectedCarrierId(editingClient.carrierId || undefined);
+        setSelectedCity(null);
+        setSelectedWarehouse(null);
+        setCityQuery('');
+        setWarehouseQuery('');
       }
     }
   }, [editingClient, form]);
@@ -616,19 +621,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
           )}
         />
 
-        {editingClient && onDelete && (
-          <div className="flex justify-center py-4">
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => onDelete(editingClient.id.toString())}
-              className="flex items-center space-x-2"
-            >
-              <Trash2 className="h-4 w-4" />
-              <span>Видалити клієнта</span>
-            </Button>
-          </div>
-        )}
+
 
         <FormField
           control={form.control}
@@ -650,13 +643,28 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
           )}
         />
 
-        <div className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={onCancel} type="button">
-            Скасувати
-          </Button>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Збереження..." : editingClient ? "Оновити" : "Створити"}
-          </Button>
+        <div className="flex justify-between">
+          <div>
+            {editingClient && onDelete && (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => onDelete(editingClient.id.toString())}
+                className="flex items-center space-x-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>Видалити</span>
+              </Button>
+            )}
+          </div>
+          <div className="flex space-x-2">
+            <Button variant="outline" onClick={onCancel} type="button">
+              Скасувати
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Збереження..." : editingClient ? "Оновити" : "Створити"}
+            </Button>
+          </div>
         </div>
       </form>
     </Form>
