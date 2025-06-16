@@ -62,7 +62,7 @@ import { UkrainianDate } from "@/components/ui/ukrainian-date";
 // Розширена схема валідації для нової структури
 const formSchema = insertClientSchema.extend({
   taxCode: z.string().min(1, "ЄДРПОУ/ІПН обов'язковий").max(20, "Максимум 20 символів"),
-  type: z.enum(["individual", "organization"]),
+  clientTypeId: z.number().min(1, "Тип клієнта обов'язковий"),
   name: z.string().min(1, "Скорочена назва обов'язкова"),
   fullName: z.string().optional(),
   legalAddress: z.string().optional(),
@@ -104,6 +104,11 @@ export default function Clients() {
     queryKey: ["/api/clients"],
   });
 
+  // Завантаження типів клієнтів
+  const { data: clientTypes = [] } = useQuery({
+    queryKey: ['/api/client-types'],
+  });
+
   // Фільтрація клієнтів за пошуковим запитом
   const filteredClients = clients.filter(client => {
     if (!searchQuery) return true;
@@ -128,7 +133,7 @@ export default function Clients() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       taxCode: "",
-      type: "organization",
+      clientTypeId: 1, // За замовчуванням "Юридична особа"
       name: "",
       fullName: "",
       legalAddress: "",
@@ -136,8 +141,6 @@ export default function Clients() {
       addressesMatch: false,
       discount: "0.00",
       notes: "",
-      novaPoshtaApiKey: "",
-      enableThirdPartyShipping: false,
       isActive: true,
     },
   });
@@ -549,15 +552,21 @@ export default function Clients() {
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-start space-x-3 flex-1 min-w-0">
-                  {client.type === "organization" ? (
-                    <Building2 className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                  ) : (
-                    <User className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                  )}
+                  {(() => {
+                    const clientType = (clientTypes as any[])?.find((type: any) => type.id === client.clientTypeId);
+                    return clientType?.name === "Юридична особа" ? (
+                      <Building2 className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    ) : (
+                      <User className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    );
+                  })()}
                   <div className="min-w-0 flex-1">
                     <CardTitle className="text-lg leading-tight truncate">{client.name}</CardTitle>
                     <CardDescription className="text-sm mt-1">
-                      {client.type === "organization" ? "ЄДРПОУ" : "ІПН"}: <span className="font-bold text-base text-foreground">{client.taxCode}</span>
+                      {(() => {
+                        const clientType = (clientTypes as any[])?.find((type: any) => type.id === client.clientTypeId);
+                        return clientType?.name === "Юридична особа" ? "ЄДРПОУ" : "ІПН";
+                      })()}: <span className="font-bold text-base text-foreground">{client.taxCode}</span>
                     </CardDescription>
                   </div>
                 </div>
