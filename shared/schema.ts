@@ -88,6 +88,16 @@ export const roles = pgTable("roles", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Довідник видів клієнтів та постачальників
+export const clientTypes = pgTable("client_types", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Модулі системи для контролю доступу
 export const systemModules = pgTable("system_modules", {
   id: serial("id").primaryKey(),
@@ -650,6 +660,7 @@ export const costCalculations = pgTable("cost_calculations", {
 export const suppliers = pgTable("suppliers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  clientTypeId: integer("client_type_id").references(() => clientTypes.id).notNull(), // зв'язок з видом постачальника
   contactPerson: text("contact_person"),
   email: text("email"),
   phone: text("phone"),
@@ -771,7 +782,7 @@ export const clients = pgTable("clients", {
   taxCode: varchar("tax_code", { length: 50 }).notNull().unique(), // ЄДРПОУ або ІПН
   name: varchar("name", { length: 255 }).notNull(), // Скорочена назва
   fullName: varchar("full_name", { length: 500 }),  // Повна назва
-  type: varchar("type", { length: 50 }).notNull().default("individual"), // individual, organization
+  clientTypeId: integer("client_type_id").references(() => clientTypes.id).notNull(), // зв'язок з видом клієнта
   
   // Адреси
   legalAddress: text("legal_address"), // Юридична адреса
@@ -2395,5 +2406,15 @@ export const insertUpdatedUserSchema = createInsertSchema(users).omit({
 
 export type User = typeof users.$inferSelect;
 export type InsertUpdatedUser = z.infer<typeof insertUpdatedUserSchema>;
+
+// Client Types schemas and types
+export const insertClientTypeSchema = createInsertSchema(clientTypes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ClientType = typeof clientTypes.$inferSelect;
+export type InsertClientType = z.infer<typeof insertClientTypeSchema>;
 
 
