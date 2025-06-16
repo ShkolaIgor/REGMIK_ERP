@@ -64,12 +64,12 @@ const validateTaxCodeAndType = (taxCode: string, clientTypeId: number): string |
 // Розширена схема валідації
 const formSchema = insertClientSchema.extend({
   taxCode: z.string()
-    .min(1, "ІПН обов'язковий")
-    .max(10, "Максимум 10 символів")
+    .optional()
     .refine((val) => {
+      if (!val || val.trim() === '') return true; // Optional field
       const cleanCode = val.replace(/\D/g, '');
-      return cleanCode.length === 10;
-    }, "Код повинен містити рівно 10 цифр (ІПН)"),
+      return cleanCode.length === 8 || cleanCode.length === 10;
+    }, "Код повинен містити 8 цифр (ЄДРПОУ) або 10 цифр (ІПН)"),
   clientTypeId: z.number().min(1, "Тип клієнта обов'язковий"),
   name: z.string().min(1, "Скорочена назва обов'язкова"),
   fullName: z.string().optional(),
@@ -207,7 +207,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
         
         toast({
           title: "Тип клієнта встановлено автоматично",
-          description: `10-значний код (ІПН) відповідає типу: ${clientType?.name}`,
+          description: `${cleanCode.length === 8 ? '8-значний код (ЄДРПОУ)' : '10-значний код (ІПН)'} відповідає типу: ${clientType?.name}`,
           duration: 4000,
         });
       }
@@ -221,7 +221,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
         
         toast({
           title: "Можлива невідповідність типу клієнта",
-          description: `10-значний код (ІПН) зазвичай відповідає іншому типу клієнта`,
+          description: `${cleanCode.length === 8 ? '8-значний код (ЄДРПОУ)' : '10-значний код (ІПН)'} зазвичай відповідає іншому типу клієнта`,
           variant: "destructive",
           duration: 5000,
         });
