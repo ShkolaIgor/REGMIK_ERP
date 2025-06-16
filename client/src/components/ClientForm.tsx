@@ -43,10 +43,8 @@ import { insertClientSchema, type Client } from "@shared/schema";
 // Функція для визначення можливих типів клієнта за кодом
 const getPossibleClientTypes = (taxCode: string): number[] => {
   const cleanCode = taxCode.replace(/\D/g, ''); // Видаляємо всі не-цифри
-  if (cleanCode.length === 8) {
-    return [1, 3]; // Юридична особа або Відокремлений підрозділ (ЄДРПОУ)
-  } else if (cleanCode.length === 10) {
-    return [2]; // Фізична особа (ІПН)
+  if (cleanCode.length === 10) {
+    return [2]; // Фізична особа (ІПН - тільки 10 цифр)
   }
   return [];
 };
@@ -56,9 +54,7 @@ const validateTaxCodeAndType = (taxCode: string, clientTypeId: number): string |
   const possibleTypes = getPossibleClientTypes(taxCode);
   if (possibleTypes.length > 0 && !possibleTypes.includes(clientTypeId)) {
     const cleanCode = taxCode.replace(/\D/g, '');
-    if (cleanCode.length === 8) {
-      return "8-значний код (ЄДРПОУ) відповідає юридичній особі або відокремленому підрозділу";
-    } else if (cleanCode.length === 10) {
+    if (cleanCode.length === 10) {
       return "10-значний код (ІПН) відповідає фізичній особі";
     }
   }
@@ -68,12 +64,12 @@ const validateTaxCodeAndType = (taxCode: string, clientTypeId: number): string |
 // Розширена схема валідації
 const formSchema = insertClientSchema.extend({
   taxCode: z.string()
-    .min(1, "ЄДРПОУ/ІПН обов'язковий")
-    .max(50, "Максимум 50 символів")
+    .min(1, "ІПН обов'язковий")
+    .max(10, "Максимум 10 символів")
     .refine((val) => {
       const cleanCode = val.replace(/\D/g, '');
-      return cleanCode.length === 8 || cleanCode.length === 10 || cleanCode.length === 0;
-    }, "Код повинен містити 8 цифр (ЄДРПОУ) або 10 цифр (ІПН)"),
+      return cleanCode.length === 10;
+    }, "Код повинен містити рівно 10 цифр (ІПН)"),
   clientTypeId: z.number().min(1, "Тип клієнта обов'язковий"),
   name: z.string().min(1, "Скорочена назва обов'язкова"),
   fullName: z.string().optional(),

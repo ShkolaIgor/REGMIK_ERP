@@ -779,7 +779,7 @@ export const emailSettings = pgTable("email_settings", {
 // Таблиця клієнтів з налаштуваннями Нової Пошти
 export const clients = pgTable("clients", {
   id: serial("id").primaryKey(), // Автоматично генерований унікальний ID
-  taxCode: varchar("tax_code", { length: 50 }).notNull().unique(), // ЄДРПОУ або ІПН
+  taxCode: varchar("tax_code", { length: 10 }).notNull().unique(), // ІПН (10 цифр)
   name: varchar("name", { length: 255 }).notNull(), // Скорочена назва
   fullName: varchar("full_name", { length: 500 }),  // Повна назва
   clientTypeId: integer("client_type_id").references(() => clientTypes.id).notNull(), // зв'язок з видом клієнта
