@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
 import {
   Form,
   FormControl,
@@ -34,7 +35,9 @@ const formSchema = insertClientSchema.extend({
   addressesMatch: z.boolean().default(false),
   discount: z.string().optional().transform(val => val || "0.00"),
   notes: z.string().optional(),
-  isActive: z.boolean().default(true)
+  isActive: z.boolean().default(true),
+  carrierId: z.number().optional(),
+  warehouseRef: z.string().optional()
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -49,6 +52,18 @@ interface ClientFormProps {
 
 export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefillName }: ClientFormProps) {
   const fullNameInputRef = useRef<HTMLInputElement>(null);
+  const [selectedCarrierId, setSelectedCarrierId] = useState<number | undefined>(editingClient?.carrierId || undefined);
+  
+  // Завантаження перевізників
+  const { data: carriers = [] } = useQuery({
+    queryKey: ['/api/carriers'],
+  });
+
+  // Завантаження відділень Нової Пошти для обраного перевізника
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ['/api/nova-poshta/warehouses'],
+    enabled: !!selectedCarrierId && carriers.some(c => c.id === selectedCarrierId && c.name.toLowerCase().includes('пошта'))
+  });
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -62,7 +77,9 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
       addressesMatch: editingClient?.addressesMatch || false,
       discount: editingClient?.discount || "0.00",
       notes: editingClient?.notes || "",
-      isActive: editingClient?.isActive ?? true
+      isActive: editingClient?.isActive ?? true,
+      carrierId: editingClient?.carrierId || undefined,
+      warehouseRef: editingClient?.warehouseRef || ""
     }
   });
 
@@ -79,6 +96,15 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
       const legalAddress = form.getValues("legalAddress");
       form.setValue("physicalAddress", legalAddress);
     }
+  };
+
+  // Обробка зміни перевізника
+  const handleCarrierChange = (carrierId: string) => {
+    const id = parseInt(carrierId);
+    setSelectedCarrierId(id);
+    form.setValue("carrierId", id);
+    // Очистити вибір відділення при зміні перевізника
+    form.setValue("warehouseRef", "");
   };
 
   const handleFormSubmit = (data: FormData) => {
@@ -236,6 +262,62 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
             </FormItem>
           )}
         />
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="carrierId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Перевізник</FormLabel>
+                <Select onValueChange={handleCarrierChange} value={field.value?.toString() || ""}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Оберіть перевізника" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {(carriers as any[])?.map((carrier: any) => (
+                      <SelectItem key={carrier.id} value={carrier.id.toString()}>
+                        {carrier.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="warehouseRef"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Відділення</FormLabel>
+                <Select 
+                  onValueChange={field.onChange} 
+                  value={field.value || ""}
+                  disabled={!selectedCarrierId || !(carriers as any[])?.some((c: any) => c.id === selectedCarrierId && c.name.toLowerCase().includes('пошта'))}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Оберіть відділення" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {(warehouses as any[])?.map((warehouse: any) => (
+                      <SelectItem key={warehouse.ref} value={warehouse.ref}>
+                        {warehouse.description}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}
