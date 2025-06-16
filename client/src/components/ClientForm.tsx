@@ -62,12 +62,12 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
   // Nova Poshta data queries
   const { data: cities, isLoading: citiesLoading } = useQuery({
     queryKey: ["/api/nova-poshta/cities", cityQuery],
-    enabled: cityQuery.length >= 2 && selectedCarrierId === 1,
+    enabled: cityQuery.length >= 2 && selectedCarrierId === 4,
   });
 
   const { data: warehouses, isLoading: warehousesLoading } = useQuery({
     queryKey: ["/api/nova-poshta/warehouses", selectedCity?.Ref],
-    enabled: !!selectedCity?.Ref && selectedCarrierId === 1,
+    enabled: !!selectedCity?.Ref && selectedCarrierId === 4,
   });
 
   // Filter cities and warehouses
@@ -234,7 +234,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
     onSubmit(data);
   };
 
-  const isNovaPoshtaCarrier = selectedCarrierId === 1;
+  const isNovaPoshtaCarrier = selectedCarrierId === 4;
 
   return (
     <Form {...form}>
