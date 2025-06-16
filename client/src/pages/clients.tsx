@@ -38,6 +38,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { 
   Plus, 
   Building2, 
@@ -103,6 +104,7 @@ export default function Clients() {
   const [pageSize, setPageSize] = useState(20);
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const fullNameInputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -574,6 +576,7 @@ export default function Clients() {
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
+            ref={searchInputRef}
             type="text"
             placeholder="Пошук клієнтів за назвою, ЄДРПОУ або повним ім'ям..."
             value={searchQuery}
@@ -647,10 +650,34 @@ export default function Clients() {
                   </Button>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 items-center">
                 <Badge variant={client.isActive ? "default" : "secondary"} className="text-xs">
                   {client.isActive ? "Активний" : "Неактивний"}
                 </Badge>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={Boolean(client.isActive)}
+                    onCheckedChange={(checked: boolean) => {
+                      updateMutation.mutate({
+                        taxCode: client.taxCode || "",
+                        name: client.name,
+                        fullName: client.fullName,
+                        clientTypeId: client.clientTypeId,
+                        legalAddress: client.legalAddress,
+                        physicalAddress: client.physicalAddress,
+                        addressesMatch: client.addressesMatch,
+                        discount: client.discount || "0",
+                        notes: client.notes,
+                        isActive: checked,
+                        carrierRef: client.carrierRef,
+                        cityRef: client.cityRef,
+                        warehouseRef: client.warehouseRef
+                      });
+                    }}
+                    disabled={updateMutation.isPending}
+                  />
+                  <span className="text-xs text-muted-foreground">Активний</span>
+                </div>
 
                 {client.discount && parseFloat(client.discount) > 0 && (
                   <Badge variant="outline" className="text-green-600 text-xs">
