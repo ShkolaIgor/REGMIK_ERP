@@ -101,6 +101,40 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
     warehouse.ShortAddress.toLowerCase().includes(warehouseQuery.toLowerCase())
   ) || [] : warehouses || [];
 
+  // Load city by Ref for editing
+  const loadCityByRef = React.useCallback(async (cityRef: string) => {
+    try {
+      const response = await fetch(`/api/nova-poshta/cities?ref=${cityRef}`);
+      if (response.ok) {
+        const cities = await response.json();
+        if (cities.length > 0) {
+          const city = cities[0];
+          setSelectedCity(city);
+          setCityQuery(city.Description);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load city by ref:', error);
+    }
+  }, []);
+
+  // Load warehouse by Ref for editing
+  const loadWarehouseByRef = React.useCallback(async (warehouseRef: string, cityRef: string) => {
+    try {
+      const response = await fetch(`/api/nova-poshta/warehouses/${cityRef}`);
+      if (response.ok) {
+        const warehouses = await response.json();
+        const warehouse = warehouses.find((w: any) => w.Ref === warehouseRef);
+        if (warehouse) {
+          setSelectedWarehouse(warehouse);
+          setWarehouseQuery(warehouse.ShortAddress);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load warehouse by ref:', error);
+    }
+  }, []);
+
   // Form initialization
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -167,7 +201,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
         loadWarehouseByRef(editingClient.warehouseRef, editingClient.cityRef);
       }
     }
-  }, [editingClient, form]);
+  }, [editingClient, form, loadCityByRef, loadWarehouseByRef]);
 
   // Handle carrier changes
   const handleCarrierChange = (carrierId: number) => {
