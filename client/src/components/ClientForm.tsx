@@ -165,41 +165,45 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
 
   // Load existing client data
   useEffect(() => {
-    if (editingClient) {
-      form.reset({
-        taxCode: editingClient.taxCode || "",
-        clientTypeId: editingClient.clientTypeId || 1,
-        name: editingClient.name || "",
-        fullName: editingClient.fullName || "",
-        legalAddress: editingClient.legalAddress || "",
-        physicalAddress: editingClient.physicalAddress || "",
-        addressesMatch: editingClient.addressesMatch || false,
-        discount: editingClient.discount || "0.00",
-        carrierId: editingClient.carrierId || undefined,
-        cityRef: editingClient.cityRef || "",
-        warehouseRef: editingClient.warehouseRef || "",
-        contactPerson: editingClient.contactPerson || "",
-        phone: editingClient.phone || "",
-        email: editingClient.email || "",
-        website: editingClient.website || "",
-        notes: editingClient.notes || "",
-      });
+    const loadClientData = async () => {
+      if (editingClient) {
+        form.reset({
+          taxCode: editingClient.taxCode || "",
+          clientTypeId: editingClient.clientTypeId || 1,
+          name: editingClient.name || "",
+          fullName: editingClient.fullName || "",
+          legalAddress: editingClient.legalAddress || "",
+          physicalAddress: editingClient.physicalAddress || "",
+          addressesMatch: editingClient.addressesMatch || false,
+          discount: editingClient.discount || "0.00",
+          carrierId: editingClient.carrierId || undefined,
+          cityRef: editingClient.cityRef || "",
+          warehouseRef: editingClient.warehouseRef || "",
+          contactPerson: editingClient.contactPerson || "",
+          phone: editingClient.phone || "",
+          email: editingClient.email || "",
+          website: editingClient.website || "",
+          notes: editingClient.notes || "",
+        });
 
-      // Set Nova Poshta selections if editing
-      if (editingClient.carrierId) {
-        setSelectedCarrierId(editingClient.carrierId);
+        // Set Nova Poshta selections if editing
+        if (editingClient.carrierId) {
+          setSelectedCarrierId(editingClient.carrierId);
+        }
+        
+        // Load city data from API if cityRef exists
+        if (editingClient.cityRef) {
+          await loadCityByRef(editingClient.cityRef);
+        }
+        
+        // Load warehouse data from API if warehouseRef exists (after city is loaded)
+        if (editingClient.warehouseRef && editingClient.cityRef) {
+          await loadWarehouseByRef(editingClient.warehouseRef, editingClient.cityRef);
+        }
       }
-      
-      // Load city data from API if cityRef exists
-      if (editingClient.cityRef) {
-        loadCityByRef(editingClient.cityRef);
-      }
-      
-      // Load warehouse data from API if warehouseRef exists
-      if (editingClient.warehouseRef && editingClient.cityRef) {
-        loadWarehouseByRef(editingClient.warehouseRef, editingClient.cityRef);
-      }
-    }
+    };
+
+    loadClientData();
   }, [editingClient, form, loadCityByRef, loadWarehouseByRef]);
 
   // Handle carrier changes
