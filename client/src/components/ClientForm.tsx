@@ -472,7 +472,11 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
               <FormItem>
                 <FormLabel>Перевізник</FormLabel>
                 <Select 
-                  onValueChange={(value) => handleCarrierChange(parseInt(value))} 
+                  onValueChange={(value) => {
+                    const carrierId = parseInt(value);
+                    field.onChange(carrierId);
+                    handleCarrierChange(carrierId);
+                  }} 
                   value={field.value?.toString()}
                 >
                   <FormControl>
