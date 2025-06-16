@@ -127,6 +127,11 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
   const { data: carriers = [] } = useQuery({
     queryKey: ['/api/carriers'],
   });
+  
+  // Debug logging
+  console.log('Carriers loaded:', carriers);
+  console.log('Selected carrier ID:', selectedCarrierId);
+  console.log('Form carrier value:', form.watch("carrierId"));
 
   // Завантаження міст Нової Пошти з пошуком
   const { data: cities = [], isLoading: citiesLoading } = useQuery({
@@ -252,21 +257,6 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
           title: "Тип клієнта встановлено автоматично",
           description: `${cleanCode.length === 8 ? '8-значний код (ЄДРПОУ)' : '10-значний код (ІПН)'} відповідає типу: ${clientType?.name}`,
           duration: 4000,
-        });
-      }
-    } else if (watchedTaxCode && clientTypes.length > 0 && editingClient) {
-      // Для існуючих клієнтів показуємо тільки попередження про невідповідність
-      const possibleTypes = getPossibleClientTypes(watchedTaxCode);
-      const currentTypeId = form.getValues("clientTypeId");
-      
-      if (possibleTypes.length > 0 && !possibleTypes.includes(currentTypeId)) {
-        const cleanCode = watchedTaxCode.replace(/\D/g, '');
-        
-        toast({
-          title: "Можлива невідповідність типу клієнта",
-          description: `${cleanCode.length === 8 ? '8-значний код (ЄДРПОУ)' : '10-значний код (ІПН)'} зазвичай відповідає іншому типу клієнта`,
-          variant: "destructive",
-          duration: 5000,
         });
       }
     }
