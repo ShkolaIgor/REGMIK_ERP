@@ -290,7 +290,10 @@ export default function ClientContacts() {
                                         <div className="flex flex-col">
                                           <span className="font-medium">{client.name}</span>
                                           <span className="text-sm text-muted-foreground">
-                                            ЄДРПОУ: {client.taxCode}
+                                            {(() => {
+                                              const clientType = (clientTypes as any[])?.find((type: any) => type.id === client.clientTypeId);
+                                              return clientType?.name === "Фізична особа" ? "ІПН" : "ЄДРПОУ";
+                                            })()}: {client.taxCode}
                                           </span>
                                         </div>
                                       </CommandItem>

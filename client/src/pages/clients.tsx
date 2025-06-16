@@ -565,7 +565,7 @@ export default function Clients() {
                     <CardDescription className="text-sm mt-1">
                       {(() => {
                         const clientType = (clientTypes as any[])?.find((type: any) => type.id === client.clientTypeId);
-                        return clientType?.name === "Юридична особа" ? "ЄДРПОУ" : "ІПН";
+                        return clientType?.name === "Фізична особа" ? "ІПН" : "ЄДРПОУ";
                       })()}: <span className="font-bold text-base text-foreground">{client.taxCode}</span>
                     </CardDescription>
                   </div>
