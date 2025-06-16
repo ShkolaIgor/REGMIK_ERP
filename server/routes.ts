@@ -5338,7 +5338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           job.skipped++;
           return;
         } else if (existingCreatedAt < newCreatedAt) {
-          // Existing client is older - remove taxCode and add note, then continue with import
+          // Existing client is older - remove taxCode, deactivate and add note, then continue with import
           try {
             const existingNotes = existingClient.notes || '';
             const taxCodeNote = `ЄДРПОУ: ${taxCode}`;
@@ -5346,9 +5346,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             await storage.updateClient(existingClient.id, { 
               taxCode: null,
+              isActive: false,
               notes: updatedNotes
             });
-            console.log(`Removed taxCode from older client and added note, taxCode ${taxCode}, id: ${existingClient.id}`);
+            console.log(`Removed taxCode, deactivated older client and added note, taxCode ${taxCode}, id: ${existingClient.id}`);
             // Continue with import to create new client with this taxCode
           } catch (updateError) {
             console.error('Error updating existing client:', updateError);
@@ -5409,7 +5410,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if we removed taxCode from existing client
       if (taxCode && existingClient && existingClient.taxCode === taxCode) {
-        message += '. ЄДРПОУ видалено у старого клієнта';
+        message += '. Старий клієнт деактивовано, ЄДРПОУ перенесено в коментарі';
       }
       
       job.details.push({
