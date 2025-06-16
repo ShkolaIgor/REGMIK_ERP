@@ -5109,6 +5109,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
 
+          // Handle CITY field - find city_ref based on city name
+          let cityRef = null;
+          if (row.CITY) {
+            try {
+              const cityQuery = `
+                SELECT "Ref" FROM nova_poshta_cities 
+                WHERE "Description" ILIKE $1 
+                LIMIT 1
+              `;
+              const cityResult = await pool.query(cityQuery, [row.CITY.trim()]);
+              if (cityResult.rows.length > 0) {
+                cityRef = cityResult.rows[0].Ref as string;
+              }
+            } catch (error) {
+              console.error('Error searching city:', error);
+            }
+          }
+
           // Handle EDRPOU field - convert "0" and empty to null/undefined for tax_code
           let taxCode = null;
           if (row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '') {
@@ -5154,14 +5172,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
             notes = notes ? `${notes}. ${carrierNote}` : carrierNote;
           }
 
-          // Parse DATE_CREATE if provided
+          // Parse DATE_CREATE if provided (format: "04.06.2025")
           let createdAt = null;
           if (row.DATE_CREATE) {
             try {
-              createdAt = new Date(row.DATE_CREATE);
-              // Validate the date
-              if (isNaN(createdAt.getTime())) {
-                createdAt = null;
+              const dateStr = row.DATE_CREATE.trim();
+              // Parse Ukrainian date format DD.MM.YYYY
+              const dateParts = dateStr.split('.');
+              if (dateParts.length === 3) {
+                const day = parseInt(dateParts[0], 10);
+                const month = parseInt(dateParts[1], 10) - 1; // JavaScript months are 0-indexed
+                const year = parseInt(dateParts[2], 10);
+                
+                // Create date with time set to 8:00 AM
+                createdAt = new Date(year, month, day, 8, 0, 0);
+                
+                // Validate the date
+                if (isNaN(createdAt.getTime())) {
+                  createdAt = null;
+                }
               }
             } catch (error) {
               createdAt = null;
@@ -5181,6 +5210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             discount: row.SKIT ? parseFloat(row.SKIT.replace(',', '.')) : 0,
             externalId: row.ID_PREDPR || null,
             warehouseRef: warehouseRef,
+            cityRef: cityRef,
             createdAt: createdAt,
           };
 
