@@ -12,11 +12,12 @@
 <FIELD FieldName="COMMENT" DisplayLabel="COMMENT" FieldType="String" FieldClass="TField"/>
 <FIELD FieldName="ACTUAL" DisplayLabel="ACTUAL" FieldType="String" FieldClass="TField"/>
 <FIELD FieldName="NAME_TRANSPORT" DisplayLabel="NAME_TRANSPORT" FieldType="String" FieldClass="TField"/>
+<FIELD FieldName="ID_PREDPR" DisplayLabel="ID_PREDPR" FieldType="Integer" FieldClass="TField"/>
 </FIELDS>
 </METADATA>
 <ROWDATA>
-<ROW CITY="Донецьк" EDRPOU="12345678" SKIT="10,00" PREDPR="Радіокомплект" NAME="ТОВ &quot;Радіокомплект&quot;" DATE_CREATE="26.11.2003" ADDRESS_PHYS="ТОВ &quot;ЕЛЕКТРОРАДІОКОМПЛЕКТ&quot; а/с 11537, м. Харків, 61001" COMMENT="Поставщик электронных компонент" ACTUAL="T" NAME_TRANSPORT="Нова пошта"/>
-<ROW CITY="Одеса" EDRPOU="87654321" SKIT="5,50" PREDPR="Хоміч Валерій Валерійович" NAME="Хоміч Валерій Валерійович" DATE_CREATE="13.06.2025" ADDRESS_PHYS="м. Одеса, вул. Морська 15" COMMENT="Індивідуальний підприємець" ACTUAL="T" NAME_TRANSPORT="Нова пошта"/>
-<ROW CITY="Київ" EDRPOU="11111111" SKIT="15,25" PREDPR="ПрАТ Електроніка Плюс" NAME="Електроніка Плюс" DATE_CREATE="01.01.2020" ADDRESS_PHYS="м. Київ, пр. Перемоги 50" COMMENT="Оптова торгівля електронікою" ACTUAL="T" NAME_TRANSPORT="УкрПошта"/>
+<ROW CITY="Донецьк" EDRPOU="" SKIT="10,00" PREDPR="Радіокомплект" NAME="ТОВ &quot;Радіокомплект&quot;" DATE_CREATE="26.11.2003" ADDRESS_PHYS="ТОВ &quot;ЕЛЕКТРОРАДІОКОМПЛЕКТ&quot; а/с 11537, м. Харків, 61001" COMMENT="Поставщик электронных компонент" ACTUAL="F" NAME_TRANSPORT="Нова пошта №10" ID_PREDPR="1"/>
+<ROW CITY="Київ" EDRPOU="0" SKIT="" PREDPR="Тестовий клієнт" NAME="Тестовий клієнт" DATE_CREATE="13.06.2025" ADDRESS_PHYS="" COMMENT="" ACTUAL="T" NAME_TRANSPORT="Самовивіз" ID_PREDPR="10838"/>
+<ROW CITY="Одеса" EDRPOU="0" SKIT="" PREDPR="Хоміч Валерій Валерійович" NAME="Хоміч Валерій Валерійович" DATE_CREATE="13.06.2025" ADDRESS_PHYS="" COMMENT="" ACTUAL="T" NAME_TRANSPORT="Нова пошта" ID_PREDPR="10839"/>
 </ROWDATA>
 </DATAPACKET>

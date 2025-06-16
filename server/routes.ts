@@ -4973,7 +4973,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const xmlContent = req.file.buffer.toString('utf-8');
-      const parser = new xml2js.Parser({ explicitArray: false });
+      const parser = new xml2js.Parser({ 
+        explicitArray: false,
+        mergeAttrs: true  // This merges attributes into the element object
+      });
       
       const result = await parser.parseStringPromise(xmlContent);
       
@@ -5017,6 +5020,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // Find carrier by transport name
           let carrierId: number | null = null;
+          let carrierNote = '';
           if (row.NAME_TRANSPORT) {
             const transportName = row.NAME_TRANSPORT.toLowerCase();
             const foundCarrier = carriers.find(carrier => {
@@ -5031,6 +5035,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             if (foundCarrier) {
               carrierId = foundCarrier.id;
+            } else {
+              // If carrier not found, add transport info to notes
+              carrierNote = `Перевізник: ${row.NAME_TRANSPORT}`;
             }
           }
 
@@ -5041,17 +5048,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
             client.name === row.NAME
           );
 
+          // Build notes combining existing comment and carrier info
+          let notes = row.COMMENT || '';
+          if (carrierNote) {
+            notes = notes ? `${notes}. ${carrierNote}` : carrierNote;
+          }
+
           const clientData = {
             taxCode: row.EDRPOU || `IMPORT_${Date.now()}_${processed}`,
             name: row.NAME,
             fullName: row.PREDPR || row.NAME,
-            type: (row.EDRPOU && row.EDRPOU.length > 0) ? 'organization' : 'individual',
+            type: (row.EDRPOU && row.EDRPOU.length > 0 && row.EDRPOU !== '0') ? 'organization' : 'individual',
             physicalAddress: row.ADDRESS_PHYS || null,
-            notes: row.COMMENT || null,
+            notes: notes || null,
             isActive: row.ACTUAL === 'T' || row.ACTUAL === 'true',
             source: 'xml_import',
             carrierId: carrierId,
             discount: row.SKIT ? parseFloat(row.SKIT.replace(',', '.')) : 0,
+            externalId: row.ID_PREDPR || null,
           };
 
           if (existingClient) {

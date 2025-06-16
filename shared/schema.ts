@@ -930,6 +930,7 @@ export const xmlClientImportSchema = z.object({
   COMMENT: z.string().optional(),
   ACTUAL: z.string().optional(),
   NAME_TRANSPORT: z.string().optional(),
+  ID_PREDPR: z.string().optional(),
 });
 
 export type XmlClientImport = z.infer<typeof xmlClientImportSchema>;
