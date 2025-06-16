@@ -134,8 +134,11 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
       });
 
       // Set Nova Poshta state
+      console.log("Ініціалізація перевізника:", editingClient.carrierId);
       if (editingClient.carrierId) {
         setSelectedCarrierId(editingClient.carrierId);
+      } else {
+        setSelectedCarrierId(null);
       }
       if (editingClient.cityRef) {
         setCityQuery(""); // Will be set when cities load
@@ -252,9 +255,11 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
   };
 
   const handleWarehouseSelect = (warehouse: any) => {
+    console.log("Відділення обрано:", warehouse.ShortAddress, "Ref:", warehouse.Ref);
     setSelectedWarehouse(warehouse);
     setWarehouseQuery(warehouse.ShortAddress);
     form.setValue("warehouseRef", warehouse.Ref);
+    console.log("Форма оновлена з warehouseRef:", warehouse.Ref);
   };
 
   const handleFormSubmit = (data: FormData) => {
