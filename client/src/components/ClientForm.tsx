@@ -80,6 +80,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
 
   const { data: warehouses, isLoading: warehousesLoading } = useQuery({
     queryKey: ["/api/nova-poshta/warehouses", selectedCity?.Ref],
+    queryFn: () => fetch(`/api/nova-poshta/warehouses?cityRef=${selectedCity?.Ref}`).then(res => res.json()),
     enabled: !!selectedCity?.Ref && selectedCarrierId === 4,
   });
 
@@ -226,6 +227,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
   };
 
   const handleCitySelect = (city: any) => {
+    console.log("Місто обрано:", city.Description, "Ref:", city.Ref);
     setSelectedCity(city);
     setCityQuery(city.Description);
     form.setValue("cityRef", city.Ref);
