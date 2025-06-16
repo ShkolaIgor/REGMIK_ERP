@@ -140,16 +140,7 @@ export default function Clients() {
     queryKey: ['/api/client-types'],
   });
 
-  // Фільтрація клієнтів за пошуковим запитом
-  const filteredClients = clients.filter(client => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      client.name.toLowerCase().includes(query) ||
-      (client.taxCode && client.taxCode.toLowerCase().includes(query)) ||
-      (client.fullName && client.fullName.toLowerCase().includes(query))
-    );
-  });
+
 
   // Автоматичне фокусування на поле "Повне ім'я" при відкритті діалогу контакту
   useEffect(() => {
@@ -702,22 +693,118 @@ export default function Clients() {
           </Card>
         ))}
 
-        {clients.length === 0 && (
+        {clients.length === 0 && !isLoading && (
           <Card>
             <CardContent className="p-6 text-center">
               <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Немає клієнтів</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                {debouncedSearch ? "Клієнти не знайдені" : "Немає клієнтів"}
+              </h3>
               <p className="text-muted-foreground mb-4">
-                Додайте першого клієнта з ЄДРПОУ або ІПН
+                {debouncedSearch 
+                  ? `За запитом "${debouncedSearch}" нічого не знайдено`
+                  : "Додайте першого клієнта з ЄДРПОУ або ІПН"
+                }
               </p>
-              <Button onClick={() => setIsDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Додати клієнта
-              </Button>
+              {!debouncedSearch && (
+                <Button onClick={() => setIsDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Додати клієнта
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
       </div>
+
+      {/* Пагінація */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-6">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-muted-foreground">
+              Показано {Math.min((currentPage - 1) * pageSize + 1, total)} - {Math.min(currentPage * pageSize, total)} з {total} записів
+            </span>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Select value={pageSize.toString()} onValueChange={(value) => {
+              setPageSize(parseInt(value));
+              setCurrentPage(1);
+            }}>
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <div className="flex space-x-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                ««
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                ‹
+              </Button>
+              
+              {/* Показуємо номери сторінок */}
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={pageNum === currentPage ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(pageNum)}
+                  >
+                    {pageNum}
+                  </Button>
+                );
+              })}
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                ›
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                »»
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
