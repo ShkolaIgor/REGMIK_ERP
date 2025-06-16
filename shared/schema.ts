@@ -787,6 +787,7 @@ export const clients = pgTable("clients", {
   externalId: varchar("external_id", { length: 100 }),
   source: varchar("source", { length: 20 }).default("manual"), // bitrix24, 1c, manual
   carrierId: integer("carrier_id").references(() => carriers.id), // зв'язок з перевізником
+  warehouseRef: varchar("warehouse_ref", { length: 255 }), // ref відділення Нової Пошти
   
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
