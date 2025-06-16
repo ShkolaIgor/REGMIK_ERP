@@ -22,11 +22,43 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
 import { insertClientSchema, type Client } from "@shared/schema";
+
+// Функція для визначення типу клієнта за кодом
+const getClientTypeByTaxCode = (taxCode: string): number | null => {
+  const cleanCode = taxCode.replace(/\D/g, ''); // Видаляємо всі не-цифри
+  if (cleanCode.length === 8) {
+    return 1; // Юридична особа (ЄДРПОУ)
+  } else if (cleanCode.length === 10) {
+    return 2; // Фізична особа (ІПН)
+  }
+  return null;
+};
+
+// Функція для валідації відповідності коду та типу клієнта
+const validateTaxCodeAndType = (taxCode: string, clientTypeId: number): string | null => {
+  const expectedType = getClientTypeByTaxCode(taxCode);
+  if (expectedType && expectedType !== clientTypeId) {
+    const cleanCode = taxCode.replace(/\D/g, '');
+    if (cleanCode.length === 8) {
+      return "8-значний код (ЄДРПОУ) відповідає юридичній особі";
+    } else if (cleanCode.length === 10) {
+      return "10-значний код (ІПН) відповідає фізичній особі";
+    }
+  }
+  return null;
+};
 
 // Розширена схема валідації
 const formSchema = insertClientSchema.extend({
-  taxCode: z.string().min(1, "ЄДРПОУ/ІПН обов'язковий").max(50, "Максимум 50 символів"),
+  taxCode: z.string()
+    .min(1, "ЄДРПОУ/ІПН обов'язковий")
+    .max(50, "Максимум 50 символів")
+    .refine((val) => {
+      const cleanCode = val.replace(/\D/g, '');
+      return cleanCode.length === 8 || cleanCode.length === 10 || cleanCode.length === 0;
+    }, "Код повинен містити 8 цифр (ЄДРПОУ) або 10 цифр (ІПН)"),
   clientTypeId: z.number().min(1, "Тип клієнта обов'язковий"),
   name: z.string().min(1, "Скорочена назва обов'язкова"),
   fullName: z.string().optional(),
@@ -39,6 +71,12 @@ const formSchema = insertClientSchema.extend({
   carrierId: z.number().optional(),
   cityRef: z.string().optional(),
   warehouseRef: z.string().optional()
+}).refine((data) => {
+  const validationError = validateTaxCodeAndType(data.taxCode, data.clientTypeId);
+  return !validationError;
+}, {
+  message: "Невідповідність між кодом та типом клієнта",
+  path: ["clientTypeId"]
 });
 
 type FormData = z.infer<typeof formSchema>;
