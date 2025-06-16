@@ -163,25 +163,43 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      taxCode: editingClient?.taxCode || "",
-      clientTypeId: editingClient?.clientTypeId || 1, // Default to "Юридична особа"
-      name: editingClient?.name || prefillName || "",
-      fullName: editingClient?.fullName || "",
-      legalAddress: editingClient?.legalAddress || "",
-      physicalAddress: editingClient?.physicalAddress || "",
-      addressesMatch: editingClient?.addressesMatch || false,
-      discount: editingClient?.discount || "0.00",
-      notes: editingClient?.notes || "",
-      isActive: editingClient?.isActive ?? true,
-      carrierId: editingClient?.carrierId || undefined,
-      cityRef: editingClient?.cityRef || "",
-      warehouseRef: editingClient?.warehouseRef || ""
+      taxCode: "",
+      clientTypeId: 1, // Default to "Юридична особа"
+      name: prefillName || "",
+      fullName: "",
+      legalAddress: "",
+      physicalAddress: "",
+      addressesMatch: false,
+      discount: "0.00",
+      notes: "",
+      isActive: true,
+      carrierId: undefined,
+      cityRef: "",
+      warehouseRef: ""
     }
   });
 
   // Ініціалізація форми для редагування клієнта
   useEffect(() => {
     if (editingClient) {
+      // Reset form with editing client data first
+      form.reset({
+        taxCode: editingClient.taxCode || "",
+        clientTypeId: editingClient.clientTypeId || 1,
+        name: editingClient.name || "",
+        fullName: editingClient.fullName || "",
+        legalAddress: editingClient.legalAddress || "",
+        physicalAddress: editingClient.physicalAddress || "",
+        addressesMatch: editingClient.addressesMatch || false,
+        discount: editingClient.discount || "0.00",
+        notes: editingClient.notes || "",
+        isActive: editingClient.isActive ?? true,
+        carrierId: editingClient.carrierId || undefined,
+        cityRef: editingClient.cityRef || "",
+        warehouseRef: editingClient.warehouseRef || ""
+      });
+      
+      // Update component state to match form values
       setSelectedCarrierId(editingClient.carrierId || undefined);
       setSelectedCityRef(editingClient.cityRef || undefined);
       
@@ -203,25 +221,8 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
           }
         }
       }
-      
-      // Reset form with editing client data
-      form.reset({
-        taxCode: editingClient.taxCode || "",
-        clientTypeId: editingClient.clientTypeId || 1,
-        name: editingClient.name || "",
-        fullName: editingClient.fullName || "",
-        legalAddress: editingClient.legalAddress || "",
-        physicalAddress: editingClient.physicalAddress || "",
-        addressesMatch: editingClient.addressesMatch || false,
-        discount: editingClient.discount || "0.00",
-        notes: editingClient.notes || "",
-        isActive: editingClient.isActive ?? true,
-        carrierId: editingClient.carrierId || undefined,
-        cityRef: editingClient.cityRef || "",
-        warehouseRef: editingClient.warehouseRef || ""
-      });
     }
-  }, [editingClient, form, cities]);
+  }, [editingClient, cities, warehouses]);
 
   // Відслідковуємо зміни типу клієнта та коду
   const watchedClientTypeId = form.watch("clientTypeId");
@@ -317,7 +318,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
             name="taxCode"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>ЄДРПОУ/ІПН *</FormLabel>
+                <FormLabel>ЄДРПОУ/ІПН</FormLabel>
                 <FormControl>
                   <Input placeholder="12345678" {...field} />
                 </FormControl>
@@ -332,7 +333,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Тип клієнта *</FormLabel>
-                <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
+                <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Оберіть тип" />
@@ -476,6 +477,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
                   handleCarrierChange(value);
                 }} 
                 value={field.value?.toString() || ""}
+                defaultValue={field.value?.toString() || ""}
               >
                 <FormControl>
                   <SelectTrigger>
