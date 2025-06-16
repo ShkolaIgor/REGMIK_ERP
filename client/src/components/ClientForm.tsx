@@ -72,7 +72,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
     },
     enabled: cityQuery.length >= 2 && selectedCarrierId === 4,
     staleTime: 0, // Відключаємо кеш для правильного пошуку
-    cacheTime: 0, // Видаляємо кеш одразу після використання
+    gcTime: 0, // Видаляємо кеш одразу після використання
   });
 
   const { data: warehouses, isLoading: warehousesLoading } = useQuery({
