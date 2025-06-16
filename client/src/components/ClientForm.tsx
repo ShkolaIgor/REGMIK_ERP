@@ -494,7 +494,14 @@ export function ClientForm({ editingClient, onSubmit, onCancel, isLoading, prefi
           render={({ field }) => (
             <FormItem>
               <FormLabel>Перевізник</FormLabel>
-              <Select onValueChange={handleCarrierChange} value={field.value?.toString() || ""}>
+              <Select 
+                onValueChange={(value) => {
+                  const carrierId = parseInt(value);
+                  field.onChange(carrierId);
+                  handleCarrierChange(value);
+                }} 
+                value={field.value?.toString() || ""}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Оберіть перевізника" />
