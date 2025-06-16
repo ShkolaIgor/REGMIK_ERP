@@ -52,10 +52,17 @@ export async function apiRequest(
   // Визначаємо чи це FormData для файлових завантажень
   const isFormData = data instanceof FormData;
   
+  let requestBody: BodyInit | undefined;
+  if (isFormData) {
+    requestBody = data as FormData;
+  } else if (data) {
+    requestBody = JSON.stringify(data);
+  }
+
   const res = await fetch(url, {
     method,
     headers: !isFormData && data ? { "Content-Type": "application/json" } : {},
-    body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
+    body: requestBody,
     credentials: "include",
     cache: "no-cache", // Примусово відключаємо кеш браузера для всіх запитів
   });
