@@ -18,8 +18,8 @@ class NovaPoshtaCache {
   }
 
   async getWarehouses(cityRef?: string, query?: string): Promise<any[]> {
-    // Отримуємо відділення з бази даних без постійного оновлення кешу
-    return await storage.getNovaPoshtaWarehouses(cityRef, query, 200);
+    // Отримуємо відділення з бази даних без обмеження кількості
+    return await storage.getNovaPoshtaWarehouses(cityRef, query);
   }
 
   async getCitiesCount(): Promise<number> {

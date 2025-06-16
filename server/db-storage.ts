@@ -6912,7 +6912,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getNovaPoshtaWarehouses(cityRef?: string, query?: string, limit: number = 200): Promise<any[]> {
+  async getNovaPoshtaWarehouses(cityRef?: string, query?: string, limit?: number): Promise<any[]> {
     try {
       let sqlQuery = `
         SELECT 
@@ -6955,12 +6955,18 @@ export class DatabaseStorage implements IStorage {
                WHEN number::text LIKE $${paramIndex + 1} THEN 2
                WHEN number::text LIKE $${paramIndex + 2} THEN 3
                ELSE 4 END,
-          CAST(COALESCE(NULLIF(regexp_replace(number, '[^0-9]', '', 'g'), ''), '0') AS INTEGER) ASC
-          LIMIT $${paramIndex + 3}`;
-        params.push(query, `${query}%`, `%${query}%`, limit);
+          CAST(COALESCE(NULLIF(regexp_replace(number, '[^0-9]', '', 'g'), ''), '0') AS INTEGER) ASC`;
+        params.push(query, `${query}%`, `%${query}%`);
+        if (limit) {
+          sqlQuery += ` LIMIT $${paramIndex + 3}`;
+          params.push(limit);
+        }
       } else {
-        sqlQuery += ` ORDER BY CAST(COALESCE(NULLIF(regexp_replace(number, '[^0-9]', '', 'g'), ''), '0') AS INTEGER) ASC LIMIT $${paramIndex}`;
-        params.push(limit);
+        sqlQuery += ` ORDER BY CAST(COALESCE(NULLIF(regexp_replace(number, '[^0-9]', '', 'g'), ''), '0') AS INTEGER) ASC`;
+        if (limit) {
+          sqlQuery += ` LIMIT $${paramIndex}`;
+          params.push(limit);
+        }
       }
 
       const result = await pool.query(sqlQuery, params);
