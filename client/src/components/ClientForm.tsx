@@ -211,16 +211,11 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
     loadClientData();
   }, [editingClient, form, loadCityByRef, loadWarehouseByRef]);
 
-  // Separate effect to handle carrier selection after carriers are loaded
+  // Handle carrier selection after carriers are loaded
   useEffect(() => {
-    if (editingClient?.carrierId && carriers && Array.isArray(carriers) && carriers.length > 0) {
-      const carrierExists = carriers.find((c: any) => c.id === editingClient.carrierId);
-      
-      if (carrierExists) {
-        const carrierIdString = editingClient.carrierId.toString();
-        form.setValue("carrierId", carrierIdString);
-        setSelectedCarrierId(editingClient.carrierId);
-      }
+    if (editingClient?.carrierId && carriers) {
+      form.setValue("carrierId", editingClient.carrierId.toString());
+      setSelectedCarrierId(editingClient.carrierId);
     }
   }, [carriers, editingClient?.carrierId, form]);
 
