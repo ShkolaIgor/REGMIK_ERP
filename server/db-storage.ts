@@ -6745,7 +6745,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getNovaPoshtaCities(query?: string): Promise<any[]> {
-    console.log(`Пошук міст Нової Пошти для запиту: "${query}"`);
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] Пошук міст Нової Пошти для запиту: "${query}"`);
     
     try {
       if (!query || query.length < 2) {
@@ -6755,39 +6756,74 @@ export class DatabaseStorage implements IStorage {
         const transformedCities = cities.map(city => ({
           Ref: city.ref,
           Description: city.name,
-          DescriptionRu: city.nameRu,
+          DescriptionRu: city.name,
           AreaDescription: city.area,
-          AreaDescriptionRu: city.areaRu,
-          RegionDescription: city.region,
-          RegionDescriptionRu: city.regionRu,
-          SettlementTypeDescription: city.settlementType,
-          DeliveryCity: city.deliveryCity,
-          Warehouses: city.warehouses?.toString() || "0"
+          AreaDescriptionRu: city.area,
+          RegionDescription: city.region || '',
+          RegionDescriptionRu: city.region || '',
+          SettlementTypeDescription: 'місто',
+          DeliveryCity: city.ref,
+          Warehouses: 0
         }));
 
-        console.log(`Знайдено ${transformedCities.length} міст без фільтрації`);
+        console.log(`[${timestamp}] Знайдено ${transformedCities.length} міст без фільтрації`);
         return transformedCities;
       }
 
-      // Use binary-compatible search for SQL_ASCII encoding
-      const searchPattern = `%${query}%`;
-      const queryLower = query.toLowerCase();
-      
-      // Get all cities and filter in JavaScript to bypass SQL_ASCII encoding issues
-      const allCitiesResult = await pool.query(`
-        SELECT ref, name, area, region
-        FROM nova_poshta_cities
-        ORDER BY LENGTH(name) ASC
-      `);
-      
-      // Filter cities in JavaScript with proper Unicode support
-      const filteredCities = allCitiesResult.rows.filter((city: any) => {
-        const cityName = city.name?.toLowerCase() || '';
-        const cityArea = city.area?.toLowerCase() || '';
-        const searchLower = query.toLowerCase();
-        
-        return cityName.includes(searchLower) || cityArea.includes(searchLower);
+      // Log search parameters for debugging
+      console.log(`[${timestamp}] Параметри пошуку:`, {
+        originalQuery: query,
+        queryLength: query.length,
+        queryEncoding: Buffer.from(query, 'utf8').toString('hex')
       });
+      
+      // Use multiple search strategies for better compatibility
+      let filteredCities: any[] = [];
+      
+      try {
+        // First try SQL ILIKE search (works well with UTF-8)
+        const sqlResult = await pool.query(`
+          SELECT ref, name, area, region
+          FROM nova_poshta_cities
+          WHERE LOWER(name) LIKE LOWER($1) OR LOWER(area) LIKE LOWER($1)
+          ORDER BY 
+            CASE WHEN LOWER(name) = LOWER($2) THEN 1 ELSE 2 END,
+            CASE WHEN LOWER(name) LIKE LOWER($3) THEN 1 ELSE 2 END,
+            LENGTH(name) ASC
+          LIMIT 1000
+        `, [`%${query}%`, query, `${query}%`]);
+        
+        filteredCities = sqlResult.rows;
+        console.log(`[${timestamp}] SQL пошук знайшов ${filteredCities.length} міст для "${query}"`);
+        
+        // Log first few results for debugging
+        if (filteredCities.length > 0) {
+          console.log(`[${timestamp}] Перші результати:`, filteredCities.slice(0, 3).map(c => c.name));
+        }
+      } catch (sqlError) {
+        console.log(`[${timestamp}] SQL пошук не вдався для "${query}":`, sqlError);
+        
+        // Fallback to JavaScript filtering if SQL fails
+        console.log(`[${timestamp}] Використовую JavaScript фільтрацію`);
+        const allCitiesResult = await pool.query(`
+          SELECT ref, name, area, region
+          FROM nova_poshta_cities
+          ORDER BY LENGTH(name) ASC
+        `);
+        
+        console.log(`[${timestamp}] Завантажено ${allCitiesResult.rows.length} міст для фільтрації`);
+        
+        // Filter cities in JavaScript with proper Unicode support
+        filteredCities = allCitiesResult.rows.filter((city: any) => {
+          const cityName = city.name?.toLowerCase() || '';
+          const cityArea = city.area?.toLowerCase() || '';
+          const searchLower = query.toLowerCase();
+          
+          return cityName.includes(searchLower) || cityArea.includes(searchLower);
+        });
+        
+        console.log(`[${timestamp}] JavaScript фільтрація знайшла ${filteredCities.length} міст`);
+      }
       
       // Sort results with priority for exact matches
       filteredCities.sort((a: any, b: any) => {

@@ -2919,11 +2919,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     console.log(`Nova Poshta cities API called with query: "${searchQuery}"`);
     
-    // Відключаємо кешування на рівні HTTP
+    // Відключаємо всі види кешування
     res.set({
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
       'Pragma': 'no-cache',
-      'Expires': '0'
+      'Expires': '0',
+      'Last-Modified': new Date().toUTCString(),
+      'ETag': `"${Date.now()}-${Math.random()}"`,
+      'Vary': '*'
     });
     
     try {
@@ -2960,11 +2963,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const searchQuery = typeof q === 'string' ? q : "";
       console.log(`Nova Poshta warehouses API called for city: "${cityRef}", query: "${searchQuery}"`);
       
-      // Відключаємо кешування на рівні HTTP
+      // Відключаємо всі види кешування
       res.set({
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
         'Pragma': 'no-cache',
-        'Expires': '0'
+        'Expires': '0',
+        'Last-Modified': new Date().toUTCString(),
+        'ETag': `"${Date.now()}-${Math.random()}"`,
+        'Vary': '*'
       });
       
       const warehouses = await novaPoshtaCache.getWarehouses(cityRef, searchQuery);
