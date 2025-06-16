@@ -2882,8 +2882,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Client Types API routes
   app.get("/api/client-types", async (req, res) => {
     try {
-      const clientTypes = await db.select().from(clientTypes).where(eq(clientTypes.isActive, true));
-      res.json(clientTypes);
+      const clientTypesList = await db.select().from(clientTypes).where(eq(clientTypes.isActive, true));
+      res.json(clientTypesList);
     } catch (error) {
       console.error("Error fetching client types:", error);
       res.status(500).json({ error: "Failed to fetch client types" });
