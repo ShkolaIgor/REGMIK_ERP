@@ -7758,8 +7758,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const xmlData = fileBuffer.toString('utf8');
-      const parser = new xml2js.Parser({ explicitArray: false });
+      const parser = new xml2js.Parser({ 
+        explicitArray: false,
+        mergeAttrs: true // Об'єднує атрибути з вмістом елементу
+      });
       const result = await parser.parseStringPromise(xmlData);
+      
+      console.log('XML parsing result structure:', JSON.stringify(result, null, 2));
 
       if (!result?.DATAPACKET?.ROWDATA?.ROW) {
         job.status = 'failed';
@@ -7806,6 +7811,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   async function processProductRow(row: any, job: any, existingProducts: any[]) {
     const attrs = row;
+    
+    console.log('Processing product row:', JSON.stringify(row, null, 2));
+    console.log('Row attributes:', Object.keys(attrs));
+    console.log('ID_LISTARTICLE value:', attrs.ID_LISTARTICLE);
     
     // Валідація обов'язкових полів
     let sku = attrs.ID_LISTARTICLE;
