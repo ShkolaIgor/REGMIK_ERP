@@ -7529,8 +7529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get existing suppliers and client types for validation
       const existingSuppliers = await storage.getSuppliers();
-      console.log('Existing suppliers:', existingSuppliers.length, 'records');
-      console.log('Sample supplier names:', existingSuppliers.slice(0, 3).map(s => ({ id: s.id, name: s.name, hasName: !!s.name })));
+
       const defaultClientType = { id: 1, name: 'Постачальник' };
 
       for (let i = 0; i < rows.length; i++) {
@@ -7566,12 +7565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // XML атрибути зберігаються в row.$ об'єкті
     const attrs = row.$ || row;
     
-    console.log('Processing supplier row:', {
-      hasAttrs: !!row.$,
-      attrs: attrs,
-      PREDPR: attrs.PREDPR,
-      NAME: attrs.NAME
-    });
+
     
     if (!attrs.PREDPR?.trim()) {
       job.details.push({
@@ -7645,7 +7639,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       createdAt: createdAt,
     };
 
-    console.log('Creating supplier with data:', JSON.stringify(supplierData, null, 2));
+
 
     try {
       const supplier = await storage.createSupplier(supplierData);
