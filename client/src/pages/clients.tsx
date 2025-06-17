@@ -609,10 +609,10 @@ export default function Clients() {
       {/* Поле пошуку */}
       <div className="mb-6">
         <SearchInput 
-          key="stable-search-input"
+          key={`search-${Date.now()}`}
           value={searchQuery}
           onChange={handleSearchChange}
-          disabled={isLoading}
+          disabled={false}
         />
         {debouncedSearch && (
           <p className="text-sm text-muted-foreground mt-2">
