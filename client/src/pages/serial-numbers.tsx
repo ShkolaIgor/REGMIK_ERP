@@ -242,7 +242,7 @@ export default function SerialNumbers() {
   };
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="w-full px-4 py-3">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Серійні номери</h1>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

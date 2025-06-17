@@ -133,7 +133,7 @@ export default function WarehouseTransfers() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-3">
               <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
@@ -299,7 +299,7 @@ export default function WarehouseTransfers() {
       </div>
 
       {/* Search */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="w-full px-4 py-3">
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
           <Input
@@ -312,7 +312,7 @@ export default function WarehouseTransfers() {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="w-full px-4 pb-12">
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
