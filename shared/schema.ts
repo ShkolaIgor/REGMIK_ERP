@@ -669,6 +669,7 @@ export const suppliers = pgTable("suppliers", {
   paymentTerms: text("payment_terms"), // умови оплати
   deliveryTerms: text("delivery_terms"), // умови доставки
   rating: integer("rating").default(5), // рейтинг від 1 до 10
+  externalId: varchar("external_id", { length: 100 }), // ID_PREDPR з зовнішньої системи
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

@@ -1802,6 +1802,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // XML Import endpoint for suppliers
+  const supplierImportJobs = new Map<string, {
+    id: string;
+    status: 'processing' | 'completed' | 'failed';
+    progress: number;
+    processed: number;
+    imported: number;
+    skipped: number;
+    errors: string[];
+    details: Array<{
+      name: string;
+      status: 'imported' | 'updated' | 'skipped' | 'error';
+      message?: string;
+    }>;
+    totalRows: number;
+  }>();
+
+  // Start XML import for suppliers
+  app.post("/api/suppliers/import-xml", upload.single('xmlFile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "No XML file provided" 
+        });
+      }
+
+      const jobId = generateJobId();
+      
+      supplierImportJobs.set(jobId, {
+        id: jobId,
+        status: 'processing',
+        progress: 0,
+        processed: 0,
+        imported: 0,
+        skipped: 0,
+        errors: [],
+        details: [],
+        totalRows: 0
+      });
+
+      res.json({
+        success: true,
+        jobId,
+        message: "Supplier import job started. Use the job ID to check progress."
+      });
+
+      processSupplierXmlImportAsync(jobId, req.file.buffer);
+
+    } catch (error) {
+      console.error("Supplier XML import error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to start supplier XML import",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Check supplier import job status
+  app.get("/api/suppliers/import-xml/:jobId/status", (req, res) => {
+    const { jobId } = req.params;
+    const job = supplierImportJobs.get(jobId);
+    
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        error: "Job not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      job
+    });
+  });
+
   // Assembly Operations
   app.get("/api/assembly-operations", async (req, res) => {
     try {
@@ -7427,6 +7504,156 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Помилка отримання доступних модулів користувача" });
     }
   });
+
+  // Process supplier XML import asynchronously
+  async function processSupplierXmlImportAsync(jobId: string, fileBuffer: Buffer) {
+    const job = supplierImportJobs.get(jobId);
+    if (!job) return;
+
+    try {
+      const xmlData = fileBuffer.toString('utf8');
+      const parser = new xml2js.Parser({ explicitArray: false });
+      const result = await parser.parseStringPromise(xmlData);
+
+      if (!result?.DATAPACKET?.ROWDATA?.ROW) {
+        job.status = 'failed';
+        job.errors.push('Invalid XML format: No ROW data found');
+        return;
+      }
+
+      const rows = Array.isArray(result.DATAPACKET.ROWDATA.ROW) 
+        ? result.DATAPACKET.ROWDATA.ROW 
+        : [result.DATAPACKET.ROWDATA.ROW];
+
+      job.totalRows = rows.length;
+
+      // Get existing suppliers and client types for validation
+      const existingSuppliers = await storage.getSuppliers();
+      const clientTypes = await storage.getClientTypes();
+      const defaultClientType = clientTypes.find(type => type.name.includes('Постачальник')) || clientTypes[0];
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        job.processed = i + 1;
+        job.progress = Math.round((job.processed / job.totalRows) * 100);
+
+        try {
+          await processSupplierRow(row, job, existingSuppliers, defaultClientType.id);
+        } catch (rowError) {
+          console.error(`Error processing supplier row ${i + 1}:`, rowError);
+          job.errors.push(`Row ${i + 1}: ${rowError instanceof Error ? rowError.message : String(rowError)}`);
+          job.details.push({
+            name: row.PREDPR || `Row ${i + 1}`,
+            status: 'error',
+            message: rowError instanceof Error ? rowError.message : String(rowError)
+          });
+        }
+      }
+
+      job.status = 'completed';
+      console.log(`Supplier import completed: ${job.imported} imported, ${job.skipped} skipped, ${job.errors.length} errors`);
+
+    } catch (error) {
+      console.error('Error in processSupplierXmlImportAsync:', error);
+      job.status = 'failed';
+      job.errors.push(`Import failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  // Process individual supplier row
+  async function processSupplierRow(row: any, job: any, existingSuppliers: any[], clientTypeId: number) {
+    if (!row.PREDPR?.trim()) {
+      job.details.push({
+        name: 'Unknown',
+        status: 'skipped',
+        message: 'Відсутня назва постачальника'
+      });
+      job.skipped++;
+      return;
+    }
+
+    // Parse creation date
+    let createdAt = null;
+    if (row.DATE_CREATE) {
+      try {
+        const dateParts = row.DATE_CREATE.split('.');
+        if (dateParts.length === 3) {
+          createdAt = new Date(parseInt(dateParts[2]), parseInt(dateParts[1]) - 1, parseInt(dateParts[0]));
+        }
+      } catch (dateError) {
+        console.log(`Invalid date format for supplier ${row.PREDPR}: ${row.DATE_CREATE}`);
+      }
+    }
+
+    // Check for existing supplier by external_id
+    if (row.ID_PREDPR) {
+      const existingByExternalId = existingSuppliers.find(supplier => 
+        supplier.externalId === row.ID_PREDPR
+      );
+      
+      if (existingByExternalId) {
+        job.details.push({
+          name: row.PREDPR,
+          status: 'skipped',
+          message: `Постачальник з external_id ${row.ID_PREDPR} вже існує`
+        });
+        job.skipped++;
+        return;
+      }
+    }
+
+    // Check for existing supplier by name
+    const existingByName = existingSuppliers.find(supplier => 
+      supplier.name.toLowerCase().trim() === row.PREDPR.toLowerCase().trim()
+    );
+
+    if (existingByName) {
+      job.details.push({
+        name: row.PREDPR,
+        status: 'skipped',
+        message: `Постачальник з назвою "${row.PREDPR}" вже існує`
+      });
+      job.skipped++;
+      return;
+    }
+
+    const supplierData = {
+      name: row.PREDPR,
+      clientTypeId: clientTypeId,
+      contactPerson: null,
+      email: null,
+      phone: null,
+      address: row.ADDRESS_PHYS || null,
+      description: row.COMMENT || null,
+      paymentTerms: null,
+      deliveryTerms: null,
+      rating: 5,
+      externalId: row.ID_PREDPR || null,
+      isActive: row.ACTUAL === 'T' || row.ACTUAL === 'true',
+      createdAt: createdAt,
+    };
+
+    console.log('Creating supplier with data:', JSON.stringify(supplierData, null, 2));
+
+    try {
+      const supplier = await storage.createSupplier(supplierData);
+      job.details.push({
+        name: row.PREDPR,
+        status: 'imported',
+        message: `Постачальник успішно імпортований з ID ${supplier.id}`
+      });
+      job.imported++;
+      console.log(`Successfully imported supplier: ${row.PREDPR} with ID ${supplier.id}`);
+    } catch (createError) {
+      console.error(`Failed to create supplier ${row.PREDPR}:`, createError);
+      job.details.push({
+        name: row.PREDPR,
+        status: 'error',
+        message: `Помилка створення постачальника: ${createError instanceof Error ? createError.message : String(createError)}`
+      });
+      job.errors.push(`Failed to create supplier ${row.PREDPR}: ${createError instanceof Error ? createError.message : String(createError)}`);
+    }
+  }
 
   const httpServer = createServer(app);
   return httpServer;
