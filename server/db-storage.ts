@@ -7289,6 +7289,194 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Client Contacts methods
+  async getClientContacts(): Promise<ClientContact[]> {
+    try {
+      const contacts = await db.select().from(clientContacts)
+        .orderBy(clientContacts.id);
+      return contacts;
+    } catch (error) {
+      console.error("Error getting client contacts:", error);
+      throw error;
+    }
+  }
+
+  async createClientContact(contactData: InsertClientContact): Promise<ClientContact> {
+    try {
+      const [contact] = await db.insert(clientContacts)
+        .values(contactData)
+        .returning();
+      return contact;
+    } catch (error) {
+      console.error("Error creating client contact:", error);
+      throw error;
+    }
+  }
+
+  async updateClientContact(id: number, contactData: Partial<InsertClientContact>): Promise<ClientContact | null> {
+    try {
+      const [contact] = await db.update(clientContacts)
+        .set(contactData)
+        .where(eq(clientContacts.id, id))
+        .returning();
+      return contact || null;
+    } catch (error) {
+      console.error("Error updating client contact:", error);
+      throw error;
+    }
+  }
+
+  async deleteClientContact(id: number): Promise<boolean> {
+    try {
+      await db.delete(clientContacts).where(eq(clientContacts.id, id));
+      return true;
+    } catch (error) {
+      console.error("Error deleting client contact:", error);
+      throw error;
+    }
+  }
+
+  // Client Mail History methods
+  async getClientMailHistory(): Promise<any[]> {
+    try {
+      const history = await db.select().from(clientMail)
+        .orderBy(desc(clientMail.createdAt));
+      return history;
+    } catch (error) {
+      console.error("Error getting client mail history:", error);
+      throw error;
+    }
+  }
+
+  async createClientMail(mailData: any): Promise<any> {
+    try {
+      const [mail] = await db.insert(clientMail)
+        .values(mailData)
+        .returning();
+      return mail;
+    } catch (error) {
+      console.error("Error creating client mail:", error);
+      throw error;
+    }
+  }
+
+  async updateClientMail(id: number, mailData: any): Promise<any | null> {
+    try {
+      const [mail] = await db.update(clientMail)
+        .set(mailData)
+        .where(eq(clientMail.id, id))
+        .returning();
+      return mail || null;
+    } catch (error) {
+      console.error("Error updating client mail:", error);
+      throw error;
+    }
+  }
+
+  async deleteClientMail(id: number): Promise<boolean> {
+    try {
+      await db.delete(clientMail).where(eq(clientMail.id, id));
+      return true;
+    } catch (error) {
+      console.error("Error deleting client mail:", error);
+      throw error;
+    }
+  }
+
+  // Mail Registry methods
+  async getMailRegistry(): Promise<any[]> {
+    try {
+      const registry = await db.select().from(mailRegistry)
+        .orderBy(desc(mailRegistry.createdAt));
+      return registry;
+    } catch (error) {
+      console.error("Error getting mail registry:", error);
+      throw error;
+    }
+  }
+
+  async createMailRegistryEntry(entryData: any): Promise<any> {
+    try {
+      const [entry] = await db.insert(mailRegistry)
+        .values(entryData)
+        .returning();
+      return entry;
+    } catch (error) {
+      console.error("Error creating mail registry entry:", error);
+      throw error;
+    }
+  }
+
+  async updateMailRegistryEntry(id: number, entryData: any): Promise<any | null> {
+    try {
+      const [entry] = await db.update(mailRegistry)
+        .set(entryData)
+        .where(eq(mailRegistry.id, id))
+        .returning();
+      return entry || null;
+    } catch (error) {
+      console.error("Error updating mail registry entry:", error);
+      throw error;
+    }
+  }
+
+  async deleteMailRegistryEntry(id: number): Promise<boolean> {
+    try {
+      await db.delete(mailRegistry).where(eq(mailRegistry.id, id));
+      return true;
+    } catch (error) {
+      console.error("Error deleting mail registry entry:", error);
+      throw error;
+    }
+  }
+
+  // Envelope Print Settings methods
+  async getEnvelopePrintSettings(): Promise<any[]> {
+    try {
+      const settings = await db.select().from(envelopePrintSettings)
+        .orderBy(envelopePrintSettings.id);
+      return settings;
+    } catch (error) {
+      console.error("Error getting envelope print settings:", error);
+      throw error;
+    }
+  }
+
+  async createEnvelopePrintSetting(settingData: any): Promise<any> {
+    try {
+      const [setting] = await db.insert(envelopePrintSettings)
+        .values(settingData)
+        .returning();
+      return setting;
+    } catch (error) {
+      console.error("Error creating envelope print setting:", error);
+      throw error;
+    }
+  }
+
+  async updateEnvelopePrintSetting(id: number, settingData: any): Promise<any | null> {
+    try {
+      const [setting] = await db.update(envelopePrintSettings)
+        .set(settingData)
+        .where(eq(envelopePrintSettings.id, id))
+        .returning();
+      return setting || null;
+    } catch (error) {
+      console.error("Error updating envelope print setting:", error);
+      throw error;
+    }
+  }
+
+  async deleteEnvelopePrintSetting(id: number): Promise<boolean> {
+    try {
+      await db.delete(envelopePrintSettings).where(eq(envelopePrintSettings.id, id));
+      return true;
+    } catch (error) {
+      console.error("Error deleting envelope print setting:", error);
+      throw error;
+    }
+  }
+
 }
 
 export const storage = new DatabaseStorage();
