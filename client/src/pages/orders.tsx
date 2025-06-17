@@ -528,7 +528,7 @@ export default function Orders() {
 
   // Функція фільтрації замовлень
   const filterOrders = (orders: any[]) => {
-    return orders.filter((order: any) => {
+    return orders?.filter((order: any) => {
       // Пошук по тексту
       const searchLower = searchTerm.toLowerCase();
       const matchesSearch = !searchTerm || 
@@ -1680,7 +1680,7 @@ export default function Orders() {
           <Card>
             <CardContent className="p-6">
               <div className="text-center">
-                <p className="text-2xl font-semibold text-gray-900">{orders.length}</p>
+                <p className="text-2xl font-semibold text-gray-900">{orders?.length || 0}</p>
                 <p className="text-sm text-gray-600">Всього замовлень</p>
               </div>
             </CardContent>
@@ -1712,7 +1712,7 @@ export default function Orders() {
             <CardContent className="p-6">
               <div className="text-center">
                 <p className="text-2xl font-semibold text-gray-900">
-                  {formatCurrency(orders.reduce((sum: number, o: any) => sum + parseFloat(o.totalAmount), 0))}
+                  {formatCurrency(orders?.reduce((sum: number, o: any) => sum + parseFloat(o.totalAmount), 0) || 0)}
                 </p>
                 <p className="text-sm text-gray-600">Загальна сума</p>
               </div>
@@ -1796,7 +1796,7 @@ export default function Orders() {
 
             {/* Results Count */}
             <div className="mt-3 text-sm text-gray-600">
-              Знайдено: {orders.length} з {allOrders.length} замовлень
+              Знайдено: {orders?.length || 0} з {allOrders?.length || 0} замовлень
             </div>
           </CardContent>
         </Card>
@@ -1807,7 +1807,7 @@ export default function Orders() {
             <CardTitle>Список замовлень</CardTitle>
           </CardHeader>
           <CardContent>
-            {orders.length === 0 ? (
+            {(orders?.length || 0) === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500">Замовлення відсутні</p>
                 <Button className="mt-4" onClick={() => setIsDialogOpen(true)}>
@@ -1863,7 +1863,7 @@ export default function Orders() {
                     </Droppable>
                   </TableHeader>
                   <TableBody>
-                    {orders.map((order: any) => (
+                    {orders?.map((order: any) => (
                       <React.Fragment key={`order-${order.id}`}>
                         <TableRow 
                           key={`row-${order.id}`}
