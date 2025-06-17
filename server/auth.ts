@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import session from "express-session";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 // Простий user store для демо
 const users = [
@@ -23,6 +24,14 @@ const users = [
     role: "user"
   }
 ];
+
+// Тимчасове сховище для токенів скидання паролю
+const resetTokens = new Map<string, { 
+  userId: number; 
+  token: string; 
+  expires: Date;
+  email: string;
+}>();
 
 // Session configuration
 export function setupSession(app: any) {
@@ -50,12 +59,18 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 
 // Login endpoint
 export async function login(username: string, password: string) {
+  console.log("Login attempt:", { username, password });
+  
   const user = users.find(u => u.username === username || u.email === username);
+  console.log("User found:", user ? user.username : "Not found");
+  
   if (!user) {
     return null;
   }
 
   const isValid = await bcrypt.compare(password, user.password);
+  console.log("Password valid:", isValid);
+  
   if (!isValid) {
     return null;
   }

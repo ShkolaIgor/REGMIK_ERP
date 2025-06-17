@@ -32,9 +32,6 @@ import multer from "multer";
 import xml2js from "xml2js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup session middleware
-  setupSession(app);
-
   // Multer configuration for file uploads
   const upload = multer({
     storage: multer.memoryStorage(),
@@ -70,19 +67,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/login", async (req, res) => {
     try {
+      console.log("Login request body:", req.body);
       const { username, password } = req.body;
       
       if (!username || !password) {
+        console.log("Missing username or password");
         return res.status(400).json({ error: "Username and password are required" });
       }
 
       const user = await login(username, password);
+      console.log("Login result:", user ? "Success" : "Failed");
+      
       if (!user) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
       // Store user in session
       (req as any).session.user = user;
+      console.log("User stored in session:", (req as any).session.user);
       
       res.json({ 
         success: true, 
