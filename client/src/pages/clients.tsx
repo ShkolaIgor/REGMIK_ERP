@@ -93,16 +93,12 @@ const contactFormSchema = insertClientContactSchema.extend({
 
 type ContactFormData = z.infer<typeof contactFormSchema>;
 
-// Стабільний компонент пошуку
+// Стабільний компонент пошуку з мемоізацією коллбеку
 const SearchInput = React.memo(({ value, onChange, disabled }: { 
   value: string; 
   onChange: (value: string) => void; 
   disabled?: boolean;
 }) => {
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(e.target.value);
-  }, [onChange]);
-
   return (
     <div className="relative max-w-md">
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -110,7 +106,7 @@ const SearchInput = React.memo(({ value, onChange, disabled }: {
         type="text"
         placeholder="Пошук клієнтів за назвою, ЄДРПОУ або повним ім'ям..."
         value={value}
-        onChange={handleChange}
+        onChange={(e) => onChange(e.target.value)}
         className="pl-10"
         autoComplete="off"
         disabled={disabled}

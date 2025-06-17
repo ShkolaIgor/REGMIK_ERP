@@ -454,7 +454,7 @@ export class DatabaseStorage implements IStorage {
             unit: products.unit,
             minStock: products.minStock,
             maxStock: products.maxStock,
-            hasSerialNumbers: products.hasSerialNumbers,
+
             isActive: products.isActive,
             createdAt: products.createdAt
           }
@@ -471,7 +471,7 @@ export class DatabaseStorage implements IStorage {
             productId: item.productId, 
             hasProduct: !!item.product,
             productName: item.product?.name,
-            hasSerialNumbers: item.product?.hasSerialNumbers,
+
             fullProduct: item.product
           })));
         }
@@ -516,7 +516,6 @@ export class DatabaseStorage implements IStorage {
         unit: products.unit,
         minStock: products.minStock,
         maxStock: products.maxStock,
-        hasSerialNumbers: products.hasSerialNumbers,
         isActive: products.isActive,
         createdAt: products.createdAt
       }
@@ -1153,7 +1152,6 @@ export class DatabaseStorage implements IStorage {
         unit: products.unit,
         minStock: products.minStock,
         maxStock: products.maxStock,
-        hasSerialNumbers: products.hasSerialNumbers,
         createdAt: products.createdAt
       }
     })
