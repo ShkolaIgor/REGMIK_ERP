@@ -305,7 +305,10 @@ export default function Clients() {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button onClick={() => setIsDialogOpen(true)}>
+          <Button onClick={() => {
+            setEditingClient(null);
+            setIsDialogOpen(true);
+          }}>
             <Plus className="mr-2 h-4 w-4" />
             Додати клієнта
           </Button>
