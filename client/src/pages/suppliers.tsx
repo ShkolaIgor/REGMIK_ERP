@@ -719,6 +719,9 @@ export default function Suppliers() {
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-lg">{supplier.name}</CardTitle>
+                    {supplier.fullName && (
+                      <p className="text-sm text-gray-600 mt-1">{supplier.fullName}</p>
+                    )}
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant={supplier.isActive ? "default" : "secondary"}>
                         {supplier.isActive ? "Активний" : "Неактивний"}
