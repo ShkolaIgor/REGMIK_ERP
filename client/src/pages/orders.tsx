@@ -1674,7 +1674,7 @@ export default function Orders() {
         </div>
       )}
 
-      <main className="p-6 space-y-6">
+      <main className="p-4 space-y-4">
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card>
