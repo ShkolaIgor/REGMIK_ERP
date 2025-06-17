@@ -171,9 +171,9 @@ export default function CostCalculationsPage() {
           aVal = parseFloat(a.profitMargin);
           bVal = parseFloat(b.profitMargin);
           break;
-        case "createdAt":
-          aVal = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          bVal = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        case "calculatedAt":
+          aVal = a.calculatedAt ? new Date(a.calculatedAt).getTime() : 0;
+          bVal = b.calculatedAt ? new Date(b.calculatedAt).getTime() : 0;
           break;
         default:
           return 0;
