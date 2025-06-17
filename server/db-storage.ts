@@ -855,10 +855,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteSupplier(id: number): Promise<boolean> {
-    // Спочатку видаляємо всі пов'язані замовлення постачальника
-    await db.delete(supplierOrders).where(eq(supplierOrders.supplierId, id));
+    // Перевіряємо, чи є пов'язані замовлення
+    const relatedOrders = await db.select().from(supplierOrders).where(eq(supplierOrders.supplierId, id));
     
-    // Тепер можемо безпечно видалити постачальника
+    if (relatedOrders.length > 0) {
+      throw new Error(`Неможливо видалити постачальника. У нього є ${relatedOrders.length} пов'язаних замовлень. Спочатку видаліть або перенесіть замовлення.`);
+    }
+    
+    // Видаляємо постачальника тільки якщо немає пов'язаних замовлень
     const result = await db.delete(suppliers).where(eq(suppliers.id, id));
     return (result.rowCount || 0) > 0;
   }
