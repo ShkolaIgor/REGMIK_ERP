@@ -7529,8 +7529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get existing suppliers and client types for validation
       const existingSuppliers = await storage.getSuppliers();
-      const clientTypes = await storage.getClientTypes();
-      const defaultClientType = clientTypes.find(type => type.name.includes('Постачальник')) || clientTypes[0];
+      const defaultClientType = { id: 1, name: 'Постачальник' };
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
