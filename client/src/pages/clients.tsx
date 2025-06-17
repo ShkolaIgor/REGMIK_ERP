@@ -260,6 +260,41 @@ export default function Clients() {
     }
   };
 
+  const handleSubmit = async (data: any) => {
+    try {
+      if (editingClient) {
+        // Оновлення існуючого клієнта
+        await apiRequest(`/api/clients/${editingClient.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(data),
+        });
+        toast({
+          title: "Клієнта оновлено",
+          description: "Дані клієнта успішно оновлено",
+        });
+      } else {
+        // Створення нового клієнта
+        await apiRequest('/api/clients', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        });
+        toast({
+          title: "Клієнта створено",
+          description: "Новий клієнт успішно додано до системи",
+        });
+      }
+      setIsDialogOpen(false);
+      setEditingClient(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+    } catch (error) {
+      toast({
+        title: "Помилка",
+        description: editingClient ? "Не вдалося оновити клієнта" : "Не вдалося створити клієнта",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="w-full px-4 py-3">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -382,11 +417,7 @@ export default function Clients() {
           </DialogHeader>
           <ClientForm
             editingClient={editingClient}
-            onSubmit={() => {
-              setIsDialogOpen(false);
-              setEditingClient(null);
-              queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
-            }}
+            onSubmit={handleSubmit}
             onCancel={() => {
               setIsDialogOpen(false);
               setEditingClient(null);
