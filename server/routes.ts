@@ -7764,7 +7764,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       const result = await parser.parseStringPromise(xmlData);
       
-      console.log('XML parsing result structure:', JSON.stringify(result, null, 2));
+
 
       if (!result?.DATAPACKET?.ROWDATA?.ROW) {
         job.status = 'failed';
@@ -7812,9 +7812,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   async function processProductRow(row: any, job: any, existingProducts: any[]) {
     const attrs = row;
     
-    console.log('Processing product row:', JSON.stringify(row, null, 2));
-    console.log('Row attributes:', Object.keys(attrs));
-    console.log('ID_LISTARTICLE value:', attrs.ID_LISTARTICLE);
+
     
     // Валідація обов'язкових полів
     let sku = attrs.ID_LISTARTICLE;
@@ -7866,13 +7864,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       // Підготовка даних товару для створення
+      // Обробка ціни - замінюємо кому на крапку для PostgreSQL
+      const processPrice = (price: any): string => {
+        if (!price) return '0';
+        return price.toString().replace(',', '.');
+      };
+
       const productData = {
         name: attrs.NAME_ARTICLE,
         sku: sku, // Використовуємо згенерований або оригінальний SKU
         description: attrs.NAME_FUNCTION || '',
         categoryId: attrs.TYPE_IZDEL ? parseInt(attrs.TYPE_IZDEL) : null,
-        costPrice: attrs.CENA ? attrs.CENA.toString() : '0',
-        retailPrice: attrs.CENA ? attrs.CENA.toString() : '0',
+        costPrice: processPrice(attrs.CENA),
+        retailPrice: processPrice(attrs.CENA),
         productType: 'product' as const,
         unit: 'шт',
         isActive: true
