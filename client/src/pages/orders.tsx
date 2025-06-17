@@ -1690,7 +1690,7 @@ export default function Orders() {
             <CardContent className="p-6">
               <div className="text-center">
                 <p className="text-2xl font-semibold text-blue-600">
-                  {orders.filter((o: any) => o.status === 'processing').length}
+                  {orders?.filter((o: any) => o.status === 'processing')?.length || 0}
                 </p>
                 <p className="text-sm text-gray-600">В обробці</p>
               </div>
@@ -1701,7 +1701,7 @@ export default function Orders() {
             <CardContent className="p-6">
               <div className="text-center">
                 <p className="text-2xl font-semibold text-green-600">
-                  {orders.filter((o: any) => o.status === 'completed').length}
+                  {orders?.filter((o: any) => o.status === 'completed')?.length || 0}
                 </p>
                 <p className="text-sm text-gray-600">Завершено</p>
               </div>
