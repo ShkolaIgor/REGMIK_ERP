@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -49,15 +49,24 @@ interface ImportJob {
   totalRows: number;
 }
 
-// Простий компонент пошуку з фокусом
+// Компонент пошуку з автофокусом
 function SearchInput({ value, onChange }: { 
   value: string; 
   onChange: (value: string) => void; 
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
   return (
     <div className="relative max-w-md">
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
       <Input
+        ref={inputRef}
         type="text"
         placeholder="Пошук постачальників за назвою, ЄДРПОУ або контактами..."
         value={value}
@@ -372,7 +381,7 @@ export default function Suppliers() {
 
   return (
     <div className="w-full px-4 py-3">
-      {/* Header with title, search and action buttons */}
+      {/* Header with title and action buttons */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Постачальники</h1>
@@ -380,11 +389,7 @@ export default function Suppliers() {
             Загалом: {total} постачальник{total === 1 ? '' : total > 4 ? 'ів' : 'и'}
           </p>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <SearchInput 
-            value={searchQuery} 
-            onChange={handleSearchChange}
-          />
+        <div className="flex items-center gap-3">
           <Button onClick={() => setIsImportDialogOpen(true)} variant="outline">
             <Upload className="h-4 w-4 mr-2" />
             Імпорт XML
@@ -530,6 +535,14 @@ export default function Suppliers() {
             </DialogContent>
           </Dialog>
         </div>
+      </div>
+
+      {/* Search Section */}
+      <div className="mb-6">
+        <SearchInput 
+          value={searchQuery} 
+          onChange={handleSearchChange}
+        />
       </div>
 
       {/* Import Dialog */}
