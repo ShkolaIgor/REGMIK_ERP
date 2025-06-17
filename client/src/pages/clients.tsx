@@ -93,16 +93,29 @@ const contactFormSchema = insertClientContactSchema.extend({
 
 type ContactFormData = z.infer<typeof contactFormSchema>;
 
-// Стабільний компонент пошуку з мемоізацією коллбеку
+// Стабільний компонент пошуку з ref для збереження фокусу
 const SearchInput = React.memo(({ value, onChange, disabled }: { 
   value: string; 
   onChange: (value: string) => void; 
   disabled?: boolean;
 }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Зберігаємо фокус при зміні disabled стану
+  useEffect(() => {
+    if (inputRef.current && document.activeElement === inputRef.current) {
+      // Відновлюємо фокус після короткої затримки
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 10);
+    }
+  }, [disabled]);
+
   return (
     <div className="relative max-w-md">
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
       <Input
+        ref={inputRef}
         type="text"
         placeholder="Пошук клієнтів за назвою, ЄДРПОУ або повним ім'ям..."
         value={value}
