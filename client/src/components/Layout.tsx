@@ -232,17 +232,17 @@ export function Layout({ children }: LayoutProps) {
               <DropdownMenuTrigger asChild>
                 <button className="w-full flex items-center space-x-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName} />
+                    <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName || user.username} />
                     <AvatarFallback>
-                      {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
+                      {user.firstName?.charAt(0) || user.username?.charAt(0)}{user.lastName?.charAt(0) || user.username?.charAt(1) || ''}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 text-left">
                     <p className="text-sm font-medium text-gray-900">
-                      {user.firstName} {user.lastName}
+                      {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username}
                     </p>
                     <p className="text-xs text-gray-500 truncate">
-                      {user.email}
+                      {user.email || user.username}
                     </p>
                   </div>
                 </button>
@@ -251,10 +251,10 @@ export function Layout({ children }: LayoutProps) {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      {user.firstName} {user.lastName}
+                      {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      {user.email}
+                      {user.email || user.username}
                     </p>
                   </div>
                 </DropdownMenuLabel>
