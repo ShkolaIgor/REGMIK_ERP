@@ -1181,7 +1181,7 @@ export default function Orders() {
   return (
     <div className="flex-1 overflow-auto">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
+      <header className="bg-white border-b border-gray-200 px-4 py-3">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-semibold text-gray-900">Замовлення / Рахунки</h2>
@@ -1674,7 +1674,7 @@ export default function Orders() {
         </div>
       )}
 
-      <main className="p-4 space-y-4">
+      <main className="p-3 space-y-3">
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card>
