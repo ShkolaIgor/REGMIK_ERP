@@ -7529,6 +7529,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get existing suppliers and client types for validation
       const existingSuppliers = await storage.getSuppliers();
+      console.log('Existing suppliers:', existingSuppliers.length, 'records');
+      console.log('Sample supplier names:', existingSuppliers.slice(0, 3).map(s => ({ id: s.id, name: s.name, hasName: !!s.name })));
       const defaultClientType = { id: 1, name: 'Постачальник' };
 
       for (let i = 0; i < rows.length; i++) {
@@ -7590,21 +7592,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           createdAt = new Date(parseInt(dateParts[2]), parseInt(dateParts[1]) - 1, parseInt(dateParts[0]));
         }
       } catch (dateError) {
-        console.log(`Invalid date format for supplier ${row.PREDPR}: ${row.DATE_CREATE}`);
+        console.log(`Invalid date format for supplier ${attrs.PREDPR}: ${attrs.DATE_CREATE}`);
       }
     }
 
     // Check for existing supplier by external_id
-    if (row.ID_PREDPR) {
+    if (attrs.ID_PREDPR) {
       const existingByExternalId = existingSuppliers.find(supplier => 
-        supplier.externalId === row.ID_PREDPR
+        supplier.externalId === parseInt(attrs.ID_PREDPR)
       );
       
       if (existingByExternalId) {
         job.details.push({
-          name: row.PREDPR,
+          name: attrs.PREDPR,
           status: 'skipped',
-          message: `Постачальник з external_id ${row.ID_PREDPR} вже існує`
+          message: `Постачальник з external_id ${attrs.ID_PREDPR} вже існує`
         });
         job.skipped++;
         return;
@@ -7613,33 +7615,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Check for existing supplier by name
     const existingByName = existingSuppliers.find(supplier => 
-      supplier.name.toLowerCase().trim() === row.PREDPR.toLowerCase().trim()
+      supplier.name && supplier.name.toLowerCase().trim() === attrs.PREDPR.toLowerCase().trim()
     );
 
     if (existingByName) {
       job.details.push({
-        name: row.PREDPR,
+        name: attrs.PREDPR,
         status: 'skipped',
-        message: `Постачальник з назвою "${row.PREDPR}" вже існує`
+        message: `Постачальник з назвою "${attrs.PREDPR}" вже існує`
       });
       job.skipped++;
       return;
     }
 
     const supplierData = {
-      name: row.PREDPR,
-      fullName: row.NAME || null,
+      name: attrs.PREDPR,
+      fullName: attrs.NAME || null,
       clientTypeId: clientTypeId,
       contactPerson: null,
       email: null,
       phone: null,
-      address: row.ADDRESS_PHYS || null,
-      description: row.COMMENT || null,
+      address: attrs.ADDRESS_PHYS || null,
+      description: attrs.COMMENT || null,
       paymentTerms: null,
       deliveryTerms: null,
       rating: 5,
-      externalId: row.ID_PREDPR ? parseInt(row.ID_PREDPR) : null,
-      isActive: row.ACTUAL === 'T' || row.ACTUAL === 'true',
+      externalId: attrs.ID_PREDPR ? parseInt(attrs.ID_PREDPR) : null,
+      isActive: attrs.ACTUAL === 'T' || attrs.ACTUAL === 'true',
       createdAt: createdAt,
     };
 
