@@ -135,6 +135,8 @@ export default function Suppliers() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });
+      setEditingSupplier(null);
+      resetForm();
       toast({
         title: "Успіх",
         description: "Постачальника видалено успішно",
@@ -688,13 +690,24 @@ export default function Suppliers() {
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => setEditingSupplier(null)}>
-                Скасувати
+            <div className="flex justify-between pt-4">
+              <Button 
+                type="button" 
+                variant="destructive" 
+                onClick={() => deleteMutation.mutate(editingSupplier!.id)}
+                disabled={deleteMutation.isPending}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                {deleteMutation.isPending ? "Видалення..." : "Видалити"}
               </Button>
-              <Button type="submit" disabled={updateMutation.isPending}>
-                {updateMutation.isPending ? "Оновлення..." : "Оновити"}
-              </Button>
+              <div className="flex gap-3">
+                <Button type="button" variant="outline" onClick={() => setEditingSupplier(null)}>
+                  Скасувати
+                </Button>
+                <Button type="submit" disabled={updateMutation.isPending}>
+                  {updateMutation.isPending ? "Оновлення..." : "Оновити"}
+                </Button>
+              </div>
             </div>
           </form>
         </DialogContent>
@@ -745,13 +758,6 @@ export default function Suppliers() {
                       onClick={() => handleEdit(supplier)}
                     >
                       <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => deleteMutation.mutate(supplier.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
