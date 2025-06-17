@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Trash2, Edit, Plus, Upload, FileX, CheckCircle, XCircle, AlertCircle, Eye, Building2 } from "lucide-react";
+import { Trash2, Edit, Plus, Upload, FileX, CheckCircle, XCircle, AlertCircle, Eye, Building2, Search, User } from "lucide-react";
 
 interface Supplier {
   id: number;
@@ -49,6 +49,26 @@ interface ImportJob {
   totalRows: number;
 }
 
+// Простий компонент пошуку з фокусом
+function SearchInput({ value, onChange }: { 
+  value: string; 
+  onChange: (value: string) => void; 
+}) {
+  return (
+    <div className="relative max-w-md">
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+      <Input
+        type="text"
+        placeholder="Пошук постачальників за назвою, ЄДРПОУ або контактами..."
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="pl-10"
+        autoComplete="off"
+      />
+    </div>
+  );
+}
+
 export default function Suppliers() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -81,6 +101,11 @@ export default function Suppliers() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Обробник зміни пошуку
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+  };
 
   // Дебаунс для пошуку
   useEffect(() => {
@@ -347,7 +372,7 @@ export default function Suppliers() {
 
   return (
     <div className="w-full px-4 py-3">
-      {/* Header with title and search */}
+      {/* Header with title, search and action buttons */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Постачальники</h1>
@@ -356,18 +381,10 @@ export default function Suppliers() {
           </p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <Input
-            placeholder="Пошук по назві, ЄДРПОУ, контакту..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full sm:w-80"
+          <SearchInput 
+            value={searchQuery} 
+            onChange={handleSearchChange}
           />
-        </div>
-      </div>
-
-      {/* Action buttons */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex gap-3">
           <Button onClick={() => setIsImportDialogOpen(true)} variant="outline">
             <Upload className="h-4 w-4 mr-2" />
             Імпорт XML
@@ -784,7 +801,7 @@ export default function Suppliers() {
       </Dialog>
 
       {/* Suppliers List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {suppliers.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-8">
@@ -803,92 +820,93 @@ export default function Suppliers() {
                   <Building2 className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
                     <CardTitle className="text-lg leading-tight">{supplier.name}</CardTitle>
+                    {supplier.fullName && (
+                      <CardDescription className="text-sm mt-1 line-clamp-2">
+                        {supplier.fullName}
+                      </CardDescription>
+                    )}
                   </div>
                 </div>
                 
-                <div className="flex justify-between items-center mb-3">
-                  <CardDescription className="text-sm">
-                    ЄДРПОУ/ІПН: <span className="font-bold text-base text-foreground">{supplier.taxCode || "Не вказано"}</span>
-                  </CardDescription>
-                  <div className="flex space-x-1 flex-shrink-0">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(supplier)} className="h-8 w-8 p-0">
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-foreground">ЄДРПОУ/ІПН:</span>
+                    <span className="text-sm font-bold text-foreground">{supplier.taxCode || "Не вказано"}</span>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant={supplier.isActive ? "default" : "secondary"} className="text-xs">
+                      {supplier.isActive ? "Активний" : "Неактивний"}
+                    </Badge>
+                    {supplier.rating && supplier.rating > 0 && (
+                      <Badge variant="outline" className="text-xs">
+                        Рейтинг: {supplier.rating}/5
+                      </Badge>
+                    )}
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant={supplier.isActive ? "default" : "secondary"} className="text-xs">
-                    {supplier.isActive ? "Активний" : "Неактивний"}
-                  </Badge>
-                  {supplier.rating && (
-                    <Badge variant="outline" className="text-xs">
-                      Рейтинг: {supplier.rating}/5
-                    </Badge>
-                  )}
-                </div>
               </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-3 text-sm">
-                  {supplier.fullName && (
-                    <div>
-                      <span className="font-medium text-foreground">Повна назва:</span>
-                      <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{supplier.fullName}</p>
-                    </div>
-                  )}
-                  {supplier.contactPerson && (
-                    <div>
-                      <span className="font-medium text-foreground">Контактна особа:</span>
-                      <p className="text-muted-foreground text-xs mt-1">{supplier.contactPerson}</p>
-                    </div>
-                  )}
-                  {(supplier.phone || supplier.email) && (
-                    <div>
-                      <span className="font-medium text-foreground">Контакти:</span>
-                      <div className="text-xs mt-1 space-y-1">
-                        {supplier.phone && (
-                          <p className="text-muted-foreground">Тел: {supplier.phone}</p>
-                        )}
-                        {supplier.email && (
-                          <p className="text-muted-foreground">Email: {supplier.email}</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  {supplier.address && (
-                    <div>
-                      <span className="font-medium text-foreground">Адреса:</span>
-                      <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{supplier.address}</p>
-                    </div>
-                  )}
-                  {(supplier.paymentTerms || supplier.deliveryTerms) && (
-                    <div>
-                      <span className="font-medium text-foreground">Умови співпраці:</span>
-                      <div className="text-xs mt-1 space-y-1">
-                        {supplier.paymentTerms && (
-                          <p className="text-muted-foreground">Оплата: {supplier.paymentTerms}</p>
-                        )}
-                        {supplier.deliveryTerms && (
-                          <p className="text-muted-foreground">Доставка: {supplier.deliveryTerms}</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  {supplier.description && (
-                    <div>
-                      <span className="font-medium text-foreground">Примітки:</span>
-                      <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{supplier.description}</p>
-                    </div>
-                  )}
-                  
-                  {/* Дати створення та оновлення */}
-                  <div className="pt-2 border-t border-border">
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Створено: {new Date(supplier.createdAt).toLocaleDateString('uk-UA')}</span>
-                      {supplier.updatedAt && supplier.updatedAt !== supplier.createdAt && (
-                        <span>Оновлено: {new Date(supplier.updatedAt).toLocaleDateString('uk-UA')}</span>
+              
+              <CardContent className="pt-0 space-y-3">
+                {supplier.contactPerson && (
+                  <div className="text-sm">
+                    <span className="font-medium text-foreground">Контактна особа:</span>
+                    <p className="text-muted-foreground text-xs mt-1">{supplier.contactPerson}</p>
+                  </div>
+                )}
+                
+                {(supplier.phone || supplier.email) && (
+                  <div className="text-sm">
+                    <span className="font-medium text-foreground">Контакти:</span>
+                    <div className="text-xs mt-1 space-y-1">
+                      {supplier.phone && (
+                        <p className="text-muted-foreground">📞 {supplier.phone}</p>
+                      )}
+                      {supplier.email && (
+                        <p className="text-muted-foreground">✉️ {supplier.email}</p>
                       )}
                     </div>
                   </div>
+                )}
+                
+                {supplier.address && (
+                  <div className="text-sm">
+                    <span className="font-medium text-foreground">Адреса:</span>
+                    <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{supplier.address}</p>
+                  </div>
+                )}
+                
+                {(supplier.paymentTerms || supplier.deliveryTerms) && (
+                  <div className="text-sm">
+                    <span className="font-medium text-foreground">Умови:</span>
+                    <div className="text-xs mt-1 space-y-1">
+                      {supplier.paymentTerms && (
+                        <p className="text-muted-foreground">💰 {supplier.paymentTerms}</p>
+                      )}
+                      {supplier.deliveryTerms && (
+                        <p className="text-muted-foreground">🚚 {supplier.deliveryTerms}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {supplier.description && (
+                  <div className="text-sm">
+                    <span className="font-medium text-foreground">Примітки:</span>
+                    <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{supplier.description}</p>
+                  </div>
+                )}
+
+                <div className="flex justify-end pt-2 border-t border-gray-100">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleEdit(supplier)} 
+                    className="h-8"
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                    Редагувати
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -898,49 +916,43 @@ export default function Suppliers() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-8">
-          <div className="text-sm text-gray-600">
-            Сторінка {currentPage} з {totalPages}
+        <div className="flex justify-center items-center space-x-2 mt-6">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+          >
+            Попередня
+          </Button>
+          
+          <div className="flex space-x-1">
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+              if (pageNum > totalPages) return null;
+              
+              return (
+                <Button
+                  key={pageNum}
+                  variant={currentPage === pageNum ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCurrentPage(pageNum)}
+                  className="w-10"
+                >
+                  {pageNum}
+                </Button>
+              );
+            })}
           </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              Попередня
-            </Button>
-            
-            {/* Page numbers */}
-            <div className="flex items-center space-x-1">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                const pageNumber = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
-                if (pageNumber > totalPages) return null;
-                
-                return (
-                  <Button
-                    key={pageNumber}
-                    variant={currentPage === pageNumber ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setCurrentPage(pageNumber)}
-                    className="w-8 h-8 p-0"
-                  >
-                    {pageNumber}
-                  </Button>
-                );
-              })}
-            </div>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              Наступна
-            </Button>
-          </div>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Наступна
+          </Button>
         </div>
       )}
     </div>
