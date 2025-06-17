@@ -251,8 +251,18 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
 
   const handleFormSubmit = async (data: FormData) => {
     console.log("Form submitted with data:", data);
+    
+    // Обробляємо пусті рядки як null для унікальних полів
+    const processedData = {
+      ...data,
+      taxCode: data.taxCode?.trim() || null,
+      cityRef: data.cityRef?.trim() || null,
+      warehouseRef: data.warehouseRef?.trim() || null,
+      carrierId: data.carrierId || null,
+    };
+    
     try {
-      await onSubmit(data);
+      await onSubmit(processedData);
     } catch (error) {
       console.error("Error submitting form:", error);
     }
