@@ -252,7 +252,7 @@ export default function Integrations() {
   };
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="w-full px-4 py-3">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">Інтеграції</h1>
