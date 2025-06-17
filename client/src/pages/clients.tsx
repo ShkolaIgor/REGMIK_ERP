@@ -267,7 +267,7 @@ export default function Clients() {
         // Оновлення існуючого клієнта
         await apiRequest(`/api/clients/${editingClient.id}`, {
           method: 'PATCH',
-          body: JSON.stringify(data),
+          body: data,
         });
         toast({
           title: "Клієнта оновлено",
@@ -277,7 +277,7 @@ export default function Clients() {
         // Створення нового клієнта
         await apiRequest('/api/clients', {
           method: 'POST',
-          body: JSON.stringify(data),
+          body: data,
         });
         toast({
           title: "Клієнта створено",
