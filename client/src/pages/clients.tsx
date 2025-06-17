@@ -93,40 +93,25 @@ const contactFormSchema = insertClientContactSchema.extend({
 
 type ContactFormData = z.infer<typeof contactFormSchema>;
 
-// Стабільний компонент пошуку з ref для збереження фокусу
-const SearchInput = React.memo(({ value, onChange, disabled }: { 
+// Простий компонент пошуку без складних оптимізацій
+function SearchInput({ value, onChange }: { 
   value: string; 
   onChange: (value: string) => void; 
-  disabled?: boolean;
-}) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  
-  // Зберігаємо фокус при зміні disabled стану
-  useEffect(() => {
-    if (inputRef.current && document.activeElement === inputRef.current) {
-      // Відновлюємо фокус після короткої затримки
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 10);
-    }
-  }, [disabled]);
-
+}) {
   return (
     <div className="relative max-w-md">
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
       <Input
-        ref={inputRef}
         type="text"
         placeholder="Пошук клієнтів за назвою, ЄДРПОУ або повним ім'ям..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="pl-10"
         autoComplete="off"
-        disabled={disabled}
       />
     </div>
   );
-});
+}
 
 export default function Clients() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -609,10 +594,8 @@ export default function Clients() {
       {/* Поле пошуку */}
       <div className="mb-6">
         <SearchInput 
-          key={`search-${Date.now()}`}
           value={searchQuery}
           onChange={handleSearchChange}
-          disabled={false}
         />
         {debouncedSearch && (
           <p className="text-sm text-muted-foreground mt-2">
