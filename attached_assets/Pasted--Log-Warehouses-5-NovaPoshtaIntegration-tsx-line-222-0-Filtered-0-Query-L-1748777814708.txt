@@ -1,0 +1,193 @@
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[] (0)
+"Filtered:"
+[] (0)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (407)
+"Filtered:"
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (407)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (407)
+"Filtered:"
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (407)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (407)
+"Filtered:"
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (303)
+"Query:"
+"2"
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (407)
+"Filtered:"
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (48)
+"Query:"
+"26"
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (407)
+"Filtered:"
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (407)
+"Query:"
+""
+[Log] Button clicked: – {selectedCity: Object, selectedWarehouse: Object, externalWeight: "1", …} (NovaPoshtaIntegration.tsx, line 664)
+{selectedCity: Object, selectedWarehouse: Object, externalWeight: "1", externalDeclaredValue: "4444.00"}Object
+[Log] API response: – {Cost: 82.22, AssessedCost: 4444} (NovaPoshtaIntegration.tsx, line 117)
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (407)
+"Filtered:"
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (407)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (407)
+"Filtered:"
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (407)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (407)
+"Filtered:"
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (407)
+"Query:"
+""
+[Log] Warehouses: (5) (NovaPoshtaIntegration.tsx, line 222)
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (407)
+"Filtered:"
+[Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (407)
+"Query:"
+""
+[Log] Sending create invoice request: (NovaPoshtaIntegration.tsx, line 159)
+"{
+  \"cityRecipient\": \"db5c897c-391c-11dd-90d9-001a92567626\",
+  \"warehouseRecipient\": \"47c9732d-7e8b-11ec-a9b5-b8830365bd14\",
+  \"citySender\": \"db5c897c-391c-11dd-90d9-001a92567626\",
+  \"warehouseSender\": \"47c9732d-7e8b-11ec-a9b5-b8830365bd14\",
+  \"senderName\": \"Ваша компанія\",
+  \"senderPhone\": \"+380123456789\",
+  \"recipientName\": \"ТОВ \\\"ЗВАРМЕД\\\"\",
+  \"recipientPhone\": \"+380 (95) 330-81-15\",
+  \"recipientType\": \"Organization\",
+  \"description\": \"док\",
+  \"weight\": 1,
+  \"cost\": 4444,
+  \"seatsAmount\": 1,
+  \"paymentMethod\": \"NonCash\",
+  \"payerType\": \"Recipient\",
+  \"orderId\": \"5\"
+}"
+[Error] Failed to load resource: the server responded with a status of 500 (Internal Server Error) (create-invoice, line 0)
+[Error] Помилка API: – {error: "Failed to create invoice"}
+	(anonymous function) (NovaPoshtaIntegration.tsx:173)

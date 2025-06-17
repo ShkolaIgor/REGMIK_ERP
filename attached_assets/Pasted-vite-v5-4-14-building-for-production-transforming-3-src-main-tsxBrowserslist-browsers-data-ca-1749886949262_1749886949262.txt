@@ -1,0 +1,66 @@
+vite v5.4.14 building for production...
+transforming (3) src/main.tsxBrowserslist: browsers data (caniuse-lite) is 8 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ 3959 modules transformed.
+../dist/public/index.html                              0.66 kB │ gzip:   0.40 kB
+../dist/public/assets/index-EBwp73vl.css              82.59 kB │ gzip:  13.99 kB
+../dist/public/assets/purify.es-BFmuJLeH.js           21.93 kB │ gzip:   8.62 kB
+../dist/public/assets/index.es-DF9lLkKS.js           149.53 kB │ gzip:  51.12 kB
+../dist/public/assets/html2canvas.esm-CBrSDip1.js    201.42 kB │ gzip:  48.03 kB
+../dist/public/assets/index-B8iJ71kB.js            2,522.66 kB │ gzip: 694.18 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 12.52s
+▲ [WARNING] Duplicate member "removeSerialNumberFromOrderItem" in class body [duplicate-class-member]
+
+    server/db-storage.ts:6360:8:
+      6360 │   async removeSerialNumberFromOrderItem(assignmentId: number): Promise<void> {
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The original member "removeSerialNumberFromOrderItem" is here:
+
+    server/db-storage.ts:6063:8:
+      6063 │   async removeSerialNumberFromOrderItem(assignmentId: number): Promise<void> {
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Duplicate member "removeSerialNumberFromOrderItem" in class body [duplicate-class-member]
+
+    server/db-storage.ts:6392:8:
+      6392 │   async removeSerialNumberFromOrderItem(assignmentId: number): Promise<void> {
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The original member "removeSerialNumberFromOrderItem" is here:
+
+    server/db-storage.ts:6360:8:
+      6360 │   async removeSerialNumberFromOrderItem(assignmentId: number): Promise<void> {
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Duplicate member "getAvailableSerialNumbersForProduct" in class body [duplicate-class-member]
+
+    server/db-storage.ts:6426:8:
+      6426 │   async getAvailableSerialNumbersForProduct(productId: number): Promise<any[]> {
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The original member "getAvailableSerialNumbersForProduct" is here:
+
+    server/db-storage.ts:6089:8:
+      6089 │   async getAvailableSerialNumbersForProduct(productId: number): Promise<SerialNumber[]> {
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Duplicate member "completeOrderWithSerialNumbers" in class body [duplicate-class-member]
+
+    server/db-storage.ts:6449:8:
+      6449 │   async completeOrderWithSerialNumbers(orderId: number): Promise<void> {
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The original member "completeOrderWithSerialNumbers" is here:
+
+    server/db-storage.ts:6099:8:
+      6099 │   async completeOrderWithSerialNumbers(orderId: number): Promise<void> {
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+4 warnings

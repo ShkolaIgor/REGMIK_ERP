@@ -1,0 +1,30 @@
+Auth check - User authenticated: demo
+2025-06-10T08:57:44.283398+00:00 ERP regmik-erp[592]: 8:57:44 AM [express] GET /api/auth/user 304 in 5ms :: {"id":"demo-user-1","email":"demo@example.com"…
+2025-06-10T08:57:44.300194+00:00 ERP regmik-erp[592]: 8:57:44 AM [express] GET /api/roles 304 in 3ms :: []
+2025-06-10T08:57:44.300969+00:00 ERP regmik-erp[592]: 8:57:44 AM [express] GET /api/users 304 in 6ms :: [{"id":1,"workerId":1,"username":"ShkolaIhor","ema…
+2025-06-10T08:57:44.301412+00:00 ERP regmik-erp[592]: 8:57:44 AM [express] GET /api/system-modules 304 in 5ms :: []
+2025-06-10T08:57:44.301817+00:00 ERP regmik-erp[592]: 8:57:44 AM [express] GET /api/users/available-workers 304 in 4ms :: []
+2025-06-10T08:57:50.958858+00:00 ERP regmik-erp[592]: Error fetching companies: TypeError: storage.getCompanies is not a function
+2025-06-10T08:57:50.958992+00:00 ERP regmik-erp[592]:     at file:///opt/REGMIK_ERP/dist/index.js:12847:40
+2025-06-10T08:57:50.959011+00:00 ERP regmik-erp[592]:     at Layer.handle [as handle_request] (/opt/REGMIK_ERP/node_modules/express/lib/router/layer.js:95:5)
+2025-06-10T08:57:50.959031+00:00 ERP regmik-erp[592]:     at next (/opt/REGMIK_ERP/node_modules/express/lib/router/route.js:149:13)
+2025-06-10T08:57:50.959049+00:00 ERP regmik-erp[592]:     at Route.dispatch (/opt/REGMIK_ERP/node_modules/express/lib/router/route.js:119:3)
+2025-06-10T08:57:50.959075+00:00 ERP regmik-erp[592]:     at Layer.handle [as handle_request] (/opt/REGMIK_ERP/node_modules/express/lib/router/layer.js:95:5)
+2025-06-10T08:57:50.959092+00:00 ERP regmik-erp[592]:     at /opt/REGMIK_ERP/node_modules/express/lib/router/index.js:284:15
+2025-06-10T08:57:50.959109+00:00 ERP regmik-erp[592]:     at Function.process_params (/opt/REGMIK_ERP/node_modules/express/lib/router/index.js:346:12)
+2025-06-10T08:57:50.959126+00:00 ERP regmik-erp[592]:     at next (/opt/REGMIK_ERP/node_modules/express/lib/router/index.js:280:10)
+2025-06-10T08:57:50.959143+00:00 ERP regmik-erp[592]:     at /opt/REGMIK_ERP/node_modules/express-session/index.js:514:7
+2025-06-10T08:57:50.959168+00:00 ERP regmik-erp[592]:     at /opt/REGMIK_ERP/node_modules/connect-pg-simple/index.js:370:18
+2025-06-10T08:57:50.960728+00:00 ERP regmik-erp[592]: 8:57:50 AM [express] GET /api/companies 500 in 5ms :: {"error":"Failed to fetch companies"}
+2025-06-10T08:58:15.769509+00:00 ERP regmik-erp[592]: Error creating company: TypeError: storage.createCompany is not a function
+2025-06-10T08:58:15.769635+00:00 ERP regmik-erp[592]:     at file:///opt/REGMIK_ERP/dist/index.js:12885:37
+2025-06-10T08:58:15.769649+00:00 ERP regmik-erp[592]:     at Layer.handle [as handle_request] (/opt/REGMIK_ERP/node_modules/express/lib/router/layer.js:95:5)
+2025-06-10T08:58:15.769664+00:00 ERP regmik-erp[592]:     at next (/opt/REGMIK_ERP/node_modules/express/lib/router/route.js:149:13)
+2025-06-10T08:58:15.769676+00:00 ERP regmik-erp[592]:     at Route.dispatch (/opt/REGMIK_ERP/node_modules/express/lib/router/route.js:119:3)
+2025-06-10T08:58:15.769687+00:00 ERP regmik-erp[592]:     at Layer.handle [as handle_request] (/opt/REGMIK_ERP/node_modules/express/lib/router/layer.js:95:5)
+2025-06-10T08:58:15.769697+00:00 ERP regmik-erp[592]:     at /opt/REGMIK_ERP/node_modules/express/lib/router/index.js:284:15
+2025-06-10T08:58:15.769712+00:00 ERP regmik-erp[592]:     at Function.process_params (/opt/REGMIK_ERP/node_modules/express/lib/router/index.js:346:12)
+2025-06-10T08:58:15.769733+00:00 ERP regmik-erp[592]:     at next (/opt/REGMIK_ERP/node_modules/express/lib/router/index.js:280:10)
+2025-06-10T08:58:15.769775+00:00 ERP regmik-erp[592]:     at /opt/REGMIK_ERP/node_modules/express-session/index.js:514:7
+2025-06-10T08:58:15.769789+00:00 ERP regmik-erp[592]:     at /opt/REGMIK_ERP/node_modules/connect-pg-simple/index.js:370:18
+2025-06-10T08:58:15.771413+00:00 ERP regmik-erp[592]: 8:58:15 AM [express] POST /api/companies 500 in 10ms :: {"error":"Failed to create company"}
