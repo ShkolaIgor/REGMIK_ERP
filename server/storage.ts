@@ -1102,8 +1102,12 @@ export class MemStorage implements IStorage {
   }
 
   async deleteSupplier(id: number): Promise<boolean> {
+    // Спочатку видаляємо всі пов'язані замовлення постачальника
+    await db.delete(supplierOrders).where(eq(supplierOrders.supplierId, id));
+    
+    // Тепер можемо безпечно видалити постачальника
     const result = await db.delete(suppliers).where(eq(suppliers.id, id));
-    return result.rowCount > 0;
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
   // Client Types
