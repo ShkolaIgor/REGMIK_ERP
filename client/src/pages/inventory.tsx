@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,10 @@ export default function Inventory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  
+  // Стейт для пагінації
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -79,6 +83,18 @@ export default function Inventory() {
 
     return matchesSearch && matchesCategory && matchesStatus;
   });
+
+  // Пагінація
+  const total = filteredProducts.length;
+  const totalPages = Math.ceil(total / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const currentProducts = pageSize === 1000 ? filteredProducts : filteredProducts.slice(startIndex, endIndex);
+
+  // Скидання сторінки при зміні фільтрів
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, categoryFilter, statusFilter]);
 
   const handleEditProduct = (product: any) => {
     console.log('Editing product:', product);
@@ -344,7 +360,7 @@ export default function Inventory() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredProducts.map((product: any) => {
+                  {currentProducts.map((product: any) => {
                     const productInventory = getProductInventory(product.id);
                     const category = categories.find((c: any) => c.id === product.categoryId);
                     
@@ -421,6 +437,106 @@ export default function Inventory() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Пагінація */}
+        {currentProducts.length > 0 && (
+          <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <p className="text-sm text-muted-foreground">
+                Показано {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, total)} з {total} товарів
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">На сторінці:</span>
+                <Select value={pageSize.toString()} onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setCurrentPage(1);
+                }}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                    <SelectItem value="1000">Всі</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                ««
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+              >
+                Попередня
+              </Button>
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className="min-w-[32px] h-8"
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Наступна
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                »»
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Повідомлення коли немає товарів */}
+        {currentProducts.length === 0 && searchQuery && (
+          <div className="text-center py-12">
+            <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">Товари не знайдені</h3>
+            <p className="text-muted-foreground mb-4">
+              Не знайдено товарів за запитом "{searchQuery}"
+            </p>
+          </div>
+        )}
       </main>
 
       <ProductForm
