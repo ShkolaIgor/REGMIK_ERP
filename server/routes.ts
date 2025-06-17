@@ -50,6 +50,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register sync API routes
   registerSyncApiRoutes(app);
 
+  // Demo authentication endpoints - always return success
+  app.get("/api/auth/user", async (req, res) => {
+    res.json({
+      id: 1,
+      username: "demo_user",
+      email: "demo@example.com",
+      firstName: "Demo",
+      lastName: "User",
+      role: "admin"
+    });
+  });
+
+  app.post("/api/auth/simple-login", async (req, res) => {
+    res.json({ 
+      success: true, 
+      user: {
+        id: 1,
+        username: "demo_user",
+        email: "demo@example.com"
+      }
+    });
+  });
+
   // Dashboard stats
   app.get("/api/dashboard/stats", async (req, res) => {
     try {
