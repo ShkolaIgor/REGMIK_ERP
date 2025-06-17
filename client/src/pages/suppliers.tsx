@@ -911,7 +911,17 @@ export default function Suppliers() {
                   </div>
                 )}
 
-                <div className="flex justify-end pt-2 border-t border-gray-100">
+                {/* Дати створення та оновлення */}
+                <div className="pt-2 border-t border-border">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Створено: {supplier.createdAt ? new Date(supplier.createdAt).toLocaleDateString('uk-UA') : 'Невідомо'}</span>
+                    {supplier.updatedAt && supplier.updatedAt !== supplier.createdAt && (
+                      <span>Оновлено: {new Date(supplier.updatedAt).toLocaleDateString('uk-UA')}</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
                   <Button 
                     variant="outline" 
                     size="sm" 
