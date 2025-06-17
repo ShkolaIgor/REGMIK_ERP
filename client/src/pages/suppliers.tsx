@@ -246,6 +246,7 @@ export default function Suppliers() {
     setFormData({
       name: supplier.name,
       fullName: supplier.fullName || "",
+      taxCode: supplier.taxCode || "",
       contactPerson: supplier.contactPerson || "",
       email: supplier.email || "",
       phone: supplier.phone || "",
@@ -616,6 +617,14 @@ export default function Suppliers() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
+                <Label htmlFor="edit-taxCode">ЄДРПОУ/ІПН</Label>
+                <Input
+                  id="edit-taxCode"
+                  value={formData.taxCode}
+                  onChange={(e) => setFormData({ ...formData, taxCode: e.target.value })}
+                />
+              </div>
+              <div>
                 <Label htmlFor="edit-contactPerson">Контактна особа</Label>
                 <Input
                   id="edit-contactPerson"
@@ -623,6 +632,8 @@ export default function Suppliers() {
                   onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
                 />
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="edit-email">Email</Label>
                 <Input
@@ -726,7 +737,7 @@ export default function Suppliers() {
       </Dialog>
 
       {/* Suppliers List */}
-      <div className="grid gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {suppliers.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-8">
@@ -756,9 +767,9 @@ export default function Suppliers() {
                           Рейтинг: {supplier.rating}/5
                         </Badge>
                       )}
-                      {supplier.externalId && (
+                      {supplier.taxCode && (
                         <Badge variant="outline" className="text-xs">
-                          ID: {supplier.externalId}
+                          ЄДРПОУ/ІПН: {supplier.taxCode}
                         </Badge>
                       )}
                     </div>
