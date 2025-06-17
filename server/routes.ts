@@ -7561,11 +7561,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Process individual supplier row
   async function processSupplierRow(row: any, job: any, existingSuppliers: any[], clientTypeId: number) {
-    if (!row.PREDPR?.trim()) {
+    // XML атрибути зберігаються в row.$ об'єкті
+    const attrs = row.$ || row;
+    
+    console.log('Processing supplier row:', {
+      hasAttrs: !!row.$,
+      attrs: attrs,
+      PREDPR: attrs.PREDPR,
+      NAME: attrs.NAME
+    });
+    
+    if (!attrs.PREDPR?.trim()) {
       job.details.push({
-        name: 'Unknown',
+        name: attrs.NAME || attrs.ID_PREDPR || 'Невідомий запис',
         status: 'skipped',
-        message: 'Відсутня назва постачальника'
+        message: 'Відсутня коротка назва постачальника (поле PREDPR)'
       });
       job.skipped++;
       return;
