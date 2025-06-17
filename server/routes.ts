@@ -7808,14 +7808,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const attrs = row;
     
     // Валідація обов'язкових полів
-    if (!attrs.ID_LISTARTICLE) {
-      job.details.push({
-        name: attrs.NAME_ARTICLE || 'Unknown',
-        status: 'skipped',
-        message: 'Відсутній SKU (ID_LISTARTICLE)'
-      });
-      job.skipped++;
-      return;
+    let sku = attrs.ID_LISTARTICLE;
+    if (!sku || sku.trim() === '') {
+      // Генеруємо SKU на основі назви товару, якщо ID_LISTARTICLE відсутній
+      if (attrs.NAME_ARTICLE) {
+        sku = attrs.NAME_ARTICLE
+          .replace(/[^a-zA-Z0-9а-яА-ЯІіЇїЄє]/g, '_') // Замінюємо спецсимволи на _
+          .replace(/_+/g, '_') // Заміняємо множинні _ на одинарні
+          .replace(/^_|_$/g, '') // Видаляємо _ на початку та в кінці
+          .toUpperCase()
+          .substring(0, 20); // Обмежуємо довжину
+        
+        // Додаємо унікальний суфікс для запобігання дублікатів
+        const timestamp = Date.now().toString().slice(-6);
+        sku = `${sku}_${timestamp}`;
+      } else {
+        job.details.push({
+          name: 'Unknown',
+          status: 'skipped',
+          message: 'Відсутні ID_LISTARTICLE та NAME_ARTICLE'
+        });
+        job.skipped++;
+        return;
+      }
     }
 
     if (!attrs.NAME_ARTICLE) {
@@ -7829,12 +7844,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     // Перевірка чи товар вже існує за SKU
-    const existingProduct = existingProducts.find(p => p.sku === attrs.ID_LISTARTICLE);
+    const existingProduct = existingProducts.find(p => p.sku === sku);
     if (existingProduct) {
       job.details.push({
         name: attrs.NAME_ARTICLE,
         status: 'skipped',
-        message: `Товар з SKU ${attrs.ID_LISTARTICLE} вже існує`
+        message: `Товар з SKU ${sku} вже існує`
       });
       job.skipped++;
       return;
@@ -7844,7 +7859,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Підготовка даних товару для створення
       const productData = {
         name: attrs.NAME_ARTICLE,
-        sku: attrs.ID_LISTARTICLE,
+        sku: sku, // Використовуємо згенерований або оригінальний SKU
         description: attrs.NAME_FUNCTION || '',
         categoryId: attrs.TYPE_IZDEL ? parseInt(attrs.TYPE_IZDEL) : null,
         costPrice: attrs.CENA ? attrs.CENA.toString() : '0',
@@ -7856,10 +7871,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const product = await storage.createProduct(productData);
       
+      const wasSkuGenerated = !attrs.ID_LISTARTICLE || attrs.ID_LISTARTICLE.trim() === '';
       job.details.push({
         name: attrs.NAME_ARTICLE,
         status: 'imported',
-        message: `Товар успішно імпортований з ID ${product.id}`
+        message: `Товар успішно імпортований з ID ${product.id}${wasSkuGenerated ? ` (SKU згенерований: ${sku})` : ``}`
       });
       job.imported++;
       console.log(`Successfully imported product: ${attrs.NAME_ARTICLE} with ID ${product.id}`);
