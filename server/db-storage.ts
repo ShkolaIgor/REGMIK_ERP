@@ -362,8 +362,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteProduct(id: number): Promise<boolean> {
-    const result = await db.delete(products).where(eq(products.id, id));
-    return (result.rowCount || 0) > 0;
+    try {
+      // Видаляємо пов'язані записи в правильному порядку
+      
+      // 1. Видаляємо записи з inventory
+      await db.delete(inventory).where(eq(inventory.productId, id));
+      
+      // 2. Видаляємо записи з product_components (як батьківські, так і компонентні)
+      await db.delete(productComponents).where(eq(productComponents.parentProductId, id));
+      await db.delete(productComponents).where(eq(productComponents.componentProductId, id));
+      
+      // 3. Видаляємо записи з production_forecasts
+      await db.delete(productionForecasts).where(eq(productionForecasts.productId, id));
+      
+      // 4. Видаляємо записи з order_items
+      await db.delete(orderItems).where(eq(orderItems.productId, id));
+      
+      // 5. Нарешті видаляємо сам товар
+      const result = await db.delete(products).where(eq(products.id, id));
+      return (result.rowCount || 0) > 0;
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      return false;
+    }
   }
 
   // Inventory
