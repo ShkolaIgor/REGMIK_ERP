@@ -82,9 +82,11 @@ export default function ClientContacts() {
   });
 
   // Fetch clients for dropdown
-  const { data: clients = [] } = useQuery({
+  const { data: clientsData } = useQuery({
     queryKey: ["/api/clients"],
   });
+  
+  const clients = clientsData?.clients || [];
 
   // Fetch client types for tax code labeling
   const { data: clientTypes = [] } = useQuery({

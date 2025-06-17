@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -94,13 +94,11 @@ const contactFormSchema = insertClientContactSchema.extend({
 type ContactFormData = z.infer<typeof contactFormSchema>;
 
 // Стабільний компонент пошуку
-const SearchInput = ({ value, onChange, disabled }: { 
+const SearchInput = React.memo(({ value, onChange, disabled }: { 
   value: string; 
   onChange: (value: string) => void; 
   disabled?: boolean;
 }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(e.target.value);
   }, [onChange]);
@@ -109,7 +107,6 @@ const SearchInput = ({ value, onChange, disabled }: {
     <div className="relative max-w-md">
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
       <Input
-        ref={inputRef}
         type="text"
         placeholder="Пошук клієнтів за назвою, ЄДРПОУ або повним ім'ям..."
         value={value}
@@ -120,7 +117,7 @@ const SearchInput = ({ value, onChange, disabled }: {
       />
     </div>
   );
-};
+});
 
 export default function Clients() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
