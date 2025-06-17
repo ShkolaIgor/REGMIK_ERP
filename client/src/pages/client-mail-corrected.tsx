@@ -150,9 +150,11 @@ export default function ClientMailPage() {
     }
   }, [envelopeSettings.envelopeSize]);
 
-  const { data: clients = [] } = useQuery<Client[]>({
+  const { data: clientsData } = useQuery({
     queryKey: ["/api/clients"]
   });
+  
+  const clients = Array.isArray(clientsData?.clients) ? clientsData.clients : [];
 
   const { data: clientMails = [] } = useQuery<ClientMail[]>({
     queryKey: ["/api/client-mail"]
