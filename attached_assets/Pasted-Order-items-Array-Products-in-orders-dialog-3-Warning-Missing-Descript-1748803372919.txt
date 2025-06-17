@@ -1,0 +1,127 @@
+Order items: 
+Array [{…}]
+Products in orders dialog: 
+(3) [{…}, {…}, {…}]
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+Products in orders dialog: 
+(3) [{…}, {…}, {…}]
+Products in orders dialog: 
+(3) [{…}, {…}, {…}]
+=== FORM SUBMIT STARTED ===
+Handle submit called with data: 
+Object {customerName: "ПРИВАТ", customerEmail: "", customerPhone: "", status: "pending", notes: ""}
+Order items: 
+Array [{…}]
+Is edit mode: true
+Updating order with data: 
+Object {id: 8, order: {…}, items: Array(1)}
+Products in orders dialog: 
+(3) [{…}, {…}, {…}]
+Products in orders dialog: 
+(3) [{…}, {…}, {…}]
+Sending PUT request to: /api/orders/8
+Request data: 
+Object {id: 8, order: {…}, items: Array(1)}
+Order update success: 
+Object {id: 8, orderNumber: "ORD-1748784480177", customerName: "ПРИВАТ", customerEmail: null, customerPhone: null, …}
+Products in orders dialog: 
+(3) [{…}, {…}, {…}]
+Products in orders dialog: 
+(3) [{…}, {…}, {…}]
+Editing order: 
+Object {id: 8, orderNumber: "ORD-1748784480177", customerName: "ПРИВАТ", customerEmail: null, customerPhone: null, …}
+Order items: 
+Array [{…}]
+Products in orders dialog: 
+(3) [{…}, {…}, {…}]
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+Products in orders dialog: 
+(3) [{…}, {…}, {…}]
+Editing order: 
+Object {id: 9, orderNumber: "ORD-1748801088606", customerName: "пукцп", customerEmail: null, customerPhone: null, …}
+Order items: 
+Array [{…}]
+Products in orders dialog: 
+(3) [{…}, {…}, {…}]
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+Products in orders dialog: 
+(3) [{…}, {…}, {…}]
+Products in orders dialog: 
+(3) [{…}, {…}, {…}]
+Editing order: 
+Object {id: 7, orderNumber: "ORD-1748778997360", customerName: "ТОВ "ЗВАРМЕД"", customerEmail: null, customerPhone: "+380 (95) 330-81-15", …}
+Order items: 
+Array [{…}]
+Products in orders dialog: 
+(3) [{…}, {…}, {…}]
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+Products in orders dialog: 
+(3) [{…}, {…}, {…}]
+=== FORM SUBMIT STARTED ===
+Handle submit called with data: 
+Object {customerName: "ТОВ "ЗВАРМЕД"", customerEmail: "", customerPhone: "+380 (95) 330-81-15", status: "pending", notes: ""}
+Order items: 
+Array [{…}]
+Is edit mode: true
+Updating order with data: 
+Object {id: 7, order: {…}, items: Array(1)}
+Products in orders dialog: 
+(3) [{…}, {…}, {…}]
+Products in orders dialog: 
+(3) [{…}, {…}, {…}]
+Sending PUT request to: /api/orders/7
+Request data: 
+Object {id: 7, order: {…}, items: Array(1)}
+Order update success: 
+Object {id: 7, orderNumber: "ORD-1748778997360", customerName: "ТОВ "ЗВАРМЕД"", customerEmail: null, customerPhone: "+380 (95) 330-81-15", …}
+createdAt: "2025-06-01T11:56:37.501Z"
+customerEmail: null
+customerName: "ТОВ "ЗВАРМЕД""
+customerPhone: "+380 (95) 330-81-15"
+id: 7
+items: Array(1)
+0: Object
+id: 4
+orderId: 7
+product: Object
+barcode: ""
+categoryId: 2
+costPrice: "1100.00"
+createdAt: "2025-05-30T12:28:30.912Z"
+description: "Ругулятор двоканальний"
+id: 1
+maxStock: 1000
+minStock: 0
+name: "РП2-У"
+photo: null
+productType: "product"
+retailPrice: "4400.00"
+sku: "RP-674"
+unit: "шт"
+[[Prototype]]: Object
+productId: 1
+quantity: 2
+totalPrice: "6888.00"
+unitPrice: "3444.00"
+[[Prototype]]: Object
+length: 1
+[[Prototype]]: Array(0)
+notes: null
+orderNumber: "ORD-1748778997360"
+status: "pending"
+totalAmount: "6888.00"
+[[Prototype]]: Object
+constructor: ƒ Object()
+hasOwnProperty: ƒ hasOwnProperty()
+isPrototypeOf: ƒ isPrototypeOf()
+propertyIsEnumerable: ƒ propertyIsEnumerable()
+toLocaleString: ƒ toLocaleString()
+toString: ƒ toString()
+valueOf: ƒ valueOf()
+__defineGetter__: ƒ __defineGetter__()
+__defineSetter__: ƒ __defineSetter__()
+__lookupGetter__: ƒ __lookupGetter__()
+__lookupSetter__: ƒ __lookupSetter__()
+__proto__: Object
+get __proto__: ƒ get __proto__()
+set __proto__: ƒ set __proto__()

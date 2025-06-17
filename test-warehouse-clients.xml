@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <row>
+    <ID_PREDPR>12345</ID_PREDPR>
+    <EDRPOU>12345678</EDRPOU>
+    <NAME>Тест Склад Київ</NAME>
+    <PREDPR>ТОВ "Тест Склад Київ"</PREDPR>
+    <ADDRESS_PHYS>м. Київ, вул. Тестова, 1</ADDRESS_PHYS>
+    <NAME_TRANSPORT>Нова пошта №43299</NAME_TRANSPORT>
+    <ACTUAL>T</ACTUAL>
+    <SKIT>5.5</SKIT>
+  </row>
+  <row>
+    <ID_PREDPR>54321</ID_PREDPR>
+    <EDRPOU>87654321</EDRPOU>
+    <NAME>Тест Склад Львів</NAME>
+    <PREDPR>ТОВ "Тест Склад Львів"</PREDPR>
+    <ADDRESS_PHYS>м. Львів, вул. Тестова, 2</ADDRESS_PHYS>
+    <NAME_TRANSPORT>Нова пошта №42736</NAME_TRANSPORT>
+    <ACTUAL>T</ACTUAL>
+    <SKIT>3.0</SKIT>
+  </row>
+  <row>
+    <ID_PREDPR>98765</ID_PREDPR>
+    <EDRPOU>11223344</EDRPOU>
+    <NAME>Тест Інший Перевізник</NAME>
+    <PREDPR>ТОВ "Тест Інший Перевізник"</PREDPR>
+    <ADDRESS_PHYS>м. Одеса, вул. Тестова, 3</ADDRESS_PHYS>
+    <NAME_TRANSPORT>УкрПошта</NAME_TRANSPORT>
+    <ACTUAL>T</ACTUAL>
+    <SKIT>2.0</SKIT>
+  </row>
+</root>

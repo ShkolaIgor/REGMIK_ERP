@@ -1,0 +1,359 @@
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (chunk-7HTPDSET.js, line 337)
+[Log] Creating manufacturing order with data: (manufacturing.tsx, line 96)
+Object
+
+assignedWorkerId: undefined
+
+estimatedDuration: undefined
+
+notes: ""
+
+plannedEndDate: undefined
+
+plannedQuantity: "3"
+
+priority: "medium"
+
+productId: 14
+
+recipeId: undefined
+
+unit: "шт"
+
+warehouseId: undefined
+
+Object Prototype
+
+__defineGetter__(propertyName, getterFunction)
+
+__defineSetter__(propertyName, setterFunction)
+
+__lookupGetter__(propertyName)
+
+__lookupSetter__(propertyName)
+
+constructor: function()
+
+hasOwnProperty(propertyName)
+
+isPrototypeOf(property)
+
+propertyIsEnumerable(propertyName)
+
+toLocaleString()
+
+toString()
+
+valueOf()
+[Log] Manufacturing order created successfully: (manufacturing.tsx, line 100)
+Array (3)
+0
+Object
+
+actualDuration: null
+
+actualEndDate: null
+
+assignedWorkerId: null
+
+batchNumber: null
+
+createdAt: "2025-06-08T13:30:54.406Z"
+
+createdBy: null
+
+estimatedDuration: null
+
+id: 11
+
+laborCost: "0.00"
+
+materialCost: "0.00"
+
+notes: "Друге тестове завдання"
+
+orderNumber: "MFG-1749389454406-2"
+
+overheadCost: "0.00"
+
+plannedEndDate: null
+
+plannedQuantity: "3"
+
+priority: "high"
+
+producedQuantity: "0"
+
+product: {id: 2, name: "ТСП-002", sku: "ТСП002", description: ""}
+
+productId: 2
+
+qualityRating: "good"
+
+recipe: null
+
+recipeId: null
+
+serialNumbers: null
+
+startDate: null
+
+status: "pending"
+
+totalCost: "0.00"
+
+unit: "шт"
+
+updatedAt: "2025-06-08T13:30:54.406Z"
+
+warehouse: null
+
+warehouseId: null
+
+worker: null
+
+Object Prototype
+1
+Object
+
+actualDuration: null
+
+actualEndDate: null
+
+assignedWorkerId: null
+
+batchNumber: null
+
+createdAt: "2025-06-08T13:27:51.662Z"
+
+createdBy: null
+
+estimatedDuration: null
+
+id: 10
+
+laborCost: "0.00"
+
+materialCost: "0.00"
+
+notes: "Тестове завдання створене через API"
+
+orderNumber: "MFG-1749389271662-1"
+
+overheadCost: "0.00"
+
+plannedEndDate: null
+
+plannedQuantity: "5"
+
+priority: "medium"
+
+producedQuantity: "0"
+
+product: {id: 1, name: "РП2-У-410", sku: "RP2U410", description: "Ругулятор двоканальний"}
+
+productId: 1
+
+qualityRating: "good"
+
+recipe: null
+
+recipeId: null
+
+serialNumbers: null
+
+startDate: null
+
+status: "pending"
+
+totalCost: "0.00"
+
+unit: "шт"
+
+updatedAt: "2025-06-08T13:27:51.662Z"
+
+warehouse: null
+
+warehouseId: null
+
+worker: null
+
+Object Prototype
+
+__defineGetter__(propertyName, getterFunction)
+
+__defineSetter__(propertyName, setterFunction)
+
+__lookupGetter__(propertyName)
+
+__lookupSetter__(propertyName)
+
+constructor: function()
+
+hasOwnProperty(propertyName)
+
+isPrototypeOf(property)
+
+propertyIsEnumerable(propertyName)
+
+toLocaleString()
+
+toString()
+
+valueOf()
+2
+Object
+
+actualDuration: null
+
+actualEndDate: null
+
+assignedWorkerId: null
+
+batchNumber: null
+
+createdAt: "2025-06-08T13:26:54.982Z"
+
+createdBy: null
+
+estimatedDuration: null
+
+id: 9
+
+laborCost: "0.00"
+
+materialCost: "0.00"
+
+notes: "Автоматично створено з замовлення ORD-1748778997360. Потрібно виготовити: 2 шт."
+
+orderNumber: "MFG-1749389214982-1"
+
+overheadCost: "0.00"
+
+plannedEndDate: null
+
+plannedQuantity: "2"
+
+priority: "medium"
+
+producedQuantity: "0"
+
+product: {id: 1, name: "РП2-У-410", sku: "RP2U410", description: "Ругулятор двоканальний"}
+
+productId: 1
+
+qualityRating: "good"
+
+recipe: {id: 1, name: "Датчик температури DS18B20"}
+
+recipeId: 1
+
+serialNumbers: null
+
+startDate: null
+
+status: "pending"
+
+totalCost: "0.00"
+
+unit: "шт"
+
+updatedAt: "2025-06-08T13:26:54.982Z"
+
+warehouse: null
+
+warehouseId: null
+
+worker: null
+
+Object Prototype
+
+Array Prototype
+
+at()
+
+concat(value, ...)
+
+constructor: function()
+
+copyWithin(targetIndex, startIndex, [endIndex=length])
+
+entries()
+
+every(callback, [thisArg])
+
+fill(value, [startIndex=0], [endIndex=length])
+
+filter(callback, [thisArg])
+
+find(callback, [thisArg])
+
+findIndex(callback, [thisArg])
+
+findLast(callback, [thisArg])
+
+findLastIndex(callback, [thisArg])
+
+flat()
+
+flatMap()
+
+forEach(callback, [thisArg])
+
+includes(searchValue, [startIndex=0])
+
+indexOf(searchValue, [startIndex=0])
+
+join([separator=","])
+
+keys()
+
+lastIndexOf(searchValue, [startIndex=length])
+
+length: 0
+
+map(callback, [thisArg])
+
+pop()
+
+push(value, ...)
+
+reduce(callback, [initialValue])
+
+reduceRight(callback, [initialValue])
+
+reverse()
+
+shift()
+
+slice([startIndex=0], [endIndex=length])
+
+some(callback, [thisArg])
+
+sort([compareFunction])
+
+splice(startIndex, [deleteCount=0], ...itemsToAdd)
+
+toLocaleString()
+
+toReversed()
+
+toSorted()
+
+toSpliced()
+
+toString()
+
+unshift()
+
+values()
+
+with()
+
+Symbol(Symbol.iterator)()
+
+Symbol(Symbol.unscopables): {at: true, copyWithin: true, entries: true, fill: true, find: true, …}
+
+Object Prototype
+[Log] Invalidating cache for /api/manufacturing-orders (manufacturing.tsx, line 101)
+[Log] Cache invalidated, refetching data... (manufacturing.tsx, line 103)

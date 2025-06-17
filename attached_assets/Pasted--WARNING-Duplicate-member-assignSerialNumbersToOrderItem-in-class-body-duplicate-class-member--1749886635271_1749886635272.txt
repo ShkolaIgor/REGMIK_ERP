@@ -1,0 +1,73 @@
+[WARNING] Duplicate member "assignSerialNumbersToOrderItem" in class body [duplicate-class-member]
+
+    server/db-storage.ts:6115:8:
+      6115 │   async assignSerialNumbersToOrderItem(orderItemId: number, serialNumberIds: number[], assignedBy?: number): Promise<void> {
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The original member "assignSerialNumbersToOrderItem" is here:
+
+    server/db-storage.ts:4575:8:
+      4575 │   async assignSerialNumbersToOrderItem(orderItemId: number, serialNumberIds: number[]): Promise<any[]> {
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Duplicate member "getOrderItemSerialNumbers" in class body [duplicate-class-member]
+
+    server/db-storage.ts:6149:8:
+      6149 │   async getOrderItemSerialNumbers(orderItemId: number): Promise<any[]> {
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The original member "getOrderItemSerialNumbers" is here:
+
+    server/db-storage.ts:4614:8:
+      4614 │   async getOrderItemSerialNumbers(orderItemId: number): Promise<any[]> {
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Duplicate member "deleteRepairPart" in class body [duplicate-class-member]
+
+    server/db-storage.ts:6289:8:
+      6289 │   async deleteRepairPart(partId: number): Promise<void> {
+           ╵         ~~~~~~~~~~~~~~~~
+
+  The original member "deleteRepairPart" is here:
+
+    server/db-storage.ts:6005:8:
+      6005 │   async deleteRepairPart(partId: number): Promise<void> {
+           ╵         ~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Duplicate member "assignSerialNumbersToOrderItem" in class body [duplicate-class-member]
+
+    server/db-storage.ts:6329:8:
+      6329 │   async assignSerialNumbersToOrderItem(
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The original member "assignSerialNumbersToOrderItem" is here:
+
+    server/db-storage.ts:6115:8:
+      6115 │   async assignSerialNumbersToOrderItem(orderItemId: number, serialNumberIds: number[], assignedBy?: number): Promise<void> {
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Duplicate member "getOrderItemSerialNumbers" in class body [duplicate-class-member]
+
+    server/db-storage.ts:6506:8:
+      6506 │   async getOrderItemSerialNumbers(orderItemId: number): Promise<any[]> {
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The original member "getOrderItemSerialNumbers" is here:
+
+    server/db-storage.ts:6149:8:
+      6149 │   async getOrderItemSerialNumbers(orderItemId: number): Promise<any[]> {
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Duplicate member "removeSerialNumberFromOrderItem" in class body [duplicate-class-member]
+
+    server/db-storage.ts:6529:8:
+      6529 │   async removeSerialNumberFromOrderItem(assignmentId: number): Promise<void> {
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The original member "removeSerialNumberFromOrderItem" is here:
+
+    server/db-storage.ts:6166:8:
+      6166 │   async removeSerialNumberFromOrderItem(assignmentId: number): Promise<void> {
+           ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+6 of 8 warnings shown (disable the message limit with --log-limit=0)

@@ -1,0 +1,92 @@
+> rest-express@1.0.0 db:push
+> drizzle-kit push
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/opt/REGMIK_ERP/drizzle.config.ts'
+Using 'pg' driver for database querying
+[✓] Pulling schema from database...
+
++ client_type_id column will be created
+
++ carrier_id column will be created
+
++ city_ref column will be created
+
++ warehouse_ref column will be created
+--- all columns conflicts in clients table resolved ---
+
+
++ preferred_service_type column will be created
+
++ preferred_payment_method column will be created
+
++ preferred_payer column will be created
+--- all columns conflicts in client_nova_poshta_settings table resolved ---
+
+· You're about to add nova_poshta_cities_ref_unique unique constraint to the table, which contains 10559 items. If this statement fails, you will receive an error from the database. Do you want to truncate nova_poshta_cities table?
+
+· You're about to add nova_poshta_warehouses_ref_unique unique constraint to the table, which contains 40468 items. If this statement fails, you will receive an error from the database. Do you want to truncate nova_poshta_warehouses table?
+
+· You're about to add permissions_name_unique unique constraint to the table, which contains 48 items. If this statement fails, you will receive an error from the database. Do you want to truncate permissions table?
+
+ Warning  Found data-loss statements:
+· You're about to change rate column type from numeric(12, 6) to numeric(10, 4) with 12012 items
+· You're about to change schedule column type from jsonb to text with 40468 items
+· You're about to change display_name column type from varchar(200) to varchar(255) with 48 items
+· You're about to delete source column in currency_rates table with 12012 items
+· You're about to delete name_ru column in nova_poshta_cities table with 10559 items
+· You're about to delete area_ru column in nova_poshta_cities table with 10559 items
+· You're about to delete region_ru column in nova_poshta_cities table with 10559 items
+· You're about to delete settlement_type column in nova_poshta_cities table with 10559 items
+· You're about to delete delivery_city column in nova_poshta_cities table with 10559 items
+· You're about to delete warehouses column in nova_poshta_cities table with 10559 items
+· You're about to delete is_active column in nova_poshta_cities table with 10559 items
+· You're about to delete short_address_ru column in nova_poshta_warehouses table with 40468 items
+· You're about to delete type_of_warehouse column in nova_poshta_warehouses table with 40468 items
+· You're about to delete category_of_warehouse column in nova_poshta_warehouses table with 40468 items
+· You're about to delete reception column in nova_poshta_warehouses table with 40468 items
+· You're about to delete delivery column in nova_poshta_warehouses table with 40468 items
+· You're about to delete district_code column in nova_poshta_warehouses table with 40468 items
+· You're about to delete ward_code column in nova_poshta_warehouses table with 40468 items
+· You're about to delete settlement_area_description column in nova_poshta_warehouses table with 40468 items
+· You're about to delete sending_limitations_on_dimensions column in nova_poshta_warehouses table with 40468 items
+· You're about to delete receiving_limitations_on_dimensions column in nova_poshta_warehouses table with 40468 items
+· You're about to delete post_finance column in nova_poshta_warehouses table with 40468 items
+· You're about to delete bicycle_parking column in nova_poshta_warehouses table with 40468 items
+· You're about to delete payment_access column in nova_poshta_warehouses table with 40468 items
+· You're about to delete pos_terminal column in nova_poshta_warehouses table with 40468 items
+· You're about to delete international_shipping column in nova_poshta_warehouses table with 40468 items
+· You're about to delete self_service_workplaces_count column in nova_poshta_warehouses table with 40468 items
+· You're about to delete total_max_weight_allowed column in nova_poshta_warehouses table with 40468 items
+· You're about to delete longitude column in nova_poshta_warehouses table with 40468 items
+· You're about to delete latitude column in nova_poshta_warehouses table with 40468 items
+· You're about to delete is_active column in nova_poshta_warehouses table with 40468 items
+
+THIS ACTION WILL CAUSE DATA LOSS AND CANNOT BE REVERTED
+
+Do you still want to push changes?
+error: cannot drop constraint nova_poshta_cities_ref_key on table nova_poshta_cities because other objects depend on it
+    at /opt/REGMIK_ERP/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Object.query (/opt/REGMIK_ERP/node_modules/drizzle-kit/bin.cjs:66575:26)
+    at async pgPush (/opt/REGMIK_ERP/node_modules/drizzle-kit/bin.cjs:70117:13)
+    at async Object.handler (/opt/REGMIK_ERP/node_modules/drizzle-kit/bin.cjs:79124:9)
+    at async run (/opt/REGMIK_ERP/node_modules/drizzle-kit/bin.cjs:78381:7) {
+  length: 366,
+  severity: 'ERROR',
+  code: '2BP01',
+  detail: 'constraint nova_poshta_warehouses_city_ref_fkey on table nova_poshta_warehouses depends on index nova_poshta_cities_ref_key',
+  hint: 'Use DROP ... CASCADE to drop the dependent objects too.',
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'dependency.c',
+  line: '1196',
+  routine: 'reportDependentObjects'
+}

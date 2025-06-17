@@ -94,18 +94,14 @@ app.use((req, res, next) => {
   }, async () => {
     log(`serving on port ${port}`);
     
-    // Ініціалізація кешу Нової Пошти при старті сервера (тільки в development)
-    if (app.get("env") === "development") {
-      try {
-        log("Ініціалізація кешу Нової Пошти...");
-        await novaPoshtaCache.forceUpdate();
-        const info = await novaPoshtaCache.getCacheInfo();
-        log(`Кеш Нової Пошти готовий: ${info.cities} міст, ${info.warehouses} відділень`);
-      } catch (error) {
-        log("Помилка ініціалізації кешу Нової Пошти:", error);
-      }
-    } else {
-      log("Продакшн режим - кеш Нової Пошти буде завантажено за потребою");
+    // Ініціалізація кешу Нової Пошти при старті сервера
+    try {
+      log("Ініціалізація кешу Нової Пошти...");
+      await novaPoshtaCache.forceUpdate();
+      const info = await novaPoshtaCache.getCacheInfo();
+      log(`Кеш Нової Пошти готовий: ${info.cities} міст, ${info.warehouses} відділень`);
+    } catch (error) {
+      log("Помилка ініціалізації кешу Нової Пошти:", error);
     }
 
     // Ініціалізація автоматичного оновлення курсів валют

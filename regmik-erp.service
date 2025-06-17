@@ -1,0 +1,42 @@
+[Unit]
+Description=REGMIK ERP System
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=runner
+Group=runner
+WorkingDirectory=/opt/REGMIK_ERP
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=10
+
+# Environment variables for database connection
+Environment=NODE_ENV=production
+Environment=PGHOST=localhost
+Environment=PGPORT=5432
+Environment=PGDATABASE=regmik-erp
+Environment=PGUSER=regmik_user
+Environment=PGPASSWORD=your_secure_password_here
+Environment=SESSION_SECRET=your_session_secret_here
+
+# Nova Poshta API
+Environment=NOVA_POSHTA_API_KEY=your_nova_poshta_api_key
+
+# Email configuration
+Environment=SMTP_HOST=smtp.gmail.com
+Environment=SMTP_PORT=587
+Environment=SMTP_USER=your_email@gmail.com
+Environment=SMTP_PASSWORD=your_app_password
+
+# Security
+Environment=SSL_REJECT_UNAUTHORIZED=false
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=regmik-erp
+
+[Install]
+WantedBy=multi-user.target
