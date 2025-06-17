@@ -162,7 +162,13 @@ export interface IStorage {
 
   // Suppliers
   getSuppliers(): Promise<Supplier[]>;
+  getSupplier(id: number): Promise<Supplier | undefined>;
   createSupplier(supplier: InsertSupplier): Promise<Supplier>;
+  updateSupplier(id: number, updates: Partial<InsertSupplier>): Promise<Supplier | undefined>;
+  deleteSupplier(id: number): Promise<boolean>;
+
+  // Client Types
+  getClientTypes(): Promise<any[]>;
 
   // Components
   getComponents(): Promise<Component[]>;
@@ -1070,21 +1076,44 @@ export class MemStorage implements IStorage {
 
   // Suppliers
   async getSuppliers(): Promise<Supplier[]> {
-    return Array.from(this.suppliers.values());
+    return await db.select().from(suppliers);
+  }
+
+  async getSupplier(id: number): Promise<Supplier | undefined> {
+    const [supplier] = await db.select().from(suppliers).where(eq(suppliers.id, id));
+    return supplier;
   }
 
   async createSupplier(insertSupplier: InsertSupplier): Promise<Supplier> {
-    const id = this.currentSupplierId++;
-    const supplier: Supplier = { 
-      ...insertSupplier, 
-      id,
-      contactPerson: insertSupplier.contactPerson ?? null,
-      email: insertSupplier.email ?? null,
-      phone: insertSupplier.phone ?? null,
-      address: insertSupplier.address ?? null
-    };
-    this.suppliers.set(id, supplier);
+    const [supplier] = await db.insert(suppliers).values({
+      ...insertSupplier,
+      createdAt: insertSupplier.createdAt || new Date(),
+      updatedAt: new Date()
+    }).returning();
     return supplier;
+  }
+
+  async updateSupplier(id: number, updates: Partial<InsertSupplier>): Promise<Supplier | undefined> {
+    const [supplier] = await db.update(suppliers)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(suppliers.id, id))
+      .returning();
+    return supplier;
+  }
+
+  async deleteSupplier(id: number): Promise<boolean> {
+    const result = await db.delete(suppliers).where(eq(suppliers.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Client Types
+  async getClientTypes(): Promise<any[]> {
+    // Return basic client types for now
+    return [
+      { id: 1, name: "Юридична особа", description: "Компанії та організації" },
+      { id: 2, name: "Фізична особа", description: "Приватні особи" },
+      { id: 3, name: "Постачальник", description: "Постачальники товарів та послуг" }
+    ];
   }
 
   // Analytics
