@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { novaPoshtaCache } from "./nova-poshta-cache";
+
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));

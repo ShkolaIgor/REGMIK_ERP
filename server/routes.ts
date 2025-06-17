@@ -1,11 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./db-storage";
-import { registerSimpleIntegrationRoutes } from "./integrations-simple";
-import { registerSyncApiRoutes } from "./sync-api";
-import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./simple-auth";
-import { novaPoshtaApi } from "./nova-poshta-api";
-import { novaPoshtaCache } from "./nova-poshta-cache";
+
 import { pool, db } from "./db";
 import { eq } from "drizzle-orm";
 import { 
@@ -28,15 +24,10 @@ import {
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import crypto from "crypto";
-import { sendEmail } from "./email-service";
 import multer from "multer";
 import xml2js from "xml2js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Simple auth setup
-  setupSimpleSession(app);
-  setupSimpleAuth(app);
-
   // Multer configuration for file uploads
   const upload = multer({
     storage: multer.memoryStorage(),
@@ -51,12 +42,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     },
   });
-
-  // Register simple integration routes
-  registerSimpleIntegrationRoutes(app);
-  
-  // Register sync API routes
-  registerSyncApiRoutes(app);
 
   // Dashboard stats
   app.get("/api/dashboard/stats", async (req, res) => {
@@ -75,7 +60,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limit = parseInt(req.query.limit as string) || 12;
       const search = req.query.search as string || "";
       
-      const result = await storage.getClients(page, limit, search);
+      const result = await storage.getClientsPaginated(page, limit, search);
       res.json(result);
     } catch (error) {
       console.error("Error fetching clients:", error);
