@@ -17,6 +17,7 @@ interface Supplier {
   id: number;
   name: string;
   fullName: string | null;
+  taxCode: string | null;
   contactPerson: string | null;
   email: string | null;
   phone: string | null;
@@ -58,6 +59,7 @@ export default function Suppliers() {
   const [formData, setFormData] = useState({
     name: "",
     fullName: "",
+    taxCode: "",
     contactPerson: "",
     email: "",
     phone: "",
@@ -355,6 +357,14 @@ export default function Suppliers() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
+                    <Label htmlFor="taxCode">ЄДРПОУ/ІПН</Label>
+                    <Input
+                      id="taxCode"
+                      value={formData.taxCode}
+                      onChange={(e) => setFormData({ ...formData, taxCode: e.target.value })}
+                    />
+                  </div>
+                  <div>
                     <Label htmlFor="contactPerson">Контактна особа</Label>
                     <Input
                       id="contactPerson"
@@ -362,6 +372,8 @@ export default function Suppliers() {
                       onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
                     />
                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="email">Email</Label>
                     <Input

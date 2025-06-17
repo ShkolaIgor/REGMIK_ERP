@@ -661,6 +661,7 @@ export const suppliers = pgTable("suppliers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   fullName: varchar("full_name", { length: 255 }), // повна назва постачальника
+  taxCode: varchar("tax_code", { length: 20 }), // ЄДРПОУ/ІПН
   clientTypeId: integer("client_type_id").references(() => clientTypes.id).notNull(), // зв'язок з видом постачальника
   contactPerson: text("contact_person"),
   email: text("email"),
