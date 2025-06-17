@@ -294,6 +294,7 @@ export default function Suppliers() {
     setFormData({
       name: "",
       fullName: "",
+      taxCode: "",
       contactPerson: "",
       email: "",
       phone: "",
