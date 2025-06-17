@@ -7618,6 +7618,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const supplierData = {
       name: row.PREDPR,
+      fullName: row.NAME || null,
       clientTypeId: clientTypeId,
       contactPerson: null,
       email: null,

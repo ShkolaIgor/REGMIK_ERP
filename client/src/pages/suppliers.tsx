@@ -16,6 +16,7 @@ import { Trash2, Edit, Plus, Upload, FileX, CheckCircle, XCircle, AlertCircle, E
 interface Supplier {
   id: number;
   name: string;
+  fullName: string | null;
   contactPerson: string | null;
   email: string | null;
   phone: string | null;
