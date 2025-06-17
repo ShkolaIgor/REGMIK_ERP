@@ -1,9 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./db-storage";
-import { registerSimpleIntegrationRoutes } from "./integrations-simple";
 import { registerSyncApiRoutes } from "./sync-api";
-import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./simple-auth";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 import { novaPoshtaApi } from "./nova-poshta-api";
 import { novaPoshtaCache } from "./nova-poshta-cache";
 import { pool, db } from "./db";
@@ -33,9 +32,8 @@ import multer from "multer";
 import xml2js from "xml2js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Simple auth setup
-  setupSimpleSession(app);
-  setupSimpleAuth(app);
+  // Auth middleware
+  await setupAuth(app);
 
   // Multer configuration for file uploads
   const upload = multer({
@@ -51,9 +49,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     },
   });
-
-  // Register simple integration routes
-  registerSimpleIntegrationRoutes(app);
   
   // Register sync API routes
   registerSyncApiRoutes(app);
