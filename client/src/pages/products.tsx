@@ -277,9 +277,11 @@ export default function Products() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex justify-center items-center h-64">
-          <div className="text-lg">Завантаження товарів...</div>
+      <div className="min-h-screen w-full bg-gray-50/30">
+        <div className="w-full px-6 py-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-lg">Завантаження товарів...</div>
+          </div>
         </div>
       </div>
     );
@@ -287,16 +289,19 @@ export default function Products() {
 
   if (error) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex justify-center items-center h-64">
-          <div className="text-lg text-red-600">Помилка завантаження товарів</div>
+      <div className="min-h-screen w-full bg-gray-50/30">
+        <div className="w-full px-6 py-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-lg text-red-600">Помилка завантаження товарів</div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="min-h-screen w-full bg-gray-50/30">
+      <div className="w-full px-6 py-6 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold">Товари</h1>
@@ -712,6 +717,7 @@ export default function Products() {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
