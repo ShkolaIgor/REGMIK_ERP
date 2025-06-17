@@ -7852,23 +7852,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Перевірка чи товар вже існує за SKU
     const existingProduct = existingProducts.find(p => p.sku === sku);
-    if (existingProduct) {
-      job.details.push({
-        name: attrs.NAME_ARTICLE,
-        status: 'skipped',
-        message: `Товар з SKU ${sku} вже існує`
-      });
-      job.skipped++;
-      return;
-    }
 
     try {
-      // Підготовка даних товару для створення
+      // Підготовка даних товару
       // Обробка ціни - замінюємо кому на крапку для PostgreSQL
       const processPrice = (price: any): string => {
         if (!price) return '0';
         return price.toString().replace(',', '.');
       };
+
+      // Обробка поля ACTUAL -> is_active (за замовчуванням true, якщо не вказано)
+      let isActive = true;
+      if (attrs.ACTUAL !== undefined && attrs.ACTUAL !== null) {
+        // ACTUAL може бути булевим, числом (0/1) або рядком
+        if (typeof attrs.ACTUAL === 'boolean') {
+          isActive = attrs.ACTUAL;
+        } else if (typeof attrs.ACTUAL === 'number') {
+          isActive = attrs.ACTUAL === 1;
+        } else if (typeof attrs.ACTUAL === 'string') {
+          const actualStr = attrs.ACTUAL.toLowerCase().trim();
+          isActive = actualStr === 'true' || actualStr === '1' || actualStr === 'так' || actualStr === 'yes';
+        }
+      }
 
       const productData = {
         name: attrs.NAME_ARTICLE,
@@ -7879,27 +7884,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         retailPrice: processPrice(attrs.CENA),
         productType: 'product' as const,
         unit: 'шт',
-        isActive: true
+        isActive: isActive
       };
 
-      const product = await storage.createProduct(productData);
+      let product;
+      let actionStatus = 'imported';
+      let actionMessage = '';
+
+      if (existingProduct) {
+        // Оновлюємо існуючий товар
+        product = await storage.updateProduct(existingProduct.id, productData);
+        actionStatus = 'updated';
+        actionMessage = `Товар успішно оновлений з ID ${existingProduct.id}`;
+        console.log(`Successfully updated product: ${attrs.NAME_ARTICLE} with ID ${existingProduct.id}`);
+      } else {
+        // Створюємо новий товар
+        product = await storage.createProduct(productData);
+        const wasSkuGenerated = !attrs.ID_LISTARTICLE || attrs.ID_LISTARTICLE.trim() === '';
+        actionMessage = `Товар успішно імпортований з ID ${product.id}${wasSkuGenerated ? ` (SKU згенерований: ${sku})` : ``}`;
+        console.log(`Successfully imported product: ${attrs.NAME_ARTICLE} with ID ${product.id}`);
+      }
       
-      const wasSkuGenerated = !attrs.ID_LISTARTICLE || attrs.ID_LISTARTICLE.trim() === '';
       job.details.push({
         name: attrs.NAME_ARTICLE,
-        status: 'imported',
-        message: `Товар успішно імпортований з ID ${product.id}${wasSkuGenerated ? ` (SKU згенерований: ${sku})` : ``}`
+        status: actionStatus,
+        message: actionMessage
       });
       job.imported++;
-      console.log(`Successfully imported product: ${attrs.NAME_ARTICLE} with ID ${product.id}`);
     } catch (createError) {
-      console.error(`Failed to create product ${attrs.NAME_ARTICLE}:`, createError);
+      console.error(`Failed to process product ${attrs.NAME_ARTICLE}:`, createError);
       job.details.push({
         name: attrs.NAME_ARTICLE,
         status: 'error',
-        message: `Помилка створення товару: ${createError instanceof Error ? createError.message : String(createError)}`
+        message: `Помилка обробки товару: ${createError instanceof Error ? createError.message : String(createError)}`
       });
-      job.errors.push(`Failed to create product ${attrs.NAME_ARTICLE}: ${createError instanceof Error ? createError.message : String(createError)}`);
+      job.errors.push(`Failed to process product ${attrs.NAME_ARTICLE}: ${createError instanceof Error ? createError.message : String(createError)}`);
     }
   }
 
