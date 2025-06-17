@@ -304,7 +304,7 @@ export default function Products() {
         <div className="flex gap-2">
           <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" title="Імпорт товарів з XML файлу">
                 <Upload className="h-4 w-4 mr-2" />
                 Імпорт XML
               </Button>
