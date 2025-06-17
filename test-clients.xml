@@ -1,0 +1,23 @@
+<?xml version="1.0" standalone="yes"?>
+<DATAPACKET Version="2.0">
+<METADATA>
+<FIELDS>
+<FIELD FieldName="CITY" DisplayLabel="CITY" FieldType="String" FieldClass="TField"/>
+<FIELD FieldName="EDRPOU" DisplayLabel="EDRPOU" FieldType="String" FieldClass="TField"/>
+<FIELD FieldName="SKIT" DisplayLabel="SKIT" FieldType="Float" FieldClass="TField"/>
+<FIELD FieldName="PREDPR" DisplayLabel="PREDPR" FieldType="String" FieldClass="TField"/>
+<FIELD FieldName="NAME" DisplayLabel="NAME" FieldType="String" FieldClass="TField"/>
+<FIELD FieldName="DATE_CREATE" DisplayLabel="DATE_CREATE" FieldType="Date" FieldClass="TField"/>
+<FIELD FieldName="ADDRESS_PHYS" DisplayLabel="ADDRESS_PHYS" FieldType="String" FieldClass="TField"/>
+<FIELD FieldName="COMMENT" DisplayLabel="COMMENT" FieldType="String" FieldClass="TField"/>
+<FIELD FieldName="ACTUAL" DisplayLabel="ACTUAL" FieldType="String" FieldClass="TField"/>
+<FIELD FieldName="NAME_TRANSPORT" DisplayLabel="NAME_TRANSPORT" FieldType="String" FieldClass="TField"/>
+<FIELD FieldName="ID_PREDPR" DisplayLabel="ID_PREDPR" FieldType="Integer" FieldClass="TField"/>
+</FIELDS>
+</METADATA>
+<ROWDATA>
+<ROW CITY="Донецьк" EDRPOU="" SKIT="10,00" PREDPR="Радіокомплект" NAME="ТОВ &quot;Радіокомплект&quot;" DATE_CREATE="26.11.2003" ADDRESS_PHYS="ТОВ &quot;ЕЛЕКТРОРАДІОКОМПЛЕКТ&quot; а/с 11537, м. Харків, 61001" COMMENT="Поставщик электронных компонент" ACTUAL="F" NAME_TRANSPORT="Нова пошта №10" ID_PREDPR="1"/>
+<ROW CITY="Київ" EDRPOU="0" SKIT="" PREDPR="Тестовий клієнт" NAME="Тестовий клієнт" DATE_CREATE="13.06.2025" ADDRESS_PHYS="" COMMENT="" ACTUAL="T" NAME_TRANSPORT="Самовивіз" ID_PREDPR="10838"/>
+<ROW CITY="Одеса" EDRPOU="0" SKIT="" PREDPR="Хоміч Валерій Валерійович" NAME="Хоміч Валерій Валерійович" DATE_CREATE="13.06.2025" ADDRESS_PHYS="" COMMENT="" ACTUAL="T" NAME_TRANSPORT="Нова пошта" ID_PREDPR="10839"/>
+</ROWDATA>
+</DATAPACKET>

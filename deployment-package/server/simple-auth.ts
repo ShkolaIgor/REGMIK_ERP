@@ -2,7 +2,7 @@ import type { Express, RequestHandler } from "express";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import bcrypt from "bcryptjs";
-import { storage } from "./db-storage";
+import { storage } from "./storage";
 
 // Простий middleware для перевірки авторизації
 export const isSimpleAuthenticated: RequestHandler = (req, res, next) => {
@@ -47,10 +47,10 @@ export function setupSimpleSession(app: Express) {
   }));
 }
 
-// Демо користувачі з цілочисельними ID що відповідають базі даних
+// Демо користувачі
 const demoUsers = [
   {
-    id: 1,
+    id: "demo-user-1",
     username: "demo",
     password: "demo123",
     email: "demo@example.com",
@@ -59,7 +59,7 @@ const demoUsers = [
     profileImageUrl: null
   },
   {
-    id: 2, 
+    id: "admin-user-1", 
     username: "admin",
     password: "admin123",
     email: "admin@regmik.com",
@@ -126,17 +126,14 @@ export function setupSimpleAuth(app: Express) {
         if (isPasswordValid) {
           console.log("Database user authenticated successfully");
           
-          // Отримуємо повні дані користувача з робітником
-          const fullUser = await storage.getLocalUserWithWorker(dbUser.id);
-          
           // Створюємо сесію для користувача з бази даних
           (req.session as any).user = {
-            id: dbUser.id,
+            id: dbUser.id.toString(),
             username: dbUser.username,
             email: dbUser.email,
-            firstName: fullUser?.worker?.firstName || dbUser.firstName || dbUser.username,
-            lastName: fullUser?.worker?.lastName || dbUser.lastName || "",
-            profileImageUrl: fullUser?.worker?.photo || dbUser.profileImageUrl || null
+            firstName: dbUser.username, // Використовуємо username як firstName
+            lastName: "",
+            profileImageUrl: null
           };
           
           // Оновлюємо час останнього входу
@@ -167,64 +164,19 @@ export function setupSimpleAuth(app: Express) {
   });
 
   // Маршрут для отримання поточного користувача
-  app.get("/api/auth/user", isSimpleAuthenticated, async (req, res) => {
-    try {
-      const sessionUser = (req.session as any)?.user;
-      if (!sessionUser?.id) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      // Перевіряємо чи це demo користувач
-      if (sessionUser.username === 'demo') {
-        // Для demo користувача повертаємо дані із сесії
-        return res.json({
-          id: sessionUser.id,
-          username: sessionUser.username,
-          email: sessionUser.email,
-          firstName: sessionUser.firstName,
-          lastName: sessionUser.lastName,
-          profileImageUrl: sessionUser.profileImageUrl
-        });
-      }
-
-      // Для звичайних користувачів отримуємо дані з БД
-      const userId = typeof sessionUser.id === 'number' ? sessionUser.id : parseInt(sessionUser.id);
-      if (isNaN(userId)) {
-        return res.status(400).json({ message: "Невірний ID користувача" });
-      }
-
-      const fullUser = await storage.getLocalUserWithWorker(userId);
-      if (!fullUser) {
-        return res.status(404).json({ message: "Користувач не знайдений" });
-      }
-
-      // Використовуємо дані з робітника, якщо доступні
-      const userData = {
-        id: fullUser.id,
-        username: fullUser.username,
-        email: fullUser.worker?.email || fullUser.email,
-        firstName: fullUser.worker?.firstName || fullUser.firstName || fullUser.username,
-        lastName: fullUser.worker?.lastName || fullUser.lastName || "",
-        profileImageUrl: fullUser.worker?.photo || fullUser.profileImageUrl
-      };
-
-      res.json(userData);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Внутрішня помилка сервера" });
-    }
+  app.get("/api/auth/user", isSimpleAuthenticated, (req, res) => {
+    const user = (req.session as any).user;
+    res.json(user);
   });
 
   // Маршрут для виходу
   app.get("/api/logout", (req, res) => {
-    console.log("Logout request received");
     req.session.destroy((err) => {
       if (err) {
         console.error("Logout error:", err);
         return res.status(500).json({ message: "Помилка при виході" });
       }
       console.log("User logged out successfully");
-      res.clearCookie('regmik_session');
       res.redirect("/");
     });
   });
@@ -236,49 +188,5 @@ export function setupSimpleAuth(app: Express) {
       }
       res.json({ success: true });
     });
-  });
-
-  // Маршрут для зміни паролю
-  app.post("/api/auth/change-password", isSimpleAuthenticated, async (req, res) => {
-    try {
-      const { currentPassword, newPassword } = req.body;
-      const sessionUser = (req.session as any)?.user;
-
-      if (!sessionUser?.id) {
-        return res.status(401).json({ message: "Не авторизований" });
-      }
-
-      // Валідація вхідних даних
-      if (!currentPassword || !newPassword) {
-        return res.status(400).json({ message: "Поточний та новий пароль обов'язкові" });
-      }
-
-      if (newPassword.length < 6) {
-        return res.status(400).json({ message: "Новий пароль повинен містити мінімум 6 символів" });
-      }
-
-      // Отримуємо користувача з бази
-      const user = await storage.getLocalUser(parseInt(sessionUser.id));
-      if (!user) {
-        return res.status(404).json({ message: "Користувач не знайдений" });
-      }
-
-      // Перевіряємо поточний пароль
-      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
-      if (!isCurrentPasswordValid) {
-        return res.status(400).json({ message: "Поточний пароль невірний" });
-      }
-
-      // Хешуємо новий пароль
-      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-
-      // Оновлюємо пароль в базі даних
-      await storage.updateUserPassword(user.id, hashedNewPassword);
-
-      res.json({ message: "Пароль успішно змінено" });
-    } catch (error) {
-      console.error("Error changing password:", error);
-      res.status(500).json({ message: "Внутрішня помилка сервера" });
-    }
   });
 }
