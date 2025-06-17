@@ -48,37 +48,7 @@ export default function SimpleLogin() {
     }
   };
 
-  const handleDemoLogin = async () => {
-    setIsLoading(true);
-    
-    try {
-      const response = await fetch("/api/auth/simple-login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          username: "demo",
-          password: "demo123"
-        })
-      });
 
-      if (!response.ok) {
-        throw new Error("Demo login failed");
-      }
-      
-      window.location.reload();
-    } catch (error) {
-      toast({
-        title: "Помилка",
-        description: "Не вдалося увійти в демо-режимі",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
@@ -158,23 +128,6 @@ export default function SimpleLogin() {
                 </Button>
               </div>
             </form>
-
-            {/* Demo Access */}
-            <div className="mt-6 pt-4 border-t border-gray-200">
-              <div className="text-center">
-                <p className="text-sm text-gray-600 mb-3">
-                  Для демонстрації системи:
-                </p>
-                <Button 
-                  onClick={handleDemoLogin}
-                  variant="outline" 
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  Демо-доступ
-                </Button>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
