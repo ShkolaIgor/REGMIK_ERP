@@ -164,6 +164,11 @@ export interface IStorage {
 
   // Suppliers
   getSuppliers(): Promise<Supplier[]>;
+  getSuppliersPaginated(page: number, limit: number, search: string): Promise<{
+    suppliers: Supplier[];
+    total: number;
+    totalPages: number;
+  }>;
   getSupplier(id: number): Promise<Supplier | undefined>;
   createSupplier(supplier: InsertSupplier): Promise<Supplier>;
   updateSupplier(id: number, updates: Partial<InsertSupplier>): Promise<Supplier | undefined>;
@@ -1078,7 +1083,7 @@ export class MemStorage implements IStorage {
 
   // Suppliers
   async getSuppliers(): Promise<Supplier[]> {
-    return await db.select().from(suppliers);
+    return Array.from(this.suppliers.values());
   }
 
   async getSuppliersPaginated(page: number, limit: number, search: string): Promise<{
@@ -1086,74 +1091,77 @@ export class MemStorage implements IStorage {
     total: number;
     totalPages: number;
   }> {
-    const offset = (page - 1) * limit;
+    let allSuppliers = Array.from(this.suppliers.values());
     
-    // Базовий запит
-    let query = db.select().from(suppliers);
-    let countQuery = db.select({ count: sql<number>`count(*)` }).from(suppliers);
-    
-    // Додаємо пошук якщо є
+    // Застосовуємо пошук якщо є
     if (search) {
-      const searchCondition = or(
-        ilike(suppliers.name, `%${search}%`),
-        ilike(suppliers.fullName, `%${search}%`),
-        ilike(suppliers.taxCode, `%${search}%`),
-        ilike(suppliers.contactPerson, `%${search}%`),
-        ilike(suppliers.email, `%${search}%`),
-        ilike(suppliers.phone, `%${search}%`)
+      const searchLower = search.toLowerCase();
+      allSuppliers = allSuppliers.filter(supplier => 
+        supplier.name.toLowerCase().includes(searchLower) ||
+        supplier.fullName?.toLowerCase().includes(searchLower) ||
+        supplier.taxCode?.toLowerCase().includes(searchLower) ||
+        supplier.contactPerson?.toLowerCase().includes(searchLower) ||
+        supplier.email?.toLowerCase().includes(searchLower) ||
+        supplier.phone?.toLowerCase().includes(searchLower)
       );
-      query = query.where(searchCondition);
-      countQuery = countQuery.where(searchCondition);
     }
     
-    // Додаємо сортування, пагінацію
-    query = query.orderBy(desc(suppliers.createdAt)).limit(limit).offset(offset);
+    // Сортуємо за датою створення (найновіші спочатку)
+    allSuppliers.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
     
-    // Виконуємо запити
-    const [suppliersResult, countResult] = await Promise.all([
-      query,
-      countQuery
-    ]);
-    
-    const total = countResult[0]?.count || 0;
+    const total = allSuppliers.length;
     const totalPages = Math.ceil(total / limit);
+    const offset = (page - 1) * limit;
+    const suppliers = allSuppliers.slice(offset, offset + limit);
     
     return {
-      suppliers: suppliersResult,
+      suppliers,
       total,
       totalPages
     };
   }
 
   async getSupplier(id: number): Promise<Supplier | undefined> {
-    const [supplier] = await db.select().from(suppliers).where(eq(suppliers.id, id));
-    return supplier;
+    return this.suppliers.get(id);
   }
 
   async createSupplier(insertSupplier: InsertSupplier): Promise<Supplier> {
-    const [supplier] = await db.insert(suppliers).values({
+    const id = this.getNextId('suppliers');
+    const supplier: Supplier = {
+      id,
       ...insertSupplier,
       createdAt: insertSupplier.createdAt || new Date(),
       updatedAt: new Date()
-    }).returning();
+    };
+    this.suppliers.set(id, supplier);
     return supplier;
   }
 
   async updateSupplier(id: number, updates: Partial<InsertSupplier>): Promise<Supplier | undefined> {
-    const [supplier] = await db.update(suppliers)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(suppliers.id, id))
-      .returning();
-    return supplier;
+    const supplier = this.suppliers.get(id);
+    if (!supplier) return undefined;
+
+    const updatedSupplier = { ...supplier, ...updates, updatedAt: new Date() };
+    this.suppliers.set(id, updatedSupplier);
+    return updatedSupplier;
   }
 
   async deleteSupplier(id: number): Promise<boolean> {
     // Спочатку видаляємо всі пов'язані замовлення постачальника
-    await db.delete(supplierOrders).where(eq(supplierOrders.supplierId, id));
+    const supplierOrderIds = Array.from(this.supplierOrders.values())
+      .filter(order => order.supplierId === id)
+      .map(order => order.id);
+    
+    for (const orderId of supplierOrderIds) {
+      this.supplierOrders.delete(orderId);
+    }
     
     // Тепер можемо безпечно видалити постачальника
-    const result = await db.delete(suppliers).where(eq(suppliers.id, id));
-    return result.rowCount !== null && result.rowCount > 0;
+    return this.suppliers.delete(id);
   }
 
   // Client Types
