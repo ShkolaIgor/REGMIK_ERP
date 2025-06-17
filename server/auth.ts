@@ -8,7 +8,7 @@ const users = [
     id: 1,
     username: "admin",
     email: "admin@regmik.com",
-    password: "$2a$10$8K1p/a0dRt1d4FoUUvxMu.N8yA8lN8u9M8/M8u9M8u9M8u9M8u9M8u", // "admin"
+    password: "$2b$10$taUskMloK7Alxcbgi2HZDuez3T2i3aWuARQ1hleMV9drmfxLaoh.C", // "admin"
     firstName: "Адміністратор",
     lastName: "Системи",
     role: "admin"
@@ -17,7 +17,7 @@ const users = [
     id: 2,
     username: "demo",
     email: "demo@regmik.com", 
-    password: "$2a$10$8K1p/a0dRt1d4FoUUvxMu.N8yA8lN8u9M8/M8u9M8u9M8u9M8u9M8u", // "demo"
+    password: "$2b$10$MQ4D43L0szF/o4HrTnP9J.mxk3xkEgxUTiuEzG2FPrudmfx7rCJpe", // "demo"
     firstName: "Демо",
     lastName: "Користувач",
     role: "user"
