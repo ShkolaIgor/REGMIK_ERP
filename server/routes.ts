@@ -1793,12 +1793,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteSupplier(id);
       if (!deleted) {
-        return res.status(404).json({ error: "Supplier not found" });
+        return res.status(404).json({ error: "Постачальника не знайдено" });
       }
-      res.status(204).end();
+      res.json({ success: true, message: "Постачальника видалено успішно" });
     } catch (error) {
       console.error("Failed to delete supplier:", error);
-      res.status(500).json({ error: "Failed to delete supplier" });
+      res.status(500).json({ error: "Помилка видалення постачальника" });
     }
   });
 
