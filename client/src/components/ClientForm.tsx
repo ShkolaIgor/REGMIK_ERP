@@ -249,9 +249,13 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
     console.log("Форма оновлена з warehouseRef:", warehouse.Ref);
   };
 
-  const handleFormSubmit = (data: FormData) => {
+  const handleFormSubmit = async (data: FormData) => {
     console.log("Form submitted with data:", data);
-    onSubmit(data);
+    try {
+      await onSubmit(data);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    }
   };
 
   return (
