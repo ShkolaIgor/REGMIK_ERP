@@ -9,7 +9,7 @@ const users = [
     id: 1,
     username: "admin",
     email: "admin@regmik.com",
-    password: "$2b$10$taUskMloK7Alxcbgi2HZDuez3T2i3aWuARQ1hleMV9drmfxLaoh.C", // "admin"
+    password: "$2b$10$Il3JWM2fRyJ3OcSoBXFsV.L5VjGuOXwhr1A0rKhG9TiLsonHdGQyq", // "newpassword"
     firstName: "Адміністратор",
     lastName: "Системи",
     role: "admin"
@@ -18,9 +18,18 @@ const users = [
     id: 2,
     username: "demo",
     email: "demo@regmik.com", 
-    password: "$2b$10$MQ4D43L0szF/o4HrTnP9J.mxk3xkEgxUTiuEzG2FPrudmfx7rCJpe", // "demo"
+    password: "$2b$10$rOvRoi24nIVWrEHwB8V1aOV5OaUMTOJ9fItF7YgkOE8UQvBTr6YZm", // "demo"
     firstName: "Демо",
     lastName: "Користувач",
+    role: "user"
+  },
+  {
+    id: 3,
+    username: "ShkolaIhor",
+    email: "ihor@shkola.com",
+    password: "$2b$10$Il3JWM2fRyJ3OcSoBXFsV.L5VjGuOXwhr1A0rKhG9TiLsonHdGQyq", // "123456"
+    firstName: "Ігор",
+    lastName: "Школа",
     role: "user"
   }
 ];
