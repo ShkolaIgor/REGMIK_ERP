@@ -596,6 +596,7 @@ export default function Clients() {
       {/* Поле пошуку */}
       <div className="mb-6">
         <SearchInput 
+          key="stable-search-input"
           value={searchQuery}
           onChange={handleSearchChange}
           disabled={isLoading}
