@@ -181,7 +181,7 @@ export default function ClientMailPage() {
       <div className="w-full px-6 py-6 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Кореспонденція клієнтів</h1>
-        <div className="flex gap-2">
+          <div className="flex gap-2">
           <Button
             onClick={() => setIsEnvelopePrintDialogOpen(true)}
             disabled={selectedClients.size === 0}
@@ -206,7 +206,7 @@ export default function ClientMailPage() {
               <Label>Клієнт</Label>
               <Select
                 value={newClientMail.clientId.toString()}
-                onValueChange={(value) => setNewClientMail(prev => ({ ...prev, clientId: value }))}
+                onValueChange={(value) => setNewClientMail(prev => ({ ...prev, clientId: parseInt(value) }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Оберіть клієнта" />
@@ -609,6 +609,7 @@ export default function ClientMailPage() {
           </div>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

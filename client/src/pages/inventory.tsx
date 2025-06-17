@@ -283,6 +283,15 @@ export default function Inventory() {
           <CardContent className="p-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex flex-wrap items-center gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Пошук товарів..."
+                    className="w-80 pl-10"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
                 <div className="flex items-center space-x-2">
                   <label className="text-sm font-medium text-gray-700">Категорія:</label>
                   <Select value={categoryFilter} onValueChange={setCategoryFilter}>
