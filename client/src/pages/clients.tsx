@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -93,6 +93,35 @@ const contactFormSchema = insertClientContactSchema.extend({
 
 type ContactFormData = z.infer<typeof contactFormSchema>;
 
+// Стабільний компонент пошуку
+const SearchInput = ({ value, onChange, disabled }: { 
+  value: string; 
+  onChange: (value: string) => void; 
+  disabled?: boolean;
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(e.target.value);
+  }, [onChange]);
+
+  return (
+    <div className="relative max-w-md">
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+      <Input
+        ref={inputRef}
+        type="text"
+        placeholder="Пошук клієнтів за назвою, ЄДРПОУ або повним ім'ям..."
+        value={value}
+        onChange={handleChange}
+        className="pl-10"
+        autoComplete="off"
+        disabled={disabled}
+      />
+    </div>
+  );
+};
+
 export default function Clients() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -109,8 +138,8 @@ export default function Clients() {
   const queryClient = useQueryClient();
 
   // Стабільний обробник зміни пошуку
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
   }, []);
 
   // Дебаунс для пошуку
@@ -573,18 +602,11 @@ export default function Clients() {
 
       {/* Поле пошуку */}
       <div className="mb-6">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            ref={searchInputRef}
-            type="text"
-            placeholder="Пошук клієнтів за назвою, ЄДРПОУ або повним ім'ям..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            className="pl-10"
-            autoComplete="off"
-          />
-        </div>
+        <SearchInput 
+          value={searchQuery}
+          onChange={handleSearchChange}
+          disabled={isLoading}
+        />
         {debouncedSearch && (
           <p className="text-sm text-muted-foreground mt-2">
             Знайдено: {total} клієнтів за запитом "{debouncedSearch}"
