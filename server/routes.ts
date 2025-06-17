@@ -1742,8 +1742,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Suppliers API
   app.get("/api/suppliers", async (req, res) => {
     try {
-      const suppliers = await storage.getSuppliers();
-      res.json(suppliers);
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 12;
+      const search = req.query.search as string || '';
+      
+      const result = await storage.getSuppliersPaginated(page, limit, search);
+      res.json(result);
     } catch (error) {
       console.error("Failed to get suppliers:", error);
       res.status(500).json({ error: "Failed to get suppliers" });

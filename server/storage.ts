@@ -60,6 +60,8 @@ import {
   type FieldMapping, type InsertFieldMapping,
   departments
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, ilike, or, sql, count } from "drizzle-orm";
 
 export interface IStorage {
   // Users (updated for Replit Auth)
@@ -1077,6 +1079,50 @@ export class MemStorage implements IStorage {
   // Suppliers
   async getSuppliers(): Promise<Supplier[]> {
     return await db.select().from(suppliers);
+  }
+
+  async getSuppliersPaginated(page: number, limit: number, search: string): Promise<{
+    suppliers: Supplier[];
+    total: number;
+    totalPages: number;
+  }> {
+    const offset = (page - 1) * limit;
+    
+    // Базовий запит
+    let query = db.select().from(suppliers);
+    let countQuery = db.select({ count: sql<number>`count(*)` }).from(suppliers);
+    
+    // Додаємо пошук якщо є
+    if (search) {
+      const searchCondition = or(
+        ilike(suppliers.name, `%${search}%`),
+        ilike(suppliers.fullName, `%${search}%`),
+        ilike(suppliers.taxCode, `%${search}%`),
+        ilike(suppliers.contactPerson, `%${search}%`),
+        ilike(suppliers.email, `%${search}%`),
+        ilike(suppliers.phone, `%${search}%`)
+      );
+      query = query.where(searchCondition);
+      countQuery = countQuery.where(searchCondition);
+    }
+    
+    // Додаємо сортування, пагінацію
+    query = query.orderBy(desc(suppliers.createdAt)).limit(limit).offset(offset);
+    
+    // Виконуємо запити
+    const [suppliersResult, countResult] = await Promise.all([
+      query,
+      countQuery
+    ]);
+    
+    const total = countResult[0]?.count || 0;
+    const totalPages = Math.ceil(total / limit);
+    
+    return {
+      suppliers: suppliersResult,
+      total,
+      totalPages
+    };
   }
 
   async getSupplier(id: number): Promise<Supplier | undefined> {
