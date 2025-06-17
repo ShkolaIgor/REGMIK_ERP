@@ -580,9 +580,11 @@ export default function Orders() {
 
 
 
-  const { data: clients = [] } = useQuery<any[]>({
+  const { data: clientsData } = useQuery({
     queryKey: ["/api/clients"],
   });
+  
+  const clients = clientsData?.clients || [];
 
   // Форма для замовлення
   const form = useForm<OrderFormData>({
