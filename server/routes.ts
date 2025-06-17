@@ -1882,6 +1882,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // XML Import endpoint for products
+  const productImportJobs = new Map<string, {
+    id: string;
+    status: 'processing' | 'completed' | 'failed';
+    progress: number;
+    processed: number;
+    imported: number;
+    skipped: number;
+    errors: string[];
+    details: Array<{
+      name: string;
+      status: 'imported' | 'updated' | 'skipped' | 'error';
+      message?: string;
+    }>;
+    totalRows: number;
+  }>();
+
+  // Start XML import for products
+  app.post("/api/products/import-xml", upload.single('xmlFile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "No XML file provided" 
+        });
+      }
+
+      const jobId = generateJobId();
+      
+      productImportJobs.set(jobId, {
+        id: jobId,
+        status: 'processing',
+        progress: 0,
+        processed: 0,
+        imported: 0,
+        skipped: 0,
+        errors: [],
+        details: [],
+        totalRows: 0
+      });
+
+      res.json({
+        success: true,
+        jobId,
+        message: "Product import job started. Use the job ID to check progress."
+      });
+
+      processProductXmlImportAsync(jobId, req.file.buffer);
+
+    } catch (error) {
+      console.error("Product XML import error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to start product XML import",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Check product import job status
+  app.get("/api/products/import-xml/:jobId/status", (req, res) => {
+    const { jobId } = req.params;
+    const job = productImportJobs.get(jobId);
+    
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        error: "Job not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      job
+    });
+  });
+
   // Assembly Operations
   app.get("/api/assembly-operations", async (req, res) => {
     try {
@@ -7671,6 +7748,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: `Помилка створення постачальника: ${createError instanceof Error ? createError.message : String(createError)}`
       });
       job.errors.push(`Failed to create supplier ${attrs.PREDPR}: ${createError instanceof Error ? createError.message : String(createError)}`);
+    }
+  }
+
+  // Product XML import processing function
+  async function processProductXmlImportAsync(jobId: string, fileBuffer: Buffer) {
+    const job = productImportJobs.get(jobId);
+    if (!job) return;
+
+    try {
+      const xmlData = fileBuffer.toString('utf8');
+      const parser = new xml2js.Parser({ explicitArray: false });
+      const result = await parser.parseStringPromise(xmlData);
+
+      if (!result?.DATAPACKET?.ROWDATA?.ROW) {
+        job.status = 'failed';
+        job.errors.push('Invalid XML format: No ROW data found');
+        return;
+      }
+
+      const rows = Array.isArray(result.DATAPACKET.ROWDATA.ROW) 
+        ? result.DATAPACKET.ROWDATA.ROW 
+        : [result.DATAPACKET.ROWDATA.ROW];
+
+      job.totalRows = rows.length;
+
+      // Get existing products for validation
+      const existingProducts = await storage.getProducts();
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        job.processed = i + 1;
+        job.progress = Math.round((job.processed / job.totalRows) * 100);
+
+        try {
+          await processProductRow(row, job, existingProducts);
+        } catch (rowError) {
+          console.error(`Error processing product row ${i + 1}:`, rowError);
+          job.errors.push(`Row ${i + 1}: ${rowError instanceof Error ? rowError.message : String(rowError)}`);
+          job.details.push({
+            name: row.NAME_ARTICLE || `Row ${i + 1}`,
+            status: 'error',
+            message: rowError instanceof Error ? rowError.message : String(rowError)
+          });
+        }
+      }
+
+      job.status = 'completed';
+      console.log(`Product import completed: ${job.imported} imported, ${job.skipped} skipped, ${job.errors.length} errors`);
+
+    } catch (error) {
+      console.error('Error in processProductXmlImportAsync:', error);
+      job.status = 'failed';
+      job.errors.push(`Import failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  async function processProductRow(row: any, job: any, existingProducts: any[]) {
+    const attrs = row;
+    
+    // Валідація обов'язкових полів
+    if (!attrs.ID_LISTARTICLE) {
+      job.details.push({
+        name: attrs.NAME_ARTICLE || 'Unknown',
+        status: 'skipped',
+        message: 'Відсутній SKU (ID_LISTARTICLE)'
+      });
+      job.skipped++;
+      return;
+    }
+
+    if (!attrs.NAME_ARTICLE) {
+      job.details.push({
+        name: attrs.ID_LISTARTICLE || 'Unknown',
+        status: 'skipped',
+        message: 'Відсутня назва товару (NAME_ARTICLE)'
+      });
+      job.skipped++;
+      return;
+    }
+
+    // Перевірка чи товар вже існує за SKU
+    const existingProduct = existingProducts.find(p => p.sku === attrs.ID_LISTARTICLE);
+    if (existingProduct) {
+      job.details.push({
+        name: attrs.NAME_ARTICLE,
+        status: 'skipped',
+        message: `Товар з SKU ${attrs.ID_LISTARTICLE} вже існує`
+      });
+      job.skipped++;
+      return;
+    }
+
+    try {
+      // Підготовка даних товару для створення
+      const productData = {
+        name: attrs.NAME_ARTICLE,
+        sku: attrs.ID_LISTARTICLE,
+        description: attrs.NAME_FUNCTION || '',
+        categoryId: attrs.TYPE_IZDEL ? parseInt(attrs.TYPE_IZDEL) : null,
+        costPrice: attrs.CENA ? parseFloat(attrs.CENA) : 0,
+        retailPrice: attrs.CENA ? parseFloat(attrs.CENA) : 0,
+        productType: 'product',
+        unit: 'шт',
+        isActive: true,
+        createdAt: attrs.DATE_CREATE ? new Date(attrs.DATE_CREATE) : new Date()
+      };
+
+      const product = await storage.createProduct(productData);
+      
+      job.details.push({
+        name: attrs.NAME_ARTICLE,
+        status: 'imported',
+        message: `Товар успішно імпортований з ID ${product.id}`
+      });
+      job.imported++;
+      console.log(`Successfully imported product: ${attrs.NAME_ARTICLE} with ID ${product.id}`);
+    } catch (createError) {
+      console.error(`Failed to create product ${attrs.NAME_ARTICLE}:`, createError);
+      job.details.push({
+        name: attrs.NAME_ARTICLE,
+        status: 'error',
+        message: `Помилка створення товару: ${createError instanceof Error ? createError.message : String(createError)}`
+      });
+      job.errors.push(`Failed to create product ${attrs.NAME_ARTICLE}: ${createError instanceof Error ? createError.message : String(createError)}`);
     }
   }
 
