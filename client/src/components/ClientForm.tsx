@@ -37,6 +37,7 @@ const formSchema = z.object({
   cityRef: z.string().optional(),
   warehouseRef: z.string().optional(),
   notes: z.string().optional(),
+  isActive: z.boolean().default(true),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -154,6 +155,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
       email: "",
       website: "",
       notes: "",
+      isActive: true,
     },
   });
 
@@ -184,6 +186,7 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
           email: editingClient.email || "",
           website: editingClient.website || "",
           notes: editingClient.notes || "",
+          isActive: editingClient.isActive ?? true,
         });
 
         // Set Nova Poshta selections if editing
@@ -661,6 +664,29 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
                 />
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="isActive"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  Активний клієнт
+                </FormLabel>
+                <p className="text-sm text-muted-foreground">
+                  Активні клієнти відображаються у списках та доступні для вибору
+                </p>
+              </div>
             </FormItem>
           )}
         />

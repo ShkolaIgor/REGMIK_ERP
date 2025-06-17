@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -650,33 +650,10 @@ export default function Clients() {
                   </Button>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2 items-center">
+              <div className="flex flex-wrap gap-2">
                 <Badge variant={client.isActive ? "default" : "secondary"} className="text-xs">
                   {client.isActive ? "Активний" : "Неактивний"}
                 </Badge>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    checked={Boolean(client.isActive)}
-                    onCheckedChange={(checked: boolean) => {
-                      updateMutation.mutate({
-                        taxCode: client.taxCode || "",
-                        name: client.name,
-                        fullName: client.fullName ?? undefined,
-                        clientTypeId: client.clientTypeId,
-                        legalAddress: client.legalAddress ?? undefined,
-                        physicalAddress: client.physicalAddress ?? undefined,
-                        addressesMatch: client.addressesMatch ?? false,
-                        discount: client.discount || "0",
-                        notes: client.notes ?? undefined,
-                        isActive: checked,
-                        cityRef: client.cityRef ?? undefined,
-                        warehouseRef: client.warehouseRef ?? undefined
-                      });
-                    }}
-                    disabled={updateMutation.isPending}
-                  />
-                  <span className="text-xs text-muted-foreground">Активний</span>
-                </div>
 
                 {client.discount && parseFloat(client.discount) > 0 && (
                   <Badge variant="outline" className="text-green-600 text-xs">
