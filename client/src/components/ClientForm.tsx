@@ -725,3 +725,5 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
     </Form>
   );
 }
+
+export default ClientForm;
