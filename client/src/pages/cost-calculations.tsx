@@ -23,6 +23,11 @@ export default function CostCalculationsPage() {
     overheadCost: "0",
     profitMargin: "20"
   });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortField, setSortField] = useState<string>("product");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -78,6 +83,58 @@ export default function CostCalculationsPage() {
       });
     },
   });
+
+  // Filter and sort calculations
+  const filteredAndSortedCalculations = (calculations as (CostCalculation & { product: Product })[])
+    .filter((calc) => {
+      const matchesSearch = calc.product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           calc.product.sku.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesSearch;
+    })
+    .sort((a, b) => {
+      let aVal, bVal;
+      
+      switch (sortField) {
+        case "product":
+          aVal = a.product.name.toLowerCase();
+          bVal = b.product.name.toLowerCase();
+          break;
+        case "totalCost":
+          aVal = parseFloat(a.totalCost);
+          bVal = parseFloat(b.totalCost);
+          break;
+        case "profitMargin":
+          aVal = parseFloat(a.profitMargin);
+          bVal = parseFloat(b.profitMargin);
+          break;
+        case "sellingPrice":
+          aVal = parseFloat(a.sellingPrice);
+          bVal = parseFloat(b.sellingPrice);
+          break;
+        default:
+          return 0;
+      }
+      
+      if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+
+  // Pagination
+  const totalItems = filteredAndSortedCalculations.length;
+  const totalPages = pageSize === -1 ? 1 : Math.ceil(totalItems / pageSize);
+  const startIndex = pageSize === -1 ? 0 : (currentPage - 1) * pageSize;
+  const endIndex = pageSize === -1 ? totalItems : startIndex + pageSize;
+  const paginatedCalculations = filteredAndSortedCalculations.slice(startIndex, endIndex);
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
 
   const resetForm = () => {
     setNewCalculation({

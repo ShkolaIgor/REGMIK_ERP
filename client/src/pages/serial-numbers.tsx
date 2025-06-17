@@ -45,6 +45,10 @@ export default function SerialNumbers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterProductId, setFilterProductId] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [sortField, setSortField] = useState<string>("serialNumber");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -222,16 +226,61 @@ export default function SerialNumbers() {
     autoGenerateMutation.mutate();
   };
 
-  // Filter serial numbers
-  const filteredSerialNumbers = (serialNumbers as (SerialNumber & { product?: Product })[]).filter((item) => {
-    const matchesSearch = item.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.product?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.product?.sku.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesProduct = filterProductId === "all" || !filterProductId || item.productId.toString() === filterProductId;
-    const matchesStatus = filterStatus === "all" || !filterStatus || item.status === filterStatus;
-    
-    return matchesSearch && matchesProduct && matchesStatus;
-  });
+  // Filter and sort serial numbers
+  const filteredAndSortedSerialNumbers = (serialNumbers as (SerialNumber & { product?: Product })[])
+    .filter((item) => {
+      const matchesSearch = item.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           item.product?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           item.product?.sku.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesProduct = filterProductId === "all" || !filterProductId || item.productId.toString() === filterProductId;
+      const matchesStatus = filterStatus === "all" || !filterStatus || item.status === filterStatus;
+      
+      return matchesSearch && matchesProduct && matchesStatus;
+    })
+    .sort((a, b) => {
+      let aVal, bVal;
+      
+      switch (sortField) {
+        case "serialNumber":
+          aVal = a.serialNumber.toLowerCase();
+          bVal = b.serialNumber.toLowerCase();
+          break;
+        case "product":
+          aVal = a.product?.name.toLowerCase() || "";
+          bVal = b.product?.name.toLowerCase() || "";
+          break;
+        case "status":
+          aVal = a.status;
+          bVal = b.status;
+          break;
+        case "createdAt":
+          aVal = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          bVal = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          break;
+        default:
+          return 0;
+      }
+      
+      if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+
+  // Pagination
+  const totalItems = filteredAndSortedSerialNumbers.length;
+  const totalPages = pageSize === -1 ? 1 : Math.ceil(totalItems / pageSize);
+  const startIndex = pageSize === -1 ? 0 : (currentPage - 1) * pageSize;
+  const endIndex = pageSize === -1 ? totalItems : startIndex + pageSize;
+  const paginatedSerialNumbers = filteredAndSortedSerialNumbers.slice(startIndex, endIndex);
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
 
   const onSubmit = (data: FormData) => {
     if (editingItem) {
@@ -242,10 +291,11 @@ export default function SerialNumbers() {
   };
 
   return (
-    <div className="w-full px-4 py-3">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Серійні номери</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+    <div className="min-h-screen w-full bg-gray-50/30">
+      <div className="w-full px-6 py-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Серійні номери</h1>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={openCreateDialog}>
               <Plus className="h-4 w-4 mr-2" />

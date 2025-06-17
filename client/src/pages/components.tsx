@@ -69,6 +69,11 @@ export default function Components() {
   const [selectedComponentForAlternatives, setSelectedComponentForAlternatives] = useState<Component | null>(null);
   const [isAlternativesDialogOpen, setIsAlternativesDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortField, setSortField] = useState<string>("name");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [filterCategory, setFilterCategory] = useState<string>("all");
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -245,11 +250,64 @@ export default function Components() {
     }
   };
 
-  const filteredComponents = components.filter(component =>
-    component.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    component.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (component.supplier && component.supplier.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredAndSortedComponents = components
+    .filter(component => {
+      const matchesSearch = component.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           component.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (component.supplier && component.supplier.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesCategory = filterCategory === "all" || !filterCategory || 
+                             (component.categoryId && component.categoryId.toString() === filterCategory);
+      
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      let aVal, bVal;
+      
+      switch (sortField) {
+        case "name":
+          aVal = a.name.toLowerCase();
+          bVal = b.name.toLowerCase();
+          break;
+        case "sku":
+          aVal = a.sku.toLowerCase();
+          bVal = b.sku.toLowerCase();
+          break;
+        case "costPrice":
+          aVal = parseFloat(a.costPrice);
+          bVal = parseFloat(b.costPrice);
+          break;
+        case "supplier":
+          aVal = (a.supplier || "").toLowerCase();
+          bVal = (b.supplier || "").toLowerCase();
+          break;
+        case "createdAt":
+          aVal = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          bVal = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          break;
+        default:
+          return 0;
+      }
+      
+      if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+
+  // Pagination
+  const totalItems = filteredAndSortedComponents.length;
+  const totalPages = pageSize === -1 ? 1 : Math.ceil(totalItems / pageSize);
+  const startIndex = pageSize === -1 ? 0 : (currentPage - 1) * pageSize;
+  const endIndex = pageSize === -1 ? totalItems : startIndex + pageSize;
+  const paginatedComponents = filteredAndSortedComponents.slice(startIndex, endIndex);
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -263,14 +321,14 @@ export default function Components() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Компоненти</h1>
-          <p className="text-gray-600">Управління компонентами для складу продуктів</p>
-        </div>
-        
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+    <div className="min-h-screen w-full bg-gray-50/30">
+      <div className="w-full px-6 py-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Компоненти</h1>
+            <p className="text-gray-600">Управління компонентами для складу продуктів</p>
+          </div>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
           if (!open) {
             setEditingComponent(null);

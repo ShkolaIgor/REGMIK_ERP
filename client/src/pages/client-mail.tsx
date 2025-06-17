@@ -177,9 +177,10 @@ export default function ClientMailPage() {
   const { senderRecipientFontSize, postalIndexFontSize, advertisementFontSize } = envelopeSettings;
 
   return (
-    <div className="w-full px-4 py-3 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Кореспонденція клієнтів</h1>
+    <div className="min-h-screen w-full bg-gray-50/30">
+      <div className="w-full px-6 py-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Кореспонденція клієнтів</h1>
         <div className="flex gap-2">
           <Button
             onClick={() => setIsEnvelopePrintDialogOpen(true)}
