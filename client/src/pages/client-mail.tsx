@@ -177,7 +177,7 @@ export default function ClientMailPage() {
   const { senderRecipientFontSize, postalIndexFontSize, advertisementFontSize } = envelopeSettings;
 
   return (
-    <div className="container mx-auto py-4 space-y-4">
+    <div className="w-full px-4 py-3 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Кореспонденція клієнтів</h1>
         <div className="flex gap-2">
