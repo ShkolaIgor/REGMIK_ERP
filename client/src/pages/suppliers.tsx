@@ -25,7 +25,7 @@ interface Supplier {
   deliveryTerms: string | null;
   rating: number;
   isActive: boolean;
-  externalId: string | null;
+  externalId: number | null;
   clientTypeId: number;
   createdAt: string | null;
   updatedAt: string | null;

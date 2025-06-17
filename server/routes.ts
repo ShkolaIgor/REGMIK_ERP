@@ -7628,7 +7628,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       paymentTerms: null,
       deliveryTerms: null,
       rating: 5,
-      externalId: row.ID_PREDPR || null,
+      externalId: row.ID_PREDPR ? parseInt(row.ID_PREDPR) : null,
       isActive: row.ACTUAL === 'T' || row.ACTUAL === 'true',
       createdAt: createdAt,
     };
