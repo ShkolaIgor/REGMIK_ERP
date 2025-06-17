@@ -1746,7 +1746,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limit = parseInt(req.query.limit as string) || 12;
       const search = req.query.search as string || '';
       
+      console.log(`Getting suppliers: page=${page}, limit=${limit}, search="${search}"`);
       const result = await storage.getSuppliersPaginated(page, limit, search);
+      console.log(`Suppliers result:`, { 
+        type: typeof result, 
+        isArray: Array.isArray(result),
+        hasSuppliers: result && 'suppliers' in result,
+        keys: result && typeof result === 'object' ? Object.keys(result) : 'not object'
+      });
       res.json(result);
     } catch (error) {
       console.error("Failed to get suppliers:", error);
