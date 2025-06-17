@@ -363,44 +363,38 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProduct(id: number): Promise<boolean> {
     try {
-      // Видаляємо пов'язані записи в правильному порядку
+      // Видаляємо пов'язані записи з обробкою помилок для кожної таблиці
       
-      // 1. Видаляємо записи з inventory
-      await db.delete(inventory).where(eq(inventory.productId, id));
+      const tablesToClean = [
+        { table: inventory, field: inventory.productId, name: 'inventory' },
+        { table: orderItems, field: orderItems.productId, name: 'order_items' },
+        { table: saleItems, field: saleItems.productId, name: 'sale_items' },
+        { table: recipeIngredients, field: recipeIngredients.productId, name: 'recipe_ingredients' },
+        { table: supplierOrderItems, field: supplierOrderItems.productId, name: 'supplier_order_items' },
+        { table: assemblyOperationItems, field: assemblyOperationItems.productId, name: 'assembly_operation_items' },
+        { table: inventoryAuditItems, field: inventoryAuditItems.productId, name: 'inventory_audit_items' },
+        { table: warehouseTransferItems, field: warehouseTransferItems.productId, name: 'warehouse_transfer_items' },
+        { table: materialShortages, field: materialShortages.productId, name: 'material_shortages' }
+      ];
       
-      // 2. Видаляємо записи з order_items
-      await db.delete(orderItems).where(eq(orderItems.productId, id));
+      // Видаляємо записи з кожної таблиці окремо
+      for (const { table, field, name } of tablesToClean) {
+        try {
+          await db.delete(table).where(eq(field, id));
+        } catch (e) {
+          console.log(`Skipping ${name} table - might not exist or have different structure`);
+        }
+      }
       
-      // 3. Видаляємо записи з material_shortages
-      await db.delete(materialShortages).where(eq(materialShortages.productId, id));
-      
-      // 4. Видаляємо записи з sale_items
-      await db.delete(saleItems).where(eq(saleItems.productId, id));
-      
-      // 5. Видаляємо записи з recipe_ingredients
-      await db.delete(recipeIngredients).where(eq(recipeIngredients.productId, id));
-      
-      // 6. Видаляємо записи з supplier_order_items
-      await db.delete(supplierOrderItems).where(eq(supplierOrderItems.productId, id));
-      
-      // 7. Видаляємо записи з assembly_operation_items
-      await db.delete(assemblyOperationItems).where(eq(assemblyOperationItems.productId, id));
-      
-      // 8. Видаляємо записи з inventory_audit_items
-      await db.delete(inventoryAuditItems).where(eq(inventoryAuditItems.productId, id));
-      
-      // 9. Видаляємо записи з warehouse_transfer_items
-      await db.delete(warehouseTransferItems).where(eq(warehouseTransferItems.productId, id));
-      
-      // 10. Видаляємо записи з product_components (якщо існують)
+      // Окремо обробляємо product_components з двома полями
       try {
         await db.delete(productComponents).where(eq(productComponents.parentProductId, id));
         await db.delete(productComponents).where(eq(productComponents.componentProductId, id));
       } catch (e) {
-        console.log('Product components table might not exist or have different structure');
+        console.log('Skipping product_components table');
       }
       
-      // 11. Нарешті видаляємо сам товар
+      // Нарешті видаляємо сам товар
       const result = await db.delete(products).where(eq(products.id, id));
       return (result.rowCount || 0) > 0;
     } catch (error) {
