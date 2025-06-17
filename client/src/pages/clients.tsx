@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { 
@@ -336,11 +337,31 @@ export default function Clients() {
       />
 
       {/* Пагінація */}
-      {clients.length > 0 && totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Показано {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, total)} з {total} клієнтів
-          </p>
+      {clients.length > 0 && (
+        <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-muted-foreground">
+              Показано {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, total)} з {total} клієнтів
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">На сторінці:</span>
+              <Select value={pageSize.toString()} onValueChange={(value) => {
+                setPageSize(Number(value));
+                setCurrentPage(1);
+              }}>
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                  <SelectItem value="1000">Всі</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <div className="flex items-center space-x-2">
             <Button
               variant="outline"
