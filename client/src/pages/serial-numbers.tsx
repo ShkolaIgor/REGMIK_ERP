@@ -1,33 +1,38 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { apiRequest } from "@/lib/queryClient";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, Edit, Trash, QrCode } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
-import { insertSerialNumberSchema, type SerialNumber, type Product, type Warehouse } from "@shared/schema";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Plus, Edit, Trash, Search, QrCode } from "lucide-react";
+import { SerialNumber, Product, Warehouse } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
 
-const formSchema = insertSerialNumberSchema.extend({
+const formSchema = z.object({
+  serialNumber: z.string().min(1, "Серійний номер обов'язковий"),
+  productId: z.number().min(1, "Виберіть продукт"),
+  status: z.enum(["available", "reserved", "sold", "defective"]),
+  warehouseId: z.number().optional(),
   manufacturedDate: z.string().optional(),
-  saleDate: z.string().optional(),
+  invoiceNumber: z.string().optional(),
+  clientShortName: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
 const statusLabels = {
   available: "Доступний",
-  reserved: "Зарезервований", 
+  reserved: "Зарезервований",
   sold: "Проданий",
   defective: "Дефектний",
 };
@@ -35,7 +40,7 @@ const statusLabels = {
 const statusColors = {
   available: "bg-green-100 text-green-800",
   reserved: "bg-yellow-100 text-yellow-800",
-  sold: "bg-blue-100 text-blue-800", 
+  sold: "bg-blue-100 text-blue-800",
   defective: "bg-red-100 text-red-800",
 };
 
@@ -49,85 +54,63 @@ export default function SerialNumbers() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  
-  const { toast } = useToast();
+
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      productId: 0,
       serialNumber: "",
       status: "available",
-      warehouseId: undefined,
-      orderId: undefined,
-      notes: "",
-      manufacturedDate: "",
-      invoiceNumber: "",
-      clientShortName: "",
-      saleDate: "",
     },
   });
 
-  // Fetch serial numbers
   const { data: serialNumbers = [], isLoading } = useQuery({
     queryKey: ["/api/serial-numbers"],
   });
 
-  // Fetch products
   const { data: products = [] } = useQuery({
     queryKey: ["/api/products"],
   });
 
-  // Fetch warehouses
   const { data: warehouses = [] } = useQuery({
     queryKey: ["/api/warehouses"],
   });
 
-  // Create mutation
   const createMutation = useMutation({
     mutationFn: (data: FormData) => {
       const payload = {
         ...data,
-        manufacturedDate: data.manufacturedDate ? new Date(data.manufacturedDate).toISOString() : null,
-        saleDate: data.saleDate ? new Date(data.saleDate).toISOString() : null,
+        manufacturedDate: data.manufacturedDate ? new Date(data.manufacturedDate) : undefined,
       };
-      return apiRequest("/api/serial-numbers", {
-        method: "POST",
-        body: payload,
-      });
+      return apiRequest("/api/serial-numbers", { method: "POST", body: payload });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/serial-numbers"] });
       setIsDialogOpen(false);
-      setEditingItem(null);
       form.reset();
       toast({
         title: "Успіх",
-        description: "Серійний номер створено",
+        description: "Серійний номер створено успішно",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Помилка",
-        description: error.message,
+        description: error.message || "Не вдалося створити серійний номер",
         variant: "destructive",
       });
     },
   });
 
-  // Update mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<FormData> }) => {
+    mutationFn: ({ id, data }: { id: number; data: FormData }) => {
       const payload = {
         ...data,
-        manufacturedDate: data.manufacturedDate ? new Date(data.manufacturedDate).toISOString() : null,
-        saleDate: data.saleDate ? new Date(data.saleDate).toISOString() : null,
+        manufacturedDate: data.manufacturedDate ? new Date(data.manufacturedDate) : undefined,
       };
-      return apiRequest(`/api/serial-numbers/${id}`, {
-        method: "PATCH",
-        body: payload,
-      });
+      return apiRequest(`/api/serial-numbers/${id}`, { method: "PATCH", body: payload });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/serial-numbers"] });
@@ -136,91 +119,85 @@ export default function SerialNumbers() {
       form.reset();
       toast({
         title: "Успіх",
-        description: "Серійний номер оновлено",
+        description: "Серійний номер оновлено успішно",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Помилка",
-        description: error.message,
+        description: error.message || "Не вдалося оновити серійний номер",
         variant: "destructive",
       });
     },
   });
 
-  // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/serial-numbers/${id}`, {
-      method: "DELETE",
-    }),
+    mutationFn: (id: number) => apiRequest(`/api/serial-numbers/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/serial-numbers"] });
       toast({
         title: "Успіх",
-        description: "Серійний номер видалено",
+        description: "Серійний номер видалено успішно",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Помилка",
-        description: error.message,
+        description: error.message || "Не вдалося видалити серійний номер",
         variant: "destructive",
       });
     },
   });
 
-  const openEditDialog = (item: SerialNumber) => {
-    setEditingItem(item);
+  const autoGenerateMutation = useMutation({
+    mutationFn: () => apiRequest("/api/serial-numbers/auto-generate", { method: "POST" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/serial-numbers"] });
+      toast({
+        title: "Успіх",
+        description: "Серійні номери згенеровано автоматично",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Не вдалося згенерувати серійні номери",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const openCreateDialog = () => {
+    setEditingItem(null);
     form.reset({
-      productId: item.productId,
-      serialNumber: item.serialNumber,
-      status: item.status,
-      warehouseId: item.warehouseId || undefined,
-      orderId: item.orderId || undefined,
-      notes: item.notes || "",
-      invoiceNumber: item.invoiceNumber || "",
-      clientShortName: item.clientShortName || "",
-      manufacturedDate: item.manufacturedDate ? new Date(item.manufacturedDate).toISOString().slice(0, 16) : "",
-      saleDate: item.saleDate ? new Date(item.saleDate).toISOString().slice(0, 16) : "",
+      serialNumber: "",
+      status: "available",
     });
     setIsDialogOpen(true);
   };
 
-  const openCreateDialog = () => {
-    setEditingItem(null);
-    form.reset();
+  const openEditDialog = (item: SerialNumber) => {
+    setEditingItem(item);
+    form.reset({
+      serialNumber: item.serialNumber,
+      productId: item.productId,
+      status: item.status as any,
+      warehouseId: item.warehouseId || undefined,
+      manufacturedDate: item.manufacturedDate 
+        ? new Date(item.manufacturedDate).toISOString().split('T')[0] 
+        : undefined,
+      invoiceNumber: item.invoiceNumber || "",
+      clientShortName: item.clientShortName || "",
+      notes: item.notes || "",
+    });
     setIsDialogOpen(true);
   };
 
-  // Auto-generate serial number mutation
-  const autoGenerateMutation = useMutation({
-    mutationFn: async () => {
-      const productId = form.getValues("productId");
-      const selectedProduct = (products as Product[]).find((p: Product) => p.id === productId);
-      
-      return apiRequest("/api/serial-numbers/generate", {
-        method: "POST",
-        body: {
-          productId,
-          categoryId: selectedProduct?.categoryId,
-        },
-      });
-    },
-    onSuccess: (data) => {
-      form.setValue("serialNumber", data.serialNumber);
-      toast({
-        title: "Успіх",
-        description: "Серійний номер згенеровано автоматично",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Помилка",
-        description: "Не вдалося згенерувати серійний номер",
-        variant: "destructive",
-      });
-    },
-  });
+  const handleDelete = (id: number) => {
+    if (confirm("Ви впевнені, що хочете видалити цей серійний номер?")) {
+      deleteMutation.mutate(id);
+    }
+  };
 
   const handleAutoGenerate = () => {
     autoGenerateMutation.mutate();
@@ -295,337 +272,410 @@ export default function SerialNumbers() {
       <div className="w-full px-6 py-6 space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Серійні номери</h1>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreateDialog}>
-              <Plus className="h-4 w-4 mr-2" />
-              Додати серійний номер
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleAutoGenerate}>
+              Автогенерація
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>
-                {editingItem ? "Редагувати серійний номер" : "Додати серійний номер"}
-              </DialogTitle>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="productId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Продукт</FormLabel>
-                        <Select
-                          onValueChange={(value) => field.onChange(parseInt(value))}
-                          value={field.value?.toString() || ""}
-                        >
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={openCreateDialog}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Додати серійний номер
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingItem ? "Редагувати серійний номер" : "Додати серійний номер"}
+                  </DialogTitle>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="serialNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Серійний номер</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Введіть серійний номер" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="productId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Продукт</FormLabel>
+                            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Виберіть продукт" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {(products as Product[]).map((product) => (
+                                  <SelectItem key={product.id} value={product.id.toString()}>
+                                    {product.name} ({product.sku})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="status"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Статус</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Виберіть статус" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="available">Доступний</SelectItem>
+                                <SelectItem value="reserved">Зарезервований</SelectItem>
+                                <SelectItem value="sold">Проданий</SelectItem>
+                                <SelectItem value="defective">Дефектний</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="warehouseId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Склад</FormLabel>
+                            <Select onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)} value={field.value?.toString()}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Виберіть склад" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="">Без складу</SelectItem>
+                                {(warehouses as Warehouse[]).map((warehouse) => (
+                                  <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
+                                    {warehouse.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="manufacturedDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Дата виробництва</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="invoiceNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Номер накладної</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Номер накладної" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="clientShortName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Коротка назва клієнта</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Коротка назва клієнта" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Примітки</FormLabel>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Оберіть продукт" />
-                            </SelectTrigger>
+                            <Textarea placeholder="Додаткові примітки" {...field} value={field.value || ""} />
                           </FormControl>
-                          <SelectContent>
-                            {(products as Product[]).map((product) => (
-                              <SelectItem key={product.id} value={product.id.toString()}>
-                                {product.name} ({product.sku})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="serialNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Серійний номер</FormLabel>
-                        <div className="flex gap-2">
-                          <FormControl>
-                            <Input {...field} placeholder="Введіть серійний номер" />
-                          </FormControl>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={handleAutoGenerate}
-                            disabled={!form.watch("productId")}
-                          >
-                            <QrCode className="h-4 w-4 mr-1" />
-                            Авто
-                          </Button>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                        Скасувати
+                      </Button>
+                      <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                        {editingItem ? "Оновити" : "Створити"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
 
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Статус</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="available">Доступний</SelectItem>
-                            <SelectItem value="reserved">Зарезервований</SelectItem>
-                            <SelectItem value="sold">Проданий</SelectItem>
-                            <SelectItem value="defective">Дефектний</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="warehouseId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Склад</FormLabel>
-                        <Select
-                          onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}
-                          value={field.value?.toString() || ""}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Оберіть склад" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="none">Не вибрано</SelectItem>
-                            {(warehouses as Warehouse[]).map((warehouse) => (
-                              <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
-                                {warehouse.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="manufacturedDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Дата виробництва</FormLabel>
-                        <FormControl>
-                          <UkrainianDatePicker
-                            date={field.value ? new Date(field.value) : undefined}
-                            onDateChange={(date) => field.onChange(date ? date.toISOString() : "")}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="invoiceNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Номер рахунку</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Введіть номер рахунку" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="clientShortName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Скорочена назва клієнта</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Введіть скорочену назву клієнта" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="saleDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Дата продажі</FormLabel>
-                        <FormControl>
-                          <UkrainianDatePicker
-                            date={field.value ? new Date(field.value) : undefined}
-                            onDateChange={(date) => field.onChange(date ? date.toISOString() : "")}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Примітки</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} placeholder="Додаткові примітки" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex gap-2 justify-end">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Скасувати
-                  </Button>
-                  <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                    {editingItem ? "Оновити" : "Створити"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Фільтри */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Фільтри</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Фільтри і пошук */}
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[200px]">
             <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Пошук за серійним номером, назвою продукту..."
+                placeholder="Пошук за серійним номером, продуктом..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-8"
               />
             </div>
-            <Select value={filterProductId} onValueChange={setFilterProductId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Фільтр за продуктом" />
+          </div>
+
+          <Select value={filterProductId} onValueChange={setFilterProductId}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Всі продукти" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Всі продукти</SelectItem>
+              {(products as Product[]).map((product) => (
+                <SelectItem key={product.id} value={product.id.toString()}>
+                  {product.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Всі статуси" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Всі статуси</SelectItem>
+              <SelectItem value="available">Доступний</SelectItem>
+              <SelectItem value="reserved">Зарезервований</SelectItem>
+              <SelectItem value="sold">Проданий</SelectItem>
+              <SelectItem value="defective">Дефектний</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Пагінація верхня */}
+        <div className="flex justify-between items-center">
+          <div className="text-sm text-gray-500">
+            Показано {startIndex + 1}-{Math.min(endIndex, totalItems)} з {totalItems} записів
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm">Розмір сторінки:</span>
+            <Select value={pageSize.toString()} onValueChange={(value) => {
+              setPageSize(value === "all" ? -1 : parseInt(value));
+              setCurrentPage(1);
+            }}>
+              <SelectTrigger className="w-20">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Всі продукти</SelectItem>
-                {(products as Product[]).map((product) => (
-                  <SelectItem key={product.id} value={product.id.toString()}>
-                    {product.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger>
-                <SelectValue placeholder="Фільтр за статусом" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Всі статуси</SelectItem>
-                <SelectItem value="available">Доступний</SelectItem>
-                <SelectItem value="reserved">Зарезервований</SelectItem>
-                <SelectItem value="sold">Проданий</SelectItem>
-                <SelectItem value="defective">Дефектний</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+                <SelectItem value="all">Всі</SelectItem>
               </SelectContent>
             </Select>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Таблиця */}
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-6 text-center">Завантаження...</div>
-          ) : (
+        <Card>
+          <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Серійний номер</TableHead>
-                  <TableHead>Продукт</TableHead>
-                  <TableHead>Статус</TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleSort("serialNumber")}
+                  >
+                    Серійний номер
+                    {sortField === "serialNumber" && (
+                      <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                    )}
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleSort("product")}
+                  >
+                    Продукт
+                    {sortField === "product" && (
+                      <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                    )}
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleSort("status")}
+                  >
+                    Статус
+                    {sortField === "status" && (
+                      <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                    )}
+                  </TableHead>
                   <TableHead>Склад</TableHead>
-                  <TableHead>Номер рахунку</TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleSort("createdAt")}
+                  >
+                    Дата виробництва
+                    {sortField === "createdAt" && (
+                      <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                    )}
+                  </TableHead>
                   <TableHead>Клієнт</TableHead>
-                  <TableHead>Дата продажі</TableHead>
                   <TableHead>Дії</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSerialNumbers.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-mono">{item.serialNumber}</TableCell>
-                    <TableCell>
-                      {item.product?.name} ({item.product?.sku})
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[item.status as keyof typeof statusColors]}>
-                        {statusLabels[item.status as keyof typeof statusLabels]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {(warehouses as Warehouse[]).find((w) => w.id === item.warehouseId)?.name || "-"}
-                    </TableCell>
-                    <TableCell>{item.invoiceNumber || "-"}</TableCell>
-                    <TableCell>{item.clientShortName || "-"}</TableCell>
-                    <TableCell>
-                      {item.saleDate ? new Date(item.saleDate).toLocaleDateString("uk-UA") : "-"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEditDialog(item)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteMutation.mutate(item.id)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
+                {paginatedSerialNumbers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <div className="flex flex-col items-center space-y-2">
+                        <QrCode className="w-8 h-8 text-gray-400" />
+                        <p className="text-gray-500">Серійні номери не знайдено</p>
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
-                {filteredSerialNumbers.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-6">
-                      Серійні номери не знайдено
-                    </TableCell>
-                  </TableRow>
+                ) : (
+                  paginatedSerialNumbers.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-mono">{item.serialNumber}</TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{item.product?.name}</div>
+                          <div className="text-sm text-gray-500">{item.product?.sku}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={statusColors[item.status as keyof typeof statusColors]}>
+                          {statusLabels[item.status as keyof typeof statusLabels]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {item.warehouseId ? (
+                          (warehouses as Warehouse[]).find(w => w.id === item.warehouseId)?.name || "Невідомо"
+                        ) : (
+                          "-"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {item.manufacturedDate 
+                          ? new Date(item.manufacturedDate).toLocaleDateString('uk-UA')
+                          : "-"}
+                      </TableCell>
+                      <TableCell>{item.clientShortName || "-"}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditDialog(item)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(item.id)}
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
               </TableBody>
             </Table>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {/* Пагінація нижня */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-500">
+              Сторінка {currentPage} з {totalPages}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                Перша
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                Попередня
+              </Button>
+              <span className="mx-2">
+                Сторінка {currentPage} з {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Наступна
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                Остання
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

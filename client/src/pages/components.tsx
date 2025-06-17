@@ -572,7 +572,7 @@ export default function Components() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Package className="w-5 h-5" />
-            Компоненти ({filteredComponents.length})
+            Компоненти ({paginatedComponents.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -597,7 +597,7 @@ export default function Components() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredComponents.map((component) => (
+                {paginatedComponents.map((component) => (
                   <TableRow key={component.id}>
                     <TableCell>
                       <div>
@@ -707,7 +707,7 @@ export default function Components() {
 }
 
 // Компонент для управління аналогами
-function AlternativesManagement({ component, onClose }: { component: Component | null, onClose: () => void }) {
+function AlternativesManagement({ component, onClose }: { component: Component | null; onClose: () => void }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
