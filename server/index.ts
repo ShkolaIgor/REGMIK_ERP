@@ -1,34 +1,11 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes-minimal";
+import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import session from "express-session";
-import connectPg from "connect-pg-simple";
+
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Session setup
-const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-const pgStore = connectPg(session);
-const sessionStore = new pgStore({
-  conString: process.env.DATABASE_URL,
-  createTableIfMissing: true,
-  ttl: sessionTtl,
-  tableName: "sessions",
-});
-
-app.use(session({
-  secret: process.env.SESSION_SECRET || "fallback-secret-for-dev",
-  store: sessionStore,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    secure: false, // Set to true in production with HTTPS
-    maxAge: sessionTtl,
-  },
-}));
 
 // Налаштування UTF-8 тільки для API роутів та HTML
 app.use((req, res, next) => {
@@ -87,8 +64,15 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Register API routes BEFORE Vite setup
   const server = await registerRoutes(app);
+
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+
+    res.status(status).json({ message });
+    throw err;
+  });
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
@@ -98,14 +82,6 @@ app.use((req, res, next) => {
   } else {
     serveStatic(app);
   }
-
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
 
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
@@ -118,7 +94,36 @@ app.use((req, res, next) => {
   }, async () => {
     log(`serving on port ${port}`);
     
-    // Ініціалізація завершена
-    log("Сервер готовий до роботи");
+    // Ініціалізація кешу Нової Пошти при старті сервера (тільки в development)
+    if (app.get("env") === "development") {
+      try {
+        log("Ініціалізація кешу Нової Пошти...");
+        await novaPoshtaCache.forceUpdate();
+        const info = await novaPoshtaCache.getCacheInfo();
+        log(`Кеш Нової Пошти готовий: ${info.cities} міст, ${info.warehouses} відділень`);
+      } catch (error) {
+        log("Помилка ініціалізації кешу Нової Пошти:", error);
+      }
+    } else {
+      log("Продакшн режим - кеш Нової Пошти буде завантажено за потребою");
+    }
+
+    // Ініціалізація автоматичного оновлення курсів валют
+    try {
+      const { currencyService } = await import("./currency-service");
+      await currencyService.initializeAutoUpdate();
+      log("Автоматичне оновлення курсів валют ініціалізовано");
+    } catch (error) {
+      log("Помилка ініціалізації автоматичного оновлення курсів:", error);
+    }
+
+    // Ініціалізація автоматичного оновлення Nova Poshta
+    try {
+      const { novaPoshtaService } = await import("./nova-poshta-service");
+      await novaPoshtaService.initializeAutoUpdate();
+      log("Автоматичне оновлення Nova Poshta ініціалізовано");
+    } catch (error) {
+      log("Помилка ініціалізації автоматичного оновлення Nova Poshta:", error);
+    }
   });
 })();
