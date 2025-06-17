@@ -7579,9 +7579,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Parse creation date
     let createdAt = null;
-    if (row.DATE_CREATE) {
+    if (attrs.DATE_CREATE) {
       try {
-        const dateParts = row.DATE_CREATE.split('.');
+        const dateParts = attrs.DATE_CREATE.split('.');
         if (dateParts.length === 3) {
           createdAt = new Date(parseInt(dateParts[2]), parseInt(dateParts[1]) - 1, parseInt(dateParts[0]));
         }
@@ -7644,20 +7644,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const supplier = await storage.createSupplier(supplierData);
       job.details.push({
-        name: row.PREDPR,
+        name: attrs.PREDPR,
         status: 'imported',
         message: `Постачальник успішно імпортований з ID ${supplier.id}`
       });
       job.imported++;
-      console.log(`Successfully imported supplier: ${row.PREDPR} with ID ${supplier.id}`);
+      console.log(`Successfully imported supplier: ${attrs.PREDPR} with ID ${supplier.id}`);
     } catch (createError) {
-      console.error(`Failed to create supplier ${row.PREDPR}:`, createError);
+      console.error(`Failed to create supplier ${attrs.PREDPR}:`, createError);
       job.details.push({
-        name: row.PREDPR,
+        name: attrs.PREDPR,
         status: 'error',
         message: `Помилка створення постачальника: ${createError instanceof Error ? createError.message : String(createError)}`
       });
-      job.errors.push(`Failed to create supplier ${row.PREDPR}: ${createError instanceof Error ? createError.message : String(createError)}`);
+      job.errors.push(`Failed to create supplier ${attrs.PREDPR}: ${createError instanceof Error ? createError.message : String(createError)}`);
     }
   }
 
