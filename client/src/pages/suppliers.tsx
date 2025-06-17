@@ -57,6 +57,7 @@ export default function Suppliers() {
   const [currentJob, setCurrentJob] = useState<ImportJob | null>(null);
   const [formData, setFormData] = useState({
     name: "",
+    fullName: "",
     contactPerson: "",
     email: "",
     phone: "",
@@ -222,6 +223,7 @@ export default function Suppliers() {
   const resetForm = () => {
     setFormData({
       name: "",
+      fullName: "",
       contactPerson: "",
       email: "",
       phone: "",
@@ -239,6 +241,7 @@ export default function Suppliers() {
     setEditingSupplier(supplier);
     setFormData({
       name: supplier.name,
+      fullName: supplier.fullName || "",
       contactPerson: supplier.contactPerson || "",
       email: supplier.email || "",
       phone: supplier.phone || "",
@@ -339,6 +342,16 @@ export default function Suppliers() {
                       required
                     />
                   </div>
+                  <div>
+                    <Label htmlFor="fullName">Повна назва</Label>
+                    <Input
+                      id="fullName"
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="contactPerson">Контактна особа</Label>
                     <Input
@@ -578,6 +591,16 @@ export default function Suppliers() {
                   required
                 />
               </div>
+              <div>
+                <Label htmlFor="edit-fullName">Повна назва</Label>
+                <Input
+                  id="edit-fullName"
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="edit-contactPerson">Контактна особа</Label>
                 <Input
