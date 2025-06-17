@@ -14,8 +14,73 @@ import { z } from "zod";
 import multer from "multer";
 import xml2js from "xml2js";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
+import { insertLocalUserSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Simple authentication routes
+  app.post("/api/auth/simple-login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ error: "Username and password required" });
+      }
+
+      // Get user from database
+      const user = await storage.getLocalUserByUsername(username);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      // Check password
+      const isValid = await bcrypt.compare(password, user.password);
+      if (!isValid) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      // Set session
+      (req.session as any).user = {
+        id: user.id,
+        username: user.username,
+        role: user.role
+      };
+
+      res.json({ success: true, user: { id: user.id, username: user.username, role: user.role } });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  app.get("/api/auth/user", async (req, res) => {
+    try {
+      const sessionUser = (req.session as any)?.user;
+      if (!sessionUser) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const user = await storage.getUser(sessionUser.id);
+      if (!user) {
+        return res.status(401).json({ error: "User not found" });
+      }
+
+      res.json({ id: user.id, username: user.username, role: user.role });
+    } catch (error) {
+      console.error("Get user error:", error);
+      res.status(500).json({ error: "Failed to get user" });
+    }
+  });
+
+  app.post("/api/auth/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Logout error:", err);
+        return res.status(500).json({ error: "Logout failed" });
+      }
+      res.json({ success: true });
+    });
+  });
   // Multer configuration for file uploads
   const upload = multer({
     storage: multer.memoryStorage(),
