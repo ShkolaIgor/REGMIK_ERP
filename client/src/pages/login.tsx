@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -125,6 +125,12 @@ export default function Login() {
               )}
             </Button>
           </form>
+          
+          <div className="text-center mt-4">
+            <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-800 underline">
+              Забули пароль?
+            </Link>
+          </div>
           
           <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
             <div className="text-sm text-gray-600 dark:text-gray-400 text-center">

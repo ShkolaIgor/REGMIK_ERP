@@ -1,140 +1,164 @@
 import { useState } from "react";
+import { Link } from "wouter";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { Package, ArrowLeft } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ArrowLeft, Mail, CheckCircle, Loader2 } from "lucide-react";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-  const { toast } = useToast();
+  const [success, setSuccess] = useState(false);
+  const [debugToken, setDebugToken] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      await apiRequest("/api/auth/forgot-password", {
+  const forgotPasswordMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const response = await apiRequest("/api/auth/forgot-password", {
         method: "POST",
-        body: { email },
+        body: JSON.stringify({ email }),
+        headers: { "Content-Type": "application/json" },
       });
+      return response;
+    },
+    onSuccess: (data) => {
+      setSuccess(true);
+      if (data.debugToken) {
+        setDebugToken(data.debugToken);
+      }
+    },
+  });
 
-      setEmailSent(true);
-      toast({
-        title: "Лист відправлено",
-        description: "Перевірте електронну пошту для отримання інструкцій з відновлення паролю",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Помилка",
-        description: error.message || "Не вдалося відправити лист для відновлення паролю",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email) {
+      forgotPasswordMutation.mutate(email);
     }
   };
 
-  if (emailSent) {
+  if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="w-full max-w-md p-6">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-              <Package className="h-8 w-8 text-white" />
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+        <Card className="w-full max-w-md shadow-xl">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">REGMIK: ERP</h1>
-            <p className="text-gray-600">Система управління виробництвом</p>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-center">Лист відправлено</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center space-y-4">
-              <p className="text-gray-600">
-                Ми відправили інструкції з відновлення паролю на адресу:
-              </p>
-              <p className="font-medium text-blue-600">{email}</p>
-              <p className="text-sm text-gray-500">
-                Перевірте папку "Спам", якщо лист не з'явився у вхідних
+            <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+              Перевірте пошту
+            </CardTitle>
+            <CardDescription className="text-gray-600 dark:text-gray-400">
+              Інструкції для скидання паролю надіслані на вашу електронну пошту
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent>
+            <div className="text-center space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Якщо ви не отримали листа протягом кількох хвилин, перевірте папку "Спам".
               </p>
               
-              <div className="pt-4">
-                <Button 
-                  onClick={() => window.location.href = '/'}
-                  variant="outline" 
-                  className="w-full"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Повернутись до входу
-                </Button>
+              {debugToken && (
+                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+                    Демо режим - токен для тестування:
+                  </p>
+                  <p className="text-xs font-mono bg-white dark:bg-gray-800 p-2 rounded border break-all">
+                    {debugToken}
+                  </p>
+                  <Link href={`/reset-password?token=${debugToken}`}>
+                    <Button className="mt-2 w-full" size="sm">
+                      Перейти до скидання паролю
+                    </Button>
+                  </Link>
+                </div>
+              )}
+              
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <Link href="/login">
+                  <Button variant="outline" className="w-full">
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Повернутися до входу
+                  </Button>
+                </Link>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-      <div className="w-full max-w-md p-6">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <Package className="h-8 w-8 text-white" />
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+      <Card className="w-full max-w-md shadow-xl">
+        <CardHeader className="text-center">
+          <div className="mx-auto w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-4">
+            <Mail className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">REGMIK: ERP</h1>
-          <p className="text-gray-600">Система управління виробництвом</p>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-center">Відновлення паролю</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Електронна пошта</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Введіть вашу електронну пошту"
-                  required
-                />
-                <p className="text-sm text-gray-500">
-                  Ми відправимо посилання для відновлення паролю на цю адресу
-                </p>
-              </div>
-
-              <Button 
-                type="submit" 
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                disabled={isLoading}
-              >
-                {isLoading ? "Відправляю..." : "Відправити лист"}
-              </Button>
-            </form>
-
-            <div className="mt-6 text-center">
-              <Button 
-                onClick={() => window.location.href = '/'}
-                variant="link" 
-                className="text-sm text-gray-600 hover:text-gray-700 p-0"
-              >
-                <ArrowLeft className="h-4 w-4 mr-1" />
-                Повернутись до входу
-              </Button>
+          <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+            Забули пароль?
+          </CardTitle>
+          <CardDescription className="text-gray-600 dark:text-gray-400">
+            Введіть вашу електронну пошту для отримання інструкцій зі скидання паролю
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {forgotPasswordMutation.error && (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  {forgotPasswordMutation.error.message || "Помилка при відправці запиту"}
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="space-y-2">
+              <Label htmlFor="email">Електронна пошта</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Введіть ваш email"
+                required
+                disabled={forgotPasswordMutation.isPending}
+                autoComplete="email"
+              />
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={forgotPasswordMutation.isPending || !email}
+            >
+              {forgotPasswordMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Відправка...
+                </>
+              ) : (
+                <>
+                  <Mail className="w-4 h-4 mr-2" />
+                  Надіслати інструкції
+                </>
+              )}
+            </Button>
+          </form>
+          
+          <div className="text-center mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <Link href="/login">
+              <Button variant="outline" className="w-full">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Повернутися до входу
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./db-storage";
 import { registerSyncApiRoutes } from "./sync-api";
-import { setupSession, requireAuth, login, getUserById } from "./auth";
+import { setupSession, requireAuth, login, getUserById, generateResetToken, verifyResetToken, resetPassword, getUserByEmail } from "./auth";
 import { novaPoshtaApi } from "./nova-poshta-api";
 import { novaPoshtaCache } from "./nova-poshta-cache";
 import { pool, db } from "./db";
@@ -108,6 +108,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } else {
       res.json({ success: true });
+    }
+  });
+
+  // Запит на скидання паролю
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+
+      const user = getUserByEmail(email);
+      
+      // Завжди повертаємо успіх, щоб не розкривати інформацію про існування користувачів
+      if (!user) {
+        return res.json({ 
+          success: true, 
+          message: "Якщо користувач з таким email існує, інструкції для скидання паролю будуть надіслані на пошту" 
+        });
+      }
+
+      const resetData = generateResetToken(email);
+      if (!resetData) {
+        return res.status(500).json({ error: "Failed to generate reset token" });
+      }
+
+      // Імітація відправки email (в реальному додатку тут був би виклик email сервісу)
+      console.log(`Password reset requested for ${email}`);
+      console.log(`Reset token: ${resetData.token}`);
+      console.log(`Reset link: ${req.protocol}://${req.headers.host}/reset-password?token=${resetData.token}`);
+
+      res.json({ 
+        success: true, 
+        message: "Інструкції для скидання паролю надіслані на вашу електронну пошту",
+        // В демо режимі показуємо токен для тестування
+        debugToken: resetData.token
+      });
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Перевірка токену скидання паролю
+  app.get("/api/auth/verify-reset-token/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      
+      const resetData = verifyResetToken(token);
+      if (!resetData) {
+        return res.status(400).json({ 
+          error: "Токен недійсний або прострочений", 
+          valid: false 
+        });
+      }
+
+      res.json({ 
+        valid: true, 
+        email: resetData.email,
+        expires: resetData.expires
+      });
+    } catch (error) {
+      console.error("Verify reset token error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Скидання паролю
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { token, password } = req.body;
+      
+      if (!token || !password) {
+        return res.status(400).json({ error: "Token and password are required" });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({ error: "Пароль має містити щонайменше 6 символів" });
+      }
+
+      const success = await resetPassword(token, password);
+      if (!success) {
+        return res.status(400).json({ error: "Токен недійсний або прострочений" });
+      }
+
+      res.json({ 
+        success: true, 
+        message: "Пароль успішно змінено" 
+      });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
   });
 

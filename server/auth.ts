@@ -88,3 +88,75 @@ export function getUserById(id: number) {
   const { password: _, ...userWithoutPassword } = user;
   return userWithoutPassword;
 }
+
+// Генерація токену скидання паролю
+export function generateResetToken(email: string) {
+  const user = users.find(u => u.email === email);
+  if (!user) {
+    return null;
+  }
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 хвилин
+
+  resetTokens.set(token, {
+    userId: user.id,
+    token,
+    expires,
+    email
+  });
+
+  // Очищення старих токенів для цього користувача
+  for (const [key, value] of resetTokens.entries()) {
+    if (value.userId === user.id && key !== token) {
+      resetTokens.delete(key);
+    }
+  }
+
+  return { token, expires };
+}
+
+// Перевірка токену скидання паролю
+export function verifyResetToken(token: string) {
+  const resetData = resetTokens.get(token);
+  if (!resetData) {
+    return null;
+  }
+
+  if (new Date() > resetData.expires) {
+    resetTokens.delete(token);
+    return null;
+  }
+
+  return resetData;
+}
+
+// Скидання паролю
+export async function resetPassword(token: string, newPassword: string) {
+  const resetData = verifyResetToken(token);
+  if (!resetData) {
+    return false;
+  }
+
+  const user = users.find(u => u.id === resetData.userId);
+  if (!user) {
+    return false;
+  }
+
+  // Хешування нового паролю
+  user.password = await bcrypt.hash(newPassword, 10);
+  
+  // Видалення використаного токену
+  resetTokens.delete(token);
+
+  return true;
+}
+
+// Пошук користувача за email
+export function getUserByEmail(email: string) {
+  const user = users.find(u => u.email === email);
+  if (!user) return null;
+  
+  const { password: _, ...userWithoutPassword } = user;
+  return userWithoutPassword;
+}
