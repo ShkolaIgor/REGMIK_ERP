@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -56,6 +56,13 @@ export default function Suppliers() {
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [currentJob, setCurrentJob] = useState<ImportJob | null>(null);
+  
+  // Пагінація та фільтрація
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const pageSize = 12;
+
   const [formData, setFormData] = useState({
     name: "",
     fullName: "",
@@ -75,9 +82,34 @@ export default function Suppliers() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: suppliers = [], isLoading } = useQuery({
-    queryKey: ["/api/suppliers"],
+  // Дебаунс для пошуку
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const { data: suppliersData, isLoading } = useQuery({
+    queryKey: ["/api/suppliers", currentPage, pageSize, debouncedSearch],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: pageSize.toString(),
+      });
+      if (debouncedSearch) {
+        params.append('search', debouncedSearch);
+      }
+      const response = await fetch(`/api/suppliers?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch suppliers');
+      return response.json();
+    },
   });
+
+  const suppliers = suppliersData?.suppliers || [];
+  const totalPages = suppliersData?.totalPages || 1;
+  const total = suppliersData?.total || 0;
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -314,12 +346,27 @@ export default function Suppliers() {
   }
 
   return (
-    <div className="w-full px-4 py-4">
-      <div className="flex justify-between items-center mb-6">
+    <div className="w-full px-4 py-3">
+      {/* Header with title and search */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Постачальники</h1>
-          <p className="text-gray-600">Управління постачальниками</p>
+          <h1 className="text-2xl font-bold text-gray-900">Постачальники</h1>
+          <p className="text-sm text-gray-600 mt-1">
+            Загалом: {total} постачальник{total === 1 ? '' : total > 4 ? 'ів' : 'и'}
+          </p>
         </div>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <Input
+            placeholder="Пошук по назві, ЄДРПОУ, контакту..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full sm:w-80"
+          />
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex justify-between items-center mb-6">
         <div className="flex gap-3">
           <Button onClick={() => setIsImportDialogOpen(true)} variant="outline">
             <Upload className="h-4 w-4 mr-2" />
@@ -848,6 +895,54 @@ export default function Suppliers() {
           ))
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-8">
+          <div className="text-sm text-gray-600">
+            Сторінка {currentPage} з {totalPages}
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              Попередня
+            </Button>
+            
+            {/* Page numbers */}
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const pageNumber = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                if (pageNumber > totalPages) return null;
+                
+                return (
+                  <Button
+                    key={pageNumber}
+                    variant={currentPage === pageNumber ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(pageNumber)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {pageNumber}
+                  </Button>
+                );
+              })}
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Наступна
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
