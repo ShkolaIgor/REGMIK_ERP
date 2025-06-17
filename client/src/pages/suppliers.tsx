@@ -752,84 +752,97 @@ export default function Suppliers() {
           suppliers.map((supplier: Supplier) => (
             <Card key={supplier.id}>
               <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">{supplier.name}</CardTitle>
-                    {supplier.fullName && (
-                      <p className="text-sm text-gray-600 mt-1">{supplier.fullName}</p>
-                    )}
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant={supplier.isActive ? "default" : "secondary"}>
-                        {supplier.isActive ? "Активний" : "Неактивний"}
-                      </Badge>
-                      {supplier.rating && (
-                        <Badge variant="outline">
-                          Рейтинг: {supplier.rating}/5
-                        </Badge>
-                      )}
-                      {supplier.taxCode && (
-                        <Badge variant="outline" className="text-xs">
-                          ЄДРПОУ/ІПН: {supplier.taxCode}
-                        </Badge>
-                      )}
-                    </div>
+                <div className="flex items-start space-x-3 mb-3">
+                  <Building2 className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-lg leading-tight">{supplier.name}</CardTitle>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(supplier)}
-                    >
+                </div>
+                
+                <div className="flex justify-between items-center mb-3">
+                  <CardDescription className="text-sm">
+                    ЄДРПОУ/ІПН: <span className="font-bold text-base text-foreground">{supplier.taxCode || "Не вказано"}</span>
+                  </CardDescription>
+                  <div className="flex space-x-1 flex-shrink-0">
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(supplier)} className="h-8 w-8 p-0">
                       <Edit className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant={supplier.isActive ? "default" : "secondary"} className="text-xs">
+                    {supplier.isActive ? "Активний" : "Неактивний"}
+                  </Badge>
+                  {supplier.rating && (
+                    <Badge variant="outline" className="text-xs">
+                      Рейтинг: {supplier.rating}/5
+                    </Badge>
+                  )}
+                </div>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+              <CardContent className="pt-0">
+                <div className="space-y-3 text-sm">
+                  {supplier.fullName && (
+                    <div>
+                      <span className="font-medium text-foreground">Повна назва:</span>
+                      <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{supplier.fullName}</p>
+                    </div>
+                  )}
                   {supplier.contactPerson && (
                     <div>
-                      <span className="font-medium">Контакт:</span>
-                      <div>{supplier.contactPerson}</div>
+                      <span className="font-medium text-foreground">Контактна особа:</span>
+                      <p className="text-muted-foreground text-xs mt-1">{supplier.contactPerson}</p>
                     </div>
                   )}
-                  {supplier.email && (
+                  {(supplier.phone || supplier.email) && (
                     <div>
-                      <span className="font-medium">Email:</span>
-                      <div>{supplier.email}</div>
-                    </div>
-                  )}
-                  {supplier.phone && (
-                    <div>
-                      <span className="font-medium">Телефон:</span>
-                      <div>{supplier.phone}</div>
+                      <span className="font-medium text-foreground">Контакти:</span>
+                      <div className="text-xs mt-1 space-y-1">
+                        {supplier.phone && (
+                          <p className="text-muted-foreground">Тел: {supplier.phone}</p>
+                        )}
+                        {supplier.email && (
+                          <p className="text-muted-foreground">Email: {supplier.email}</p>
+                        )}
+                      </div>
                     </div>
                   )}
                   {supplier.address && (
                     <div>
-                      <span className="font-medium">Адреса:</span>
-                      <div>{supplier.address}</div>
+                      <span className="font-medium text-foreground">Адреса:</span>
+                      <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{supplier.address}</p>
                     </div>
                   )}
-                  {supplier.paymentTerms && (
+                  {(supplier.paymentTerms || supplier.deliveryTerms) && (
                     <div>
-                      <span className="font-medium">Умови оплати:</span>
-                      <div>{supplier.paymentTerms}</div>
+                      <span className="font-medium text-foreground">Умови співпраці:</span>
+                      <div className="text-xs mt-1 space-y-1">
+                        {supplier.paymentTerms && (
+                          <p className="text-muted-foreground">Оплата: {supplier.paymentTerms}</p>
+                        )}
+                        {supplier.deliveryTerms && (
+                          <p className="text-muted-foreground">Доставка: {supplier.deliveryTerms}</p>
+                        )}
+                      </div>
                     </div>
                   )}
-                  {supplier.deliveryTerms && (
+                  {supplier.description && (
                     <div>
-                      <span className="font-medium">Умови доставки:</span>
-                      <div>{supplier.deliveryTerms}</div>
+                      <span className="font-medium text-foreground">Примітки:</span>
+                      <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{supplier.description}</p>
                     </div>
                   )}
-                </div>
-                {supplier.description && (
-                  <div className="mt-3 pt-3 border-t">
-                    <span className="font-medium text-sm">Опис:</span>
-                    <p className="text-sm text-gray-600 mt-1">{supplier.description}</p>
+                  
+                  {/* Дати створення та оновлення */}
+                  <div className="pt-2 border-t border-border">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Створено: {new Date(supplier.createdAt).toLocaleDateString('uk-UA')}</span>
+                      {supplier.updatedAt && supplier.updatedAt !== supplier.createdAt && (
+                        <span>Оновлено: {new Date(supplier.updatedAt).toLocaleDateString('uk-UA')}</span>
+                      )}
+                    </div>
                   </div>
-                )}
+                </div>
               </CardContent>
             </Card>
           ))

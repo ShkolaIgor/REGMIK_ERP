@@ -7622,9 +7622,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return;
     }
 
+    // Parse EDRPOU/taxCode
+    let taxCode = null;
+    if (attrs.EDRPOU && attrs.EDRPOU.trim() !== '') {
+      const cleanCode = attrs.EDRPOU.trim().replace(/\D/g, '');
+      if (cleanCode.length === 8 || cleanCode.length === 10) {
+        taxCode = cleanCode;
+      }
+    }
+
     const supplierData = {
       name: attrs.PREDPR,
       fullName: attrs.NAME || null,
+      taxCode: taxCode,
       clientTypeId: clientTypeId,
       contactPerson: null,
       email: null,
