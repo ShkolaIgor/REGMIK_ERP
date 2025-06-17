@@ -100,9 +100,11 @@ export default function Components() {
     queryKey: ["/api/component-categories"],
   });
 
-  const { data: suppliers = [] } = useQuery({
+  const { data: suppliersData } = useQuery({
     queryKey: ["/api/suppliers"],
   });
+
+  const suppliers = suppliersData?.suppliers || [];
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
