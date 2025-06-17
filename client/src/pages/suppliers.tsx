@@ -83,7 +83,7 @@ export default function Suppliers() {
     mutationFn: async (data: typeof formData) => {
       return await apiRequest("/api/suppliers", {
         method: "POST",
-        body: JSON.stringify(data),
+        body: data,
       });
     },
     onSuccess: () => {
@@ -108,7 +108,7 @@ export default function Suppliers() {
     mutationFn: async ({ id, data }: { id: number; data: typeof formData }) => {
       return await apiRequest(`/api/suppliers/${id}`, {
         method: "PATCH",
-        body: JSON.stringify(data),
+        body: data,
       });
     },
     onSuccess: () => {
