@@ -7861,8 +7861,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return price.toString().replace(',', '.');
       };
 
-      // Обробка поля ACTUAL -> is_active (за замовчуванням true, якщо не вказано або пусте)
-      let isActive = true;
+      // Обробка поля ACTUAL -> is_active
+      let isActive = true; // За замовчуванням активний
       if (attrs.ACTUAL !== undefined && attrs.ACTUAL !== null) {
         // ACTUAL може бути булевим, числом (0/1) або рядком
         if (typeof attrs.ACTUAL === 'boolean') {
@@ -7870,12 +7870,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else if (typeof attrs.ACTUAL === 'number') {
           isActive = attrs.ACTUAL === 1;
         } else if (typeof attrs.ACTUAL === 'string') {
-          const actualStr = attrs.ACTUAL.toLowerCase().trim();
-          // Пустий рядок або "true", "1", "так", "yes" означають активний
-          if (actualStr === '') {
+          const actualStr = attrs.ACTUAL.trim();
+          // Специфічні правила: T = true, F = false, пустий рядок = true
+          if (actualStr === '' || actualStr.toUpperCase() === 'T') {
             isActive = true;
+          } else if (actualStr.toUpperCase() === 'F') {
+            isActive = false;
           } else {
-            isActive = actualStr === 'true' || actualStr === '1' || actualStr === 'так' || actualStr === 'yes';
+            // Додаткові варіанти для сумісності
+            const lowerStr = actualStr.toLowerCase();
+            isActive = lowerStr === 'true' || lowerStr === '1' || lowerStr === 'так' || lowerStr === 'yes';
           }
         }
       }
