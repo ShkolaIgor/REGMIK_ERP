@@ -1097,15 +1097,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Suppliers
-  app.get("/api/suppliers", async (req, res) => {
-    try {
-      const suppliers = await storage.getSuppliers();
-      res.json(suppliers);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch suppliers" });
-    }
-  });
+  // Suppliers - старий маршрут видалено, використовується новий з пагінацією
 
   app.post("/api/suppliers", async (req, res) => {
     try {
