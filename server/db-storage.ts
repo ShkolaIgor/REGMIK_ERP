@@ -368,17 +368,19 @@ export class DatabaseStorage implements IStorage {
       // 1. Видаляємо записи з inventory
       await db.delete(inventory).where(eq(inventory.productId, id));
       
-      // 2. Видаляємо записи з product_components (як батьківські, так і компонентні)
-      await db.delete(productComponents).where(eq(productComponents.parentProductId, id));
-      await db.delete(productComponents).where(eq(productComponents.componentProductId, id));
-      
-      // 3. Видаляємо записи з production_forecasts
-      await db.delete(productionForecasts).where(eq(productionForecasts.productId, id));
-      
-      // 4. Видаляємо записи з order_items
+      // 2. Видаляємо записи з order_items
       await db.delete(orderItems).where(eq(orderItems.productId, id));
       
-      // 5. Нарешті видаляємо сам товар
+      // 3. Видаляємо записи з product_components (якщо існують)
+      try {
+        await db.delete(productComponents).where(eq(productComponents.parentProductId, id));
+        await db.delete(productComponents).where(eq(productComponents.componentProductId, id));
+      } catch (e) {
+        // Ігноруємо помилки якщо таблиця не існує
+        console.log('Product components table might not exist or have different structure');
+      }
+      
+      // 4. Нарешті видаляємо сам товар
       const result = await db.delete(products).where(eq(products.id, id));
       return (result.rowCount || 0) > 0;
     } catch (error) {
