@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Upload, Download, Eye, FileText, AlertCircle, CheckCircle, Clock, X } from "lucide-react";
+import { Plus, Search, Upload, Download, Eye, FileText, AlertCircle, CheckCircle, Clock, X, Grid3X3, List } from "lucide-react";
 
 interface Product {
   id: number;
@@ -84,6 +84,7 @@ export default function Products() {
   // Пагінація та фільтрація
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'cards'>('list');
   const itemsPerPage = 12;
 
   const { toast } = useToast();
@@ -301,7 +302,33 @@ export default function Products() {
             Управління каталогом товарів ({filteredProducts.length} з {products.length})
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          {/* Перемикач видів відображення */}
+          <div className="flex border rounded-lg p-1">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+              className="h-8 px-3"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'cards' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('cards')}
+              className="h-8 px-3"
+            >
+              <Grid3X3 className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {/* Кнопки імпорту та експорту */}
+          <Button variant="outline" size="sm" title="Експорт товарів">
+            <Download className="h-4 w-4 mr-2" />
+            Експорт
+          </Button>
+          
           <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" title="Імпорт товарів з XML файлу">
@@ -367,73 +394,136 @@ export default function Products() {
         )}
       </div>
 
-      {/* Сітка товарів */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {currentProducts.map((product: Product) => (
-          <Card key={product.id} className="hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-start">
-                <div className="space-y-1 flex-1">
-                  <CardTitle className="text-lg leading-6">{product.name}</CardTitle>
-                  <CardDescription className="text-sm">
-                    SKU: {product.sku}
-                  </CardDescription>
+      {/* Відображення товарів */}
+      {viewMode === 'cards' ? (
+        /* Вид карточками */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {currentProducts.map((product: Product) => (
+            <Card key={product.id} className="hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-1 flex-1">
+                    <CardTitle className="text-lg leading-6">{product.name}</CardTitle>
+                    <CardDescription className="text-sm">
+                      SKU: {product.sku}
+                    </CardDescription>
+                  </div>
+                  <Badge variant={product.isActive ? "default" : "secondary"}>
+                    {product.isActive ? "Активний" : "Неактивний"}
+                  </Badge>
                 </div>
-                <Badge variant={product.isActive ? "default" : "secondary"}>
-                  {product.isActive ? "Активний" : "Неактивний"}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {product.description && (
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {product.description}
-                </p>
-              )}
-              
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Собівартість:</span>
-                  <span className="font-medium">{product.costPrice} ₴</span>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {product.description && (
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {product.description}
+                  </p>
+                )}
+                
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Собівартість:</span>
+                    <span className="font-medium">{product.costPrice} ₴</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Роздрібна ціна:</span>
+                    <span className="font-medium">{product.retailPrice} ₴</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Од. виміру:</span>
+                    <span>{product.unit}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Створено:</span>
+                    <span>{new Date(product.createdAt).toLocaleDateString('uk-UA')}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Роздрібна ціна:</span>
-                  <span className="font-medium">{product.retailPrice} ₴</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Од. виміру:</span>
-                  <span>{product.unit}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Створено:</span>
-                  <span>{new Date(product.createdAt).toLocaleDateString('uk-UA')}</span>
-                </div>
-              </div>
 
-              <div className="flex gap-2 pt-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setEditingProduct(product)}
-                  className="flex-1"
-                >
-                  <Eye className="h-4 w-4 mr-1" />
-                  Редагувати
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => deleteMutation.mutate(product.id)}
-                  disabled={deleteMutation.isPending}
-                  className="px-3"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setEditingProduct(product)}
+                    className="flex-1"
+                  >
+                    <Eye className="h-4 w-4 mr-1" />
+                    Редагувати
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => deleteMutation.mutate(product.id)}
+                    disabled={deleteMutation.isPending}
+                    className="px-3"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        /* Вид списком */
+        <div className="bg-white rounded-lg border">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr className="border-b">
+                  <th className="text-left p-4 font-medium text-gray-900">Назва</th>
+                  <th className="text-left p-4 font-medium text-gray-900">SKU</th>
+                  <th className="text-left p-4 font-medium text-gray-900">Опис</th>
+                  <th className="text-left p-4 font-medium text-gray-900">Собівартість</th>
+                  <th className="text-left p-4 font-medium text-gray-900">Роздрібна ціна</th>
+                  <th className="text-left p-4 font-medium text-gray-900">Од. виміру</th>
+                  <th className="text-left p-4 font-medium text-gray-900">Статус</th>
+                  <th className="text-left p-4 font-medium text-gray-900">Дії</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentProducts.map((product: Product) => (
+                  <tr key={product.id} className="border-b hover:bg-gray-50">
+                    <td className="p-4">
+                      <div className="font-medium text-gray-900">{product.name}</div>
+                    </td>
+                    <td className="p-4 text-gray-600">{product.sku}</td>
+                    <td className="p-4 text-gray-600 max-w-xs">
+                      <div className="truncate">{product.description || "—"}</div>
+                    </td>
+                    <td className="p-4 text-gray-900 font-medium">{product.costPrice} ₴</td>
+                    <td className="p-4 text-gray-900 font-medium">{product.retailPrice} ₴</td>
+                    <td className="p-4 text-gray-600">{product.unit}</td>
+                    <td className="p-4">
+                      <Badge variant={product.isActive ? "default" : "secondary"}>
+                        {product.isActive ? "Активний" : "Неактивний"}
+                      </Badge>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setEditingProduct(product)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteMutation.mutate(product.id)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Пагінація */}
       {totalPages > 1 && (
