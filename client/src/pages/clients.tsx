@@ -159,6 +159,16 @@ const ClientsList = React.memo(({
                   <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{client.notes}</p>
                 </div>
               )}
+              
+              {/* Дати створення та оновлення */}
+              <div className="pt-2 border-t border-border">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Створено: {new Date(client.createdAt).toLocaleDateString('uk-UA')}</span>
+                  {client.updatedAt && client.updatedAt !== client.createdAt && (
+                    <span>Оновлено: {new Date(client.updatedAt).toLocaleDateString('uk-UA')}</span>
+                  )}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -227,6 +237,27 @@ export default function Clients() {
   const openAddContactDialog = (clientId: string) => {
     setSelectedClientForContact(clientId);
     setIsContactDialogOpen(true);
+  };
+
+  const handleDelete = async (clientId: string) => {
+    try {
+      await apiRequest(`/api/clients/${clientId}`, {
+        method: 'DELETE',
+      });
+      toast({
+        title: "Клієнта видалено",
+        description: "Клієнта успішно видалено з системи",
+      });
+      setIsDialogOpen(false);
+      setEditingClient(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+    } catch (error) {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося видалити клієнта",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -360,6 +391,7 @@ export default function Clients() {
               setIsDialogOpen(false);
               setEditingClient(null);
             }}
+            onDelete={editingClient ? () => handleDelete(editingClient.id.toString()) : undefined}
           />
         </DialogContent>
       </Dialog>
