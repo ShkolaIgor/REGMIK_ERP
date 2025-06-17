@@ -458,6 +458,78 @@ export default function Clients() {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Import XML Dialog */}
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Імпорт клієнтів з XML</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <input
+                type="file"
+                accept=".xml"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    // Викликаємо API для імпорту клієнтів
+                    fetch('/api/clients/import', {
+                      method: 'POST',
+                      body: formData,
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                      if (data.success) {
+                        toast({
+                          title: "Імпорт завершено",
+                          description: `Імпортовано ${data.imported} клієнтів`,
+                        });
+                        queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+                        setIsImportDialogOpen(false);
+                      } else {
+                        toast({
+                          title: "Помилка імпорту",
+                          description: data.message || "Не вдалося імпортувати клієнтів",
+                          variant: "destructive",
+                        });
+                      }
+                    })
+                    .catch(error => {
+                      toast({
+                        title: "Помилка",
+                        description: "Не вдалося завантажити файл",
+                        variant: "destructive",
+                      });
+                    });
+                  }
+                }}
+                className="hidden"
+                id="xml-upload"
+              />
+              <label htmlFor="xml-upload" className="cursor-pointer">
+                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <p className="text-lg font-medium">Оберіть XML файл</p>
+                <p className="text-gray-500">або перетягніть файл сюди</p>
+              </label>
+            </div>
+            
+            <div className="text-sm text-gray-600">
+              <p className="font-medium mb-2">Формат XML файлу:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>EDRPOU - код ЄДРПОУ/ІПН</li>
+                <li>PREDPR - коротка назва</li>
+                <li>NAME - повна назва</li>
+                <li>ADDRESS_PHYS - фізична адреса</li>
+                <li>COMMENT - коментар</li>
+              </ul>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
