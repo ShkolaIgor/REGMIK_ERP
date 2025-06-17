@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./db-storage";
 import { registerSyncApiRoutes } from "./sync-api";
-import { basicAuth, requireAuth } from "./basic-auth";
+import { setupSession, requireAuth, login, getUserById } from "./auth";
 import { novaPoshtaApi } from "./nova-poshta-api";
 import { novaPoshtaCache } from "./nova-poshta-cache";
 import { pool, db } from "./db";
@@ -32,6 +32,9 @@ import multer from "multer";
 import xml2js from "xml2js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup session middleware
+  setupSession(app);
+
   // Multer configuration for file uploads
   const upload = multer({
     storage: multer.memoryStorage(),
@@ -50,27 +53,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register sync API routes
   registerSyncApiRoutes(app);
 
-  // Demo authentication endpoints - always return success
+  // Authentication endpoints
   app.get("/api/auth/user", async (req, res) => {
-    res.json({
-      id: 1,
-      username: "demo_user",
-      email: "demo@example.com",
-      firstName: "Demo",
-      lastName: "User",
-      role: "admin"
-    });
+    const session = (req as any).session;
+    if (session && session.user) {
+      const user = getUserById(session.user.id);
+      if (user) {
+        res.json(user);
+      } else {
+        res.status(401).json({ error: "User not found" });
+      }
+    } else {
+      res.status(401).json({ error: "Not authenticated" });
+    }
   });
 
-  app.post("/api/auth/simple-login", async (req, res) => {
-    res.json({ 
-      success: true, 
-      user: {
-        id: 1,
-        username: "demo_user",
-        email: "demo@example.com"
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ error: "Username and password are required" });
       }
-    });
+
+      const user = await login(username, password);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      // Store user in session
+      (req as any).session.user = user;
+      
+      res.json({ 
+        success: true, 
+        user: user
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/auth/logout", async (req, res) => {
+    const session = (req as any).session;
+    if (session) {
+      session.destroy((err: any) => {
+        if (err) {
+          console.error("Session destroy error:", err);
+          return res.status(500).json({ error: "Failed to logout" });
+        }
+        res.json({ success: true });
+      });
+    } else {
+      res.json({ success: true });
+    }
   });
 
   // Dashboard stats
