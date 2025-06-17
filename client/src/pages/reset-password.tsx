@@ -1,273 +1,258 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, Key, CheckCircle, Loader2, AlertTriangle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Package, Eye, EyeOff, CheckCircle } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function ResetPassword() {
-  const [, setLocation] = useLocation();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [success, setSuccess] = useState(false);
-  
-  // Отримуємо токен з URL
-  const token = new URLSearchParams(window.location.search).get("token");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [token, setToken] = useState("");
+  const [isValidToken, setIsValidToken] = useState(false);
+  const [isCheckingToken, setIsCheckingToken] = useState(true);
+  const { toast } = useToast();
 
-  // Перевірка токену
-  const { data: tokenData, isLoading, error: tokenError } = useQuery({
-    queryKey: ["/api/auth/verify-reset-token", token],
-    queryFn: () => apiRequest(`/api/auth/verify-reset-token/${token}`),
-    enabled: !!token,
-    retry: false,
-  });
-
-  const resetPasswordMutation = useMutation({
-    mutationFn: async ({ token, password }: { token: string; password: string }) => {
-      const response = await apiRequest("/api/auth/reset-password", {
-        method: "POST",
-        body: JSON.stringify({ token, password }),
+  useEffect(() => {
+    // Get token from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenParam = urlParams.get('token');
+    
+    if (!tokenParam) {
+      toast({
+        title: "Помилка",
+        description: "Недійсне посилання для скидання паролю",
+        variant: "destructive",
       });
-      return response;
-    },
-    onSuccess: () => {
-      setSuccess(true);
-      // Перенаправляємо на логін через 3 секунди
       setTimeout(() => {
-        setLocation("/login");
-      }, 3000);
-    },
-  });
+        window.location.href = '/';
+      }, 2000);
+      return;
+    }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (token && password && password === confirmPassword) {
-      resetPasswordMutation.mutate({ token, password });
+    setToken(tokenParam);
+    validateToken(tokenParam);
+  }, []);
+
+  const validateToken = async (tokenParam: string) => {
+    try {
+      await apiRequest(`/api/auth/validate-reset-token?token=${tokenParam}`);
+      setIsValidToken(true);
+    } catch (error: any) {
+      toast({
+        title: "Помилка",
+        description: "Посилання для скидання паролю недійсне або застаріле",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 3000);
+    } finally {
+      setIsCheckingToken(false);
     }
   };
 
-  // Якщо немає токену, показуємо помилку
-  if (!token) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-        <Card className="w-full max-w-md shadow-xl">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mb-4">
-              <AlertTriangle className="w-8 h-8 text-white" />
-            </div>
-            <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-              Недійсне посилання
-            </CardTitle>
-            <CardDescription className="text-gray-600 dark:text-gray-400">
-              Посилання для скидання паролю недійсне або відсутнє
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="text-center">
-            <Link href="/login">
-              <Button className="w-full">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Повернутися до входу
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      toast({
+        title: "Помилка",
+        description: "Паролі не співпадають",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  // Якщо токен недійсний
-  if (tokenError || (tokenData && !tokenData.valid)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-        <Card className="w-full max-w-md shadow-xl">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mb-4">
-              <AlertTriangle className="w-8 h-8 text-white" />
-            </div>
-            <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-              Токен прострочений
-            </CardTitle>
-            <CardDescription className="text-gray-600 dark:text-gray-400">
-              Токен для скидання паролю недійсний або прострочений
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="text-center space-y-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Будь ласка, запросіть новий токен для скидання паролю
-            </p>
-            <div className="space-y-2">
-              <Link href="/forgot-password">
-                <Button className="w-full">
-                  Запросити новий токен
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button variant="outline" className="w-full">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Повернутися до входу
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+    if (password.length < 6) {
+      toast({
+        title: "Помилка",
+        description: "Пароль повинен містити мінімум 6 символів",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  // Успішне скидання паролю
-  if (success) {
+    setIsLoading(true);
+
+    try {
+      await apiRequest("/api/auth/reset-password", {
+        method: "POST",
+        body: { token, password },
+      });
+
+      setIsSuccess(true);
+      toast({
+        title: "Успіх",
+        description: "Пароль успішно змінено",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Помилка",
+        description: error.message || "Не вдалося змінити пароль",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isCheckingToken) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-        <Card className="w-full max-w-md shadow-xl">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="w-8 h-8 text-white" />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="w-full max-w-md p-6">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <Package className="h-8 w-8 text-white" />
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-              Пароль змінено
-            </CardTitle>
-            <CardDescription className="text-gray-600 dark:text-gray-400">
-              Ваш пароль успішно змінено
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="text-center space-y-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Зараз ви будете перенаправлені на сторінку входу...
-            </p>
-            <Link href="/login">
-              <Button className="w-full">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Увійти зараз
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Завантаження токену
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-        <Card className="w-full max-w-md shadow-xl">
-          <CardContent className="text-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-            <p className="text-gray-600 dark:text-gray-400">Перевірка токену...</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Форма скидання паролю
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-4">
-            <Key className="w-8 h-8 text-white" />
+            <h1 className="text-2xl font-bold text-gray-900">REGMIK: ERP</h1>
+            <p className="text-gray-600 mt-4">Перевіряю посилання...</p>
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-            Новий пароль
-          </CardTitle>
-          <CardDescription className="text-gray-600 dark:text-gray-400">
-            Введіть новий пароль для вашого облікового запису
-          </CardDescription>
-          {tokenData?.email && (
-            <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">
-              {tokenData.email}
-            </p>
-          )}
-        </CardHeader>
-        
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {resetPasswordMutation.error && (
-              <Alert variant="destructive">
-                <AlertDescription>
-                  {resetPasswordMutation.error.message || "Помилка при зміні паролю"}
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            <div className="space-y-2">
-              <Label htmlFor="password">Новий пароль</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Введіть новий пароль"
-                required
-                minLength={6}
-                disabled={resetPasswordMutation.isPending}
-                autoComplete="new-password"
-              />
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Пароль має містити щонайменше 6 символів
+        </div>
+      </div>
+    );
+  }
+
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="w-full max-w-md p-6">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-green-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="h-8 w-8 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">REGMIK: ERP</h1>
+            <p className="text-gray-600">Система управління виробництвом</p>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-center">Пароль змінено</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-gray-600">
+                Ваш пароль успішно змінено. Тепер ви можете увійти в систему з новим паролем.
               </p>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Підтвердіть пароль</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Підтвердіть новий пароль"
-                required
-                disabled={resetPasswordMutation.isPending}
-                autoComplete="new-password"
-              />
-              {confirmPassword && password !== confirmPassword && (
-                <p className="text-xs text-red-500">Паролі не співпадають</p>
-              )}
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full"
-              disabled={
-                resetPasswordMutation.isPending || 
-                !password || 
-                !confirmPassword || 
-                password !== confirmPassword ||
-                password.length < 6
-              }
-            >
-              {resetPasswordMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Зміна паролю...
-                </>
-              ) : (
-                <>
-                  <Key className="w-4 h-4 mr-2" />
-                  Змінити пароль
-                </>
-              )}
-            </Button>
-          </form>
-          
-          <div className="text-center mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <Link href="/login">
-              <Button variant="outline" className="w-full">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Повернутися до входу
+              
+              <Button 
+                onClick={() => window.location.href = '/'}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                Увійти в систему
               </Button>
-            </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isValidToken) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="w-full max-w-md p-6">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-red-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <Package className="h-8 w-8 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">REGMIK: ERP</h1>
+            <p className="text-gray-600 mt-4">Недійсне посилання</p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="w-full max-w-md p-6">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <Package className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">REGMIK: ERP</h1>
+          <p className="text-gray-600">Система управління виробництвом</p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center">Новий пароль</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="password">Новий пароль</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Введіть новий пароль"
+                    required
+                    minLength={6}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Підтвердіть пароль</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Підтвердіть новий пароль"
+                    required
+                    minLength={6}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <Button 
+                type="submit" 
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                disabled={isLoading}
+              >
+                {isLoading ? "Зміняю пароль..." : "Змінити пароль"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

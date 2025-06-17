@@ -2,7 +2,6 @@ import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -144,30 +143,9 @@ export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user } = useAuth();
-  const queryClient = useQueryClient();
-
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-      });
-      if (!response.ok) {
-        throw new Error("Logout failed");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.clear();
-      window.location.reload();
-    },
-    onError: (error) => {
-      console.error("Logout error:", error);
-      window.location.reload();
-    },
-  });
 
   const handleLogout = () => {
-    logoutMutation.mutate();
+    window.location.href = '/api/logout';
   };
 
   return (

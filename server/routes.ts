@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./db-storage";
 import { registerSyncApiRoutes } from "./sync-api";
-import { setupSession, requireAuth, login, getUserById, generateResetToken, verifyResetToken, resetPassword, getUserByEmail } from "./auth";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 import { novaPoshtaApi } from "./nova-poshta-api";
 import { novaPoshtaCache } from "./nova-poshta-cache";
 import { pool, db } from "./db";
@@ -32,6 +32,9 @@ import multer from "multer";
 import xml2js from "xml2js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Auth middleware
+  await setupAuth(app);
+
   // Multer configuration for file uploads
   const upload = multer({
     storage: multer.memoryStorage(),
@@ -46,163 +49,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     },
   });
-
+  
   // Register sync API routes
   registerSyncApiRoutes(app);
-
-  // Authentication endpoints
-  app.get("/api/auth/user", async (req, res) => {
-    const session = (req as any).session;
-    if (session && session.user) {
-      const user = getUserById(session.user.id);
-      if (user) {
-        res.json(user);
-      } else {
-        res.status(401).json({ error: "User not found" });
-      }
-    } else {
-      res.status(401).json({ error: "Not authenticated" });
-    }
-  });
-
-  app.post("/api/auth/login", async (req, res) => {
-    try {
-      console.log("Login request body:", req.body);
-      const { username, password } = req.body;
-      
-      if (!username || !password) {
-        console.log("Missing username or password");
-        return res.status(400).json({ error: "Username and password are required" });
-      }
-
-      const user = await login(username, password);
-      console.log("Login result:", user ? "Success" : "Failed");
-      
-      if (!user) {
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-
-      // Store user in session
-      (req as any).session.user = user;
-      console.log("User stored in session:", (req as any).session.user);
-      
-      res.json({ 
-        success: true, 
-        user: user
-      });
-    } catch (error) {
-      console.error("Login error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
-  app.post("/api/auth/logout", async (req, res) => {
-    const session = (req as any).session;
-    if (session) {
-      session.destroy((err: any) => {
-        if (err) {
-          console.error("Session destroy error:", err);
-          return res.status(500).json({ error: "Failed to logout" });
-        }
-        res.json({ success: true });
-      });
-    } else {
-      res.json({ success: true });
-    }
-  });
-
-  // Запит на скидання паролю
-  app.post("/api/auth/forgot-password", async (req, res) => {
-    try {
-      const { email } = req.body;
-      
-      if (!email) {
-        return res.status(400).json({ error: "Email is required" });
-      }
-
-      const user = getUserByEmail(email);
-      
-      // Завжди повертаємо успіх, щоб не розкривати інформацію про існування користувачів
-      if (!user) {
-        return res.json({ 
-          success: true, 
-          message: "Якщо користувач з таким email існує, інструкції для скидання паролю будуть надіслані на пошту" 
-        });
-      }
-
-      const resetData = generateResetToken(email);
-      if (!resetData) {
-        return res.status(500).json({ error: "Failed to generate reset token" });
-      }
-
-      // Імітація відправки email (в реальному додатку тут був би виклик email сервісу)
-      console.log(`Password reset requested for ${email}`);
-      console.log(`Reset token: ${resetData.token}`);
-      console.log(`Reset link: ${req.protocol}://${req.headers.host}/reset-password?token=${resetData.token}`);
-
-      res.json({ 
-        success: true, 
-        message: "Інструкції для скидання паролю надіслані на вашу електронну пошту",
-        // В демо режимі показуємо токен для тестування
-        debugToken: resetData.token
-      });
-    } catch (error) {
-      console.error("Forgot password error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
-  // Перевірка токену скидання паролю
-  app.get("/api/auth/verify-reset-token/:token", async (req, res) => {
-    try {
-      const { token } = req.params;
-      
-      const resetData = verifyResetToken(token);
-      if (!resetData) {
-        return res.status(400).json({ 
-          error: "Токен недійсний або прострочений", 
-          valid: false 
-        });
-      }
-
-      res.json({ 
-        valid: true, 
-        email: resetData.email,
-        expires: resetData.expires
-      });
-    } catch (error) {
-      console.error("Verify reset token error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
-  // Скидання паролю
-  app.post("/api/auth/reset-password", async (req, res) => {
-    try {
-      const { token, password } = req.body;
-      
-      if (!token || !password) {
-        return res.status(400).json({ error: "Token and password are required" });
-      }
-
-      if (password.length < 6) {
-        return res.status(400).json({ error: "Пароль має містити щонайменше 6 символів" });
-      }
-
-      const success = await resetPassword(token, password);
-      if (!success) {
-        return res.status(400).json({ error: "Токен недійсний або прострочений" });
-      }
-
-      res.json({ 
-        success: true, 
-        message: "Пароль успішно змінено" 
-      });
-    } catch (error) {
-      console.error("Reset password error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
 
   // Dashboard stats
   app.get("/api/dashboard/stats", async (req, res) => {
@@ -215,7 +64,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Analytics API
-  app.get("/api/analytics/sales", async (req, res) => {
+  app.get("/api/analytics/sales", isSimpleAuthenticated, async (req, res) => {
     try {
       const { period = 'month' } = req.query;
       const salesData = await storage.getSalesAnalytics(period as string);
@@ -226,7 +75,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/analytics/expenses", requireAuth, async (req, res) => {
+  app.get("/api/analytics/expenses", isSimpleAuthenticated, async (req, res) => {
     try {
       const { period = 'month' } = req.query;
       const expensesData = await storage.getExpensesAnalytics(period as string);
@@ -237,7 +86,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/analytics/profit", requireAuth, async (req, res) => {
+  app.get("/api/analytics/profit", isSimpleAuthenticated, async (req, res) => {
     try {
       const { period = 'month' } = req.query;
       const profitData = await storage.getProfitAnalytics(period as string);
@@ -249,7 +98,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Product profitability analysis
-  app.get("/api/analytics/product-profitability", requireAuth, async (req, res) => {
+  app.get("/api/analytics/product-profitability", isSimpleAuthenticated, async (req, res) => {
     try {
       const { period = 'month' } = req.query;
       const profitabilityData = await storage.calculateProductProfitability(period as string);
@@ -260,7 +109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/analytics/top-profitable-products", requireAuth, async (req, res) => {
+  app.get("/api/analytics/top-profitable-products", isSimpleAuthenticated, async (req, res) => {
     try {
       const { limit = '10', period = 'month' } = req.query;
       const topProducts = await storage.getTopProfitableProducts(parseInt(limit as string), period as string);
@@ -271,7 +120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/analytics/product-trends/:productId", requireAuth, async (req, res) => {
+  app.get("/api/analytics/product-trends/:productId", isSimpleAuthenticated, async (req, res) => {
     try {
       const { productId } = req.params;
       const { months = '6' } = req.query;
@@ -284,7 +133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Time tracking API
-  app.get("/api/time-entries", requireAuth, async (req, res) => {
+  app.get("/api/time-entries", isSimpleAuthenticated, async (req, res) => {
     try {
       const timeEntries = await storage.getTimeEntries();
       res.json(timeEntries);
@@ -294,7 +143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/time-entries", requireAuth, async (req, res) => {
+  app.post("/api/time-entries", isSimpleAuthenticated, async (req, res) => {
     try {
       const timeEntryData = req.body;
       const timeEntry = await storage.createTimeEntry(timeEntryData);
@@ -305,7 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/time-entries/:id", requireAuth, async (req, res) => {
+  app.patch("/api/time-entries/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const updateData = req.body;
@@ -318,7 +167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Inventory alerts API
-  app.get("/api/inventory/alerts", requireAuth, async (req, res) => {
+  app.get("/api/inventory/alerts", isSimpleAuthenticated, async (req, res) => {
     try {
       const alerts = await storage.getInventoryAlerts();
       res.json(alerts);
@@ -328,7 +177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/inventory/check-alerts", requireAuth, async (req, res) => {
+  app.post("/api/inventory/check-alerts", isSimpleAuthenticated, async (req, res) => {
     try {
       await storage.checkAndCreateInventoryAlerts();
       res.json({ message: "Inventory alerts checked and updated" });
@@ -531,7 +380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Оновлення профілю користувача
-  app.patch("/api/auth/profile", requireAuth, async (req, res) => {
+  app.patch("/api/auth/profile", isSimpleAuthenticated, async (req, res) => {
     try {
       const sessionUser = (req.session as any)?.user;
       if (!sessionUser?.id) {
@@ -582,7 +431,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Production statistics by category
-  app.get("/api/production-stats/by-category", requireAuth, async (req, res) => {
+  app.get("/api/production-stats/by-category", isSimpleAuthenticated, async (req, res) => {
     try {
       const stats = await storage.getProductionStatsByCategory();
       res.json(stats);
@@ -593,7 +442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Order statistics by period
-  app.get("/api/production-stats/by-period", requireAuth, async (req, res) => {
+  app.get("/api/production-stats/by-period", isSimpleAuthenticated, async (req, res) => {
     try {
       const { period = 'month', startDate, endDate } = req.query;
       const stats = await storage.getOrderStatsByPeriod(
@@ -4574,7 +4423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/users/:id", requireAuth, async (req, res) => {
+  app.delete("/api/users/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       
@@ -4606,7 +4455,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/users/:id/toggle-status", requireAuth, async (req, res) => {
+  app.patch("/api/users/:id/toggle-status", isSimpleAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const { isActive } = req.body;
@@ -4622,7 +4471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/users/:id/change-password", requireAuth, async (req, res) => {
+  app.post("/api/users/:id/change-password", isSimpleAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const passwordData = changePasswordSchema.parse(req.body);
@@ -4659,7 +4508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin reset password (without current password)
-  app.post("/api/users/:id/reset-password", requireAuth, async (req, res) => {
+  app.post("/api/users/:id/reset-password", isSimpleAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const { newPassword } = req.body;
@@ -4697,7 +4546,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Email password reset routes
-  app.post("/api/auth/send-password-reset", requireAuth, async (req, res) => {
+  app.post("/api/auth/send-password-reset", isSimpleAuthenticated, async (req, res) => {
     try {
       const { email, userId } = req.body;
       
@@ -4840,7 +4689,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user permissions
-  app.patch("/api/users/:id/permissions", requireAuth, async (req, res) => {
+  app.patch("/api/users/:id/permissions", isSimpleAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const { permissions } = req.body;
@@ -5028,7 +4877,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Product profitability analysis endpoints
-  app.get('/api/analytics/product-profitability', requireAuth, async (req, res) => {
+  app.get('/api/analytics/product-profitability', isSimpleAuthenticated, async (req, res) => {
     try {
       const period = req.query.period as string || 'month';
       const profitabilityData = await storage.getProductProfitability(period);
@@ -5039,7 +4888,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/analytics/top-profitable-products', requireAuth, async (req, res) => {
+  app.get('/api/analytics/top-profitable-products', isSimpleAuthenticated, async (req, res) => {
     try {
       const period = req.query.period as string || 'month';
       const limit = parseInt(req.query.limit as string) || 10;
@@ -5051,7 +4900,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/analytics/product-trends/:productId', requireAuth, async (req, res) => {
+  app.get('/api/analytics/product-trends/:productId', isSimpleAuthenticated, async (req, res) => {
     try {
       const productId = parseInt(req.params.productId);
       const trends = await storage.getProductProfitabilityTrends(productId);
@@ -6799,7 +6648,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const { currencyService } = await import("./currency-service");
 
   // Отримання останніх курсів валют
-  app.get("/api/currency-rates", requireAuth, async (req, res) => {
+  app.get("/api/currency-rates", isSimpleAuthenticated, async (req, res) => {
     try {
       const rates = await storage.getAllCurrencyRates();
       res.json(rates);
@@ -6810,7 +6659,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Отримання курсів на конкретну дату
-  app.get("/api/currency-rates/:date", requireAuth, async (req, res) => {
+  app.get("/api/currency-rates/:date", isSimpleAuthenticated, async (req, res) => {
     try {
       const date = new Date(req.params.date);
       if (isNaN(date.getTime())) {
@@ -6826,7 +6675,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Ручне оновлення курсів на поточну дату
-  app.post("/api/currency-rates/update", requireAuth, async (req, res) => {
+  app.post("/api/currency-rates/update", isSimpleAuthenticated, async (req, res) => {
     try {
       const result = await currencyService.updateCurrentRates();
       
@@ -6849,7 +6698,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Ручне оновлення курсів за період
-  app.post("/api/currency-rates/update-period", requireAuth, async (req, res) => {
+  app.post("/api/currency-rates/update-period", isSimpleAuthenticated, async (req, res) => {
     try {
       const { startDate, endDate } = req.body;
       
@@ -6892,7 +6741,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Налаштування автоматичного оновлення
-  app.get("/api/currency-settings", requireAuth, async (req, res) => {
+  app.get("/api/currency-settings", isSimpleAuthenticated, async (req, res) => {
     try {
       const settings = await storage.getCurrencyUpdateSettings();
       res.json(settings);
@@ -6902,7 +6751,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/currency-settings", requireAuth, async (req, res) => {
+  app.post("/api/currency-settings", isSimpleAuthenticated, async (req, res) => {
     try {
       const settingsData = req.body;
       const settings = await storage.saveCurrencyUpdateSettings(settingsData);
@@ -6919,7 +6768,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/currency-settings", requireAuth, async (req, res) => {
+  app.put("/api/currency-settings", isSimpleAuthenticated, async (req, res) => {
     try {
       const settingsData = req.body;
       const settings = await storage.saveCurrencyUpdateSettings(settingsData);
@@ -6939,7 +6788,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Отримання конкретного курсу валюти
-  app.get("/api/currency-rate/:code", requireAuth, async (req, res) => {
+  app.get("/api/currency-rate/:code", isSimpleAuthenticated, async (req, res) => {
     try {
       const { code } = req.params;
       const { date } = req.query;
@@ -6971,7 +6820,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ==================== REPAIRS API ====================
   
   // Отримати всі ремонти
-  app.get("/api/repairs", requireAuth, async (req, res) => {
+  app.get("/api/repairs", isSimpleAuthenticated, async (req, res) => {
     try {
       const repairs = await storage.getRepairs();
       res.json(repairs);
@@ -6982,7 +6831,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Отримати ремонт за ID
-  app.get("/api/repairs/:id", requireAuth, async (req, res) => {
+  app.get("/api/repairs/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const repair = await storage.getRepair(parseInt(req.params.id));
       if (!repair) {
@@ -6996,7 +6845,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Створити новий ремонт
-  app.post("/api/repairs", requireAuth, async (req, res) => {
+  app.post("/api/repairs", isSimpleAuthenticated, async (req, res) => {
     try {
       const validatedData = insertRepairSchema.parse(req.body);
       const repair = await storage.createRepair(validatedData);
@@ -7011,7 +6860,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Оновити ремонт
-  app.patch("/api/repairs/:id", requireAuth, async (req, res) => {
+  app.patch("/api/repairs/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const repairId = parseInt(req.params.id);
       const validatedData = insertRepairSchema.partial().parse(req.body);
@@ -7027,7 +6876,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Видалити ремонт
-  app.delete("/api/repairs/:id", requireAuth, async (req, res) => {
+  app.delete("/api/repairs/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       await storage.deleteRepair(parseInt(req.params.id));
       res.status(204).send();
@@ -7038,7 +6887,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Пошук ремонтів за серійним номером
-  app.get("/api/repairs/search/:serialNumber", requireAuth, async (req, res) => {
+  app.get("/api/repairs/search/:serialNumber", isSimpleAuthenticated, async (req, res) => {
     try {
       const repairs = await storage.getRepairsBySerialNumber(req.params.serialNumber);
       res.json(repairs);
@@ -7049,7 +6898,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Отримати запчастини ремонту
-  app.get("/api/repairs/:id/parts", requireAuth, async (req, res) => {
+  app.get("/api/repairs/:id/parts", isSimpleAuthenticated, async (req, res) => {
     try {
       const parts = await storage.getRepairParts(parseInt(req.params.id));
       res.json(parts);
@@ -7060,7 +6909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Додати запчастину до ремонту
-  app.post("/api/repairs/:id/parts", requireAuth, async (req, res) => {
+  app.post("/api/repairs/:id/parts", isSimpleAuthenticated, async (req, res) => {
     try {
       const repairId = parseInt(req.params.id);
       const validatedData = insertRepairPartSchema.parse({
@@ -7079,7 +6928,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Видалити запчастину з ремонту
-  app.delete("/api/repairs/:repairId/parts/:partId", requireAuth, async (req, res) => {
+  app.delete("/api/repairs/:repairId/parts/:partId", isSimpleAuthenticated, async (req, res) => {
     try {
       await storage.deleteRepairPart(parseInt(req.params.partId));
       res.status(204).send();
@@ -7090,7 +6939,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Отримати історію статусів ремонту
-  app.get("/api/repairs/:id/status-history", requireAuth, async (req, res) => {
+  app.get("/api/repairs/:id/status-history", isSimpleAuthenticated, async (req, res) => {
     try {
       const history = await storage.getRepairStatusHistory(parseInt(req.params.id));
       res.json(history);
@@ -7101,7 +6950,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Змінити статус ремонту
-  app.post("/api/repairs/:id/status", requireAuth, async (req, res) => {
+  app.post("/api/repairs/:id/status", isSimpleAuthenticated, async (req, res) => {
     try {
       const repairId = parseInt(req.params.id);
       const { newStatus, comment } = req.body;
@@ -7119,7 +6968,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Отримати документи ремонту
-  app.get("/api/repairs/:id/documents", requireAuth, async (req, res) => {
+  app.get("/api/repairs/:id/documents", isSimpleAuthenticated, async (req, res) => {
     try {
       const documents = await storage.getRepairDocuments(parseInt(req.params.id));
       res.json(documents);
@@ -7130,7 +6979,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Додати документ до ремонту
-  app.post("/api/repairs/:id/documents", requireAuth, async (req, res) => {
+  app.post("/api/repairs/:id/documents", isSimpleAuthenticated, async (req, res) => {
     try {
       const repairId = parseInt(req.params.id);
       const validatedData = insertRepairDocumentSchema.parse({
@@ -7150,7 +6999,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Пошук серійних номерів для створення ремонту
-  app.get("/api/serial-numbers/for-repair", requireAuth, async (req, res) => {
+  app.get("/api/serial-numbers/for-repair", isSimpleAuthenticated, async (req, res) => {
     try {
       const { search } = req.query;
       console.log("Serial numbers search request:", { search });
@@ -7166,7 +7015,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Додати запчастини до ремонту зі списанням зі складу
-  app.post("/api/repairs/:id/parts", requireAuth, async (req, res) => {
+  app.post("/api/repairs/:id/parts", isSimpleAuthenticated, async (req, res) => {
     try {
       const repairId = parseInt(req.params.id);
       if (isNaN(repairId)) {
@@ -7207,7 +7056,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Видалити запчастину з ремонту та повернути на склад
-  app.delete("/api/repair-parts/:id", requireAuth, async (req, res) => {
+  app.delete("/api/repair-parts/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const partId = parseInt(req.params.id);
       if (isNaN(partId)) {
@@ -7227,7 +7076,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ================================
 
   // Прив'язати серійні номери до позиції замовлення
-  app.post("/api/order-items/:id/serial-numbers", requireAuth, async (req, res) => {
+  app.post("/api/order-items/:id/serial-numbers", isSimpleAuthenticated, async (req, res) => {
     try {
       const orderItemId = parseInt(req.params.id);
       const { serialNumberIds, notes } = req.body;
@@ -7245,7 +7094,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Отримати серійні номери позиції замовлення
-  app.get("/api/order-items/:id/serial-numbers", requireAuth, async (req, res) => {
+  app.get("/api/order-items/:id/serial-numbers", isSimpleAuthenticated, async (req, res) => {
     try {
       const orderItemId = parseInt(req.params.id);
       const serialNumbers = await storage.getOrderItemSerialNumbers(orderItemId);
@@ -7257,7 +7106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Видалити прив'язку серійного номера
-  app.delete("/api/order-item-serial-numbers/:id", requireAuth, async (req, res) => {
+  app.delete("/api/order-item-serial-numbers/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const assignmentId = parseInt(req.params.id);
       await storage.removeSerialNumberFromOrderItem(assignmentId);
@@ -7269,7 +7118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Отримати доступні серійні номери для продукту
-  app.get("/api/products/:id/available-serial-numbers", requireAuth, async (req, res) => {
+  app.get("/api/products/:id/available-serial-numbers", isSimpleAuthenticated, async (req, res) => {
     try {
       const productId = parseInt(req.params.id);
       const serialNumbers = await storage.getAvailableSerialNumbersForProduct(productId);
@@ -7281,7 +7130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Завершити замовлення з прив'язаними серійними номерами
-  app.post("/api/orders/:id/complete-with-serials", requireAuth, async (req, res) => {
+  app.post("/api/orders/:id/complete-with-serials", isSimpleAuthenticated, async (req, res) => {
     try {
       const orderId = parseInt(req.params.id);
       await storage.completeOrderWithSerialNumbers(orderId);
@@ -7293,7 +7142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Створити та прив'язати серійні номери до позиції замовлення
-  app.post("/api/order-items/:id/create-and-assign-serials", requireAuth, async (req, res) => {
+  app.post("/api/order-items/:id/create-and-assign-serials", isSimpleAuthenticated, async (req, res) => {
     try {
       const orderItemId = parseInt(req.params.id);
       const { productId, serialNumbers } = req.body;
@@ -7317,7 +7166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Перевірити дублікати серійних номерів
-  app.post("/api/serial-numbers/check-duplicates", requireAuth, async (req, res) => {
+  app.post("/api/serial-numbers/check-duplicates", isSimpleAuthenticated, async (req, res) => {
     try {
       const { serialNumbers } = req.body;
 
@@ -7334,7 +7183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Редагувати серійний номер
-  app.put("/api/serial-numbers/:id", requireAuth, async (req, res) => {
+  app.put("/api/serial-numbers/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const serialId = parseInt(req.params.id);
       const { serialNumber } = req.body;
@@ -7357,7 +7206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========================================
 
   // Get all roles
-  app.get("/api/roles", requireAuth, async (req, res) => {
+  app.get("/api/roles", isSimpleAuthenticated, async (req, res) => {
     try {
       const roles = await storage.getRoles();
       res.json(roles);
@@ -7368,7 +7217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get role by ID
-  app.get("/api/roles/:id", requireAuth, async (req, res) => {
+  app.get("/api/roles/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const roleId = parseInt(req.params.id);
       const role = await storage.getRole(roleId);
@@ -7385,7 +7234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new role
-  app.post("/api/roles", requireAuth, async (req, res) => {
+  app.post("/api/roles", isSimpleAuthenticated, async (req, res) => {
     try {
       const validatedData = insertRoleSchema.parse(req.body);
       const role = await storage.createRole(validatedData);
@@ -7397,7 +7246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update role
-  app.put("/api/roles/:id", requireAuth, async (req, res) => {
+  app.put("/api/roles/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const roleId = parseInt(req.params.id);
       const validatedData = insertRoleSchema.partial().parse(req.body);
@@ -7415,7 +7264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete role
-  app.delete("/api/roles/:id", requireAuth, async (req, res) => {
+  app.delete("/api/roles/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const roleId = parseInt(req.params.id);
       const success = await storage.deleteRole(roleId);
@@ -7432,7 +7281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all system modules
-  app.get("/api/system-modules", requireAuth, async (req, res) => {
+  app.get("/api/system-modules", isSimpleAuthenticated, async (req, res) => {
     try {
       const modules = await storage.getSystemModules();
       res.json(modules);
@@ -7443,7 +7292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get system module by ID
-  app.get("/api/system-modules/:id", requireAuth, async (req, res) => {
+  app.get("/api/system-modules/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const moduleId = parseInt(req.params.id);
       const module = await storage.getSystemModule(moduleId);
@@ -7460,7 +7309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new system module
-  app.post("/api/system-modules", requireAuth, async (req, res) => {
+  app.post("/api/system-modules", isSimpleAuthenticated, async (req, res) => {
     try {
       const validatedData = insertSystemModuleSchema.parse(req.body);
       const module = await storage.createSystemModule(validatedData);
@@ -7472,7 +7321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update system module
-  app.put("/api/system-modules/:id", requireAuth, async (req, res) => {
+  app.put("/api/system-modules/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const moduleId = parseInt(req.params.id);
       const validatedData = insertSystemModuleSchema.partial().parse(req.body);
@@ -7490,7 +7339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete system module
-  app.delete("/api/system-modules/:id", requireAuth, async (req, res) => {
+  app.delete("/api/system-modules/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const moduleId = parseInt(req.params.id);
       const success = await storage.deleteSystemModule(moduleId);
@@ -7507,7 +7356,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all permissions
-  app.get("/api/permissions", requireAuth, async (req, res) => {
+  app.get("/api/permissions", isSimpleAuthenticated, async (req, res) => {
     try {
       const permissions = await storage.getPermissions();
       res.json(permissions);
@@ -7518,7 +7367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get role permissions
-  app.get("/api/roles/:id/permissions", requireAuth, async (req, res) => {
+  app.get("/api/roles/:id/permissions", isSimpleAuthenticated, async (req, res) => {
     try {
       const roleId = parseInt(req.params.id);
       const permissions = await storage.getRolePermissions(roleId);
@@ -7530,7 +7379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Assign permission to role
-  app.post("/api/roles/:roleId/permissions/:permissionId", requireAuth, async (req, res) => {
+  app.post("/api/roles/:roleId/permissions/:permissionId", isSimpleAuthenticated, async (req, res) => {
     try {
       const roleId = parseInt(req.params.roleId);
       const permissionId = parseInt(req.params.permissionId);
@@ -7554,7 +7403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Remove permission from role
-  app.delete("/api/roles/:roleId/permissions/:permissionId", requireAuth, async (req, res) => {
+  app.delete("/api/roles/:roleId/permissions/:permissionId", isSimpleAuthenticated, async (req, res) => {
     try {
       const roleId = parseInt(req.params.roleId);
       const permissionId = parseInt(req.params.permissionId);
@@ -7573,7 +7422,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user permissions
-  app.get("/api/users/:id/permissions", requireAuth, async (req, res) => {
+  app.get("/api/users/:id/permissions", isSimpleAuthenticated, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       const permissions = await storage.getUserPermissions(userId);
@@ -7585,7 +7434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Assign permission to user
-  app.post("/api/users/:userId/permissions/:permissionId", requireAuth, async (req, res) => {
+  app.post("/api/users/:userId/permissions/:permissionId", isSimpleAuthenticated, async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
       const permissionId = parseInt(req.params.permissionId);
@@ -7606,7 +7455,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Remove permission from user
-  app.delete("/api/users/:userId/permissions/:permissionId", requireAuth, async (req, res) => {
+  app.delete("/api/users/:userId/permissions/:permissionId", isSimpleAuthenticated, async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
       const permissionId = parseInt(req.params.permissionId);
@@ -7625,7 +7474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Check user permission
-  app.get("/api/users/:id/check-permission", requireAuth, async (req, res) => {
+  app.get("/api/users/:id/check-permission", isSimpleAuthenticated, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       const { module, action } = req.query;
@@ -7643,7 +7492,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user accessible modules
-  app.get("/api/users/:id/accessible-modules", requireAuth, async (req, res) => {
+  app.get("/api/users/:id/accessible-modules", isSimpleAuthenticated, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       const modules = await storage.getUserAccessibleModules(userId);
