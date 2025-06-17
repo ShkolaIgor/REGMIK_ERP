@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { 
   Search, Plus, Edit, User, Building2, Truck, Package, Percent,
-  Users, Phone, Mail, MapPin, UserPlus, Trash2, MoreVertical 
+  Users, Phone, Mail, MapPin, UserPlus, Trash2, MoreVertical, Upload 
 } from "lucide-react";
 import { Client, type InsertClient } from "@shared/schema";
 import ClientForm from "@/components/ClientForm";
@@ -188,6 +188,7 @@ export default function Clients() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -306,6 +307,13 @@ export default function Clients() {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => setIsImportDialogOpen(true)}
+          >
+            <Upload className="mr-2 h-4 w-4" />
+            Імпорт XML
+          </Button>
           <Button onClick={() => {
             setEditingClient(null);
             setIsDialogOpen(true);
