@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Package } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Edit, Trash2, Package, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Category, InsertCategory } from "@shared/schema";
 
@@ -32,12 +33,37 @@ export default function ProductCategories() {
     name: "",
     description: ""
   });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["/api/categories"],
   });
+
+  // Фільтрація категорій
+  const filteredCategories = categories.filter((category: Category) => {
+    if (!searchQuery) return true;
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      (category.name && category.name.toLowerCase().includes(searchLower)) ||
+      (category.description && category.description.toLowerCase().includes(searchLower))
+    );
+  });
+
+  // Пагінація
+  const total = filteredCategories.length;
+  const totalPages = Math.ceil(total / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const currentCategories = filteredCategories.slice(startIndex, endIndex);
+
+  // Скидаємо сторінку при зміні фільтру
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertCategory) => {
@@ -249,8 +275,21 @@ export default function ProductCategories() {
         </Dialog>
       </div>
 
+      {/* Пошук */}
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Input
+            placeholder="Пошук категорій..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {(categories as Category[]).map((category) => (
+        {currentCategories.map((category) => (
           <Card key={category.id} className="relative">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
