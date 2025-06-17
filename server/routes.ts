@@ -7847,12 +7847,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sku: attrs.ID_LISTARTICLE,
         description: attrs.NAME_FUNCTION || '',
         categoryId: attrs.TYPE_IZDEL ? parseInt(attrs.TYPE_IZDEL) : null,
-        costPrice: attrs.CENA ? parseFloat(attrs.CENA) : 0,
-        retailPrice: attrs.CENA ? parseFloat(attrs.CENA) : 0,
-        productType: 'product',
+        costPrice: attrs.CENA ? attrs.CENA.toString() : '0',
+        retailPrice: attrs.CENA ? attrs.CENA.toString() : '0',
+        productType: 'product' as const,
         unit: 'шт',
-        isActive: true,
-        createdAt: attrs.DATE_CREATE ? new Date(attrs.DATE_CREATE) : new Date()
+        isActive: true
       };
 
       const product = await storage.createProduct(productData);

@@ -107,6 +107,7 @@ const navigationItems = [
       { name: "Типи пайки", href: "/soldering-types", icon: Flame },
       { name: "Одиниці виміру", href: "/units", icon: Ruler },
       { name: "Постачальники", href: "/suppliers", icon: Users },
+      { name: "Товари", href: "/products", icon: Package },
       { name: "Робітники", href: "/workers", icon: Users },
       { name: "Посади", href: "/positions", icon: Users },
       { name: "Відділи", href: "/departments", icon: Building2 },

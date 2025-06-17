@@ -30,6 +30,7 @@ import CostCalculations from "@/pages/cost-calculations";
 import MaterialShortages from "@/pages/material-shortages";
 import SupplierOrders from "@/pages/supplier-orders";
 import Suppliers from "@/pages/suppliers";
+import Products from "@/pages/products";
 import AssemblyOperations from "@/pages/assembly-operations";
 import InventoryAudits from "@/pages/inventory-audits";
 import Workers from "@/pages/workers";
@@ -151,6 +152,10 @@ function Router() {
                       <span className="block text-2xl mb-2">🏢</span>
                       <span className="text-sm font-medium">Постачальники</span>
                     </a>
+                    <a href="/products" className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 text-center">
+                      <span className="block text-2xl mb-2">📦</span>
+                      <span className="text-sm font-medium">Товари</span>
+                    </a>
                     <a href="/tech-cards" className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 text-center">
                       <span className="block text-2xl mb-2">📝</span>
                       <span className="text-sm font-medium">Техкарти</span>
@@ -201,6 +206,7 @@ function Router() {
         <Route path="/shortage" component={MaterialShortages} />
         <Route path="/supplier-orders" component={SupplierOrders} />
         <Route path="/suppliers" component={Suppliers} />
+        <Route path="/products" component={Products} />
         <Route path="/assembly" component={AssemblyOperations} />
         <Route path="/inventory-audits" component={InventoryAudits} />
         <Route path="/workers" component={Workers} />
