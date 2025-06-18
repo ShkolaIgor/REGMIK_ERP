@@ -1462,14 +1462,14 @@ export default function Orders() {
                   <div>
                     <Label htmlFor="carrierId">Перевізник</Label>
                     <Select
-                      value={form.watch("carrierId") ? form.watch("carrierId").toString() : ""}
-                      onValueChange={(value) => form.setValue("carrierId", value ? parseInt(value) : null)}
+                      value={form.watch("carrierId") ? form.watch("carrierId").toString() : "none"}
+                      onValueChange={(value) => form.setValue("carrierId", value === "none" ? null : parseInt(value))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Оберіть перевізника" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Без перевізника</SelectItem>
+                        <SelectItem value="none">Без перевізника</SelectItem>
                         {carriers?.map((carrier: any) => (
                           <SelectItem key={carrier.id} value={carrier.id.toString()}>
                             {carrier.name}
@@ -2023,7 +2023,7 @@ export default function Orders() {
                   </TableHeader>
                   <TableBody>
                     {orders.map((order: any) => (
-                      <React.Fragment key={order.id}>
+                      <div key={order.id}>
                         <TableRow 
                           className="cursor-pointer hover:bg-gray-50"
                           onClick={() => toggleOrderExpansion(order.id)}
@@ -2082,7 +2082,7 @@ export default function Orders() {
                             </TableCell>
                           </TableRow>
                         )}
-                      </React.Fragment>
+                      </div>
                     ))}
                   </TableBody>
                 </Table>
