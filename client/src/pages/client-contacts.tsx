@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -81,9 +81,31 @@ export default function ClientContacts() {
     queryKey: ["/api/client-contacts"],
   });
 
-  // Fetch clients for dropdown
+  // Запит для пошуку клієнтів з debounce
+  const [debouncedClientSearch, setDebouncedClientSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedClientSearch(clientSearchValue);
+    }, 300); // 300мс затримка
+
+    return () => clearTimeout(timer);
+  }, [clientSearchValue]);
+
   const { data: clientsData } = useQuery({
-    queryKey: ["/api/clients/search"],
+    queryKey: ["/api/clients/search", debouncedClientSearch],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (debouncedClientSearch) {
+        params.append('q', debouncedClientSearch);
+      }
+      params.append('limit', '50');
+      
+      const response = await fetch(`/api/clients/search?${params}`);
+      if (!response.ok) throw new Error('Failed to search clients');
+      return response.json();
+    },
+    enabled: true,
   });
   
   const clients = clientsData?.clients || [];

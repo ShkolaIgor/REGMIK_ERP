@@ -75,9 +75,34 @@ export function RepairForm({ repair, onSuccess, onCancel }: RepairFormProps) {
   });
 
   // Отримання клієнтів
-  const { data: clients = [] } = useQuery({
-    queryKey: ["/api/clients/search"]
+  // Пошук клієнтів з debounce
+  const [clientSearchValue, setClientSearchValue] = useState("");
+  const [debouncedClientSearch, setDebouncedClientSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedClientSearch(clientSearchValue);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [clientSearchValue]);
+
+  const { data: clientsData } = useQuery({
+    queryKey: ["/api/clients/search", debouncedClientSearch],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (debouncedClientSearch) {
+        params.append('q', debouncedClientSearch);
+      }
+      params.append('limit', '50');
+      
+      const response = await fetch(`/api/clients/search?${params}`);
+      if (!response.ok) throw new Error('Failed to search clients');
+      return response.json();
+    },
+    enabled: true,
   });
+  
+  const clients = clientsData?.clients || [];
 
   // Отримання працівників
   const { data: workers = [] } = useQuery({
