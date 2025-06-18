@@ -1337,8 +1337,31 @@ export default function Orders() {
                 <Button onClick={() => {
                   setIsEditMode(false);
                   setEditingOrder(null);
+                  setSelectedClientId("");
+                  setSelectedContactId("");
+                  setSelectedCompanyId("");
                   setOrderItems([]);
-                  form.reset();
+                  
+                  // Встановлюємо компанію за замовчуванням (is_default = TRUE)
+                  const defaultCompany = companies && companies.length > 0 
+                    ? companies.find((c: any) => c.isDefault === true) || companies[0] 
+                    : null;
+                  if (defaultCompany) {
+                    setSelectedCompanyId(defaultCompany.id.toString());
+                  }
+                  
+                  form.reset({
+                    companyId: defaultCompany ? defaultCompany.id.toString() : "",
+                    customerName: "",
+                    customerEmail: "",
+                    customerPhone: "",
+                    status: "pending",
+                    notes: "",
+                    paymentDate: "",
+                    dueDate: "",
+                    shippedDate: "",
+                    trackingNumber: "",
+                  });
                   setIsDialogOpen(true);
                 }}>
                   <Plus className="w-4 h-4 mr-2" />
@@ -1358,53 +1381,75 @@ export default function Orders() {
                 {/* Поле компанії */}
                 <div>
                   <Label htmlFor="companyId">Компанія *</Label>
-                  <Popover open={companyComboboxOpen} onOpenChange={setCompanyComboboxOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={companyComboboxOpen}
-                        className="w-full justify-between"
-                      >
-                        {selectedCompanyId && companies
-                          ? companies.find((company: any) => company.id.toString() === selectedCompanyId)?.name || "Оберіть компанію..."
-                          : "Оберіть компанію..."}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0">
-                      <Command>
-                        <CommandInput 
-                          placeholder="Пошук компанії..." 
-                          value={companySearchValue}
-                          onValueChange={setCompanySearchValue}
-                        />
-                        <CommandEmpty>Компанія не знайдена</CommandEmpty>
-                        <CommandGroup>
-                          {companies?.map((company: any) => (
-                            <CommandItem
+                  <div className="relative">
+                    <Input
+                      placeholder="Почніть вводити назву компанії..."
+                      value={form.watch("companyId") ? 
+                        companies.find((c: any) => c.id.toString() === form.watch("companyId"))?.name || companySearchValue 
+                        : companySearchValue}
+                      onChange={(e) => {
+                        // Якщо є обрана компанія і користувач редагує, скидаємо вибір
+                        if (form.watch("companyId")) {
+                          form.setValue("companyId", "");
+                        }
+                        setCompanySearchValue(e.target.value);
+                        setCompanyComboboxOpen(true);
+                      }}
+                      onFocus={() => {
+                        // При фокусі, якщо є обрана компанія, очищаємо поле для редагування
+                        if (form.watch("companyId")) {
+                          const selectedCompany = companies.find((c: any) => c.id.toString() === form.watch("companyId"));
+                          setCompanySearchValue(selectedCompany?.name || "");
+                          form.setValue("companyId", "");
+                        }
+                        setCompanyComboboxOpen(true);
+                      }}
+                      onBlur={() => setTimeout(() => setCompanyComboboxOpen(false), 200)}
+                      className={form.formState.errors.companyId ? "border-red-500" : ""}
+                    />
+                    
+                    {companyComboboxOpen && companySearchValue && companies && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                        {companies
+                          .filter((company: any) => 
+                            company.name.toLowerCase().includes(companySearchValue.toLowerCase()) ||
+                            (company.fullName && company.fullName.toLowerCase().includes(companySearchValue.toLowerCase()))
+                          )
+                          .map((company: any) => (
+                            <div
                               key={company.id}
-                              value={company.name}
-                              onSelect={() => {
-                                const companyId = company.id.toString();
-                                setSelectedCompanyId(companyId);
-                                form.setValue("companyId", companyId);
+                              className="px-3 py-2 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                              onClick={() => {
+                                setSelectedCompanyId(company.id.toString());
+                                form.setValue("companyId", company.id.toString());
+                                setCompanySearchValue(company.name);
                                 setCompanyComboboxOpen(false);
                               }}
                             >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  selectedCompanyId === company.id.toString() ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              {company.name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                              <div className="font-medium">{company.name}</div>
+                              {company.fullName && company.fullName !== company.name && (
+                                <div className="text-sm text-gray-500">{company.fullName}</div>
+                              )}
+                              {company.isDefault && (
+                                <div className="text-xs text-blue-600">За замовчуванням</div>
+                              )}
+                            </div>
+                          ))
+                        }
+                        {companies.filter((company: any) => 
+                          company.name.toLowerCase().includes(companySearchValue.toLowerCase()) ||
+                          (company.fullName && company.fullName.toLowerCase().includes(companySearchValue.toLowerCase()))
+                        ).length === 0 && (
+                          <div className="px-3 py-2 text-gray-500">Компанію не знайдено</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {form.formState.errors.companyId && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {form.formState.errors.companyId.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* Інформація про клієнта */}
