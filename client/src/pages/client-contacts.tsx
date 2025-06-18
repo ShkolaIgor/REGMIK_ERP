@@ -21,7 +21,7 @@ import { insertClientContactSchema, type ClientContact, type Client } from "@sha
 import { z } from "zod";
 
 const formSchema = insertClientContactSchema.extend({
-  clientId: z.string().min(1, "Клієнт обов'язковий"),
+  clientId: z.string().min(1, "Клієнт обов'язковий").transform((val) => parseInt(val, 10)),
   fullName: z.string().min(1, "Повне ім'я обов'язкове"),
   position: z.string().optional(),
   email: z.string().email("Невірний формат email").optional().or(z.literal("")),
@@ -235,10 +235,16 @@ export default function ClientContacts() {
   });
 
   const onSubmit = (data: FormData) => {
+    // Конвертуємо clientId в число
+    const submitData = {
+      ...data,
+      clientId: typeof data.clientId === 'string' ? parseInt(data.clientId, 10) : data.clientId
+    };
+    
     if (editingItem) {
-      updateMutation.mutate({ id: editingItem.id, data });
+      updateMutation.mutate({ id: editingItem.id, data: submitData });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(submitData);
     }
   };
 
