@@ -249,7 +249,7 @@ export default function Orders() {
             <div className="text-sm text-gray-500">
               {order.clientId && (
                 <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded mr-2">
-                  {Array.isArray(clients) && clients.find((client: any) => client.id === order.clientId)?.taxCode || order.clientId}
+                  ЄДРПОУ: {Array.isArray(clients) && clients.find((client: any) => client.id === order.clientId)?.taxCode || 'не вказано'}
                 </span>
               )}
               {order.customerEmail}
