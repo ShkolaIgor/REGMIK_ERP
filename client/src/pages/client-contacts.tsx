@@ -53,6 +53,7 @@ export default function ClientContacts() {
   const [filterActive, setFilterActive] = useState<string>("all");
   const [clientSearchOpen, setClientSearchOpen] = useState(false);
   const [clientSearchValue, setClientSearchValue] = useState("");
+  const [clientComboboxOpen, setClientComboboxOpen] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -265,73 +266,72 @@ export default function ClientContacts() {
                     control={form.control}
                     name="clientId"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col">
+                      <FormItem>
                         <FormLabel>Клієнт</FormLabel>
-                        <Popover open={clientSearchOpen} onOpenChange={setClientSearchOpen}>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                role="combobox"
-                                aria-expanded={clientSearchOpen}
-                                className="justify-between"
-                              >
-                                {field.value
-                                  ? (() => {
-                                      const selectedClient = (clients as Client[]).find((client) => client.id.toString() === field.value);
-                                      return selectedClient ? `${selectedClient.name} (${selectedClient.taxCode})` : "Клієнт не знайдений";
-                                    })()
-                                  : "Пошук по назві, ЄДРПОУ або ІПН..."}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="p-0" style={{ width: "var(--radix-popover-trigger-width)" }}>
-                            <Command>
-                              <CommandInput 
-                                placeholder="Пошук по назві, ЄДРПОУ або ІПН..." 
-                                value={clientSearchValue}
-                                onValueChange={setClientSearchValue}
-                              />
-                              <CommandList>
-                                <CommandEmpty>Клієнтів не знайдено.</CommandEmpty>
-                                <CommandGroup>
-                                  {(clients as Client[])
-                                    .filter((client) =>
-                                      client.name.toLowerCase().includes(clientSearchValue.toLowerCase()) ||
-                                      (client.taxCode && client.taxCode.toString().includes(clientSearchValue))
-                                    )
-                                    .map((client) => (
-                                      <CommandItem
-                                        key={client.id}
-                                        value={client.id.toString()}
-                                        onSelect={() => {
-                                          field.onChange(client.id.toString());
-                                          setClientSearchOpen(false);
-                                          setClientSearchValue("");
-                                        }}
-                                      >
-                                        <Check
-                                          className={`mr-2 h-4 w-4 ${
-                                            field.value === client.id.toString() ? "opacity-100" : "opacity-0"
-                                          }`}
-                                        />
-                                        <div className="flex flex-col">
-                                          <span className="font-medium">{client.name}</span>
-                                          <span className="text-sm text-muted-foreground">
-                                            {(() => {
-                                              const clientType = (clientTypes as any[])?.find((type: any) => type.id === client.clientTypeId);
-                                              return clientType?.name === "Фізична особа" ? "ІПН" : "ЄДРПОУ";
-                                            })()}: {client.taxCode}
-                                          </span>
-                                        </div>
-                                      </CommandItem>
-                                    ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
+                        <div className="relative">
+                          <Input
+                            placeholder="Почніть вводити назву клієнта..."
+                            value={field.value ? 
+                              clients.find((c: any) => c.id.toString() === field.value)?.name || clientSearchValue 
+                              : clientSearchValue}
+                            onChange={(e) => {
+                              if (field.value) {
+                                field.onChange("");
+                              }
+                              setClientSearchValue(e.target.value);
+                              setClientComboboxOpen(true);
+                            }}
+                            onFocus={() => {
+                              if (field.value) {
+                                const selectedClient = clients.find((c: any) => c.id.toString() === field.value);
+                                setClientSearchValue(selectedClient?.name || "");
+                                field.onChange("");
+                              }
+                              setClientComboboxOpen(true);
+                            }}
+                            onBlur={() => setTimeout(() => setClientComboboxOpen(false), 200)}
+                            className={form.formState.errors.clientId ? "border-red-500" : ""}
+                          />
+                          {clientSearchValue && clientComboboxOpen && (
+                            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                              {clients.length > 0 ? (
+                                <div className="py-1">
+                                  {clients.map((client: any) => (
+                                    <div
+                                      key={client.id}
+                                      onClick={() => {
+                                        field.onChange(client.id.toString());
+                                        setClientSearchValue("");
+                                        setClientComboboxOpen(false);
+                                      }}
+                                      className="px-3 py-2 cursor-pointer hover:bg-gray-100 flex items-center"
+                                    >
+                                      <Check
+                                        className={`mr-2 h-4 w-4 ${
+                                          field.value === client.id.toString()
+                                            ? "opacity-100 text-blue-600"
+                                            : "opacity-0"
+                                        }`}
+                                      />
+                                      <div className="flex-1">
+                                        <div className="font-medium">{client.name}</div>
+                                        <div className="text-sm text-gray-500">{client.taxCode}</div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : clientSearchValue.length > 2 ? (
+                                <div className="p-3 text-sm text-gray-500">
+                                  Клієнт "{clientSearchValue}" не знайдений
+                                </div>
+                              ) : (
+                                <div className="p-3 text-sm text-gray-500">
+                                  Введіть мінімум 3 символи для пошуку
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
