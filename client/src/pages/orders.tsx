@@ -243,7 +243,7 @@ export default function Orders() {
       shippedDate: order.shippedDate || "",
       trackingNumber: order.trackingNumber || "",
       invoiceNumber: order.invoiceNumber || "",
-      carrierId: order.carrierId ? order.carrierId.toString() : "",
+      carrierId: order.carrierId ? order.carrierId.toString() : "none",
     });
     
     setIsDialogOpen(true);
@@ -430,7 +430,7 @@ export default function Orders() {
                           <SelectValue placeholder="Оберіть перевізника" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Без перевізника</SelectItem>
+                          <SelectItem value="none">Без перевізника</SelectItem>
                           {carriers && carriers.map && carriers.map((carrier: any) => (
                             <SelectItem key={carrier.id} value={carrier.id.toString()}>
                               {carrier.name}
