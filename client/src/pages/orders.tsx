@@ -1071,11 +1071,6 @@ export default function Orders() {
       return date.toISOString().slice(0, 16);
     };
     
-    // Встановлюємо контактну особу якщо вона є
-    if (order.clientContactsId) {
-      form.setValue("clientContactsId", order.clientContactsId);
-    }
-
     // Заповнюємо форму даними замовлення
     form.reset({
       clientId: order.clientId ? order.clientId.toString() : "",
@@ -1091,6 +1086,18 @@ export default function Orders() {
       invoiceNumber: order.invoiceNumber || "",
       carrierId: order.carrierId ? order.carrierId.toString() : "",
     });
+
+    // Встановлюємо вибраного клієнта для оновлення контактів
+    if (order.clientId) {
+      setSelectedClientId(order.clientId.toString());
+    }
+
+    // Встановлюємо контактну особу після оновлення клієнта
+    setTimeout(() => {
+      if (order.clientContactsId) {
+        form.setValue("clientContactsId", order.clientContactsId);
+      }
+    }, 100);
 
     // Заповнюємо товари замовлення
     if (order.items) {
