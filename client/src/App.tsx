@@ -12,7 +12,7 @@ import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import Inventory from "@/pages/inventory";
 import Production from "@/pages/production";
-import OrdersSimple from "@/pages/orders-simple";
+import Orders from "@/pages/orders";
 import Clients from "@/pages/clients";
 import ClientContacts from "@/pages/client-contacts";
 import ClientNovaPoshtaSettings from "@/pages/client-nova-poshta-settings";
@@ -189,7 +189,7 @@ function Router() {
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/inventory" component={Inventory} />
         <Route path="/production" component={Production} />
-        <Route path="/orders" component={OrdersSimple} />
+        <Route path="/orders" component={Orders} />
         <Route path="/clients" component={Clients} />
         <Route path="/client-contacts" component={ClientContacts} />
         <Route path="/clients/:id/nova-poshta-settings" component={ClientNovaPoshtaSettings} />

@@ -677,21 +677,6 @@ export default function Orders() {
   }, [form.watch("clientId")]);
   
   const clients = clientSearchData?.clients || [];
-  
-  // Встановлюємо компанію за замовчуванням при завантаженні компаній
-  useEffect(() => {
-    if (Array.isArray(companies) && companies.length > 0 && !selectedCompanyId && !isEditMode) {
-      const defaultCompany = companies.find((company: any) => company.isDefault);
-      if (defaultCompany) {
-        setSelectedCompanyId(defaultCompany.id.toString());
-        form.setValue("companyId", defaultCompany.id.toString());
-      }
-    }
-  }, [companies, selectedCompanyId, isEditMode, form]);
-
-  // Фіксуємо порядок декларації для запобігання помилок ініціалізації
-  const companiesArray = Array.isArray(companies) ? companies : [];
-  const carriersArray = Array.isArray(carriers) ? carriers : [];
 
   const { data: orderStatusList = [] } = useQuery({
     queryKey: ["/api/order-statuses"],
@@ -701,15 +686,13 @@ export default function Orders() {
     queryKey: ["/api/client-contacts"],
   });
 
-  const carriersQuery = useQuery({
+  const { data: carriers = [] } = useQuery({
     queryKey: ["/api/carriers"],
   });
-  const carriers = carriersQuery.data || [];
 
-  const companiesQuery = useQuery({
+  const { data: companies = [] } = useQuery({
     queryKey: ["/api/companies"],
   });
-  const companies = companiesQuery.data || [];
 
   // Форма для управління статусами
   const statusForm = useForm<StatusFormData>({
@@ -1232,39 +1215,6 @@ export default function Orders() {
     createClientMutation.mutate(formData);
   };
 
-  const handleCreateOrder = () => {
-    setIsEditMode(false);
-    setSelectedClientId("");
-    setSelectedContactId("");
-    setSelectedCompanyId("");
-    setOrderItems([]);
-    setEditingOrder(null);
-    
-    // Знаходимо компанію за замовчуванням
-    const defaultCompany = Array.isArray(companies) ? companies.find((company: any) => company.isDefault) : null;
-    const defaultCompanyId = defaultCompany ? defaultCompany.id.toString() : "";
-    
-    form.reset({
-      companyId: defaultCompanyId,
-      customerName: "",
-      customerEmail: "",
-      customerPhone: "",
-      status: "pending",
-      notes: "",
-      paymentDate: "",
-      dueDate: "",
-      shippedDate: "",
-      trackingNumber: "",
-    });
-    
-    // Встановлюємо компанію за замовчуванням
-    if (defaultCompanyId) {
-      setSelectedCompanyId(defaultCompanyId);
-    }
-    
-    setIsDialogOpen(true);
-  };
-
   const handleSubmit = (data: OrderFormData) => {
     console.log("=== FORM SUBMIT STARTED ===");
     console.log("Handle submit called with data:", data);
@@ -1384,7 +1334,13 @@ export default function Orders() {
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={handleCreateOrder}>
+                <Button onClick={() => {
+                  setIsEditMode(false);
+                  setEditingOrder(null);
+                  setOrderItems([]);
+                  form.reset();
+                  setIsDialogOpen(true);
+                }}>
                   <Plus className="w-4 h-4 mr-2" />
                   Новий рахунок/замовлення
                 </Button>
@@ -1410,7 +1366,7 @@ export default function Orders() {
                         aria-expanded={companyComboboxOpen}
                         className="w-full justify-between"
                       >
-                        {selectedCompanyId && Array.isArray(companies) && companies.length > 0
+                        {selectedCompanyId && companies
                           ? companies.find((company: any) => company.id.toString() === selectedCompanyId)?.name || "Оберіть компанію..."
                           : "Оберіть компанію..."}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1425,7 +1381,7 @@ export default function Orders() {
                         />
                         <CommandEmpty>Компанія не знайдена</CommandEmpty>
                         <CommandGroup>
-                          {Array.isArray(companies) && companies.length > 0 && companies.map((company: any) => (
+                          {companies?.map((company: any) => (
                             <CommandItem
                               key={company.id}
                               value={company.name}
@@ -1563,7 +1519,7 @@ export default function Orders() {
                           />
                           <CommandEmpty>Контактна особа не знайдена</CommandEmpty>
                           <CommandGroup>
-                            {clientContactsForOrder && clientContactsForOrder.length > 0 && clientContactsForOrder.map((contact: any) => (
+                            {clientContactsForOrder?.map((contact: any) => (
                               <CommandItem
                                 key={contact.id}
                                 value={contact.fullName}
@@ -1645,11 +1601,11 @@ export default function Orders() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">Без перевізника</SelectItem>
-                        {Array.isArray(carriers) ? carriers.map((carrier: any) => (
+                        {carriers?.map((carrier: any) => (
                           <SelectItem key={carrier.id} value={carrier.id.toString()}>
                             {carrier.name}
                           </SelectItem>
-                        )) : null}
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
