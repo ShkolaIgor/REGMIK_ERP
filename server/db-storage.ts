@@ -5861,29 +5861,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateClient(id: number, updates: any): Promise<any> {
-    console.log(`[DEBUG] updateClient called with id: ${id}`);
-    console.log(`[DEBUG] Updates object:`, updates);
-    console.log(`[DEBUG] Contact fields in updates:`, {
-      contactPerson: updates.contactPerson,
-      phone: updates.phone,
-      email: updates.email,
-      website: updates.website
-    });
-    
     const [client] = await db
       .update(clients)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(clients.id, id))
       .returning();
-      
-    console.log(`[DEBUG] Client after update:`, {
-      id: client?.id,
-      contactPerson: client?.contactPerson,
-      phone: client?.phone,
-      email: client?.email,
-      website: client?.website
-    });
-      
     return client;
   }
 

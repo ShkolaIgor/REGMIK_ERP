@@ -5239,32 +5239,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/clients/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      console.log(`[DEBUG] Updating client ${id} with data:`, req.body);
-      
       // Виключаємо ID з даних оновлення, щоб не порушувати foreign key constraints
       const { id: clientId, ...updateData } = req.body;
-      
-      console.log(`[DEBUG] Update data after removing ID:`, updateData);
-      console.log(`[DEBUG] Contact fields:`, {
-        contactPerson: updateData.contactPerson,
-        phone: updateData.phone,
-        email: updateData.email,
-        website: updateData.website
-      });
-      
       const client = await storage.updateClient(id, updateData);
       if (!client) {
         return res.status(404).json({ error: "Client not found" });
       }
-      
-      console.log(`[DEBUG] Updated client result:`, {
-        id: client.id,
-        contactPerson: client.contactPerson,
-        phone: client.phone,
-        email: client.email,
-        website: client.website
-      });
-      
       res.json(client);
     } catch (error) {
       console.error("Failed to update client:", error);
