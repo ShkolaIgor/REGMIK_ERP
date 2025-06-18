@@ -92,17 +92,17 @@ export function ContactPersonAutocomplete({
       setIsCreateDialogOpen(false);
       contactForm.reset();
       
+      // Оптимістично оновлюємо кеш замість інвалідації
+      queryClient.setQueryData(["/api/client-contacts", clientId], (oldData: any) => {
+        if (!oldData) return [newContact];
+        return [...oldData, newContact];
+      });
+      
       // Автоматично вибираємо новий контакт
       setSelectedContactId(newContact.id);
       setSearchValue(newContact.fullName);
       setIsDropdownOpen(false);
       onChange(newContact.id, newContact.fullName);
-      
-      // Інвалідуємо кеш після встановлення значень
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/client-contacts", clientId] });
-        queryClient.invalidateQueries({ queryKey: ["/api/client-contacts"] });
-      }, 50);
       
       toast({
         title: "Успіх",
@@ -173,15 +173,15 @@ export function ContactPersonAutocomplete({
     }
   }, [value, contactsData]);
 
-  // Оновлення після створення нового контакту
+  // Оновлення після створення нового контакту  
   useEffect(() => {
     if (contactsData.length > 0 && searchValue && !selectedContactId) {
       const contact = contactsData.find((c: any) => c.fullName === searchValue);
-      if (contact && contact.id !== selectedContactId) {
+      if (contact) {
         setSelectedContactId(contact.id);
       }
     }
-  }, [contactsData, searchValue, selectedContactId]);
+  }, [contactsData.length, searchValue, selectedContactId]);
 
   // Обробка створення нового контакту
   const handleCreateContact = (data: ContactFormData) => {
