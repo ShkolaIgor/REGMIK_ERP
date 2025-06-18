@@ -162,8 +162,8 @@ export default function Orders() {
   const [selectedContactId, setSelectedContactId] = useState<string>("");
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   const [contactComboboxOpen, setContactComboboxOpen] = useState(false);
-  const [companyComboboxOpen, setCompanyComboboxOpen] = useState(false);
   const [contactSearchValue, setContactSearchValue] = useState("");
+  const [companyComboboxOpen, setCompanyComboboxOpen] = useState(false);
   const [companySearchValue, setCompanySearchValue] = useState("");
   const [clientContactsForOrder, setClientContactsForOrder] = useState<any[]>([]);
   const [editingStatus, setEditingStatus] = useState<OrderStatus | null>(null);
@@ -1582,44 +1582,57 @@ export default function Orders() {
                   </div>
                   <div>
                     <Label htmlFor="clientContactsId">Контактна особа</Label>
-                    <Popover open={contactComboboxOpen} onOpenChange={setContactComboboxOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={contactComboboxOpen}
-                          className={cn(
-                            "w-full justify-between",
-                            // Червоний фон якщо контакт видалений (є clientContactsId але контакт не знайдений)
-                            isEditMode && form.watch("clientContactsId") && !clientContactsForOrder?.find((c: any) => c.id.toString() === form.watch("clientContactsId")) ? "bg-red-50 border-red-300" : ""
-                          )}
-                          disabled={!form.watch("clientId")}
-                        >
-                          {selectedContactId && clientContactsForOrder
-                            ? clientContactsForOrder.find((contact: any) => contact.id.toString() === selectedContactId)?.fullName || "Контакт видалений"
-                            : form.watch("clientContactsId") && isEditMode
-                            ? "Контакт видалений"
-                            : form.watch("clientId") ? "Оберіть контактну особу..." : "Спочатку оберіть клієнта"}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-full p-0">
-                        <Command>
-                          <CommandInput 
-                            placeholder="Пошук контактної особи..." 
-                            value={contactSearchValue}
-                            onValueChange={setContactSearchValue}
-                          />
-                          <CommandEmpty>Контактна особа не знайдена</CommandEmpty>
-                          <CommandGroup>
-                            {clientContactsForOrder?.map((contact: any) => (
-                              <CommandItem
+                    <div className="relative">
+                      <Input
+                        placeholder={!form.watch("clientId") ? "Спочатку оберіть клієнта" : "Почніть вводити ім'я контакта..."}
+                        value={form.watch("clientContactsId") ? 
+                          clientContactsForOrder?.find((c: any) => c.id.toString() === form.watch("clientContactsId"))?.fullName || contactSearchValue 
+                          : contactSearchValue}
+                        disabled={!form.watch("clientId")}
+                        onChange={(e) => {
+                          // Якщо є обраний контакт і користувач редагує, скидаємо вибір
+                          if (form.watch("clientContactsId")) {
+                            form.setValue("clientContactsId", "");
+                          }
+                          setContactSearchValue(e.target.value);
+                          // Відкриваємо список тільки якщо є текст для пошуку (мінімум 1 символ)
+                          if (e.target.value.trim().length >= 1) {
+                            setContactComboboxOpen(true);
+                          } else {
+                            setContactComboboxOpen(false);
+                          }
+                        }}
+                        onFocus={() => {
+                          // При фокусі, якщо є обраний контакт, очищаємо поле для редагування
+                          if (form.watch("clientContactsId")) {
+                            const selectedContact = clientContactsForOrder?.find((c: any) => c.id.toString() === form.watch("clientContactsId"));
+                            setContactSearchValue(selectedContact?.fullName || "");
+                            form.setValue("clientContactsId", "");
+                          }
+                          // НЕ відкриваємо список автоматично при фокусі
+                        }}
+                        onBlur={() => setTimeout(() => setContactComboboxOpen(false), 200)}
+                        className={cn(
+                          form.formState.errors.clientContactsId ? "border-red-500" : "",
+                          // Червоний фон якщо контакт видалений (є clientContactsId але контакт не знайдений)
+                          isEditMode && form.watch("clientContactsId") && !clientContactsForOrder?.find((c: any) => c.id.toString() === form.watch("clientContactsId")) ? "bg-red-50 border-red-300" : ""
+                        )}
+                      />
+                      
+                      {contactComboboxOpen && contactSearchValue.trim().length >= 1 && clientContactsForOrder && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                          {clientContactsForOrder
+                            .filter((contact: any) => 
+                              contact.fullName.toLowerCase().includes(contactSearchValue.toLowerCase())
+                            )
+                            .map((contact: any) => (
+                              <div
                                 key={contact.id}
-                                value={contact.fullName}
-                                onSelect={() => {
-                                  const contactId = contact.id.toString();
-                                  setSelectedContactId(contactId);
-                                  form.setValue("clientContactsId", contactId);
+                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                                onClick={() => {
+                                  form.setValue("clientContactsId", contact.id.toString());
+                                  setContactSearchValue(contact.fullName);
+                                  setContactComboboxOpen(false);
                                   
                                   // Автозаповнення email та телефону з контактної особи
                                   if (contact.email) {
@@ -1628,28 +1641,22 @@ export default function Orders() {
                                   if (contact.phone) {
                                     form.setValue("customerPhone", contact.phone);
                                   }
-                                  
-                                  setContactComboboxOpen(false);
                                 }}
                               >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    selectedContactId === contact.id.toString() ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                <div>
-                                  <div className="font-medium">{contact.fullName}</div>
-                                  {contact.email && (
-                                    <div className="text-sm text-gray-500">{contact.email}</div>
-                                  )}
-                                </div>
-                              </CommandItem>
+                                <div className="font-medium">{contact.fullName}</div>
+                                {contact.email && (
+                                  <div className="text-sm text-gray-500">{contact.email}</div>
+                                )}
+                              </div>
                             ))}
-                          </CommandGroup>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                          {clientContactsForOrder.filter((contact: any) => 
+                            contact.fullName.toLowerCase().includes(contactSearchValue.toLowerCase())
+                          ).length === 0 && (
+                            <div className="px-3 py-2 text-gray-500">Контактів не знайдено</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
