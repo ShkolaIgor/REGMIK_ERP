@@ -7025,7 +7025,7 @@ export class DatabaseStorage implements IStorage {
 
   async getNovaPoshtaWarehousesCount(): Promise<number> {
     try {
-      const result = await pool.query('SELECT COUNT(*) as count FROM nova_poshta_warehouses WHERE is_active = true');
+      const result = await pool.query('SELECT COUNT(*) as count FROM nova_poshta_warehouses');
       return parseInt(result.rows[0]?.count || '0');
     } catch (error) {
       console.error('Помилка підрахунку відділень Нової Пошти:', error);

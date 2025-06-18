@@ -1,0 +1,24 @@
+Помилка підрахунку відділень Нової Пошти: error: column "is_active" does not exist
+2025-06-18T19:36:45.017429+03:00 ERP regmik-erp[71892]:     at /opt/REGMIK_ERP/node_modules/pg-pool/index.js:45:11
+2025-06-18T19:36:45.017449+03:00 ERP regmik-erp[71892]:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-06-18T19:36:45.017516+03:00 ERP regmik-erp[71892]:     at async DatabaseStorage.getNovaPoshtaWarehousesCount (file:///opt/REGMIK_ERP/dist/index.js:7133:26)
+2025-06-18T19:36:45.017539+03:00 ERP regmik-erp[71892]:     at async NovaPoshtaCache.getWarehousesCount (file:///opt/REGMIK_ERP/dist/index.js:7733:16)
+2025-06-18T19:36:45.017552+03:00 ERP regmik-erp[71892]:     at async file:///opt/REGMIK_ERP/dist/index.js:12091:31 {
+2025-06-18T19:36:45.017562+03:00 ERP regmik-erp[71892]:   length: 109,
+2025-06-18T19:36:45.017574+03:00 ERP regmik-erp[71892]:   severity: 'ERROR',
+2025-06-18T19:36:45.017585+03:00 ERP regmik-erp[71892]:   code: '42703',
+2025-06-18T19:36:45.017596+03:00 ERP regmik-erp[71892]:   detail: undefined,
+2025-06-18T19:36:45.017606+03:00 ERP regmik-erp[71892]:   hint: undefined,
+2025-06-18T19:36:45.017616+03:00 ERP regmik-erp[71892]:   position: '60',
+2025-06-18T19:36:45.017626+03:00 ERP regmik-erp[71892]:   internalPosition: undefined,
+2025-06-18T19:36:45.017636+03:00 ERP regmik-erp[71892]:   internalQuery: undefined,
+2025-06-18T19:36:45.017658+03:00 ERP regmik-erp[71892]:   where: undefined,
+2025-06-18T19:36:45.017668+03:00 ERP regmik-erp[71892]:   schema: undefined,
+2025-06-18T19:36:45.017678+03:00 ERP regmik-erp[71892]:   table: undefined,
+2025-06-18T19:36:45.017688+03:00 ERP regmik-erp[71892]:   column: undefined,
+2025-06-18T19:36:45.017699+03:00 ERP regmik-erp[71892]:   dataType: undefined,
+2025-06-18T19:36:45.017709+03:00 ERP regmik-erp[71892]:   constraint: undefined,
+2025-06-18T19:36:45.017719+03:00 ERP regmik-erp[71892]:   file: 'parse_relation.c',
+2025-06-18T19:36:45.017729+03:00 ERP regmik-erp[71892]:   line: '3665',
+2025-06-18T19:36:45.017739+03:00 ERP regmik-erp[71892]:   routine: 'errorMissingColumn'
+2025-06-18T19:36:45.017749+03:00 ERP regmik-erp[71892]: }
