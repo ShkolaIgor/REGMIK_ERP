@@ -1093,7 +1093,7 @@ export default function Orders() {
   // Функції для роботи з клієнтами
   const filteredClients = clients.filter((client: any) =>
     client.name.toLowerCase().includes(clientSearchValue.toLowerCase()) ||
-    client.taxCode.toLowerCase().includes(clientSearchValue.toLowerCase())
+    client?.taxCode?.toLowerCase().includes(clientSearchValue.toLowerCase())
   );
 
   const handleClientSelect = (clientId: string) => {

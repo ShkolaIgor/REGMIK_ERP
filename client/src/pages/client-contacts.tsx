@@ -277,7 +277,7 @@ export default function ClientContacts() {
                                   {(clients as Client[])
                                     .filter((client) =>
                                       client.name.toLowerCase().includes(clientSearchValue.toLowerCase()) ||
-                                      client.taxCode.toLowerCase().includes(clientSearchValue.toLowerCase())
+                                      client?.taxCode?.toLowerCase().includes(clientSearchValue.toLowerCase())
                                     )
                                     .map((client) => (
                                       <CommandItem
