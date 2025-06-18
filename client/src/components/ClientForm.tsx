@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import React, { useEffect, useRef, useState } from "react";
 import { Loader2, MapPin, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ContactPersonAutocomplete } from "./ContactPersonAutocomplete";
 
 // Схема валідації з оновленими правилами для taxCode
 const formSchema = z.object({
@@ -29,6 +30,7 @@ const formSchema = z.object({
   physicalAddress: z.string().optional(), 
   addressesMatch: z.boolean().default(false),
   contactPerson: z.string().optional(),
+  contactPersonId: z.number().optional(),
   phone: z.string().optional(),
   email: z.string().optional(),
   website: z.string().optional(),
@@ -412,7 +414,15 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
               <FormItem>
                 <FormLabel>Контактна особа</FormLabel>
                 <FormControl>
-                  <Input placeholder="Іван Іванович" {...field} />
+                  <ContactPersonAutocomplete
+                    clientId={editingClient?.id}
+                    value={field.value}
+                    onChange={(contactId, contactName) => {
+                      field.onChange(contactName || "");
+                      form.setValue("contactPersonId", contactId);
+                    }}
+                    placeholder="Введіть ім'я контактної особи..."
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
