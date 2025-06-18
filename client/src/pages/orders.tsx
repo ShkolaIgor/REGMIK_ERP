@@ -680,7 +680,7 @@ export default function Orders() {
   
   // Встановлюємо компанію за замовчуванням при завантаженні компаній
   useEffect(() => {
-    if (companies.length > 0 && !selectedCompanyId && !isEditMode) {
+    if (companies && companies.length > 0 && !selectedCompanyId && !isEditMode) {
       const defaultCompany = companies.find((company: any) => company.isDefault);
       if (defaultCompany) {
         setSelectedCompanyId(defaultCompany.id.toString());
@@ -1226,6 +1226,39 @@ export default function Orders() {
     createClientMutation.mutate(formData);
   };
 
+  const handleCreateOrder = () => {
+    setIsEditMode(false);
+    setSelectedClientId("");
+    setSelectedContactId("");
+    setSelectedCompanyId("");
+    setOrderItems([]);
+    setEditingOrder(null);
+    
+    // Знаходимо компанію за замовчуванням
+    const defaultCompany = companies && companies.find((company: any) => company.isDefault);
+    const defaultCompanyId = defaultCompany ? defaultCompany.id.toString() : "";
+    
+    form.reset({
+      companyId: defaultCompanyId,
+      customerName: "",
+      customerEmail: "",
+      customerPhone: "",
+      status: "pending",
+      notes: "",
+      paymentDate: "",
+      dueDate: "",
+      shippedDate: "",
+      trackingNumber: "",
+    });
+    
+    // Встановлюємо компанію за замовчуванням
+    if (defaultCompanyId) {
+      setSelectedCompanyId(defaultCompanyId);
+    }
+    
+    setIsDialogOpen(true);
+  };
+
   const handleSubmit = (data: OrderFormData) => {
     console.log("=== FORM SUBMIT STARTED ===");
     console.log("Handle submit called with data:", data);
@@ -1371,7 +1404,7 @@ export default function Orders() {
                         aria-expanded={companyComboboxOpen}
                         className="w-full justify-between"
                       >
-                        {selectedCompanyId && companies
+                        {selectedCompanyId && companies && companies.length > 0
                           ? companies.find((company: any) => company.id.toString() === selectedCompanyId)?.name || "Оберіть компанію..."
                           : "Оберіть компанію..."}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1386,7 +1419,7 @@ export default function Orders() {
                         />
                         <CommandEmpty>Компанія не знайдена</CommandEmpty>
                         <CommandGroup>
-                          {companies?.map((company: any) => (
+                          {companies && companies.length > 0 && companies.map((company: any) => (
                             <CommandItem
                               key={company.id}
                               value={company.name}
@@ -1524,7 +1557,7 @@ export default function Orders() {
                           />
                           <CommandEmpty>Контактна особа не знайдена</CommandEmpty>
                           <CommandGroup>
-                            {clientContactsForOrder?.map((contact: any) => (
+                            {clientContactsForOrder && clientContactsForOrder.length > 0 && clientContactsForOrder.map((contact: any) => (
                               <CommandItem
                                 key={contact.id}
                                 value={contact.fullName}
