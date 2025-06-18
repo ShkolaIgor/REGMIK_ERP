@@ -1703,27 +1703,52 @@ export default function Orders() {
                     <div className="space-y-3">
                       {orderItems.map((item, index) => (
                         <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg">
-                          <Select
-                            value={item.productId > 0 ? item.productId.toString() : ""}
-                            onValueChange={(value) => updateOrderItem(index, "productId", parseInt(value))}
-                          >
-                            <SelectTrigger className="flex-1">
-                              <SelectValue placeholder="Оберіть товар" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {products.length > 0 ? (
-                                products.map((product: any) => (
-                                  <SelectItem key={product.id} value={product.id.toString()}>
-                                    {product.name} ({product.sku})
-                                  </SelectItem>
-                                ))
-                              ) : (
-                                <SelectItem value="no-products" disabled>
-                                  Немає доступних товарів
-                                </SelectItem>
-                              )}
-                            </SelectContent>
-                          </Select>
+                          <div className="flex-1">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  className="w-full justify-between"
+                                >
+                                  {item.productId > 0 && products
+                                    ? products.find((product: any) => product.id === item.productId)?.name || "Оберіть товар..."
+                                    : "Оберіть товар..."}
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-full p-0">
+                                <Command>
+                                  <CommandInput placeholder="Пошук товару..." />
+                                  <CommandEmpty>Товар не знайдено</CommandEmpty>
+                                  <CommandGroup>
+                                    {products?.map((product: any) => (
+                                      <CommandItem
+                                        key={product.id}
+                                        value={`${product.name} ${product.sku}`}
+                                        onSelect={() => {
+                                          updateOrderItem(index, "productId", product.id);
+                                        }}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            item.productId === product.id ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                        <div>
+                                          <div className="font-medium">{product.name}</div>
+                                          <div className="text-sm text-gray-500">
+                                            {product.sku} • {formatCurrency(product.retailPrice)}
+                                          </div>
+                                        </div>
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
                           
                           <Input
                             placeholder="Кількість"
