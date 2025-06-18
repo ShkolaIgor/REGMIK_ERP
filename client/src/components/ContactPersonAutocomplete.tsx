@@ -69,7 +69,9 @@ export function ContactPersonAutocomplete({
       const response = await fetch(`/api/client-contacts?clientId=${clientId}`);
       if (!response.ok) throw new Error('Failed to fetch contacts');
       const data = await response.json();
-      return data.clientContacts || [];
+      // Переконуємося, що завжди повертаємо масив
+      const contacts = data.clientContacts || data || [];
+      return Array.isArray(contacts) ? contacts : [];
     },
     enabled: !!clientId,
   });
@@ -92,10 +94,10 @@ export function ContactPersonAutocomplete({
       setIsCreateDialogOpen(false);
       contactForm.reset();
       
-      // Оптимістично оновлюємо кеш замість інвалідації
+      // Оптимістично оновлюємо кеш - завжди повертаємо масив
       queryClient.setQueryData(["/api/client-contacts", clientId], (oldData: any) => {
-        if (!oldData) return [newContact];
-        return [...oldData, newContact];
+        const currentContacts = Array.isArray(oldData) ? oldData : [];
+        return [...currentContacts, newContact];
       });
       
       // Автоматично вибираємо новий контакт
