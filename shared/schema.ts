@@ -801,6 +801,12 @@ export const clients = pgTable("clients", {
   // Фінансова інформація
   discount: decimal("discount", { precision: 5, scale: 2 }).default("0.00"), // Знижка клієнта в %
   
+  // Контактна інформація
+  contactPerson: varchar("contact_person", { length: 255 }), // Контактна особа
+  phone: varchar("phone", { length: 50 }), // Телефон
+  email: varchar("email", { length: 255 }), // Email
+  website: varchar("website", { length: 255 }), // Веб-сайт
+  
   notes: text("notes"),
   
   // Поля для синхронізації з зовнішніми системами
