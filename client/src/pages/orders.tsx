@@ -87,6 +87,17 @@ type Product = {
   createdAt: Date | null;
 };
 
+type Company = {
+  id: number;
+  name: string;
+  fullName: string | null;
+  taxCode: string;
+  isDefault: boolean | null;
+  isActive: boolean | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+};
+
 type OrderWithItems = Order & {
   items: (OrderItem & { product: Product })[];
 };
@@ -690,7 +701,7 @@ export default function Orders() {
     queryKey: ["/api/carriers"],
   });
 
-  const { data: companies = [] } = useQuery({
+  const { data: companies = [] } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
   });
 
@@ -1272,6 +1283,7 @@ export default function Orders() {
         totalAmount,
         ...(data.clientId && { clientId: parseInt(data.clientId) }),
         ...(data.clientContactsId && { clientContactsId: data.clientContactsId }),
+        ...(data.companyId && { companyId: parseInt(data.companyId) }),
         ...(data.customerName && { customerName: data.customerName }),
         ...(data.customerEmail && { customerEmail: data.customerEmail }),
         ...(data.customerPhone && { customerPhone: data.customerPhone }),
