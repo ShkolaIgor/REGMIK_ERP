@@ -2023,7 +2023,7 @@ export default function Orders() {
                   </TableHeader>
                   <TableBody>
                     {orders.map((order: any) => (
-                      <div key={order.id}>
+                      <React.Fragment key={order.id}>
                         <TableRow 
                           className="cursor-pointer hover:bg-gray-50"
                           onClick={() => toggleOrderExpansion(order.id)}
@@ -2033,9 +2033,8 @@ export default function Orders() {
                               {renderColumnContent(columnKey, order)}
                             </TableCell>
                           ))}
-                        </TableRow>
+                        </TableRow>,
                         
-                        {/* Розкривний рядок з деталями замовлення */}
                         {expandedOrderId === order.id && (
                           <TableRow>
                             <TableCell colSpan={columnOrder.length} className="bg-gray-50 p-0">
@@ -2082,7 +2081,7 @@ export default function Orders() {
                             </TableCell>
                           </TableRow>
                         )}
-                      </div>
+                      </React.Fragment>
                     ))}
                   </TableBody>
                 </Table>
