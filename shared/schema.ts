@@ -1481,13 +1481,28 @@ export type InsertShipment = z.infer<typeof insertShipmentSchema>;
 export type ShipmentItem = typeof shipmentItems.$inferSelect;
 export type InsertShipmentItem = z.infer<typeof insertShipmentItemSchema>;
 
-// Nova Poshta tables removed due to dependency conflicts
+// Нова Пошта - Міста
+export const novaPoshtaCities = pgTable("nova_poshta_cities", {
+  id: serial("id").primaryKey(),
+  ref: varchar("ref").notNull().unique(), // UUID від Нової Пошти
+  name: varchar("name").notNull(),
+  nameRu: varchar("name_ru"),
+  area: varchar("area").notNull(),
+  areaRu: varchar("area_ru"),
+  region: varchar("region"),
+  regionRu: varchar("region_ru"),
+  settlementType: varchar("settlement_type"),
+  deliveryCity: varchar("delivery_city"),
+  warehouses: integer("warehouses").default(0),
+  isActive: boolean("is_active").default(true),
+  lastUpdated: timestamp("last_updated").defaultNow(),
+});
 
 // Нова Пошта - Відділення
 export const novaPoshtaWarehouses = pgTable("nova_poshta_warehouses", {
   id: serial("id").primaryKey(),
   ref: varchar("ref").notNull().unique(), // UUID від Нової Пошти
-  cityRef: varchar("city_ref").notNull(),
+  cityRef: varchar("city_ref").notNull().references(() => novaPoshtaCities.ref),
   description: text("description").notNull(),
   descriptionRu: text("description_ru"),
   shortAddress: varchar("short_address"),
@@ -1498,7 +1513,20 @@ export const novaPoshtaWarehouses = pgTable("nova_poshta_warehouses", {
   lastUpdated: timestamp("last_updated").defaultNow(),
 });
 
-// Nova Poshta schemas removed
+export const insertNovaPoshtaCitySchema = createInsertSchema(novaPoshtaCities).omit({ 
+  id: true, 
+  lastUpdated: true 
+});
+
+export const insertNovaPoshtaWarehouseSchema = createInsertSchema(novaPoshtaWarehouses).omit({ 
+  id: true, 
+  lastUpdated: true 
+});
+
+export type NovaPoshtaCity = typeof novaPoshtaCities.$inferSelect;
+export type InsertNovaPoshtaCity = z.infer<typeof insertNovaPoshtaCitySchema>;
+export type NovaPoshtaWarehouse = typeof novaPoshtaWarehouses.$inferSelect;
+export type InsertNovaPoshtaWarehouse = z.infer<typeof insertNovaPoshtaWarehouseSchema>;
 
 // Таблиця завдань на виготовлення товарів
 export const manufacturingOrders = pgTable("manufacturing_orders", {
