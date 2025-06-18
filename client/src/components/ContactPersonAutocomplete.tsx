@@ -172,9 +172,12 @@ export function ContactPersonAutocomplete({
   };
 
   // Відкриття діалогу створення з автозаповненням імені
-  const openCreateDialog = () => {
+  const openCreateDialog = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
     contactForm.setValue("fullName", searchValue);
     setIsCreateDialogOpen(true);
+    setIsDropdownOpen(false);
   };
 
   if (!clientId) {
@@ -193,7 +196,7 @@ export function ContactPersonAutocomplete({
         value={searchValue}
         onChange={handleSearchChange}
         onFocus={handleFocus}
-        onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+        onBlur={() => setTimeout(() => setIsDropdownOpen(false), 300)}
         placeholder={placeholder}
         disabled={disabled}
         className={selectedContactId ? "border-green-500" : ""}
@@ -227,7 +230,10 @@ export function ContactPersonAutocomplete({
                 <Button
                   variant="ghost"
                   className="w-full justify-start px-3 py-2 rounded-none"
-                  onClick={openCreateDialog}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    openCreateDialog(e);
+                  }}
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Додати контакт "{searchValue}"
@@ -240,7 +246,10 @@ export function ContactPersonAutocomplete({
               <Button
                 variant="ghost"
                 className="w-full justify-start px-0 py-1"
-                onClick={openCreateDialog}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  openCreateDialog(e);
+                }}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Додати контакт "{searchValue}"
