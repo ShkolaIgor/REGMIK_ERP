@@ -50,7 +50,7 @@ interface Order {
   notes?: string;
 }
 
-export default function Orders() {
+export default function OrdersSimple() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
