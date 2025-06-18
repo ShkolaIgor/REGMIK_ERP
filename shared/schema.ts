@@ -556,12 +556,14 @@ export const insertUnitSchema = createInsertSchema(units).omit({ id: true, creat
 export const insertWarehouseSchema = createInsertSchema(warehouses).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true });
 export const insertInventorySchema = createInsertSchema(inventory).omit({ id: true, updatedAt: true });
-export const insertOrderSchema = z.object({
+export const insertOrderSchemaForm = z.object({
   customerName: z.string().optional(),
   clientId: z.number().optional(),
+  clientContactsId: z.number().optional(),
   customerEmail: z.string().optional(),
   customerPhone: z.string().optional(),
   status: z.string().default("pending"),
+  statusId: z.number().optional(),
   notes: z.string().optional(),
   paymentDate: z.string().optional(),
   dueDate: z.string().optional(),
@@ -917,6 +919,8 @@ export const insertClientContactSchema = createInsertSchema(clientContacts).omit
   updatedAt: true
 });
 
+
+
 export const insertClientNovaPoshtaApiSettingsSchema = createInsertSchema(clientNovaPoshtaApiSettings).omit({
   id: true,
   createdAt: true,
@@ -934,6 +938,8 @@ export type ClientNovaPoshtaApiSettings = typeof clientNovaPoshtaApiSettings.$in
 export type InsertClientNovaPoshtaApiSettings = z.infer<typeof insertClientNovaPoshtaApiSettingsSchema>;
 export type ClientNovaPoshtaSettings = typeof clientNovaPoshtaSettings.$inferSelect;
 export type InsertClientNovaPoshtaSettings = z.infer<typeof insertClientNovaPoshtaSettingsSchema>;
+
+
 
 // XML Import schema для клієнтів
 export const xmlClientImportSchema = z.object({
@@ -1260,8 +1266,7 @@ export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Inventory = typeof inventory.$inferSelect;
 export type InsertInventory = z.infer<typeof insertInventorySchema>;
-export type Order = typeof orders.$inferSelect;
-export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type OrderForm = z.infer<typeof insertOrderSchemaForm>;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type Recipe = typeof recipes.$inferSelect;
@@ -1998,6 +2003,10 @@ export type InsertRole = z.infer<typeof insertRoleSchema>;
 
 export type SystemModule = typeof systemModules.$inferSelect;
 export type InsertSystemModule = z.infer<typeof insertSystemModuleSchema>;
+
+// Additional schemas and types for orders and order statuses
+export type OrderWithDetails = typeof orders.$inferSelect;
+export type OrderStatusWithDetails = typeof orderStatuses.$inferSelect;
 
 export type UserLoginHistory = typeof userLoginHistory.$inferSelect;
 export type InsertUserLoginHistory = z.infer<typeof insertUserLoginHistorySchema>;
