@@ -1,6 +1,8 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -15,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import type { ClientNovaPoshtaSettings } from "@shared/schema";
 
 const deliverySettingsSchema = z.object({
@@ -85,6 +87,40 @@ export default function NovaPoshtaDeliverySettingsForm({
       isPrimary: defaultValues?.isPrimary ?? false,
     },
   });
+
+  // Запит для пошуку міст
+  const { data: cities = [], isLoading: citiesLoading } = useQuery({
+    queryKey: ["/api/nova-poshta/cities", cityQuery],
+    queryFn: async () => {
+      if (cityQuery.length < 2) return [];
+      const response = await fetch(`/api/nova-poshta/cities?search=${encodeURIComponent(cityQuery)}`);
+      if (!response.ok) throw new Error('Failed to fetch cities');
+      return response.json();
+    },
+    enabled: cityQuery.length >= 2,
+  });
+
+  // Запит для пошуку відділень
+  const { data: warehouses = [], isLoading: warehousesLoading } = useQuery({
+    queryKey: ["/api/nova-poshta/warehouses", selectedCity?.Ref, warehouseQuery],
+    queryFn: async () => {
+      if (!selectedCity?.Ref) return [];
+      const response = await fetch(`/api/nova-poshta/warehouses/${selectedCity.Ref}?search=${encodeURIComponent(warehouseQuery)}`);
+      if (!response.ok) throw new Error('Failed to fetch warehouses');
+      return response.json();
+    },
+    enabled: !!selectedCity?.Ref,
+  });
+
+  // Ініціалізація форми з даними
+  useEffect(() => {
+    if (defaultValues?.deliveryCityName) {
+      setCityQuery(defaultValues.deliveryCityName);
+    }
+    if (defaultValues?.deliveryWarehouseAddress) {
+      setWarehouseQuery(defaultValues.deliveryWarehouseAddress);
+    }
+  }, [defaultValues]);
 
   const handleSubmit = async (data: FormData) => {
     try {
