@@ -448,7 +448,7 @@ export default function Orders() {
         );
       
       case 'status':
-        const statusInfo = orderStatusList.find((s: any) => s.id === order.statusId);
+        const statusInfo = orderStatuses.find(s => s.name === order.status);
         
         const handleStatusChange = (newStatus: string) => {
           console.log("Status change handler called with:", { orderId: order.id, currentStatus: order.status, newStatus });
@@ -463,18 +463,18 @@ export default function Orders() {
               onValueChange={handleStatusChange}
             >
               <SelectTrigger className="w-[140px] h-7 border-0 p-1">
-                <span 
-                  className="px-2 py-1 text-xs font-medium rounded-full"
+                <Badge 
+                  className="text-sm font-medium border-0 w-full justify-center"
                   style={{
                     color: statusInfo?.textColor || '#000000',
                     backgroundColor: statusInfo?.backgroundColor || '#f3f4f6'
                   }}
                 >
-                  {statusInfo?.name || order.status}
-                </span>
+                  {order.status}
+                </Badge>
               </SelectTrigger>
               <SelectContent>
-                {orderStatusList.map((status: any) => (
+                {orderStatuses.map((status) => (
                   <SelectItem key={status.id} value={status.name}>
                     <div className="flex items-center">
                       <div
@@ -1591,7 +1591,7 @@ export default function Orders() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {orderStatusList?.map((status: OrderStatus) => (
+                  {orderStatuses?.map((status: OrderStatus) => (
                     <div key={status.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center space-x-3">
                         <div
@@ -1759,15 +1759,9 @@ export default function Orders() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Всі статуси</SelectItem>
-                  {orderStatusList.map((status: any) => (
+                  {orderStatuses.map((status) => (
                     <SelectItem key={status.id} value={status.name}>
-                      <div className="flex items-center space-x-2">
-                        <div 
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: status.backgroundColor }}
-                        />
-                        <span>{status.name}</span>
-                      </div>
+                      {status.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
