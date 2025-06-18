@@ -81,10 +81,10 @@ export function ContactPersonAutocomplete({
       
       return apiRequest("/api/client-contacts", {
         method: "POST",
-        body: JSON.stringify({
+        body: {
           ...data,
           clientId,
-        }),
+        },
       });
     },
     onSuccess: (newContact) => {
