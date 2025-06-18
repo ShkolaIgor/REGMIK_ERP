@@ -101,6 +101,7 @@ const orderItemSchema = z.object({
 const orderSchema = z.object({
   clientId: z.string().optional(),
   clientContactsId: z.string().optional(),
+  companyId: z.string().optional(),
   customerName: z.string().optional(),
   customerEmail: z.string().email("Введіть правильний email").optional().or(z.literal("")),
   customerPhone: z.string().optional(),
@@ -148,8 +149,11 @@ export default function Orders() {
   const [isStatusSettingsOpen, setIsStatusSettingsOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [selectedContactId, setSelectedContactId] = useState<string>("");
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   const [contactComboboxOpen, setContactComboboxOpen] = useState(false);
+  const [companyComboboxOpen, setCompanyComboboxOpen] = useState(false);
   const [contactSearchValue, setContactSearchValue] = useState("");
+  const [companySearchValue, setCompanySearchValue] = useState("");
   const [clientContactsForOrder, setClientContactsForOrder] = useState<any[]>([]);
   const [editingStatus, setEditingStatus] = useState<OrderStatus | null>(null);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
@@ -686,6 +690,10 @@ export default function Orders() {
     queryKey: ["/api/carriers"],
   });
 
+  const { data: companies = [] } = useQuery({
+    queryKey: ["/api/companies"],
+  });
+
   // Форма для управління статусами
   const statusForm = useForm<StatusFormData>({
     resolver: zodResolver(statusSchema),
@@ -1079,6 +1087,7 @@ export default function Orders() {
     form.reset({
       clientId: order.clientId ? order.clientId.toString() : "",
       clientContactsId: order.clientContactsId ? order.clientContactsId.toString() : "",
+      companyId: order.companyId ? order.companyId.toString() : "",
       customerName: order.customerName || "",
       customerEmail: order.customerEmail || "",
       customerPhone: order.customerPhone || "",
@@ -1095,6 +1104,11 @@ export default function Orders() {
     // Встановлюємо вибраного клієнта для оновлення контактів
     if (order.clientId) {
       setSelectedClientId(order.clientId.toString());
+    }
+
+    // Встановлюємо компанію
+    if (order.companyId) {
+      setSelectedCompanyId(order.companyId.toString());
     }
 
     // Встановлюємо контактну особу після оновлення клієнта
@@ -1429,31 +1443,68 @@ export default function Orders() {
                   </div>
                   <div>
                     <Label htmlFor="clientContactsId">Контактна особа</Label>
-                    <Select
-                      value={form.watch("clientContactsId")?.toString() || ""}
-                      onValueChange={(value) => form.setValue("clientContactsId", value ? parseInt(value) : undefined)}
-                      disabled={!form.watch("clientId")}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={form.watch("clientId") ? "Оберіть контактну особу" : "Спочатку оберіть клієнта"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {clientContactsForOrder.length > 0 ? (
-                          clientContactsForOrder.map((contact: any) => (
-                            <SelectItem key={contact.id} value={contact.id.toString()}>
-                              <div className="flex flex-col">
-                                <span className="font-medium">{contact.fullName}</span>
-                                <span className="text-sm text-gray-500">{contact.position}</span>
-                              </div>
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value="no-contacts" disabled>
-                            {form.watch("clientId") ? "Контактні особи відсутні" : "Оберіть клієнта"}
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={contactComboboxOpen} onOpenChange={setContactComboboxOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={contactComboboxOpen}
+                          className="w-full justify-between"
+                          disabled={!form.watch("clientId")}
+                        >
+                          {selectedContactId && clientContactsForOrder
+                            ? clientContactsForOrder.find((contact: any) => contact.id.toString() === selectedContactId)?.fullName || "Оберіть контактну особу..."
+                            : form.watch("clientId") ? "Оберіть контактну особу..." : "Спочатку оберіть клієнта"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput 
+                            placeholder="Пошук контактної особи..." 
+                            value={contactSearchValue}
+                            onValueChange={setContactSearchValue}
+                          />
+                          <CommandEmpty>Контактна особа не знайдена</CommandEmpty>
+                          <CommandGroup>
+                            {clientContactsForOrder?.map((contact: any) => (
+                              <CommandItem
+                                key={contact.id}
+                                value={contact.fullName}
+                                onSelect={() => {
+                                  const contactId = contact.id.toString();
+                                  setSelectedContactId(contactId);
+                                  form.setValue("clientContactsId", contactId);
+                                  
+                                  // Автозаповнення email та телефону з контактної особи
+                                  if (contact.email) {
+                                    form.setValue("customerEmail", contact.email);
+                                  }
+                                  if (contact.phone) {
+                                    form.setValue("customerPhone", contact.phone);
+                                  }
+                                  
+                                  setContactComboboxOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedContactId === contact.id.toString() ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div>
+                                  <div className="font-medium">{contact.fullName}</div>
+                                  {contact.email && (
+                                    <div className="text-sm text-gray-500">{contact.email}</div>
+                                  )}
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
 
