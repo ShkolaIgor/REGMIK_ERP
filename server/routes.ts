@@ -9,7 +9,7 @@ import { novaPoshtaCache } from "./nova-poshta-cache";
 import { pool, db } from "./db";
 import { eq } from "drizzle-orm";
 import { 
-  insertProductSchema, insertOrderSchema, insertRecipeSchema,
+  insertProductSchema, insertOrderSchemaForm, insertRecipeSchema,
   insertProductionTaskSchema, insertCategorySchema, insertUnitSchema, insertWarehouseSchema,
   insertSupplierSchema, insertInventorySchema, insertTechCardSchema, insertTechCardStepSchema, insertTechCardMaterialSchema,
   insertComponentSchema, insertProductComponentSchema, insertCostCalculationSchema, insertMaterialShortageSchema,
@@ -23,7 +23,7 @@ import {
   insertLocalUserSchema, insertRoleSchema, insertSystemModuleSchema, changePasswordSchema,
   insertEmailSettingsSchema, insertClientSchema, insertClientContactSchema, insertClientMailSchema, insertMailRegistrySchema, insertEnvelopePrintSettingsSchema,
   insertRepairSchema, insertRepairPartSchema, insertRepairStatusHistorySchema, insertRepairDocumentSchema,
-  clientTypes, insertClientTypeSchema
+  clientTypes, insertClientTypeSchema, insertOrderStatusSchema, insertOrderSchemaForm
 } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -5094,6 +5094,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ error: "Failed to create envelope print settings" });
       }
+    }
+  });
+
+  // Order Statuses API
+  app.get("/api/order-statuses", async (req, res) => {
+    try {
+      const statuses = await storage.getOrderStatuses();
+      res.json(statuses);
+    } catch (error) {
+      console.error("Error fetching order statuses:", error);
+      res.status(500).json({ error: "Failed to fetch order statuses" });
+    }
+  });
+
+  app.post("/api/order-statuses", async (req, res) => {
+    try {
+      const validatedData = insertOrderStatusSchema.parse(req.body);
+      const status = await storage.createOrderStatus(validatedData);
+      res.status(201).json(status);
+    } catch (error) {
+      console.error("Error creating order status:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid status data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create order status" });
+      }
+    }
+  });
+
+  app.put("/api/order-statuses/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertOrderStatusSchema.parse(req.body);
+      const status = await storage.updateOrderStatus(id, validatedData);
+      res.json(status);
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid status data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update order status" });
+      }
+    }
+  });
+
+  app.delete("/api/order-statuses/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteOrderStatus(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting order status:", error);
+      res.status(500).json({ error: "Failed to delete order status" });
     }
   });
 

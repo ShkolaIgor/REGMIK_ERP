@@ -37,7 +37,7 @@ import {
   type MailRegistry, type InsertMailRegistry,
   type EnvelopePrintSettings, type InsertEnvelopePrintSettings,
   type Company, type InsertCompany,
-  type OrderStatus, type InsertOrderStatus,
+  type OrderStatusWithDetails, type InsertOrderStatus,
   type Shipment, type InsertShipment,
   type CustomerAddress, type InsertCustomerAddress,
   type SenderSettings, type InsertSenderSettings,
@@ -7560,6 +7560,48 @@ export class DatabaseStorage implements IStorage {
       return true;
     } catch (error) {
       console.error("Error deleting envelope print setting:", error);
+      throw error;
+    }
+  }
+
+  // Order status management
+  async getOrderStatuses(): Promise<OrderStatusWithDetails[]> {
+    try {
+      return await db.select().from(orderStatuses).orderBy(orderStatuses.name);
+    } catch (error) {
+      console.error('Error getting order statuses:', error);
+      throw error;
+    }
+  }
+
+  async createOrderStatus(data: InsertOrderStatus): Promise<OrderStatusWithDetails> {
+    try {
+      const [orderStatus] = await db.insert(orderStatuses).values(data).returning();
+      return orderStatus;
+    } catch (error) {
+      console.error('Error creating order status:', error);
+      throw error;
+    }
+  }
+
+  async updateOrderStatus(id: number, data: InsertOrderStatus): Promise<OrderStatusWithDetails> {
+    try {
+      const [orderStatus] = await db.update(orderStatuses)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(orderStatuses.id, id))
+        .returning();
+      return orderStatus;
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      throw error;
+    }
+  }
+
+  async deleteOrderStatus(id: number): Promise<void> {
+    try {
+      await db.delete(orderStatuses).where(eq(orderStatuses.id, id));
+    } catch (error) {
+      console.error('Error deleting order status:', error);
       throw error;
     }
   }

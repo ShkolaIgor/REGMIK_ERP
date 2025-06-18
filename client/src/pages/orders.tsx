@@ -36,6 +36,8 @@ type Order = {
   customerEmail: string | null;
   customerPhone: string | null;
   clientId: string | null;
+  clientContactsId: number | null;
+  statusId: number | null;
   status: string;
   totalAmount: string;
   notes: string | null;
