@@ -13,47 +13,85 @@ ON CONFLICT (name) DO UPDATE SET
   description = EXCLUDED.description;
 
 -- 2. Створюємо дозволи, якщо їх немає
-INSERT INTO permissions (name, display_name, description, action) 
+-- Спочатку отримуємо ID модулів для призначення
+DO $$
+DECLARE 
+  users_module_id INT;
+  clients_module_id INT;
+  orders_module_id INT;
+  products_module_id INT;
+  warehouses_module_id INT;
+  companies_module_id INT;
+  departments_module_id INT;
+  workers_module_id INT;
+  reports_module_id INT;
+  settings_module_id INT;
+  nova_poshta_module_id INT;
+  xml_import_module_id INT;
+  email_module_id INT;
+  system_module_id INT;
+BEGIN
+  -- Отримуємо ID модулів
+  SELECT id INTO users_module_id FROM system_modules WHERE name = 'users';
+  SELECT id INTO clients_module_id FROM system_modules WHERE name = 'clients';
+  SELECT id INTO orders_module_id FROM system_modules WHERE name = 'orders';
+  SELECT id INTO products_module_id FROM system_modules WHERE name = 'products';
+  SELECT id INTO warehouses_module_id FROM system_modules WHERE name = 'warehouses';
+  SELECT id INTO companies_module_id FROM system_modules WHERE name = 'companies';
+  SELECT id INTO departments_module_id FROM system_modules WHERE name = 'departments';
+  SELECT id INTO workers_module_id FROM system_modules WHERE name = 'workers';
+  SELECT id INTO reports_module_id FROM system_modules WHERE name = 'reports';
+  SELECT id INTO settings_module_id FROM system_modules WHERE name = 'settings';
+  SELECT id INTO nova_poshta_module_id FROM system_modules WHERE name = 'nova_poshta';
+  SELECT id INTO xml_import_module_id FROM system_modules WHERE name = 'xml_import';
+  SELECT id INTO email_module_id FROM system_modules WHERE name = 'email';
+  SELECT id INTO system_module_id FROM system_modules WHERE name = 'system';
+
+INSERT INTO permissions (name, display_name, description, action, resource_type, module_id) 
 VALUES 
-  ('users.view', 'Перегляд користувачів', 'Перегляд користувачів', 'view'),
-  ('users.create', 'Створення користувачів', 'Створення користувачів', 'create'),
-  ('users.edit', 'Редагування користувачів', 'Редагування користувачів', 'edit'),
-  ('users.delete', 'Видалення користувачів', 'Видалення користувачів', 'delete'),
-  ('clients.view', 'Перегляд клієнтів', 'Перегляд клієнтів', 'view'),
-  ('clients.create', 'Створення клієнтів', 'Створення клієнтів', 'create'),
-  ('clients.edit', 'Редагування клієнтів', 'Редагування клієнтів', 'edit'),
-  ('clients.delete', 'Видалення клієнтів', 'Видалення клієнтів', 'delete'),
-  ('orders.view', 'Перегляд замовлень', 'Перегляд замовлень', 'view'),
-  ('orders.create', 'Створення замовлень', 'Створення замовлень', 'create'),
-  ('orders.edit', 'Редагування замовлень', 'Редагування замовлень', 'edit'),
-  ('orders.delete', 'Видалення замовлень', 'Видалення замовлень', 'delete'),
-  ('products.view', 'Перегляд товарів', 'Перегляд товарів', 'view'),
-  ('products.create', 'Створення товарів', 'Створення товарів', 'create'),
-  ('products.edit', 'Редагування товарів', 'Редагування товарів', 'edit'),
-  ('products.delete', 'Видалення товарів', 'Видалення товарів', 'delete'),
-  ('warehouses.view', 'Перегляд складів', 'Перегляд складів', 'view'),
-  ('warehouses.manage', 'Управління складами', 'Управління складами', 'manage'),
-  ('companies.view', 'Перегляд компаній', 'Перегляд компаній', 'view'),
-  ('companies.manage', 'Управління компаніями', 'Управління компаніями', 'manage'),
-  ('departments.view', 'Перегляд відділів', 'Перегляд відділів', 'view'),
-  ('departments.manage', 'Управління відділами', 'Управління відділами', 'manage'),
-  ('workers.view', 'Перегляд працівників', 'Перегляд працівників', 'view'),
-  ('workers.manage', 'Управління працівниками', 'Управління працівниками', 'manage'),
-  ('reports.view', 'Перегляд звітів', 'Перегляд звітів', 'view'),
-  ('reports.generate', 'Генерація звітів', 'Генерація звітів', 'generate'),
-  ('settings.view', 'Перегляд налаштувань', 'Перегляд налаштувань', 'view'),
-  ('settings.manage', 'Управління налаштуваннями', 'Управління налаштуваннями', 'manage'),
-  ('nova_poshta.view', 'Перегляд даних Нової Пошти', 'Перегляд даних Нової Пошти', 'view'),
-  ('nova_poshta.sync', 'Синхронізація з Новою Поштою', 'Синхронізація з Новою Поштою', 'sync'),
-  ('xml_import.view', 'Перегляд XML імпорту', 'Перегляд XML імпорту', 'view'),
-  ('xml_import.execute', 'Виконання XML імпорту', 'Виконання XML імпорту', 'execute'),
-  ('email.send', 'Відправка електронної пошти', 'Відправка електронної пошти', 'send'),
-  ('system.backup', 'Створення резервних копій', 'Створення резервних копій', 'backup'),
-  ('system.restore', 'Відновлення з резервних копій', 'Відновлення з резервних копій', 'restore')
+  ('users.view', 'Перегляд користувачів', 'Перегляд користувачів', 'view', 'users', users_module_id),
+  ('users.create', 'Створення користувачів', 'Створення користувачів', 'create', 'users', users_module_id),
+  ('users.edit', 'Редагування користувачів', 'Редагування користувачів', 'edit', 'users', users_module_id),
+  ('users.delete', 'Видалення користувачів', 'Видалення користувачів', 'delete', 'users', users_module_id),
+  ('clients.view', 'Перегляд клієнтів', 'Перегляд клієнтів', 'view', 'clients', clients_module_id),
+  ('clients.create', 'Створення клієнтів', 'Створення клієнтів', 'create', 'clients', clients_module_id),
+  ('clients.edit', 'Редагування клієнтів', 'Редагування клієнтів', 'edit', 'clients', clients_module_id),
+  ('clients.delete', 'Видалення клієнтів', 'Видалення клієнтів', 'delete', 'clients', clients_module_id),
+  ('orders.view', 'Перегляд замовлень', 'Перегляд замовлень', 'view', 'orders', orders_module_id),
+  ('orders.create', 'Створення замовлень', 'Створення замовлень', 'create', 'orders', orders_module_id),
+  ('orders.edit', 'Редагування замовлень', 'Редагування замовлень', 'edit', 'orders', orders_module_id),
+  ('orders.delete', 'Видалення замовлень', 'Видалення замовлень', 'delete', 'orders', orders_module_id),
+  ('products.view', 'Перегляд товарів', 'Перегляд товарів', 'view', 'products', products_module_id),
+  ('products.create', 'Створення товарів', 'Створення товарів', 'create', 'products', products_module_id),
+  ('products.edit', 'Редагування товарів', 'Редагування товарів', 'edit', 'products', products_module_id),
+  ('products.delete', 'Видалення товарів', 'Видалення товарів', 'delete', 'products', products_module_id),
+  ('warehouses.view', 'Перегляд складів', 'Перегляд складів', 'view', 'warehouses', warehouses_module_id),
+  ('warehouses.manage', 'Управління складами', 'Управління складами', 'manage', 'warehouses', warehouses_module_id),
+  ('companies.view', 'Перегляд компаній', 'Перегляд компаній', 'view', 'companies', companies_module_id),
+  ('companies.manage', 'Управління компаніями', 'Управління компаніями', 'manage', 'companies', companies_module_id),
+  ('departments.view', 'Перегляд відділів', 'Перегляд відділів', 'view', 'departments', departments_module_id),
+  ('departments.manage', 'Управління відділами', 'Управління відділами', 'manage', 'departments', departments_module_id),
+  ('workers.view', 'Перегляд працівників', 'Перегляд працівників', 'view', 'workers', workers_module_id),
+  ('workers.manage', 'Управління працівниками', 'Управління працівниками', 'manage', 'workers', workers_module_id),
+  ('reports.view', 'Перегляд звітів', 'Перегляд звітів', 'view', 'reports', reports_module_id),
+  ('reports.generate', 'Генерація звітів', 'Генерація звітів', 'generate', 'reports', reports_module_id),
+  ('settings.view', 'Перегляд налаштувань', 'Перегляд налаштувань', 'view', 'settings', settings_module_id),
+  ('settings.manage', 'Управління налаштуваннями', 'Управління налаштуваннями', 'manage', 'settings', settings_module_id),
+  ('nova_poshta.view', 'Перегляд даних Нової Пошти', 'Перегляд даних Нової Пошти', 'view', 'nova_poshta', nova_poshta_module_id),
+  ('nova_poshta.sync', 'Синхронізація з Новою Поштою', 'Синхронізація з Новою Поштою', 'sync', 'nova_poshta', nova_poshta_module_id),
+  ('xml_import.view', 'Перегляд XML імпорту', 'Перегляд XML імпорту', 'view', 'xml_import', xml_import_module_id),
+  ('xml_import.execute', 'Виконання XML імпорту', 'Виконання XML імпорту', 'execute', 'xml_import', xml_import_module_id),
+  ('email.send', 'Відправка електронної пошти', 'Відправка електронної пошти', 'send', 'email', email_module_id),
+  ('system.backup', 'Створення резервних копій', 'Створення резервних копій', 'backup', 'system', system_module_id),
+  ('system.restore', 'Відновлення з резервних копій', 'Відновлення з резервних копій', 'restore', 'system', system_module_id)
 ON CONFLICT (name) DO UPDATE SET
   display_name = EXCLUDED.display_name,
   description = EXCLUDED.description,
-  action = EXCLUDED.action;
+  action = EXCLUDED.action,
+  resource_type = EXCLUDED.resource_type,
+  module_id = EXCLUDED.module_id;
+
+END $$;
 
 -- 3. Призначаємо дозволи ролям
 -- Адміністратор - всі дозволи
