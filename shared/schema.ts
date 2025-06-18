@@ -1487,7 +1487,7 @@ export type InsertShipmentItem = z.infer<typeof insertShipmentItemSchema>;
 export const novaPoshtaWarehouses = pgTable("nova_poshta_warehouses", {
   id: serial("id").primaryKey(),
   ref: varchar("ref").notNull().unique(), // UUID від Нової Пошти
-  cityRef: varchar("city_ref").notNull().references(() => novaPoshtaCities.ref),
+  cityRef: varchar("city_ref").notNull(),
   description: text("description").notNull(),
   descriptionRu: text("description_ru"),
   shortAddress: varchar("short_address"),
@@ -1498,20 +1498,7 @@ export const novaPoshtaWarehouses = pgTable("nova_poshta_warehouses", {
   lastUpdated: timestamp("last_updated").defaultNow(),
 });
 
-export const insertNovaPoshtaCitySchema = createInsertSchema(novaPoshtaCities).omit({ 
-  id: true, 
-  lastUpdated: true 
-});
-
-export const insertNovaPoshtaWarehouseSchema = createInsertSchema(novaPoshtaWarehouses).omit({ 
-  id: true, 
-  lastUpdated: true 
-});
-
-export type NovaPoshtaCity = typeof novaPoshtaCities.$inferSelect;
-export type InsertNovaPoshtaCity = z.infer<typeof insertNovaPoshtaCitySchema>;
-export type NovaPoshtaWarehouse = typeof novaPoshtaWarehouses.$inferSelect;
-export type InsertNovaPoshtaWarehouse = z.infer<typeof insertNovaPoshtaWarehouseSchema>;
+// Nova Poshta schemas removed
 
 // Таблиця завдань на виготовлення товарів
 export const manufacturingOrders = pgTable("manufacturing_orders", {
