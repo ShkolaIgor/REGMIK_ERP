@@ -936,8 +936,6 @@ export const insertClientNovaPoshtaSettingsSchema = createInsertSchema(clientNov
 // Types для нових таблиць
 export type ClientNovaPoshtaApiSettings = typeof clientNovaPoshtaApiSettings.$inferSelect;
 export type InsertClientNovaPoshtaApiSettings = z.infer<typeof insertClientNovaPoshtaApiSettingsSchema>;
-export type ClientNovaPoshtaSettings = typeof clientNovaPoshtaSettings.$inferSelect;
-export type InsertClientNovaPoshtaSettings = z.infer<typeof insertClientNovaPoshtaSettingsSchema>;
 
 
 
@@ -1977,8 +1975,6 @@ export const newPasswordSchema = z.object({
 });
 
 // Типи для таблиці користувачів (тепер використовуємо єдину таблицю)
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
 
 // Для сумісності з Replit Auth
 export type UpsertUser = {
@@ -2065,8 +2061,7 @@ export const insertTaskSchema = createInsertSchema(tasks).omit({
 export type Task = typeof tasks.$inferSelect;
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 
-export type ClientNovaPoshtaSettings = typeof clientNovaPoshtaSettings.$inferSelect;
-export type InsertClientNovaPoshtaSettings = z.infer<typeof insertClientNovaPoshtaSettingsSchema>;
+
 
 // ================================
 // ІНТЕГРАЦІЇ З ЗОВНІШНІМИ СИСТЕМАМИ
@@ -2417,7 +2412,7 @@ export const insertUpdatedUserSchema = createInsertSchema(users).omit({
   lastLoginAt: true,
 });
 
-export type User = typeof users.$inferSelect;
+
 export type InsertUpdatedUser = z.infer<typeof insertUpdatedUserSchema>;
 
 // Client Types schemas and types
