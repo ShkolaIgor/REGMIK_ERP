@@ -1152,6 +1152,16 @@ export default function Orders() {
     }
     
     setIsDialogOpen(true);
+    
+    // Встановлюємо фокус на поле клієнта для нових замовлень
+    if (!order) {
+      setTimeout(() => {
+        const clientInput = document.querySelector('input[placeholder*="Почніть вводити назву клієнта"]') as HTMLInputElement;
+        if (clientInput) {
+          clientInput.focus();
+        }
+      }, 100);
+    }
   };
 
   // Функції для управління товарами в замовленні
