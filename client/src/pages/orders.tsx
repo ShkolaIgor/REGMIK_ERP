@@ -1073,12 +1073,13 @@ export default function Orders() {
     
     // Встановлюємо контактну особу якщо вона є
     if (order.clientContactsId) {
-      setSelectedContactId(order.clientContactsId);
+      form.setValue("clientContactsId", order.clientContactsId);
     }
 
     // Заповнюємо форму даними замовлення
     form.reset({
       clientId: order.clientId ? order.clientId.toString() : "",
+      clientContactsId: order.clientContactsId || "",
       customerName: order.customerName || "",
       customerEmail: order.customerEmail || "",
       customerPhone: order.customerPhone || "",
@@ -1087,6 +1088,8 @@ export default function Orders() {
       paymentDate: formatDateForInput(order.paymentDate),
       dueDate: formatDateForInput(order.dueDate),
       shippedDate: formatDateForInput(order.shippedDate),
+      invoiceNumber: order.invoiceNumber || "",
+      carrierId: order.carrierId ? order.carrierId.toString() : "",
     });
 
     // Заповнюємо товари замовлення
