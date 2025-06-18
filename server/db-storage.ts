@@ -6765,58 +6765,23 @@ export class DatabaseStorage implements IStorage {
 
           await this.db.execute(sql`
             INSERT INTO nova_poshta_warehouses (
-              ref, city_ref, number, description, description_ru, short_address, short_address_ru,
-              phone, type_of_warehouse, category_of_warehouse, schedule, reception, delivery,
-              district_code, ward_code, settlement_area_description, place_max_weight_allowed,
-              sending_limitations_on_dimensions, receiving_limitations_on_dimensions,
-              post_finance, bicycle_parking, payment_access, pos_terminal, international_shipping,
-              self_service_workplaces_count, total_max_weight_allowed, longitude, latitude,
-              is_active, last_updated
+              ref, city_ref, number, description, description_ru, short_address,
+              phone, schedule, place_max_weight_allowed, last_updated
             ) VALUES (
               ${warehouse.Ref}, ${warehouse.CityRef}, ${warehouse.Number || ''}, 
               ${warehouse.Description?.replace(/'/g, "''") || ''}, ${warehouse.DescriptionRu?.replace(/'/g, "''") || ''},
-              ${warehouse.ShortAddress?.replace(/'/g, "''") || ''}, ${warehouse.ShortAddressRu?.replace(/'/g, "''") || ''},
-              ${warehouse.Phone || ''}, ${warehouse.TypeOfWarehouse || ''}, ${warehouse.CategoryOfWarehouse || ''},
-              ${schedule}, ${reception}, ${delivery}, ${warehouse.DistrictCode || ''}, ${warehouse.WardCode || ''},
-              ${warehouse.SettlementAreaDescription?.replace(/'/g, "''") || ''}, 
-              ${parseInt(warehouse.PlaceMaxWeightAllowed) || null},
-              ${sendingLimitations}, ${receivingLimitations},
-              ${Boolean(warehouse.PostFinance)}, ${Boolean(warehouse.BicycleParking)}, 
-              ${Boolean(warehouse.PaymentAccess)}, ${Boolean(warehouse.POSTerminal)}, 
-              ${Boolean(warehouse.InternationalShipping)}, ${parseInt(warehouse.SelfServiceWorkplacesCount) || 0},
-              ${parseInt(warehouse.TotalMaxWeightAllowed) || null}, 
-              ${warehouse.Longitude ? parseFloat(warehouse.Longitude) : null},
-              ${warehouse.Latitude ? parseFloat(warehouse.Latitude) : null}, true, NOW()
+              ${warehouse.ShortAddress?.replace(/'/g, "''") || ''},
+              ${warehouse.Phone || ''}, ${schedule}, ${warehouse.PlaceMaxWeightAllowed || null}, NOW()
             ) ON CONFLICT (ref) DO UPDATE SET
               city_ref = EXCLUDED.city_ref,
               number = EXCLUDED.number,
               description = EXCLUDED.description,
               description_ru = EXCLUDED.description_ru,
               short_address = EXCLUDED.short_address,
-              short_address_ru = EXCLUDED.short_address_ru,
               phone = EXCLUDED.phone,
-              type_of_warehouse = EXCLUDED.type_of_warehouse,
-              category_of_warehouse = EXCLUDED.category_of_warehouse,
               schedule = EXCLUDED.schedule,
-              reception = EXCLUDED.reception,
-              delivery = EXCLUDED.delivery,
-              district_code = EXCLUDED.district_code,
-              ward_code = EXCLUDED.ward_code,
-              settlement_area_description = EXCLUDED.settlement_area_description,
               place_max_weight_allowed = EXCLUDED.place_max_weight_allowed,
-              sending_limitations_on_dimensions = EXCLUDED.sending_limitations_on_dimensions,
-              receiving_limitations_on_dimensions = EXCLUDED.receiving_limitations_on_dimensions,
-              post_finance = EXCLUDED.post_finance,
-              bicycle_parking = EXCLUDED.bicycle_parking,
-              payment_access = EXCLUDED.payment_access,
-              pos_terminal = EXCLUDED.pos_terminal,
-              international_shipping = EXCLUDED.international_shipping,
-              self_service_workplaces_count = EXCLUDED.self_service_workplaces_count,
-              total_max_weight_allowed = EXCLUDED.total_max_weight_allowed,
-              longitude = EXCLUDED.longitude,
-              latitude = EXCLUDED.latitude,
-              is_active = EXCLUDED.is_active,
-              last_updated = EXCLUDED.last_updated
+              last_updated = NOW()
           `);
         }
       }
