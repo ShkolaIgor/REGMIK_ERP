@@ -65,7 +65,7 @@ SELECT
 FROM roles r
 CROSS JOIN permissions p
 WHERE r.name = 'admin'
-ON CONFLICT (role_id, permission_id) DO UPDATE SET
+ON CONFLICT ON CONSTRAINT role_permissions_role_id_permission_id_key DO UPDATE SET
   granted = EXCLUDED.granted;
 
 -- Менеджер - більшість дозволів окрім системних
@@ -78,7 +78,7 @@ FROM roles r
 CROSS JOIN permissions p
 WHERE r.name = 'manager' 
   AND p.name NOT IN ('system.backup', 'system.restore', 'settings.manage', 'users.delete')
-ON CONFLICT (role_id, permission_id) DO UPDATE SET
+ON CONFLICT ON CONSTRAINT role_permissions_role_id_permission_id_key DO UPDATE SET
   granted = EXCLUDED.granted;
 
 -- Оператор - основні дозволи для роботи
@@ -99,7 +99,7 @@ WHERE r.name = 'operator'
     'email.send',
     'reports.view'
   )
-ON CONFLICT (role_id, permission_id) DO UPDATE SET
+ON CONFLICT ON CONSTRAINT role_permissions_role_id_permission_id_key DO UPDATE SET
   granted = EXCLUDED.granted;
 
 -- Глядач - тільки перегляд
@@ -112,7 +112,7 @@ FROM roles r
 CROSS JOIN permissions p
 WHERE r.name = 'viewer' 
   AND p.name LIKE '%.view'
-ON CONFLICT (role_id, permission_id) DO UPDATE SET
+ON CONFLICT ON CONSTRAINT role_permissions_role_id_permission_id_key DO UPDATE SET
   granted = EXCLUDED.granted;
 
 -- 4. Оновлюємо системні модулі
