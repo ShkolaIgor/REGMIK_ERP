@@ -1209,8 +1209,25 @@ export default function Orders() {
       return new Date(dateString).toISOString();
     };
 
+    // Генеруємо номер замовлення якщо це новий рахунок
+    const orderNumber = isEditMode && editingOrder 
+      ? editingOrder.orderNumber 
+      : `ORD-${Date.now()}`;
+
+    // Знаходимо statusId для статусу
+    const statusObj = orderStatuses?.find(status => status.name === data.status);
+    const statusId = statusObj?.id || 1; // Fallback на перший статус
+
+    // Розраховуємо загальну суму
+    const totalAmount = orderItems.reduce((sum, item) => 
+      sum + (parseFloat(item.quantity) * parseFloat(item.unitPrice)), 0
+    ).toString();
+
     const orderData = {
       order: {
+        orderNumber,
+        statusId,
+        totalAmount,
         ...(data.clientId && { clientId: parseInt(data.clientId) }),
         ...(data.clientContactsId && { clientContactsId: data.clientContactsId }),
         ...(data.customerName && { customerName: data.customerName }),
@@ -1968,9 +1985,8 @@ export default function Orders() {
                   </TableHeader>
                   <TableBody>
                     {orders.map((order: any) => (
-                      <React.Fragment key={`order-${order.id}`}>
+                      <React.Fragment key={order.id}>
                         <TableRow 
-                          key={`row-${order.id}`}
                           className="cursor-pointer hover:bg-gray-50"
                           onClick={() => toggleOrderExpansion(order.id)}
                         >
