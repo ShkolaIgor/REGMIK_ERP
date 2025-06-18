@@ -9,7 +9,7 @@ import { novaPoshtaCache } from "./nova-poshta-cache";
 import { pool, db } from "./db";
 import { eq } from "drizzle-orm";
 import { 
-  insertProductSchema, insertOrderSchemaForm, insertRecipeSchema,
+  insertProductSchema, insertOrderSchema, insertRecipeSchema,
   insertProductionTaskSchema, insertCategorySchema, insertUnitSchema, insertWarehouseSchema,
   insertSupplierSchema, insertInventorySchema, insertTechCardSchema, insertTechCardStepSchema, insertTechCardMaterialSchema,
   insertComponentSchema, insertProductComponentSchema, insertCostCalculationSchema, insertMaterialShortageSchema,
@@ -23,7 +23,7 @@ import {
   insertLocalUserSchema, insertRoleSchema, insertSystemModuleSchema, changePasswordSchema,
   insertEmailSettingsSchema, insertClientSchema, insertClientContactSchema, insertClientMailSchema, insertMailRegistrySchema, insertEnvelopePrintSettingsSchema,
   insertRepairSchema, insertRepairPartSchema, insertRepairStatusHistorySchema, insertRepairDocumentSchema,
-  clientTypes, insertClientTypeSchema, insertOrderStatusSchema, insertOrderSchemaForm
+  clientTypes, insertClientTypeSchema, insertOrderStatusSchema
 } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import { z } from "zod";

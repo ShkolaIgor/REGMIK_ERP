@@ -1994,12 +1994,6 @@ export type UpsertUser = {
 export type LocalUser = typeof localUsers.$inferSelect;
 export type InsertLocalUser = z.infer<typeof insertLocalUserSchema>;
 
-export type Role = typeof roles.$inferSelect;
-export type InsertRole = z.infer<typeof insertRoleSchema>;
-
-export type SystemModule = typeof systemModules.$inferSelect;
-export type InsertSystemModule = z.infer<typeof insertSystemModuleSchema>;
-
 // Additional schemas and types for orders and order statuses
 export type OrderWithDetails = typeof orders.$inferSelect;
 export type OrderStatusWithDetails = typeof orderStatuses.$inferSelect;
@@ -2389,11 +2383,7 @@ export const insertUserPermissionSchema = createInsertSchema(userPermissions).om
 });
 
 // Типи для ролей та дозволів
-export type Role = typeof roles.$inferSelect;
-export type InsertRole = z.infer<typeof insertRoleSchema>;
 
-export type SystemModule = typeof systemModules.$inferSelect;
-export type InsertSystemModule = z.infer<typeof insertSystemModuleSchema>;
 
 export type Permission = typeof permissions.$inferSelect;
 export type InsertPermission = z.infer<typeof insertPermissionSchema>;
