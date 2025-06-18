@@ -5165,6 +5165,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Окремий endpoint для пошуку клієнтів (без пагінації)
+  app.get("/api/clients/search", async (req, res) => {
+    try {
+      const search = req.query.q as string || '';
+      const limit = parseInt(req.query.limit as string) || 50;
+      
+      if (!search.trim()) {
+        // Якщо немає пошукового запиту, повертаємо перші записи
+        const result = await storage.getClientsPaginated(1, limit);
+        return res.json({ clients: result.clients });
+      }
+
+      // Пошук по всій базі з обмеженням кількості результатів
+      const result = await storage.getClientsPaginated(1, limit, search);
+      res.json({ clients: result.clients });
+    } catch (error) {
+      console.error("Failed to search clients:", error);
+      res.status(500).json({ error: "Failed to search clients" });
+    }
+  });
+
   app.post("/api/clients", async (req, res) => {
     try {
       console.log("Creating client with data:", JSON.stringify(req.body, null, 2));

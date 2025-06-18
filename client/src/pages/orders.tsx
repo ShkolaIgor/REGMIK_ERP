@@ -589,11 +589,23 @@ export default function Orders() {
 
 
 
-  const { data: clientsData } = useQuery({
-    queryKey: ["/api/clients"],
+  // Запит для пошуку клієнтів з debounce
+  const [debouncedSearchValue, setDebouncedSearchValue] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchValue(clientSearchValue);
+    }, 300); // 300мс затримка
+
+    return () => clearTimeout(timer);
+  }, [clientSearchValue]);
+
+  const { data: clientSearchData, isLoading: isSearchingClients } = useQuery({
+    queryKey: ["/api/clients/search", debouncedSearchValue],
+    enabled: true,
   });
   
-  const clients = clientsData?.clients || [];
+  const clients = clientSearchData?.clients || [];
 
   const { data: orderStatusList = [] } = useQuery({
     queryKey: ["/api/order-statuses"],
@@ -1090,11 +1102,8 @@ export default function Orders() {
     setIsPartialShipmentOpen(true);
   };
 
-  // Функції для роботи з клієнтами
-  const filteredClients = clients.filter((client: any) =>
-    client.name.toLowerCase().includes(clientSearchValue.toLowerCase()) ||
-    (client.taxCode && client.taxCode.toString().includes(clientSearchValue))
-  );
+  // Функції для роботи з клієнтами - серверний пошук замість клієнтського фільтрування
+  const filteredClients = clients; // Дані вже відфільтровані на сервері
 
   const handleClientSelect = (clientId: string) => {
     form.setValue("clientId", clientId);
