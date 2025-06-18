@@ -104,6 +104,8 @@ const orderSchema = z.object({
   customerName: z.string().optional(),
   customerEmail: z.string().email("Введіть правильний email").optional().or(z.literal("")),
   customerPhone: z.string().optional(),
+  invoiceNumber: z.string().optional(),
+  carrierId: z.number().optional().nullable(),
   status: z.string().default("pending"),
   statusId: z.number().optional(),
   notes: z.string().optional(),
@@ -676,6 +678,10 @@ export default function Orders() {
     queryKey: ["/api/client-contacts"],
   });
 
+  const { data: carriers = [] } = useQuery({
+    queryKey: ["/api/carriers"],
+  });
+
   // Форма для управління статусами
   const statusForm = useForm<StatusFormData>({
     resolver: zodResolver(statusSchema),
@@ -1233,6 +1239,8 @@ export default function Orders() {
         ...(data.customerName && { customerName: data.customerName }),
         ...(data.customerEmail && { customerEmail: data.customerEmail }),
         ...(data.customerPhone && { customerPhone: data.customerPhone }),
+        ...(data.invoiceNumber && { invoiceNumber: data.invoiceNumber }),
+        ...(data.carrierId && { carrierId: data.carrierId }),
         status: data.status,
         ...(data.notes && { notes: data.notes }),
         ...(data.paymentDate && { paymentDate: parseDateForServer(data.paymentDate) }),
@@ -1442,6 +1450,33 @@ export default function Orders() {
                       id="customerPhone"
                       {...form.register("customerPhone")}
                     />
+                  </div>
+                  <div>
+                    <Label htmlFor="invoiceNumber">Рахунок</Label>
+                    <Input
+                      id="invoiceNumber"
+                      {...form.register("invoiceNumber")}
+                      placeholder="Номер рахунку"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="carrierId">Перевізник</Label>
+                    <Select
+                      value={form.watch("carrierId") ? form.watch("carrierId").toString() : ""}
+                      onValueChange={(value) => form.setValue("carrierId", value ? parseInt(value) : null)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Оберіть перевізника" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Без перевізника</SelectItem>
+                        {carriers?.map((carrier: any) => (
+                          <SelectItem key={carrier.id} value={carrier.id.toString()}>
+                            {carrier.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label htmlFor="status">Статус</Label>
