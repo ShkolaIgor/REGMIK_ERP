@@ -6765,22 +6765,28 @@ export class DatabaseStorage implements IStorage {
 
           await this.db.execute(sql`
             INSERT INTO nova_poshta_warehouses (
-              ref, city_ref, number, description, description_ru, short_address,
-              phone, schedule, place_max_weight_allowed, last_updated
+              ref, city_ref, number, description, description_ru, short_address, short_address_ru,
+              phone, schedule, place_max_weight_allowed, is_active, city_name, city_name_ru, last_updated
             ) VALUES (
               ${warehouse.Ref}, ${warehouse.CityRef}, ${warehouse.Number || ''}, 
               ${warehouse.Description?.replace(/'/g, "''") || ''}, ${warehouse.DescriptionRu?.replace(/'/g, "''") || ''},
-              ${warehouse.ShortAddress?.replace(/'/g, "''") || ''},
-              ${warehouse.Phone || ''}, ${schedule}, ${warehouse.PlaceMaxWeightAllowed || null}, NOW()
+              ${warehouse.ShortAddress?.replace(/'/g, "''") || ''}, ${warehouse.ShortAddressRu?.replace(/'/g, "''") || ''},
+              ${warehouse.Phone || ''}, ${schedule}, ${warehouse.PlaceMaxWeightAllowed || null}, 
+              ${warehouse.IsActive !== false}, ${warehouse.CityName?.replace(/'/g, "''") || ''}, 
+              ${warehouse.CityNameRu?.replace(/'/g, "''") || ''}, NOW()
             ) ON CONFLICT (ref) DO UPDATE SET
               city_ref = EXCLUDED.city_ref,
               number = EXCLUDED.number,
               description = EXCLUDED.description,
               description_ru = EXCLUDED.description_ru,
               short_address = EXCLUDED.short_address,
+              short_address_ru = EXCLUDED.short_address_ru,
               phone = EXCLUDED.phone,
               schedule = EXCLUDED.schedule,
               place_max_weight_allowed = EXCLUDED.place_max_weight_allowed,
+              is_active = EXCLUDED.is_active,
+              city_name = EXCLUDED.city_name,
+              city_name_ru = EXCLUDED.city_name_ru,
               last_updated = NOW()
           `);
         }
