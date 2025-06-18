@@ -1212,6 +1212,7 @@ export default function Orders() {
     const orderData = {
       order: {
         ...(data.clientId && { clientId: parseInt(data.clientId) }),
+        ...(data.clientContactsId && { clientContactsId: data.clientContactsId }),
         ...(data.customerName && { customerName: data.customerName }),
         ...(data.customerEmail && { customerEmail: data.customerEmail }),
         ...(data.customerPhone && { customerPhone: data.customerPhone }),
