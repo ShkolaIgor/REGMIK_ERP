@@ -703,15 +703,15 @@ export default function Orders() {
 
   // Ініціалізуємо поле компанії з компанією за замовчуванням
   useEffect(() => {
-    if (companies.length > 0 && !form.watch("companyId") && !isEditMode) {
+    if (companies.length > 0 && !form.watch("companyId") && !isEditMode && isDialogOpen) {
       const defaultCompany = companies.find((c: Company) => c.isDefault);
       if (defaultCompany) {
         form.setValue("companyId", defaultCompany.id.toString());
         setCompanySearchValue(defaultCompany.name);
-        setCompanyComboboxOpen(false);
+        setCompanyComboboxOpen(false); // Закриваємо список компаній
       }
     }
-  }, [companies, form, isEditMode]);
+  }, [companies, form, isEditMode, isDialogOpen]);
 
   // Форма для управління статусами
   const statusForm = useForm<StatusFormData>({
@@ -1159,8 +1159,9 @@ export default function Orders() {
         const clientInput = document.querySelector('input[placeholder*="Почніть вводити назву клієнта"]') as HTMLInputElement;
         if (clientInput) {
           clientInput.focus();
+          clientInput.click(); // Додатково викликаємо клік для активації поля
         }
-      }, 100);
+      }, 200);
     }
   };
 
