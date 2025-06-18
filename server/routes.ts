@@ -9,7 +9,7 @@ import { novaPoshtaCache } from "./nova-poshta-cache";
 import { pool, db } from "./db";
 import { eq } from "drizzle-orm";
 import { 
-  insertProductSchema, insertOrderSchema, insertRecipeSchema,
+  insertProductSchema, insertOrderSchemaForm, insertRecipeSchema,
   insertProductionTaskSchema, insertCategorySchema, insertUnitSchema, insertWarehouseSchema,
   insertSupplierSchema, insertInventorySchema, insertTechCardSchema, insertTechCardStepSchema, insertTechCardMaterialSchema,
   insertComponentSchema, insertProductComponentSchema, insertCostCalculationSchema, insertMaterialShortageSchema,
