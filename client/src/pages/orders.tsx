@@ -22,10 +22,13 @@ import { cn, formatCurrency } from "@/lib/utils";
 // Схеми валідації
 const orderSchema = z.object({
   companyId: z.string().min(1, "Оберіть компанію"),
+  clientId: z.string().optional(),
+  clientContactsId: z.string().optional(),
   customerName: z.string().min(1, "Введіть ім'я клієнта"),
   customerEmail: z.string().email("Введіть коректний email").optional().or(z.literal("")),
   customerPhone: z.string().optional(),
-  status: z.string().min(1, "Оберіть статус"),
+  statusId: z.string().min(1, "Оберіть статус"),
+  totalAmount: z.string().min(1, "Введіть суму"),
   notes: z.string().optional(),
   paymentDate: z.string().optional(),
   dueDate: z.string().optional(),
@@ -33,18 +36,31 @@ const orderSchema = z.object({
   trackingNumber: z.string().optional(),
   invoiceNumber: z.string().optional(),
   carrierId: z.string().optional(),
+  contractNumber: z.string().optional(),
+  paymentType: z.string().optional(),
+  paidAmount: z.string().optional(),
+});
+
+const orderItemSchema = z.object({
+  productId: z.number().min(1, "Оберіть товар"),
+  quantity: z.string().min(1, "Введіть кількість"),
+  unitPrice: z.string().min(1, "Введіть ціну"),
 });
 
 type OrderFormData = z.infer<typeof orderSchema>;
 
 interface Order {
   id: number;
+  orderSequenceNumber: number;
   orderNumber: string;
   customerName: string;
   customerEmail?: string;
   customerPhone?: string;
+  clientId?: string;
+  clientContactsId?: number;
+  statusId?: number;
   status: string;
-  totalAmount: number;
+  totalAmount: string | number;
   createdAt: string;
   companyId: number;
   invoiceNumber?: string;
@@ -54,6 +70,21 @@ interface Order {
   dueDate?: string;
   shippedDate?: string;
   notes?: string;
+  contractNumber?: string;
+  paymentType?: string;
+  paidAmount?: string;
+}
+
+interface OrderItem {
+  id?: number;
+  productId: number;
+  quantity: string;
+  unitPrice: string;
+  product?: {
+    id: number;
+    name: string;
+    sku: string;
+  };
 }
 
 export default function Orders() {
@@ -66,7 +97,15 @@ export default function Orders() {
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [companyComboboxOpen, setCompanyComboboxOpen] = useState(false);
+  const [clientComboboxOpen, setClientComboboxOpen] = useState(false);
+  const [contactComboboxOpen, setContactComboboxOpen] = useState(false);
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState("");
+  const [selectedContactId, setSelectedContactId] = useState("");
+  const [clientSearchValue, setClientSearchValue] = useState("");
+  const [contactSearchValue, setContactSearchValue] = useState("");
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [isAddingProduct, setIsAddingProduct] = useState(false);
 
   // Завантаження даних
   const { data: orders = [], isLoading: ordersLoading } = useQuery({
@@ -83,6 +122,20 @@ export default function Orders() {
 
   const { data: carriers = [] } = useQuery({
     queryKey: ["/api/carriers"],
+  });
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["/api/client-search"],
+    enabled: false,
+  });
+
+  const { data: clientContacts = [] } = useQuery({
+    queryKey: ["/api/client-contacts"],
+    enabled: !!selectedClientId,
+  });
+
+  const { data: products = [] } = useQuery({
+    queryKey: ["/api/products"],
   });
 
   // Форма
@@ -132,6 +185,9 @@ export default function Orders() {
       setIsDialogOpen(false);
       form.reset();
       setSelectedCompanyId("");
+      setSelectedClientId("");
+      setSelectedContactId("");
+      setOrderItems([]);
       toast({
         title: "Успіх",
         description: "Замовлення створено",
@@ -223,6 +279,9 @@ export default function Orders() {
     });
     
     setSelectedCompanyId(defaultCompanyId);
+    setSelectedClientId("");
+    setSelectedContactId("");
+    setOrderItems([]);
     setIsDialogOpen(true);
   };
 
@@ -233,10 +292,13 @@ export default function Orders() {
     
     form.reset({
       companyId: order.companyId.toString(),
+      clientId: order.clientId || "",
+      clientContactsId: order.clientContactsId ? order.clientContactsId.toString() : "",
       customerName: order.customerName,
       customerEmail: order.customerEmail || "",
       customerPhone: order.customerPhone || "",
-      status: order.status,
+      statusId: order.statusId ? order.statusId.toString() : "1",
+      totalAmount: order.totalAmount.toString(),
       notes: order.notes || "",
       paymentDate: order.paymentDate || "",
       dueDate: order.dueDate || "",
@@ -244,6 +306,9 @@ export default function Orders() {
       trackingNumber: order.trackingNumber || "",
       invoiceNumber: order.invoiceNumber || "",
       carrierId: order.carrierId ? order.carrierId.toString() : "none",
+      contractNumber: order.contractNumber || "",
+      paymentType: order.paymentType || "",
+      paidAmount: order.paidAmount ? order.paidAmount.toString() : "",
     });
     
     setIsDialogOpen(true);
@@ -366,6 +431,115 @@ export default function Orders() {
                     )}
                   </div>
 
+                  {/* Клієнт */}
+                  <div>
+                    <Label htmlFor="clientId">Клієнт</Label>
+                    <Popover open={clientComboboxOpen} onOpenChange={setClientComboboxOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={clientComboboxOpen}
+                          className="w-full justify-between"
+                        >
+                          {selectedClientId && clients && clients.find
+                            ? clients.find((client: any) => client.id === selectedClientId)?.name || "Оберіть клієнта..."
+                            : "Оберіть клієнта..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput 
+                            placeholder="Пошук клієнта..." 
+                            value={clientSearchValue}
+                            onValueChange={setClientSearchValue}
+                          />
+                          <CommandEmpty>Клієнт не знайдений</CommandEmpty>
+                          <CommandGroup>
+                            {clients && clients.map && clients.map((client: any) => (
+                              <CommandItem
+                                key={client.id}
+                                value={client.name}
+                                onSelect={() => {
+                                  setSelectedClientId(client.id);
+                                  form.setValue("clientId", client.id);
+                                  form.setValue("customerName", client.name);
+                                  form.setValue("customerEmail", client.email || "");
+                                  form.setValue("customerPhone", client.phone || "");
+                                  setClientComboboxOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedClientId === client.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {client.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* Контактна особа */}
+                  {selectedClientId && (
+                    <div>
+                      <Label htmlFor="clientContactsId">Контактна особа</Label>
+                      <Popover open={contactComboboxOpen} onOpenChange={setContactComboboxOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={contactComboboxOpen}
+                            className="w-full justify-between"
+                          >
+                            {selectedContactId && clientContacts && clientContacts.find
+                              ? clientContacts.find((contact: any) => contact.id.toString() === selectedContactId)?.fullName || "Оберіть контактну особу..."
+                              : "Оберіть контактну особу..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0">
+                          <Command>
+                            <CommandInput 
+                              placeholder="Пошук контактної особи..." 
+                              value={contactSearchValue}
+                              onValueChange={setContactSearchValue}
+                            />
+                            <CommandEmpty>Контактна особа не знайдена</CommandEmpty>
+                            <CommandGroup>
+                              {clientContacts && clientContacts.map && clientContacts.map((contact: any) => (
+                                <CommandItem
+                                  key={contact.id}
+                                  value={contact.fullName}
+                                  onSelect={() => {
+                                    setSelectedContactId(contact.id.toString());
+                                    form.setValue("clientContactsId", contact.id.toString());
+                                    form.setValue("customerEmail", contact.email || "");
+                                    form.setValue("customerPhone", contact.phone || "");
+                                    setContactComboboxOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedContactId === contact.id.toString() ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {contact.fullName}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  )}
+
                   {/* Інформація про клієнта */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -395,33 +569,51 @@ export default function Orders() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="customerPhone">Телефон</Label>
                       <Input {...form.register("customerPhone")} />
                     </div>
                     <div>
-                      <Label htmlFor="status">Статус *</Label>
-                      <Select onValueChange={(value) => form.setValue("status", value)} defaultValue={form.getValues("status")}>
+                      <Label htmlFor="statusId">Статус *</Label>
+                      <Select onValueChange={(value) => form.setValue("statusId", value)} defaultValue={form.getValues("statusId")}>
                         <SelectTrigger>
                           <SelectValue placeholder="Оберіть статус" />
                         </SelectTrigger>
                         <SelectContent>
                           {orderStatuses && orderStatuses.map && orderStatuses.map((status: any) => (
-                            <SelectItem key={status.id} value={status.name}>
-                              {status.displayName || status.name}
+                            <SelectItem key={status.id} value={status.id.toString()}>
+                              {status.name || status.displayName}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
+                    <div>
+                      <Label htmlFor="totalAmount">Загальна сума *</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        {...form.register("totalAmount")}
+                        className={form.formState.errors.totalAmount ? "border-red-500" : ""}
+                      />
+                      {form.formState.errors.totalAmount && (
+                        <p className="text-sm text-red-500 mt-1">
+                          {form.formState.errors.totalAmount.message}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Додаткові поля */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="invoiceNumber">Номер рахунку</Label>
                       <Input {...form.register("invoiceNumber")} />
+                    </div>
+                    <div>
+                      <Label htmlFor="contractNumber">Номер договору</Label>
+                      <Input {...form.register("contractNumber")} />
                     </div>
                     <div>
                       <Label htmlFor="carrierId">Перевізник</Label>
@@ -441,20 +633,37 @@ export default function Orders() {
                     </div>
                   </div>
 
-                  {/* Треки та дати */}
-                  {isEditMode && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="trackingNumber">Трек-номер</Label>
-                        <Input {...form.register("trackingNumber")} />
-                      </div>
-                      <div>
-                        <Label htmlFor="paymentDate">Дата оплати</Label>
-                        <Input type="date" {...form.register("paymentDate")} />
-                      </div>
+                  {/* Оплата */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="paymentType">Тип оплати</Label>
+                      <Select onValueChange={(value) => form.setValue("paymentType", value)} defaultValue={form.getValues("paymentType")}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Оберіть тип оплати" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cash">Готівка</SelectItem>
+                          <SelectItem value="card">Картка</SelectItem>
+                          <SelectItem value="transfer">Переказ</SelectItem>
+                          <SelectItem value="credit">Кредит</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                  )}
+                    <div>
+                      <Label htmlFor="paidAmount">Сплачено</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        {...form.register("paidAmount")}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="paymentDate">Дата оплати</Label>
+                      <Input type="date" {...form.register("paymentDate")} />
+                    </div>
+                  </div>
 
+                  {/* Дати та треки */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="dueDate">Дата виконання</Label>
@@ -464,6 +673,116 @@ export default function Orders() {
                       <Label htmlFor="shippedDate">Дата відправки</Label>
                       <Input type="date" {...form.register("shippedDate")} />
                     </div>
+                  </div>
+
+                  {/* Треки та дати */}
+                  {isEditMode && (
+                    <div>
+                      <Label htmlFor="trackingNumber">Трек-номер</Label>
+                      <Input {...form.register("trackingNumber")} />
+                    </div>
+                  )}
+
+                  {/* Товари */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <Label>Товари</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsAddingProduct(true)}
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Додати товар
+                      </Button>
+                    </div>
+                    
+                    {orderItems.length > 0 && (
+                      <div className="border rounded-lg">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Товар</TableHead>
+                              <TableHead>Кількість</TableHead>
+                              <TableHead>Ціна</TableHead>
+                              <TableHead>Сума</TableHead>
+                              <TableHead>Дії</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {orderItems.map((item, index) => {
+                              const product = products.find((p: any) => p.id === item.productId);
+                              const itemTotal = parseFloat(item.quantity) * parseFloat(item.unitPrice);
+                              return (
+                                <TableRow key={index}>
+                                  <TableCell>{product?.name || `ID: ${item.productId}`}</TableCell>
+                                  <TableCell>{item.quantity}</TableCell>
+                                  <TableCell>{formatCurrency(parseFloat(item.unitPrice))}</TableCell>
+                                  <TableCell>{formatCurrency(itemTotal)}</TableCell>
+                                  <TableCell>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        const newItems = [...orderItems];
+                                        newItems.splice(index, 1);
+                                        setOrderItems(newItems);
+                                      }}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+
+                    {isAddingProduct && (
+                      <div className="border rounded-lg p-4 space-y-4">
+                        <h4 className="font-medium">Додати товар</h4>
+                        <div className="grid grid-cols-4 gap-4">
+                          <div>
+                            <Label>Товар</Label>
+                            <Select onValueChange={(value) => {
+                              const selectedProduct = products.find((p: any) => p.id.toString() === value);
+                              if (selectedProduct) {
+                                setOrderItems([...orderItems, {
+                                  productId: selectedProduct.id,
+                                  quantity: "1",
+                                  unitPrice: selectedProduct.retailPrice || "0",
+                                }]);
+                                setIsAddingProduct(false);
+                              }
+                            }}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Оберіть товар" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {products && products.map && products.map((product: any) => (
+                                  <SelectItem key={product.id} value={product.id.toString()}>
+                                    {product.name} - {formatCurrency(parseFloat(product.retailPrice || 0))}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsAddingProduct(false)}
+                          >
+                            Скасувати
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Примітки */}
