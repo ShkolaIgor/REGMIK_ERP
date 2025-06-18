@@ -5861,8 +5861,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Client Contacts API (Combined table)
   app.get("/api/client-contacts", async (req, res) => {
     try {
-      const contacts = await storage.getClientContacts();
-      res.json(contacts);
+      const { clientId } = req.query;
+      
+      if (clientId) {
+        // Фільтруємо контакти для конкретного клієнта
+        const clientIdNum = parseInt(clientId as string);
+        console.log(`Фільтруємо контакти для клієнта ID: ${clientIdNum}`);
+        
+        const contacts = await storage.getClientContacts();
+        const filteredContacts = contacts.filter(contact => contact.clientId === clientIdNum);
+        
+        console.log(`Знайдено ${filteredContacts.length} контактів для клієнта ${clientIdNum}`);
+        console.log('Фільтровані контакти:', filteredContacts.map(c => ({id: c.id, clientId: c.clientId, fullName: c.fullName})));
+        
+        res.json({ clientContacts: filteredContacts });
+      } else {
+        // Повертаємо всі контакти
+        const contacts = await storage.getClientContacts();
+        res.json(contacts);
+      }
     } catch (error) {
       console.error("Error fetching client contacts:", error);
       res.status(500).json({ error: "Failed to fetch client contacts" });
