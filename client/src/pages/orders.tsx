@@ -1345,13 +1345,7 @@ export default function Orders() {
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={() => {
-                  setIsEditMode(false);
-                  setEditingOrder(null);
-                  setOrderItems([]);
-                  form.reset();
-                  setIsDialogOpen(true);
-                }}>
+                <Button onClick={handleCreateOrder}>
                   <Plus className="w-4 h-4 mr-2" />
                   Новий рахунок/замовлення
                 </Button>
