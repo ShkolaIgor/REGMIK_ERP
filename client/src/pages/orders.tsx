@@ -448,7 +448,7 @@ export default function Orders() {
         );
       
       case 'status':
-        const statusInfo = orderStatuses.find(s => s.name === order.status);
+        const statusInfo = orderStatusList.find((s: any) => s.id === order.statusId);
         
         const handleStatusChange = (newStatus: string) => {
           console.log("Status change handler called with:", { orderId: order.id, currentStatus: order.status, newStatus });
@@ -463,18 +463,18 @@ export default function Orders() {
               onValueChange={handleStatusChange}
             >
               <SelectTrigger className="w-[140px] h-7 border-0 p-1">
-                <Badge 
-                  className="text-sm font-medium border-0 w-full justify-center"
+                <span 
+                  className="px-2 py-1 text-xs font-medium rounded-full"
                   style={{
                     color: statusInfo?.textColor || '#000000',
                     backgroundColor: statusInfo?.backgroundColor || '#f3f4f6'
                   }}
                 >
-                  {order.status}
-                </Badge>
+                  {statusInfo?.name || order.status}
+                </span>
               </SelectTrigger>
               <SelectContent>
-                {orderStatuses.map((status) => (
+                {orderStatusList.map((status: any) => (
                   <SelectItem key={status.id} value={status.name}>
                     <div className="flex items-center">
                       <div
