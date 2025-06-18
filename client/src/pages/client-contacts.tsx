@@ -83,7 +83,7 @@ export default function ClientContacts() {
 
   // Fetch clients for dropdown
   const { data: clientsData } = useQuery({
-    queryKey: ["/api/clients"],
+    queryKey: ["/api/clients/search"],
   });
   
   const clients = clientsData?.clients || [];

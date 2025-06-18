@@ -76,7 +76,7 @@ export function RepairForm({ repair, onSuccess, onCancel }: RepairFormProps) {
 
   // Отримання клієнтів
   const { data: clients = [] } = useQuery({
-    queryKey: ["/api/clients"]
+    queryKey: ["/api/clients/search"]
   });
 
   // Отримання працівників
