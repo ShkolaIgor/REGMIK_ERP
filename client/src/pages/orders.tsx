@@ -1507,19 +1507,36 @@ export default function Orders() {
                     <div className="relative">
                       <Input
                         placeholder="Почніть вводити назву клієнта..."
-                        value={form.watch("clientId") ? 
-                          clients.find((c: any) => c.id.toString() === form.watch("clientId"))?.name || clientSearchValue 
-                          : clientSearchValue || form.watch("customerName")}
+                        value={clientSearchValue || (form.watch("clientId") ? 
+                          clients.find((c: any) => c.id.toString() === form.watch("clientId"))?.name 
+                          : form.watch("customerName") || "")}
                         onChange={(e) => {
-                          handleClientSearchChange(e.target.value);
+                          const value = e.target.value;
+                          setClientSearchValue(value);
+                          
+                          // Скидаємо вибраного клієнта при редагуванні
+                          if (form.watch("clientId")) {
+                            form.setValue("clientId", "");
+                            setSelectedClientId("");
+                          }
+                          
                           // Відкриваємо список при введенні
-                          if (e.target.value.trim().length >= 1) {
+                          if (value.trim().length >= 1) {
                             setClientComboboxOpen(true);
+                          } else {
+                            setClientComboboxOpen(false);
                           }
                         }}
                         onFocus={() => {
-                          // При фокусі відкриваємо список тільки якщо поле не заповнене або це пошук
-                          if (!form.watch("clientId") || clientSearchValue.length > 0) {
+                          // При фокусі, якщо є обраний клієнт, підготовуємо для редагування
+                          if (form.watch("clientId") && !clientSearchValue) {
+                            const selectedClient = clients.find((c: any) => c.id.toString() === form.watch("clientId"));
+                            if (selectedClient) {
+                              setClientSearchValue(selectedClient.name);
+                            }
+                          }
+                          // Відкриваємо список тільки якщо є текст для пошуку
+                          if (clientSearchValue && clientSearchValue.length >= 1) {
                             setClientComboboxOpen(true);
                           }
                         }}
