@@ -60,6 +60,12 @@ export default function NovaPoshtaDeliverySettingsForm({
 }: NovaPoshtaDeliverySettingsFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Стан для пошуку міст та відділень
+  const [cityQuery, setCityQuery] = useState("");
+  const [selectedCity, setSelectedCity] = useState<any>(null);
+  const [warehouseQuery, setWarehouseQuery] = useState("");
+  const [selectedWarehouse, setSelectedWarehouse] = useState<any>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(deliverySettingsSchema),
@@ -166,74 +172,146 @@ export default function NovaPoshtaDeliverySettingsForm({
         {/* Адреса доставки */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Адреса доставки</h3>
+          
+          {/* Пошук міста і відділення в одному рядку */}
           <div className="grid gap-4 md:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="deliveryCityRef"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Референс міста</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Референс міста в Nova Poshta"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Пошук міста */}
+            <div className="space-y-2">
+              <FormField
+                control={form.control}
+                name="deliveryCityName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Місто доставки</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input 
+                          placeholder="Введіть назву міста"
+                          value={cityQuery}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setCityQuery(value);
+                            field.onChange(value);
+                            if (!value) {
+                              setSelectedCity(null);
+                              form.setValue("deliveryCityRef", "");
+                            }
+                          }}
+                        />
+                        {citiesLoading && (
+                          <div className="absolute right-2 top-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          </div>
+                        )}
+                        {cities.length > 0 && cityQuery.length >= 2 && !selectedCity && (
+                          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                            {cities.slice(0, 10).map((city: any) => (
+                              <div
+                                key={city.Ref}
+                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                onClick={() => {
+                                  setSelectedCity(city);
+                                  setCityQuery(city.Description);
+                                  form.setValue("deliveryCityName", city.Description);
+                                  form.setValue("deliveryCityRef", city.Ref);
+                                  setSelectedWarehouse(null);
+                                  setWarehouseQuery("");
+                                  form.setValue("deliveryWarehouseAddress", "");
+                                  form.setValue("deliveryWarehouseRef", "");
+                                }}
+                              >
+                                <div className="font-medium text-sm">{city.Description}</div>
+                                <div className="text-xs text-gray-500">{city.AreaDescription}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="deliveryCityRef"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input type="hidden" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
 
-            <FormField
-              control={form.control}
-              name="deliveryCityName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Назва міста</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Назва міста доставки"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="deliveryWarehouseRef"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Референс відділення</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Референс відділення Nova Poshta"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="deliveryWarehouseAddress"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Адреса відділення</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Повна адреса відділення"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Пошук відділення */}
+            <div className="space-y-2">
+              <FormField
+                control={form.control}
+                name="deliveryWarehouseAddress"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Відділення</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input 
+                          placeholder={selectedCity ? "Введіть номер або адресу відділення" : "Спочатку оберіть місто"}
+                          value={warehouseQuery}
+                          disabled={!selectedCity}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setWarehouseQuery(value);
+                            field.onChange(value);
+                            if (!value) {
+                              setSelectedWarehouse(null);
+                              form.setValue("deliveryWarehouseRef", "");
+                            }
+                          }}
+                        />
+                        {warehousesLoading && selectedCity && (
+                          <div className="absolute right-2 top-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          </div>
+                        )}
+                        {warehouses.length > 0 && selectedCity && !selectedWarehouse && (
+                          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                            {warehouses.slice(0, 10).map((warehouse: any) => (
+                              <div
+                                key={warehouse.ref}
+                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                onClick={() => {
+                                  setSelectedWarehouse(warehouse);
+                                  const fullAddress = `№${warehouse.number}: ${warehouse.short_address}`;
+                                  setWarehouseQuery(fullAddress);
+                                  form.setValue("deliveryWarehouseAddress", fullAddress);
+                                  form.setValue("deliveryWarehouseRef", warehouse.ref);
+                                }}
+                              >
+                                <div className="font-medium text-sm">№{warehouse.number}</div>
+                                <div className="text-xs text-gray-500">{warehouse.short_address}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="deliveryWarehouseRef"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input type="hidden" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
         </div>
 
