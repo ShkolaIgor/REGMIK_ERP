@@ -1,11 +1,6 @@
 -- SQL скрипт для перенесення дозволів в продакшн
 -- Створено: 2025-06-18
 
--- 0. Створюємо необхідні унікальні індекси
-CREATE UNIQUE INDEX IF NOT EXISTS permissions_name_unique ON permissions (name);
-CREATE UNIQUE INDEX IF NOT EXISTS roles_name_unique ON roles (name);
-CREATE UNIQUE INDEX IF NOT EXISTS system_modules_name_unique ON system_modules (name);
-
 -- 1. Спочатку створюємо ролі, якщо їх немає
 INSERT INTO roles (name, display_name, description, permissions) 
 VALUES 
