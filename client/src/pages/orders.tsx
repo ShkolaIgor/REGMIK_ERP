@@ -1496,7 +1496,7 @@ export default function Orders() {
                         placeholder="Почніть вводити назву клієнта..."
                         value={form.watch("clientId") ? 
                           clients.find((c: any) => c.id.toString() === form.watch("clientId"))?.name || clientSearchValue 
-                          : clientSearchValue}
+                          : clientSearchValue || form.watch("customerName")}
                         onChange={(e) => {
                           // Якщо є обраний клієнт і користувач редагує, скидаємо вибір
                           if (form.watch("clientId")) {
