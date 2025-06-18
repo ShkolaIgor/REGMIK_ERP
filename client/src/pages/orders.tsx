@@ -686,6 +686,18 @@ export default function Orders() {
       form.setValue("clientContactsId", undefined);
     }
   }, [form.watch("clientId")]);
+
+  // Ініціалізуємо поле компанії з компанією за замовчуванням
+  useEffect(() => {
+    if (companies.length > 0 && !form.watch("companyId") && !isEditMode) {
+      const defaultCompany = companies.find((c: Company) => c.isDefault);
+      if (defaultCompany) {
+        form.setValue("companyId", defaultCompany.id.toString());
+        setCompanySearchValue(defaultCompany.name);
+        setCompanyComboboxOpen(false);
+      }
+    }
+  }, [companies, form, isEditMode]);
   
   const clients = clientSearchData?.clients || [];
 
