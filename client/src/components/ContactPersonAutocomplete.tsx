@@ -69,9 +69,7 @@ export function ContactPersonAutocomplete({
       const response = await fetch(`/api/client-contacts?clientId=${clientId}`);
       if (!response.ok) throw new Error('Failed to fetch contacts');
       const data = await response.json();
-      // Переконуємося, що завжди повертаємо масив
-      const contacts = data.clientContacts || data || [];
-      return Array.isArray(contacts) ? contacts : [];
+      return data.clientContacts || [];
     },
     enabled: !!clientId,
   });
@@ -89,21 +87,22 @@ export function ContactPersonAutocomplete({
         },
       });
     },
-    onSuccess: async (newContact) => {
+    onSuccess: (newContact) => {
+      // Спочатку інвалідуємо кеш
+      queryClient.invalidateQueries({ queryKey: ["/api/client-contacts", clientId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/client-contacts"] });
+      
       // Закриваємо діалог і очищаємо форму
       setIsCreateDialogOpen(false);
       contactForm.reset();
       
-      // Автоматично вибираємо новий контакт
-      setSelectedContactId(newContact.id);
-      setSearchValue(newContact.fullName);
-      setIsDropdownOpen(false);
-      onChange(newContact.id, newContact.fullName);
-      
-      // Перезавантажуємо дані контактів
-      await queryClient.refetchQueries({ 
-        queryKey: ["/api/client-contacts", clientId] 
-      });
+      // Автоматично вибираємо новий контакт після короткої затримки
+      setTimeout(() => {
+        setSelectedContactId(newContact.id);
+        setSearchValue(newContact.fullName);
+        setIsDropdownOpen(false);
+        onChange(newContact.id, newContact.fullName);
+      }, 100);
       
       toast({
         title: "Успіх",
@@ -174,15 +173,16 @@ export function ContactPersonAutocomplete({
     }
   }, [value, contactsData]);
 
-  // Оновлення після створення нового контакту  
+  // Оновлення після створення нового контакту
   useEffect(() => {
-    if (contactsData.length > 0 && searchValue && !selectedContactId) {
+    if (contactsData.length > 0 && !selectedContactId && searchValue) {
       const contact = contactsData.find((c: any) => c.fullName === searchValue);
       if (contact) {
         setSelectedContactId(contact.id);
+        onChange(contact.id, contact.fullName);
       }
     }
-  }, [contactsData.length, searchValue, selectedContactId]);
+  }, [contactsData, selectedContactId, searchValue, onChange]);
 
   // Обробка створення нового контакту
   const handleCreateContact = (data: ContactFormData) => {
