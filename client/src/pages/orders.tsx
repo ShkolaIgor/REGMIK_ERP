@@ -1405,7 +1405,12 @@ export default function Orders() {
                           form.setValue("companyId", "");
                         }
                         setCompanySearchValue(e.target.value);
-                        setCompanyComboboxOpen(true);
+                        // Відкриваємо список тільки якщо є текст для пошуку
+                        if (e.target.value.trim().length > 0) {
+                          setCompanyComboboxOpen(true);
+                        } else {
+                          setCompanyComboboxOpen(false);
+                        }
                       }}
                       onFocus={() => {
                         // При фокусі, якщо є обрана компанія, очищаємо поле для редагування
@@ -1414,13 +1419,16 @@ export default function Orders() {
                           setCompanySearchValue(selectedCompany?.name || "");
                           form.setValue("companyId", "");
                         }
-                        setCompanyComboboxOpen(true);
+                        // Відкриваємо список тільки якщо є текст
+                        if (companySearchValue.trim().length > 0) {
+                          setCompanyComboboxOpen(true);
+                        }
                       }}
                       onBlur={() => setTimeout(() => setCompanyComboboxOpen(false), 200)}
                       className={form.formState.errors.companyId ? "border-red-500" : ""}
                     />
                     
-                    {companyComboboxOpen && companySearchValue && companies && (
+                    {companyComboboxOpen && companySearchValue.trim().length > 0 && companies && (
                       <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
                         {companies
                           .filter((company: Company) => 
