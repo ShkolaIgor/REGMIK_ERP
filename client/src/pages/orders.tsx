@@ -1517,7 +1517,11 @@ export default function Orders() {
                           }
                         }}
                         onBlur={() => setTimeout(() => setClientComboboxOpen(false), 200)}
-                        className={form.formState.errors.clientId ? "border-red-500" : ""}
+                        className={cn(
+                          form.formState.errors.clientId ? "border-red-500" : "",
+                          // Червоний фон якщо клієнт видалений (є customerName але немає clientId)
+                          isEditMode && form.watch("customerName") && !form.watch("clientId") ? "bg-red-50 border-red-300" : ""
+                        )}
                       />
                       {clientSearchValue && clientComboboxOpen && (
                         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
