@@ -1250,7 +1250,7 @@ export default function Orders() {
       items: orderItems.map(item => ({
         productId: item.productId,
         quantity: parseInt(item.quantity),
-        unitPrice: item.unitPrice,
+        unitPrice: parseFloat(item.unitPrice).toString(),
         totalPrice: (parseFloat(item.quantity) * parseFloat(item.unitPrice)).toString(),
       })),
     };
@@ -1592,7 +1592,10 @@ export default function Orders() {
                           <Input
                             placeholder="Ціна"
                             value={item.unitPrice}
-                            onChange={(e) => updateOrderItem(index, "unitPrice", e.target.value)}
+                            onChange={(e) => {
+                              console.log("Price change:", e.target.value);
+                              updateOrderItem(index, "unitPrice", e.target.value);
+                            }}
                             className="w-24"
                           />
                           
