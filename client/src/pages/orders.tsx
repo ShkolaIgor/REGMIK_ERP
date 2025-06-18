@@ -100,7 +100,7 @@ const orderItemSchema = z.object({
 
 const orderSchema = z.object({
   clientId: z.string().optional(),
-  clientContactsId: z.number().optional(),
+  clientContactsId: z.string().optional(),
   customerName: z.string().optional(),
   customerEmail: z.string().email("Введіть правильний email").optional().or(z.literal("")),
   customerPhone: z.string().optional(),
@@ -112,6 +112,7 @@ const orderSchema = z.object({
   paymentDate: z.string().optional(),
   dueDate: z.string().optional(),
   shippedDate: z.string().optional(),
+  trackingNumber: z.string().optional(),
 }).refine(data => data.clientId || data.customerName, {
   message: "Оберіть клієнта або введіть ім'я клієнта",
   path: ["clientId"],
@@ -146,6 +147,9 @@ export default function Orders() {
   const [newClientName, setNewClientName] = useState("");
   const [isStatusSettingsOpen, setIsStatusSettingsOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [selectedContactId, setSelectedContactId] = useState<string>("");
+  const [contactComboboxOpen, setContactComboboxOpen] = useState(false);
+  const [contactSearchValue, setContactSearchValue] = useState("");
   const [clientContactsForOrder, setClientContactsForOrder] = useState<any[]>([]);
   const [editingStatus, setEditingStatus] = useState<OrderStatus | null>(null);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
@@ -1074,7 +1078,7 @@ export default function Orders() {
     // Заповнюємо форму даними замовлення
     form.reset({
       clientId: order.clientId ? order.clientId.toString() : "",
-      clientContactsId: order.clientContactsId || "",
+      clientContactsId: order.clientContactsId ? order.clientContactsId.toString() : "",
       customerName: order.customerName || "",
       customerEmail: order.customerEmail || "",
       customerPhone: order.customerPhone || "",
@@ -1085,6 +1089,7 @@ export default function Orders() {
       shippedDate: formatDateForInput(order.shippedDate),
       invoiceNumber: order.invoiceNumber || "",
       carrierId: order.carrierId ? order.carrierId.toString() : "",
+      trackingNumber: order.trackingNumber || "",
     });
 
     // Встановлюємо вибраного клієнта для оновлення контактів
@@ -1095,7 +1100,8 @@ export default function Orders() {
     // Встановлюємо контактну особу після оновлення клієнта
     setTimeout(() => {
       if (order.clientContactsId) {
-        form.setValue("clientContactsId", order.clientContactsId);
+        setSelectedContactId(order.clientContactsId.toString());
+        form.setValue("clientContactsId", order.clientContactsId.toString());
       }
     }, 100);
 
@@ -1551,6 +1557,18 @@ export default function Orders() {
                     />
                   </div>
                 </div>
+
+                {/* Трек номер (тільки для редагування) */}
+                {isEditMode && (
+                  <div>
+                    <Label htmlFor="trackingNumber">Номер відстеження (трек)</Label>
+                    <Input
+                      id="trackingNumber"
+                      {...form.register("trackingNumber")}
+                      placeholder="Введіть номер відстеження"
+                    />
+                  </div>
+                )}
 
                 {/* Примітки */}
                 <div>
