@@ -143,6 +143,8 @@ export default function Orders() {
   const [isCreateClientDialogOpen, setIsCreateClientDialogOpen] = useState(false);
   const [newClientName, setNewClientName] = useState("");
   const [isStatusSettingsOpen, setIsStatusSettingsOpen] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [clientContactsForOrder, setClientContactsForOrder] = useState<any[]>([]);
   const [editingStatus, setEditingStatus] = useState<OrderStatus | null>(null);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   
@@ -615,6 +617,42 @@ export default function Orders() {
     },
     enabled: true,
   });
+
+  // Запит для завантаження контактів вибраного клієнта
+  const { data: clientContactsData } = useQuery({
+    queryKey: ["/api/client-contacts", selectedClientId],
+    queryFn: async () => {
+      if (!selectedClientId) return { clientContacts: [] };
+      
+      const response = await fetch(`/api/client-contacts?clientId=${selectedClientId}`);
+      if (!response.ok) throw new Error('Failed to fetch client contacts');
+      return response.json();
+    },
+    enabled: !!selectedClientId,
+  });
+
+  // Оновлюємо список контактів при зміні даних
+  useEffect(() => {
+    if (clientContactsData?.clientContacts) {
+      setClientContactsForOrder(clientContactsData.clientContacts);
+    } else {
+      setClientContactsForOrder([]);
+    }
+  }, [clientContactsData]);
+
+  // Відстежуємо зміни клієнта для оновлення контактів
+  useEffect(() => {
+    const clientId = form.watch("clientId");
+    if (clientId) {
+      setSelectedClientId(clientId);
+      // Скидаємо обрану контактну особу при зміні клієнта
+      form.setValue("clientContactsId", undefined);
+    } else {
+      setSelectedClientId("");
+      setClientContactsForOrder([]);
+      form.setValue("clientContactsId", undefined);
+    }
+  }, [form.watch("clientId")]);
   
   const clients = clientSearchData?.clients || [];
 
@@ -1336,6 +1374,37 @@ export default function Orders() {
                     )}
                   </div>
                   <div>
+                    <Label htmlFor="clientContactsId">Контактна особа</Label>
+                    <Select
+                      value={form.watch("clientContactsId")?.toString() || ""}
+                      onValueChange={(value) => form.setValue("clientContactsId", value ? parseInt(value) : undefined)}
+                      disabled={!form.watch("clientId")}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={form.watch("clientId") ? "Оберіть контактну особу" : "Спочатку оберіть клієнта"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clientContactsForOrder.length > 0 ? (
+                          clientContactsForOrder.map((contact: any) => (
+                            <SelectItem key={contact.id} value={contact.id.toString()}>
+                              <div className="flex flex-col">
+                                <span className="font-medium">{contact.fullName}</span>
+                                <span className="text-sm text-gray-500">{contact.position}</span>
+                              </div>
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="" disabled>
+                            {form.watch("clientId") ? "Контактні особи відсутні" : "Оберіть клієнта"}
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
                     <Label htmlFor="customerEmail">Email</Label>
                     <Input
                       id="customerEmail"
@@ -1349,9 +1418,6 @@ export default function Orders() {
                       </p>
                     )}
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="customerPhone">Телефон</Label>
                     <Input
