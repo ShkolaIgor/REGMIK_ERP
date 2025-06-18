@@ -1481,34 +1481,34 @@ export type InsertShipment = z.infer<typeof insertShipmentSchema>;
 export type ShipmentItem = typeof shipmentItems.$inferSelect;
 export type InsertShipmentItem = z.infer<typeof insertShipmentItemSchema>;
 
-// Нова Пошта - Міста
+// Нова Пошта - Міста (спрощена схема без зовнішніх ключів)
 export const novaPoshtaCities = pgTable("nova_poshta_cities", {
   id: serial("id").primaryKey(),
-  ref: varchar("ref").notNull().unique(), // UUID від Нової Пошти
-  name: varchar("name").notNull(),
-  nameRu: varchar("name_ru"),
-  area: varchar("area").notNull(),
-  areaRu: varchar("area_ru"),
-  region: varchar("region"),
-  regionRu: varchar("region_ru"),
-  settlementType: varchar("settlement_type"),
-  deliveryCity: varchar("delivery_city"),
+  ref: varchar("ref", { length: 255 }).notNull().unique(), // UUID від Нової Пошти
+  name: varchar("name", { length: 255 }).notNull(),
+  nameRu: varchar("name_ru", { length: 255 }),
+  area: varchar("area", { length: 255 }).notNull(),
+  areaRu: varchar("area_ru", { length: 255 }),
+  region: varchar("region", { length: 255 }),
+  regionRu: varchar("region_ru", { length: 255 }),
+  settlementType: varchar("settlement_type", { length: 100 }),
+  deliveryCity: varchar("delivery_city", { length: 10 }),
   warehouses: integer("warehouses").default(0),
   isActive: boolean("is_active").default(true),
   lastUpdated: timestamp("last_updated").defaultNow(),
 });
 
-// Нова Пошта - Відділення
+// Нова Пошта - Відділення (без зовнішніх ключів для уникнення проблем)
 export const novaPoshtaWarehouses = pgTable("nova_poshta_warehouses", {
   id: serial("id").primaryKey(),
-  ref: varchar("ref").notNull().unique(), // UUID від Нової Пошти
-  cityRef: varchar("city_ref").notNull().references(() => novaPoshtaCities.ref),
+  ref: varchar("ref", { length: 255 }).notNull().unique(), // UUID від Нової Пошти
+  cityRef: varchar("city_ref", { length: 255 }).notNull(), // Видалено references
   description: text("description").notNull(),
   descriptionRu: text("description_ru"),
-  shortAddress: varchar("short_address"),
-  phone: varchar("phone"),
+  shortAddress: varchar("short_address", { length: 500 }),
+  phone: varchar("phone", { length: 50 }),
   schedule: text("schedule"),
-  number: varchar("number"),
+  number: varchar("number", { length: 20 }),
   placeMaxWeightAllowed: integer("place_max_weight_allowed"),
   lastUpdated: timestamp("last_updated").defaultNow(),
 });
