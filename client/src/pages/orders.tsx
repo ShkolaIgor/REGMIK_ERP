@@ -243,7 +243,7 @@ export default function Orders() {
             </div>
             {order.clientContactsId && (
               <div className="text-sm text-gray-500">
-                {Array.isArray(clientContacts) && clientContacts.find((contact: any) => contact.id === order.clientContactsId)?.fullName || 'Контакт'}
+                {Array.isArray(clientContacts) && clientContacts.find((contact: any) => contact.id === order.clientContactsId)?.fullName || 'Контакт видалений'}
               </div>
             )}
             <div className="text-sm text-gray-500">
@@ -1588,11 +1588,17 @@ export default function Orders() {
                           variant="outline"
                           role="combobox"
                           aria-expanded={contactComboboxOpen}
-                          className="w-full justify-between"
+                          className={cn(
+                            "w-full justify-between",
+                            // Червоний фон якщо контакт видалений (є clientContactsId але контакт не знайдений)
+                            isEditMode && form.watch("clientContactsId") && !clientContactsForOrder?.find((c: any) => c.id.toString() === form.watch("clientContactsId")) ? "bg-red-50 border-red-300" : ""
+                          )}
                           disabled={!form.watch("clientId")}
                         >
                           {selectedContactId && clientContactsForOrder
-                            ? clientContactsForOrder.find((contact: any) => contact.id.toString() === selectedContactId)?.fullName || "Оберіть контактну особу..."
+                            ? clientContactsForOrder.find((contact: any) => contact.id.toString() === selectedContactId)?.fullName || "Контакт видалений"
+                            : form.watch("clientContactsId") && isEditMode
+                            ? "Контакт видалений"
                             : form.watch("clientId") ? "Оберіть контактну особу..." : "Спочатку оберіть клієнта"}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
