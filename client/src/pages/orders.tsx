@@ -2036,7 +2036,7 @@ export default function Orders() {
                   </TableHeader>
                   <TableBody>
                     {orders.map((order: any) => (
-                      <React.Fragment key={order.id}>
+                      <div key={order.id}>
                         <TableRow 
                           className="cursor-pointer hover:bg-gray-50"
                           onClick={() => toggleOrderExpansion(order.id)}
@@ -2094,7 +2094,7 @@ export default function Orders() {
                             </TableCell>
                           </TableRow>
                         )}
-                      </React.Fragment>
+                      </div>
                     ))}
                   </TableBody>
                 </Table>

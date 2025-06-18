@@ -806,6 +806,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Конвертуємо paymentDate з рядка в Date якщо потрібно
+      if (orderData.paymentDate && typeof orderData.paymentDate === 'string') {
+        orderData.paymentDate = new Date(orderData.paymentDate);
+      }
+      
       const validatedOrderData = insertOrderSchemaForm.parse(orderData);
       const createdOrder = await storage.createOrder(validatedOrderData, items || []);
       console.log("Created order:", createdOrder);
