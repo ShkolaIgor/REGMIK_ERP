@@ -6922,8 +6922,9 @@ export class DatabaseStorage implements IStorage {
       let sqlQuery = `
         SELECT 
           ref, city_ref, number, description, description_ru, 
-          short_address, phone, schedule,
-          place_max_weight_allowed, city_name, city_name_ru
+          short_address, 
+          CASE WHEN short_address_ru IS NOT NULL THEN short_address_ru ELSE short_address END as short_address_ru,
+          phone, schedule, place_max_weight_allowed, city_name, city_name_ru
         FROM nova_poshta_warehouses 
         WHERE is_active = true
       `;
@@ -6993,7 +6994,7 @@ export class DatabaseStorage implements IStorage {
         Description: warehouse.description,
         DescriptionRu: warehouse.description_ru,
         ShortAddress: warehouse.short_address,
-        ShortAddressRu: warehouse.short_address,
+        ShortAddressRu: warehouse.short_address_ru,
         Phone: warehouse.phone,
         TypeOfWarehouse: "Warehouse", // Значення за замовчуванням
         CategoryOfWarehouse: "", // Порожнє значення
