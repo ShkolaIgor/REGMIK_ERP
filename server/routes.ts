@@ -806,7 +806,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      const validatedOrderData = insertOrderSchema.parse(orderData);
+      const validatedOrderData = insertOrderSchemaForm.parse(orderData);
       const createdOrder = await storage.createOrder(validatedOrderData, items || []);
       console.log("Created order:", createdOrder);
       res.status(201).json(createdOrder);
@@ -861,7 +861,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Order data:", order);
       console.log("Items data:", items);
       
-      const orderData = insertOrderSchema.parse(order);
+      const orderData = insertOrderSchemaForm.parse(order);
       
       // Передаємо дані без перетворення дат - це зробить db-storage.ts
       const updatedOrder = await storage.updateOrder(id, orderData, items || []);

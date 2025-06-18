@@ -100,10 +100,12 @@ const orderItemSchema = z.object({
 
 const orderSchema = z.object({
   clientId: z.string().optional(),
+  clientContactsId: z.number().optional(),
   customerName: z.string().optional(),
   customerEmail: z.string().email("Введіть правильний email").optional().or(z.literal("")),
   customerPhone: z.string().optional(),
   status: z.string().default("pending"),
+  statusId: z.number().optional(),
   notes: z.string().optional(),
   paymentDate: z.string().optional(),
   dueDate: z.string().optional(),
@@ -216,6 +218,11 @@ export default function Orders() {
                 : order.customerName
               }
             </div>
+            {order.clientContactsId && (
+              <div className="text-sm text-gray-500">
+                {clientContacts.find((contact: any) => contact.id === order.clientContactsId)?.fullName || 'Контакт'}
+              </div>
+            )}
             <div className="text-sm text-gray-500">
               {order.clientId && (
                 <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded mr-2">
@@ -587,6 +594,14 @@ export default function Orders() {
   });
   
   const clients = clientsData?.clients || [];
+
+  const { data: orderStatusList = [] } = useQuery({
+    queryKey: ["/api/order-statuses"],
+  });
+
+  const { data: clientContacts = [] } = useQuery({
+    queryKey: ["/api/client-contacts"],
+  });
 
   // Форма для замовлення
   const form = useForm<OrderFormData>({
