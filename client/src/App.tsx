@@ -189,7 +189,7 @@ function Router() {
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/inventory" component={Inventory} />
         <Route path="/production" component={Production} />
-        <Route path="/orders" component={Orders} />
+        <Route path="/orders" component={OrdersSimple} />
         <Route path="/clients" component={Clients} />
         <Route path="/client-contacts" component={ClientContacts} />
         <Route path="/clients/:id/nova-poshta-settings" component={ClientNovaPoshtaSettings} />
