@@ -89,22 +89,21 @@ export function ContactPersonAutocomplete({
         },
       });
     },
-    onSuccess: (newContact) => {
+    onSuccess: async (newContact) => {
       // Закриваємо діалог і очищаємо форму
       setIsCreateDialogOpen(false);
       contactForm.reset();
-      
-      // Оптимістично оновлюємо кеш - завжди повертаємо масив
-      queryClient.setQueryData(["/api/client-contacts", clientId], (oldData: any) => {
-        const currentContacts = Array.isArray(oldData) ? oldData : [];
-        return [...currentContacts, newContact];
-      });
       
       // Автоматично вибираємо новий контакт
       setSelectedContactId(newContact.id);
       setSearchValue(newContact.fullName);
       setIsDropdownOpen(false);
       onChange(newContact.id, newContact.fullName);
+      
+      // Перезавантажуємо дані контактів
+      await queryClient.refetchQueries({ 
+        queryKey: ["/api/client-contacts", clientId] 
+      });
       
       toast({
         title: "Успіх",
