@@ -180,7 +180,7 @@ export default function Inventory() {
           </div>
           <div className="flex items-center space-x-4">
             <div className="flex gap-2">
-              <div className="relative">
+              {/*<div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   placeholder="Пошук товарів..."
@@ -188,7 +188,7 @@ export default function Inventory() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-              </div>
+              </div> */}
               <ScannerButton
                 onScanResult={(barcode) => {
                   setSearchQuery(barcode);
