@@ -701,9 +701,9 @@ export default function Orders() {
     queryKey: ["/api/carriers"],
   });
 
-  const { data: companies = [] } = useQuery<Company[]>({
+  const { data: companies = [] } = useQuery({
     queryKey: ["/api/companies"],
-  });
+  }) as { data: Company[] };
 
   // Форма для управління статусами
   const statusForm = useForm<StatusFormData>({
@@ -1356,7 +1356,7 @@ export default function Orders() {
                   
                   // Встановлюємо компанію за замовчуванням (is_default = TRUE)
                   const defaultCompany = companies && companies.length > 0 
-                    ? companies.find((c: any) => c.isDefault === true) || companies[0] 
+                    ? companies.find((c: Company) => c.isDefault === true) || companies[0] 
                     : null;
                   if (defaultCompany) {
                     setSelectedCompanyId(defaultCompany.id.toString());
@@ -1397,7 +1397,7 @@ export default function Orders() {
                     <Input
                       placeholder="Почніть вводити назву компанії..."
                       value={form.watch("companyId") ? 
-                        companies.find((c: any) => c.id.toString() === form.watch("companyId"))?.name || companySearchValue 
+                        companies.find((c: Company) => c.id.toString() === form.watch("companyId"))?.name || companySearchValue 
                         : companySearchValue}
                       onChange={(e) => {
                         // Якщо є обрана компанія і користувач редагує, скидаємо вибір
@@ -1410,7 +1410,7 @@ export default function Orders() {
                       onFocus={() => {
                         // При фокусі, якщо є обрана компанія, очищаємо поле для редагування
                         if (form.watch("companyId")) {
-                          const selectedCompany = companies.find((c: any) => c.id.toString() === form.watch("companyId"));
+                          const selectedCompany = companies.find((c: Company) => c.id.toString() === form.watch("companyId"));
                           setCompanySearchValue(selectedCompany?.name || "");
                           form.setValue("companyId", "");
                         }
@@ -1423,11 +1423,11 @@ export default function Orders() {
                     {companyComboboxOpen && companySearchValue && companies && (
                       <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
                         {companies
-                          .filter((company: any) => 
+                          .filter((company: Company) => 
                             company.name.toLowerCase().includes(companySearchValue.toLowerCase()) ||
                             (company.fullName && company.fullName.toLowerCase().includes(companySearchValue.toLowerCase()))
                           )
-                          .map((company: any) => (
+                          .map((company: Company) => (
                             <div
                               key={company.id}
                               className="px-3 py-2 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
@@ -1448,7 +1448,7 @@ export default function Orders() {
                             </div>
                           ))
                         }
-                        {companies.filter((company: any) => 
+                        {companies.filter((company: Company) => 
                           company.name.toLowerCase().includes(companySearchValue.toLowerCase()) ||
                           (company.fullName && company.fullName.toLowerCase().includes(companySearchValue.toLowerCase()))
                         ).length === 0 && (
