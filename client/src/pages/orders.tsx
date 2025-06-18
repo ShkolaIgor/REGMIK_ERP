@@ -1591,7 +1591,7 @@ export default function Orders() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {orderStatuses?.map((status: OrderStatus) => (
+                  {orderStatusList?.map((status: OrderStatus) => (
                     <div key={status.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center space-x-3">
                         <div
@@ -1759,9 +1759,15 @@ export default function Orders() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Всі статуси</SelectItem>
-                  {orderStatuses.map((status) => (
+                  {orderStatusList.map((status: any) => (
                     <SelectItem key={status.id} value={status.name}>
-                      {status.name}
+                      <div className="flex items-center space-x-2">
+                        <div 
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: status.backgroundColor }}
+                        />
+                        <span>{status.name}</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
