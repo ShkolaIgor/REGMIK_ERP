@@ -226,6 +226,7 @@ export const orders = pgTable("orders", {
   customerEmail: text("customer_email"),
   customerPhone: text("customer_phone"),
   clientId: integer("client_id").references(() => clients.id), // зв'язок з клієнтом для використання його API ключів
+  clientContactsId: integer("client_contacts_id").references(() => clientContacts.id), // зв'язок з представником клієнта
   companyId: integer("company_id").references(() => companies.id), // Компанія, від імені якої здійснюється продаж
   status: text("status").notNull().default("pending"), // pending, processing, shipped, delivered, cancelled
   statusId: integer("status_id").references(() => orderStatuses.id), // зв'язок з таблицею статусів
