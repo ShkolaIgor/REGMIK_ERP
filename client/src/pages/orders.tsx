@@ -8,10 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit, Trash2, Search, Package, Settings } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Plus, Edit, Trash2, Search, Package, Settings, ChevronsUpDown, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 // Схеми валідації
 const orderSchema = z.object({
@@ -50,7 +56,7 @@ interface Order {
   notes?: string;
 }
 
-export default function OrdersSimple() {
+export default function Orders() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -59,6 +65,8 @@ export default function OrdersSimple() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [companyComboboxOpen, setCompanyComboboxOpen] = useState(false);
+  const [selectedCompanyId, setSelectedCompanyId] = useState("");
 
   // Завантаження даних
   const { data: orders = [], isLoading: ordersLoading } = useQuery({
@@ -96,15 +104,16 @@ export default function OrdersSimple() {
     },
   });
 
-  // Знаходимо компанію за замовчуванням
-  const defaultCompany = companies.find((company: any) => company.isDefault);
-
-  // Встановлюємо компанію за замовчуванням при створенні нового замовлення
+  // Встановлюємо компанію за замовчуванням
   useEffect(() => {
-    if (!isEditMode && defaultCompany && !form.getValues("companyId")) {
-      form.setValue("companyId", defaultCompany.id.toString());
+    if (companies && companies.length > 0 && !isEditMode && !selectedCompanyId) {
+      const defaultCompany = companies.find((company: any) => company.isDefault);
+      if (defaultCompany) {
+        setSelectedCompanyId(defaultCompany.id.toString());
+        form.setValue("companyId", defaultCompany.id.toString());
+      }
     }
-  }, [isEditMode, defaultCompany, form]);
+  }, [companies, isEditMode, selectedCompanyId, form]);
 
   // Мутації
   const createOrderMutation = useMutation({
@@ -122,6 +131,7 @@ export default function OrdersSimple() {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       setIsDialogOpen(false);
       form.reset();
+      setSelectedCompanyId("");
       toast({
         title: "Успіх",
         description: "Замовлення створено",
@@ -153,6 +163,7 @@ export default function OrdersSimple() {
       setIsEditMode(false);
       setEditingOrder(null);
       form.reset();
+      setSelectedCompanyId("");
       toast({
         title: "Успіх",
         description: "Замовлення оновлено",
@@ -191,8 +202,13 @@ export default function OrdersSimple() {
   const handleCreateOrder = () => {
     setIsEditMode(false);
     setEditingOrder(null);
+    
+    // Знаходимо компанію за замовчуванням
+    const defaultCompany = companies && companies.find ? companies.find((company: any) => company.isDefault) : null;
+    const defaultCompanyId = defaultCompany ? defaultCompany.id.toString() : "";
+    
     form.reset({
-      companyId: defaultCompany ? defaultCompany.id.toString() : "",
+      companyId: defaultCompanyId,
       customerName: "",
       customerEmail: "",
       customerPhone: "",
@@ -205,12 +221,16 @@ export default function OrdersSimple() {
       invoiceNumber: "",
       carrierId: "",
     });
+    
+    setSelectedCompanyId(defaultCompanyId);
     setIsDialogOpen(true);
   };
 
   const handleEditOrder = (order: Order) => {
     setIsEditMode(true);
     setEditingOrder(order);
+    setSelectedCompanyId(order.companyId.toString());
+    
     form.reset({
       companyId: order.companyId.toString(),
       customerName: order.customerName,
@@ -225,6 +245,7 @@ export default function OrdersSimple() {
       invoiceNumber: order.invoiceNumber || "",
       carrierId: order.carrierId ? order.carrierId.toString() : "",
     });
+    
     setIsDialogOpen(true);
   };
 
@@ -242,11 +263,17 @@ export default function OrdersSimple() {
     }
   };
 
+  const handleCompanySelect = (companyId: string) => {
+    setSelectedCompanyId(companyId);
+    form.setValue("companyId", companyId);
+    setCompanyComboboxOpen(false);
+  };
+
   // Фільтрація замовлень
-  const filteredOrders = orders.filter((order: Order) =>
+  const filteredOrders = orders && orders.filter ? orders.filter((order: Order) =>
     order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ) : [];
 
   if (ordersLoading) {
     return (
@@ -280,7 +307,7 @@ export default function OrdersSimple() {
                   Нове замовлення
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
                     {isEditMode ? "Редагувати замовлення" : "Створити замовлення"}
@@ -290,21 +317,48 @@ export default function OrdersSimple() {
                   </DialogDescription>
                 </DialogHeader>
                 
-                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                   {/* Компанія */}
                   <div>
                     <Label htmlFor="companyId">Компанія *</Label>
-                    <select
-                      {...form.register("companyId")}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    >
-                      <option value="">Оберіть компанію</option>
-                      {companies.map((company: any) => (
-                        <option key={company.id} value={company.id.toString()}>
-                          {company.name}
-                        </option>
-                      ))}
-                    </select>
+                    <Popover open={companyComboboxOpen} onOpenChange={setCompanyComboboxOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={companyComboboxOpen}
+                          className="w-full justify-between"
+                        >
+                          {selectedCompanyId && companies && companies.find
+                            ? companies.find((company: any) => company.id.toString() === selectedCompanyId)?.name || "Оберіть компанію..."
+                            : "Оберіть компанію..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput placeholder="Пошук компанії..." />
+                          <CommandEmpty>Компанія не знайдена</CommandEmpty>
+                          <CommandGroup>
+                            {companies && companies.map && companies.map((company: any) => (
+                              <CommandItem
+                                key={company.id}
+                                value={company.name}
+                                onSelect={() => handleCompanySelect(company.id.toString())}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedCompanyId === company.id.toString() ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {company.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                     {form.formState.errors.companyId && (
                       <p className="text-sm text-red-500 mt-1">
                         {form.formState.errors.companyId.message}
@@ -348,16 +402,18 @@ export default function OrdersSimple() {
                     </div>
                     <div>
                       <Label htmlFor="status">Статус *</Label>
-                      <select
-                        {...form.register("status")}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2"
-                      >
-                        {orderStatuses.map((status: any) => (
-                          <option key={status.id} value={status.name}>
-                            {status.displayName}
-                          </option>
-                        ))}
-                      </select>
+                      <Select onValueChange={(value) => form.setValue("status", value)} defaultValue={form.getValues("status")}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Оберіть статус" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {orderStatuses && orderStatuses.map && orderStatuses.map((status: any) => (
+                            <SelectItem key={status.id} value={status.name}>
+                              {status.displayName || status.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
@@ -369,17 +425,19 @@ export default function OrdersSimple() {
                     </div>
                     <div>
                       <Label htmlFor="carrierId">Перевізник</Label>
-                      <select
-                        {...form.register("carrierId")}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2"
-                      >
-                        <option value="">Оберіть перевізника</option>
-                        {carriers.map((carrier: any) => (
-                          <option key={carrier.id} value={carrier.id.toString()}>
-                            {carrier.name}
-                          </option>
-                        ))}
-                      </select>
+                      <Select onValueChange={(value) => form.setValue("carrierId", value)} defaultValue={form.getValues("carrierId")}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Оберіть перевізника" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Без перевізника</SelectItem>
+                          {carriers && carriers.map && carriers.map((carrier: any) => (
+                            <SelectItem key={carrier.id} value={carrier.id.toString()}>
+                              {carrier.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
@@ -411,9 +469,9 @@ export default function OrdersSimple() {
                   {/* Примітки */}
                   <div>
                     <Label htmlFor="notes">Примітки</Label>
-                    <textarea
+                    <Textarea
                       {...form.register("notes")}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 min-h-[80px]"
+                      className="min-h-[80px]"
                       placeholder="Додаткова інформація..."
                     />
                   </div>
@@ -444,63 +502,115 @@ export default function OrdersSimple() {
           </div>
         </div>
 
-        {/* Таблиця замовлень */}
-        <div className="bg-white rounded-lg shadow">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Номер</TableHead>
-                <TableHead>Клієнт</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Статус</TableHead>
-                <TableHead>Сума</TableHead>
-                <TableHead>Дата</TableHead>
-                <TableHead>Дії</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredOrders.map((order: Order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.orderNumber}</TableCell>
-                  <TableCell>{order.customerName}</TableCell>
-                  <TableCell>{order.customerEmail || "-"}</TableCell>
-                  <TableCell>
-                    <span className={cn(
-                      "px-2 py-1 rounded-full text-xs",
-                      order.status === "completed" ? "bg-green-100 text-green-800" :
-                      order.status === "pending" ? "bg-yellow-100 text-yellow-800" :
-                      "bg-gray-100 text-gray-800"
-                    )}>
-                      {order.status}
-                    </span>
-                  </TableCell>
-                  <TableCell>{order.totalAmount.toLocaleString()} ₴</TableCell>
-                  <TableCell>
-                    {new Date(order.createdAt).toLocaleDateString("uk-UA")}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditOrder(order)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteOrder(order.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        {/* Статистика */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Всього замовлень</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{orders ? orders.length : 0}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Активні замовлення</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {orders ? orders.filter((order: any) => order.status === "pending").length : 0}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Виконані замовлення</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {orders ? orders.filter((order: any) => order.status === "completed").length : 0}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Загальна сума</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {orders ? formatCurrency(orders.reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0)) : "0 ₴"}
+              </div>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Таблиця замовлень */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Список замовлень</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Номер</TableHead>
+                  <TableHead>Клієнт</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Статус</TableHead>
+                  <TableHead>Сума</TableHead>
+                  <TableHead>Дата</TableHead>
+                  <TableHead>Дії</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredOrders.map((order: Order) => (
+                  <TableRow key={order.id}>
+                    <TableCell className="font-medium">{order.orderNumber}</TableCell>
+                    <TableCell>{order.customerName}</TableCell>
+                    <TableCell>{order.customerEmail || "-"}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          order.status === "completed" ? "default" :
+                          order.status === "pending" ? "secondary" :
+                          "outline"
+                        }
+                      >
+                        {order.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{formatCurrency(order.totalAmount || 0)}</TableCell>
+                    <TableCell>
+                      {new Date(order.createdAt).toLocaleDateString("uk-UA")}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditOrder(order)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteOrder(order.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
         {filteredOrders.length === 0 && (
           <div className="text-center py-12">
