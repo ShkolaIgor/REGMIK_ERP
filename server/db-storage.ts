@@ -6920,14 +6920,8 @@ export class DatabaseStorage implements IStorage {
       let sqlQuery = `
         SELECT 
           ref, city_ref, number, description, description_ru, 
-          short_address, short_address_ru, phone, type_of_warehouse,
-          category_of_warehouse, schedule, reception, delivery,
-          district_code, ward_code, settlement_area_description,
-          place_max_weight_allowed, sending_limitations_on_dimensions,
-          receiving_limitations_on_dimensions, post_finance, bicycle_parking,
-          payment_access, pos_terminal, international_shipping,
-          self_service_workplaces_count, total_max_weight_allowed,
-          longitude, latitude
+          short_address, short_address_ru, phone, schedule,
+          place_max_weight_allowed, city_name, city_name_ru
         FROM nova_poshta_warehouses 
         WHERE is_active = true
       `;
@@ -6989,15 +6983,7 @@ export class DatabaseStorage implements IStorage {
         TypeOfWarehouse: "Warehouse", // Значення за замовчуванням
         CategoryOfWarehouse: "", // Порожнє значення
         Schedule: warehouse.schedule,
-        PlaceMaxWeightAllowed: warehouse.place_max_weight_allowed?.toString() || '',
-        BicycleParking: warehouse.bicycle_parking,
-        PaymentAccess: warehouse.payment_access,
-        POSTerminal: warehouse.pos_terminal,
-        InternationalShipping: warehouse.international_shipping,
-        SelfServiceWorkplacesCount: warehouse.self_service_workplaces_count?.toString() || '0',
-        TotalMaxWeightAllowed: warehouse.total_max_weight_allowed?.toString() || '',
-        Longitude: warehouse.longitude?.toString() || '',
-        Latitude: warehouse.latitude?.toString() || ''
+        PlaceMaxWeightAllowed: warehouse.place_max_weight_allowed?.toString() || ''
       }));
     } catch (error) {
       console.error('Помилка отримання відділень Нової Пошти:', error);
