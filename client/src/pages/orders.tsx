@@ -631,6 +631,18 @@ export default function Orders() {
     enabled: !!selectedClientId,
   });
 
+  // Форма для замовлення
+  const form = useForm<OrderFormData>({
+    resolver: zodResolver(orderSchema),
+    defaultValues: {
+      clientId: "",
+      customerEmail: "",
+      customerPhone: "",
+      status: "pending",
+      notes: "",
+    },
+  });
+
   // Оновлюємо список контактів при зміні даних
   useEffect(() => {
     if (clientContactsData?.clientContacts) {
@@ -662,18 +674,6 @@ export default function Orders() {
 
   const { data: clientContacts = [] } = useQuery({
     queryKey: ["/api/client-contacts"],
-  });
-
-  // Форма для замовлення
-  const form = useForm<OrderFormData>({
-    resolver: zodResolver(orderSchema),
-    defaultValues: {
-      clientId: "",
-      customerEmail: "",
-      customerPhone: "",
-      status: "pending",
-      notes: "",
-    },
   });
 
   // Форма для управління статусами
