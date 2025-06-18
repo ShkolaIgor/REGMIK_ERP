@@ -220,13 +220,13 @@ export default function Orders() {
             </div>
             {order.clientContactsId && (
               <div className="text-sm text-gray-500">
-                {clientContacts.find((contact: any) => contact.id === order.clientContactsId)?.fullName || 'Контакт'}
+                {Array.isArray(clientContacts) && clientContacts.find((contact: any) => contact.id === order.clientContactsId)?.fullName || 'Контакт'}
               </div>
             )}
             <div className="text-sm text-gray-500">
               {order.clientId && (
                 <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded mr-2">
-                  {clients.find((client: any) => client.id === order.clientId)?.taxCode || order.clientId}
+                  {Array.isArray(clients) && clients.find((client: any) => client.id === order.clientId)?.taxCode || order.clientId}
                 </span>
               )}
               {order.customerEmail}

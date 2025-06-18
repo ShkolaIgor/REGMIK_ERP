@@ -556,21 +556,22 @@ export const insertUnitSchema = createInsertSchema(units).omit({ id: true, creat
 export const insertWarehouseSchema = createInsertSchema(warehouses).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true });
 export const insertInventorySchema = createInsertSchema(inventory).omit({ id: true, updatedAt: true });
-export const insertOrderSchemaForm = z.object({
-  customerName: z.string().optional(),
-  clientId: z.number().optional(),
-  clientContactsId: z.number().optional(),
-  customerEmail: z.string().optional(),
-  customerPhone: z.string().optional(),
-  status: z.string().default("pending"),
-  statusId: z.number().optional(),
-  notes: z.string().optional(),
-  paymentDate: z.string().optional(),
-  dueDate: z.string().optional(),
-  shippedDate: z.string().optional(),
-}).refine(data => data.customerName || data.clientId, {
-  message: "Потрібно вказати або ім'я клієнта, або обрати клієнта зі списку"
+export const insertOrderSchema = createInsertSchema(orders).omit({ 
+  id: true, 
+  orderSequenceNumber: true,
+  createdAt: true, 
+  updatedAt: true 
 });
+
+export const insertOrderSchemaForm = insertOrderSchema.extend({
+  statusId: z.number().int().positive("Статус обов'язковий"),
+  clientContactsId: z.number().int().positive().optional()
+});
+
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type InsertOrderForm = z.infer<typeof insertOrderSchemaForm>;
+
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
 export const insertRecipeSchema = createInsertSchema(recipes).omit({ id: true, createdAt: true });
 export const insertRecipeIngredientSchema = createInsertSchema(recipeIngredients).omit({ id: true });

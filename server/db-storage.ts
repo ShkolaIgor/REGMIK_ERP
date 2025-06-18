@@ -20,7 +20,7 @@ import {
   type Warehouse, type InsertWarehouse, type Unit, type InsertUnit,
   type Product, type InsertProduct,
   type Inventory, type InsertInventory,
-  orders, orderItems, orderStatuses, type Order, type InsertOrder,
+  type Order, type InsertOrder,
   type OrderItem, type InsertOrderItem, type Recipe, type InsertRecipe,
   type RecipeIngredient, type InsertRecipeIngredient,
   type ProductionTask, type InsertProductionTask,
