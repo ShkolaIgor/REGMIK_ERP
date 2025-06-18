@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { formatCurrency, getStatusColor } from "@/lib/utils";
+import { formatCurrency, getStatusColor, cn } from "@/lib/utils";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
 import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
 import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X, Settings, Palette } from "lucide-react";
@@ -1355,6 +1355,58 @@ export default function Orders() {
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                {/* Поле компанії */}
+                <div>
+                  <Label htmlFor="companyId">Компанія *</Label>
+                  <Popover open={companyComboboxOpen} onOpenChange={setCompanyComboboxOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={companyComboboxOpen}
+                        className="w-full justify-between"
+                      >
+                        {selectedCompanyId && companies
+                          ? companies.find((company: any) => company.id.toString() === selectedCompanyId)?.name || "Оберіть компанію..."
+                          : "Оберіть компанію..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput 
+                          placeholder="Пошук компанії..." 
+                          value={companySearchValue}
+                          onValueChange={setCompanySearchValue}
+                        />
+                        <CommandEmpty>Компанія не знайдена</CommandEmpty>
+                        <CommandGroup>
+                          {companies?.map((company: any) => (
+                            <CommandItem
+                              key={company.id}
+                              value={company.name}
+                              onSelect={() => {
+                                const companyId = company.id.toString();
+                                setSelectedCompanyId(companyId);
+                                form.setValue("companyId", companyId);
+                                setCompanyComboboxOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedCompanyId === company.id.toString() ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {company.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
                 {/* Інформація про клієнта */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
