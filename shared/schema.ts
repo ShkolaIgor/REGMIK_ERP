@@ -1484,8 +1484,15 @@ export const novaPoshtaCities = pgTable("nova_poshta_cities", {
   id: serial("id").primaryKey(),
   ref: varchar("ref").notNull().unique(), // UUID від Нової Пошти
   name: varchar("name").notNull(),
+  nameRu: varchar("name_ru"),
   area: varchar("area").notNull(),
+  areaRu: varchar("area_ru"),
   region: varchar("region"),
+  regionRu: varchar("region_ru"),
+  settlementType: varchar("settlement_type"),
+  deliveryCity: varchar("delivery_city"),
+  warehouses: integer("warehouses").default(0),
+  isActive: boolean("is_active").default(true),
   lastUpdated: timestamp("last_updated").defaultNow(),
 });
 
