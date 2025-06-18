@@ -757,6 +757,7 @@ export default function Orders() {
     mutationFn: (id: number) => apiRequest(`/api/orders/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      handleCloseDialog(); // Закриваємо форму після видалення
       toast({
         title: "Успіх",
         description: "Замовлення видалено",
@@ -1298,7 +1299,13 @@ export default function Orders() {
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={() => setIsDialogOpen(true)}>
+                <Button onClick={() => {
+                  setIsEditMode(false);
+                  setEditingOrder(null);
+                  setOrderItems([]);
+                  form.reset();
+                  setIsDialogOpen(true);
+                }}>
                   <Plus className="w-4 h-4 mr-2" />
                   Новий рахунок/замовлення
                 </Button>
@@ -1969,7 +1976,13 @@ export default function Orders() {
             {orders.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500">Замовлення відсутні</p>
-                <Button className="mt-4" onClick={() => setIsDialogOpen(true)}>
+                <Button className="mt-4" onClick={() => {
+                  setIsEditMode(false);
+                  setEditingOrder(null);
+                  setOrderItems([]);
+                  form.reset();
+                  setIsDialogOpen(true);
+                }}>
                   <Plus className="w-4 h-4 mr-2" />
                   Створити перше замовлення
                 </Button>
