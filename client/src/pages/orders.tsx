@@ -1153,15 +1153,14 @@ export default function Orders() {
     
     setIsDialogOpen(true);
     
-    // Встановлюємо фокус на поле клієнта для нових замовлень
+    // Встановлюємо фокус на поле клієнта тільки для нових замовлень
     if (!order) {
       setTimeout(() => {
         const clientInput = document.querySelector('input[placeholder*="Почніть вводити назву клієнта"]') as HTMLInputElement;
         if (clientInput) {
           clientInput.focus();
-          clientInput.click(); // Додатково викликаємо клік для активації поля
         }
-      }, 200);
+      }, 300);
     }
   };
 
@@ -1515,7 +1514,10 @@ export default function Orders() {
                             setClientSearchValue(selectedClient?.name || "");
                             form.setValue("clientId", "");
                           }
-                          // Не відкриваємо автоматично список при фокусі
+                          // Відкриваємо список тільки якщо це нове замовлення
+                          if (!isEditMode) {
+                            setClientComboboxOpen(true);
+                          }
                         }}
                         onBlur={() => setTimeout(() => setClientComboboxOpen(false), 200)}
                         className={form.formState.errors.clientId ? "border-red-500" : ""}
