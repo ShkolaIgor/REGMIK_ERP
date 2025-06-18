@@ -1619,21 +1619,24 @@ export default function Orders() {
                             form.setValue("clientContactsId", "");
                           }
                           setContactSearchValue(e.target.value);
-                          // Відкриваємо список тільки якщо є текст для пошуку (мінімум 1 символ)
-                          if (e.target.value.trim().length >= 1) {
+                          // Список залишається відкритим при введенні тексту
+                          if (form.watch("clientId") && clientContactsForOrder && clientContactsForOrder.length > 0) {
                             setContactComboboxOpen(true);
-                          } else {
-                            setContactComboboxOpen(false);
                           }
                         }}
                         onFocus={() => {
-                          // При фокусі, якщо є обраний контакт, очищаємо поле для редагування
-                          if (form.watch("clientContactsId")) {
-                            const selectedContact = clientContactsForOrder?.find((c: any) => c.id.toString() === form.watch("clientContactsId"));
-                            setContactSearchValue(selectedContact?.fullName || "");
-                            form.setValue("clientContactsId", "");
+                          // При фокусі відразу відкриваємо список контактів, якщо є клієнт
+                          if (form.watch("clientId") && clientContactsForOrder && clientContactsForOrder.length > 0) {
+                            setContactComboboxOpen(true);
                           }
-                          // НЕ відкриваємо список автоматично при фокусі
+                          
+                          // Якщо є обраний контакт, підготовуємо його для редагування
+                          if (form.watch("clientContactsId") && !contactSearchValue) {
+                            const selectedContact = clientContactsForOrder?.find((c: any) => c.id.toString() === form.watch("clientContactsId"));
+                            if (selectedContact) {
+                              setContactSearchValue(selectedContact.fullName);
+                            }
+                          }
                         }}
                         onBlur={() => setTimeout(() => setContactComboboxOpen(false), 200)}
                         className={cn(
@@ -1643,11 +1646,11 @@ export default function Orders() {
                         )}
                       />
                       
-                      {contactComboboxOpen && contactSearchValue.trim().length >= 1 && clientContactsForOrder && (
+                      {contactComboboxOpen && clientContactsForOrder && (
                         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
                           {clientContactsForOrder
                             .filter((contact: any) => 
-                              contact.fullName.toLowerCase().includes(contactSearchValue.toLowerCase())
+                              !contactSearchValue || contact.fullName.toLowerCase().includes(contactSearchValue.toLowerCase())
                             )
                             .map((contact: any) => (
                               <div
@@ -1674,9 +1677,11 @@ export default function Orders() {
                               </div>
                             ))}
                           {clientContactsForOrder.filter((contact: any) => 
-                            contact.fullName.toLowerCase().includes(contactSearchValue.toLowerCase())
+                            !contactSearchValue || contact.fullName.toLowerCase().includes(contactSearchValue.toLowerCase())
                           ).length === 0 && (
-                            <div className="px-3 py-2 text-gray-500">Контактів не знайдено</div>
+                            <div className="px-3 py-2 text-gray-500">
+                              {contactSearchValue ? "Контактів не знайдено" : "Немає доступних контактів"}
+                            </div>
                           )}
                         </div>
                       )}
