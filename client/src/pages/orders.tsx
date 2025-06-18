@@ -1395,7 +1395,7 @@ export default function Orders() {
                             </SelectItem>
                           ))
                         ) : (
-                          <SelectItem value="" disabled>
+                          <SelectItem value="no-contacts" disabled>
                             {form.watch("clientId") ? "Контактні особи відсутні" : "Оберіть клієнта"}
                           </SelectItem>
                         )}
