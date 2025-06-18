@@ -677,6 +677,17 @@ export default function Orders() {
   }, [form.watch("clientId")]);
   
   const clients = clientSearchData?.clients || [];
+  
+  // Встановлюємо компанію за замовчуванням при завантаженні компаній
+  useEffect(() => {
+    if (companies.length > 0 && !selectedCompanyId && !isEditMode) {
+      const defaultCompany = companies.find((company: any) => company.isDefault);
+      if (defaultCompany) {
+        setSelectedCompanyId(defaultCompany.id.toString());
+        form.setValue("companyId", defaultCompany.id.toString());
+      }
+    }
+  }, [companies, selectedCompanyId, isEditMode, form]);
 
   const { data: orderStatusList = [] } = useQuery({
     queryKey: ["/api/order-statuses"],
