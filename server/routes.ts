@@ -3124,6 +3124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { q } = req.query;
       const searchQuery = typeof q === 'string' ? q : "";
       console.log(`Nova Poshta warehouses API called for city: "${cityRef}", query: "${searchQuery}"`);
+      console.log(`[DEBUG] Request headers:`, req.headers.origin, req.headers['user-agent']);
       
       // Відключаємо всі види кешування
       res.set({
@@ -3136,11 +3137,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const warehouses = await novaPoshtaCache.getWarehouses(cityRef, searchQuery);
+      console.log(`[DEBUG] Final result length: ${warehouses.length}`);
       console.log(`Returning ${warehouses.length} warehouses for city: "${cityRef}", search: "${searchQuery}"`);
+      
+      if (warehouses.length === 0) {
+        console.log(`[DEBUG] No warehouses found - checking database directly`);
+        const directCount = await pool.query(`
+          SELECT COUNT(*) as count 
+          FROM nova_poshta_warehouses 
+          WHERE city_ref = $1 AND is_active = true
+        `, [cityRef]);
+        console.log(`[DEBUG] Direct DB count for city ${cityRef}: ${directCount.rows[0]?.count || 0}`);
+      }
+      
       res.json(warehouses);
     } catch (error) {
       console.error("Error fetching warehouses:", error);
-      res.status(500).json({ error: "Failed to fetch warehouses" });
+      console.error("[DEBUG] Full error stack:", error.stack);
+      res.status(500).json({ error: "Failed to fetch warehouses", details: error.message });
     }
   });
 

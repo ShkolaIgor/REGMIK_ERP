@@ -6917,6 +6917,8 @@ export class DatabaseStorage implements IStorage {
 
   async getNovaPoshtaWarehouses(cityRef?: string, query?: string, limit?: number): Promise<any[]> {
     try {
+      console.log(`[DEBUG] getNovaPoshtaWarehouses called with cityRef: "${cityRef}", query: "${query}", limit: ${limit}`);
+      
       let sqlQuery = `
         SELECT 
           ref, city_ref, number, description, description_ru, 
@@ -6966,10 +6968,23 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
+      console.log(`[DEBUG] Executing SQL: ${sqlQuery}`);
+      console.log(`[DEBUG] With params:`, params);
+      
       const result = await pool.query(sqlQuery, params);
       const results = result.rows;
 
+      console.log(`[DEBUG] Raw SQL result count: ${results.length}`);
       console.log(`Знайдено ${results.length} відділень для міста: "${cityRef}", запит: "${query}"`);
+      
+      if (results.length > 0) {
+        console.log(`[DEBUG] First result sample:`, {
+          ref: results[0].ref,
+          number: results[0].number,
+          description: results[0].description,
+          short_address: results[0].short_address
+        });
+      }
       
       return results.map((warehouse: any) => ({
         Ref: warehouse.ref,
