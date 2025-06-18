@@ -27,6 +27,7 @@ import { PaymentDialog } from "@/components/PaymentDialog";
 import DueDateButton from "@/components/DueDateButton";
 import { useSorting } from "@/hooks/useSorting";
 import { InlineSerialNumbers } from "@/components/InlineSerialNumbers";
+import { NovaPoshtaIntegration } from "@/components/NovaPoshtaIntegration";
 // Типи
 type Order = {
   id: number;
@@ -1738,6 +1739,27 @@ export default function Orders() {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                {/* Nova Poshta Integration */}
+                {form.watch("carrierId") && carriers?.find((c: any) => c.id === parseInt(form.watch("carrierId")))?.name === "Нова Пошта" && (
+                  <div className="mt-6">
+                    <NovaPoshtaIntegration
+                      onAddressSelect={(address, cityRef, warehouseRef) => {
+                        // Можна зберегти адресу в додаткових полях
+                        console.log("Обрано адресу Nova Poshta:", address, cityRef, warehouseRef);
+                      }}
+                      onTrackingNumberCreated={(trackingNumber) => {
+                        form.setValue("trackingNumber", trackingNumber);
+                      }}
+                      orderId={isEditMode ? editingOrder?.id?.toString() : undefined}
+                      recipientName={form.watch("customerName")}
+                      recipientPhone={form.watch("customerPhone")}
+                    />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="status">Статус</Label>
                     {!isEditMode ? (
