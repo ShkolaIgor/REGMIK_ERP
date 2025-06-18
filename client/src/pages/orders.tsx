@@ -602,6 +602,17 @@ export default function Orders() {
 
   const { data: clientSearchData, isLoading: isSearchingClients } = useQuery({
     queryKey: ["/api/clients/search", debouncedSearchValue],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (debouncedSearchValue) {
+        params.append('q', debouncedSearchValue);
+      }
+      params.append('limit', '50');
+      
+      const response = await fetch(`/api/clients/search?${params}`);
+      if (!response.ok) throw new Error('Failed to search clients');
+      return response.json();
+    },
     enabled: true,
   });
   
