@@ -689,6 +689,10 @@ export default function Orders() {
     }
   }, [companies, selectedCompanyId, isEditMode, form]);
 
+  // Фіксуємо порядок декларації для запобігання помилок ініціалізації
+  const companiesArray = Array.isArray(companies) ? companies : [];
+  const carriersArray = Array.isArray(carriers) ? carriers : [];
+
   const { data: orderStatusList = [] } = useQuery({
     queryKey: ["/api/order-statuses"],
   });
@@ -697,13 +701,15 @@ export default function Orders() {
     queryKey: ["/api/client-contacts"],
   });
 
-  const { data: carriers = [] } = useQuery({
+  const carriersQuery = useQuery({
     queryKey: ["/api/carriers"],
   });
+  const carriers = carriersQuery.data || [];
 
-  const { data: companies = [] } = useQuery({
+  const companiesQuery = useQuery({
     queryKey: ["/api/companies"],
   });
+  const companies = companiesQuery.data || [];
 
   // Форма для управління статусами
   const statusForm = useForm<StatusFormData>({
@@ -1235,7 +1241,7 @@ export default function Orders() {
     setEditingOrder(null);
     
     // Знаходимо компанію за замовчуванням
-    const defaultCompany = companies && companies.find((company: any) => company.isDefault);
+    const defaultCompany = Array.isArray(companies) ? companies.find((company: any) => company.isDefault) : null;
     const defaultCompanyId = defaultCompany ? defaultCompany.id.toString() : "";
     
     form.reset({
