@@ -12,7 +12,7 @@ import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import Inventory from "@/pages/inventory";
 import Production from "@/pages/production";
-import Orders from "@/pages/orders";
+import OrdersSimple from "@/pages/orders-simple";
 import Clients from "@/pages/clients";
 import ClientContacts from "@/pages/client-contacts";
 import ClientNovaPoshtaSettings from "@/pages/client-nova-poshta-settings";
