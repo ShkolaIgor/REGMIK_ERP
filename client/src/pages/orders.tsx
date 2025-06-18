@@ -1070,6 +1070,11 @@ export default function Orders() {
       const date = new Date(dateString);
       return date.toISOString().slice(0, 16);
     };
+    
+    // Встановлюємо контактну особу якщо вона є
+    if (order.clientContactsId) {
+      setSelectedContactId(order.clientContactsId);
+    }
 
     // Заповнюємо форму даними замовлення
     form.reset({
@@ -2035,67 +2040,66 @@ export default function Orders() {
                     </Droppable>
                   </TableHeader>
                   <TableBody>
-                    {orders.map((order: any) => (
-                      <div key={order.id}>
-                        <TableRow 
-                          className="cursor-pointer hover:bg-gray-50"
-                          onClick={() => toggleOrderExpansion(order.id)}
-                        >
-                          {columnOrder.map((columnKey) => (
-                            <TableCell key={columnKey}>
-                              {renderColumnContent(columnKey, order)}
-                            </TableCell>
-                          ))}
-                        </TableRow>,
-                        
-                        {expandedOrderId === order.id && (
-                          <TableRow>
-                            <TableCell colSpan={columnOrder.length} className="bg-gray-50 p-0">
-                              <div className="p-4">
-                                <h4 className="font-medium mb-3">Склад замовлення:</h4>
-                                {order.items && order.items.length > 0 ? (
-                                  <div className="space-y-4">
-                                    {order.items.map((item: any, index: number) => (
-                                      <div key={index} className="bg-white rounded border p-4 space-y-4">
-                                        <div className="flex justify-between items-center">
-                                          <div className="flex-1">
-                                            <span className="font-medium">{item.product?.name || 'Товар не знайдено'}</span>
-                                            <span className="text-sm text-gray-500 ml-2">({item.product?.sku})</span>
-                                          </div>
-                                          <div className="flex items-center space-x-4">
-                                            <span className="text-sm text-gray-600">
-                                              Кількість: <span className="font-medium">{item.quantity}</span>
-                                            </span>
-                                            <span className="text-sm text-gray-600">
-                                              Ціна: <span className="font-medium">{formatCurrency(item.unitPrice)}</span>
-                                            </span>
-                                            <span className="text-sm font-medium">
-                                              Всього: {formatCurrency(item.totalPrice)}
-                                            </span>
-                                          </div>
+                    {orders.map((order: any) => [
+                      <TableRow 
+                        key={order.id}
+                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() => toggleOrderExpansion(order.id)}
+                      >
+                        {columnOrder.map((columnKey: any) => (
+                          <TableCell key={columnKey}>
+                            {renderColumnContent(columnKey, order)}
+                          </TableCell>
+                        ))}
+                      </TableRow>,
+                      
+                      expandedOrderId === order.id && (
+                        <TableRow key={`expanded-${order.id}`}>
+                          <TableCell colSpan={columnOrder.length} className="bg-gray-50 p-0">
+                            <div className="p-4">
+                              <h4 className="font-medium mb-3">Склад замовлення:</h4>
+                              {order.items && order.items.length > 0 ? (
+                                <div className="space-y-4">
+                                  {order.items.map((item: any, index: number) => (
+                                    <div key={index} className="bg-white rounded border p-4 space-y-4">
+                                      <div className="flex justify-between items-center">
+                                        <div className="flex-1">
+                                          <span className="font-medium">{item.product?.name || 'Товар не знайдено'}</span>
+                                          <span className="text-sm text-gray-500 ml-2">({item.product?.sku})</span>
                                         </div>
-                                        
-                                        {/* Компонент для прив'язки серійних номерів */}
-                                        {item.product?.hasSerialNumbers && (
-                                          <InlineSerialNumbers 
-                                            orderItemId={item.id}
-                                            productId={item.productId}
-                                            productName={item.product?.name || 'Невідомий товар'}
-                                            quantity={parseInt(item.quantity)}
-                                          />
-                                        )}
+                                        <div className="flex items-center space-x-4">
+                                          <span className="text-sm text-gray-600">
+                                            Кількість: <span className="font-medium">{item.quantity}</span>
+                                          </span>
+                                          <span className="text-sm text-gray-600">
+                                            Ціна: <span className="font-medium">{formatCurrency(item.unitPrice)}</span>
+                                          </span>
+                                          <span className="text-sm font-medium">
+                                            Всього: {formatCurrency(item.totalPrice)}
+                                          </span>
+                                        </div>
                                       </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-gray-500 text-sm">Замовлення не містить товарів</p>
-                                )}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </div>
-                    ))}
+                                      
+                                      {/* Компонент для прив'язки серійних номерів */}
+                                      {item.product?.hasSerialNumbers && (
+                                        <InlineSerialNumbers 
+                                          orderItemId={item.id}
+                                          productId={item.productId}
+                                          productName={item.product?.name || 'Невідомий товар'}
+                                          quantity={parseInt(item.quantity)}
+                                        />
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-gray-500 text-sm">Замовлення не містить товарів</p>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    ]).flat()}
                   </TableBody>
                 </Table>
               </DragDropContext>
