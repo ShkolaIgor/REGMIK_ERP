@@ -680,7 +680,7 @@ export default function Orders() {
   
   // Встановлюємо компанію за замовчуванням при завантаженні компаній
   useEffect(() => {
-    if (companies && companies.length > 0 && !selectedCompanyId && !isEditMode) {
+    if (Array.isArray(companies) && companies.length > 0 && !selectedCompanyId && !isEditMode) {
       const defaultCompany = companies.find((company: any) => company.isDefault);
       if (defaultCompany) {
         setSelectedCompanyId(defaultCompany.id.toString());
@@ -1404,7 +1404,7 @@ export default function Orders() {
                         aria-expanded={companyComboboxOpen}
                         className="w-full justify-between"
                       >
-                        {selectedCompanyId && companies && companies.length > 0
+                        {selectedCompanyId && Array.isArray(companies) && companies.length > 0
                           ? companies.find((company: any) => company.id.toString() === selectedCompanyId)?.name || "Оберіть компанію..."
                           : "Оберіть компанію..."}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
