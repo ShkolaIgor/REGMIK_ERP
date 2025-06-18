@@ -1419,7 +1419,7 @@ export default function Orders() {
                         />
                         <CommandEmpty>Компанія не знайдена</CommandEmpty>
                         <CommandGroup>
-                          {companies && companies.length > 0 && companies.map((company: any) => (
+                          {Array.isArray(companies) && companies.length > 0 && companies.map((company: any) => (
                             <CommandItem
                               key={company.id}
                               value={company.name}
@@ -1639,11 +1639,11 @@ export default function Orders() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">Без перевізника</SelectItem>
-                        {carriers?.map((carrier: any) => (
+                        {Array.isArray(carriers) ? carriers.map((carrier: any) => (
                           <SelectItem key={carrier.id} value={carrier.id.toString()}>
                             {carrier.name}
                           </SelectItem>
-                        ))}
+                        )) : null}
                       </SelectContent>
                     </Select>
                   </div>
