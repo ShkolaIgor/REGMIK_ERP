@@ -1506,10 +1506,14 @@ export const novaPoshtaWarehouses = pgTable("nova_poshta_warehouses", {
   description: text("description").notNull(),
   descriptionRu: text("description_ru"),
   shortAddress: varchar("short_address", { length: 500 }),
+  shortAddressRu: varchar("short_address_ru", { length: 500 }), // Коротка адреса російською
   phone: varchar("phone", { length: 50 }),
   schedule: text("schedule"),
   number: varchar("number", { length: 20 }),
   placeMaxWeightAllowed: integer("place_max_weight_allowed"),
+  isActive: boolean("is_active").default(true), // Чи активне відділення
+  cityName: varchar("city_name", { length: 255 }), // Назва міста українською
+  cityNameRu: varchar("city_name_ru", { length: 255 }), // Назва міста російською
   lastUpdated: timestamp("last_updated").defaultNow(),
 });
 
