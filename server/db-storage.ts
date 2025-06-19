@@ -7304,6 +7304,86 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getClientContactsPaginated(page: number, limit: number, search?: string, clientId?: number): Promise<{
+    contacts: (ClientContact & { clientName?: string })[];
+    total: number;
+    totalPages: number;
+    currentPage: number;
+  }> {
+    try {
+      const offset = (page - 1) * limit;
+      
+      let whereConditions = [];
+      
+      if (search) {
+        whereConditions.push(
+          or(
+            ilike(clientContacts.fullName, `%${search}%`),
+            ilike(clientContacts.email, `%${search}%`),
+            ilike(clientContacts.primaryPhone, `%${search}%`),
+            ilike(clientContacts.position, `%${search}%`),
+            ilike(clients.name, `%${search}%`)
+          )
+        );
+      }
+      
+      if (clientId) {
+        whereConditions.push(eq(clientContacts.clientId, clientId));
+      }
+      
+      const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+      
+      // Get total count
+      const totalResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(clientContacts)
+        .leftJoin(clients, eq(clientContacts.clientId, clients.id))
+        .where(whereClause);
+      
+      const total = Number(totalResult[0]?.count || 0);
+      
+      // Get paginated results with client names using LEFT JOIN
+      const results = await db
+        .select({
+          id: clientContacts.id,
+          clientId: clientContacts.clientId,
+          fullName: clientContacts.fullName,
+          position: clientContacts.position,
+          email: clientContacts.email,
+          primaryPhone: clientContacts.primaryPhone,
+          primaryPhoneType: clientContacts.primaryPhoneType,
+          secondaryPhone: clientContacts.secondaryPhone,
+          secondaryPhoneType: clientContacts.secondaryPhoneType,
+          tertiaryPhone: clientContacts.tertiaryPhone,
+          tertiaryPhoneType: clientContacts.tertiaryPhoneType,
+          notes: clientContacts.notes,
+          isPrimary: clientContacts.isPrimary,
+          isActive: clientContacts.isActive,
+          externalId: clientContacts.externalId,
+          source: clientContacts.source,
+          createdAt: clientContacts.createdAt,
+          updatedAt: clientContacts.updatedAt,
+          clientName: clients.name,
+        })
+        .from(clientContacts)
+        .leftJoin(clients, eq(clientContacts.clientId, clients.id))
+        .where(whereClause)
+        .orderBy(desc(clientContacts.createdAt))
+        .limit(limit)
+        .offset(offset);
+      
+      return {
+        contacts: results,
+        total,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      };
+    } catch (error) {
+      console.error("Error getting paginated client contacts:", error);
+      throw error;
+    }
+  }
+
   async createClientContact(contactData: InsertClientContact): Promise<ClientContact> {
     try {
       const [contact] = await db.insert(clientContacts)
