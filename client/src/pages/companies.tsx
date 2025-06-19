@@ -150,7 +150,6 @@ export default function Companies() {
       bankName: "",
       bankAccount: "",
       bankCode: "",
-      logo: "",
       isActive: true,
       isDefault: false,
       notes: "",
@@ -172,7 +171,7 @@ export default function Companies() {
       bankName: company.bankName || "",
       bankAccount: company.bankAccount || "",
       bankCode: company.bankCode || "",
-      logo: company.logo || "",
+
       isActive: company.isActive,
       isDefault: company.isDefault,
       notes: company.notes || "",
@@ -485,24 +484,15 @@ export default function Companies() {
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                    {(() => {
-                      console.log(`Company ${company.name} logo:`, {
-                        hasLogo: !!company.logo,
-                        logoLength: company.logo?.length,
-                        logoStart: company.logo?.substring(0, 50)
-                      });
-                      return company.logo && company.logo.trim() !== '' ? (
-                        <img 
-                          src={company.logo} 
-                          alt={`${company.name} logo`}
-                          className="w-full h-full object-contain"
-                          onError={(e) => console.error('Image load error:', e)}
-                          onLoad={() => console.log('Image loaded successfully for', company.name)}
-                        />
-                      ) : (
-                        <Building className="h-5 w-5 text-blue-600" />
-                      );
-                    })()}
+                    {company.logo && company.logo.trim() !== '' ? (
+                      <img 
+                        src={company.logo} 
+                        alt={`${company.name} logo`}
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <Building className="h-5 w-5 text-blue-600" />
+                    )}
                   </div>
                   <div>
                     <CardTitle className="text-lg">{company.name}</CardTitle>
