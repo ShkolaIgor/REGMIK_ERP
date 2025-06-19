@@ -78,6 +78,26 @@ export class DatabaseStorage implements IStorage {
   
   constructor() {
     this.initializeData();
+    this.configureDatabase();
+  }
+
+  private async configureDatabase() {
+    try {
+      // Налаштовуємо кодування UTF-8 для всіх підключень
+      const client = await pool.connect();
+      console.log('Database connection configured for UTF-8');
+      
+      try {
+        await client.query("SET client_encoding TO 'UTF8'");
+        await client.query("SET timezone = 'Europe/Kiev'");
+      } catch (error) {
+        console.error('Error setting UTF-8 encoding:', error);
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error('Error configuring database:', error);
+    }
   }
 
   private async initializeData() {
