@@ -652,7 +652,6 @@ export default function ClientContacts() {
                 <TableRow>
                   <TableHead>Ім'я</TableHead>
                   <TableHead>Клієнт</TableHead>
-                  <TableHead>Посада</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Телефони</TableHead>
                   <TableHead>Статус</TableHead>
@@ -682,7 +681,6 @@ export default function ClientContacts() {
                        (clients as Client[]).find(c => c.id === contact.clientId)?.name || 
                        'Клієнт не знайдений'}
                     </TableCell>
-                    <TableCell>{contact.position || "-"}</TableCell>
                     <TableCell>
                       {contact.email ? (
                         <div className="flex items-center gap-2">
@@ -792,7 +790,7 @@ export default function ClientContacts() {
                 ))}
                 {filteredContacts.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-6">
+                    <TableCell colSpan={6} className="text-center py-6">
                       Контакти не знайдено
                     </TableCell>
                   </TableRow>
