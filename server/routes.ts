@@ -5305,6 +5305,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Start XML import (returns job ID immediately)
+  // XML import for client contacts
+  app.post("/api/client-contacts/import-xml", upload.single('xmlFile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "No XML file uploaded" 
+        });
+      }
+
+      const jobId = generateJobId();
+      
+      // Initialize job status
+      importJobs.set(jobId, {
+        id: jobId,
+        status: 'processing',
+        progress: 0,
+        totalRows: 0,
+        processed: 0,
+        imported: 0,
+        skipped: 0,
+        errors: [],
+        details: [],
+        startTime: new Date(),
+        endTime: null
+      });
+
+      // Start async processing for client contacts
+      processClientContactsXmlImportAsync(jobId, req.file.buffer);
+
+      res.json({
+        success: true,
+        jobId: jobId,
+        message: "Client contacts import started successfully"
+      });
+    } catch (error) {
+      console.error("Client contacts XML import error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to process XML file" 
+      });
+    }
+  });
+
   app.post("/api/clients/import-xml", upload.single('xmlFile'), async (req, res) => {
     try {
       if (!req.file) {
@@ -7981,6 +8025,167 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error in processProductXmlImportAsync:', error);
       job.status = 'failed';
       job.errors.push(`Import failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  async function processClientContactsXmlImportAsync(jobId: string, fileBuffer: Buffer) {
+    const job = importJobs.get(jobId);
+    if (!job) return;
+
+    try {
+      const xmlContent = fileBuffer.toString('utf-8');
+      const parser = new xml2js.Parser({ 
+        explicitArray: false,
+        mergeAttrs: true
+      });
+      
+      const result = await parser.parseStringPromise(xmlContent);
+      
+      if (!result.DATAPACKET || !result.DATAPACKET.ROWDATA || !result.DATAPACKET.ROWDATA.ROW) {
+        job.status = 'failed';
+        job.errors.push("Invalid XML format. Expected DATAPACKET structure.");
+        return;
+      }
+
+      const rows = Array.isArray(result.DATAPACKET.ROWDATA.ROW) 
+        ? result.DATAPACKET.ROWDATA.ROW 
+        : [result.DATAPACKET.ROWDATA.ROW];
+
+      job.totalRows = rows.length;
+      
+      // Get existing clients for matching by external_id
+      const existingClients = await storage.getClients();
+      const existingContacts = await storage.getClientContacts();
+
+      // Process in batches to avoid memory issues and allow progress updates
+      const BATCH_SIZE = 50;
+      
+      for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+        const batch = rows.slice(i, i + BATCH_SIZE);
+        
+        for (const row of batch) {
+          try {
+            await processClientContactRow(row, job, existingClients, existingContacts);
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            job.details.push({
+              name: row.FIO || 'Unknown',
+              status: 'error',
+              message: errorMessage
+            });
+            job.errors.push(`Row ${job.processed + 1} (${row.FIO}): ${errorMessage}`);
+          }
+          
+          job.processed++;
+          job.progress = Math.round((job.processed / job.totalRows) * 100);
+        }
+
+        // Small delay between batches to prevent blocking
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+
+      job.skipped = job.processed - job.imported - job.errors.length;
+      job.status = 'completed';
+      job.progress = 100;
+
+      // Clean up job after 5 minutes
+      setTimeout(() => {
+        importJobs.delete(jobId);
+      }, 5 * 60 * 1000);
+
+    } catch (error) {
+      console.error("Async client contacts XML import error:", error);
+      job.status = 'failed';
+      job.errors.push(error instanceof Error ? error.message : 'Unknown error');
+    }
+  }
+
+  async function processClientContactRow(row: any, job: any, existingClients: any[], existingContacts: any[]) {
+    if (!row.ID_TELEPHON) {
+      job.details.push({
+        name: row.FIO || 'Unknown',
+        status: 'error',
+        message: 'Missing required ID_TELEPHON field'
+      });
+      job.errors.push(`Row ${job.processed + 1}: Missing required ID_TELEPHON field`);
+      return;
+    }
+
+    if (!row.INDEX_PREDPR) {
+      job.details.push({
+        name: row.FIO || 'Unknown',
+        status: 'error',
+        message: 'Missing required INDEX_PREDPR field'
+      });
+      job.errors.push(`Row ${job.processed + 1}: Missing required INDEX_PREDPR field`);
+      return;
+    }
+
+    // Find client by external_id matching INDEX_PREDPR
+    const client = existingClients.find(c => c.externalId === row.INDEX_PREDPR);
+    if (!client) {
+      job.details.push({
+        name: row.FIO || 'Unknown',
+        status: 'skipped',
+        message: `Client with external_id ${row.INDEX_PREDPR} not found`
+      });
+      job.skipped++;
+      return;
+    }
+
+    // Check for existing contact with same external_id
+    const existingContact = existingContacts.find(c => c.externalId === row.ID_TELEPHON);
+    if (existingContact) {
+      job.details.push({
+        name: row.FIO || 'Unknown',
+        status: 'skipped',
+        message: `Contact with external_id ${row.ID_TELEPHON} already exists`
+      });
+      job.skipped++;
+      return;
+    }
+
+    // Determine if this is the first contact for this client (for is_primary)
+    const clientContactsCount = existingContacts.filter(c => c.clientId === client.id).length;
+    const isPrimary = clientContactsCount === 0;
+
+    const contactData = {
+      clientId: client.id,
+      externalId: row.ID_TELEPHON,
+      fullName: row.FIO || '',
+      position: row.DOLGNOST || null,
+      primaryPhone: row.MOBIL || null,
+      secondaryPhone: row.TEL_WORK || null,
+      tertiaryPhone: row.FAX || null,
+      email: row.EMAIL || null,
+      isActive: row.ACTUAL === 'T',
+      isPrimary: isPrimary,
+      source: 'Elecomp'
+    };
+
+    try {
+      await storage.createClientContact(contactData);
+      
+      job.details.push({
+        name: row.FIO || 'Unknown',
+        status: 'imported',
+        message: `Imported contact for client: ${client.name}`
+      });
+      job.imported++;
+      
+      // Add to existing contacts for next iterations
+      existingContacts.push({
+        ...contactData,
+        id: Date.now(), // Temporary ID for counting purposes
+      });
+    } catch (createError) {
+      const createErrorMessage = createError instanceof Error ? createError.message : 'Unknown create error';
+      job.details.push({
+        name: row.FIO || 'Unknown',
+        status: 'error',
+        message: createErrorMessage
+      });
+      job.errors.push(`Row ${job.processed + 1} (${row.FIO}): ${createErrorMessage}`);
     }
   }
 
