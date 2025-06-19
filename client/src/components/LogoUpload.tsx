@@ -38,6 +38,7 @@ export function LogoUpload({ companyId, currentLogo, onLogoUpdate }: LogoUploadP
       return response.json();
     },
     onSuccess: (data) => {
+      console.log("Logo upload successful:", data);
       setPreviewUrl(data.logo);
       onLogoUpdate?.(data.logo);
       queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
@@ -47,6 +48,7 @@ export function LogoUpload({ companyId, currentLogo, onLogoUpdate }: LogoUploadP
       });
     },
     onError: (error: any) => {
+      console.error("Logo upload error:", error);
       toast({
         title: "Помилка",
         description: error.message || "Не вдалося завантажити логотип",
