@@ -7679,10 +7679,10 @@ export class DatabaseStorage implements IStorage {
       const parsed = await parseXml(xmlContent);
       
       let rows: any[] = [];
-      if (parsed.ROWDATA && parsed.ROWDATA.ROW) {
-        rows = Array.isArray(parsed.ROWDATA.ROW) ? parsed.ROWDATA.ROW : [parsed.ROWDATA.ROW];
+      if (parsed.DATAPACKET && parsed.DATAPACKET.ROWDATA && parsed.DATAPACKET.ROWDATA.ROW) {
+        rows = Array.isArray(parsed.DATAPACKET.ROWDATA.ROW) ? parsed.DATAPACKET.ROWDATA.ROW : [parsed.DATAPACKET.ROWDATA.ROW];
       } else {
-        throw new Error("Невірний формат XML: очікується структура ROWDATA/ROW");
+        throw new Error("Невірний формат XML: очікується структура DATAPACKET/ROWDATA/ROW");
       }
 
       // Обробляємо кожен рядок
