@@ -7639,9 +7639,10 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async deleteOrderStatus(id: number): Promise<void> {
+  async deleteOrderStatus(id: number): Promise<boolean> {
     try {
-      await db.delete(orderStatuses).where(eq(orderStatuses.id, id));
+      const result = await db.delete(orderStatuses).where(eq(orderStatuses.id, id));
+      return result.rowCount > 0;
     } catch (error) {
       console.error('Error deleting order status:', error);
       throw error;

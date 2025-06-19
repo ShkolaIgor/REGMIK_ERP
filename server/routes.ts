@@ -964,55 +964,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Order Status API
-  app.get("/api/order-statuses", async (req, res) => {
-    try {
-      console.log("Fetching order statuses...");
-      const statuses = await storage.getOrderStatuses();
-      console.log("Order statuses fetched:", statuses);
-      res.json(statuses);
-    } catch (error) {
-      console.error("Failed to fetch order statuses:", error);
-      res.status(500).json({ error: "Failed to fetch order statuses" });
-    }
-  });
 
-  app.post("/api/order-statuses", async (req, res) => {
-    try {
-      const statusData = req.body;
-      const status = await storage.createOrderStatus(statusData);
-      res.status(201).json(status);
-    } catch (error) {
-      console.error("Failed to create order status:", error);
-      res.status(500).json({ error: "Failed to create order status" });
-    }
-  });
-
-  app.put("/api/order-statuses/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const statusData = req.body;
-      const status = await storage.updateOrderStatusRecord(id, statusData);
-      if (!status) {
-        return res.status(404).json({ error: "Order status not found" });
-      }
-      res.json(status);
-    } catch (error) {
-      console.error("Failed to update order status:", error);
-      res.status(500).json({ error: "Failed to update order status" });
-    }
-  });
-
-  app.delete("/api/order-statuses/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      await storage.deleteOrderStatusRecord(id);
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Failed to delete order status:", error);
-      res.status(500).json({ error: "Failed to delete order status" });
-    }
-  });
 
   // Recipes
   app.get("/api/recipes", async (req, res) => {
@@ -5162,6 +5114,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const validatedData = insertOrderStatusSchema.parse(req.body);
       const status = await storage.updateOrderStatus(id, validatedData);
+      if (!status) {
+        return res.status(404).json({ error: "Order status not found" });
+      }
       res.json(status);
     } catch (error) {
       console.error("Error updating order status:", error);
@@ -5176,7 +5131,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/order-statuses/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      await storage.deleteOrderStatus(id);
+      const success = await storage.deleteOrderStatus(id);
+      if (!success) {
+        return res.status(404).json({ error: "Order status not found" });
+      }
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting order status:", error);
