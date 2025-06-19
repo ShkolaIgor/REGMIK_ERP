@@ -8029,17 +8029,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   async function processClientContactsXmlImportAsync(jobId: string, fileBuffer: Buffer) {
+    console.log(`Starting client contacts import with jobId: ${jobId}`);
     const job = importJobs.get(jobId);
-    if (!job) return;
+    if (!job) {
+      console.log(`Job ${jobId} not found`);
+      return;
+    }
 
     try {
+      console.log('Starting client contacts XML import processing...');
       const xmlContent = fileBuffer.toString('utf-8');
+      console.log(`XML content length: ${xmlContent.length} characters`);
+      
       const parser = new xml2js.Parser({ 
         explicitArray: false,
         mergeAttrs: true
       });
       
+      console.log('Parsing XML content...');
       const result = await parser.parseStringPromise(xmlContent);
+      console.log('XML parsed successfully');
       
       if (!result.DATAPACKET || !result.DATAPACKET.ROWDATA || !result.DATAPACKET.ROWDATA.ROW) {
         job.status = 'failed';
@@ -8054,8 +8063,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       job.totalRows = rows.length;
       
       // Get existing clients for matching by external_id
+      console.log('Loading existing clients...');
       const existingClients = await storage.getClients();
+      console.log(`Loaded ${existingClients.length} existing clients`);
+      
+      console.log('Loading existing contacts...');
       const existingContacts = await storage.getClientContacts();
+      console.log(`Loaded ${existingContacts.length} existing contacts`);
 
       // Process in batches to avoid memory issues and allow progress updates
       const BATCH_SIZE = 50;
@@ -8065,8 +8079,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         for (const row of batch) {
           try {
+            console.log(`Processing contact row ${job.processed + 1}: ${row.FIO}`);
             await processClientContactRow(row, job, existingClients, existingContacts);
           } catch (error) {
+            console.error(`Error processing contact row ${job.processed + 1}:`, error);
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             job.details.push({
               name: row.FIO || 'Unknown',
@@ -8078,6 +8094,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           job.processed++;
           job.progress = Math.round((job.processed / job.totalRows) * 100);
+          console.log(`Progress: ${job.progress}% (${job.processed}/${job.totalRows})`);
         }
 
         // Small delay between batches to prevent blocking
@@ -8101,6 +8118,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   async function processClientContactRow(row: any, job: any, existingClients: any[], existingContacts: any[]) {
+    console.log(`Processing contact: ${row.FIO}, ID_TELEPHON: ${row.ID_TELEPHON}, INDEX_PREDPR: ${row.INDEX_PREDPR}`);
+    
     if (!row.ID_TELEPHON) {
       job.details.push({
         name: row.FIO || 'Unknown',
@@ -8122,8 +8141,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     // Find client by external_id matching INDEX_PREDPR
+    console.log(`Looking for client with external_id: ${row.INDEX_PREDPR}`);
     const client = existingClients.find(c => c.externalId === row.INDEX_PREDPR);
     if (!client) {
+      console.log(`Client with external_id ${row.INDEX_PREDPR} not found`);
       job.details.push({
         name: row.FIO || 'Unknown',
         status: 'skipped',
@@ -8132,6 +8153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       job.skipped++;
       return;
     }
+    console.log(`Found client: ${client.name} (ID: ${client.id})`);
 
     // Check for existing contact with same external_id
     const existingContact = existingContacts.find(c => c.externalId === row.ID_TELEPHON);
@@ -8164,7 +8186,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     };
 
     try {
+      console.log(`Creating contact for client ${client.name}:`, contactData);
       await storage.createClientContact(contactData);
+      console.log(`Contact created successfully`);
       
       job.details.push({
         name: row.FIO || 'Unknown',
@@ -8179,6 +8203,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: Date.now(), // Temporary ID for counting purposes
       });
     } catch (createError) {
+      console.error(`Error creating contact:`, createError);
       const createErrorMessage = createError instanceof Error ? createError.message : 'Unknown create error';
       job.details.push({
         name: row.FIO || 'Unknown',
