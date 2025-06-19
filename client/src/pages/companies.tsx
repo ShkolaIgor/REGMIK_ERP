@@ -15,6 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertCompanySchema, type Company, type InsertCompany } from "@shared/schema";
+import { LogoUpload } from "@/components/LogoUpload";
 
 export default function Companies() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);

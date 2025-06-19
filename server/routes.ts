@@ -52,6 +52,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   });
 
+  // Multer configuration for logo uploads
+  const logoUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB limit for images
+    },
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only image files are allowed'));
+      }
+    },
+  });
+
   // Register simple integration routes
   registerSimpleIntegrationRoutes(app);
   
@@ -6438,6 +6453,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching orders by company:", error);
       res.status(500).json({ error: "Failed to fetch orders" });
+    }
+  });
+
+  // Company logo upload
+  app.post("/api/companies/:id/logo", logoUpload.single('logo'), async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      if (!req.file) {
+        return res.status(400).json({ error: "No logo file provided" });
+      }
+
+      // Convert image to base64
+      const base64Logo = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+      
+      // Update company with logo
+      const updatedCompany = await storage.updateCompany(companyId, { logo: base64Logo });
+      
+      if (!updatedCompany) {
+        return res.status(404).json({ error: "Company not found" });
+      }
+
+      res.json({ 
+        message: "Logo uploaded successfully", 
+        logo: base64Logo,
+        company: updatedCompany 
+      });
+    } catch (error) {
+      console.error("Error uploading company logo:", error);
+      res.status(500).json({ error: "Failed to upload logo" });
+    }
+  });
+
+  // Remove company logo
+  app.delete("/api/companies/:id/logo", async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      const updatedCompany = await storage.updateCompany(companyId, { logo: null });
+      
+      if (!updatedCompany) {
+        return res.status(404).json({ error: "Company not found" });
+      }
+
+      res.json({ 
+        message: "Logo removed successfully", 
+        company: updatedCompany 
+      });
+    } catch (error) {
+      console.error("Error removing company logo:", error);
+      res.status(500).json({ error: "Failed to remove logo" });
     }
   });
 
