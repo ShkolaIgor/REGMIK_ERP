@@ -27,6 +27,7 @@ export function LogoUpload({ companyId, currentLogo, onLogoUpdate }: LogoUploadP
       const response = await fetch(`/api/companies/${companyId}/logo`, {
         method: 'POST',
         body: formData,
+        credentials: 'include', // Важливо для cookies
       });
       
       if (!response.ok) {
@@ -58,6 +59,7 @@ export function LogoUpload({ companyId, currentLogo, onLogoUpdate }: LogoUploadP
     mutationFn: async () => {
       const response = await fetch(`/api/companies/${companyId}/logo`, {
         method: 'DELETE',
+        credentials: 'include',
       });
       
       if (!response.ok) {

@@ -484,7 +484,7 @@ export default function Companies() {
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center overflow-hidden">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
                     {company.logo ? (
                       <img 
                         src={company.logo} 
@@ -492,7 +492,7 @@ export default function Companies() {
                         className="w-full h-full object-contain"
                       />
                     ) : (
-                      <Building className="h-6 w-6 text-blue-600" />
+                      <Building className="h-5 w-5 text-blue-600" />
                     )}
                   </div>
                   <div>
@@ -775,6 +775,15 @@ export default function Companies() {
                   onLogoUpdate={(logo) => {
                     // Оновлюємо локальний стан для негайного відображення
                     setEditingCompany(prev => prev ? { ...prev, logo } : null);
+                    // Також оновлюємо кеш відразу для швидкого відображення
+                    queryClient.setQueryData(['/api/companies'], (oldData: any) => {
+                      if (!oldData) return oldData;
+                      return oldData.map((company: any) => 
+                        company.id === editingCompany.id 
+                          ? { ...company, logo }
+                          : company
+                      );
+                    });
                   }}
                 />
               )}
