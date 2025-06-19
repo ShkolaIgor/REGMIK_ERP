@@ -245,6 +245,10 @@ export default function Clients() {
     setIsContactDialogOpen(true);
   };
 
+  const handleViewContacts = (clientId: number, clientName: string) => {
+    setContactsPopup({ clientId, clientName });
+  };
+
   const handleDelete = async (clientId: string) => {
     try {
       await apiRequest(`/api/clients/${clientId}`, {
@@ -347,7 +351,7 @@ export default function Clients() {
         clientTypes={clientTypes}
         onEdit={handleEdit}
         onAddContact={openAddContactDialog}
-        onViewContacts={(clientId, clientName) => setContactsPopup({ clientId, clientName })}
+        onViewContacts={handleViewContacts}
       />
 
       {/* Client Contacts Popup */}
