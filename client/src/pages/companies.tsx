@@ -485,7 +485,7 @@ export default function Companies() {
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                    {company.logo ? (
+                    {company.logo && company.logo.trim() !== '' ? (
                       <img 
                         src={company.logo} 
                         alt={`${company.name} logo`}
