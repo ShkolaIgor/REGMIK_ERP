@@ -8228,7 +8228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       secondaryPhone: cleanPhone(row.TEL_WORK),
       tertiaryPhone: cleanPhone(row.FAX),
       email: cleanEmail(row.EMAIL),
-      isActive: row.ACTUAL === 'T' || row.ACTUAL === '' || !row.ACTUAL, // Default to active if empty
+      isActive: row.ACTUAL === 'T' || row.ACTUAL === '' || row.ACTUAL === null || row.ACTUAL === undefined, // ACTUAL="" is TRUE
       isPrimary: isPrimary,
       source: 'Elecomp'
     };
