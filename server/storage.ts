@@ -419,6 +419,13 @@ export interface IStorage {
 
   // Client Contacts
   getClientContacts(): Promise<ClientContact[]>;
+  getClientContactsPaginated?(page: number, limit: number, search?: string, clientId?: number): Promise<{
+    contacts: ClientContact[];
+    total: number;
+    totalPages: number;
+    currentPage: number;
+  }>;
+  getClientContactsByClientId?(clientId: number): Promise<ClientContact[]>;
   getClientContact(id: number): Promise<ClientContact | undefined>;
   createClientContact(contact: InsertClientContact): Promise<ClientContact>;
   updateClientContact(id: number, contact: Partial<InsertClientContact>): Promise<ClientContact | undefined>;

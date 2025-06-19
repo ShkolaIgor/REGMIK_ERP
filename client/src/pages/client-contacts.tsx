@@ -97,9 +97,10 @@ export default function ClientContacts() {
     },
   });
 
-  const contacts = contactsResponse?.contacts || [];
-  const totalPages = contactsResponse?.totalPages || 1;
-  const totalContacts = contactsResponse?.total || 0;
+  // Handle both paginated and non-paginated responses
+  const contacts = Array.isArray(contactsResponse) ? contactsResponse : (contactsResponse?.contacts || []);
+  const totalPages = contactsResponse?.totalPages || Math.ceil(contacts.length / pageSize);
+  const totalContacts = contactsResponse?.total || contacts.length;
 
   // Запит для пошуку клієнтів з debounce
   const [debouncedClientSearch, setDebouncedClientSearch] = useState("");
