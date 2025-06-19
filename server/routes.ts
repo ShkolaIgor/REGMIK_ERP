@@ -8169,20 +8169,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return;
     }
 
+    // Clean and validate phone numbers
+    const cleanPhone = (phone: string) => {
+      if (!phone || phone.trim() === '') return null;
+      const cleaned = phone.trim().replace(/\s+/g, '');
+      // Skip obviously invalid phone entries
+      if (cleaned.length < 7 || cleaned.includes('@')) return null;
+      return cleaned;
+    };
+
+    // Clean and validate email
+    const cleanEmail = (email: string) => {
+      if (!email || email.trim() === '') return null;
+      const cleaned = email.trim();
+      // Basic email validation
+      if (!cleaned.includes('@') || cleaned.length < 5) return null;
+      return cleaned;
+    };
+
+    // Clean name - skip if it looks like a phone number
+    const cleanName = (name: string) => {
+      if (!name || name.trim() === '') return '';
+      const cleaned = name.trim();
+      // Skip if name looks like a phone number
+      if (/^[\d\s\(\)\-\+]+$/.test(cleaned)) return '';
+      return cleaned;
+    };
+
     // Determine if this is the first contact for this client (for is_primary)
     const clientContactsCount = existingContacts.filter(c => c.clientId === client.id).length;
     const isPrimary = clientContactsCount === 0;
 
+    // Skip contact if no useful information
+    const hasUsefulInfo = cleanName(row.FIO) || 
+                         cleanPhone(row.MOBIL) || 
+                         cleanPhone(row.TEL_WORK) || 
+                         cleanPhone(row.FAX) || 
+                         cleanEmail(row.EMAIL) ||
+                         (row.DOLGNOST && row.DOLGNOST.trim());
+
+    if (!hasUsefulInfo) {
+      console.log(`Skipping contact with no useful information: ID_TELEPHON=${row.ID_TELEPHON}`);
+      job.details.push({
+        name: row.FIO || `Contact ${row.ID_TELEPHON}`,
+        status: 'skipped',
+        message: 'No useful contact information provided'
+      });
+      job.skipped++;
+      return;
+    }
+
     const contactData = {
       clientId: client.id,
       externalId: row.ID_TELEPHON,
-      fullName: row.FIO || '',
-      position: row.DOLGNOST || null,
-      primaryPhone: row.MOBIL || null,
-      secondaryPhone: row.TEL_WORK || null,
-      tertiaryPhone: row.FAX || null,
-      email: row.EMAIL || null,
-      isActive: row.ACTUAL === 'T',
+      fullName: cleanName(row.FIO) || `Contact ${row.ID_TELEPHON}`,
+      position: row.DOLGNOST && row.DOLGNOST.trim() ? row.DOLGNOST.trim() : null,
+      primaryPhone: cleanPhone(row.MOBIL),
+      secondaryPhone: cleanPhone(row.TEL_WORK),
+      tertiaryPhone: cleanPhone(row.FAX),
+      email: cleanEmail(row.EMAIL),
+      isActive: row.ACTUAL === 'T' || row.ACTUAL === '' || !row.ACTUAL, // Default to active if empty
       isPrimary: isPrimary,
       source: 'Elecomp'
     };
