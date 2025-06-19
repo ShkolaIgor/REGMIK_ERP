@@ -7663,13 +7663,20 @@ export class DatabaseStorage implements IStorage {
 
     try {
       // Парсимо XML
-      const xml2js = require('xml2js');
-      const parser = new xml2js.Parser({ 
-        explicitArray: false,
-        mergeAttrs: true 
-      });
+      const { parseString } = await import('xml2js');
+      const parseXml = (xml: string): Promise<any> => {
+        return new Promise((resolve, reject) => {
+          parseString(xml, { 
+            explicitArray: false,
+            mergeAttrs: true 
+          }, (err: any, result: any) => {
+            if (err) reject(err);
+            else resolve(result);
+          });
+        });
+      };
 
-      const parsed = await parser.parseStringPromise(xmlContent);
+      const parsed = await parseXml(xmlContent);
       
       let rows: any[] = [];
       if (parsed.ROWDATA && parsed.ROWDATA.ROW) {
