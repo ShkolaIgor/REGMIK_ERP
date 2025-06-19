@@ -7384,6 +7384,17 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getClientContactsByClientId(clientId: number): Promise<ClientContact[]> {
+    try {
+      return await db.select().from(clientContacts)
+        .where(eq(clientContacts.clientId, clientId))
+        .orderBy(desc(clientContacts.isPrimary), desc(clientContacts.createdAt));
+    } catch (error) {
+      console.error("Error getting client contacts by clientId:", error);
+      throw error;
+    }
+  }
+
   async createClientContact(contactData: InsertClientContact): Promise<ClientContact> {
     try {
       const [contact] = await db.insert(clientContacts)

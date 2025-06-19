@@ -348,6 +348,16 @@ export default function Clients() {
         onViewContacts={(clientId, clientName) => setContactsPopup({ clientId, clientName })}
       />
 
+      {/* Client Contacts Popup */}
+      {contactsPopup && (
+        <ClientContactsPopup
+          clientId={contactsPopup.clientId}
+          clientName={contactsPopup.clientName}
+          isOpen={!!contactsPopup}
+          onClose={() => setContactsPopup(null)}
+        />
+      )}
+
       {/* Пагінація */}
       {clients.length > 0 && (
         <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
