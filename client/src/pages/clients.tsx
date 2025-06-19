@@ -97,9 +97,18 @@ const ClientsList = React.memo(({
                   size="sm" 
                   onClick={() => onAddContact(client.id.toString())}
                   className="text-blue-600 hover:text-blue-700 h-8 w-8 p-0"
-                  title="Контакти клієнта"
+                  title="Додати контакт"
                 >
-                  <User className="h-4 w-4" />
+                  <UserPlus className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => onViewContacts(client.id, client.name)}
+                  className="text-indigo-600 hover:text-indigo-700 h-8 w-8 p-0"
+                  title="Переглянути всі контакти"
+                >
+                  <Users className="h-4 w-4" />
                 </Button>
                 <Button 
                   variant="outline" 
