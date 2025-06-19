@@ -8215,8 +8215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'skipped',
         message: 'No useful contact information provided'
       });
-      job.skipped++;
-      return;
+      return; // Don't increment skipped here, will be calculated at the end
     }
 
     const contactData = {
