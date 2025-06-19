@@ -247,13 +247,18 @@ export default function ClientContacts() {
 
   // Filter contacts
   const filteredContacts = (contacts as (ClientContact & { client?: Client })[]).filter((item) => {
+    // Отримуємо назву клієнта з різних джерел
+    const clientName = (item as any).clientName || 
+                      (clients as Client[]).find(c => c.id === item.clientId)?.name || 
+                      '';
+    
     const matchesSearch = item.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.primaryPhone?.includes(searchTerm) ||
                          item.secondaryPhone?.includes(searchTerm) ||
                          item.tertiaryPhone?.includes(searchTerm) ||
-                         item.client?.name.toLowerCase().includes(searchTerm.toLowerCase());
+                         clientName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesClient = filterClientId === "all" || !filterClientId || item.clientId.toString() === filterClientId;
     const matchesActive = filterActive === "all" || 
                          (filterActive === "active" && item.isActive) ||
