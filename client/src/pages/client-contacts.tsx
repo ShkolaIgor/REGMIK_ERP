@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Search, Edit, Trash, Phone, Mail, User, Check, ChevronsUpDown } from "lucide-react";
+import { Plus, Search, Edit, Trash, Phone, Mail, User, Check, ChevronsUpDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertClientContactSchema, type ClientContact, type Client } from "@shared/schema";
@@ -48,6 +48,10 @@ const phoneTypeLabels = {
 export default function ClientContacts() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ClientContact | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterClientId, setFilterClientId] = useState<string>("all");
   const [filterActive, setFilterActive] = useState<string>("all");
@@ -78,9 +82,25 @@ export default function ClientContacts() {
   });
 
   // Fetch client contacts
-  const { data: contacts = [], isLoading } = useQuery({
-    queryKey: ["/api/client-contacts"],
+  const { data: contactsResponse, isLoading } = useQuery({
+    queryKey: ["/api/client-contacts", currentPage, pageSize, searchTerm, selectedClientId],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: pageSize.toString(),
+      });
+      if (searchTerm) params.append('search', searchTerm);
+      if (selectedClientId) params.append('clientId', selectedClientId.toString());
+      
+      const response = await fetch(`/api/client-contacts?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch contacts');
+      return response.json();
+    },
   });
+
+  const contacts = contactsResponse?.contacts || [];
+  const totalPages = contactsResponse?.totalPages || 1;
+  const totalContacts = contactsResponse?.total || 0;
 
   // Запит для пошуку клієнтів з debounce
   const [debouncedClientSearch, setDebouncedClientSearch] = useState("");
