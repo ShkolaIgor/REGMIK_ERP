@@ -8101,9 +8101,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await new Promise(resolve => setTimeout(resolve, 10));
       }
 
-      job.skipped = job.processed - job.imported - job.errors.length;
+      job.skipped = job.processed - job.imported - (job.errors?.length || 0);
       job.status = 'completed';
       job.progress = 100;
+      console.log(`Client contacts import completed: ${job.imported} imported, ${job.skipped} skipped, ${job.errors?.length || 0} errors`);
 
       // Clean up job after 5 minutes
       setTimeout(() => {
@@ -8113,6 +8114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Async client contacts XML import error:", error);
       job.status = 'failed';
+      if (!job.errors) job.errors = [];
       job.errors.push(error instanceof Error ? error.message : 'Unknown error');
     }
   }
