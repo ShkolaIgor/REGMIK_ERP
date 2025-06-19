@@ -428,6 +428,7 @@ export interface IStorage {
   getClientContactsByClientId?(clientId: number): Promise<ClientContact[]>;
   getClientContact(id: number): Promise<ClientContact | undefined>;
   createClientContact(contact: InsertClientContact): Promise<ClientContact>;
+  upsertClientContact?(contact: InsertClientContact): Promise<ClientContact>;
   updateClientContact(id: number, contact: Partial<InsertClientContact>): Promise<ClientContact | undefined>;
   deleteClientContact(id: number): Promise<boolean>;
 

@@ -7407,6 +7407,41 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async upsertClientContact(contactData: InsertClientContact): Promise<ClientContact> {
+    try {
+      // Якщо є external_id, спробуємо знайти існуючий контакт
+      if (contactData.externalId) {
+        const existingContact = await db.select().from(clientContacts)
+          .where(and(
+            eq(clientContacts.externalId, contactData.externalId),
+            eq(clientContacts.source, contactData.source || 'manual')
+          ))
+          .limit(1);
+
+        if (existingContact.length > 0) {
+          // Оновлюємо існуючий контакт
+          const [updatedContact] = await db.update(clientContacts)
+            .set({
+              ...contactData,
+              updatedAt: new Date()
+            })
+            .where(eq(clientContacts.id, existingContact[0].id))
+            .returning();
+          return updatedContact;
+        }
+      }
+
+      // Створюємо новий контакт
+      const [contact] = await db.insert(clientContacts)
+        .values(contactData)
+        .returning();
+      return contact;
+    } catch (error) {
+      console.error("Error upserting client contact:", error);
+      throw error;
+    }
+  }
+
   async updateClientContact(id: number, contactData: Partial<InsertClientContact>): Promise<ClientContact | null> {
     try {
       const [contact] = await db.update(clientContacts)
