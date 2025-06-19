@@ -676,9 +676,9 @@ export default function ClientContacts() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {contact.client?.name || 
+                      {(contact as any).clientName || 
                        (clients as Client[]).find(c => c.id === contact.clientId)?.name || 
-                       contact.clientId}
+                       'Клієнт не знайдений'}
                     </TableCell>
                     <TableCell>{contact.position || "-"}</TableCell>
                     <TableCell>
