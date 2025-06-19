@@ -4687,13 +4687,11 @@ export class DatabaseStorage implements IStorage {
 
   async updateCompany(id: number, companyData: Partial<InsertCompany>): Promise<Company | undefined> {
     try {
-      console.log("Updating company", id, "with data:", Object.keys(companyData));
       const [updated] = await db
         .update(companies)
         .set({ ...companyData, updatedAt: new Date() })
         .where(eq(companies.id, id))
         .returning();
-      console.log("Company updated successfully:", !!updated);
       return updated;
     } catch (error) {
       console.error("Error updating company:", error);

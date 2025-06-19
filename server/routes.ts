@@ -6460,21 +6460,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/companies/:id/logo", isSimpleAuthenticated, logoUpload.single('logo'), async (req, res) => {
     try {
       const companyId = parseInt(req.params.id);
-      console.log("Uploading logo for company:", companyId);
       
       if (!req.file) {
-        console.log("No file provided");
         return res.status(400).json({ error: "No logo file provided" });
       }
-
-      console.log("File received:", req.file.originalname, req.file.mimetype, req.file.size);
 
       // Convert image to base64
       const base64Logo = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
       
       // Update company with logo
       const updatedCompany = await storage.updateCompany(companyId, { logo: base64Logo });
-      console.log("Company updated:", !!updatedCompany);
       
       if (!updatedCompany) {
         return res.status(404).json({ error: "Company not found" });
@@ -6495,10 +6490,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/companies/:id/logo", isSimpleAuthenticated, async (req, res) => {
     try {
       const companyId = parseInt(req.params.id);
-      console.log("Removing logo for company:", companyId);
       
       const updatedCompany = await storage.updateCompany(companyId, { logo: null });
-      console.log("Logo removed:", !!updatedCompany);
       
       if (!updatedCompany) {
         return res.status(404).json({ error: "Company not found" });

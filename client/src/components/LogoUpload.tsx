@@ -41,6 +41,15 @@ export function LogoUpload({ companyId, currentLogo, onLogoUpdate }: LogoUploadP
       console.log("Logo upload successful:", data);
       setPreviewUrl(data.logo);
       onLogoUpdate?.(data.logo);
+      // Оновлюємо кеш відразу для швидкого відображення
+      queryClient.setQueryData(['/api/companies'], (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.map((company: any) => 
+          company.id === companyId 
+            ? { ...company, logo: data.logo }
+            : company
+        );
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
       toast({
         title: "Успіх",
@@ -48,7 +57,6 @@ export function LogoUpload({ companyId, currentLogo, onLogoUpdate }: LogoUploadP
       });
     },
     onError: (error: any) => {
-      console.error("Logo upload error:", error);
       toast({
         title: "Помилка",
         description: error.message || "Не вдалося завантажити логотип",
@@ -74,6 +82,15 @@ export function LogoUpload({ companyId, currentLogo, onLogoUpdate }: LogoUploadP
     onSuccess: () => {
       setPreviewUrl(null);
       onLogoUpdate?.(null);
+      // Оновлюємо кеш відразу
+      queryClient.setQueryData(['/api/companies'], (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.map((company: any) => 
+          company.id === companyId 
+            ? { ...company, logo: null }
+            : company
+        );
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
       toast({
         title: "Успіх",
