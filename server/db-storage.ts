@@ -7649,6 +7649,213 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Orders XML Import
+  async importOrdersFromXml(xmlContent: string): Promise<{
+    success: number;
+    errors: Array<{ row: number; error: string; data?: any }>;
+    warnings: Array<{ row: number; warning: string; data?: any }>;
+  }> {
+    const result = {
+      success: 0,
+      errors: [] as Array<{ row: number; error: string; data?: any }>,
+      warnings: [] as Array<{ row: number; warning: string; data?: any }>
+    };
+
+    try {
+      // Парсимо XML
+      const xml2js = require('xml2js');
+      const parser = new xml2js.Parser({ 
+        explicitArray: false,
+        mergeAttrs: true 
+      });
+
+      const parsed = await parser.parseStringPromise(xmlContent);
+      
+      let rows: any[] = [];
+      if (parsed.ROWDATA && parsed.ROWDATA.ROW) {
+        rows = Array.isArray(parsed.ROWDATA.ROW) ? parsed.ROWDATA.ROW : [parsed.ROWDATA.ROW];
+      } else {
+        throw new Error("Невірний формат XML: очікується структура ROWDATA/ROW");
+      }
+
+      // Обробляємо кожен рядок
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const rowNumber = i + 1;
+
+        try {
+          // Мапимо поля
+          const orderData: any = {
+            orderNumber: row.NAME_ZAKAZ || `ORDER_${rowNumber}`,
+            totalAmount: this.parseDecimal(row.SUMMA) || "0",
+            notes: row.COMMENT || "",
+            invoiceNumber: row.SCHET || "",
+            trackingNumber: row.DECLARATION || "",
+          };
+
+          // Обробляємо дати
+          if (row.TERM) {
+            orderData.dueDate = this.parseDate(row.TERM);
+          }
+          if (row.PAY) {
+            orderData.paymentDate = this.parseDate(row.PAY);
+          }
+          if (row.REALIZ) {
+            orderData.shippedDate = this.parseDate(row.REALIZ);
+          }
+          if (row.DATE_CREATE) {
+            orderData.createdAt = this.parseDate(row.DATE_CREATE);
+          }
+
+          // Знаходимо клієнта за INDEX_PREDPR
+          let clientId = null;
+          if (row.INDEX_PREDPR) {
+            const clientResult = await db.select({ id: clients.id })
+              .from(clients)
+              .where(eq(clients.externalId, parseInt(row.INDEX_PREDPR)))
+              .limit(1);
+            
+            if (clientResult.length > 0) {
+              clientId = clientResult[0].id;
+              orderData.clientId = clientId;
+            } else {
+              result.warnings.push({
+                row: rowNumber,
+                warning: `Клієнт з external_id=${row.INDEX_PREDPR} не знайдений`,
+                data: row
+              });
+            }
+          }
+
+          // Знаходимо компанію за INDEX_FIRMA
+          if (row.INDEX_FIRMA) {
+            const companyResult = await db.select({ id: companies.id })
+              .from(companies)
+              .where(eq(companies.id, parseInt(row.INDEX_FIRMA)))
+              .limit(1);
+            
+            if (companyResult.length > 0) {
+              orderData.companyId = companyResult[0].id;
+            } else {
+              result.warnings.push({
+                row: rowNumber,
+                warning: `Компанія з id=${row.INDEX_FIRMA} не знайдена`,
+                data: row
+              });
+            }
+          }
+
+          // Обробляємо INDEX_TRANSPORT для carrier_id
+          if (row.INDEX_TRANSPORT) {
+            const transportIndex = parseInt(row.INDEX_TRANSPORT);
+            if (transportIndex > 18) {
+              orderData.carrierId = 1;
+            } else {
+              orderData.carrierId = transportIndex;
+            }
+          }
+
+          // Знаходимо контакт клієнта за INDEX_ZAKAZCHIK
+          if (row.INDEX_ZAKAZCHIK && clientId) {
+            const contactResult = await db.select({ id: clientContacts.id })
+              .from(clientContacts)
+              .where(eq(clientContacts.externalId, row.INDEX_ZAKAZCHIK))
+              .limit(1);
+            
+            if (contactResult.length > 0) {
+              orderData.clientContactsId = contactResult[0].id;
+            } else {
+              result.warnings.push({
+                row: rowNumber,
+                warning: `Контакт з external_id=${row.INDEX_ZAKAZCHIK} не знайдений`,
+                data: row
+              });
+            }
+          }
+
+          // Визначаємо статус на основі DEL, REALIZ, PAY
+          if (row.DEL === 'T') {
+            orderData.statusId = 8; // Видалено
+          } else if (row.REALIZ && this.parseDate(row.REALIZ)) {
+            orderData.statusId = 6; // Відвантажено
+          } else if (row.PAY && this.parseDate(row.PAY)) {
+            orderData.statusId = 12; // Оплачено
+          } else {
+            orderData.statusId = 1; // За замовчуванням
+          }
+
+          // Створюємо замовлення
+          const [createdOrder] = await db.insert(orders)
+            .values(orderData)
+            .returning();
+
+          result.success++;
+
+        } catch (error) {
+          result.errors.push({
+            row: rowNumber,
+            error: error instanceof Error ? error.message : "Невідома помилка",
+            data: row
+          });
+        }
+      }
+
+    } catch (error) {
+      result.errors.push({
+        row: 0,
+        error: error instanceof Error ? error.message : "Помилка парсингу XML"
+      });
+    }
+
+    return result;
+  }
+
+  private parseDate(dateStr: string): Date | null {
+    if (!dateStr || dateStr.trim() === '') return null;
+    
+    try {
+      // Формат DD.MM.YYYY
+      const parts = dateStr.split('.');
+      if (parts.length === 3) {
+        const day = parseInt(parts[0]);
+        const month = parseInt(parts[1]) - 1; // місяці від 0
+        const year = parseInt(parts[2]);
+        
+        if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+          return new Date(year, month, day);
+        }
+      }
+      
+      // Спробуємо стандартний парсинг
+      const parsed = new Date(dateStr);
+      if (!isNaN(parsed.getTime())) {
+        return parsed;
+      }
+      
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  private parseDecimal(value: string): string | null {
+    if (!value || value.trim() === '') return null;
+    
+    try {
+      // Замінюємо кому на крапку для десяткових
+      const normalized = value.replace(',', '.');
+      const parsed = parseFloat(normalized);
+      
+      if (!isNaN(parsed)) {
+        return parsed.toString();
+      }
+      
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
 }
 
 export const storage = new DatabaseStorage();
