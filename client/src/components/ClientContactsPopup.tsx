@@ -49,7 +49,9 @@ export function ClientContactsPopup({ clientId, clientName, isOpen, onClose }: C
                   <CardContent className="pt-4 space-y-3">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="font-semibold text-lg">{contact.fullName}</h3>
+                        <h3 className={`text-lg ${contact.isPrimary ? 'font-bold' : 'font-semibold'}`}>
+                          {contact.fullName}
+                        </h3>
                         {contact.position && (
                           <p className="text-sm text-gray-600">{contact.position}</p>
                         )}

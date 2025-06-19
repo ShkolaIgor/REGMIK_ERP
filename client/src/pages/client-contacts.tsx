@@ -666,11 +666,13 @@ export default function ClientContacts() {
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4" />
                         <div>
-                          <div className="font-medium">{contact.fullName}</div>
-                          {contact.isPrimary && (
-                            <Badge variant="secondary" className="text-xs">
-                              Основний контакт
-                            </Badge>
+                          <div className={`${contact.isPrimary ? 'font-bold' : 'font-medium'}`}>
+                            {contact.fullName}
+                          </div>
+                          {contact.position && (
+                            <div className="text-xs text-muted-foreground">
+                              {contact.position}
+                            </div>
                           )}
                         </div>
                       </div>
