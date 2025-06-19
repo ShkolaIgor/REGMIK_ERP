@@ -56,12 +56,14 @@ const ClientsList = React.memo(({
   clients, 
   clientTypes, 
   onEdit, 
-  onAddContact 
+  onAddContact,
+  onViewContacts 
 }: {
   clients: Client[];
   clientTypes: any[];
   onEdit: (client: Client) => void;
   onAddContact: (clientId: string) => void;
+  onViewContacts?: (clientId: number, clientName: string) => void;
 }) => {
   return (
     <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
@@ -388,6 +390,14 @@ export default function Clients() {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+            >
+              Перша
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
             >
@@ -425,6 +435,14 @@ export default function Clients() {
               disabled={currentPage === totalPages}
             >
               Наступна
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+            >
+              Остання
             </Button>
           </div>
         </div>
