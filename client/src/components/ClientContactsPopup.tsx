@@ -88,46 +88,79 @@ export function ClientContactsPopup({ clientId, clientName, isOpen, onClose }: C
 
                       {contact.primaryPhone && (
                         <div className="flex items-center gap-2 text-sm">
-                          <Phone className="h-4 w-4 text-green-600" />
+                          {contact.primaryPhoneType === 'mobile' ? (
+                            <svg className="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a1 1 0 001-1V4a1 1 0 00-1-1H8a1 1 0 00-1 1v16a1 1 0 001 1z" />
+                            </svg>
+                          ) : contact.primaryPhoneType === 'office' ? (
+                            <svg className="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                          ) : contact.primaryPhoneType === 'fax' ? (
+                            <svg className="h-4 w-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10M7 4l-2 14h14l-2-14M7 4h10m-5 3v8m-2-4h4" />
+                            </svg>
+                          ) : (
+                            <Phone className="h-4 w-4 text-gray-600" />
+                          )}
                           <a 
                             href={`tel:${contact.primaryPhone}`}
                             className="text-green-600 hover:underline"
                           >
                             {contact.primaryPhone}
                           </a>
-                          <span className="text-xs text-gray-500">
-                            ({contact.primaryPhoneType})
-                          </span>
                         </div>
                       )}
 
                       {contact.secondaryPhone && (
                         <div className="flex items-center gap-2 text-sm">
-                          <Phone className="h-4 w-4 text-blue-600" />
+                          {contact.secondaryPhoneType === 'mobile' ? (
+                            <svg className="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a1 1 0 001-1V4a1 1 0 00-1-1H8a1 1 0 00-1 1v16a1 1 0 001 1z" />
+                            </svg>
+                          ) : contact.secondaryPhoneType === 'office' ? (
+                            <svg className="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                          ) : contact.secondaryPhoneType === 'fax' ? (
+                            <svg className="h-4 w-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10M7 4l-2 14h14l-2-14M7 4h10m-5 3v8m-2-4h4" />
+                            </svg>
+                          ) : (
+                            <Phone className="h-4 w-4 text-gray-600" />
+                          )}
                           <a 
                             href={`tel:${contact.secondaryPhone}`}
                             className="text-blue-600 hover:underline"
                           >
                             {contact.secondaryPhone}
                           </a>
-                          <span className="text-xs text-gray-500">
-                            ({contact.secondaryPhoneType})
-                          </span>
                         </div>
                       )}
 
                       {contact.tertiaryPhone && (
                         <div className="flex items-center gap-2 text-sm">
-                          <Phone className="h-4 w-4 text-orange-600" />
+                          {contact.tertiaryPhoneType === 'mobile' ? (
+                            <svg className="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a1 1 0 001-1V4a1 1 0 00-1-1H8a1 1 0 00-1 1v16a1 1 0 001 1z" />
+                            </svg>
+                          ) : contact.tertiaryPhoneType === 'office' ? (
+                            <svg className="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                          ) : contact.tertiaryPhoneType === 'fax' ? (
+                            <svg className="h-4 w-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10M7 4l-2 14h14l-2-14M7 4h10m-5 3v8m-2-4h4" />
+                            </svg>
+                          ) : (
+                            <Phone className="h-4 w-4 text-gray-600" />
+                          )}
                           <a 
                             href={`tel:${contact.tertiaryPhone}`}
                             className="text-orange-600 hover:underline"
                           >
                             {contact.tertiaryPhone}
                           </a>
-                          <span className="text-xs text-gray-500">
-                            ({contact.tertiaryPhoneType})
-                          </span>
                         </div>
                       )}
                     </div>
