@@ -293,7 +293,7 @@ export function ClientContactsXmlImport() {
                       </div>
                       <div>
                         <span className="font-medium">Помилки:</span>
-                        <div className="text-red-600">{job.errors.length}</div>
+                        <div className="text-red-600">{job.errors?.length || 0}</div>
                       </div>
                     </div>
                   )}
@@ -336,7 +336,7 @@ export function ClientContactsXmlImport() {
           )}
 
           {/* Errors */}
-          {job && job.errors.length > 0 && (
+          {job && job.errors && job.errors.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm text-red-600">Помилки імпорту</CardTitle>
