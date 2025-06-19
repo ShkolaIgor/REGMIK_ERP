@@ -472,18 +472,19 @@ export default function Orders() {
         );
       
       case 'status':
-        const statusInfo = orderStatuses.find(s => s.name === order.status);
+        const statusInfo = orderStatuses.find(s => s.id === order.statusId);
+        const currentStatusName = statusInfo?.name || order.status || 'Невідомо';
         
-        const handleStatusChange = (newStatus: string) => {
-          console.log("Status change handler called with:", { orderId: order.id, currentStatus: order.status, newStatus });
-          console.log("About to call updateStatusMutation.mutate with:", { id: order.id, status: newStatus });
-          updateStatusMutation.mutate({ id: order.id, status: newStatus });
+        const handleStatusChange = (newStatusId: string) => {
+          const statusId = parseInt(newStatusId);
+          console.log("Status change handler called with:", { orderId: order.id, currentStatusId: order.statusId, newStatusId: statusId });
+          updateStatusMutation.mutate({ id: order.id, statusId });
         };
         
         return (
           <div onClick={(e) => e.stopPropagation()}>
             <Select
-              value={order.status}
+              value={order.statusId?.toString() || ''}
               onValueChange={handleStatusChange}
             >
               <SelectTrigger className="w-[140px] h-7 border-0 p-1">
@@ -494,12 +495,12 @@ export default function Orders() {
                     backgroundColor: statusInfo?.backgroundColor || '#f3f4f6'
                   }}
                 >
-                  {order.status}
+                  {currentStatusName}
                 </Badge>
               </SelectTrigger>
               <SelectContent>
                 {orderStatuses.map((status) => (
-                  <SelectItem key={status.id} value={status.name}>
+                  <SelectItem key={status.id} value={status.id.toString()}>
                     <div className="flex items-center">
                       <div
                         className="w-3 h-3 rounded-full mr-2"
