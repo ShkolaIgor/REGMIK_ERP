@@ -85,7 +85,8 @@ export function ClientContactsXmlImport() {
             variant: "destructive",
           });
         } else if (response.status === 'processing') {
-          setTimeout(() => pollJobStatus(currentJobId), 2000);
+          // Continue polling with shorter interval for better UX
+          setTimeout(() => pollJobStatus(currentJobId), 1000);
         }
       }
     } catch (error) {
@@ -129,8 +130,8 @@ export function ClientContactsXmlImport() {
           description: "Файл завантажено, обробка в процесі...",
         });
         
-        // Start polling for status
-        setTimeout(() => pollJobStatus(response.jobId!), 1000);
+        // Start polling for status immediately
+        setTimeout(() => pollJobStatus(response.jobId!), 500);
       } else {
         setIsImporting(false);
         toast({
@@ -274,7 +275,7 @@ export function ClientContactsXmlImport() {
                 <div className="space-y-3">
                   <Progress value={progress} className="w-full" />
                   <div className="text-xs text-gray-600">
-                    Прогрес: {progress}%
+                    Прогрес: {progress}% {job && `(${job.processed}/${job.totalRows})`}
                   </div>
                   
                   {job && (
