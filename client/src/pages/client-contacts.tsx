@@ -52,7 +52,6 @@ export default function ClientContacts() {
   const [pageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
   const [filterClientId, setFilterClientId] = useState<string>("all");
   const [filterActive, setFilterActive] = useState<string>("all");
   const [clientSearchOpen, setClientSearchOpen] = useState(false);

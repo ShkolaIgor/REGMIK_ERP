@@ -457,6 +457,10 @@ export default function Clients() {
               setEditingClient(null);
             }}
             onDelete={editingClient ? () => handleDelete(editingClient.id.toString()) : undefined}
+            onViewContacts={(clientId, clientName) => {
+              setContactsPopup({ clientId, clientName });
+              setIsDialogOpen(false);
+            }}
           />
         </DialogContent>
       </Dialog>
@@ -532,6 +536,16 @@ export default function Clients() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Client Contacts Popup */}
+      {contactsPopup && (
+        <ClientContactsPopup
+          clientId={contactsPopup.clientId}
+          clientName={contactsPopup.clientName}
+          isOpen={!!contactsPopup}
+          onClose={() => setContactsPopup(null)}
+        />
+      )}
     </div>
   );
 }
