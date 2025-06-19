@@ -2441,9 +2441,9 @@ export default function Orders() {
                 </Table>
               </DragDropContext>
               
-              {/* Пагінація */}
               {filteredOrders.length > 0 && (
                 <div className="flex items-center justify-between p-4 border-t">
+                  {/* Пагінація */}
                   <div className="flex items-center space-x-4">
                     <p className="text-sm text-muted-foreground">
                       Показано {currentPage * itemsPerPage + 1}-{Math.min((currentPage + 1) * itemsPerPage, filteredOrders.length)} з {filteredOrders.length} замовлень
