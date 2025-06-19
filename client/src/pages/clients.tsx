@@ -190,6 +190,7 @@ export default function Clients() {
   const [pageSize, setPageSize] = useState(20);
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [contactsPopup, setContactsPopup] = useState<{ clientId: number; clientName: string } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -344,6 +345,7 @@ export default function Clients() {
         clientTypes={clientTypes}
         onEdit={handleEdit}
         onAddContact={openAddContactDialog}
+        onViewContacts={(clientId, clientName) => setContactsPopup({ clientId, clientName })}
       />
 
       {/* Пагінація */}
