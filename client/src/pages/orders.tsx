@@ -171,6 +171,11 @@ export default function Orders() {
   const [editingStatus, setEditingStatus] = useState<OrderStatus | null>(null);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   
+  // Пагінація
+  const [currentPage, setCurrentPage] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [showPaginationSettings, setShowPaginationSettings] = useState(false);
+  
   // Стан для керування порядком стовпців
   const [columnOrder, setColumnOrder] = useState(() => {
     const saved = localStorage.getItem('orders-column-order');
@@ -597,11 +602,31 @@ export default function Orders() {
   };
 
   // Хук сортування з збереженням налаштувань користувача
-  const { sortedData: orders, sortConfig, handleSort } = useSorting({
+  const { sortedData: filteredOrders, sortConfig, handleSort } = useSorting({
     data: allOrders ? filterOrders(allOrders) : [],
     tableName: 'orders',
     defaultSort: { field: 'orderSequenceNumber', direction: 'desc' }
   });
+
+  // Пагінація
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const orders = filteredOrders.slice(
+    currentPage * itemsPerPage,
+    (currentPage + 1) * itemsPerPage
+  );
+
+  // Скидання на першу сторінку при зміні фільтрів
+  React.useEffect(() => {
+    setCurrentPage(0);
+  }, [searchTerm, statusFilter, paymentFilter, dateRangeFilter, itemsPerPage]);
+
+  // Функції пагінації
+  const goToFirstPage = () => setCurrentPage(0);
+  const goToLastPage = () => setCurrentPage(totalPages - 1);
+  const goToPreviousPage = () => setCurrentPage(Math.max(0, currentPage - 1));
+  const goToNextPage = () => setCurrentPage(Math.min(totalPages - 1, currentPage + 1));
+  const goToPage = (page: number) => setCurrentPage(Math.max(0, Math.min(totalPages - 1, page)));
+  const itemsPerPageOptions = [10, 25, 50, 100, 200];
 
 
 
@@ -2163,7 +2188,7 @@ export default function Orders() {
           <Card>
             <CardContent className="p-6">
               <div className="text-center">
-                <p className="text-2xl font-semibold text-gray-900">{orders.length}</p>
+                <p className="text-2xl font-semibold text-gray-900">{filteredOrders.length}</p>
                 <p className="text-sm text-gray-600">Всього замовлень</p>
               </div>
             </CardContent>
@@ -2173,7 +2198,7 @@ export default function Orders() {
             <CardContent className="p-6">
               <div className="text-center">
                 <p className="text-2xl font-semibold text-blue-600">
-                  {orders.filter((o: any) => o.status === 'processing').length}
+                  {filteredOrders.filter((o: any) => o.status === 'processing').length}
                 </p>
                 <p className="text-sm text-gray-600">В обробці</p>
               </div>
@@ -2184,7 +2209,7 @@ export default function Orders() {
             <CardContent className="p-6">
               <div className="text-center">
                 <p className="text-2xl font-semibold text-green-600">
-                  {orders.filter((o: any) => o.status === 'completed').length}
+                  {filteredOrders.filter((o: any) => o.status === 'completed').length}
                 </p>
                 <p className="text-sm text-gray-600">Завершено</p>
               </div>
@@ -2195,7 +2220,7 @@ export default function Orders() {
             <CardContent className="p-6">
               <div className="text-center">
                 <p className="text-2xl font-semibold text-gray-900">
-                  {formatCurrency(orders.reduce((sum: number, o: any) => sum + parseFloat(o.totalAmount), 0))}
+                  {formatCurrency(filteredOrders.reduce((sum: number, o: any) => sum + parseFloat(o.totalAmount), 0))}
                 </p>
                 <p className="text-sm text-gray-600">Загальна сума</p>
               </div>
@@ -2279,7 +2304,7 @@ export default function Orders() {
 
             {/* Results Count */}
             <div className="mt-3 text-sm text-gray-600">
-              Знайдено: {orders.length} з {allOrders.length} замовлень
+              Знайдено: {filteredOrders.length} з {allOrders.length} замовлень
             </div>
           </CardContent>
         </Card>
@@ -2415,6 +2440,115 @@ export default function Orders() {
                   </TableBody>
                 </Table>
               </DragDropContext>
+              
+              {/* Пагінація */}
+              {filteredOrders.length > 0 && (
+                <div className="flex items-center justify-between p-4 border-t">
+                  <div className="flex items-center space-x-4">
+                    <p className="text-sm text-muted-foreground">
+                      Показано {currentPage * itemsPerPage + 1}-{Math.min((currentPage + 1) * itemsPerPage, filteredOrders.length)} з {filteredOrders.length} замовлень
+                    </p>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowPaginationSettings(!showPaginationSettings)}
+                      className="h-8"
+                    >
+                      <Settings className="h-4 w-4 mr-1" />
+                      Налаштування
+                    </Button>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    {showPaginationSettings && (
+                      <div className="flex items-center space-x-2 mr-4">
+                        <Label className="text-sm">Рядків на сторінці:</Label>
+                        <Select
+                          value={itemsPerPage.toString()}
+                          onValueChange={(value) => setItemsPerPage(Number(value))}
+                        >
+                          <SelectTrigger className="h-8 w-[80px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {itemsPerPageOptions.map((pageSize) => (
+                              <SelectItem key={pageSize} value={pageSize.toString()}>
+                                {pageSize}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center space-x-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToFirstPage}
+                        disabled={currentPage === 0}
+                        className="h-8 w-8 p-0"
+                        title="Перша сторінка"
+                      >
+                        <ChevronsLeft className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToPreviousPage}
+                        disabled={currentPage === 0}
+                        className="h-8 w-8 p-0"
+                        title="Попередня сторінка"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      
+                      <div className="flex items-center space-x-2 mx-2">
+                        <Input
+                          className="w-16 h-8 text-center"
+                          type="number"
+                          min={1}
+                          max={totalPages}
+                          value={currentPage + 1}
+                          onChange={(e) => {
+                            const page = parseInt(e.target.value) - 1;
+                            if (!isNaN(page)) {
+                              goToPage(page);
+                            }
+                          }}
+                        />
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">
+                          з {totalPages}
+                        </span>
+                      </div>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToNextPage}
+                        disabled={currentPage >= totalPages - 1}
+                        className="h-8 w-8 p-0"
+                        title="Наступна сторінка"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToLastPage}
+                        disabled={currentPage >= totalPages - 1}
+                        className="h-8 w-8 p-0"
+                        title="Остання сторінка"
+                      >
+                        <ChevronsRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             )}
           </CardContent>
         </Card>
