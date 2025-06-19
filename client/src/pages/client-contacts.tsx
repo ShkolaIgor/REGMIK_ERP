@@ -213,6 +213,13 @@ export default function ClientContacts() {
 
   const openEditDialog = (item: ClientContact) => {
     setEditingItem(item);
+    
+    // Знаходимо клієнта для встановлення назви в поле пошуку
+    const clientName = (item as any).clientName || 
+                      (clients as Client[]).find(c => c.id === item.clientId)?.name || 
+                      '';
+    setClientSearchValue(clientName);
+    
     form.reset({
       clientId: item.clientId.toString(),
       fullName: item.fullName,
@@ -233,6 +240,7 @@ export default function ClientContacts() {
 
   const openCreateDialog = () => {
     setEditingItem(null);
+    setClientSearchValue("");
     form.reset();
     setIsDialogOpen(true);
   };
@@ -297,22 +305,16 @@ export default function ClientContacts() {
                         <div className="relative">
                           <Input
                             placeholder="Почніть вводити назву клієнта..."
-                            value={field.value ? 
-                              clients.find((c: any) => c.id.toString() === field.value)?.name || clientSearchValue 
-                              : clientSearchValue}
+                            value={clientSearchValue}
                             onChange={(e) => {
-                              if (field.value) {
-                                field.onChange("");
-                              }
                               setClientSearchValue(e.target.value);
                               setClientComboboxOpen(true);
-                            }}
-                            onFocus={() => {
+                              // Очищаємо вибір якщо користувач редагує поле
                               if (field.value) {
-                                const selectedClient = clients.find((c: any) => c.id.toString() === field.value);
-                                setClientSearchValue(selectedClient?.name || "");
                                 field.onChange("");
                               }
+                            }}
+                            onFocus={() => {
                               setClientComboboxOpen(true);
                             }}
                             onBlur={() => setTimeout(() => setClientComboboxOpen(false), 200)}
@@ -327,7 +329,7 @@ export default function ClientContacts() {
                                       key={client.id}
                                       onClick={() => {
                                         field.onChange(client.id.toString());
-                                        setClientSearchValue("");
+                                        setClientSearchValue(client.name);
                                         setClientComboboxOpen(false);
                                       }}
                                       className="px-3 py-2 cursor-pointer hover:bg-gray-100 flex items-center"
