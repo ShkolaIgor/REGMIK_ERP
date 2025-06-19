@@ -14,7 +14,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { ClientContactsXmlImport } from "@/components/ClientContactsXmlImport";
 import { 
   Search, Plus, Edit, User, Building2, Truck, Package, Percent,
-  Users, Phone, Mail, MapPin, UserPlus, Trash2, MoreVertical, Upload 
+  Users, Phone, Mail, MapPin, UserPlus, Trash2, MoreVertical, Upload, FileText 
 } from "lucide-react";
 import { Client, type InsertClient } from "@shared/schema";
 import ClientForm from "@/components/ClientForm";
@@ -188,6 +188,12 @@ export default function Clients() {
   const [selectedClientForContact, setSelectedClientForContact] = useState<string>("");
   const [isGlobalContactAdd, setIsGlobalContactAdd] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [contactFormData, setContactFormData] = useState({
+    fullName: "",
+    position: "",
+    primaryPhone: "",
+    email: ""
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -242,6 +248,12 @@ export default function Clients() {
 
   const openAddContactDialog = (clientId: string) => {
     setSelectedClientForContact(clientId);
+    setContactFormData({
+      fullName: "",
+      position: "",
+      primaryPhone: "",
+      email: ""
+    });
     setIsContactDialogOpen(true);
   };
 
@@ -566,6 +578,110 @@ export default function Clients() {
                 <li>ADDRESS_PHYS - фізична адреса</li>
                 <li>COMMENT - коментар</li>
               </ul>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Contact Add Dialog */}
+      <Dialog open={isContactDialogOpen} onOpenChange={setIsContactDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Додати контакт</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Ім'я контакту *</label>
+              <Input 
+                placeholder="Введіть ім'я контакту" 
+                value={contactFormData.fullName}
+                onChange={(e) => setContactFormData(prev => ({ ...prev, fullName: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Посада</label>
+              <Input 
+                placeholder="Введіть посаду" 
+                value={contactFormData.position}
+                onChange={(e) => setContactFormData(prev => ({ ...prev, position: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Телефон</label>
+              <Input 
+                placeholder="Введіть номер телефону" 
+                value={contactFormData.primaryPhone}
+                onChange={(e) => setContactFormData(prev => ({ ...prev, primaryPhone: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Email</label>
+              <Input 
+                placeholder="Введіть email" 
+                value={contactFormData.email}
+                onChange={(e) => setContactFormData(prev => ({ ...prev, email: e.target.value }))}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => {
+                setIsContactDialogOpen(false);
+                setContactFormData({
+                  fullName: "",
+                  position: "",
+                  primaryPhone: "",
+                  email: ""
+                });
+              }}>
+                Скасувати
+              </Button>
+              <Button 
+                disabled={!contactFormData.fullName.trim()}
+                onClick={async () => {
+                  try {
+                    await apiRequest('/api/client-contacts', {
+                      method: 'POST',
+                      body: {
+                        clientId: parseInt(selectedClientForContact),
+                        fullName: contactFormData.fullName,
+                        position: contactFormData.position || '',
+                        email: contactFormData.email || '',
+                        primaryPhone: contactFormData.primaryPhone || '',
+                        primaryPhoneType: 'mobile',
+                        secondaryPhone: '',
+                        secondaryPhoneType: 'office',
+                        tertiaryPhone: '',
+                        tertiaryPhoneType: 'fax',
+                        notes: '',
+                        isPrimary: false,
+                        isActive: true,
+                        source: 'manual'
+                      }
+                    });
+                    
+                    toast({
+                      title: "Контакт додано",
+                      description: "Контакт успішно створено",
+                    });
+                    
+                    queryClient.invalidateQueries({ queryKey: ['/api/client-contacts'] });
+                    setIsContactDialogOpen(false);
+                    setContactFormData({
+                      fullName: "",
+                      position: "",
+                      primaryPhone: "",
+                      email: ""
+                    });
+                  } catch (error) {
+                    toast({
+                      title: "Помилка",
+                      description: "Не вдалося створити контакт",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+              >
+                Додати
+              </Button>
             </div>
           </div>
         </DialogContent>
