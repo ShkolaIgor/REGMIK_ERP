@@ -311,13 +311,6 @@ export default function Clients() {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button 
-            variant="outline"
-            onClick={() => setIsImportDialogOpen(true)}
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            Імпорт XML
-          </Button>
           <ClientContactsXmlImport />
           <Button onClick={() => {
             setEditingClient(null);
