@@ -4,8 +4,8 @@ import { setupVite, serveStatic, log } from "./vite";
 import { novaPoshtaCache } from "./nova-poshta-cache";
 
 const app = express();
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Налаштування UTF-8 тільки для API роутів та HTML
 app.use((req, res, next) => {

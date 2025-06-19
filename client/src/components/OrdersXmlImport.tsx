@@ -94,16 +94,39 @@ export default function OrdersXmlImport() {
       return;
     }
 
+    // Перевіряємо розмір файлу (максимум 50MB)
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (selectedFile.size > maxSize) {
+      toast({
+        title: "Файл занадто великий",
+        description: `Максимальний розмір файлу: 50MB. Ваш файл: ${Math.round(selectedFile.size / 1024 / 1024)}MB`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsImporting(true);
     
     try {
-      const fileContent = await selectedFile.text();
+      // Читаємо файл по частинам для великих файлів
+      let fileContent = '';
+      if (selectedFile.size > 5 * 1024 * 1024) { // Більше 5MB
+        const reader = new FileReader();
+        fileContent = await new Promise((resolve, reject) => {
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.onerror = reject;
+          reader.readAsText(selectedFile, 'utf-8');
+        });
+      } else {
+        fileContent = await selectedFile.text();
+      }
+
       await importMutation.mutateAsync(fileContent);
     } catch (error) {
       console.error("File reading error:", error);
       toast({
         title: "Помилка",
-        description: "Не вдалося прочитати файл",
+        description: error instanceof Error ? error.message : "Не вдалося прочитати файл",
         variant: "destructive",
       });
     } finally {

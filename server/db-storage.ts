@@ -7661,6 +7661,11 @@ export class DatabaseStorage implements IStorage {
       warnings: [] as Array<{ row: number; warning: string; data?: any }>
     };
 
+    // Перевіряємо розмір вхідних даних
+    if (xmlContent.length > 100 * 1024 * 1024) { // 100MB
+      throw new Error("XML файл занадто великий для обробки");
+    }
+
     try {
       // Парсимо XML
       const { parseString } = await import('xml2js');
@@ -7685,10 +7690,17 @@ export class DatabaseStorage implements IStorage {
         throw new Error("Невірний формат XML: очікується структура DATAPACKET/ROWDATA/ROW");
       }
 
-      // Обробляємо кожен рядок
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        const rowNumber = i + 1;
+      console.log(`Початок імпорту: знайдено ${rows.length} записів`);
+
+      // Обробляємо кожен рядок з обмеженням на кількість за раз
+      const batchSize = 100; // Обробляємо по 100 записів за раз
+      for (let i = 0; i < rows.length; i += batchSize) {
+        const batch = rows.slice(i, i + batchSize);
+        console.log(`Обробка записів ${i + 1}-${Math.min(i + batchSize, rows.length)} з ${rows.length}`);
+
+        for (let j = 0; j < batch.length; j++) {
+          const row = batch[j];
+          const rowNumber = i + j + 1;
 
         try {
           // Мапимо поля
@@ -7806,6 +7818,12 @@ export class DatabaseStorage implements IStorage {
           });
         }
       }
+
+      // Невелика пауза між батчами для зменшення навантаження
+      if (i + batchSize < rows.length) {
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+    }
 
     } catch (error) {
       result.errors.push({
