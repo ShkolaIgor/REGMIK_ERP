@@ -6467,9 +6467,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Convert image to base64
       const base64Logo = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+      console.log("Generated base64 logo length:", base64Logo.length);
       
       // Update company with logo
       const updatedCompany = await storage.updateCompany(companyId, { logo: base64Logo });
+      console.log("Updated company logo field:", updatedCompany?.logo?.substring(0, 50));
       
       if (!updatedCompany) {
         return res.status(404).json({ error: "Company not found" });
