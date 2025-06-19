@@ -426,6 +426,13 @@ export default function Companies() {
                   )}
                 />
 
+                {/* Логотип буде додано після створення компанії */}
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <Label className="text-sm text-gray-600">
+                    Логотип можна буде завантажити після створення компанії
+                  </Label>
+                </div>
+
                 <FormField
                   control={createForm.control}
                   name="isActive"
@@ -477,8 +484,16 @@ export default function Companies() {
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Building className="h-6 w-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center overflow-hidden">
+                    {company.logo ? (
+                      <img 
+                        src={company.logo} 
+                        alt={`${company.name} logo`}
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <Building className="h-6 w-6 text-blue-600" />
+                    )}
                   </div>
                   <div>
                     <CardTitle className="text-lg">{company.name}</CardTitle>
@@ -751,6 +766,18 @@ export default function Companies() {
                   </FormItem>
                 )}
               />
+
+              {/* Компонент завантаження логотипу */}
+              {editingCompany && (
+                <LogoUpload 
+                  companyId={editingCompany.id}
+                  currentLogo={editingCompany.logo}
+                  onLogoUpdate={(logo) => {
+                    // Оновлюємо локальний стан для негайного відображення
+                    setEditingCompany(prev => prev ? { ...prev, logo } : null);
+                  }}
+                />
+              )}
 
               <FormField
                 control={editForm.control}
