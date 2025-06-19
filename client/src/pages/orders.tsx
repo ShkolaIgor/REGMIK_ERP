@@ -28,6 +28,7 @@ import DueDateButton from "@/components/DueDateButton";
 import { useSorting } from "@/hooks/useSorting";
 import { InlineSerialNumbers } from "@/components/InlineSerialNumbers";
 import { NovaPoshtaIntegration } from "@/components/NovaPoshtaIntegration";
+import OrdersXmlImport from "@/components/OrdersXmlImport";
 // Типи
 type Order = {
   id: number;
@@ -1377,9 +1378,11 @@ export default function Orders() {
               <Settings className="w-4 h-4 mr-2" />
               Налаштування статусів
             </Button>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => {
+            <div className="flex gap-2">
+              <OrdersXmlImport />
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button onClick={() => {
                   setIsEditMode(false);
                   setEditingOrder(null);
                   setSelectedClientId("");
@@ -1409,11 +1412,11 @@ export default function Orders() {
                   });
                   setIsDialogOpen(true);
                 }}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Новий рахунок/замовлення
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" aria-describedby="order-dialog-description">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Новий рахунок/замовлення
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" aria-describedby="order-dialog-description">
               <DialogHeader>
                 <DialogTitle>
                   {isEditMode ? `Редагувати рахунок ${editingOrder?.orderNumber}` : "Створити новий рахунок/замовлення"}
