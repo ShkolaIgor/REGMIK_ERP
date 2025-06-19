@@ -1371,14 +1371,14 @@ export default function Orders() {
             <p className="text-gray-600">Управління замовленнями та рахунками</p>
           </div>
           <div className="flex items-center space-x-3">
-            <Button
-              variant="outline"
-              onClick={() => setIsStatusSettingsOpen(!isStatusSettingsOpen)}
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Налаштування статусів
-            </Button>
             <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsStatusSettingsOpen(!isStatusSettingsOpen)}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Налаштування статусів
+              </Button>
               <OrdersXmlImport />
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
@@ -1985,7 +1985,8 @@ export default function Orders() {
                 </div>
               </form>
               </DialogContent>
-            </Dialog>
+              </Dialog>
+            </div>
           </div>
         </div>
       </header>
