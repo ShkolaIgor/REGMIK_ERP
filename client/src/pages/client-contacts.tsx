@@ -18,7 +18,6 @@ import { Plus, Search, Edit, Trash, Phone, Mail, User, Check, ChevronsUpDown, Ch
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertClientContactSchema, type ClientContact, type Client } from "@shared/schema";
-import { ClientContactsXmlImport } from "@/components/ClientContactsXmlImport";
 import { z } from "zod";
 
 const formSchema = insertClientContactSchema.extend({
