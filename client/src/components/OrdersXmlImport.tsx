@@ -4,8 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, FileText, Check, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -26,19 +25,34 @@ interface ImportResult {
 
 export default function OrdersXmlImport() {
   const [isOpen, setIsOpen] = useState(false);
-  const [xmlContent, setXmlContent] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
-  const [progress, setProgress] = useState(0);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type === "text/xml" || file.name.endsWith(".xml")) {
+        setSelectedFile(file);
+        setImportResult(null);
+      } else {
+        toast({
+          title: "Помилка",
+          description: "Будь ласка, оберіть XML файл",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   const importMutation = useMutation({
-    mutationFn: async (data: { xmlContent: string }) => {
+    mutationFn: async (xmlContent: string) => {
       return await apiRequest("/api/orders/xml-import", {
         method: "POST",
-        body: data,
+        body: { xmlContent },
       });
     },
     onSuccess: (result: ImportResult) => {
@@ -54,212 +68,205 @@ export default function OrdersXmlImport() {
       
       if (result.errors.length > 0) {
         toast({
-          title: "Помилки при імпорті",
-          description: `${result.errors.length} записів не вдалося імпортувати`,
+          title: "Виявлено помилки",
+          description: `${result.errors.length} замовлень не вдалося імпортувати`,
           variant: "destructive",
         });
       }
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      console.error("Import error:", error);
       toast({
-        title: "Помилка",
-        description: error.message || "Не вдалося імпортувати замовлення",
+        title: "Помилка імпорту",
+        description: "Не вдалося обробити XML файл",
         variant: "destructive",
       });
-      setIsImporting(false);
     },
   });
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const content = e.target?.result as string;
-        setXmlContent(content);
-      };
-      reader.readAsText(file, 'utf-8');
-    }
-  };
-
-  const handleImport = () => {
-    if (!xmlContent.trim()) {
+  const handleImport = async () => {
+    if (!selectedFile) {
       toast({
         title: "Помилка",
-        description: "Будь ласка, завантажте XML файл або вставте XML контент",
+        description: "Будь ласка, оберіть XML файл для імпорту",
         variant: "destructive",
       });
       return;
     }
 
     setIsImporting(true);
-    setProgress(0);
-    setImportResult(null);
-
-    // Симуляція прогресу
-    const progressInterval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 90) {
-          clearInterval(progressInterval);
-          return prev;
-        }
-        return prev + 10;
+    
+    try {
+      const fileContent = await selectedFile.text();
+      await importMutation.mutateAsync(fileContent);
+    } catch (error) {
+      console.error("File reading error:", error);
+      toast({
+        title: "Помилка",
+        description: "Не вдалося прочитати файл",
+        variant: "destructive",
       });
-    }, 200);
-
-    importMutation.mutate({ xmlContent });
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   const resetForm = () => {
-    setXmlContent("");
+    setSelectedFile(null);
     setImportResult(null);
-    setProgress(0);
-    setIsImporting(false);
-    setIsOpen(false);
+    const fileInput = document.getElementById('xml-file-input') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" onClick={() => setIsOpen(true)}>
-          <Upload className="h-4 w-4 mr-2" />
+        <Button variant="outline">
+          <Upload className="w-4 h-4 mr-2" />
           Імпорт XML
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+      
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Імпорт замовлень з XML</DialogTitle>
+          <DialogTitle>Імпорт замовлень з XML файлу</DialogTitle>
         </DialogHeader>
         
-        <div className="max-h-[calc(90vh-120px)] overflow-y-auto space-y-4">
-          {!importResult && (
-            <>
-              <div>
-                <Label htmlFor="xmlFile">Завантажити XML файл</Label>
-                <Input
-                  id="xmlFile"
-                  type="file"
-                  accept=".xml,.txt"
-                  onChange={handleFileUpload}
-                  className="mt-2"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="xmlContent">Або вставити XML контент</Label>
-                <Textarea
-                  id="xmlContent"
-                  value={xmlContent}
-                  onChange={(e) => setXmlContent(e.target.value)}
-                  placeholder="Вставте XML контент тут..."
-                  rows={15}
-                  className="mt-2 font-mono text-sm"
-                />
-              </div>
-
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-2">Маппінг полів:</h4>
-                <div className="text-sm text-blue-800 space-y-1">
-                  <div><code>INDEX_PREDPR</code> → зв'язок з клієнтом через external_id</div>
-                  <div><code>INDEX_FIRMA</code> → company_id</div>
-                  <div><code>INDEX_TRANSPORT</code> → carrier_id (якщо &gt;18, то carrier_id=1)</div>
-                  <div><code>NAME_ZAKAZ</code> → order_number</div>
-                  <div><code>TERM</code> → due_date</div>
-                  <div><code>PAY</code> → payment_date</div>
-                  <div><code>REALIZ</code> → shipped_date</div>
-                  <div><code>SCHET</code> → invoice_number</div>
-                  <div><code>SUMMA</code> → total_amount</div>
-                  <div><code>DATE_CREATE</code> → created_at</div>
-                  <div><code>COMMENT</code> → notes</div>
-                  <div><code>DECLARATION</code> → tracking_number</div>
-                  <div><code>INDEX_ZAKAZCHIK</code> → зв'язок з контактом через external_id</div>
-                </div>
-              </div>
-
-              {isImporting && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Імпорт замовлень...</span>
-                    <span className="text-sm">{progress}%</span>
-                  </div>
-                  <Progress value={progress} className="w-full" />
-                </div>
-              )}
-
-              <div className="flex gap-2 justify-end">
-                <Button type="button" variant="outline" onClick={resetForm}>
-                  Скасувати
-                </Button>
-                <Button 
-                  onClick={handleImport} 
-                  disabled={isImporting || !xmlContent.trim()}
-                >
-                  {isImporting ? "Імпорт..." : "Імпортувати"}
-                </Button>
-              </div>
-            </>
-          )}
-
-          {importResult && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="bg-green-50 p-4 rounded-lg text-center">
-                  <Check className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-green-700">{importResult.success}</div>
-                  <div className="text-sm text-green-600">Успішно</div>
-                </div>
-                <div className="bg-red-50 p-4 rounded-lg text-center">
-                  <AlertTriangle className="h-8 w-8 text-red-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-red-700">{importResult.errors.length}</div>
-                  <div className="text-sm text-red-600">Помилки</div>
-                </div>
-                <div className="bg-yellow-50 p-4 rounded-lg text-center">
-                  <AlertTriangle className="h-8 w-8 text-yellow-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-yellow-700">{importResult.warnings.length}</div>
-                  <div className="text-sm text-yellow-600">Попередження</div>
-                </div>
-              </div>
-
-              {importResult.errors.length > 0 && (
+        <div className="space-y-6">
+          {/* File Upload */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="w-5 h-5" />
+                Завантаження XML файлу
+              </CardTitle>
+              <CardDescription>
+                Оберіть XML файл з замовленнями для імпорту в систему
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
                 <div>
-                  <h4 className="font-medium text-red-900 mb-2">Помилки:</h4>
-                  <div className="max-h-40 overflow-y-auto space-y-2">
-                    {importResult.errors.map((error, index) => (
-                      <div key={index} className="bg-red-50 p-3 rounded text-sm">
-                        <div className="font-medium text-red-800">Рядок {error.row}:</div>
-                        <div className="text-red-700">{error.error}</div>
-                        {error.data && (
-                          <div className="text-red-600 text-xs mt-1">
-                            Дані: {JSON.stringify(error.data)}
+                  <Label htmlFor="xml-file-input">Файл XML</Label>
+                  <Input
+                    id="xml-file-input"
+                    type="file"
+                    accept=".xml,text/xml"
+                    onChange={handleFileChange}
+                    className="cursor-pointer mt-1"
+                  />
+                </div>
+                
+                {selectedFile && (
+                  <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-3 rounded-lg border">
+                    <FileText className="w-4 h-4" />
+                    <span>
+                      <strong>Обрано файл:</strong> {selectedFile.name} 
+                      <span className="text-gray-500 ml-2">
+                        ({Math.round(selectedFile.size / 1024)} KB)
+                      </span>
+                    </span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Import Results */}
+          {importResult && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Check className="w-5 h-5" />
+                  Результати імпорту
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Success */}
+                  {importResult.success > 0 && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center gap-2 text-green-800">
+                        <Check className="w-5 h-5" />
+                        <span className="font-medium">
+                          Успішно імпортовано: {importResult.success} замовлень
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Warnings */}
+                  {importResult.warnings.length > 0 && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <div className="flex items-center gap-2 text-yellow-800 mb-2">
+                        <AlertTriangle className="w-5 h-5" />
+                        <span className="font-medium">
+                          Попередження ({importResult.warnings.length})
+                        </span>
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        {importResult.warnings.slice(0, 5).map((warning, index) => (
+                          <div key={index} className="text-yellow-700">
+                            Рядок {warning.row}: {warning.warning}
+                          </div>
+                        ))}
+                        {importResult.warnings.length > 5 && (
+                          <div className="text-yellow-600">
+                            ... та ще {importResult.warnings.length - 5} попереджень
                           </div>
                         )}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                    </div>
+                  )}
 
-              {importResult.warnings.length > 0 && (
-                <div>
-                  <h4 className="font-medium text-yellow-900 mb-2">Попередження:</h4>
-                  <div className="max-h-40 overflow-y-auto space-y-2">
-                    {importResult.warnings.map((warning, index) => (
-                      <div key={index} className="bg-yellow-50 p-3 rounded text-sm">
-                        <div className="font-medium text-yellow-800">Рядок {warning.row}:</div>
-                        <div className="text-yellow-700">{warning.warning}</div>
+                  {/* Errors */}
+                  {importResult.errors.length > 0 && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <div className="flex items-center gap-2 text-red-800 mb-2">
+                        <AlertTriangle className="w-5 h-5" />
+                        <span className="font-medium">
+                          Помилки ({importResult.errors.length})
+                        </span>
                       </div>
-                    ))}
-                  </div>
+                      <div className="space-y-1 text-sm">
+                        {importResult.errors.slice(0, 5).map((error, index) => (
+                          <div key={index} className="text-red-700">
+                            Рядок {error.row}: {error.error}
+                          </div>
+                        ))}
+                        {importResult.errors.length > 5 && (
+                          <div className="text-red-600">
+                            ... та ще {importResult.errors.length - 5} помилок
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-
-              <div className="flex gap-2 justify-end">
-                <Button onClick={resetForm}>
-                  Закрити
-                </Button>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           )}
+
+          {/* Actions */}
+          <div className="flex justify-between items-center">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsOpen(false);
+                resetForm();
+              }}
+            >
+              Закрити
+            </Button>
+            <Button
+              onClick={handleImport}
+              disabled={!selectedFile || isImporting}
+            >
+              {isImporting ? "Імпортування..." : "Імпортувати"}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
