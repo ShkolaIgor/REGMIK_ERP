@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { ClientContactsXmlImport } from "@/components/ClientContactsXmlImport";
 import { 
   Search, Plus, Edit, User, Building2, Truck, Package, Percent,
   Users, Phone, Mail, MapPin, UserPlus, Trash2, MoreVertical, Upload 
@@ -314,6 +315,7 @@ export default function Clients() {
             <Upload className="mr-2 h-4 w-4" />
             Імпорт XML
           </Button>
+          <ClientContactsXmlImport />
           <Button onClick={() => {
             setEditingClient(null);
             setIsDialogOpen(true);
