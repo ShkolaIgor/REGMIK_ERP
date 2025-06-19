@@ -2315,7 +2315,7 @@ export default function Orders() {
             <CardTitle>Список замовлень</CardTitle>
           </CardHeader>
           <CardContent>
-            {orders.length === 0 ? (
+            {filteredOrders.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500">Замовлення відсутні</p>
                 <Button className="mt-4" onClick={() => {
@@ -2330,6 +2330,7 @@ export default function Orders() {
                 </Button>
               </div>
             ) : (
+              <>
               <DragDropContext onDragEnd={handleColumnDragEnd}>
                 <Table>
                   <TableHeader>
@@ -2440,10 +2441,9 @@ export default function Orders() {
                   </TableBody>
                 </Table>
               </DragDropContext>
-              
+
               {filteredOrders.length > 0 && (
                 <div className="flex items-center justify-between p-4 border-t">
-                  {/* Пагінація */}
                   <div className="flex items-center space-x-4">
                     <p className="text-sm text-muted-foreground">
                       Показано {currentPage * itemsPerPage + 1}-{Math.min((currentPage + 1) * itemsPerPage, filteredOrders.length)} з {filteredOrders.length} замовлень
@@ -2549,6 +2549,7 @@ export default function Orders() {
                   </div>
                 </div>
               )}
+              </>
             )}
           </CardContent>
         </Card>
