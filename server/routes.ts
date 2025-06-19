@@ -5939,28 +5939,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Client Contacts API (Combined table)
   app.get("/api/client-contacts", async (req, res) => {
     try {
-      const { clientId } = req.query;
+      const page = parseInt(req.query.page as string);
+      const limit = parseInt(req.query.limit as string);
+      const search = req.query.search as string;
+      const clientId = req.query.clientId ? parseInt(req.query.clientId as string) : undefined;
       
-      if (clientId) {
-        // Фільтруємо контакти для конкретного клієнта
-        const clientIdNum = parseInt(clientId as string);
-        console.log(`Фільтруємо контакти для клієнта ID: ${clientIdNum}`);
-        
-        const contacts = await storage.getClientContacts();
-        const filteredContacts = contacts.filter(contact => contact.clientId === clientIdNum);
-        
-        console.log(`Знайдено ${filteredContacts.length} контактів для клієнта ${clientIdNum}`);
-        console.log('Фільтровані контакти:', filteredContacts.map(c => ({id: c.id, clientId: c.clientId, fullName: c.fullName})));
-        
-        res.json({ clientContacts: filteredContacts });
+      if (page && limit && storage.getClientContactsPaginated) {
+        // Paginated request
+        const result = await storage.getClientContactsPaginated(page, limit, search, clientId);
+        res.json(result);
+      } else if (clientId) {
+        // Filter contacts for specific client (for popup)
+        console.log(`Filtering contacts for client ${clientId}`);
+        const contacts = await storage.getClientContactsByClientId ? 
+          await storage.getClientContactsByClientId(clientId) : 
+          (await storage.getClientContacts()).filter(c => c.clientId === clientId);
+        res.json(contacts);
       } else {
-        // Повертаємо всі контакти
+        // All contacts without pagination
         const contacts = await storage.getClientContacts();
         res.json(contacts);
       }
     } catch (error) {
       console.error("Error fetching client contacts:", error);
-      res.status(500).json({ error: "Failed to fetch client contacts" });
+      res.status(500).json({ message: "Failed to fetch client contacts" });
     }
   });
 
@@ -6018,6 +6020,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting client contact:", error);
       res.status(500).json({ error: "Failed to delete client contact" });
+    }
+  });
+
+  // Get contacts by client ID for popup
+  app.get("/api/client-contacts/by-client/:clientId", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      const contacts = await storage.getClientContactsByClientId ? 
+        await storage.getClientContactsByClientId(clientId) : 
+        (await storage.getClientContacts()).filter(c => c.clientId === clientId);
+      res.json(contacts);
+    } catch (error) {
+      console.error("Error fetching client contacts by clientId:", error);
+      res.status(500).json({ message: "Failed to fetch client contacts" });
     }
   });
 
