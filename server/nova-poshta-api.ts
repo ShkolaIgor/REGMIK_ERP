@@ -214,9 +214,11 @@ class NovaPoshtaApi {
   constructor() {
     const apiKey = process.env.NOVA_POSHTA_API_KEY;
     if (!apiKey) {
-      throw new Error('NOVA_POSHTA_API_KEY environment variable is required');
+      console.warn('NOVA_POSHTA_API_KEY not found, using demo key');
+      this.apiKey = 'demo';
+    } else {
+      this.apiKey = apiKey;
     }
-    this.apiKey = apiKey;
   }
 
   updateApiKey(newApiKey: string) {
