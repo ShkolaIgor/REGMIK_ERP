@@ -114,41 +114,6 @@ class NovaPoshtaService {
     });
 
     console.log("Автоматичне оновлення Nova Poshta ініціалізовано");
-      let currentDay = now.getDay();
-      
-      // Встановлюємо час оновлення на сьогодні
-      nextUpdate.setHours(hours, minutes, 0, 0);
-      
-      // Якщо час уже минув сьогодні або сьогодні не день оновлення
-      if (nextUpdate <= now || !updateDays.includes(currentDay)) {
-        // Шукаємо наступний день оновлення
-        for (let i = 1; i <= 7; i++) {
-          const dayToCheck = (currentDay + i) % 7;
-          if (updateDays.includes(dayToCheck)) {
-            daysToAdd = i;
-            break;
-          }
-        }
-        nextUpdate.setDate(nextUpdate.getDate() + daysToAdd);
-        nextUpdate.setHours(hours, minutes, 0, 0);
-      }
-      
-      const timeUntilUpdate = nextUpdate.getTime() - now.getTime();
-      
-      // Очищаємо попередній таймер
-      if (this.updateTimeoutId) {
-        clearTimeout(this.updateTimeoutId);
-      }
-      
-      this.updateTimeoutId = setTimeout(async () => {
-        await runUpdate();
-        scheduleNextUpdate(); // Планування наступного оновлення
-      }, timeUntilUpdate);
-      
-      console.log(`Наступне оновлення Nova Poshta: ${nextUpdate.toLocaleString('uk-UA')}`);
-    };
-
-    scheduleNextUpdate();
   }
 
   async manualUpdate(): Promise<{ success: boolean; message: string; stats?: any }> {
