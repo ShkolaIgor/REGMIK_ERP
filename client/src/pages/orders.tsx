@@ -1143,6 +1143,16 @@ export default function Orders() {
     // Встановлюємо вибраного клієнта для оновлення контактів
     if (order.clientId) {
       setSelectedClientId(order.clientId.toString());
+      // Встановлюємо назву клієнта для відображення в полі пошуку
+      if (order.clientName) {
+        setClientSearchValue(order.clientName);
+      } else {
+        // Якщо немає clientName, знаходимо клієнта за ID
+        const client = Array.isArray(allClients) ? allClients.find((c: any) => c.id === order.clientId) : null;
+        if (client) {
+          setClientSearchValue(client.name);
+        }
+      }
     }
 
     // Встановлюємо компанію
@@ -1560,15 +1570,13 @@ export default function Orders() {
                     <div className="relative">
                       <Input
                         placeholder="Почніть вводити назву клієнта..."
-                        value={clientSearchValue || (form.watch("clientId") ? 
-                          (Array.isArray(allClients) ? allClients.find((c: any) => c.id.toString() === form.watch("clientId"))?.name : "")
-                          : "")}
+                        value={clientSearchValue}
                         onChange={(e) => {
                           const value = e.target.value;
                           setClientSearchValue(value);
                           
-                          // Скидаємо вибраного клієнта при редагуванні
-                          if (form.watch("clientId")) {
+                          // Скидаємо вибраного клієнта тільки якщо це не початкове завантаження
+                          if (value !== clientSearchValue && form.watch("clientId")) {
                             form.setValue("clientId", "");
                             setSelectedClientId("");
                           }
