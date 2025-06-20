@@ -106,15 +106,29 @@ export default function OrdersXmlImport() {
 
   // Poll job status for progress updates
   const pollJobStatus = async (jobId: string) => {
+    console.log("Starting polling for job:", jobId);
+    
     const checkStatus = async () => {
       try {
+        console.log("Checking status for job:", jobId);
         const response = await fetch(`/api/orders/xml-import/${jobId}/status`);
-        if (!response.ok) throw new Error("Failed to fetch job status");
+        if (!response.ok) {
+          console.error("Failed to fetch job status:", response.status, response.statusText);
+          throw new Error("Failed to fetch job status");
+        }
         
         const data = await response.json();
-        const job: ImportJob = data.job;
+        console.log("Job status response:", data);
         
+        if (!data.success || !data.job) {
+          console.error("Invalid job response:", data);
+          throw new Error("Invalid job response");
+        }
+        
+        const job: ImportJob = data.job;
         setCurrentJob(job);
+        
+        console.log("Job progress:", job.progress, "Status:", job.status);
         
         if (job.status === 'completed') {
           setIsImporting(false);
@@ -149,7 +163,7 @@ export default function OrdersXmlImport() {
         }
         
         // Continue polling if still processing
-        setTimeout(checkStatus, 1000);
+        setTimeout(checkStatus, 500); // Check every 0.5 seconds for faster updates
         
       } catch (error) {
         console.error("Error checking job status:", error);
@@ -162,6 +176,7 @@ export default function OrdersXmlImport() {
       }
     };
     
+    // Start checking immediately
     checkStatus();
   };
 
