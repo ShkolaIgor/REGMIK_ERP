@@ -227,40 +227,41 @@ export default function Orders() {
       case 'orderSequenceNumber':
         return (
           <div className={`font-semibold text-center text-lg p-2 rounded ${getOrderNumberBgColor(order)}`}>
-            {order.orderSequenceNumber}
+            {order.orderNumber || order.orderSequenceNumber}
           </div>
         );
       
       case 'orderNumber':
         return (
           <div>
-            <div className="font-mono font-medium">{order.orderNumber}</div>
+            <div className="font-mono font-medium">{order.invoiceNumber || 'Не створено'}</div>
             <div className="text-sm text-gray-500"><UkrainianDate date={order.createdAt} format="short" /></div>
           </div>
         );
       
       case 'customerName':
+        const client = order.clientId 
+          ? Array.isArray(clients) && clients.find((client: any) => client.id === order.clientId)
+          : null;
+        const contact = order.clientContactsId
+          ? Array.isArray(clientContacts) && clientContacts.find((contact: any) => contact.id === order.clientContactsId)
+          : null;
+        
         return (
-          <div>
+          <div className="space-y-1">
             <div className="font-medium">
-              {order.clientId 
-                ? (clients.find((client: any) => client.id === order.clientId)?.name || order.customerName)
-                : order.customerName
-              }
+              {client?.name || order.customerName}
             </div>
-            {order.clientContactsId && (
-              <div className="text-sm text-gray-500">
-                {Array.isArray(clientContacts) && clientContacts.find((contact: any) => contact.id === order.clientContactsId)?.fullName || 'Контакт видалений'}
+            {client?.taxCode && (
+              <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded inline-block">
+                ЄДРПОУ: {client.taxCode}
               </div>
             )}
-            <div className="text-sm text-gray-500">
-              {order.clientId && (
-                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded mr-2">
-                  ЄДРПОУ: {Array.isArray(clients) && clients.find((client: any) => client.id === order.clientId)?.taxCode || 'не вказано'}
-                </span>
-              )}
-              {order.customerEmail}
-            </div>
+            {contact && (
+              <div className="text-sm text-gray-600">
+                👤 {contact.fullName}
+              </div>
+            )}
           </div>
         );
       
