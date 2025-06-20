@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ClientContactsXmlImport } from "@/components/ClientContactsXmlImport";
+import { ClientsXmlImport } from "@/components/ClientsXmlImport";
 import { 
   Search, Plus, Edit, User, Building2, Truck, Package, Percent,
   Users, Phone, Mail, MapPin, UserPlus, Trash2, MoreVertical, Upload, FileText 
