@@ -681,83 +681,55 @@ export class DatabaseStorage implements IStorage {
   async getOrder(id: number): Promise<any> {
     try {
       console.log(`Getting order with ID: ${id}`);
-      const orderResult = await db
-        .select({
-          id: orders.id,
-          orderSequenceNumber: orders.orderSequenceNumber,
-          orderNumber: orders.orderNumber,
-          clientId: orders.clientId,
-          clientContactsId: orders.clientContactsId,
-          companyId: orders.companyId,
-          status: orders.status,
-          statusId: orders.statusId,
-          totalAmount: orders.totalAmount,
-          notes: orders.notes,
-          paymentDate: orders.paymentDate,
-          paymentType: orders.paymentType,
-          paidAmount: orders.paidAmount,
-          productionApproved: orders.productionApproved,
-          productionApprovedBy: orders.productionApprovedBy,
-          productionApprovedAt: orders.productionApprovedAt,
-          dueDate: orders.dueDate,
-          shippedDate: orders.shippedDate,
-          trackingNumber: orders.trackingNumber,
-          invoiceNumber: orders.invoiceNumber,
-          carrierId: orders.carrierId,
-          createdAt: orders.createdAt,
-          clientName: clients.name,
-          clientTaxCode: clients.taxCode,
-          contactName: clientContacts.fullName,
-          contactEmail: clientContacts.email,
-          contactPhone: clientContacts.phone,
-        })
-        .from(orders)
-        .innerJoin(clients, eq(orders.clientId, clients.id))
-        .leftJoin(clientContacts, eq(orders.clientContactsId, clientContacts.id))
-        .where(eq(orders.id, id));
       
-      console.log(`Order query result length: ${orderResult.length}`);
-      if (orderResult.length === 0) {
+      // Спочатку отримуємо базове замовлення
+      const [order] = await db.select().from(orders).where(eq(orders.id, id));
+      
+      if (!order) {
         console.log(`No order found with ID: ${id}`);
         return undefined;
       }
 
-      const order = orderResult[0];
-      console.log(`Order found: ${order.orderNumber} for client: ${order.clientName}`);
-
-      const itemsResult = await db.select({
-      id: orderItems.id,
-      orderId: orderItems.orderId,
-      productId: orderItems.productId,
-      quantity: orderItems.quantity,
-      unitPrice: orderItems.unitPrice,
-      totalPrice: orderItems.totalPrice,
-      product: {
-        id: products.id,
-        name: products.name,
-        sku: products.sku,
-        description: products.description,
-        barcode: products.barcode,
-        categoryId: products.categoryId,
-        companyId: products.companyId,
-        costPrice: products.costPrice,
-        retailPrice: products.retailPrice,
-        photo: products.photo,
-        productType: products.productType,
-        unit: products.unit,
-        minStock: products.minStock,
-        maxStock: products.maxStock,
-        isActive: products.isActive,
-        createdAt: products.createdAt
+      // Отримуємо дані клієнта
+      const [client] = await db.select().from(clients).where(eq(clients.id, order.clientId));
+      
+      // Отримуємо дані контакту (якщо є)
+      let contact = null;
+      if (order.clientContactsId) {
+        const [contactResult] = await db.select().from(clientContacts).where(eq(clientContacts.id, order.clientContactsId));
+        contact = contactResult || null;
       }
-    })
+
+      console.log(`Order found: ${order.orderNumber} for client: ${client?.name || 'Unknown'}`);
+
+      // Отримуємо товари замовлення
+      const itemsResult = await db.select({
+        id: orderItems.id,
+        orderId: orderItems.orderId,
+        productId: orderItems.productId,
+        quantity: orderItems.quantity,
+        unitPrice: orderItems.unitPrice,
+        totalPrice: orderItems.totalPrice,
+        product: products
+      })
       .from(orderItems)
       .leftJoin(products, eq(orderItems.productId, products.id))
       .where(eq(orderItems.orderId, id));
 
-      const items = itemsResult.filter(item => item.product) as (OrderItem & { product: Product })[];
+      const items = itemsResult.filter(item => item.product);
 
-      return { ...order, items };
+      // Складаємо повний об'єкт замовлення
+      const fullOrder = {
+        ...order,
+        clientName: client?.name || null,
+        clientTaxCode: client?.taxCode || null,
+        contactName: contact?.fullName || null,
+        contactEmail: contact?.email || null,
+        contactPhone: contact?.phone || null,
+        items
+      };
+
+      return fullOrder;
     } catch (error) {
       console.error(`Error in getOrder for ID ${id}:`, error);
       throw error;

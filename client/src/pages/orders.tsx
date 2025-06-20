@@ -1145,17 +1145,25 @@ export default function Orders() {
       setSelectedClientId(order.clientId.toString());
       
       // Встановлюємо назву клієнта для відображення в полі пошуку
-      // Спочатку пробуємо з отриманих даних замовлення
       if (order.clientName) {
+        console.log(`Setting client name from order: ${order.clientName}`);
         setClientSearchValue(order.clientName);
       } else {
+        console.log('No clientName in order, searching in allClients');
         // Якщо немає clientName в замовленні, пробуємо знайти в списку клієнтів
-        setTimeout(() => {
-          const client = Array.isArray(allClients) ? allClients.find((c: any) => c.id === order.clientId) : null;
-          if (client) {
-            setClientSearchValue(client.name);
-          }
-        }, 500); // Даємо час завантажитись списку клієнтів
+        const client = Array.isArray(allClients) ? allClients.find((c: any) => c.id === order.clientId) : null;
+        if (client) {
+          console.log(`Found client in allClients: ${client.name}`);
+          setClientSearchValue(client.name);
+        } else {
+          console.log('Client not found in allClients, will try with delay');
+          setTimeout(() => {
+            const delayedClient = Array.isArray(allClients) ? allClients.find((c: any) => c.id === order.clientId) : null;
+            if (delayedClient) {
+              setClientSearchValue(delayedClient.name);
+            }
+          }, 500);
+        }
       }
     }
 
