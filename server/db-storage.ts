@@ -7950,14 +7950,41 @@ export class DatabaseStorage implements IStorage {
               }
             }
 
+            // Визначаємо статус замовлення безпечно
+            let statusId = 1; // За замовчуванням "Новий"
+            
             if (row.DEL === 'T') {
-              orderData.statusId = 8;
+              statusId = 8; // Видалено
             } else if (row.REALIZ && this.parseDate(row.REALIZ)) {
-              orderData.statusId = 6;
+              statusId = 6; // Відвантажено
             } else if (row.PAY && this.parseDate(row.PAY)) {
-              orderData.statusId = 12;
-            } else {
-              orderData.statusId = 1;
+              statusId = 12; // Оплачено
+            }
+            
+            // Перевіряємо, чи існує статус, якщо ні - використовуємо базовий
+            try {
+              const statusExists = await db.select({ id: orderStatuses.id })
+                .from(orderStatuses)
+                .where(eq(orderStatuses.id, statusId))
+                .limit(1);
+              
+              if (statusExists.length === 0) {
+                statusId = 1; // Повертаємось до базового статусу
+                result.warnings.push({
+                  row: rowNumber,
+                  warning: `Статус з id=${statusId} не знайдений, використано базовий статус`,
+                  data: row
+                });
+              }
+              
+              orderData.statusId = statusId;
+            } catch (statusError) {
+              // Якщо помилка з перевіркою статусу, не встановлюємо statusId взагалі
+              result.warnings.push({
+                row: rowNumber,
+                warning: `Не вдалося перевірити статус, statusId пропущено`,
+                data: row
+              });
             }
 
             await db.insert(orders).values(orderData);
@@ -8150,15 +8177,41 @@ export class DatabaseStorage implements IStorage {
             }
           }
 
-          // Визначаємо статус на основі DEL, REALIZ, PAY
+          // Визначаємо статус замовлення безпечно
+          let statusId = 1; // За замовчуванням "Новий"
+          
           if (row.DEL === 'T') {
-            orderData.statusId = 8; // Видалено
+            statusId = 8; // Видалено
           } else if (row.REALIZ && this.parseDate(row.REALIZ)) {
-            orderData.statusId = 6; // Відвантажено
+            statusId = 6; // Відвантажено
           } else if (row.PAY && this.parseDate(row.PAY)) {
-            orderData.statusId = 12; // Оплачено
-          } else {
-            orderData.statusId = 1; // За замовчуванням
+            statusId = 12; // Оплачено
+          }
+          
+          // Перевіряємо, чи існує статус
+          try {
+            const statusExists = await db.select({ id: orderStatuses.id })
+              .from(orderStatuses)
+              .where(eq(orderStatuses.id, statusId))
+              .limit(1);
+            
+            if (statusExists.length === 0) {
+              statusId = 1; // Повертаємось до базового статусу
+              result.warnings.push({
+                row: rowNumber,
+                warning: `Статус з id=${statusId} не знайдений, використано базовий статус`,
+                data: row
+              });
+            }
+            
+            orderData.statusId = statusId;
+          } catch (statusError) {
+            // Якщо помилка з перевіркою статусу, не встановлюємо statusId
+            result.warnings.push({
+              row: rowNumber,
+              warning: `Не вдалося перевірити статус, statusId пропущено`,
+              data: row
+            });
           }
 
           // Створюємо замовлення
