@@ -174,9 +174,6 @@ export default function Carriers() {
       serviceType: "",
       rating: 5,
       apiKey: "",
-      syncTime: "",
-      syncInterval: 24,
-      autoSync: false,
       autoUpdateEnabled: false,
       updateTime: "06:00",
       updateDays: "1,2,3,4,5",
@@ -192,6 +189,9 @@ export default function Carriers() {
       alternativeNames: formData.alternativeNames ? 
         formData.alternativeNames.split(',').map(name => name.trim()).filter(name => name) : 
         null,
+      autoUpdateEnabled: formData.autoUpdateEnabled || false,
+      updateTime: formData.updateTime || "06:00",
+      updateDays: formData.updateDays || "1,2,3,4,5",
     };
 
     if (editingCarrier) {
@@ -357,51 +357,81 @@ export default function Carriers() {
                   />
                 </div>
                 
-                {/* Налаштування синхронізації - показувати тільки якщо введено API ключ */}
-                {formData.apiKey && (
-                  <>
-                    <div className="col-span-2">
-                      <div className="border-t pt-4">
-                        <h4 className="text-sm font-medium mb-3">Налаштування синхронізації</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="syncTime">Час синхронізації</Label>
-                            <Input
-                              id="syncTime"
-                              type="time"
-                              placeholder="09:00"
-                              value={formData.syncTime}
-                              onChange={(e) => setFormData({ ...formData, syncTime: e.target.value })}
-                            />
-                            <p className="text-xs text-gray-500 mt-1">Щоденний час автоматичної синхронізації</p>
-                          </div>
-                          <div>
-                            <Label htmlFor="syncInterval">Інтервал оновлення (годин)</Label>
-                            <Input
-                              id="syncInterval"
-                              type="number"
-                              min="1"
-                              max="168"
-                              value={formData.syncInterval}
-                              onChange={(e) => setFormData({ ...formData, syncInterval: Number(e.target.value) })}
-                            />
-                            <p className="text-xs text-gray-500 mt-1">Як часто оновлювати дані (1-168 годин)</p>
-                          </div>
-                        </div>
-                        <div className="mt-4 flex items-center space-x-2">
-                          <Checkbox
-                            id="autoSync"
-                            checked={formData.autoSync}
-                            onCheckedChange={(checked) => setFormData({ ...formData, autoSync: checked as boolean })}
-                          />
-                          <Label htmlFor="autoSync" className="text-sm">
-                            Автоматична синхронізація
-                          </Label>
-                          <p className="text-xs text-gray-500">Включити регулярне оновлення даних</p>
-                        </div>
+                {/* Налаштування Nova Poshta - показувати тільки для Nova Poshta з API ключем */}
+                {formData.apiKey && (formData.name?.toLowerCase().includes('nova') || 
+                  formData.name?.toLowerCase().includes('нова') ||
+                  (formData.alternativeNames && formData.alternativeNames.split(',').some((name: string) => 
+                    name.trim().toLowerCase().includes('nova') || name.trim().toLowerCase().includes('нова')
+                  ))) && (
+                  <div className="col-span-2">
+                    <div className="space-y-4 p-4 border rounded-lg bg-blue-50">
+                      <h4 className="font-medium text-blue-900">Налаштування автоматичного оновлення Nova Poshta</h4>
+                      
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="autoUpdateEnabled"
+                          checked={formData.autoUpdateEnabled || false}
+                          onChange={(e) => setFormData({ ...formData, autoUpdateEnabled: e.target.checked })}
+                          className="rounded"
+                        />
+                        <Label htmlFor="autoUpdateEnabled">Увімкнути автоматичне оновлення даних</Label>
                       </div>
+
+                      {formData.autoUpdateEnabled && (
+                        <>
+                          <div>
+                            <Label htmlFor="updateTime">Час оновлення (години:хвилини)</Label>
+                            <Input
+                              id="updateTime"
+                              type="time"
+                              value={formData.updateTime || "06:00"}
+                              onChange={(e) => setFormData({ ...formData, updateTime: e.target.value })}
+                            />
+                            <p className="text-sm text-gray-600 mt-1">Вкажіть час у форматі 24 години (наприклад: 06:00)</p>
+                          </div>
+
+                          <div>
+                            <Label>Дні тижня для оновлення</Label>
+                            <div className="flex space-x-2 mt-2">
+                              {[
+                                { value: '1', label: 'Пн' },
+                                { value: '2', label: 'Вт' },
+                                { value: '3', label: 'Ср' },
+                                { value: '4', label: 'Чт' },
+                                { value: '5', label: 'Пт' },
+                                { value: '6', label: 'Сб' },
+                                { value: '7', label: 'Нд' }
+                              ].map((day) => {
+                                const selectedDays = formData.updateDays ? formData.updateDays.split(',') : ['1','2','3','4','5'];
+                                const isSelected = selectedDays.includes(day.value);
+                                
+                                return (
+                                  <Button
+                                    key={day.value}
+                                    type="button"
+                                    variant={isSelected ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => {
+                                      const currentDays = formData.updateDays ? formData.updateDays.split(',') : ['1','2','3','4','5'];
+                                      const newDays = isSelected 
+                                        ? currentDays.filter(d => d !== day.value)
+                                        : [...currentDays, day.value];
+                                      setFormData({ ...formData, updateDays: newDays.sort().join(',') });
+                                    }}
+                                    className="w-10 h-8"
+                                  >
+                                    {day.label}
+                                  </Button>
+                                );
+                              })}
+                            </div>
+                            <p className="text-sm text-gray-600 mt-1">Оберіть дні тижня для автоматичного оновлення</p>
+                          </div>
+                        </>
+                      )}
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
               <div>
