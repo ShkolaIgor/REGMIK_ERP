@@ -162,7 +162,7 @@ export default function Shipments() {
   });
 
   // Завантаження замовлень готових до відвантаження
-  const { data: availableOrders = [] } = useQuery({
+  const { data: availableOrdersData } = useQuery({
     queryKey: ["/api/orders", "ready-to-ship"],
     queryFn: async () => {
       const response = await fetch("/api/orders?status=processing");
@@ -170,6 +170,8 @@ export default function Shipments() {
       return response.json();
     }
   });
+  
+  const availableOrders = availableOrdersData?.orders || [];
 
   // Завантаження перевізників
   const { data: carriers = [] } = useQuery({
@@ -640,7 +642,7 @@ export default function Shipments() {
                     <SelectValue placeholder="Оберіть замовлення" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableOrders.map((order: Order) => (
+                    {Array.isArray(availableOrders) && availableOrders.map((order: Order) => (
                       <SelectItem key={order.id} value={order.id.toString()}>
                         {order.orderNumber} - {order.customerName}
                       </SelectItem>
