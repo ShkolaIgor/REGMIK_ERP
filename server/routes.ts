@@ -1131,31 +1131,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (row.REALIZ) orderData.shippedDate = storage.parseDate(row.REALIZ);
             if (row.DATE_CREATE) orderData.createdAt = storage.parseDate(row.DATE_CREATE);
 
-            // Check for existing order
-            const existingOrder = await db.select()
-              .from(orders)
-              .where(
-                and(
-                  eq(orders.orderNumber, orderData.orderNumber),
-                  eq(orders.invoiceNumber, orderData.invoiceNumber || ''),
-                  orderData.createdAt ? 
-                    sql`DATE(${orders.createdAt}) = DATE(${orderData.createdAt})` :
-                    sql`DATE(${orders.createdAt}) = CURRENT_DATE`
-                )
-              )
-              .limit(1);
+            // Check for existing order using storage method
+            try {
+              const existingOrder = await storage.findOrderByNumberAndInvoice(
+                orderData.orderNumber,
+                orderData.invoiceNumber || '',
+                orderData.createdAt
+              );
 
-            if (existingOrder.length > 0) {
-              job.warnings.push({
+              if (existingOrder) {
+                job.warnings.push({
+                  row: rowNumber,
+                  warning: `Замовлення ${orderData.orderNumber} вже існує`,
+                  data: row
+                });
+                job.skipped++;
+              } else {
+                // Create order using storage method
+                await storage.createOrderFromImport(orderData);
+                job.imported++;
+              }
+            } catch (createError) {
+              job.errors.push({
                 row: rowNumber,
-                warning: `Замовлення ${orderData.orderNumber} вже існує`,
+                error: `Помилка створення замовлення: ${createError instanceof Error ? createError.message : 'Невідома помилка'}`,
                 data: row
               });
-              job.skipped++;
-            } else {
-              // Create order
-              await db.insert(orders).values(orderData);
-              job.imported++;
             }
 
           } catch (error) {
