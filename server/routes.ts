@@ -5676,13 +5676,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
 
-    // Handle EDRPOU field - validate length and convert incorrect to null
+    // Handle EDRPOU field - validate length (8 for ЮР особи, 11 for ФОП) and convert incorrect to null
     let taxCode = null;
     if (row.EDRPOU && row.EDRPOU !== '0' && row.EDRPOU.trim() !== '') {
       const cleanCode = row.EDRPOU.trim().replace(/\D/g, '');
-      if (cleanCode.length === 8 || cleanCode.length === 10) {
+      if (cleanCode.length === 8 || cleanCode.length === 11) {
         taxCode = cleanCode;
       }
+      // If length is not 8 or 11, taxCode remains null (empty import)
     }
 
     // Determine client type
@@ -5690,8 +5691,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (taxCode) {
       if (taxCode.length === 8) {
         clientTypeId = 1; // Юридична особа
-      } else if (taxCode.length === 10) {
-        clientTypeId = 2; // Фізична особа
+      } else if (taxCode.length === 11) {
+        clientTypeId = 2; // Фізична особа (ФОП)
       }
     }
 
