@@ -38,7 +38,7 @@ type Order = {
   clientTaxCode?: string;
   contactName?: string;
 
-  clientId: string | null;
+  clientId: number;
   clientContactsId: number | null;
   statusId: number | null;
   status: string;
@@ -116,15 +116,22 @@ const orderSchema = z.object({
   clientId: z.string().min(1, "Оберіть клієнта"),
   clientContactsId: z.string().optional(),
   companyId: z.string().optional(),
+  orderNumber: z.string().min(1, "Номер замовлення обов'язковий"),
+  totalAmount: z.string().min(1, "Сума замовлення обов'язкова"),
   invoiceNumber: z.string().optional(),
   carrierId: z.number().optional().nullable(),
   status: z.string().default("pending"),
   statusId: z.number().optional(),
   notes: z.string().optional(),
   paymentDate: z.string().optional(),
+  paymentType: z.string().optional(),
+  paidAmount: z.string().optional(),
   dueDate: z.string().optional(),
   shippedDate: z.string().optional(),
   trackingNumber: z.string().optional(),
+  productionApproved: z.boolean().optional(),
+  productionApprovedBy: z.string().optional(),
+  productionApprovedAt: z.string().optional(),
 });
 
 const statusSchema = z.object({
@@ -1405,6 +1412,8 @@ export default function Orders() {
                   setIsEditMode(false);
                   setEditingOrder(null);
                   setSelectedClientId("");
+                  setClientSearchValue("");
+                  setClientComboboxOpen(false);
                   setSelectedContactId("");
                   setSelectedCompanyId("");
                   setOrderItems([]);
@@ -1420,14 +1429,29 @@ export default function Orders() {
                   form.reset({
                     companyId: defaultCompany ? defaultCompany.id.toString() : "",
                     clientId: "",
-
+                    clientContactsId: "",
                     status: "pending",
                     notes: "",
                     paymentDate: "",
                     dueDate: "",
                     shippedDate: "",
                     trackingNumber: "",
+                    invoiceNumber: "",
+                    carrierId: null,
+                    statusId: undefined,
+                    totalAmount: "",
+                    orderNumber: "",
+                    paymentType: "full",
+                    paidAmount: "0",
+                    productionApproved: false,
+                    productionApprovedBy: "",
+                    productionApprovedAt: "",
                   });
+                  
+                  // Скидаємо стан компонентів
+                  setSelectedClientId("");
+                  setClientSearchValue("");
+                  setClientComboboxOpen(false);
                   setIsDialogOpen(true);
                 }}>
                     <Plus className="w-4 h-4 mr-2" />
