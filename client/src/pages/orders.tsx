@@ -243,10 +243,10 @@ export default function Orders() {
       
       case 'customerName':
         const client = order.clientId 
-          ? Array.isArray(clients) && clients.find((client: any) => client.id === order.clientId)
+          ? Array.isArray(allClients) && allClients.find((client: any) => client.id === order.clientId)
           : null;
         const contact = order.clientContactsId
-          ? Array.isArray(clientContacts) && clientContacts.find((contact: any) => contact.id === order.clientContactsId)
+          ? Array.isArray(allClientContacts) && allClientContacts.find((contact: any) => contact.id === order.clientContactsId)
           : null;
         
         return (
@@ -417,7 +417,7 @@ export default function Orders() {
       
       case 'shippedDate':
         const carrier = order.carrierId 
-          ? Array.isArray(carriers) && carriers.find((c: any) => c.id === order.carrierId)
+          ? Array.isArray(allCarriers) && allCarriers.find((c: any) => c.id === order.carrierId)
           : null;
         
         return (
@@ -695,7 +695,7 @@ export default function Orders() {
     queryKey: ["/api/client-contacts"],
   });
 
-  const { data: carriers = [] } = useQuery({
+  const { data: allCarriers = [] } = useQuery({
     queryKey: ["/api/carriers"],
   });
 
@@ -1244,7 +1244,7 @@ export default function Orders() {
   const filteredClients = clients; // Дані вже відфільтровані на сервері
 
   const handleClientSelect = (clientId: string) => {
-    const selectedClient = clients.find((c: any) => c.id.toString() === clientId);
+    const selectedClient = allClients.find((c: any) => c.id.toString() === clientId);
     if (selectedClient) {
       form.setValue("clientId", clientId);
       form.setValue("customerName", selectedClient.name);
@@ -1528,7 +1528,7 @@ export default function Orders() {
                       <Input
                         placeholder="Почніть вводити назву клієнта..."
                         value={clientSearchValue || (form.watch("clientId") ? 
-                          clients.find((c: any) => c.id.toString() === form.watch("clientId"))?.name 
+                          allClients.find((c: any) => c.id.toString() === form.watch("clientId"))?.name 
                           : form.watch("customerName") || "")}
                         onChange={(e) => {
                           const value = e.target.value;
@@ -1550,7 +1550,7 @@ export default function Orders() {
                         onFocus={() => {
                           // При фокусі, якщо є обраний клієнт, підготовуємо для редагування
                           if (form.watch("clientId") && !clientSearchValue) {
-                            const selectedClient = clients.find((c: any) => c.id.toString() === form.watch("clientId"));
+                            const selectedClient = allClients.find((c: any) => c.id.toString() === form.watch("clientId"));
                             if (selectedClient) {
                               setClientSearchValue(selectedClient.name);
                             }
