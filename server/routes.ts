@@ -773,12 +773,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/orders/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      console.log(`Fetching order with ID: ${id}`);
       const order = await storage.getOrder(id);
       if (!order) {
+        console.log(`Order with ID ${id} not found`);
         return res.status(404).json({ error: "Order not found" });
       }
+      console.log(`Order fetched successfully with clientName: ${order.clientName}`);
       res.json(order);
     } catch (error) {
+      console.error("Error fetching order:", error);
       res.status(500).json({ error: "Failed to fetch order" });
     }
   });

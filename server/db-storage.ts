@@ -678,45 +678,54 @@ export class DatabaseStorage implements IStorage {
     return result.orders;
   }
 
-  async getOrder(id: number): Promise<(Order & { items: (OrderItem & { product: Product })[] }) | undefined> {
-    const orderResult = await db
-      .select({
-        id: orders.id,
-        orderSequenceNumber: orders.orderSequenceNumber,
-        orderNumber: orders.orderNumber,
-        clientId: orders.clientId,
-        clientContactsId: orders.clientContactsId,
-        companyId: orders.companyId,
-        status: orders.status,
-        statusId: orders.statusId,
-        totalAmount: orders.totalAmount,
-        notes: orders.notes,
-        paymentDate: orders.paymentDate,
-        paymentType: orders.paymentType,
-        paidAmount: orders.paidAmount,
-        productionApproved: orders.productionApproved,
-        productionApprovedBy: orders.productionApprovedBy,
-        productionApprovedAt: orders.productionApprovedAt,
-        dueDate: orders.dueDate,
-        shippedDate: orders.shippedDate,
-        trackingNumber: orders.trackingNumber,
-        invoiceNumber: orders.invoiceNumber,
-        carrierId: orders.carrierId,
-        createdAt: orders.createdAt,
-        clientName: clients.name,
-        clientTaxCode: clients.taxCode,
-        contactName: clientContacts.fullName,
-        contactEmail: clientContacts.email,
-        contactPhone: clientContacts.phone,
-      })
-      .from(orders)
-      .innerJoin(clients, eq(orders.clientId, clients.id))
-      .leftJoin(clientContacts, eq(orders.clientContactsId, clientContacts.id))
-      .where(eq(orders.id, id));
-    
-    if (orderResult.length === 0) return undefined;
+  async getOrder(id: number): Promise<any> {
+    try {
+      console.log(`Getting order with ID: ${id}`);
+      const orderResult = await db
+        .select({
+          id: orders.id,
+          orderSequenceNumber: orders.orderSequenceNumber,
+          orderNumber: orders.orderNumber,
+          clientId: orders.clientId,
+          clientContactsId: orders.clientContactsId,
+          companyId: orders.companyId,
+          status: orders.status,
+          statusId: orders.statusId,
+          totalAmount: orders.totalAmount,
+          notes: orders.notes,
+          paymentDate: orders.paymentDate,
+          paymentType: orders.paymentType,
+          paidAmount: orders.paidAmount,
+          productionApproved: orders.productionApproved,
+          productionApprovedBy: orders.productionApprovedBy,
+          productionApprovedAt: orders.productionApprovedAt,
+          dueDate: orders.dueDate,
+          shippedDate: orders.shippedDate,
+          trackingNumber: orders.trackingNumber,
+          invoiceNumber: orders.invoiceNumber,
+          carrierId: orders.carrierId,
+          createdAt: orders.createdAt,
+          clientName: clients.name,
+          clientTaxCode: clients.taxCode,
+          contactName: clientContacts.fullName,
+          contactEmail: clientContacts.email,
+          contactPhone: clientContacts.phone,
+        })
+        .from(orders)
+        .innerJoin(clients, eq(orders.clientId, clients.id))
+        .leftJoin(clientContacts, eq(orders.clientContactsId, clientContacts.id))
+        .where(eq(orders.id, id));
+      
+      console.log(`Order query result length: ${orderResult.length}`);
+      if (orderResult.length === 0) {
+        console.log(`No order found with ID: ${id}`);
+        return undefined;
+      }
 
-    const itemsResult = await db.select({
+      const order = orderResult[0];
+      console.log(`Order found: ${order.orderNumber} for client: ${order.clientName}`);
+
+      const itemsResult = await db.select({
       id: orderItems.id,
       orderId: orderItems.orderId,
       productId: orderItems.productId,
@@ -742,13 +751,17 @@ export class DatabaseStorage implements IStorage {
         createdAt: products.createdAt
       }
     })
-    .from(orderItems)
-    .leftJoin(products, eq(orderItems.productId, products.id))
-    .where(eq(orderItems.orderId, id));
+      .from(orderItems)
+      .leftJoin(products, eq(orderItems.productId, products.id))
+      .where(eq(orderItems.orderId, id));
 
-    const items = itemsResult.filter(item => item.product) as (OrderItem & { product: Product })[];
+      const items = itemsResult.filter(item => item.product) as (OrderItem & { product: Product })[];
 
-    return { ...orderResult[0], items };
+      return { ...order, items };
+    } catch (error) {
+      console.error(`Error in getOrder for ID ${id}:`, error);
+      throw error;
+    }
   }
 
   async getOrderProducts(orderId: number): Promise<any[]> {
