@@ -41,7 +41,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
-      fileSize: 10 * 1024 * 1024, // 10MB limit
+      fileSize: 100 * 1024 * 1024, // 100MB limit
+      fieldSize: 100 * 1024 * 1024, // 100MB field size limit
+      fields: 10,
+      files: 5,
+      parts: 20
     },
     fileFilter: (req, file, cb) => {
       if (file.mimetype === 'text/xml' || file.originalname.endsWith('.xml')) {
