@@ -156,7 +156,6 @@ class NovaPoshtaService {
     scheduleNextUpdate();
   }
 
-  // Ручне оновлення
   async manualUpdate(): Promise<{ success: boolean; message: string; stats?: any }> {
     return await this.updateData();
   }
