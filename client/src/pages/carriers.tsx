@@ -177,6 +177,9 @@ export default function Carriers() {
       syncTime: "",
       syncInterval: 24,
       autoSync: false,
+      autoUpdateEnabled: false,
+      updateTime: "06:00",
+      updateDays: "1,2,3,4,5",
     });
     setEditingCarrier(null);
   };

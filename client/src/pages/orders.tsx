@@ -261,7 +261,7 @@ export default function Orders() {
             {/* ЄДРПОУ з таблиці clients */}
             {client?.taxCode && (
               <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded inline-block">
-                ЄДРПОУ: {client.taxCode}
+                {client.taxCode}
               </div>
             )}
             
@@ -275,7 +275,7 @@ export default function Orders() {
             {/* Якщо немає клієнта в таблиці, але є clientName */}
             {!client && order.clientName && (
               <div className="text-xs text-gray-500 italic">
-                Ручний ввід
+                Клієнт відсутній
               </div>
             )}
           </div>
