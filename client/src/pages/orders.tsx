@@ -1776,7 +1776,7 @@ export default function Orders() {
                       }}
                       orderId={isEditMode ? editingOrder?.id?.toString() : undefined}
                       recipientName={clientSearchValue}
-                      recipientPhone={form.watch("customerPhone")}
+                      recipientPhone={""}
                     />
                   </div>
                 )}

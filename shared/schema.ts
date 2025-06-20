@@ -1375,7 +1375,7 @@ export const sales = pgTable("sales", {
   id: serial("id").primaryKey(),
   orderNumber: varchar("order_number", { length: 100 }).notNull().unique(),
   customerId: integer("customer_id"),
-  customerName: varchar("customer_name", { length: 255 }),
+  clientId: integer("client_id").references(() => clients.id).notNull(),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   currency: varchar("currency", { length: 3 }).default("UAH"),
   saleDate: timestamp("sale_date").defaultNow(),
