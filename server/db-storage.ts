@@ -100,11 +100,16 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  private async initializeData() {
-    // Перевіряємо чи є дані в базі, якщо ні - додаємо початкові дані
-    const categoriesCount = await db.select({ count: sql<number>`count(*)` }).from(categories);
-    if (categoriesCount[0].count === 0) {
-      await this.seedInitialData();
+  async initializeData() {
+    try {
+      // Перевіряємо чи є дані в базі, якщо ні - додаємо початкові дані
+      const categoriesCount = await db.select({ count: sql<number>`count(*)` }).from(categories);
+      if (categoriesCount[0].count === 0) {
+        await this.seedInitialData();
+      }
+    } catch (error) {
+      console.error("Database initialization skipped due to connection issues:", error);
+      // Don't throw error - allow server to continue
     }
   }
 

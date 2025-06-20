@@ -344,6 +344,7 @@ export default function Clients() {
             <Upload className="mr-2 h-4 w-4" />
             Імпорт клієнтів XML
           </Button>
+          <ClientsXmlImport />
           <ClientContactsXmlImport />
           <Button onClick={() => {
             setEditingClient(null);

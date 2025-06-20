@@ -94,6 +94,15 @@ app.use((req, res, next) => {
   }, async () => {
     log(`serving on port ${port}`);
     
+    // Initialize database safely
+    try {
+      const { storage } = await import("./db-storage");
+      await storage.initializeData();
+      log("Database initialized successfully");
+    } catch (error) {
+      log("Database initialization failed, continuing with server startup:", error);
+    }
+    
     // Ініціалізація кешу Нової Пошти при старті сервера (тільки в development)
     if (app.get("env") === "development") {
       try {
