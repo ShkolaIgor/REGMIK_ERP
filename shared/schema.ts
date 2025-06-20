@@ -1369,6 +1369,8 @@ export type InsertComponentAlternative = z.infer<typeof insertComponentAlternati
 // Carrier types
 export type Carrier = typeof carriers.$inferSelect;
 export type InsertCarrier = z.infer<typeof insertCarrierSchema>;
+export type ColumnWidth = typeof columnWidths.$inferSelect;
+export type InsertColumnWidth = z.infer<typeof insertColumnWidthSchema>;
 
 // Sales transactions
 export const sales = pgTable("sales", {
