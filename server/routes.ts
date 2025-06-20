@@ -1079,15 +1079,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Викликаємо імпорт з callback для оновлення прогресу
       const result = await storage.importOrdersFromXmlWithProgress(xmlContent, (progress: number, processed: number, totalRows: number) => {
-        job.progress = Math.min(90, 10 + (progress * 0.8)); // 10-90%
+        job.progress = Math.min(95, 5 + (progress * 0.9)); // 5-95%
         job.processed = processed;
         job.totalRows = totalRows;
         console.log(`Job ${jobId} progress: ${job.progress}% (${processed}/${totalRows})`);
       });
       
-      // Завершуємо імпорт
+      // Завершуємо імпорт - переконуємося що показуємо 100%
       job.status = 'completed';
       job.progress = 100;
+      job.processed = result.success + result.errors.length;
+      job.totalRows = result.success + result.errors.length;
       job.processed = result.success + result.errors.length;
       job.imported = result.success;
       job.skipped = 0;

@@ -7866,7 +7866,7 @@ export class DatabaseStorage implements IStorage {
 
       console.log(`Початок імпорту: знайдено ${rows.length} записів`);
       
-      // Повідомляємо загальну кількість
+      // Повідомляємо загальну кількість на початку
       if (progressCallback) {
         progressCallback(0, 0, rows.length);
       }
@@ -7880,8 +7880,8 @@ export class DatabaseStorage implements IStorage {
           const row = batch[j];
           const rowNumber = i + j + 1;
 
-          // Оновлюємо прогрес кожні 10 записів або в кінці батчу
-          if (progressCallback && (rowNumber % 10 === 0 || j === batch.length - 1)) {
+          // Оновлюємо прогрес кожні 5 записів або в кінці батчу
+          if (progressCallback && (rowNumber % 5 === 0 || j === batch.length - 1)) {
             const progress = (rowNumber / rows.length) * 100;
             progressCallback(progress, rowNumber, rows.length);
           }
@@ -8002,6 +8002,11 @@ export class DatabaseStorage implements IStorage {
         if (i + batchSize < rows.length) {
           await new Promise(resolve => setTimeout(resolve, 10));
         }
+      }
+
+      // Фінальне оновлення прогресу до 100%
+      if (progressCallback) {
+        progressCallback(100, rows.length, rows.length);
       }
 
     } catch (error) {
