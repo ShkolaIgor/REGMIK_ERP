@@ -243,12 +243,9 @@ export default function OrdersXmlImport() {
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" aria-describedby="import-description">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Імпорт замовлень з XML файлу</DialogTitle>
-          <div id="import-description" className="sr-only">
-            Діалог для імпорту замовлень з XML файлу з відстеженням прогресу
-          </div>
         </DialogHeader>
         
         <div className="space-y-6">
