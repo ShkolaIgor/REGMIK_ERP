@@ -113,10 +113,9 @@ const orderItemSchema = z.object({
 });
 
 const orderSchema = z.object({
-  clientId: z.string().optional(),
+  clientId: z.string().min(1, "Оберіть клієнта"),
   clientContactsId: z.string().optional(),
   companyId: z.string().optional(),
-
   invoiceNumber: z.string().optional(),
   carrierId: z.number().optional().nullable(),
   status: z.string().default("pending"),
@@ -1566,8 +1565,7 @@ export default function Orders() {
                         }}
                         onBlur={() => setTimeout(() => setClientComboboxOpen(false), 200)}
                         className={cn(
-                          form.formState.errors.clientId ? "border-red-500" : "",
-
+                          form.formState.errors.clientId ? "border-red-500" : ""
                         )}
                       />
                       {clientSearchValue && clientComboboxOpen && (
