@@ -1131,25 +1131,25 @@ export default function Orders() {
     
     // Заповнюємо форму даними замовлення
     form.reset({
-      clientId: order.clientId ? order.clientId.toString() : "",
-      clientContactsId: order.clientContactsId ? order.clientContactsId.toString() : "",
-      companyId: order.companyId ? order.companyId.toString() : "",
-      orderNumber: order.orderNumber || "",
-      totalAmount: order.totalAmount || "",
-      status: order.status,
-      notes: order.notes || "",
-      paymentDate: formatDateForInput(order.paymentDate),
-      paymentType: order.paymentType || "full",
-      paidAmount: order.paidAmount || "0",
-      dueDate: formatDateForInput(order.dueDate),
-      shippedDate: formatDateForInput(order.shippedDate),
-      trackingNumber: order.trackingNumber || "",
-      invoiceNumber: order.invoiceNumber || "",
-      carrierId: order.carrierId || null,
-      statusId: order.statusId || undefined,
-      productionApproved: order.productionApproved || false,
-      productionApprovedBy: order.productionApprovedBy || "",
-      productionApprovedAt: formatDateForInput(order.productionApprovedAt),
+      clientId: fullOrder.clientId ? fullOrder.clientId.toString() : "",
+      clientContactsId: fullOrder.clientContactsId ? fullOrder.clientContactsId.toString() : "",
+      companyId: fullOrder.companyId ? fullOrder.companyId.toString() : "",
+      orderNumber: fullOrder.orderNumber || "",
+      totalAmount: fullOrder.totalAmount || "",
+      status: fullOrder.status,
+      notes: fullOrder.notes || "",
+      paymentDate: formatDateForInput(fullOrder.paymentDate),
+      paymentType: fullOrder.paymentType || "full",
+      paidAmount: fullOrder.paidAmount || "0",
+      dueDate: formatDateForInput(fullOrder.dueDate),
+      shippedDate: formatDateForInput(fullOrder.shippedDate),
+      trackingNumber: fullOrder.trackingNumber || "",
+      invoiceNumber: fullOrder.invoiceNumber || "",
+      carrierId: fullOrder.carrierId || null,
+      statusId: fullOrder.statusId || undefined,
+      productionApproved: fullOrder.productionApproved || false,
+      productionApprovedBy: fullOrder.productionApprovedBy || "",
+      productionApprovedAt: formatDateForInput(fullOrder.productionApprovedAt),
     });
 
     // Встановлюємо вибраного клієнта для оновлення контактів
@@ -1180,22 +1180,22 @@ export default function Orders() {
     }
 
     // Встановлюємо компанію
-    if (order.companyId) {
-      setSelectedCompanyId(order.companyId.toString());
+    if (fullOrder.companyId) {
+      setSelectedCompanyId(fullOrder.companyId.toString());
     }
 
     // Встановлюємо контактну особу після оновлення клієнта
     setTimeout(() => {
-      if (order.clientContactsId) {
-        setSelectedContactId(order.clientContactsId.toString());
-        form.setValue("clientContactsId", order.clientContactsId.toString());
+      if (fullOrder.clientContactsId) {
+        setSelectedContactId(fullOrder.clientContactsId.toString());
+        form.setValue("clientContactsId", fullOrder.clientContactsId.toString());
       }
     }, 100);
 
     // Заповнюємо товари замовлення
-    if (order.items) {
-      console.log("Order items:", order.items);
-      setOrderItems(order.items.map((item: any) => ({
+    if (fullOrder.items) {
+      console.log("Order items:", fullOrder.items);
+      setOrderItems(fullOrder.items.map((item: any) => ({
         productId: item.productId,
         quantity: item.quantity.toString(),
         unitPrice: item.unitPrice.toString(),
@@ -1599,10 +1599,10 @@ export default function Orders() {
                           const value = e.target.value;
                           setClientSearchValue(value);
                           
-                          // При зміні тексту, очищаємо обраний ID тільки якщо це не редагування
-                          // або якщо користувач справді змінює значення
-                          if (!isEditMode || (value.length > 0 && !form.watch("clientId"))) {
-                            setClientComboboxOpen(true);
+                          // Очищаємо обраний ID при зміні тексту пошуку
+                          if (form.watch("clientId")) {
+                            form.setValue("clientId", "");
+                            setSelectedClientId("");
                           }
                           
                           // Відкриваємо список при введенні
