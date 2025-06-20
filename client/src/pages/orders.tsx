@@ -495,9 +495,33 @@ export default function Orders() {
     }
   };
 
-  const { data: allOrders = [], isLoading } = useQuery<OrderWithItems[]>({
-    queryKey: ["/api/orders"],
+  // Стан для серверної пагінації
+  const [serverPagination, setServerPagination] = useState({
+    page: 1,
+    limit: itemsPerPage
   });
+
+  const { data: ordersResponse, isLoading } = useQuery({
+    queryKey: ["/api/orders", serverPagination.page, serverPagination.limit, searchTerm, statusFilter, paymentFilter, dateRangeFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: serverPagination.page.toString(),
+        limit: serverPagination.limit.toString(),
+        ...(searchTerm && { search: searchTerm }),
+        ...(statusFilter !== 'all' && { status: statusFilter }),
+        ...(paymentFilter !== 'all' && { payment: paymentFilter }),
+        ...(dateRangeFilter !== 'all' && { dateRange: dateRangeFilter })
+      });
+      
+      const response = await fetch(`/api/orders?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch orders');
+      return response.json();
+    },
+  });
+
+  const allOrders = ordersResponse?.orders || [];
+  const totalServerRecords = ordersResponse?.total || 0;
+  const totalServerPages = ordersResponse?.totalPages || 0;
 
 
 
@@ -505,66 +529,36 @@ export default function Orders() {
     queryKey: ["/api/order-statuses"],
   });
 
-  // Функція фільтрації замовлень
-  const filterOrders = (orders: any[]) => {
-    return orders.filter((order: any) => {
-      // Пошук по тексту
-      const searchLower = searchTerm.toLowerCase();
-      const matchesSearch = !searchTerm || 
-        order.orderNumber.toLowerCase().includes(searchLower) ||
-        order.customerName.toLowerCase().includes(searchLower) ||
-        order.customerEmail?.toLowerCase().includes(searchLower) ||
-        order.customerPhone?.toLowerCase().includes(searchLower) ||
-        order.orderSequenceNumber.toString().includes(searchLower);
+  // Оновлення серверної пагінації при зміні фільтрів
+  React.useEffect(() => {
+    setServerPagination(prev => ({ ...prev, page: 1 }));
+  }, [searchTerm, statusFilter, paymentFilter, dateRangeFilter]);
 
-      // Фільтр за статусом
-      const matchesStatus = statusFilter === "all" || order.status === statusFilter;
+  // Оновлення серверної пагінації при зміні itemsPerPage
+  React.useEffect(() => {
+    setServerPagination(prev => ({ 
+      ...prev, 
+      limit: itemsPerPage,
+      page: 1 
+    }));
+  }, [itemsPerPage]);
 
-      // Фільтр за оплатою
-      const matchesPayment = 
-        paymentFilter === "all" ||
-        (paymentFilter === "paid" && order.paymentDate) ||
-        (paymentFilter === "unpaid" && !order.paymentDate) ||
-        (paymentFilter === "overdue" && !order.paymentDate && order.dueDate && new Date(order.dueDate) < new Date());
-
-      // Фільтр за датами
-      const now = new Date();
-      const orderDate = new Date(order.createdAt);
-      const matchesDateRange = 
-        dateRangeFilter === "all" ||
-        (dateRangeFilter === "today" && orderDate.toDateString() === now.toDateString()) ||
-        (dateRangeFilter === "week" && (now.getTime() - orderDate.getTime()) <= 7 * 24 * 60 * 60 * 1000) ||
-        (dateRangeFilter === "month" && (now.getTime() - orderDate.getTime()) <= 30 * 24 * 60 * 60 * 1000);
-
-      return matchesSearch && matchesStatus && matchesPayment && matchesDateRange;
-    });
-  };
-
-  // Хук сортування з збереженням налаштувань користувача
+  // Для локального сортування (сервер вже відправляє відсортовані дані)
   const { sortedData: filteredOrders, sortConfig, handleSort } = useSorting({
-    data: allOrders ? filterOrders(allOrders) : [],
+    data: allOrders || [],
     tableName: 'orders',
     defaultSort: { field: 'orderSequenceNumber', direction: 'desc' }
   });
 
-  // Пагінація
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
-  const orders = filteredOrders.slice(
-    currentPage * itemsPerPage,
-    (currentPage + 1) * itemsPerPage
-  );
+  // Оскільки сервер обробляє пагінацію, використовуємо всі отримані замовлення
+  const orders = filteredOrders;
 
-  // Скидання на першу сторінку при зміні фільтрів
-  React.useEffect(() => {
-    setCurrentPage(0);
-  }, [searchTerm, statusFilter, paymentFilter, dateRangeFilter, itemsPerPage]);
-
-  // Функції пагінації
-  const goToFirstPage = () => setCurrentPage(0);
-  const goToLastPage = () => setCurrentPage(totalPages - 1);
-  const goToPreviousPage = () => setCurrentPage(Math.max(0, currentPage - 1));
-  const goToNextPage = () => setCurrentPage(Math.min(totalPages - 1, currentPage + 1));
-  const goToPage = (page: number) => setCurrentPage(Math.max(0, Math.min(totalPages - 1, page)));
+  // Функції серверної пагінації
+  const goToFirstPage = () => setServerPagination(prev => ({ ...prev, page: 1 }));
+  const goToLastPage = () => setServerPagination(prev => ({ ...prev, page: totalServerPages }));
+  const goToPreviousPage = () => setServerPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }));
+  const goToNextPage = () => setServerPagination(prev => ({ ...prev, page: Math.min(totalServerPages, prev.page + 1) }));
+  const goToPage = (page: number) => setServerPagination(prev => ({ ...prev, page: Math.max(1, Math.min(totalServerPages, page)) }));
   const itemsPerPageOptions = [10, 25, 50, 100, 200];
 
 
@@ -2143,7 +2137,7 @@ export default function Orders() {
           <Card>
             <CardContent className="p-6">
               <div className="text-center">
-                <p className="text-2xl font-semibold text-gray-900">{filteredOrders.length}</p>
+                <p className="text-2xl font-semibold text-gray-900">{totalServerRecords}</p>
                 <p className="text-sm text-gray-600">Всього замовлень</p>
               </div>
             </CardContent>
@@ -2153,7 +2147,7 @@ export default function Orders() {
             <CardContent className="p-6">
               <div className="text-center">
                 <p className="text-2xl font-semibold text-blue-600">
-                  {filteredOrders.filter((o: any) => o.status === 'processing').length}
+                  {orders.filter((o: any) => o.status === 'processing').length}
                 </p>
                 <p className="text-sm text-gray-600">В обробці</p>
               </div>
@@ -2164,7 +2158,7 @@ export default function Orders() {
             <CardContent className="p-6">
               <div className="text-center">
                 <p className="text-2xl font-semibold text-green-600">
-                  {filteredOrders.filter((o: any) => o.status === 'completed').length}
+                  {orders.filter((o: any) => o.status === 'completed').length}
                 </p>
                 <p className="text-sm text-gray-600">Завершено</p>
               </div>
@@ -2175,7 +2169,7 @@ export default function Orders() {
             <CardContent className="p-6">
               <div className="text-center">
                 <p className="text-2xl font-semibold text-gray-900">
-                  {formatCurrency(filteredOrders.reduce((sum: number, o: any) => sum + parseFloat(o.totalAmount), 0))}
+                  {formatCurrency(orders.reduce((sum: number, o: any) => sum + parseFloat(o.totalAmount), 0))}
                 </p>
                 <p className="text-sm text-gray-600">Загальна сума</p>
               </div>
@@ -2259,7 +2253,7 @@ export default function Orders() {
 
             {/* Results Count */}
             <div className="mt-3 text-sm text-gray-600">
-              Знайдено: {filteredOrders.length} з {allOrders.length} замовлень
+              Знайдено: {totalServerRecords} замовлень (сторінка {serverPagination.page} з {totalServerPages})
             </div>
           </CardContent>
         </Card>
@@ -2270,7 +2264,7 @@ export default function Orders() {
             <CardTitle>Список замовлень</CardTitle>
           </CardHeader>
           <CardContent>
-            {filteredOrders.length === 0 ? (
+            {orders.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500">Замовлення відсутні</p>
                 <Button className="mt-4" onClick={() => {
@@ -2397,11 +2391,11 @@ export default function Orders() {
                 </Table>
               </DragDropContext>
 
-              {filteredOrders.length > 0 && (
+              {orders.length > 0 && (
                 <div className="flex items-center justify-between p-4 border-t">
                   <div className="flex items-center space-x-4">
                     <p className="text-sm text-muted-foreground">
-                      Показано {currentPage * itemsPerPage + 1}-{Math.min((currentPage + 1) * itemsPerPage, filteredOrders.length)} з {filteredOrders.length} замовлень
+                      Показано {((serverPagination.page - 1) * serverPagination.limit) + 1}-{Math.min(serverPagination.page * serverPagination.limit, totalServerRecords)} з {totalServerRecords} замовлень
                     </p>
                     
                     <Button
@@ -2442,7 +2436,7 @@ export default function Orders() {
                         variant="outline"
                         size="sm"
                         onClick={goToFirstPage}
-                        disabled={currentPage === 0}
+                        disabled={serverPagination.page === 1}
                         className="h-8 w-8 p-0"
                         title="Перша сторінка"
                       >
@@ -2453,7 +2447,7 @@ export default function Orders() {
                         variant="outline"
                         size="sm"
                         onClick={goToPreviousPage}
-                        disabled={currentPage === 0}
+                        disabled={serverPagination.page === 1}
                         className="h-8 w-8 p-0"
                         title="Попередня сторінка"
                       >
@@ -2465,17 +2459,17 @@ export default function Orders() {
                           className="w-16 h-8 text-center"
                           type="number"
                           min={1}
-                          max={totalPages}
-                          value={currentPage + 1}
+                          max={totalServerPages}
+                          value={serverPagination.page}
                           onChange={(e) => {
-                            const page = parseInt(e.target.value) - 1;
+                            const page = parseInt(e.target.value);
                             if (!isNaN(page)) {
                               goToPage(page);
                             }
                           }}
                         />
                         <span className="text-sm text-muted-foreground whitespace-nowrap">
-                          з {totalPages}
+                          з {totalServerPages}
                         </span>
                       </div>
                       
@@ -2483,7 +2477,7 @@ export default function Orders() {
                         variant="outline"
                         size="sm"
                         onClick={goToNextPage}
-                        disabled={currentPage >= totalPages - 1}
+                        disabled={serverPagination.page >= totalServerPages}
                         className="h-8 w-8 p-0"
                         title="Наступна сторінка"
                       >
@@ -2494,7 +2488,7 @@ export default function Orders() {
                         variant="outline"
                         size="sm"
                         onClick={goToLastPage}
-                        disabled={currentPage >= totalPages - 1}
+                        disabled={serverPagination.page >= totalServerPages}
                         className="h-8 w-8 p-0"
                         title="Остання сторінка"
                       >

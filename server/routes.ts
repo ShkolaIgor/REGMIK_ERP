@@ -744,12 +744,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Orders
+  // Orders with pagination
   app.get("/api/orders", async (req, res) => {
     try {
-      const orders = await storage.getOrders();
-      res.json(orders);
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 25;
+      const search = req.query.search as string || '';
+      const statusFilter = req.query.status as string || '';
+      const paymentFilter = req.query.payment as string || '';
+      const dateRangeFilter = req.query.dateRange as string || '';
+      
+      const result = await storage.getOrdersPaginated({
+        page,
+        limit,
+        search,
+        statusFilter,
+        paymentFilter,
+        dateRangeFilter
+      });
+      
+      res.json(result);
     } catch (error) {
+      console.error("Failed to fetch orders:", error);
       res.status(500).json({ error: "Failed to fetch orders" });
     }
   });
