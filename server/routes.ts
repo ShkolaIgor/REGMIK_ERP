@@ -985,45 +985,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Orders XML Import endpoint (using same structure as clients)
-  app.post("/api/orders/import-xml", upload.single('xmlFile'), async (req, res) => {
-    try {
-      if (!req.file) {
+  app.post("/api/orders/import-xml", (req, res) => {
+    const uploadSingle = upload.single('xmlFile');
+    
+    uploadSingle(req, res, async (err) => {
+      if (err) {
+        console.error("Multer error:", err);
+        if (err.code === 'LIMIT_FIELD_VALUE' || err.message.includes('Field value too long')) {
+          return res.status(400).json({ 
+            success: false, 
+            error: "XML файл занадто великий. Максимальний розмір: 100MB" 
+          });
+        }
         return res.status(400).json({ 
           success: false, 
-          error: "No XML file uploaded" 
+          error: `Upload error: ${err.message}` 
         });
       }
 
-      const jobId = generateJobId();
-      
-      // Initialize job status
-      importJobs.set(jobId, {
-        id: jobId,
-        status: 'processing',
-        progress: 0,
-        totalRows: 0,
-        processed: 0,
-        imported: 0,
-        skipped: 0,
-        errors: [],
-        details: [],
-      });
+      try {
+        if (!req.file) {
+          return res.status(400).json({ 
+            success: false, 
+            error: "No XML file uploaded" 
+          });
+        }
 
-      // Start async processing for orders
-      processOrdersXmlImportAsync(jobId, req.file.buffer);
+        const jobId = generateJobId();
+        
+        // Initialize job status
+        importJobs.set(jobId, {
+          id: jobId,
+          status: 'processing',
+          progress: 0,
+          totalRows: 0,
+          processed: 0,
+          imported: 0,
+          skipped: 0,
+          errors: [],
+          details: [],
+        });
 
-      res.json({
-        success: true,
-        jobId: jobId,
-        message: "Orders import started successfully"
-      });
-    } catch (error) {
-      console.error("Orders XML import error:", error);
-      res.status(500).json({ 
-        success: false, 
-        error: "Failed to process XML file" 
-      });
-    }
+        // Start async processing for orders
+        processOrdersXmlImportAsync(jobId, req.file.buffer);
+
+        res.json({
+          success: true,
+          jobId: jobId,
+          message: "Orders import started successfully"
+        });
+      } catch (error) {
+        console.error("Orders XML import error:", error);
+        res.status(500).json({ 
+          success: false, 
+          error: "Failed to process XML file" 
+        });
+      }
+    });
   });
 
   // Check import job status for orders

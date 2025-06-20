@@ -182,12 +182,12 @@ export default function OrdersXmlImport() {
       return;
     }
 
-    // Перевіряємо розмір файлу (максимум 50MB)
-    const maxSize = 50 * 1024 * 1024; // 50MB
+    // Перевіряємо розмір файлу (максимум 100MB)
+    const maxSize = 100 * 1024 * 1024; // 100MB
     if (selectedFile.size > maxSize) {
       toast({
         title: "Файл занадто великий",
-        description: `Максимальний розмір файлу: 50MB. Ваш файл: ${Math.round(selectedFile.size / 1024 / 1024)}MB`,
+        description: `Максимальний розмір файлу: 100MB. Ваш файл: ${Math.round(selectedFile.size / 1024 / 1024)}MB`,
         variant: "destructive",
       });
       return;
