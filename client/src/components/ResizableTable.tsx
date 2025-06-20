@@ -130,26 +130,29 @@ export const ResizableTable: React.FC<ResizableTableProps> = ({
 
   return (
     <div className="relative overflow-auto">
-      <Table ref={tableRef} className="min-w-full">
+      <Table ref={tableRef} className="min-w-full table-fixed">
         <TableHeader>
           <TableRow>
             {columns.map((column) => (
               <TableHead
                 key={column.key}
-                className="relative border-r"
+                className="relative border-r bg-gray-50"
                 style={{ 
-                  width: getColumnWidth(column),
-                  minWidth: column.minWidth || 50,
-                  maxWidth: column.maxWidth
+                  width: `${getColumnWidth(column)}px`,
+                  minWidth: `${column.minWidth || 50}px`,
+                  maxWidth: column.maxWidth ? `${column.maxWidth}px` : undefined
                 }}
               >
-                <div className="flex items-center justify-between">
-                  <span>{column.label}</span>
+                <div className="flex items-center justify-between pr-2">
+                  <span className="truncate">{column.label}</span>
                   {column.resizable !== false && (
                     <div
-                      className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500 hover:opacity-50"
+                      className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-500 hover:opacity-70 flex items-center justify-center"
                       onMouseDown={(e) => handleMouseDown(e, column.key)}
-                    />
+                      title="Перетягніть для зміни ширини"
+                    >
+                      <div className="w-0.5 h-4 bg-gray-400"></div>
+                    </div>
                   )}
                 </div>
               </TableHead>
@@ -157,29 +160,33 @@ export const ResizableTable: React.FC<ResizableTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.map((item, index) => (
-            <TableRow key={index}>
-              {children ? (
-                children(item, index)
-              ) : (
-                columns.map((column) => (
+          {children ? (
+            data.map((item, index) => children(item, index))
+          ) : (
+            data.map((item, index) => (
+              <TableRow key={index}>
+                {columns.map((column) => (
                   <TableCell
                     key={column.key}
-                    style={{ width: getColumnWidth(column) }}
-                    className="border-r"
+                    style={{ width: `${getColumnWidth(column)}px` }}
+                    className="border-r truncate"
                   >
                     {item[column.key]}
                   </TableCell>
-                ))
-              )}
-            </TableRow>
-          ))}
+                ))}
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
       
       {/* Курсор для зміни розміру */}
       {isResizing && (
-        <div className="fixed inset-0 cursor-col-resize" style={{ zIndex: 9999 }} />
+        <div 
+          className="fixed inset-0 cursor-col-resize bg-blue-100 bg-opacity-20" 
+          style={{ zIndex: 9999 }}
+          onMouseUp={handleMouseUp}
+        />
       )}
     </div>
   );

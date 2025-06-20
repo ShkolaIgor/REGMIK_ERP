@@ -8395,7 +8395,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Column widths API
   app.get("/api/column-widths/:tableName", isSimpleAuthenticated, async (req, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id?.toString() || "guest";
       const tableName = req.params.tableName;
       
       const widths = await storage.getColumnWidths(userId, tableName);
