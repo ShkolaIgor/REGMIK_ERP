@@ -8392,9 +8392,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
 
-  const httpServer = createServer(app);
   // Column widths API
-  app.get("/api/column-widths/:tableName", isAuthenticated, async (req, res) => {
+  app.get("/api/column-widths/:tableName", isSimpleAuthenticated, async (req, res) => {
     try {
       const userId = req.user?.claims?.sub;
       const tableName = req.params.tableName;
@@ -8407,9 +8406,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/column-widths", isAuthenticated, async (req, res) => {
+  app.post("/api/column-widths", isSimpleAuthenticated, async (req, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id?.toString() || "guest";
       const data = { ...req.body, userId };
       
       const width = await storage.upsertColumnWidth(data);
@@ -8420,5 +8419,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  const httpServer = createServer(app);
   return httpServer;
 }

@@ -72,32 +72,53 @@ class NovaPoshtaService {
   }
 
   async initializeAutoUpdate(): Promise<void> {
-    const settings = await this.getUpdateSettings();
+    console.log("Ініціалізація автоматичного оновлення Nova Poshta...");
     
-    if (!settings.autoUpdateEnabled) {
-      console.log("Автоматичне оновлення Nova Poshta вимкнено");
+    // Отримуємо налаштування з перевізників Nova Poshta
+    const novaPoshtaCarriers = await this.storage.getCarriers();
+    const novaPoshtaCarrier = novaPoshtaCarriers.find(c => 
+      c.name.toLowerCase().includes('nova') || 
+      c.name.toLowerCase().includes('нова') ||
+      (c.alternativeNames && c.alternativeNames.some((name: string) => 
+        name.toLowerCase().includes('nova') || name.toLowerCase().includes('нова')
+      ))
+    );
+    
+    if (!novaPoshtaCarrier || !novaPoshtaCarrier.autoUpdateEnabled) {
+      console.log("Автоматичне оновлення Nova Poshta вимкнено або перевізник не знайдений");
       return;
     }
 
-    const updateTime = settings.updateTime || "06:00";
-    const [hours, minutes] = updateTime.split(':').map(Number);
-    const updateDays = settings.updateDays || [1, 2, 3, 4, 5];
-    
-    console.log(`Налаштовано автоматичне оновлення Nova Poshta: ${updateTime} у дні ${updateDays.join(', ')}`);
-    
-    // Функція для запуску оновлення
-    const runUpdate = async () => {
-      console.log("Запуск автоматичного оновлення Nova Poshta");
-      await this.updateData();
-    };
+    // Парсимо налаштування розкладу
+    const [hours, minutes] = novaPoshtaCarrier.updateTime.split(':').map(Number);
+    const updateDays = novaPoshtaCarrier.updateDays.split(',').map(d => parseInt(d.trim()));
+    const cronDays = updateDays.map(d => d === 7 ? 0 : d); // Конвертуємо неділю з 7 на 0
 
-    // Розрахунок часу до наступного оновлення
-    const scheduleNextUpdate = () => {
-      const now = new Date();
-      let nextUpdate = new Date();
-      
-      // Знаходимо наступний день для оновлення
-      let daysToAdd = 0;
+    // Створюємо cron pattern
+    const cronPattern = `${minutes} ${hours} * * ${cronDays.join(',')}`;
+    
+    console.log(`Налаштовано автоматичне оновлення Nova Poshta: ${cronPattern}`);
+    
+    // Створюємо завдання
+    const job = cron.schedule(cronPattern, async () => {
+      console.log('Планове оновлення Nova Poshta...');
+      try {
+        const result = await this.updateData();
+        console.log('Планове оновлення Nova Poshta завершено:', result.message);
+      } catch (error) {
+        console.error('Помилка планового оновлення Nova Poshta:', error);
+      }
+    }, {
+      scheduled: true,
+      timezone: "Europe/Kyiv"
+    });
+
+    // Виводимо інформацію про наступне оновлення
+    const nextUpdate = job.nextDate();
+    if (nextUpdate) {
+      console.log(`Наступне оновлення Nova Poshta: ${nextUpdate.toFormat('dd.MM.yyyy, HH:mm:ss')}`);
+      console.log("Автоматичне оновлення Nova Poshta ініціалізовано");
+    }
       let currentDay = now.getDay();
       
       // Встановлюємо час оновлення на сьогодні
