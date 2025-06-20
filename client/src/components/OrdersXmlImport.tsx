@@ -318,24 +318,39 @@ export function OrdersXmlImport() {
             </Card>
           )}
 
-          {/* Detailed Results */}
+          {/* Detailed Results - тільки помилки та попередження */}
           {job && job.details && job.details.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Деталі імпорту</CardTitle>
+                <CardTitle className="text-sm">Помилки та попередження</CardTitle>
+                <CardDescription>
+                  Показано тільки записи з проблемами. Успішні імпорти не відображаються.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-64">
                   <div className="space-y-2">
                     {job.details.map((detail, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 border rounded">
-                        <div className="flex-1">
-                          <div className="font-medium text-sm">{detail.orderNumber}</div>
-                          {detail.message && (
-                            <div className="text-xs text-gray-600">{detail.message}</div>
-                          )}
+                      <div key={index} className={`p-3 border rounded-lg ${
+                        detail.status === 'error' ? 'border-red-200 bg-red-50' : 
+                        detail.status === 'warning' ? 'border-yellow-200 bg-yellow-50' : 
+                        'border-gray-200'
+                      }`}>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="font-medium text-sm">{detail.orderNumber}</div>
+                            {detail.message && (
+                              <div className={`text-xs mt-1 ${
+                                detail.status === 'error' ? 'text-red-700' : 
+                                detail.status === 'warning' ? 'text-yellow-700' : 
+                                'text-gray-600'
+                              }`}>
+                                {detail.message}
+                              </div>
+                            )}
+                          </div>
+                          <div className="ml-2">{getStatusBadge(detail.status)}</div>
                         </div>
-                        <div>{getStatusBadge(detail.status)}</div>
                       </div>
                     ))}
                   </div>

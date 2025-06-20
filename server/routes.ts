@@ -1095,15 +1095,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       job.skipped = 0;
       job.errors = result.errors.map((err: any) => err.error);
       job.details = [
-        ...Array(result.success).fill(0).map((_, index) => ({
-          orderNumber: `Order ${index + 1}`,
-          status: 'imported' as const,
-          message: 'Успішно імпортовано'
-        })),
+        // Показуємо тільки помилки та попередження
         ...result.errors.map((err: any) => ({
-          orderNumber: err.data?.orderNumber || `Row ${err.row}`,
+          orderNumber: err.data?.orderNumber || `Рядок ${err.row}`,
           status: 'error' as const,
           message: err.error
+        })),
+        ...result.warnings.map((warn: any) => ({
+          orderNumber: warn.data?.orderNumber || `Рядок ${warn.row}`,
+          status: 'warning' as const,
+          message: warn.warning
         }))
       ];
       job.totalRows = result.success + result.errors.length;
