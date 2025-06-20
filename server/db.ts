@@ -38,17 +38,17 @@ export const pool = new Pool(poolConfig);
 // Забезпечуємо UTF-8 кодування для всіх підключень
 pool.on('connect', async (client) => {
   try {
-    await client.query('SET client_encoding TO "UTF8"');
-    await client.query('SET standard_conforming_strings TO on');
-    // Встановлюємо сесійні параметри для надійності
-    await client.query('SET timezone TO "UTC"');
-    await client.query('SET datestyle TO "ISO, DMY"');
-    // Забезпечуємо правильну обробку UTF-8 на рівні з'єднання
-    await client.query('SET bytea_output TO "escape"');
-    await client.query('SET escape_string_warning TO off');
-    console.log('Database connection configured for UTF-8');
+    // Перевіряємо стан підключення перед налаштуванням
+    if (client && !client._ending && !client._connected === false) {
+      await client.query('SET client_encoding TO "UTF8"');
+      await client.query('SET standard_conforming_strings TO on');
+      console.log('Database connection configured for UTF-8');
+    }
   } catch (error) {
-    console.error('Error setting UTF-8 encoding:', error);
+    // Тихо ігноруємо помилки підключення під час налаштування кодування
+    if (!error.message?.includes('Connection terminated') && !error.message?.includes('Connection ended')) {
+      console.warn('Warning setting UTF-8 encoding:', error.message);
+    }
   }
 });
 

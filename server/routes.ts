@@ -990,14 +990,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { xmlContent } = req.body;
       
       if (!xmlContent) {
-        return res.status(400).json({ error: "XML content is required" });
+        return res.status(400).json({ 
+          success: 0,
+          errors: [{ row: 0, error: "XML content is required" }],
+          warnings: []
+        });
       }
 
+      console.log("Starting XML import for orders...");
       const result = await storage.importOrdersFromXml(xmlContent);
+      console.log("XML import completed:", result);
+      
       res.json(result);
     } catch (error) {
       console.error("Error importing orders from XML:", error);
-      res.status(500).json({ error: "Failed to import orders from XML" });
+      res.status(500).json({ 
+        success: 0,
+        errors: [{ 
+          row: 0, 
+          error: error instanceof Error ? error.message : "Failed to import orders from XML",
+          data: error instanceof Error ? error.stack : undefined
+        }],
+        warnings: []
+      });
     }
   });
 

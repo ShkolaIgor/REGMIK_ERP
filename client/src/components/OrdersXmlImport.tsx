@@ -50,13 +50,27 @@ export default function OrdersXmlImport() {
 
   const importMutation = useMutation({
     mutationFn: async (xmlContent: string) => {
-      return await apiRequest("/api/orders/xml-import", {
-        method: "POST",
-        body: { xmlContent },
-      });
+      console.log("Starting XML import...");
+      setIsImporting(true);
+      
+      try {
+        const result = await apiRequest("/api/orders/xml-import", {
+          method: "POST",
+          body: { xmlContent },
+        });
+        console.log("Import result:", result);
+        return result;
+      } catch (error) {
+        console.error("Import mutation error:", error);
+        throw error;
+      } finally {
+        setIsImporting(false);
+      }
     },
     onSuccess: (result: ImportResult) => {
+      console.log("Import success:", result);
       setImportResult(result);
+      setIsImporting(false);
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       
       if (result.success > 0) {
@@ -66,7 +80,7 @@ export default function OrdersXmlImport() {
         });
       }
       
-      if (result.errors.length > 0) {
+      if (result.errors && result.errors.length > 0) {
         toast({
           title: "Виявлено помилки",
           description: `${result.errors.length} замовлень не вдалося імпортувати`,
@@ -76,9 +90,15 @@ export default function OrdersXmlImport() {
     },
     onError: (error) => {
       console.error("Import error:", error);
+      setIsImporting(false);
+      setImportResult({
+        success: 0,
+        errors: [{ row: 0, error: error instanceof Error ? error.message : "Невідома помилка" }],
+        warnings: []
+      });
       toast({
         title: "Помилка імпорту",
-        description: "Не вдалося обробити XML файл",
+        description: error instanceof Error ? error.message : "Не вдалося обробити XML файл",
         variant: "destructive",
       });
     },
