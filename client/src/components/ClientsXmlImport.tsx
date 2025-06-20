@@ -88,6 +88,10 @@ export function ClientsXmlImport() {
         body: formData,
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const result: ImportResponse = await response.json();
 
       console.log('Import response:', result);
@@ -100,7 +104,7 @@ export function ClientsXmlImport() {
         });
         
         // Start polling for status immediately
-        setTimeout(() => pollJobStatus(result.jobId!), 500);
+        pollJobStatus(result.jobId!);
       } else {
         setIsImporting(false);
         toast({
@@ -126,14 +130,24 @@ export function ClientsXmlImport() {
     try {
       console.log('Polling job status for:', currentJobId);
       const response = await fetch(`/api/clients/import-xml/${currentJobId}/status`);
-      const job = await response.json();
       
+      if (!response.ok) {
+        console.error('Failed to fetch job status:', response.status, response.statusText);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const job = await response.json();
       console.log('Job status response:', job);
       
-      if (job) {
+      if (job && job.id) {
         setJob(job);
-        // Ensure progress reaches 100% when completed
-        const currentProgress = job.status === 'completed' ? 100 : (job.progress || 0);
+        // Calculate progress properly
+        let currentProgress = 0;
+        if (job.status === 'completed') {
+          currentProgress = 100;
+        } else if (job.totalRows > 0) {
+          currentProgress = Math.round((job.processed / job.totalRows) * 100);
+        }
         setProgress(currentProgress);
         
         if (job.status === 'completed') {
@@ -143,23 +157,28 @@ export function ClientsXmlImport() {
             description: `Оброблено: ${job.processed || 0}, Імпортовано: ${job.imported || 0}, Пропущено: ${job.skipped || 0}`,
           });
           // Refresh clients list - invalidate all client queries
-          await queryClient.invalidateQueries({ 
+          queryClient.invalidateQueries({ 
             predicate: (query) => query.queryKey[0] === '/api/clients' 
           });
           // Force immediate refetch
-          await queryClient.refetchQueries({ 
+          queryClient.refetchQueries({ 
             predicate: (query) => query.queryKey[0] === '/api/clients' 
           });
         } else if (job.status === 'failed') {
           setIsImporting(false);
           toast({
             title: "Помилка імпорту клієнтів",
-            description: "Імпорт завершився з помилкою",
+            description: job.errors?.[0] || "Імпорт завершився з помилкою",
             variant: "destructive",
           });
         } else if (job.status === 'processing') {
+          // Continue polling
           setTimeout(() => pollJobStatus(currentJobId), 1000);
         }
+      } else {
+        console.warn('Invalid job response:', job);
+        // Retry after a short delay
+        setTimeout(() => pollJobStatus(currentJobId), 2000);
       }
     } catch (error) {
       console.error('Error polling job status:', error);
