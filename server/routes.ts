@@ -5427,7 +5427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const jobId = generateJobId();
       
-      // Initialize job status
+      // Initialize job status for client contacts
       importJobs.set(jobId, {
         id: jobId,
         status: 'processing',
@@ -5438,7 +5438,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         skipped: 0,
         errors: [],
         details: [],
-        startTime: new Date(),
+        logs: [],
+        failedIds: [],
+        startTime: new Date().toISOString(),
         endTime: null
       });
 
@@ -5470,7 +5472,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const jobId = generateJobId();
       
-      // Initialize job
+      // Initialize job with proper structure
       importJobs.set(jobId, {
         id: jobId,
         status: 'processing',
@@ -5480,7 +5482,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         skipped: 0,
         errors: [],
         details: [],
-        totalRows: 0
+        logs: [],
+        failedIds: [],
+        totalRows: 0,
+        startTime: new Date().toISOString()
       });
 
       // Return job ID immediately
@@ -5546,6 +5551,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         : [result.DATAPACKET.ROWDATA.ROW];
 
       job.totalRows = rows.length;
+      console.log(`Starting client import with ${rows.length} rows`);
       
       // Get all carriers for matching by name (once at start)
       const carriers = await storage.getCarriers();
@@ -8239,7 +8245,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       job.skipped = job.processed - job.imported - (job.errors?.length || 0);
       job.status = 'completed';
       job.progress = 100;
+      job.endTime = new Date().toISOString();
+      
       console.log(`Client contacts import completed: ${job.imported} imported, ${job.skipped} skipped, ${job.errors?.length || 0} errors`);
+      
+      // Add completion log
+      job.logs.push({
+        type: 'info',
+        message: `Імпорт контактів завершено успішно`,
+        details: `Імпортовано: ${job.imported}, Пропущено: ${job.skipped}, Помилок: ${job.errors?.length || 0}`
+      });
 
       // Clean up job after 5 minutes
       setTimeout(() => {
