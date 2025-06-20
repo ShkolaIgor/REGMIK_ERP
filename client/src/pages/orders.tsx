@@ -1143,15 +1143,19 @@ export default function Orders() {
     // Встановлюємо вибраного клієнта для оновлення контактів
     if (order.clientId) {
       setSelectedClientId(order.clientId.toString());
+      
       // Встановлюємо назву клієнта для відображення в полі пошуку
+      // Спочатку пробуємо з отриманих даних замовлення
       if (order.clientName) {
         setClientSearchValue(order.clientName);
       } else {
-        // Якщо немає clientName, знаходимо клієнта за ID
-        const client = Array.isArray(allClients) ? allClients.find((c: any) => c.id === order.clientId) : null;
-        if (client) {
-          setClientSearchValue(client.name);
-        }
+        // Якщо немає clientName в замовленні, пробуємо знайти в списку клієнтів
+        setTimeout(() => {
+          const client = Array.isArray(allClients) ? allClients.find((c: any) => c.id === order.clientId) : null;
+          if (client) {
+            setClientSearchValue(client.name);
+          }
+        }, 500); // Даємо час завантажитись списку клієнтів
       }
     }
 
@@ -1575,10 +1579,10 @@ export default function Orders() {
                           const value = e.target.value;
                           setClientSearchValue(value);
                           
-                          // Скидаємо вибраного клієнта тільки якщо це не початкове завантаження
-                          if (value !== clientSearchValue && form.watch("clientId")) {
-                            form.setValue("clientId", "");
-                            setSelectedClientId("");
+                          // При зміні тексту, очищаємо обраний ID тільки якщо це не редагування
+                          // або якщо користувач справді змінює значення
+                          if (!isEditMode || (value.length > 0 && !form.watch("clientId"))) {
+                            setClientComboboxOpen(true);
                           }
                           
                           // Відкриваємо список при введенні
@@ -1589,14 +1593,7 @@ export default function Orders() {
                           }
                         }}
                         onFocus={() => {
-                          // При фокусі, якщо є обраний клієнт, підготовуємо для редагування
-                          if (form.watch("clientId") && !clientSearchValue) {
-                            const selectedClient = Array.isArray(allClients) ? allClients.find((c: any) => c.id.toString() === form.watch("clientId")) : null;
-                            if (selectedClient) {
-                              setClientSearchValue(selectedClient.name);
-                            }
-                          }
-                          // Відкриваємо список тільки якщо є текст для пошуку
+                          // При фокусі на поле, відкриваємо список для пошуку
                           if (clientSearchValue && clientSearchValue.length >= 1) {
                             setClientComboboxOpen(true);
                           }
