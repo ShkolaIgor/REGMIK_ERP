@@ -222,7 +222,7 @@ export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   orderSequenceNumber: serial("order_sequence_number").notNull().unique(), // Числовий номер замовлення
   orderNumber: text("order_number").notNull().unique(),
-  customerName: text("customer_name"),
+  customerName: text("customer_name").notNull(),
   customerEmail: text("customer_email"),
   customerPhone: text("customer_phone"),
   clientId: integer("client_id").references(() => clients.id), // зв'язок з клієнтом для використання його API ключів

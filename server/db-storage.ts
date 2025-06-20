@@ -7924,10 +7924,22 @@ export class DatabaseStorage implements IStorage {
           // Обробляємо INDEX_TRANSPORT для carrier_id
           if (row.INDEX_TRANSPORT) {
             const transportIndex = parseInt(row.INDEX_TRANSPORT);
-            if (transportIndex > 18) {
-              orderData.carrierId = 1;
-            } else {
+            // Перевіряємо чи існує такий перевізник
+            const carrierResult = await db.select({ id: carriers.id })
+              .from(carriers)
+              .where(eq(carriers.id, transportIndex))
+              .limit(1);
+            
+            if (carrierResult.length > 0) {
               orderData.carrierId = transportIndex;
+            } else {
+              // Якщо перевізник не знайдений, використовуємо перевізника за замовчуванням (ID=4 - Нова пошта)
+              orderData.carrierId = 4; // Нова пошта
+              result.warnings.push({
+                row: rowNumber,
+                warning: `Перевізник з id=${transportIndex} не знайдений, використано Нову пошту (ID=4)`,
+                data: row
+              });
             }
           }
 
