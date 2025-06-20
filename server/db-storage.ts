@@ -7997,6 +7997,29 @@ export class DatabaseStorage implements IStorage {
             orderData.statusId = 1; // За замовчуванням
           }
 
+          // Перевіряємо чи існує замовлення з таким номером, датою створення та номером рахунку
+          const existingOrder = await db.select()
+            .from(orders)
+            .where(
+              and(
+                eq(orders.orderNumber, orderData.orderNumber),
+                eq(orders.invoiceNumber, orderData.invoiceNumber || ''),
+                orderData.createdAt ? 
+                  sql`DATE(${orders.createdAt}) = DATE(${orderData.createdAt})` :
+                  sql`DATE(${orders.createdAt}) = CURRENT_DATE`
+              )
+            )
+            .limit(1);
+
+          if (existingOrder.length > 0) {
+            result.warnings.push({
+              row: rowNumber,
+              warning: `Замовлення ${orderData.orderNumber} з такою датою та номером рахунку вже існує`,
+              data: row
+            });
+            continue; // Пропускаємо цей запис
+          }
+
           // Створюємо замовлення
           const [createdOrder] = await db.insert(orders)
             .values(orderData)
