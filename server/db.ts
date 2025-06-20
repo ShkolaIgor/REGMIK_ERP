@@ -33,7 +33,12 @@ if (process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool(poolConfig);
+export const pool = new Pool({
+  ...poolConfig,
+  max: 5, // максимум 5 з'єднань
+  idleTimeoutMillis: 30000, // закривати неактивні з'єднання через 30 секунд
+  connectionTimeoutMillis: 10000, // таймаут на підключення 10 секунд
+});
 
 // Забезпечуємо UTF-8 кодування для всіх підключень
 pool.on('connect', async (client) => {
