@@ -214,9 +214,9 @@ export default function Carriers() {
       serviceType: carrier.serviceType || "",
       rating: carrier.rating || 5,
       apiKey: carrier.apiKey || "",
-      syncTime: carrier.syncTime || "",
-      syncInterval: carrier.syncInterval || 24,
-      autoSync: carrier.autoSync || false,
+      autoUpdateEnabled: (carrier as any).autoUpdateEnabled || false,
+      updateTime: (carrier as any).updateTime || "06:00", 
+      updateDays: (carrier as any).updateDays || "1,2,3,4,5",
     });
     setIsDialogOpen(true);
   };
