@@ -623,38 +623,34 @@ export class DatabaseStorage implements IStorage {
         // Завантаження інформації про клієнта з таблиці clients
         let clientData = null;
         if (order.clientId) {
-          const clientResult = await db.select({
-            id: clients.id,
-            name: clients.name,
-            taxCode: clients.taxCode,
-            phone: clients.phone,
-            email: clients.email
-          })
-          .from(clients)
-          .where(eq(clients.id, order.clientId))
-          .limit(1);
-          
-          if (clientResult.length > 0) {
-            clientData = clientResult[0];
+          try {
+            const clientResult = await db.select()
+              .from(clients)
+              .where(eq(clients.id, order.clientId))
+              .limit(1);
+            
+            if (clientResult.length > 0) {
+              clientData = clientResult[0];
+            }
+          } catch (error) {
+            console.error(`Error fetching client ${order.clientId}:`, error);
           }
         }
 
         // Завантаження інформації про контакт з таблиці client_contacts
         let contactData = null;
         if (order.clientContactsId) {
-          const contactResult = await db.select({
-            id: clientContacts.id,
-            fullName: clientContacts.fullName,
-            position: clientContacts.position,
-            phone: clientContacts.phone,
-            email: clientContacts.email
-          })
-          .from(clientContacts)
-          .where(eq(clientContacts.id, order.clientContactsId))
-          .limit(1);
-          
-          if (contactResult.length > 0) {
-            contactData = contactResult[0];
+          try {
+            const contactResult = await db.select()
+              .from(clientContacts)
+              .where(eq(clientContacts.id, order.clientContactsId))
+              .limit(1);
+            
+            if (contactResult.length > 0) {
+              contactData = contactResult[0];
+            }
+          } catch (error) {
+            console.error(`Error fetching contact ${order.clientContactsId}:`, error);
           }
         }
 
