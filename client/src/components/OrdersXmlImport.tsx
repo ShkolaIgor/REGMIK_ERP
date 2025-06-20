@@ -110,11 +110,11 @@ export function OrdersXmlImport() {
       return;
     }
 
-    const maxSize = 50 * 1024 * 1024; // 50MB
+    const maxSize = 100 * 1024 * 1024; // 100MB
     if (file.size > maxSize) {
       toast({
         title: "Файл занадто великий",
-        description: `Максимальний розмір файлу: 50MB. Ваш файл: ${Math.round(file.size / 1024 / 1024)}MB`,
+        description: `Максимальний розмір файлу: 100MB. Ваш файл: ${Math.round(file.size / 1024 / 1024)}MB`,
         variant: "destructive",
       });
       return;
