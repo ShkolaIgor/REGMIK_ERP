@@ -37,8 +37,7 @@ type Order = {
   clientName?: string;
   clientTaxCode?: string;
   contactName?: string;
-  customerEmail: string | null;
-  customerPhone: string | null;
+
   clientId: string | null;
   clientContactsId: number | null;
   statusId: number | null;
@@ -117,9 +116,7 @@ const orderSchema = z.object({
   clientId: z.string().optional(),
   clientContactsId: z.string().optional(),
   companyId: z.string().optional(),
-  customerName: z.string().optional(),
-  customerEmail: z.string().email("Введіть правильний email").optional().or(z.literal("")),
-  customerPhone: z.string().optional(),
+
   invoiceNumber: z.string().optional(),
   carrierId: z.number().optional().nullable(),
   status: z.string().default("pending"),
@@ -129,9 +126,6 @@ const orderSchema = z.object({
   dueDate: z.string().optional(),
   shippedDate: z.string().optional(),
   trackingNumber: z.string().optional(),
-}).refine(data => data.clientId || data.customerName, {
-  message: "Оберіть клієнта або введіть ім'я клієнта",
-  path: ["clientId"],
 });
 
 const statusSchema = z.object({
@@ -1122,9 +1116,8 @@ export default function Orders() {
       clientId: order.clientId ? order.clientId.toString() : "",
       clientContactsId: order.clientContactsId ? order.clientContactsId.toString() : "",
       companyId: order.companyId ? order.companyId.toString() : "",
-      customerName: order.customerName || "",
-      customerEmail: order.customerEmail || "",
-      customerPhone: order.customerPhone || "",
+
+
       status: order.status,
       notes: order.notes || "",
       paymentDate: formatDateForInput(order.paymentDate),
@@ -1260,7 +1253,7 @@ export default function Orders() {
     const selectedClient = Array.isArray(allClients) ? allClients.find((c: any) => c.id.toString() === clientId) : null;
     if (selectedClient) {
       form.setValue("clientId", clientId);
-      form.setValue("customerName", selectedClient.name);
+      // Автоматично встановлюємо клієнта
       setSelectedClientId(clientId);
       setClientSearchValue(selectedClient.name);
       setClientComboboxOpen(false);
@@ -1346,9 +1339,8 @@ export default function Orders() {
         ...(data.clientId && { clientId: parseInt(data.clientId) }),
         ...(data.clientContactsId && { clientContactsId: data.clientContactsId }),
         ...(data.companyId && { companyId: parseInt(data.companyId) }),
-        ...(data.customerName && { customerName: data.customerName }),
-        ...(data.customerEmail && { customerEmail: data.customerEmail }),
-        ...(data.customerPhone && { customerPhone: data.customerPhone }),
+
+
         ...(data.invoiceNumber && { invoiceNumber: data.invoiceNumber }),
         ...(data.carrierId && { carrierId: data.carrierId }),
         status: data.status,
@@ -1428,9 +1420,8 @@ export default function Orders() {
                   
                   form.reset({
                     companyId: defaultCompany ? defaultCompany.id.toString() : "",
-                    customerName: "",
-                    customerEmail: "",
-                    customerPhone: "",
+                    clientId: "",
+
                     status: "pending",
                     notes: "",
                     paymentDate: "",
@@ -1542,7 +1533,7 @@ export default function Orders() {
                         placeholder="Почніть вводити назву клієнта..."
                         value={clientSearchValue || (form.watch("clientId") ? 
                           (Array.isArray(allClients) ? allClients.find((c: any) => c.id.toString() === form.watch("clientId"))?.name : "")
-                          : form.watch("customerName") || "")}
+                          : "")}
                         onChange={(e) => {
                           const value = e.target.value;
                           setClientSearchValue(value);
@@ -1576,8 +1567,7 @@ export default function Orders() {
                         onBlur={() => setTimeout(() => setClientComboboxOpen(false), 200)}
                         className={cn(
                           form.formState.errors.clientId ? "border-red-500" : "",
-                          // Червоний фон якщо клієнт видалений (є customerName але немає clientId)
-                          isEditMode && form.watch("customerName") && !form.watch("clientId") ? "bg-red-50 border-red-300" : ""
+
                         )}
                       />
                       {clientSearchValue && clientComboboxOpen && (
@@ -1785,7 +1775,7 @@ export default function Orders() {
                         form.setValue("trackingNumber", trackingNumber);
                       }}
                       orderId={isEditMode ? editingOrder?.id?.toString() : undefined}
-                      recipientName={form.watch("customerName")}
+                      recipientName={clientSearchValue}
                       recipientPhone={form.watch("customerPhone")}
                     />
                   </div>
