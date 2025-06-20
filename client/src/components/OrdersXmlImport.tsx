@@ -288,6 +288,46 @@ export default function OrdersXmlImport() {
                     </span>
                   </div>
                 )}
+                
+                <Button 
+                  onClick={handleImport} 
+                  disabled={!selectedFile || isImporting}
+                  className="w-full"
+                >
+                  {isImporting ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                      {currentJob ? 
+                        `Обробка: ${currentJob.processed}/${currentJob.totalRows} (${currentJob.progress}%)` :
+                        "Запуск імпорту..."
+                      }
+                    </div>
+                  ) : (
+                    "Імпортувати замовлення"
+                  )}
+                </Button>
+                
+                {/* Progress Bar */}
+                {isImporting && currentJob && (
+                  <div className="mt-4 space-y-2">
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Прогрес імпорту</span>
+                      <span>{currentJob.progress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                        style={{ width: `${currentJob.progress}%` }}
+                      ></div>
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>Оброблено: {currentJob.processed}</span>
+                      <span>Імпортовано: {currentJob.imported}</span>
+                      <span>Пропущено: {currentJob.skipped}</span>
+                      <span>Помилок: {currentJob.errors.length}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
