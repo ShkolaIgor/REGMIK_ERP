@@ -1159,14 +1159,19 @@ export default function Orders() {
       // Встановлюємо назву клієнта для відображення в полі пошуку
       if (fullOrder.clientName) {
         console.log(`Setting client name from fullOrder: ${fullOrder.clientName}`);
-        setClientSearchValue(fullOrder.clientName);
+        // Додаємо затримку для синхронізації станів
+        setTimeout(() => {
+          setClientSearchValue(fullOrder.clientName);
+        }, 50);
       } else {
         console.log('No clientName in fullOrder, searching in allClients');
         // Якщо немає clientName в замовленні, пробуємо знайти в списку клієнтів
         const client = Array.isArray(allClients) ? allClients.find((c: any) => c.id === fullOrder.clientId) : null;
         if (client) {
           console.log(`Found client in allClients: ${client.name}`);
-          setClientSearchValue(client.name);
+          setTimeout(() => {
+            setClientSearchValue(client.name);
+          }, 50);
         } else {
           console.log('Client not found in allClients, will try with delay');
           setTimeout(() => {
@@ -1597,6 +1602,7 @@ export default function Orders() {
                         value={clientSearchValue}
                         onChange={(e) => {
                           const value = e.target.value;
+                          console.log('Client field onChange:', value);
                           setClientSearchValue(value);
                           
                           // Очищаємо обраний ID при зміні тексту пошуку
@@ -1613,10 +1619,9 @@ export default function Orders() {
                           }
                         }}
                         onFocus={() => {
+                          console.log('Client field focused, current value:', clientSearchValue);
                           // При фокусі на поле, відкриваємо список для пошуку
-                          if (clientSearchValue && clientSearchValue.length >= 1) {
-                            setClientComboboxOpen(true);
-                          }
+                          setClientComboboxOpen(true);
                         }}
                         onBlur={() => setTimeout(() => setClientComboboxOpen(false), 200)}
                         className={cn(
