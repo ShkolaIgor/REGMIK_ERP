@@ -337,13 +337,14 @@ export default function Clients() {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button 
+          {/*  <Button 
             variant="outline"
             onClick={() => setIsImportDialogOpen(true)}
           >
             <Upload className="mr-2 h-4 w-4" />
-            Імпорт клієнтів XML
+            Імпорт клієнтів XML 1
           </Button>
+          */}
           <ClientsXmlImport />
           <ClientContactsXmlImport />
           <Button onClick={() => {
@@ -521,12 +522,12 @@ export default function Clients() {
           />
         </DialogContent>
       </Dialog>
-
-      {/* Import XML Dialog */}
+     
+      {/* Import XML Dialog
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Імпорт клієнтів з XML</DialogTitle>
+            <DialogTitle>Імпорт клієнтів з XML old</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
@@ -593,7 +594,8 @@ export default function Clients() {
           </div>
         </DialogContent>
       </Dialog>
-
+      */}
+      
       {/* Contact Add Dialog */}
       <Dialog open={isContactDialogOpen} onOpenChange={setIsContactDialogOpen}>
         <DialogContent className="max-w-md">

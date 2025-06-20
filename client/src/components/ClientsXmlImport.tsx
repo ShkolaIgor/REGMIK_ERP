@@ -218,7 +218,7 @@ export function ClientsXmlImport() {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Upload className="h-4 w-4 mr-2" />
-          Імпорт клієнтів XML
+          Імпорт клієнтів
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
