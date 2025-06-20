@@ -222,7 +222,7 @@ export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   orderSequenceNumber: serial("order_sequence_number").notNull().unique(), // Числовий номер замовлення
   orderNumber: text("order_number").notNull().unique(),
-  clientId: integer("client_id").references(() => clients.id).notNull(), // зв'язок з клієнтом (обов'язковий)
+  clientId: integer("client_id").references(() => clients.id), // зв'язок з клієнтом
   clientContactsId: integer("client_contacts_id").references(() => clientContacts.id), // зв'язок з представником клієнта
   companyId: integer("company_id").references(() => companies.id), // Компанія, від імені якої здійснюється продаж
   status: text("status").notNull().default("pending"), // pending, processing, shipped, delivered, cancelled
