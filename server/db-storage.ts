@@ -7921,23 +7921,31 @@ export class DatabaseStorage implements IStorage {
             }
           }
 
-          // Обробляємо INDEX_TRANSPORT для carrier_id
+          // Обробляємо INDEX_TRANSPORT для carrier_id з мапуванням
           if (row.INDEX_TRANSPORT) {
             const transportIndex = parseInt(row.INDEX_TRANSPORT);
-            // Перевіряємо чи існує такий перевізник
-            const carrierResult = await db.select({ id: carriers.id })
-              .from(carriers)
-              .where(eq(carriers.id, transportIndex))
-              .limit(1);
+            // Мапування INDEX_TRANSPORT -> carrier_id
+            const transportMapping: { [key: number]: number } = {
+              1: 4,  // Нова пошта
+              2: 5,  // Міст
+              3: 4,  // Нова пошта
+              4: 4,  // Нова пошта
+              5: 4,  // Нова пошта
+              6: 6,  // Nova Poshta
+              7: 7,  // Нова Пошта 1
+              8: 8,  // Нова Пошта
+              9: 4,  // Нова пошта (за замовчуванням)
+              10: 4, // Нова пошта (за замовчуванням)
+              // Для всіх інших значень використовуємо Нову пошту
+            };
             
-            if (carrierResult.length > 0) {
-              orderData.carrierId = transportIndex;
-            } else {
-              // Якщо перевізник не знайдений, використовуємо перевізника за замовчуванням (ID=4 - Нова пошта)
-              orderData.carrierId = 4; // Нова пошта
+            const mappedCarrierId = transportMapping[transportIndex] || 4; // За замовчуванням Нова пошта
+            orderData.carrierId = mappedCarrierId;
+            
+            if (!transportMapping[transportIndex]) {
               result.warnings.push({
                 row: rowNumber,
-                warning: `Перевізник з id=${transportIndex} не знайдений, використано Нову пошту (ID=4)`,
+                warning: `INDEX_TRANSPORT=${transportIndex} не має прямого мапування, використано Нову пошту`,
                 data: row
               });
             }

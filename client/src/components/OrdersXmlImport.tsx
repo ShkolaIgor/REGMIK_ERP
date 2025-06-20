@@ -166,7 +166,15 @@ export default function OrdersXmlImport() {
                 Завантаження XML файлу
               </CardTitle>
               <CardDescription>
-                Оберіть XML файл з замовленнями для імпорту в систему
+                <div className="space-y-2">
+                  <p>Оберіть XML файл з замовленнями для імпорту в систему.</p>
+                  <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                    <p><strong>Формат:</strong> DATAPACKET/ROWDATA/ROW з атрибутами:</p>
+                    <p>• INDEX_PREDPR (ID клієнта), NAME_ZAKAZ (номер), SUMMA (сума)</p>
+                    <p>• TERM (термін), PAY (оплата), REALIZ (відвантаження)</p>
+                    <p>• INDEX_TRANSPORT (перевізник), INDEX_ZAKAZCHIK (контакт)</p>
+                  </div>
+                </div>
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -193,6 +201,41 @@ export default function OrdersXmlImport() {
                     </span>
                   </div>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Format Example */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Приклад XML структури
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <pre className="text-xs text-gray-700 overflow-x-auto">
+{`<?xml version="1.0" encoding="UTF-8"?>
+<DATAPACKET>
+  <ROWDATA>
+    <ROW INDEX_PREDPR="7734" 
+         INDEX_FIRMA="1" 
+         INDEX_TRANSPORT="21" 
+         NAME_ZAKAZ="52403" 
+         DEL="F" 
+         TERM="26.06.2025" 
+         PAY="18.06.2025" 
+         REALIZ="" 
+         SCHET="РМ00-027501" 
+         SUMMA="3045,60" 
+         DATE_CREATE="18.06.2025" 
+         COMMENT="" 
+         DECLARATION="" 
+         INDEX_ZAKAZCHIK="11537"/>
+  </ROWDATA>
+</DATAPACKET>`}
+                </pre>
               </div>
             </CardContent>
           </Card>
