@@ -1074,21 +1074,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const xmlContent = xmlBuffer.toString('utf-8');
       console.log(`Processing order XML import job ${jobId}...`);
       
-      // Parse XML and process orders
-      const result = await storage.importOrdersFromXml(xmlContent);
+      // Оновлюємо прогрес на початку
+      job.progress = 10;
       
-      // Update job status
+      // Викликаємо імпорт з callback для оновлення прогресу
+      const result = await storage.importOrdersFromXmlWithProgress(xmlContent, (progress: number, processed: number, totalRows: number) => {
+        job.progress = Math.min(90, 10 + (progress * 0.8)); // 10-90%
+        job.processed = processed;
+        job.totalRows = totalRows;
+        console.log(`Job ${jobId} progress: ${job.progress}% (${processed}/${totalRows})`);
+      });
+      
+      // Завершуємо імпорт
       job.status = 'completed';
       job.progress = 100;
       job.processed = result.success + result.errors.length;
       job.imported = result.success;
       job.skipped = 0;
       job.errors = result.errors.map((err: any) => err.error);
-      job.details = result.errors.map((err: any) => ({
-        orderNumber: err.data?.orderNumber || `Row ${err.row}`,
-        status: 'error' as const,
-        message: err.error
-      }));
+      job.details = [
+        ...Array(result.success).fill(0).map((_, index) => ({
+          orderNumber: `Order ${index + 1}`,
+          status: 'imported' as const,
+          message: 'Успішно імпортовано'
+        })),
+        ...result.errors.map((err: any) => ({
+          orderNumber: err.data?.orderNumber || `Row ${err.row}`,
+          status: 'error' as const,
+          message: err.error
+        }))
+      ];
       job.totalRows = result.success + result.errors.length;
       
       console.log(`Order import job ${jobId} completed: ${result.success} imported, ${result.errors.length} errors`);

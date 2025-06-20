@@ -86,7 +86,8 @@ export function OrdersXmlImport() {
             variant: "destructive",
           });
         } else if (jobData.status === 'processing') {
-          setTimeout(() => pollJobStatus(currentJobId), 1000);
+          // Продовжуємо опитування з коротшим інтервалом для кращого UX
+          setTimeout(() => pollJobStatus(currentJobId), 500);
         }
       }
     } catch (error) {

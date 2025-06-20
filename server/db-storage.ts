@@ -7823,6 +7823,170 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Orders XML Import
+  async importOrdersFromXmlWithProgress(
+    xmlContent: string, 
+    progressCallback?: (progress: number, processed: number, totalRows: number) => void
+  ): Promise<{
+    success: number;
+    errors: Array<{ row: number; error: string; data?: any }>;
+    warnings: Array<{ row: number; warning: string; data?: any }>;
+  }> {
+    const result = {
+      success: 0,
+      errors: [] as Array<{ row: number; error: string; data?: any }>,
+      warnings: [] as Array<{ row: number; warning: string; data?: any }>
+    };
+
+    if (xmlContent.length > 100 * 1024 * 1024) {
+      throw new Error("XML файл занадто великий для обробки");
+    }
+
+    try {
+      const { parseString } = await import('xml2js');
+      const parseXml = (xml: string): Promise<any> => {
+        return new Promise((resolve, reject) => {
+          parseString(xml, { 
+            explicitArray: false,
+            mergeAttrs: true 
+          }, (err: any, result: any) => {
+            if (err) reject(err);
+            else resolve(result);
+          });
+        });
+      };
+
+      const parsed = await parseXml(xmlContent);
+      
+      let rows: any[] = [];
+      if (parsed.DATAPACKET && parsed.DATAPACKET.ROWDATA && parsed.DATAPACKET.ROWDATA.ROW) {
+        rows = Array.isArray(parsed.DATAPACKET.ROWDATA.ROW) ? parsed.DATAPACKET.ROWDATA.ROW : [parsed.DATAPACKET.ROWDATA.ROW];
+      } else {
+        throw new Error("Невірний формат XML: очікується структура DATAPACKET/ROWDATA/ROW");
+      }
+
+      console.log(`Початок імпорту: знайдено ${rows.length} записів`);
+      
+      // Повідомляємо загальну кількість
+      if (progressCallback) {
+        progressCallback(0, 0, rows.length);
+      }
+
+      const batchSize = 50;
+      for (let i = 0; i < rows.length; i += batchSize) {
+        const batch = rows.slice(i, i + batchSize);
+        console.log(`Обробка записів ${i + 1}-${Math.min(i + batchSize, rows.length)} з ${rows.length}`);
+
+        for (let j = 0; j < batch.length; j++) {
+          const row = batch[j];
+          const rowNumber = i + j + 1;
+
+          // Оновлюємо прогрес кожні 10 записів або в кінці батчу
+          if (progressCallback && (rowNumber % 10 === 0 || j === batch.length - 1)) {
+            const progress = (rowNumber / rows.length) * 100;
+            progressCallback(progress, rowNumber, rows.length);
+          }
+
+          try {
+            const orderData: any = {
+              orderNumber: row.NAME_ZAKAZ || `ORDER_${rowNumber}`,
+              totalAmount: this.parseDecimal(row.SUMMA) || "0",
+              notes: row.COMMENT || "",
+              invoiceNumber: row.SCHET || "",
+              trackingNumber: row.DECLARATION || "",
+              clientId: 1,
+            };
+
+            if (row.TERM) orderData.dueDate = this.parseDate(row.TERM);
+            if (row.PAY) orderData.paymentDate = this.parseDate(row.PAY);
+            if (row.REALIZ) orderData.shippedDate = this.parseDate(row.REALIZ);
+            if (row.DATE_CREATE) orderData.createdAt = this.parseDate(row.DATE_CREATE);
+
+            let clientId = 1;
+            if (row.INDEX_PREDPR) {
+              const clientResult = await db.select({ id: clients.id })
+                .from(clients)
+                .where(eq(clients.externalId, parseInt(row.INDEX_PREDPR)))
+                .limit(1);
+              
+              if (clientResult.length > 0) {
+                clientId = clientResult[0].id;
+                orderData.clientId = clientId;
+              } else {
+                result.warnings.push({
+                  row: rowNumber,
+                  warning: `Клієнт з external_id=${row.INDEX_PREDPR} не знайдений`,
+                  data: row
+                });
+              }
+            }
+
+            if (row.INDEX_FIRMA) {
+              const companyResult = await db.select({ id: companies.id })
+                .from(companies)
+                .where(eq(companies.id, parseInt(row.INDEX_FIRMA)))
+                .limit(1);
+              
+              if (companyResult.length > 0) {
+                orderData.companyId = companyResult[0].id;
+              }
+            }
+
+            if (row.INDEX_TRANSPORT) {
+              const transportIndex = parseInt(row.INDEX_TRANSPORT);
+              const transportMapping: { [key: number]: number } = {
+                1: 4, 2: 5, 3: 4, 4: 4, 5: 4, 6: 6, 7: 7, 8: 8, 9: 4, 10: 4,
+              };
+              orderData.carrierId = transportMapping[transportIndex] || 4;
+            }
+
+            if (row.INDEX_ZAKAZCHIK && clientId) {
+              const contactResult = await db.select({ id: clientContacts.id })
+                .from(clientContacts)
+                .where(eq(clientContacts.externalId, row.INDEX_ZAKAZCHIK))
+                .limit(1);
+              
+              if (contactResult.length > 0) {
+                orderData.clientContactsId = contactResult[0].id;
+              }
+            }
+
+            if (row.DEL === 'T') {
+              orderData.statusId = 8;
+            } else if (row.REALIZ && this.parseDate(row.REALIZ)) {
+              orderData.statusId = 6;
+            } else if (row.PAY && this.parseDate(row.PAY)) {
+              orderData.statusId = 12;
+            } else {
+              orderData.statusId = 1;
+            }
+
+            await db.insert(orders).values(orderData);
+            result.success++;
+
+          } catch (error) {
+            result.errors.push({
+              row: rowNumber,
+              error: error instanceof Error ? error.message : "Невідома помилка",
+              data: row
+            });
+          }
+        }
+
+        if (i + batchSize < rows.length) {
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
+      }
+
+    } catch (error) {
+      result.errors.push({
+        row: 0,
+        error: error instanceof Error ? error.message : "Помилка парсингу XML"
+      });
+    }
+
+    return result;
+  }
+
   async importOrdersFromXml(xmlContent: string): Promise<{
     success: number;
     errors: Array<{ row: number; error: string; data?: any }>;
