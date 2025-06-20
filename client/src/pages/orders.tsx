@@ -558,6 +558,18 @@ export default function Orders() {
     queryKey: ["/api/order-statuses"],
   });
 
+  const { data: allClients = [] } = useQuery<any[]>({
+    queryKey: ["/api/clients/search"],
+  });
+
+  const { data: allClientContacts = [] } = useQuery<any[]>({
+    queryKey: ["/api/client-contacts"],
+  });
+
+  const { data: carriers = [] } = useQuery<any[]>({
+    queryKey: ["/api/carriers"],
+  });
+
   // Оновлення серверної пагінації при зміні фільтрів
   React.useEffect(() => {
     setServerPagination(prev => ({ ...prev, page: 1 }));
@@ -673,7 +685,7 @@ export default function Orders() {
     }
   }, [form.watch("clientId")]);
   
-  const clients = clientSearchData?.clients || [];
+  const clientsList = clientSearchData?.clients || [];
 
   const { data: orderStatusList = [] } = useQuery({
     queryKey: ["/api/order-statuses"],

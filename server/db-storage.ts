@@ -1,4 +1,4 @@
-import { eq, sql, desc, and, gte, lte, isNull, ne, or, not, inArray, ilike } from "drizzle-orm";
+import { eq, sql, desc, and, gte, lte, lt, isNull, isNotNull, ne, or, not, inArray, ilike } from "drizzle-orm";
 import { db, pool } from "./db";
 import { IStorage } from "./storage";
 import {
@@ -503,35 +503,7 @@ export class DatabaseStorage implements IStorage {
     const offset = (page - 1) * limit;
 
     // Початковий запит для підрахунку та фільтрації
-    let baseQuery = db.select({
-      id: orders.id,
-      orderSequenceNumber: orders.orderSequenceNumber,
-      orderNumber: orders.orderNumber,
-      invoiceNumber: orders.invoiceNumber,
-      customerName: orders.customerName,
-      customerEmail: orders.customerEmail,
-      customerPhone: orders.customerPhone,
-      clientId: orders.clientId,
-      clientContactsId: orders.clientContactsId,
-      companyId: orders.companyId,
-      carrierId: orders.carrierId,
-      statusId: orders.statusId,
-      status: orders.status,
-      totalAmount: orders.totalAmount,
-      notes: orders.notes,
-      paymentDate: orders.paymentDate,
-      paymentType: orders.paymentType,
-      paidAmount: orders.paidAmount,
-      contractNumber: orders.contractNumber,
-      productionApproved: orders.productionApproved,
-      productionApprovedBy: orders.productionApprovedBy,
-      productionApprovedAt: orders.productionApprovedAt,
-      dueDate: orders.dueDate,
-      shippedDate: orders.shippedDate,
-      trackingNumber: orders.trackingNumber,
-      createdAt: orders.createdAt,
-      updatedAt: orders.updatedAt
-    }).from(orders);
+    let baseQuery = db.select().from(orders);
 
     // Застосування фільтрів
     const conditions = [];
