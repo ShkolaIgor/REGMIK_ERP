@@ -82,27 +82,29 @@ export function ClientContactsXmlImport() {
 
       console.log('Starting import with file:', file.name);
 
-      const response: ImportResponse = await apiRequest('/api/client-contacts/import-xml', {
+      const response = await fetch('/api/client-contacts/import-xml', {
         method: 'POST',
         body: formData,
       });
 
+      const result: ImportResponse = await response.json();
+
       console.log('Import response:', response);
 
-      if (response.success && response.jobId) {
-        setJobId(response.jobId);
+      if (result.success && result.jobId) {
+        setJobId(result.jobId);
         toast({
           title: "Імпорт розпочато",
           description: "Файл завантажено, обробка в процесі...",
         });
         
         // Start polling for status immediately
-        setTimeout(() => pollJobStatus(response.jobId!), 500);
+        setTimeout(() => pollJobStatus(result.jobId!), 500);
       } else {
         setIsImporting(false);
         toast({
           title: "Помилка запуску імпорту",
-          description: response.error || "Не вдалося розпочати імпорт",
+          description: result.error || "Не вдалося розпочати імпорт",
           variant: "destructive",
         });
       }
