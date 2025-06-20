@@ -178,6 +178,8 @@ export default function Orders() {
   
   // Стан для керування порядком стовпців
   const [columnOrder, setColumnOrder] = useState(() => {
+    // Очищуємо старі налаштування щоб застосувати новий порядок стовпців
+    localStorage.removeItem('orders-column-order');
     const saved = localStorage.getItem('orders-column-order');
     return saved ? JSON.parse(saved) : [
       'orderSequenceNumber',
