@@ -984,36 +984,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Orders XML Import
-  app.post("/api/orders/xml-import", async (req, res) => {
+  // Orders XML Import with job tracking
+  const orderImportJobs = new Map<string, {
+    id: string;
+    status: 'processing' | 'completed' | 'failed';
+    progress: number;
+    processed: number;
+    imported: number;
+    skipped: number;
+    errors: string[];
+    details: Array<{
+      orderNumber: string;
+      status: 'imported' | 'updated' | 'skipped' | 'error';
+      message: string;
+    }>;
+    totalRows: number;
+  }>();
+
+  // Start XML import for orders
+  app.post("/api/orders/import-xml", upload.single('xmlFile'), async (req, res) => {
     try {
-      const { xmlContent } = req.body;
-      
-      if (!xmlContent) {
+      if (!req.file) {
         return res.status(400).json({ 
-          success: 0,
-          errors: [{ row: 0, error: "XML content is required" }],
-          warnings: []
+          success: false, 
+          error: "No XML file provided" 
         });
       }
 
-      console.log("Starting XML import for orders...");
-      const result = await storage.importOrdersFromXml(xmlContent);
-      console.log("XML import completed:", result);
+      const jobId = generateJobId();
       
-      res.json(result);
+      orderImportJobs.set(jobId, {
+        id: jobId,
+        status: 'processing',
+        progress: 0,
+        processed: 0,
+        imported: 0,
+        skipped: 0,
+        errors: [],
+        details: [],
+        totalRows: 0
+      });
+
+      res.json({
+        success: true,
+        jobId,
+        message: "Order import job started. Use the job ID to check progress."
+      });
+
+      processOrderXmlImportAsync(jobId, req.file.buffer);
+
     } catch (error) {
-      console.error("Error importing orders from XML:", error);
+      console.error("Order XML import error:", error);
       res.status(500).json({ 
-        success: 0,
-        errors: [{ 
-          row: 0, 
-          error: error instanceof Error ? error.message : "Failed to import orders from XML",
-          data: error instanceof Error ? error.stack : undefined
-        }],
-        warnings: []
+        success: false, 
+        error: "Failed to start order XML import",
+        details: error instanceof Error ? error.message : 'Unknown error'
       });
     }
+  });
+
+  // Check order import job status
+  app.get("/api/orders/import-xml/:jobId/status", (req, res) => {
+    const { jobId } = req.params;
+    const job = orderImportJobs.get(jobId);
+    
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        error: "Job not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      job
+    });
   });
 
   // Recipes
