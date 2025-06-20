@@ -225,8 +225,10 @@ export default function Orders() {
     
     switch (columnKey) {
       case 'orderSequenceNumber':
+        const isOverdue = isOrderOverdue(order);
         return (
           <div className={`font-semibold text-center text-lg p-2 rounded ${getOrderNumberBgColor(order)}`}>
+            {isOverdue && <div className="text-xs text-red-600 font-bold mb-1">ПРОСТРОЧЕНО</div>}
             {order.orderNumber || order.orderSequenceNumber}
           </div>
         );
@@ -392,8 +394,14 @@ export default function Orders() {
         );
       
       case 'dueDate':
+        const isOverdueForDueDate = isOrderOverdue(order);
         return (
           <div onClick={(e) => e.stopPropagation()}>
+            {isOverdueForDueDate && (
+              <div className="text-xs text-red-600 font-bold mb-1 bg-red-100 px-2 py-1 rounded">
+                ⚠️ ПРОСТРОЧЕНО
+              </div>
+            )}
             <DueDateButton 
               order={order}
               onDueDateChange={(orderId, dueDate) => {
@@ -1226,9 +1234,25 @@ export default function Orders() {
   };
 
   // Допоміжні функції для таблиці
+  // Функція для перевірки чи замовлення прострочене
+  const isOrderOverdue = (order: any) => {
+    if (!order.dueDate || order.shippedDate) return false;
+    
+    const dueDate = new Date(order.dueDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    dueDate.setHours(0, 0, 0, 0);
+    
+    return today > dueDate;
+  };
+
   const getOrderNumberBgColor = (order: any) => {
+    // Якщо замовлення прострочене
+    if (isOrderOverdue(order)) return "bg-red-100 border-red-300 border-2 text-red-800";
+    // Якщо оплачено
     if (order.paymentDate) return "bg-green-50 border-green-200";
-    if (order.dueDate && new Date(order.dueDate) < new Date()) return "bg-red-50 border-red-200";
+    // Якщо близько до дедлайну (менше 3 днів)
+    if (order.dueDate && new Date(order.dueDate) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)) return "bg-yellow-50 border-yellow-200";
     return "bg-gray-50";
   };
 
