@@ -1241,7 +1241,7 @@ export default function Orders() {
   };
 
   // Функції для роботи з клієнтами - серверний пошук замість клієнтського фільтрування
-  const filteredClients = clients; // Дані вже відфільтровані на сервері
+  const filteredClients = clientsList; // Дані вже відфільтровані на сервері
 
   const handleClientSelect = (clientId: string) => {
     const selectedClient = allClients.find((c: any) => c.id.toString() === clientId);
