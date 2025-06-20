@@ -1106,8 +1106,20 @@ export default function Orders() {
   };
 
   // Функція для початку редагування замовлення
-  const handleEditOrder = (order: any) => {
-    setEditingOrder(order);
+  const handleEditOrder = async (order: any) => {
+    console.log('Starting to edit order:', order);
+    
+    // Отримуємо повні дані замовлення з сервера
+    const fullOrder = await fetch(`/api/orders/${order.id}`)
+      .then(res => res.json())
+      .catch(err => {
+        console.error('Failed to fetch full order:', err);
+        return order; // fallback to original order data
+      });
+    
+    console.log('Full order data received:', fullOrder);
+    
+    setEditingOrder(fullOrder);
     setIsEditMode(true);
     
     // Функція для конвертації дати в формат datetime-local
@@ -1141,24 +1153,24 @@ export default function Orders() {
     });
 
     // Встановлюємо вибраного клієнта для оновлення контактів
-    if (order.clientId) {
-      setSelectedClientId(order.clientId.toString());
+    if (fullOrder.clientId) {
+      setSelectedClientId(fullOrder.clientId.toString());
       
       // Встановлюємо назву клієнта для відображення в полі пошуку
-      if (order.clientName) {
-        console.log(`Setting client name from order: ${order.clientName}`);
-        setClientSearchValue(order.clientName);
+      if (fullOrder.clientName) {
+        console.log(`Setting client name from fullOrder: ${fullOrder.clientName}`);
+        setClientSearchValue(fullOrder.clientName);
       } else {
-        console.log('No clientName in order, searching in allClients');
+        console.log('No clientName in fullOrder, searching in allClients');
         // Якщо немає clientName в замовленні, пробуємо знайти в списку клієнтів
-        const client = Array.isArray(allClients) ? allClients.find((c: any) => c.id === order.clientId) : null;
+        const client = Array.isArray(allClients) ? allClients.find((c: any) => c.id === fullOrder.clientId) : null;
         if (client) {
           console.log(`Found client in allClients: ${client.name}`);
           setClientSearchValue(client.name);
         } else {
           console.log('Client not found in allClients, will try with delay');
           setTimeout(() => {
-            const delayedClient = Array.isArray(allClients) ? allClients.find((c: any) => c.id === order.clientId) : null;
+            const delayedClient = Array.isArray(allClients) ? allClients.find((c: any) => c.id === fullOrder.clientId) : null;
             if (delayedClient) {
               setClientSearchValue(delayedClient.name);
             }
