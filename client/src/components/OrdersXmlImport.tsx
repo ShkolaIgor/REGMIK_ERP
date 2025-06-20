@@ -23,26 +23,11 @@ interface ImportResult {
   }>;
 }
 
-interface ImportJob {
-  id: string;
-  status: 'processing' | 'completed' | 'failed';
-  progress: number;
-  processed: number;
-  imported: number;
-  skipped: number;
-  errors: Array<{ row: number; error: string; data?: any }>;
-  warnings: Array<{ row: number; warning: string; data?: any }>;
-  totalRows: number;
-  startTime: string;
-}
-
 export default function OrdersXmlImport() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
-  const [currentJob, setCurrentJob] = useState<ImportJob | null>(null);
-  const [jobId, setJobId] = useState<string | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -64,26 +49,44 @@ export default function OrdersXmlImport() {
   };
 
   const importMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('xmlFile', file);
+    mutationFn: async (xmlContent: string) => {
+      console.log("Starting XML import...");
+      setIsImporting(true);
       
-      const response = await fetch('/api/orders/import-xml', {
-        method: 'POST',
-        body: formData,
-      });
+      try {
+        const result = await apiRequest("/api/orders/xml-import", {
+          method: "POST",
+          body: { xmlContent },
+        });
+        console.log("Import result:", result);
+        return result;
+      } catch (error) {
+        console.error("Import mutation error:", error);
+        throw error;
+      } finally {
+        setIsImporting(false);
+      }
+    },
+    onSuccess: (result: ImportResult) => {
+      console.log("Import success:", result);
+      setImportResult(result);
+      setIsImporting(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (result.success > 0) {
+        toast({
+          title: "Імпорт завершено",
+          description: `Успішно імпортовано ${result.success} замовлень`,
+        });
       }
       
-      return response.json();
-    },
-    onSuccess: (result: { jobId: string; message: string }) => {
-      console.log("Import job started:", result);
-      setJobId(result.jobId);
-      // Start polling for progress
-      pollJobStatus(result.jobId);
+      if (result.errors && result.errors.length > 0) {
+        toast({
+          title: "Виявлено помилки",
+          description: `${result.errors.length} замовлень не вдалося імпортувати`,
+          variant: "destructive",
+        });
+      }
     },
     onError: (error) => {
       console.error("Import error:", error);
@@ -101,77 +104,6 @@ export default function OrdersXmlImport() {
     },
   });
 
-  // Poll job status for progress updates
-  const pollJobStatus = async (jobId: string) => {
-    const checkStatus = async () => {
-      try {
-        const response = await fetch(`/api/orders/import-xml/${jobId}/status`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch job status");
-        }
-        
-        const data = await response.json();
-        
-        if (!data.success) {
-          throw new Error(data.error || "Job not found");
-        }
-        
-        const job: ImportJob = data.job;
-        setCurrentJob(job);
-        
-        if (job.status === 'completed') {
-          setIsImporting(false);
-          setImportResult({
-            success: job.imported,
-            errors: job.errors.map(e => ({ row: 0, error: e, data: null })),
-            warnings: job.details.filter(d => d.status === 'skipped').map(d => ({ 
-              row: 0, 
-              warning: d.message || 'Пропущено', 
-              data: null 
-            }))
-          });
-          queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-          
-          toast({
-            title: "Імпорт завершено",
-            description: `Успішно імпортовано ${job.imported} замовлень`,
-          });
-          
-          return;
-        } else if (job.status === 'failed') {
-          setIsImporting(false);
-          setImportResult({
-            success: job.imported,
-            errors: job.errors.map(e => ({ row: 0, error: e, data: null })),
-            warnings: []
-          });
-          
-          toast({
-            title: "Помилка імпорту",
-            description: `Імпорт не вдався. Оброблено: ${job.processed}/${job.totalRows}`,
-            variant: "destructive",
-          });
-          
-          return;
-        }
-        
-        // Continue polling if still processing
-        setTimeout(checkStatus, 1000);
-        
-      } catch (error) {
-        console.error("Error checking job status:", error);
-        setIsImporting(false);
-        toast({
-          title: "Помилка",
-          description: "Не вдалося отримати статус імпорту",
-          variant: "destructive",
-        });
-      }
-    };
-    
-    checkStatus();
-  };
-
   const handleImport = async () => {
     if (!selectedFile) {
       toast({
@@ -182,12 +114,12 @@ export default function OrdersXmlImport() {
       return;
     }
 
-    // Перевіряємо розмір файлу (максимум 100MB)
-    const maxSize = 100 * 1024 * 1024; // 100MB
+    // Перевіряємо розмір файлу (максимум 50MB)
+    const maxSize = 50 * 1024 * 1024; // 50MB
     if (selectedFile.size > maxSize) {
       toast({
         title: "Файл занадто великий",
-        description: `Максимальний розмір файлу: 100MB. Ваш файл: ${Math.round(selectedFile.size / 1024 / 1024)}MB`,
+        description: `Максимальний розмір файлу: 50MB. Ваш файл: ${Math.round(selectedFile.size / 1024 / 1024)}MB`,
         variant: "destructive",
       });
       return;
@@ -225,9 +157,6 @@ export default function OrdersXmlImport() {
   const resetForm = () => {
     setSelectedFile(null);
     setImportResult(null);
-    setCurrentJob(null);
-    setJobId(null);
-    setIsImporting(false);
     const fileInput = document.getElementById('xml-file-input') as HTMLInputElement;
     if (fileInput) {
       fileInput.value = '';
@@ -290,53 +219,6 @@ export default function OrdersXmlImport() {
                         ({Math.round(selectedFile.size / 1024)} KB)
                       </span>
                     </span>
-                  </div>
-                )}
-                
-                <Button 
-                  onClick={handleImport} 
-                  disabled={!selectedFile || isImporting}
-                  className="w-full"
-                >
-                  {isImporting ? (
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                      {currentJob ? 
-                        `Обробка: ${currentJob.processed}/${currentJob.totalRows} (${currentJob.progress}%)` :
-                        "Запуск імпорту..."
-                      }
-                    </div>
-                  ) : (
-                    "Імпортувати замовлення"
-                  )}
-                </Button>
-                
-                {/* Progress Bar */}
-                {isImporting && currentJob && (
-                  <div className="mt-4 space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Прогрес імпорту</span>
-                      <span className="text-sm text-gray-600">{currentJob.progress}%</span>
-                    </div>
-                    <Progress value={currentJob.progress} className="w-full" />
-                    <div className="grid grid-cols-4 gap-2 text-xs text-center">
-                      <div className="bg-blue-50 p-2 rounded">
-                        <div className="font-medium text-blue-700">{currentJob.processed}</div>
-                        <div className="text-blue-600">Оброблено</div>
-                      </div>
-                      <div className="bg-green-50 p-2 rounded">
-                        <div className="font-medium text-green-700">{currentJob.imported}</div>
-                        <div className="text-green-600">Імпортовано</div>
-                      </div>
-                      <div className="bg-yellow-50 p-2 rounded">
-                        <div className="font-medium text-yellow-700">{currentJob.skipped}</div>
-                        <div className="text-yellow-600">Пропущено</div>
-                      </div>
-                      <div className="bg-red-50 p-2 rounded">
-                        <div className="font-medium text-red-700">{currentJob.errors.length}</div>
-                        <div className="text-red-600">Помилок</div>
-                      </div>
-                    </div>
                   </div>
                 )}
               </div>

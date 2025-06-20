@@ -41,11 +41,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
-      fileSize: 100 * 1024 * 1024, // 100MB limit
-      fieldSize: 100 * 1024 * 1024, // 100MB field size limit
-      fields: 10,
-      files: 5,
-      parts: 20
+      fileSize: 10 * 1024 * 1024, // 10MB limit
     },
     fileFilter: (req, file, cb) => {
       if (file.mimetype === 'text/xml' || file.originalname.endsWith('.xml')) {
@@ -988,204 +984,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Orders XML Import endpoint (using same structure as clients)
-  app.post("/api/orders/import-xml", (req, res) => {
-    const uploadSingle = upload.single('xmlFile');
-    
-    uploadSingle(req, res, async (err) => {
-      if (err) {
-        console.error("Multer error:", err);
-        if (err.code === 'LIMIT_FIELD_VALUE' || err.message.includes('Field value too long')) {
-          return res.status(400).json({ 
-            success: false, 
-            error: "XML файл занадто великий. Максимальний розмір: 100MB" 
-          });
-        }
+  // Orders XML Import
+  app.post("/api/orders/xml-import", async (req, res) => {
+    try {
+      const { xmlContent } = req.body;
+      
+      if (!xmlContent) {
         return res.status(400).json({ 
-          success: false, 
-          error: `Upload error: ${err.message}` 
+          success: 0,
+          errors: [{ row: 0, error: "XML content is required" }],
+          warnings: []
         });
       }
 
-      try {
-        if (!req.file) {
-          return res.status(400).json({ 
-            success: false, 
-            error: "No XML file uploaded" 
-          });
-        }
-
-        const jobId = generateJobId();
-        
-        // Initialize job status
-        importJobs.set(jobId, {
-          id: jobId,
-          status: 'processing',
-          progress: 0,
-          totalRows: 0,
-          processed: 0,
-          imported: 0,
-          skipped: 0,
-          errors: [],
-          details: [],
-        });
-
-        // Start async processing for orders
-        processOrdersXmlImportAsync(jobId, req.file.buffer);
-
-        res.json({
-          success: true,
-          jobId: jobId,
-          message: "Orders import started successfully"
-        });
-      } catch (error) {
-        console.error("Orders XML import error:", error);
-        res.status(500).json({ 
-          success: false, 
-          error: "Failed to process XML file" 
-        });
-      }
-    });
-  });
-
-  // Check import job status for orders
-  app.get("/api/orders/import-xml/:jobId/status", (req, res) => {
-    const { jobId } = req.params;
-    const job = importJobs.get(jobId);
-    
-    if (!job) {
-      return res.status(404).json({
-        success: false,
-        error: "Job not found"
+      console.log("Starting XML import for orders...");
+      const result = await storage.importOrdersFromXml(xmlContent);
+      console.log("XML import completed:", result);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error importing orders from XML:", error);
+      res.status(500).json({ 
+        success: 0,
+        errors: [{ 
+          row: 0, 
+          error: error instanceof Error ? error.message : "Failed to import orders from XML",
+          data: error instanceof Error ? error.stack : undefined
+        }],
+        warnings: []
       });
     }
-
-    res.json({
-      success: true,
-      job
-    });
   });
-
-
-
-  // Process orders XML import asynchronously
-  async function processOrdersXmlImportAsync(jobId: string, fileBuffer: Buffer) {
-    const job = importJobs.get(jobId);
-    if (!job) return;
-
-    try {
-      console.log(`Starting orders XML import job ${jobId}...`);
-      
-      // Parse XML
-      const { parseString } = await import('xml2js');
-      const xmlContent = fileBuffer.toString('utf8');
-      
-      const parseXml = (xml: string): Promise<any> => {
-        return new Promise((resolve, reject) => {
-          parseString(xml, { 
-            explicitArray: false,
-            mergeAttrs: true 
-          }, (err: any, result: any) => {
-            if (err) reject(err);
-            else resolve(result);
-          });
-        });
-      };
-
-      const parsed = await parseXml(xmlContent);
-      
-      let rows: any[] = [];
-      if (parsed.DATAPACKET && parsed.DATAPACKET.ROWDATA && parsed.DATAPACKET.ROWDATA.ROW) {
-        rows = Array.isArray(parsed.DATAPACKET.ROWDATA.ROW) ? parsed.DATAPACKET.ROWDATA.ROW : [parsed.DATAPACKET.ROWDATA.ROW];
-      } else {
-        throw new Error("Невірний формат XML: очікується структура DATAPACKET/ROWDATA/ROW");
-      }
-
-      job.totalRows = rows.length;
-      job.progress = 5; // 5% for parsing
-
-      console.log(`Orders import job ${jobId}: Found ${rows.length} records to process`);
-
-      // Process each row
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        const rowNumber = i + 1;
-
-        try {
-          const orderData: any = {
-            orderNumber: row.NAME_ZAKAZ || `ORDER_${rowNumber}`,
-            totalAmount: storage.parseDecimal(row.SUMMA) || "0",
-            notes: row.COMMENT || "",
-            invoiceNumber: row.SCHET || "",
-            trackingNumber: row.DECLARATION || "",
-            clientId: 1,
-          };
-
-          // Process dates
-          if (row.TERM) orderData.dueDate = storage.parseDate(row.TERM);
-          if (row.PAY) orderData.paymentDate = storage.parseDate(row.PAY);
-          if (row.REALIZ) orderData.shippedDate = storage.parseDate(row.REALIZ);
-          if (row.DATE_CREATE) orderData.createdAt = storage.parseDate(row.DATE_CREATE);
-
-          // Check if order already exists
-          const existingOrder = await storage.findOrderByNumberAndInvoice(
-            orderData.orderNumber,
-            orderData.invoiceNumber || '',
-            orderData.createdAt
-          );
-
-          if (existingOrder) {
-            job.details.push({
-              name: orderData.orderNumber,
-              status: 'skipped',
-              message: `Замовлення вже існує`
-            });
-            job.skipped++;
-          } else {
-            // Create new order
-            await storage.createOrderFromImport(orderData);
-            job.details.push({
-              name: orderData.orderNumber,
-              status: 'imported',
-              message: 'Успішно імпортовано'
-            });
-            job.imported++;
-          }
-
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Невідома помилка';
-          job.errors.push(errorMessage);
-          job.details.push({
-            name: row.NAME_ZAKAZ || `Рядок ${rowNumber}`,
-            status: 'error',
-            message: errorMessage
-          });
-        }
-
-        job.processed++;
-        job.progress = Math.round(5 + (job.processed / job.totalRows) * 95);
-
-        // Small delay for UI responsiveness
-        if (i % 10 === 0) {
-          await new Promise(resolve => setTimeout(resolve, 10));
-        }
-      }
-
-      job.status = 'completed';
-      job.progress = 100;
-      console.log(`Orders import job ${jobId} completed: ${job.imported} imported, ${job.skipped} skipped, ${job.errors.length} errors`);
-
-    } catch (error) {
-      job.status = 'failed';
-      job.errors.push(error instanceof Error ? error.message : "Помилка імпорту");
-      console.error(`Orders import job ${jobId} failed:`, error);
-    }
-
-    // Clean up job after 1 hour
-    setTimeout(() => {
-      importJobs.delete(jobId);
-    }, 60 * 60 * 1000);
-  }
 
   // Recipes
   app.get("/api/recipes", async (req, res) => {

@@ -7823,32 +7823,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Orders XML Import
-  // Helper methods for import functionality
-  async findOrderByNumberAndInvoice(orderNumber: string, invoiceNumber: string, createdAt?: Date): Promise<Order | undefined> {
-    const result = await db.select()
-      .from(orders)
-      .where(
-        and(
-          eq(orders.orderNumber, orderNumber),
-          eq(orders.invoiceNumber, invoiceNumber),
-          createdAt ? 
-            sql`DATE(${orders.createdAt}) = DATE(${createdAt})` :
-            sql`DATE(${orders.createdAt}) = CURRENT_DATE`
-        )
-      )
-      .limit(1);
-    
-    return result[0];
-  }
-
-  async createOrderFromImport(orderData: any): Promise<Order> {
-    const [order] = await db.insert(orders)
-      .values(orderData)
-      .returning();
-    
-    return order;
-  }
-
   async importOrdersFromXml(xmlContent: string): Promise<{
     success: number;
     errors: Array<{ row: number; error: string; data?: any }>;
@@ -8021,29 +7995,6 @@ export class DatabaseStorage implements IStorage {
             orderData.statusId = 12; // Оплачено
           } else {
             orderData.statusId = 1; // За замовчуванням
-          }
-
-          // Перевіряємо чи існує замовлення з таким номером, датою створення та номером рахунку
-          const existingOrder = await db.select()
-            .from(orders)
-            .where(
-              and(
-                eq(orders.orderNumber, orderData.orderNumber),
-                eq(orders.invoiceNumber, orderData.invoiceNumber || ''),
-                orderData.createdAt ? 
-                  sql`DATE(${orders.createdAt}) = DATE(${orderData.createdAt})` :
-                  sql`DATE(${orders.createdAt}) = CURRENT_DATE`
-              )
-            )
-            .limit(1);
-
-          if (existingOrder.length > 0) {
-            result.warnings.push({
-              row: rowNumber,
-              warning: `Замовлення ${orderData.orderNumber} з такою датою та номером рахунку вже існує`,
-              data: row
-            });
-            continue; // Пропускаємо цей запис
           }
 
           // Створюємо замовлення
