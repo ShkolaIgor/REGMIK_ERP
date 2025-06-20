@@ -23,11 +23,26 @@ interface ImportResult {
   }>;
 }
 
+interface ImportJob {
+  id: string;
+  status: 'processing' | 'completed' | 'failed';
+  progress: number;
+  processed: number;
+  imported: number;
+  skipped: number;
+  errors: Array<{ row: number; error: string; data?: any }>;
+  warnings: Array<{ row: number; warning: string; data?: any }>;
+  totalRows: number;
+  startTime: string;
+}
+
 export default function OrdersXmlImport() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [currentJob, setCurrentJob] = useState<ImportJob | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -52,41 +67,26 @@ export default function OrdersXmlImport() {
     mutationFn: async (xmlContent: string) => {
       console.log("Starting XML import...");
       setIsImporting(true);
+      setCurrentJob(null);
+      setImportResult(null);
       
       try {
         const result = await apiRequest("/api/orders/xml-import", {
           method: "POST",
           body: { xmlContent },
         });
-        console.log("Import result:", result);
+        console.log("Import job started:", result);
         return result;
       } catch (error) {
         console.error("Import mutation error:", error);
         throw error;
-      } finally {
-        setIsImporting(false);
       }
     },
-    onSuccess: (result: ImportResult) => {
-      console.log("Import success:", result);
-      setImportResult(result);
-      setIsImporting(false);
-      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      
-      if (result.success > 0) {
-        toast({
-          title: "Імпорт завершено",
-          description: `Успішно імпортовано ${result.success} замовлень`,
-        });
-      }
-      
-      if (result.errors && result.errors.length > 0) {
-        toast({
-          title: "Виявлено помилки",
-          description: `${result.errors.length} замовлень не вдалося імпортувати`,
-          variant: "destructive",
-        });
-      }
+    onSuccess: (result: { jobId: string; message: string }) => {
+      console.log("Import job started:", result);
+      setJobId(result.jobId);
+      // Start polling for progress
+      pollJobStatus(result.jobId);
     },
     onError: (error) => {
       console.error("Import error:", error);
@@ -103,6 +103,67 @@ export default function OrdersXmlImport() {
       });
     },
   });
+
+  // Poll job status for progress updates
+  const pollJobStatus = async (jobId: string) => {
+    const checkStatus = async () => {
+      try {
+        const response = await fetch(`/api/orders/xml-import/${jobId}/status`);
+        if (!response.ok) throw new Error("Failed to fetch job status");
+        
+        const data = await response.json();
+        const job: ImportJob = data.job;
+        
+        setCurrentJob(job);
+        
+        if (job.status === 'completed') {
+          setIsImporting(false);
+          setImportResult({
+            success: job.imported,
+            errors: job.errors,
+            warnings: job.warnings
+          });
+          queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+          
+          toast({
+            title: "Імпорт завершено",
+            description: `Успішно імпортовано ${job.imported} замовлень. Пропущено: ${job.skipped}. Помилок: ${job.errors.length}`,
+          });
+          
+          return;
+        } else if (job.status === 'failed') {
+          setIsImporting(false);
+          setImportResult({
+            success: job.imported,
+            errors: job.errors,
+            warnings: job.warnings
+          });
+          
+          toast({
+            title: "Помилка імпорту",
+            description: `Імпорт не вдався. Оброблено: ${job.processed}/${job.totalRows}`,
+            variant: "destructive",
+          });
+          
+          return;
+        }
+        
+        // Continue polling if still processing
+        setTimeout(checkStatus, 1000);
+        
+      } catch (error) {
+        console.error("Error checking job status:", error);
+        setIsImporting(false);
+        toast({
+          title: "Помилка",
+          description: "Не вдалося отримати статус імпорту",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    checkStatus();
+  };
 
   const handleImport = async () => {
     if (!selectedFile) {

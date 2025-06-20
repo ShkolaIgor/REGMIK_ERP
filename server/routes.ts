@@ -984,7 +984,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Orders XML Import
+  // Orders XML Import with progress tracking
+  const ordersImportJobs = new Map<string, {
+    id: string;
+    status: 'processing' | 'completed' | 'failed';
+    progress: number;
+    processed: number;
+    imported: number;
+    skipped: number;
+    errors: Array<{ row: number; error: string; data?: any }>;
+    warnings: Array<{ row: number; warning: string; data?: any }>;
+    totalRows: number;
+    startTime: Date;
+  }>();
+
+  // Generate unique job ID for orders
+  const generateOrdersJobId = () => Math.random().toString(36).substring(2, 15);
+
   app.post("/api/orders/xml-import", async (req, res) => {
     try {
       const { xmlContent } = req.body;
@@ -997,24 +1013,185 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      console.log("Starting XML import for orders...");
-      const result = await storage.importOrdersFromXml(xmlContent);
-      console.log("XML import completed:", result);
+      const jobId = generateJobId();
       
-      res.json(result);
+      // Initialize job
+      importJobs.set(jobId, {
+        id: jobId,
+        status: 'processing',
+        progress: 0,
+        processed: 0,
+        imported: 0,
+        skipped: 0,
+        errors: [],
+        warnings: [],
+        totalRows: 0,
+        startTime: new Date()
+      });
+
+      // Return job ID immediately
+      res.json({
+        jobId,
+        message: "Import job started. Use the job ID to check progress."
+      });
+
+      // Process import asynchronously
+      processOrdersImportAsync(jobId, xmlContent);
+
     } catch (error) {
-      console.error("Error importing orders from XML:", error);
+      console.error("Error starting orders XML import:", error);
       res.status(500).json({ 
         success: 0,
         errors: [{ 
           row: 0, 
-          error: error instanceof Error ? error.message : "Failed to import orders from XML",
+          error: error instanceof Error ? error.message : "Failed to start import",
           data: error instanceof Error ? error.stack : undefined
         }],
         warnings: []
       });
     }
   });
+
+  // Check import job status
+  app.get("/api/orders/xml-import/:jobId/status", (req, res) => {
+    const { jobId } = req.params;
+    const job = ordersImportJobs.get(jobId);
+    
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        error: "Job not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      job
+    });
+  });
+
+  // Async import processing function
+  async function processOrdersImportAsync(jobId: string, xmlContent: string) {
+    const job = ordersImportJobs.get(jobId);
+    if (!job) return;
+
+    try {
+      console.log(`Starting XML import job ${jobId}...`);
+      
+      // Parse XML to get total count first
+      const { parseString } = await import('xml2js');
+      const parseXml = (xml: string): Promise<any> => {
+        return new Promise((resolve, reject) => {
+          parseString(xml, { 
+            explicitArray: false,
+            mergeAttrs: true 
+          }, (err: any, result: any) => {
+            if (err) reject(err);
+            else resolve(result);
+          });
+        });
+      };
+
+      const parsed = await parseXml(xmlContent);
+      
+      let rows: any[] = [];
+      if (parsed.DATAPACKET && parsed.DATAPACKET.ROWDATA && parsed.DATAPACKET.ROWDATA.ROW) {
+        rows = Array.isArray(parsed.DATAPACKET.ROWDATA.ROW) ? parsed.DATAPACKET.ROWDATA.ROW : [parsed.DATAPACKET.ROWDATA.ROW];
+      } else {
+        throw new Error("Невірний формат XML: очікується структура DATAPACKET/ROWDATA/ROW");
+      }
+
+      job.totalRows = rows.length;
+      job.progress = 1; // 1% for parsing
+
+      console.log(`Job ${jobId}: Found ${rows.length} records to process`);
+
+      // Process records with progress updates
+      const batchSize = 50;
+      for (let i = 0; i < rows.length; i += batchSize) {
+        const batch = rows.slice(i, i + batchSize);
+        
+        for (let j = 0; j < batch.length; j++) {
+          const row = batch[j];
+          const rowNumber = i + j + 1;
+
+          try {
+            const orderData: any = {
+              orderNumber: row.NAME_ZAKAZ || `ORDER_${rowNumber}`,
+              totalAmount: storage.parseDecimal(row.SUMMA) || "0",
+              notes: row.COMMENT || "",
+              invoiceNumber: row.SCHET || "",
+              trackingNumber: row.DECLARATION || "",
+              clientId: 1,
+            };
+
+            // Process dates
+            if (row.TERM) orderData.dueDate = storage.parseDate(row.TERM);
+            if (row.PAY) orderData.paymentDate = storage.parseDate(row.PAY);
+            if (row.REALIZ) orderData.shippedDate = storage.parseDate(row.REALIZ);
+            if (row.DATE_CREATE) orderData.createdAt = storage.parseDate(row.DATE_CREATE);
+
+            // Check for existing order
+            const existingOrder = await db.select()
+              .from(orders)
+              .where(
+                and(
+                  eq(orders.orderNumber, orderData.orderNumber),
+                  eq(orders.invoiceNumber, orderData.invoiceNumber || ''),
+                  orderData.createdAt ? 
+                    sql`DATE(${orders.createdAt}) = DATE(${orderData.createdAt})` :
+                    sql`DATE(${orders.createdAt}) = CURRENT_DATE`
+                )
+              )
+              .limit(1);
+
+            if (existingOrder.length > 0) {
+              job.warnings.push({
+                row: rowNumber,
+                warning: `Замовлення ${orderData.orderNumber} вже існує`,
+                data: row
+              });
+              job.skipped++;
+            } else {
+              // Create order
+              await db.insert(orders).values(orderData);
+              job.imported++;
+            }
+
+          } catch (error) {
+            job.errors.push({
+              row: rowNumber,
+              error: error instanceof Error ? error.message : "Невідома помилка",
+              data: row
+            });
+          }
+
+          job.processed++;
+          job.progress = Math.round((job.processed / job.totalRows) * 100);
+        }
+
+        // Small delay between batches
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+
+      job.status = 'completed';
+      job.progress = 100;
+      console.log(`Job ${jobId} completed: ${job.imported} imported, ${job.skipped} skipped, ${job.errors.length} errors`);
+
+    } catch (error) {
+      job.status = 'failed';
+      job.errors.push({
+        row: 0,
+        error: error instanceof Error ? error.message : "Помилка імпорту"
+      });
+      console.error(`Job ${jobId} failed:`, error);
+    }
+
+    // Clean up job after 1 hour
+    setTimeout(() => {
+      ordersImportJobs.delete(jobId);
+    }, 60 * 60 * 1000);
+  }
 
   // Recipes
   app.get("/api/recipes", async (req, res) => {
