@@ -242,26 +242,35 @@ export default function Orders() {
         );
       
       case 'customerName':
-        const client = order.clientId 
-          ? Array.isArray(allClients) && allClients.find((client: any) => client.id === order.clientId)
-          : null;
-        const contact = order.clientContactsId
-          ? Array.isArray(allClientContacts) && allClientContacts.find((contact: any) => contact.id === order.clientContactsId)
-          : null;
+        // Використовуємо дані клієнта та контакту, які вже завантажені з сервера
+        const client = order.client || null;
+        const contact = order.contact || null;
         
         return (
           <div className="space-y-1">
-            <div className="font-medium">
-              {client?.name || order.customerName}
+            {/* Назва клієнта */}
+            <div className="font-medium text-sm">
+              {client?.name || order.customerName || "Клієнт не вказаний"}
             </div>
+            
+            {/* ЄДРПОУ з таблиці clients */}
             {client?.taxCode && (
               <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded inline-block">
                 ЄДРПОУ: {client.taxCode}
               </div>
             )}
+            
+            {/* Контактна особа з таблиці client_contacts */}
             {contact && (
-              <div className="text-sm text-gray-600">
+              <div className="text-xs text-gray-600">
                 👤 {contact.fullName}
+              </div>
+            )}
+            
+            {/* Якщо немає клієнта в таблиці, але є customerName */}
+            {!client && order.customerName && (
+              <div className="text-xs text-gray-500 italic">
+                Ручний ввід
               </div>
             )}
           </div>

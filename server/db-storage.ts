@@ -584,9 +584,10 @@ export class DatabaseStorage implements IStorage {
       .limit(limit)
       .offset(offset);
 
-    // Завантаження товарів для кожного замовлення
+    // Завантаження товарів, клієнтів та контактів для кожного замовлення
     const ordersWithItems = await Promise.all(
       ordersResult.map(async (order) => {
+        // Завантаження товарів замовлення
         const itemsResult = await db.select({
           id: orderItems.id,
           orderId: orderItems.orderId,
@@ -619,9 +620,49 @@ export class DatabaseStorage implements IStorage {
 
         const filteredItems = itemsResult.filter(item => item.product !== null);
 
+        // Завантаження інформації про клієнта з таблиці clients
+        let clientData = null;
+        if (order.clientId) {
+          const clientResult = await db.select({
+            id: clients.id,
+            name: clients.name,
+            taxCode: clients.taxCode,
+            phone: clients.phone,
+            email: clients.email
+          })
+          .from(clients)
+          .where(eq(clients.id, order.clientId))
+          .limit(1);
+          
+          if (clientResult.length > 0) {
+            clientData = clientResult[0];
+          }
+        }
+
+        // Завантаження інформації про контакт з таблиці client_contacts
+        let contactData = null;
+        if (order.clientContactsId) {
+          const contactResult = await db.select({
+            id: clientContacts.id,
+            fullName: clientContacts.fullName,
+            position: clientContacts.position,
+            phone: clientContacts.phone,
+            email: clientContacts.email
+          })
+          .from(clientContacts)
+          .where(eq(clientContacts.id, order.clientContactsId))
+          .limit(1);
+          
+          if (contactResult.length > 0) {
+            contactData = contactResult[0];
+          }
+        }
+
         return {
           ...order,
-          items: filteredItems as (OrderItem & { product: Product })[]
+          items: filteredItems as (OrderItem & { product: Product })[],
+          client: clientData,
+          contact: contactData
         };
       })
     );
