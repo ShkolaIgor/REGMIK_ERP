@@ -186,7 +186,7 @@ export default function Orders() {
       'paymentDate',
       'dueDate',
       'totalAmount',
-      'paymentStatus',
+      'shippedDate',
       'status',
       'actions'
     ];
