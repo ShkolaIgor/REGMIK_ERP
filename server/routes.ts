@@ -1031,7 +1031,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Order import job started. Use the job ID to check progress."
       });
 
-      processOrderXmlImportAsync(jobId, req.file.buffer);
+      processOrderXmlImportAsync(jobId, req.file.buffer, orderImportJobs);
 
     } catch (error) {
       console.error("Order XML import error:", error);
@@ -1060,6 +1060,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       job
     });
   });
+
+  // Process Order XML Import Async Function
+  async function processOrderXmlImportAsync(
+    jobId: string, 
+    xmlBuffer: Buffer, 
+    jobsMap: Map<string, any>
+  ) {
+    const job = jobsMap.get(jobId);
+    if (!job) return;
+
+    try {
+      const xmlContent = xmlBuffer.toString('utf-8');
+      console.log(`Processing order XML import job ${jobId}...`);
+      
+      // Parse XML and process orders
+      const result = await storage.importOrdersFromXml(xmlContent);
+      
+      // Update job status
+      job.status = 'completed';
+      job.progress = 100;
+      job.processed = result.success + result.errors.length;
+      job.imported = result.success;
+      job.skipped = 0;
+      job.errors = result.errors.map((err: any) => err.error);
+      job.details = result.errors.map((err: any) => ({
+        orderNumber: err.data?.orderNumber || `Row ${err.row}`,
+        status: 'error' as const,
+        message: err.error
+      }));
+      job.totalRows = result.success + result.errors.length;
+      
+      console.log(`Order import job ${jobId} completed: ${result.success} imported, ${result.errors.length} errors`);
+      
+    } catch (error) {
+      console.error(`Order import job ${jobId} failed:`, error);
+      job.status = 'failed';
+      job.errors = [error instanceof Error ? error.message : 'Unknown error'];
+    }
+  }
 
   // Recipes
   app.get("/api/recipes", async (req, res) => {

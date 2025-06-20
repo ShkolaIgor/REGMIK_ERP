@@ -29,7 +29,7 @@ import DueDateButton from "@/components/DueDateButton";
 import { useSorting } from "@/hooks/useSorting";
 import { InlineSerialNumbers } from "@/components/InlineSerialNumbers";
 import { NovaPoshtaIntegration } from "@/components/NovaPoshtaIntegration";
-import OrdersXmlImport from "@/components/OrdersXmlImport";
+import { OrdersXmlImport } from "@/components/OrdersXmlImport";
 // Типи
 type Order = {
   id: number;
