@@ -1013,10 +1013,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const jobId = generateJobId();
+      const jobId = generateOrdersJobId();
       
       // Initialize job
-      importJobs.set(jobId, {
+      ordersImportJobs.set(jobId, {
         id: jobId,
         status: 'processing',
         progress: 0,
