@@ -218,6 +218,9 @@ export default function OrdersXmlImport() {
   const resetForm = () => {
     setSelectedFile(null);
     setImportResult(null);
+    setCurrentJob(null);
+    setJobId(null);
+    setIsImporting(false);
     const fileInput = document.getElementById('xml-file-input') as HTMLInputElement;
     if (fileInput) {
       fileInput.value = '';
