@@ -484,10 +484,135 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Orders
-  async getOrders(): Promise<(Order & { items: (OrderItem & { product: Product })[] })[]> {
-    const ordersResult = await db.select().from(orders);
+  // Orders with pagination
+  async getOrdersPaginated(params: {
+    page: number;
+    limit: number;
+    search?: string;
+    statusFilter?: string;
+    paymentFilter?: string;
+    dateRangeFilter?: string;
+  }): Promise<{
+    orders: (Order & { items: (OrderItem & { product: Product })[] })[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const { page, limit, search = '', statusFilter = '', paymentFilter = '', dateRangeFilter = '' } = params;
+    const offset = (page - 1) * limit;
+
+    // Початковий запит для підрахунку та фільтрації
+    let baseQuery = db.select({
+      id: orders.id,
+      orderSequenceNumber: orders.orderSequenceNumber,
+      orderNumber: orders.orderNumber,
+      invoiceNumber: orders.invoiceNumber,
+      customerName: orders.customerName,
+      customerEmail: orders.customerEmail,
+      customerPhone: orders.customerPhone,
+      clientId: orders.clientId,
+      clientContactsId: orders.clientContactsId,
+      companyId: orders.companyId,
+      carrierId: orders.carrierId,
+      statusId: orders.statusId,
+      status: orders.status,
+      totalAmount: orders.totalAmount,
+      notes: orders.notes,
+      paymentDate: orders.paymentDate,
+      paymentType: orders.paymentType,
+      paidAmount: orders.paidAmount,
+      contractNumber: orders.contractNumber,
+      productionApproved: orders.productionApproved,
+      productionApprovedBy: orders.productionApprovedBy,
+      productionApprovedAt: orders.productionApprovedAt,
+      dueDate: orders.dueDate,
+      shippedDate: orders.shippedDate,
+      trackingNumber: orders.trackingNumber,
+      createdAt: orders.createdAt,
+      updatedAt: orders.updatedAt
+    }).from(orders);
+
+    // Застосування фільтрів
+    const conditions = [];
+
+    // Пошук
+    if (search) {
+      const searchLower = `%${search.toLowerCase()}%`;
+      conditions.push(
+        or(
+          ilike(orders.orderNumber, searchLower),
+          ilike(orders.customerName, searchLower),
+          ilike(orders.customerEmail, searchLower),
+          ilike(orders.customerPhone, searchLower),
+          sql`CAST(${orders.orderSequenceNumber} AS TEXT) ILIKE ${searchLower}`
+        )
+      );
+    }
+
+    // Фільтр за статусом
+    if (statusFilter && statusFilter !== 'all') {
+      conditions.push(eq(orders.status, statusFilter));
+    }
+
+    // Фільтр за оплатою
+    if (paymentFilter && paymentFilter !== 'all') {
+      if (paymentFilter === 'paid') {
+        conditions.push(isNotNull(orders.paymentDate));
+      } else if (paymentFilter === 'unpaid') {
+        conditions.push(isNull(orders.paymentDate));
+      } else if (paymentFilter === 'overdue') {
+        conditions.push(
+          and(
+            isNull(orders.paymentDate),
+            isNotNull(orders.dueDate),
+            lt(orders.dueDate, new Date())
+          )
+        );
+      }
+    }
+
+    // Фільтр за датами
+    if (dateRangeFilter && dateRangeFilter !== 'all') {
+      const now = new Date();
+      if (dateRangeFilter === 'today') {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        conditions.push(
+          and(
+            gte(orders.createdAt, today),
+            lt(orders.createdAt, tomorrow)
+          )
+        );
+      } else if (dateRangeFilter === 'week') {
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        conditions.push(gte(orders.createdAt, weekAgo));
+      } else if (dateRangeFilter === 'month') {
+        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        conditions.push(gte(orders.createdAt, monthAgo));
+      }
+    }
+
+    // Підрахунок загальної кількості
+    const countQuery = db.select({ count: sql<number>`COUNT(*)` }).from(orders);
+    if (conditions.length > 0) {
+      countQuery.where(and(...conditions));
+    }
+    const [{ count: total }] = await countQuery;
+
+    // Отримання замовлень з пагінацією
+    if (conditions.length > 0) {
+      baseQuery = baseQuery.where(and(...conditions));
+    }
     
+    const ordersResult = await baseQuery
+      .orderBy(desc(orders.orderSequenceNumber))
+      .limit(limit)
+      .offset(offset);
+
+    // Завантаження товарів для кожного замовлення
     const ordersWithItems = await Promise.all(
       ordersResult.map(async (order) => {
         const itemsResult = await db.select({
@@ -512,7 +637,6 @@ export class DatabaseStorage implements IStorage {
             unit: products.unit,
             minStock: products.minStock,
             maxStock: products.maxStock,
-
             isActive: products.isActive,
             createdAt: products.createdAt
           }
@@ -521,31 +645,28 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(products, eq(orderItems.productId, products.id))
         .where(eq(orderItems.orderId, order.id));
 
-        // Логування для замовлення #9
-        if (order.id === 9) {
-          console.log(`Замовлення #9 - всього товарів: ${itemsResult.length}`);
-          console.log('Товари замовлення #9:', itemsResult.map(item => ({ 
-            id: item.id, 
-            productId: item.productId, 
-            hasProduct: !!item.product,
-            productName: item.product?.name,
+        const filteredItems = itemsResult.filter(item => item.product !== null);
 
-            fullProduct: item.product
-          })));
-        }
-
-        const items = itemsResult.filter(item => item.product) as (OrderItem & { product: Product })[];
-        
-        // Логування після фільтрації
-        if (order.id === 9) {
-          console.log(`Замовлення #9 - після фільтрації: ${items.length} товарів`);
-        }
-        
-        return { ...order, items };
+        return {
+          ...order,
+          items: filteredItems as (OrderItem & { product: Product })[]
+        };
       })
     );
-    
-    return ordersWithItems;
+
+    return {
+      orders: ordersWithItems,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
+    };
+  }
+
+  // Legacy method for backward compatibility
+  async getOrders(): Promise<(Order & { items: (OrderItem & { product: Product })[] })[]> {
+    const result = await this.getOrdersPaginated({ page: 1, limit: 1000 });
+    return result.orders;
   }
 
   async getOrder(id: number): Promise<(Order & { items: (OrderItem & { product: Product })[] }) | undefined> {

@@ -215,6 +215,7 @@ export default function Orders() {
     paymentDate: 'Дата оплати',
     dueDate: 'Термін виконання',
     totalAmount: 'Сума',
+    shippedDate: 'Відвантаження',
     status: 'Статус',
     actions: 'Дії'
   };
@@ -414,8 +415,36 @@ export default function Orders() {
       case 'totalAmount':
         return <div className="font-medium">{formatCurrency(parseFloat(order.totalAmount))}</div>;
       
+      case 'shippedDate':
+        const carrier = order.carrierId 
+          ? Array.isArray(carriers) && carriers.find((c: any) => c.id === order.carrierId)
+          : null;
+        
+        return (
+          <div className="space-y-1">
+            {order.shippedDate && (
+              <div className="text-sm font-medium">
+                <UkrainianDate date={order.shippedDate} format="short" />
+              </div>
+            )}
+            {carrier && (
+              <div className="text-xs text-gray-600">
+                🚚 {carrier.name}
+              </div>
+            )}
+            {order.trackingNumber && (
+              <div className="text-xs text-blue-600 font-mono">
+                📦 {order.trackingNumber}
+              </div>
+            )}
+            {!order.shippedDate && (
+              <div className="text-xs text-gray-400">
+                Не відвантажено
+              </div>
+            )}
+          </div>
+        );
 
-      
       case 'status':
         const statusInfo = orderStatuses.find(s => s.id === order.statusId);
         const currentStatusName = statusInfo?.name || order.status || 'Невідомо';
