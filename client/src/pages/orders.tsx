@@ -1301,21 +1301,26 @@ export default function Orders() {
   const filteredClients = clientsList; // Дані вже відфільтровані на сервері
 
   const handleClientSelect = (clientId: string) => {
-    const selectedClient = Array.isArray(allClients) ? allClients.find((c: any) => c.id.toString() === clientId) : null;
+    console.log("handleClientSelect called with ID:", clientId);
+    
+    // Шукаємо клієнта у відфільтрованому списку
+    const selectedClient = filteredClients.find((c: any) => c.id.toString() === clientId);
+    console.log("Found client in filteredClients:", selectedClient);
+    
     if (selectedClient) {
+      console.log("Setting client:", selectedClient.name);
       form.setValue("clientId", clientId);
-      // Автоматично встановлюємо клієнта
       setSelectedClientId(clientId);
       setClientSearchValue(selectedClient.name);
       setClientComboboxOpen(false);
       
-      // Автозаповнення даних клієнта
-      if (selectedClient.email) {
-        form.setValue("customerEmail", selectedClient.email);
-      }
-      if (selectedClient.phone) {
-        form.setValue("customerPhone", selectedClient.phone);
-      }
+      // Очищаємо контакт при зміні клієнта
+      form.setValue("clientContactsId", "");
+      setSelectedContactId("");
+      
+      console.log("Client selection completed");
+    } else {
+      console.log("Client not found!");
     }
   };
 

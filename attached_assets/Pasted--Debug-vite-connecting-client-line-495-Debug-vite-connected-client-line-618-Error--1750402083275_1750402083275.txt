@@ -1,0 +1,52 @@
+[Debug] [vite] connecting... (client, line 495)
+[Debug] [vite] connected. (client, line 618)
+[Error] Warning: Connect(Droppable): Support for defaultProps will be removed from memo components in a future major release. Use JavaScript default parameters instead.
+thead
+_c3@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/components/ui/table.tsx:46:21
+table
+div
+_c@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/components/ui/table.tsx:20:20
+Provider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-beautiful-dnd.js:911:19
+App@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-beautiful-dnd.js:7428:24
+ErrorBoundary2@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-beautiful-dnd.js:1925:40
+DragDropContext@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-beautiful-dnd.js:7548:35
+div
+_c9@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/components/ui/card.tsx:114:21
+div
+_c@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/components/ui/card.tsx:20:20
+main
+div
+Orders@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/pages/orders.tsx:82:51
+Route@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:323:20
+Switch@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:379:25
+div
+main
+div
+Layout@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/components/Layout.tsx:153:34
+Router@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/App.tsx:87:49
+TooltipProviderProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js:38:52
+TooltipProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js:69:12
+QueryClientProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js:2805:9
+App
+	printWarning (chunk-RPCDYKBN.js:521)
+	error (chunk-RPCDYKBN.js:505)
+	updateMemoComponent (chunk-RPCDYKBN.js:14382)
+	beginWork$1 (chunk-RPCDYKBN.js:19753)
+	performUnitOfWork (chunk-RPCDYKBN.js:19198)
+	workLoopSync (chunk-RPCDYKBN.js:19137)
+	renderRootSync (chunk-RPCDYKBN.js:19116)
+	performSyncWorkOnRoot (chunk-RPCDYKBN.js:18874)
+	flushSyncCallbacks (chunk-RPCDYKBN.js:9119)
+	(anonymous function) (chunk-RPCDYKBN.js:18627)
+[Log] Starting to edit order: – {id: 10, orderSequenceNumber: 3, orderNumber: "ORD-1748803257877", …} (orders.tsx, line 1181)
+{id: 10, orderSequenceNumber: 3, orderNumber: "ORD-1748803257877", clientId: 1, clientContactsId: null, …}Object
+[Log] Full order data received: – {id: 10, orderSequenceNumber: 3, orderNumber: "ORD-1748803257877", …} (orders.tsx, line 1186)
+{id: 10, orderSequenceNumber: 3, orderNumber: "ORD-1748803257877", clientId: 1, clientContactsId: null, …}Object
+[Log] Setting client name from fullOrder: ТестКомпанія ТОВ (orders.tsx, line 1218)
+[Log] Order items: – [Object] (1) (orders.tsx, line 1251)
+[Object]Array (1)
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (chunk-V4SDQJCY.js, line 339)
+[Log] Client field focused, current value: – "ТестКомпанія ТОВ" (orders.tsx, line 1697)
+[Log] Client field onChange: – "р" (orders.tsx, line 1684)
+[Log] Client field onChange: – "ре" (orders.tsx, line 1684)
+[Log] Clicking client: – "РегМік" – "ID:" – 66 (orders.tsx, line 1721)
