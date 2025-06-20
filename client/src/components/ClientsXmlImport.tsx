@@ -124,18 +124,23 @@ export function ClientsXmlImport() {
     if (!currentJobId) return;
 
     try {
+      console.log('Polling job status for:', currentJobId);
       const response = await fetch(`/api/clients/import-xml/${currentJobId}/status`);
       const job = await response.json();
       
+      console.log('Job status response:', job);
+      
       if (job) {
         setJob(job);
-        setProgress(job.progress || 0);
+        // Ensure progress reaches 100% when completed
+        const currentProgress = job.status === 'completed' ? 100 : (job.progress || 0);
+        setProgress(currentProgress);
         
         if (job.status === 'completed') {
           setIsImporting(false);
           toast({
             title: "Імпорт клієнтів завершено",
-            description: `Оброблено: ${job.processed}, Імпортовано: ${job.imported}, Пропущено: ${job.skipped}`,
+            description: `Оброблено: ${job.processed || 0}, Імпортовано: ${job.imported || 0}, Пропущено: ${job.skipped || 0}`,
           });
           // Refresh clients list
           queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
@@ -288,22 +293,22 @@ export function ClientsXmlImport() {
                 <div className="space-y-3">
                   <Progress value={progress} className="w-full" />
                   <div className="text-xs text-gray-600">
-                    Прогрес: {progress}% {job && `(${job.processed}/${job.totalRows})`}
+                    Прогрес: {Math.round(progress)}% {job && job.totalRows > 0 && `(${job.processed || 0}/${job.totalRows})`}
                   </div>
                   
                   {job && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <span className="font-medium">Оброблено:</span>
-                        <div>{job.processed} / {job.totalRows}</div>
+                        <div>{job.processed || 0} {job.totalRows > 0 && `/ ${job.totalRows}`}</div>
                       </div>
                       <div>
                         <span className="font-medium">Імпортовано:</span>
-                        <div className="text-green-600">{job.imported}</div>
+                        <div className="text-green-600">{job.imported || 0}</div>
                       </div>
                       <div>
                         <span className="font-medium">Пропущено:</span>
-                        <div className="text-yellow-600">{job.skipped}</div>
+                        <div className="text-yellow-600">{job.skipped || 0}</div>
                       </div>
                       <div>
                         <span className="font-medium">Помилки:</span>
@@ -312,14 +317,20 @@ export function ClientsXmlImport() {
                     </div>
                   )}
 
-                  {job?.status && (
+                  {job && (
                     <div className="flex items-center gap-2 text-sm">
                       {getStatusIcon(job.status)}
                       <span className="font-medium">
                         Статус: {job.status === 'processing' ? 'Обробка' : 
                                  job.status === 'completed' ? 'Завершено' : 
-                                 job.status === 'failed' ? 'Помилка' : job.status}
+                                 job.status === 'failed' ? 'Помилка' : job.status || 'Невідомо'}
                       </span>
+                    </div>
+                  )}
+                  
+                  {jobId && !job && (
+                    <div className="text-sm text-gray-500">
+                      Job ID: {jobId} (завантаження статусу...)
                     </div>
                   )}
                 </div>
