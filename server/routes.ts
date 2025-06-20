@@ -5682,6 +5682,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cleanCode = row.EDRPOU.trim().replace(/\D/g, '');
       if (cleanCode.length === 8 || cleanCode.length === 10) {
         taxCode = cleanCode;
+      } else {
+        // Log warning about incorrect EDRPOU format but continue import without tax code
+        job.logs.push({
+          type: 'warning',
+          message: `Некоректний ЄДРПОУ для ${row.PREDPR}: "${row.EDRPOU}" (має бути 8 або 10 цифр)`,
+          details: `Клієнт буде імпортований без ЄДРПОУ`
+        });
       }
     }
 
