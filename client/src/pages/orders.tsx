@@ -1122,16 +1122,22 @@ export default function Orders() {
       clientId: order.clientId ? order.clientId.toString() : "",
       clientContactsId: order.clientContactsId ? order.clientContactsId.toString() : "",
       companyId: order.companyId ? order.companyId.toString() : "",
-
-
+      orderNumber: order.orderNumber || "",
+      totalAmount: order.totalAmount || "",
       status: order.status,
       notes: order.notes || "",
       paymentDate: formatDateForInput(order.paymentDate),
+      paymentType: order.paymentType || "full",
+      paidAmount: order.paidAmount || "0",
       dueDate: formatDateForInput(order.dueDate),
       shippedDate: formatDateForInput(order.shippedDate),
-      invoiceNumber: order.invoiceNumber || "",
-      carrierId: order.carrierId ? order.carrierId.toString() : "",
       trackingNumber: order.trackingNumber || "",
+      invoiceNumber: order.invoiceNumber || "",
+      carrierId: order.carrierId || null,
+      statusId: order.statusId || undefined,
+      productionApproved: order.productionApproved || false,
+      productionApprovedBy: order.productionApprovedBy || "",
+      productionApprovedAt: formatDateForInput(order.productionApprovedAt),
     });
 
     // Встановлюємо вибраного клієнта для оновлення контактів
