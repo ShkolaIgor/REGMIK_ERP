@@ -1233,14 +1233,35 @@ export const carriers = pgTable("carriers", {
   lastSyncAt: timestamp("last_sync_at"), // Дата останньої синхронізації
   citiesCount: integer("cities_count").default(0), // Кількість населених пунктів
   warehousesCount: integer("warehouses_count").default(0), // Кількість відділень
-  syncTime: varchar("sync_time", { length: 5 }), // Час синхронізації у форматі HH:MM
-  syncInterval: integer("sync_interval").default(24), // Інтервал оновлення даних у годинах
-  autoSync: boolean("auto_sync").default(false), // Автоматична синхронізація
+  // Налаштування розкладу автоматичного оновлення
+  autoUpdateEnabled: boolean("auto_update_enabled").default(false),
+  updateTime: varchar("update_time", { length: 5 }).default("06:00"), // HH:MM format
+  updateDays: text("update_days").default("1,2,3,4,5"), // дні тижня через кому (1-7, понеділок-неділя)
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Таблиця для зберігання ширини стовпців у таблицях
+export const columnWidths = pgTable("column_widths", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(), // Replit user ID
+  tableName: varchar("table_name", { length: 100 }).notNull(), // назва таблиці (orders, clients, etc.)
+  columnName: varchar("column_name", { length: 100 }).notNull(), // назва стовпця
+  width: integer("width").notNull(), // ширина в пікселях
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertCarrierSchema = createInsertSchema(carriers).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true,
+  citiesCount: true,
+  warehousesCount: true,
+  lastSyncAt: true
+});
+
+export const insertColumnWidthSchema = createInsertSchema(columnWidths).omit({ 
   id: true, 
   createdAt: true, 
   updatedAt: true 

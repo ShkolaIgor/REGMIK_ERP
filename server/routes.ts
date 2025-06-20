@@ -8393,5 +8393,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   const httpServer = createServer(app);
+  // Column widths API
+  app.get("/api/column-widths/:tableName", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const tableName = req.params.tableName;
+      
+      const widths = await storage.getColumnWidths(userId, tableName);
+      res.json(widths);
+    } catch (error) {
+      console.error("Failed to get column widths:", error);
+      res.status(500).json({ error: "Failed to get column widths" });
+    }
+  });
+
+  app.post("/api/column-widths", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const data = { ...req.body, userId };
+      
+      const width = await storage.upsertColumnWidth(data);
+      res.json(width);
+    } catch (error) {
+      console.error("Failed to save column width:", error);
+      res.status(500).json({ error: "Failed to save column width" });
+    }
+  });
+
   return httpServer;
 }
