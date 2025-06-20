@@ -7860,6 +7860,7 @@ export class DatabaseStorage implements IStorage {
             notes: row.COMMENT || "",
             invoiceNumber: row.SCHET || "",
             trackingNumber: row.DECLARATION || "",
+            customerName: `Замовлення_${row.NAME_ZAKAZ || rowNumber}`, // За замовчуванням
           };
 
           // Обробляємо дати
@@ -7878,23 +7879,29 @@ export class DatabaseStorage implements IStorage {
 
           // Знаходимо клієнта за INDEX_PREDPR
           let clientId = null;
+          let clientName = null;
           if (row.INDEX_PREDPR) {
-            const clientResult = await db.select({ id: clients.id })
+            const clientResult = await db.select({ id: clients.id, name: clients.name })
               .from(clients)
               .where(eq(clients.externalId, parseInt(row.INDEX_PREDPR)))
               .limit(1);
             
             if (clientResult.length > 0) {
               clientId = clientResult[0].id;
+              clientName = clientResult[0].name;
               orderData.clientId = clientId;
+              orderData.customerName = clientName; // Перезаписуємо значення за замовчуванням
             } else {
               result.warnings.push({
                 row: rowNumber,
                 warning: `Клієнт з external_id=${row.INDEX_PREDPR} не знайдений`,
                 data: row
               });
+              // Використовуємо номер замовлення як ім'я клієнта, якщо клієнт не знайдений
+              orderData.customerName = `Клієнт_${row.INDEX_PREDPR || rowNumber}`;
             }
           }
+          // Якщо INDEX_PREDPR відсутній, customerName вже встановлено за замовчуванням
 
           // Знаходимо компанію за INDEX_FIRMA
           if (row.INDEX_FIRMA) {
