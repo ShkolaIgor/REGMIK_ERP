@@ -338,6 +338,12 @@ export function ClientsXmlImport() {
                       <div>
                         <span className="font-medium">Помилки:</span>
                         <div className="text-red-600">{job.errors?.length || 0}</div>
+                        {job.failedIds && job.failedIds.length > 0 && (
+                          <div className="text-xs text-red-500 mt-1">
+                            Не імпортовано ID: {job.failedIds.slice(0, 3).join(', ')}
+                            {job.failedIds.length > 3 && ` та ще ${job.failedIds.length - 3}`}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}

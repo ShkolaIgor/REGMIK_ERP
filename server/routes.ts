@@ -5600,9 +5600,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       job.details.push({
         name: row.NAME || 'Unknown',
         status: 'error',
-        message: 'Missing required PREDPR field'
+        message: 'Missing required PREDPR field',
+        id_predpr: row.ID_PREDPR || 'N/A'
       });
-      job.errors.push(`Row ${job.processed + 1}: Missing required PREDPR field`);
+      job.errors.push(`Row ${job.processed + 1}: Missing required PREDPR field (ID_PREDPR: ${row.ID_PREDPR || 'N/A'})`);
+      job.failedIds.push(row.ID_PREDPR || 'N/A');
       return;
     }
 
