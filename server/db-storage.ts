@@ -515,8 +515,8 @@ export class DatabaseStorage implements IStorage {
         or(
           ilike(orders.orderNumber, searchLower),
           ilike(clients.name, searchLower),
-          ilike(orders.customerEmail, searchLower),
-          ilike(orders.customerPhone, searchLower),
+          ilike(clientContacts.email, searchLower),
+          ilike(clientContacts.phone, searchLower),
           sql`CAST(${orders.orderSequenceNumber} AS TEXT) ILIKE ${searchLower}`
         )
       );
@@ -3569,13 +3569,13 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async findCustomerAddressByDetails(customerName: string, cityName: string, warehouseAddress: string): Promise<CustomerAddress | null> {
+  async findCustomerAddressByDetails(clientId: number, cityName: string, warehouseAddress: string): Promise<CustomerAddress | null> {
     const [address] = await db
       .select()
       .from(customerAddresses)
       .where(
         and(
-          eq(customerAddresses.customerName, customerName),
+          eq(customerAddresses.clientId, clientId),
           eq(customerAddresses.cityName, cityName),
           eq(customerAddresses.warehouseAddress, warehouseAddress)
         )

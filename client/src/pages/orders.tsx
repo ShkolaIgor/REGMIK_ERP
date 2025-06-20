@@ -34,7 +34,9 @@ type Order = {
   id: number;
   orderSequenceNumber: number;
   orderNumber: string;
-  customerName: string;
+  clientName?: string;
+  clientTaxCode?: string;
+  contactName?: string;
   customerEmail: string | null;
   customerPhone: string | null;
   clientId: string | null;
@@ -184,7 +186,7 @@ export default function Orders() {
     return saved ? JSON.parse(saved) : [
       'orderSequenceNumber',
       'orderNumber', 
-      'customerName',
+      'clientName',
       'paymentDate',
       'dueDate',
       'totalAmount',
@@ -213,7 +215,7 @@ export default function Orders() {
   const columnLabels = {
     orderSequenceNumber: 'Замовлення',
     orderNumber: 'Рахунок',
-    customerName: 'Клієнт',
+    clientName: 'Клієнт',
     paymentDate: 'Дата оплати',
     dueDate: 'Термін виконання',
     totalAmount: 'Сума',
@@ -243,7 +245,7 @@ export default function Orders() {
           </div>
         );
       
-      case 'customerName':
+      case 'clientName':
         // Використовуємо дані клієнта та контакту, які вже завантажені з сервера
         const client = order.client || null;
         const contact = order.contact || null;
@@ -252,7 +254,7 @@ export default function Orders() {
           <div className="space-y-1">
             {/* Назва клієнта */}
             <div className="font-medium text-sm">
-              {client?.name || order.customerName || "Клієнт не вказаний"}
+              {client?.name || order.clientName || "Клієнт не вказаний"}
             </div>
             
             {/* ЄДРПОУ з таблиці clients */}
@@ -269,8 +271,8 @@ export default function Orders() {
               </div>
             )}
             
-            {/* Якщо немає клієнта в таблиці, але є customerName */}
-            {!client && order.customerName && (
+            {/* Якщо немає клієнта в таблиці, але є clientName */}
+            {!client && order.clientName && (
               <div className="text-xs text-gray-500 italic">
                 Ручний ввід
               </div>
