@@ -51,52 +51,14 @@ export function ClientContactsXmlImport() {
         setJob(null);
         setJobId(null);
         setProgress(0);
+        console.log('File selected:', selectedFile.name, selectedFile.size);
       } else {
         toast({
-          title: "Помилка файлу",
-          description: "Будь ласка, оберіть XML файл",
-          variant: "destructive"
+          title: "Неправильний формат файлу",
+          description: "Оберіть XML файл",
+          variant: "destructive",
         });
       }
-    }
-  };
-
-  const pollJobStatus = async (currentJobId: string) => {
-    if (!currentJobId) return;
-
-    try {
-      const response = await apiRequest(`/api/import-jobs/${currentJobId}`);
-      
-      if (response) {
-        setJob(response);
-        setProgress(response.progress || 0);
-        
-        if (response.status === 'completed') {
-          setIsImporting(false);
-          toast({
-            title: "Імпорт завершено",
-            description: `Оброблено: ${response.processed}, Імпортовано: ${response.imported}, Пропущено: ${response.skipped}`,
-          });
-        } else if (response.status === 'failed') {
-          setIsImporting(false);
-          toast({
-            title: "Помилка імпорту",
-            description: "Імпорт завершився з помилкою",
-            variant: "destructive",
-          });
-        } else if (response.status === 'processing') {
-          // Continue polling with shorter interval for better UX
-          setTimeout(() => pollJobStatus(currentJobId), 1000);
-        }
-      }
-    } catch (error) {
-      console.error('Error polling job status:', error);
-      setIsImporting(false);
-      toast({
-        title: "Помилка перевірки статусу",
-        description: "Не вдалося отримати статус імпорту",
-        variant: "destructive",
-      });
     }
   };
 
@@ -118,10 +80,14 @@ export function ClientContactsXmlImport() {
       const formData = new FormData();
       formData.append('xmlFile', file);
 
+      console.log('Starting import with file:', file.name);
+
       const response: ImportResponse = await apiRequest('/api/client-contacts/import-xml', {
         method: 'POST',
         body: formData,
       });
+
+      console.log('Import response:', response);
 
       if (response.success && response.jobId) {
         setJobId(response.jobId);
@@ -151,6 +117,44 @@ export function ClientContactsXmlImport() {
     }
   };
 
+  const pollJobStatus = async (currentJobId: string) => {
+    if (!currentJobId) return;
+
+    try {
+      const response = await apiRequest(`/api/import-jobs/${currentJobId}`);
+      
+      if (response) {
+        setJob(response);
+        setProgress(response.progress || 0);
+        
+        if (response.status === 'completed') {
+          setIsImporting(false);
+          toast({
+            title: "Імпорт завершено",
+            description: `Оброблено: ${response.processed}, Імпортовано: ${response.imported}, Пропущено: ${response.skipped}`,
+          });
+        } else if (response.status === 'failed') {
+          setIsImporting(false);
+          toast({
+            title: "Помилка імпорту",
+            description: "Імпорт завершився з помилкою",
+            variant: "destructive",
+          });
+        } else if (response.status === 'processing') {
+          setTimeout(() => pollJobStatus(currentJobId), 1000);
+        }
+      }
+    } catch (error) {
+      console.error('Error polling job status:', error);
+      setIsImporting(false);
+      toast({
+        title: "Помилка перевірки статусу",
+        description: "Не вдалося отримати статус імпорту",
+        variant: "destructive",
+      });
+    }
+  };
+
   const resetImport = () => {
     setFile(null);
     setJob(null);
@@ -161,40 +165,38 @@ export function ClientContactsXmlImport() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'imported':
+      case 'completed':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'updated':
-        return <CheckCircle className="h-4 w-4 text-blue-500" />;
-      case 'skipped':
-        return <Clock className="h-4 w-4 text-yellow-500" />;
-      case 'error':
+      case 'failed':
         return <XCircle className="h-4 w-4 text-red-500" />;
+      case 'processing':
+        return <Clock className="h-4 w-4 text-blue-500" />;
       default:
-        return null;
+        return <AlertCircle className="h-4 w-4 text-gray-500" />;
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'imported':
-        return 'Імпортовано';
+        return <Badge variant="default" className="bg-green-100 text-green-800">Імпортовано</Badge>;
       case 'updated':
-        return 'Оновлено';
+        return <Badge variant="default" className="bg-blue-100 text-blue-800">Оновлено</Badge>;
       case 'skipped':
-        return 'Пропущено';
+        return <Badge variant="secondary">Пропущено</Badge>;
       case 'error':
-        return 'Помилка';
+        return <Badge variant="destructive">Помилка</Badge>;
       default:
-        return status;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
-          <Upload className="h-4 w-4" />
-          Імпорт контактів XML
+        <Button variant="outline" size="sm">
+          <Upload className="h-4 w-4 mr-2" />
+          Імпорт XML
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -298,13 +300,24 @@ export function ClientContactsXmlImport() {
                       </div>
                     </div>
                   )}
+
+                  {job?.status && (
+                    <div className="flex items-center gap-2 text-sm">
+                      {getStatusIcon(job.status)}
+                      <span className="font-medium">
+                        Статус: {job.status === 'processing' ? 'Обробка' : 
+                                 job.status === 'completed' ? 'Завершено' : 
+                                 job.status === 'failed' ? 'Помилка' : job.status}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Results */}
-          {job && job.status === 'completed' && (
+          {/* Detailed Results */}
+          {job && job.details && job.details.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm">Деталі імпорту</CardTitle>
@@ -313,40 +326,33 @@ export function ClientContactsXmlImport() {
                 <ScrollArea className="h-64">
                   <div className="space-y-2">
                     {job.details.map((detail, index) => (
-                      <div key={index} className="flex items-center gap-2 p-2 border rounded">
-                        {getStatusIcon(detail.status)}
-                        <span className="font-medium">{detail.name}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {getStatusText(detail.status)}
-                        </Badge>
-                        <span className="text-xs text-gray-600 flex-1">
-                          {detail.message}
-                        </span>
+                      <div key={index} className="flex items-center justify-between p-2 border rounded">
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{detail.name}</div>
+                          {detail.message && (
+                            <div className="text-xs text-gray-600">{detail.message}</div>
+                          )}
+                        </div>
+                        <div>{getStatusBadge(detail.status)}</div>
                       </div>
                     ))}
                   </div>
                 </ScrollArea>
-                
-                <div className="mt-4 pt-4 border-t">
-                  <Button onClick={resetImport} className="w-full">
-                    Новий імпорт
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Errors */}
+          {/* Error Messages */}
           {job && job.errors && job.errors.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm text-red-600">Помилки імпорту</CardTitle>
+                <CardTitle className="text-sm text-red-600">Помилки</CardTitle>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-32">
                   <div className="space-y-1">
                     {job.errors.map((error, index) => (
-                      <div key={index} className="text-xs text-red-600 bg-red-50 p-2 rounded">
+                      <div key={index} className="text-sm text-red-600 p-2 bg-red-50 rounded">
                         {error}
                       </div>
                     ))}
@@ -355,8 +361,22 @@ export function ClientContactsXmlImport() {
               </CardContent>
             </Card>
           )}
+
+          {/* Action Buttons */}
+          {job && job.status !== 'processing' && (
+            <div className="flex gap-2">
+              <Button onClick={resetImport} variant="outline" className="flex-1">
+                Новий імпорт
+              </Button>
+              <Button onClick={() => setIsOpen(false)} className="flex-1">
+                Закрити
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+
+export default ClientContactsXmlImport;

@@ -341,7 +341,7 @@ export default function Clients() {
             onClick={() => setIsImportDialogOpen(true)}
           >
             <Upload className="mr-2 h-4 w-4" />
-            Імпорт XML
+            Імпорт клієнтів XML
           </Button>
           <ClientContactsXmlImport />
           <Button onClick={() => {
