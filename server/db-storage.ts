@@ -7823,6 +7823,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Orders XML Import
+  // Helper methods for import functionality
+  async findOrderByNumberAndInvoice(orderNumber: string, invoiceNumber: string, createdAt?: Date): Promise<Order | undefined> {
+    const result = await db.select()
+      .from(orders)
+      .where(
+        and(
+          eq(orders.orderNumber, orderNumber),
+          eq(orders.invoiceNumber, invoiceNumber),
+          createdAt ? 
+            sql`DATE(${orders.createdAt}) = DATE(${createdAt})` :
+            sql`DATE(${orders.createdAt}) = CURRENT_DATE`
+        )
+      )
+      .limit(1);
+    
+    return result[0];
+  }
+
+  async createOrderFromImport(orderData: any): Promise<Order> {
+    const [order] = await db.insert(orders)
+      .values(orderData)
+      .returning();
+    
+    return order;
+  }
+
   async importOrdersFromXml(xmlContent: string): Promise<{
     success: number;
     errors: Array<{ row: number; error: string; data?: any }>;

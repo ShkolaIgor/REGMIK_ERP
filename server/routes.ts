@@ -984,78 +984,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Orders XML Import with progress tracking
-  const ordersImportJobs = new Map<string, {
-    id: string;
-    status: 'processing' | 'completed' | 'failed';
-    progress: number;
-    processed: number;
-    imported: number;
-    skipped: number;
-    errors: Array<{ row: number; error: string; data?: any }>;
-    warnings: Array<{ row: number; warning: string; data?: any }>;
-    totalRows: number;
-    startTime: Date;
-  }>();
-
-  // Generate unique job ID for orders
-  const generateOrdersJobId = () => Math.random().toString(36).substring(2, 15);
-
-  app.post("/api/orders/xml-import", async (req, res) => {
+  // Orders XML Import endpoint (using same structure as clients)
+  app.post("/api/orders/import-xml", upload.single('xmlFile'), async (req, res) => {
     try {
-      const { xmlContent } = req.body;
-      
-      if (!xmlContent) {
+      if (!req.file) {
         return res.status(400).json({ 
-          success: 0,
-          errors: [{ row: 0, error: "XML content is required" }],
-          warnings: []
+          success: false, 
+          error: "No XML file uploaded" 
         });
       }
 
-      const jobId = generateOrdersJobId();
+      const jobId = generateJobId();
       
-      // Initialize job
-      ordersImportJobs.set(jobId, {
+      // Initialize job status
+      importJobs.set(jobId, {
         id: jobId,
         status: 'processing',
         progress: 0,
+        totalRows: 0,
         processed: 0,
         imported: 0,
         skipped: 0,
         errors: [],
-        warnings: [],
-        totalRows: 0,
-        startTime: new Date()
+        details: [],
       });
 
-      // Return job ID immediately
+      // Start async processing for orders
+      processOrdersXmlImportAsync(jobId, req.file.buffer);
+
       res.json({
-        jobId,
-        message: "Import job started. Use the job ID to check progress."
+        success: true,
+        jobId: jobId,
+        message: "Orders import started successfully"
       });
-
-      // Process import asynchronously
-      processOrdersImportAsync(jobId, xmlContent);
-
     } catch (error) {
-      console.error("Error starting orders XML import:", error);
+      console.error("Orders XML import error:", error);
       res.status(500).json({ 
-        success: 0,
-        errors: [{ 
-          row: 0, 
-          error: error instanceof Error ? error.message : "Failed to start import",
-          data: error instanceof Error ? error.stack : undefined
-        }],
-        warnings: []
+        success: false, 
+        error: "Failed to process XML file" 
       });
     }
   });
 
-  // Check import job status
-  app.get("/api/orders/xml-import/:jobId/status", (req, res) => {
+  // Check import job status for orders
+  app.get("/api/orders/import-xml/:jobId/status", (req, res) => {
     const { jobId } = req.params;
-    const job = ordersImportJobs.get(jobId);
+    const job = importJobs.get(jobId);
     
     if (!job) {
       return res.status(404).json({
@@ -1070,16 +1044,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Async import processing function
-  async function processOrdersImportAsync(jobId: string, xmlContent: string) {
-    const job = ordersImportJobs.get(jobId);
+
+
+  // Process orders XML import asynchronously
+  async function processOrdersXmlImportAsync(jobId: string, fileBuffer: Buffer) {
+    const job = importJobs.get(jobId);
     if (!job) return;
 
     try {
-      console.log(`Starting XML import job ${jobId}...`);
+      console.log(`Starting orders XML import job ${jobId}...`);
       
-      // Parse XML to get total count first
+      // Parse XML
       const { parseString } = await import('xml2js');
+      const xmlContent = fileBuffer.toString('utf8');
+      
       const parseXml = (xml: string): Promise<any> => {
         return new Promise((resolve, reject) => {
           parseString(xml, { 
@@ -1102,95 +1080,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       job.totalRows = rows.length;
-      job.progress = 1; // 1% for parsing
+      job.progress = 5; // 5% for parsing
 
-      console.log(`Job ${jobId}: Found ${rows.length} records to process`);
+      console.log(`Orders import job ${jobId}: Found ${rows.length} records to process`);
 
-      // Process records with progress updates
-      const batchSize = 50;
-      for (let i = 0; i < rows.length; i += batchSize) {
-        const batch = rows.slice(i, i + batchSize);
-        
-        for (let j = 0; j < batch.length; j++) {
-          const row = batch[j];
-          const rowNumber = i + j + 1;
+      // Process each row
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const rowNumber = i + 1;
 
-          try {
-            const orderData: any = {
-              orderNumber: row.NAME_ZAKAZ || `ORDER_${rowNumber}`,
-              totalAmount: storage.parseDecimal(row.SUMMA) || "0",
-              notes: row.COMMENT || "",
-              invoiceNumber: row.SCHET || "",
-              trackingNumber: row.DECLARATION || "",
-              clientId: 1,
-            };
+        try {
+          const orderData: any = {
+            orderNumber: row.NAME_ZAKAZ || `ORDER_${rowNumber}`,
+            totalAmount: storage.parseDecimal(row.SUMMA) || "0",
+            notes: row.COMMENT || "",
+            invoiceNumber: row.SCHET || "",
+            trackingNumber: row.DECLARATION || "",
+            clientId: 1,
+          };
 
-            // Process dates
-            if (row.TERM) orderData.dueDate = storage.parseDate(row.TERM);
-            if (row.PAY) orderData.paymentDate = storage.parseDate(row.PAY);
-            if (row.REALIZ) orderData.shippedDate = storage.parseDate(row.REALIZ);
-            if (row.DATE_CREATE) orderData.createdAt = storage.parseDate(row.DATE_CREATE);
+          // Process dates
+          if (row.TERM) orderData.dueDate = storage.parseDate(row.TERM);
+          if (row.PAY) orderData.paymentDate = storage.parseDate(row.PAY);
+          if (row.REALIZ) orderData.shippedDate = storage.parseDate(row.REALIZ);
+          if (row.DATE_CREATE) orderData.createdAt = storage.parseDate(row.DATE_CREATE);
 
-            // Check for existing order using storage method
-            try {
-              const existingOrder = await storage.findOrderByNumberAndInvoice(
-                orderData.orderNumber,
-                orderData.invoiceNumber || '',
-                orderData.createdAt
-              );
+          // Check if order already exists
+          const existingOrder = await storage.findOrderByNumberAndInvoice(
+            orderData.orderNumber,
+            orderData.invoiceNumber || '',
+            orderData.createdAt
+          );
 
-              if (existingOrder) {
-                job.warnings.push({
-                  row: rowNumber,
-                  warning: `Замовлення ${orderData.orderNumber} вже існує`,
-                  data: row
-                });
-                job.skipped++;
-              } else {
-                // Create order using storage method
-                await storage.createOrderFromImport(orderData);
-                job.imported++;
-              }
-            } catch (createError) {
-              job.errors.push({
-                row: rowNumber,
-                error: `Помилка створення замовлення: ${createError instanceof Error ? createError.message : 'Невідома помилка'}`,
-                data: row
-              });
-            }
-
-          } catch (error) {
-            job.errors.push({
-              row: rowNumber,
-              error: error instanceof Error ? error.message : "Невідома помилка",
-              data: row
+          if (existingOrder) {
+            job.details.push({
+              name: orderData.orderNumber,
+              status: 'skipped',
+              message: `Замовлення вже існує`
             });
+            job.skipped++;
+          } else {
+            // Create new order
+            await storage.createOrderFromImport(orderData);
+            job.details.push({
+              name: orderData.orderNumber,
+              status: 'imported',
+              message: 'Успішно імпортовано'
+            });
+            job.imported++;
           }
 
-          job.processed++;
-          job.progress = Math.round((job.processed / job.totalRows) * 100);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Невідома помилка';
+          job.errors.push(errorMessage);
+          job.details.push({
+            name: row.NAME_ZAKAZ || `Рядок ${rowNumber}`,
+            status: 'error',
+            message: errorMessage
+          });
         }
 
-        // Small delay between batches
-        await new Promise(resolve => setTimeout(resolve, 10));
+        job.processed++;
+        job.progress = Math.round(5 + (job.processed / job.totalRows) * 95);
+
+        // Small delay for UI responsiveness
+        if (i % 10 === 0) {
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
       }
 
       job.status = 'completed';
       job.progress = 100;
-      console.log(`Job ${jobId} completed: ${job.imported} imported, ${job.skipped} skipped, ${job.errors.length} errors`);
+      console.log(`Orders import job ${jobId} completed: ${job.imported} imported, ${job.skipped} skipped, ${job.errors.length} errors`);
 
     } catch (error) {
       job.status = 'failed';
-      job.errors.push({
-        row: 0,
-        error: error instanceof Error ? error.message : "Помилка імпорту"
-      });
-      console.error(`Job ${jobId} failed:`, error);
+      job.errors.push(error instanceof Error ? error.message : "Помилка імпорту");
+      console.error(`Orders import job ${jobId} failed:`, error);
     }
 
     // Clean up job after 1 hour
     setTimeout(() => {
-      ordersImportJobs.delete(jobId);
+      importJobs.delete(jobId);
     }, 60 * 60 * 1000);
   }
 

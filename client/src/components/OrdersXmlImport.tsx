@@ -64,23 +64,20 @@ export default function OrdersXmlImport() {
   };
 
   const importMutation = useMutation({
-    mutationFn: async (xmlContent: string) => {
-      console.log("Starting XML import...");
-      setIsImporting(true);
-      setCurrentJob(null);
-      setImportResult(null);
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('xmlFile', file);
       
-      try {
-        const result = await apiRequest("/api/orders/xml-import", {
-          method: "POST",
-          body: { xmlContent },
-        });
-        console.log("Import job started:", result);
-        return result;
-      } catch (error) {
-        console.error("Import mutation error:", error);
-        throw error;
+      const response = await fetch('/api/orders/import-xml', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
+      return response.json();
     },
     onSuccess: (result: { jobId: string; message: string }) => {
       console.log("Import job started:", result);
@@ -106,42 +103,38 @@ export default function OrdersXmlImport() {
 
   // Poll job status for progress updates
   const pollJobStatus = async (jobId: string) => {
-    console.log("Starting polling for job:", jobId);
-    
     const checkStatus = async () => {
       try {
-        console.log("Checking status for job:", jobId);
-        const response = await fetch(`/api/orders/xml-import/${jobId}/status`);
+        const response = await fetch(`/api/orders/import-xml/${jobId}/status`);
         if (!response.ok) {
-          console.error("Failed to fetch job status:", response.status, response.statusText);
           throw new Error("Failed to fetch job status");
         }
         
         const data = await response.json();
-        console.log("Job status response:", data);
         
-        if (!data.success || !data.job) {
-          console.error("Invalid job response:", data);
-          throw new Error("Invalid job response");
+        if (!data.success) {
+          throw new Error(data.error || "Job not found");
         }
         
         const job: ImportJob = data.job;
         setCurrentJob(job);
         
-        console.log("Job progress:", job.progress, "Status:", job.status);
-        
         if (job.status === 'completed') {
           setIsImporting(false);
           setImportResult({
             success: job.imported,
-            errors: job.errors,
-            warnings: job.warnings
+            errors: job.errors.map(e => ({ row: 0, error: e, data: null })),
+            warnings: job.details.filter(d => d.status === 'skipped').map(d => ({ 
+              row: 0, 
+              warning: d.message || 'Пропущено', 
+              data: null 
+            }))
           });
           queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
           
           toast({
             title: "Імпорт завершено",
-            description: `Успішно імпортовано ${job.imported} замовлень. Пропущено: ${job.skipped}. Помилок: ${job.errors.length}`,
+            description: `Успішно імпортовано ${job.imported} замовлень`,
           });
           
           return;
@@ -149,8 +142,8 @@ export default function OrdersXmlImport() {
           setIsImporting(false);
           setImportResult({
             success: job.imported,
-            errors: job.errors,
-            warnings: job.warnings
+            errors: job.errors.map(e => ({ row: 0, error: e, data: null })),
+            warnings: []
           });
           
           toast({
@@ -163,7 +156,7 @@ export default function OrdersXmlImport() {
         }
         
         // Continue polling if still processing
-        setTimeout(checkStatus, 500); // Check every 0.5 seconds for faster updates
+        setTimeout(checkStatus, 1000);
         
       } catch (error) {
         console.error("Error checking job status:", error);
@@ -176,7 +169,6 @@ export default function OrdersXmlImport() {
       }
     };
     
-    // Start checking immediately
     checkStatus();
   };
 
@@ -324,22 +316,29 @@ export default function OrdersXmlImport() {
                 
                 {/* Progress Bar */}
                 {isImporting && currentJob && (
-                  <div className="mt-4 space-y-2">
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>Прогрес імпорту</span>
-                      <span>{currentJob.progress}%</span>
+                  <div className="mt-4 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Прогрес імпорту</span>
+                      <span className="text-sm text-gray-600">{currentJob.progress}%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                        style={{ width: `${currentJob.progress}%` }}
-                      ></div>
-                    </div>
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>Оброблено: {currentJob.processed}</span>
-                      <span>Імпортовано: {currentJob.imported}</span>
-                      <span>Пропущено: {currentJob.skipped}</span>
-                      <span>Помилок: {currentJob.errors.length}</span>
+                    <Progress value={currentJob.progress} className="w-full" />
+                    <div className="grid grid-cols-4 gap-2 text-xs text-center">
+                      <div className="bg-blue-50 p-2 rounded">
+                        <div className="font-medium text-blue-700">{currentJob.processed}</div>
+                        <div className="text-blue-600">Оброблено</div>
+                      </div>
+                      <div className="bg-green-50 p-2 rounded">
+                        <div className="font-medium text-green-700">{currentJob.imported}</div>
+                        <div className="text-green-600">Імпортовано</div>
+                      </div>
+                      <div className="bg-yellow-50 p-2 rounded">
+                        <div className="font-medium text-yellow-700">{currentJob.skipped}</div>
+                        <div className="text-yellow-600">Пропущено</div>
+                      </div>
+                      <div className="bg-red-50 p-2 rounded">
+                        <div className="font-medium text-red-700">{currentJob.errors.length}</div>
+                        <div className="text-red-600">Помилок</div>
+                      </div>
                     </div>
                   </div>
                 )}
