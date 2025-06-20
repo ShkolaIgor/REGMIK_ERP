@@ -142,8 +142,14 @@ export function ClientsXmlImport() {
             title: "Імпорт клієнтів завершено",
             description: `Оброблено: ${job.processed || 0}, Імпортовано: ${job.imported || 0}, Пропущено: ${job.skipped || 0}`,
           });
-          // Refresh clients list
-          queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
+          // Refresh clients list - invalidate all client queries
+          await queryClient.invalidateQueries({ 
+            predicate: (query) => query.queryKey[0] === '/api/clients' 
+          });
+          // Force immediate refetch
+          await queryClient.refetchQueries({ 
+            predicate: (query) => query.queryKey[0] === '/api/clients' 
+          });
         } else if (job.status === 'failed') {
           setIsImporting(false);
           toast({
