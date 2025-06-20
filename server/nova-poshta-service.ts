@@ -113,12 +113,7 @@ class NovaPoshtaService {
       timezone: "Europe/Kyiv"
     });
 
-    // Виводимо інформацію про наступне оновлення
-    const nextUpdate = job.nextDate();
-    if (nextUpdate) {
-      console.log(`Наступне оновлення Nova Poshta: ${nextUpdate.toFormat('dd.MM.yyyy, HH:mm:ss')}`);
-      console.log("Автоматичне оновлення Nova Poshta ініціалізовано");
-    }
+    console.log("Автоматичне оновлення Nova Poshta ініціалізовано");
       let currentDay = now.getDay();
       
       // Встановлюємо час оновлення на сьогодні
