@@ -514,7 +514,7 @@ export class DatabaseStorage implements IStorage {
       conditions.push(
         or(
           ilike(orders.orderNumber, searchLower),
-          ilike(orders.customerName, searchLower),
+          ilike(clients.name, searchLower),
           ilike(orders.customerEmail, searchLower),
           ilike(orders.customerPhone, searchLower),
           sql`CAST(${orders.orderSequenceNumber} AS TEXT) ILIKE ${searchLower}`
@@ -3368,7 +3368,9 @@ export class DatabaseStorage implements IStorage {
           .select({
             id: orders.id,
             orderNumber: orders.orderNumber,
-            customerName: orders.customerName
+            clientName: clients.name,
+            clientTaxCode: clients.taxCode,
+            contactName: clientContacts.fullName
           })
           .from(orders)
           .where(eq(orders.id, shipment.orderId));
@@ -3460,7 +3462,9 @@ export class DatabaseStorage implements IStorage {
         carrier: carrier ? { name: carrier.name } : null,
         order: order ? {
           orderNumber: order.orderNumber,
-          customerName: order.customerName
+          clientName: order.clientName,
+          clientTaxCode: order.clientTaxCode,
+          contactName: order.contactName
         } : null,
         items: items
       };
@@ -3527,7 +3531,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select({
         id: customerAddresses.id,
-        customerName: customerAddresses.customerName,
+        customerName: clients.name,
         customerPhone: customerAddresses.customerPhone,
         recipientName: customerAddresses.recipientName,
         recipientPhone: customerAddresses.recipientPhone,
@@ -4719,7 +4723,7 @@ export class DatabaseStorage implements IStorage {
           status: orders.status,
           totalAmount: orders.totalAmount,
           createdAt: orders.createdAt,
-          customerName: orders.customerName,
+          clientName: clients.name,
           quantity: orderItems.quantity,
         })
         .from(orderItems)
@@ -7860,7 +7864,7 @@ export class DatabaseStorage implements IStorage {
             notes: row.COMMENT || "",
             invoiceNumber: row.SCHET || "",
             trackingNumber: row.DECLARATION || "",
-            customerName: `Замовлення_${row.NAME_ZAKAZ || rowNumber}`, // За замовчуванням
+            clientId: 1, // За замовчуванням, буде перезаписано якщо знайдено клієнта
           };
 
           // Обробляємо дати
@@ -7878,30 +7882,24 @@ export class DatabaseStorage implements IStorage {
           }
 
           // Знаходимо клієнта за INDEX_PREDPR
-          let clientId = null;
-          let clientName = null;
+          let clientId = 1; // За замовчуванням перший клієнт
           if (row.INDEX_PREDPR) {
-            const clientResult = await db.select({ id: clients.id, name: clients.name })
+            const clientResult = await db.select({ id: clients.id })
               .from(clients)
               .where(eq(clients.externalId, parseInt(row.INDEX_PREDPR)))
               .limit(1);
             
             if (clientResult.length > 0) {
               clientId = clientResult[0].id;
-              clientName = clientResult[0].name;
               orderData.clientId = clientId;
-              orderData.customerName = clientName; // Перезаписуємо значення за замовчуванням
             } else {
               result.warnings.push({
                 row: rowNumber,
-                warning: `Клієнт з external_id=${row.INDEX_PREDPR} не знайдений`,
+                warning: `Клієнт з external_id=${row.INDEX_PREDPR} не знайдений, використано клієнта за замовчуванням`,
                 data: row
               });
-              // Використовуємо номер замовлення як ім'я клієнта, якщо клієнт не знайдений
-              orderData.customerName = `Клієнт_${row.INDEX_PREDPR || rowNumber}`;
             }
           }
-          // Якщо INDEX_PREDPR відсутній, customerName вже встановлено за замовчуванням
 
           // Знаходимо компанію за INDEX_FIRMA
           if (row.INDEX_FIRMA) {

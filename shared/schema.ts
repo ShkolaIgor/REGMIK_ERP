@@ -222,10 +222,7 @@ export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   orderSequenceNumber: serial("order_sequence_number").notNull().unique(), // Числовий номер замовлення
   orderNumber: text("order_number").notNull().unique(),
-  customerName: text("customer_name").notNull(),
-  customerEmail: text("customer_email"),
-  customerPhone: text("customer_phone"),
-  clientId: integer("client_id").references(() => clients.id), // зв'язок з клієнтом для використання його API ключів
+  clientId: integer("client_id").references(() => clients.id).notNull(), // зв'язок з клієнтом (обов'язковий)
   clientContactsId: integer("client_contacts_id").references(() => clientContacts.id), // зв'язок з представником клієнта
   companyId: integer("company_id").references(() => companies.id), // Компанія, від імені якої здійснюється продаж
   status: text("status").notNull().default("pending"), // pending, processing, shipped, delivered, cancelled
@@ -235,7 +232,6 @@ export const orders = pgTable("orders", {
   paymentDate: timestamp("payment_date"), // дата оплати
   paymentType: varchar("payment_type", { length: 50 }).default("full"), // full, partial, contract, none
   paidAmount: decimal("paid_amount", { precision: 10, scale: 2 }).default("0"), // сума оплачена
-  contractNumber: varchar("contract_number", { length: 100 }), // номер договору для contract типу
   productionApproved: boolean("production_approved").default(false), // дозвіл на запуск виробництва
   productionApprovedBy: varchar("production_approved_by", { length: 100 }), // хто дав дозвіл
   productionApprovedAt: timestamp("production_approved_at"), // коли дали дозвіл
