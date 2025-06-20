@@ -1635,7 +1635,10 @@ export default function Orders() {
                               {filteredClients.map((client: any) => (
                                 <div
                                   key={client.id}
-                                  onClick={() => handleClientSelect(client.id.toString())}
+                                  onClick={() => {
+                                    console.log("Clicking client:", client.name, "ID:", client.id);
+                                    handleClientSelect(client.id.toString());
+                                  }}
                                   className="px-3 py-2 cursor-pointer hover:bg-gray-100 flex items-center"
                                 >
                                   <Check
