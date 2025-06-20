@@ -215,7 +215,6 @@ export default function Orders() {
     paymentDate: 'Дата оплати',
     dueDate: 'Термін виконання',
     totalAmount: 'Сума',
-    paymentStatus: 'Статус оплати',
     status: 'Статус',
     actions: 'Дії'
   };
@@ -415,76 +414,7 @@ export default function Orders() {
       case 'totalAmount':
         return <div className="font-medium">{formatCurrency(parseFloat(order.totalAmount))}</div>;
       
-      case 'paymentStatus':
-        const getPaymentStatusBadge = () => {
-          const paymentType = order.paymentType || 'none';
-          const paidAmount = parseFloat(order.paidAmount || '0');
-          const totalAmount = parseFloat(order.totalAmount);
-          
-          switch (paymentType) {
-            case 'full':
-              return (
-                <div className="space-y-1">
-                  <Badge className="bg-green-100 text-green-800 border-green-300">
-                    ✅ Повна оплата
-                  </Badge>
-                  {order.paymentDate && (
-                    <div className="text-xs text-green-700 font-medium flex items-center gap-1">
-                      📅 <UkrainianDate date={order.paymentDate} format="short" />
-                    </div>
-                  )}
-                </div>
-              );
-            case 'partial':
-              const percentage = totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0;
-              return (
-                <div className="space-y-1">
-                  <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">
-                    🔸 Часткова ({percentage}%)
-                  </Badge>
-                  <div className="text-xs text-gray-600">
-                    {formatCurrency(paidAmount)} з {formatCurrency(totalAmount)}
-                  </div>
-                  {order.paymentDate && (
-                    <div className="text-xs text-yellow-700 font-medium flex items-center gap-1">
-                      📅 <UkrainianDate date={order.paymentDate} format="short" />
-                    </div>
-                  )}
-                </div>
-              );
-            case 'contract':
-              return (
-                <div className="space-y-1">
-                  <Badge className="bg-blue-100 text-blue-800 border-blue-300">
-                    📋 По договору
-                  </Badge>
-                  {order.contractNumber && (
-                    <div className="text-xs text-blue-700 font-medium">
-                      📝 №{order.contractNumber}
-                    </div>
-                  )}
-                </div>
-              );
-            case 'none':
-            default:
-              return (
-                <Badge className="bg-gray-100 text-gray-600 border-gray-300">
-                  ❌ Без оплати
-                </Badge>
-              );
-          }
-        };
 
-        return (
-          <div className="flex flex-col items-start">
-            {getPaymentStatusBadge()}
-            {order.productionApproved && (
-              <div className="text-xs text-green-600 mt-1 flex items-center">
-                ✅ Виробництво дозволено
-              </div>
-            )}
-          </div>
-        );
       
       case 'status':
         const statusInfo = orderStatuses.find(s => s.id === order.statusId);
