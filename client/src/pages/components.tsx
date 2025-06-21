@@ -422,6 +422,7 @@ export default function Components() {
                       />
                     </div>
                   </div>
+                  
                   <div className="col-span-2">
                     <Label htmlFor="description">Опис</Label>
                     <Textarea
@@ -430,6 +431,15 @@ export default function Components() {
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={3}
                     />
+                  </div>
+                  
+                  <div className="col-span-2 flex items-center space-x-2">
+                    <Switch
+                      id="isActive"
+                      checked={formData.isActive}
+                      onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+                    />
+                    <Label htmlFor="isActive">Активний</Label>
                   </div>
                   <div className="flex justify-between">
                     <div>
