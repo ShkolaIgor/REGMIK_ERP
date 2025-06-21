@@ -8365,15 +8365,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!job) return;
 
     try {
+      console.log('🚀 Starting order items import with XML buffer size:', xmlBuffer.length);
+      
       const xmlContent = xmlBuffer.toString('utf-8');
+      console.log('📄 XML preview (first 500 chars):', xmlContent.substring(0, 500));
+      
       const parser = new xml2js.Parser({ 
         explicitArray: false,
         mergeAttrs: true
       });
       
       const result = await parser.parseStringPromise(xmlContent);
+      console.log('📊 Parsed XML structure keys:', Object.keys(result || {}));
       
       if (!result.DATAPACKET || !result.DATAPACKET.ROWDATA || !result.DATAPACKET.ROWDATA.ROW) {
+        console.log('❌ Invalid XML structure. Full result:', JSON.stringify(result, null, 2));
         job.status = 'failed';
         job.errors.push("Invalid XML format. Expected DATAPACKET structure.");
         job.logs.push({
@@ -8389,11 +8395,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         : [result.DATAPACKET.ROWDATA.ROW];
 
       job.totalRows = rows.length;
-      console.log(`Starting order items import with ${rows.length} rows`);
+      console.log(`✅ Found ${rows.length} rows to process`);
+      console.log('🔍 First row sample:', JSON.stringify(rows[0], null, 2));
       
       // Get all products and orders for matching
+      console.log('📋 Loading orders and products from database...');
       const products = await storage.getProducts();
       const orders = await storage.getOrders();
+      console.log(`📋 Loaded ${orders.length} orders and ${products.length} products`);
       
       // Process in batches
       const BATCH_SIZE = 50;
@@ -8402,9 +8411,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const batch = rows.slice(i, i + BATCH_SIZE);
         
         for (const row of batch) {
+          console.log(`\n🔄 About to process row ${job.processed + 1}/${job.totalRows}`);
+          console.log('📝 Row data:', JSON.stringify(row, null, 2));
+          
           try {
             await processOrderItemRow(row, job, products, orders, orderId);
+            console.log(`✅ Row ${job.processed + 1} processed successfully`);
           } catch (error) {
+            console.log(`❌ Error processing row ${job.processed + 1}:`, error);
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             job.details.push({
               orderNumber: row.NAME_ZAKAZ || 'Unknown',
@@ -8419,7 +8433,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           job.progress = Math.round((job.processed / job.totalRows) * 100);
           
           if (job.processed % 10 === 0 || job.processed === job.totalRows) {
-            console.log(`Order items import progress: ${job.progress}% (${job.processed}/${job.totalRows})`);
+            console.log(`📊 Progress: ${job.progress}% (${job.processed}/${job.totalRows})`);
           }
         }
 
@@ -8430,7 +8444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       job.status = 'completed';
       job.progress = 100;
       
-      console.log(`Order items import completed: ${job.imported} imported, ${job.skipped} skipped, ${job.errors.length} errors`);
+      console.log(`🎉 Order items import completed: ${job.imported} imported, ${job.skipped} skipped, ${job.errors.length} errors`);
       
       job.logs.push({
         type: 'info',
