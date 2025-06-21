@@ -342,6 +342,9 @@ export const orderItems = pgTable("order_items", {
   shippedQuantity: integer("shipped_quantity").notNull().default(0), // кількість вже відвантажена
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  costPrice: decimal("cost_price", { precision: 10, scale: 2 }),
+  serialNumbers: text("serial_numbers"),
+  notes: text("notes"),
 });
 
 export const recipes = pgTable("recipes", {

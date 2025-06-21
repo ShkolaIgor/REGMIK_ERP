@@ -1001,6 +1001,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     totalRows: number;
   }>();
 
+  // Order Items XML Import with job tracking  
+  const orderItemImportJobs = new Map<string, {
+    id: string;
+    status: 'processing' | 'completed' | 'failed';
+    progress: number;
+    processed: number;
+    imported: number;
+    skipped: number;
+    errors: string[];
+    details: Array<{
+      orderNumber: string;
+      productSku: string;
+      status: 'imported' | 'updated' | 'skipped' | 'error';
+      message: string;
+    }>;
+    logs: Array<{
+      type: 'info' | 'warning' | 'error';
+      message: string;
+      details?: string;
+    }>;
+    totalRows: number;
+  }>();
+
   // Start XML import for orders
   app.post("/api/orders/import-xml", upload.single('xmlFile'), async (req, res) => {
     try {
@@ -1041,6 +1064,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
         details: error instanceof Error ? error.message : 'Unknown error'
       });
     }
+  });
+
+  // Order Items XML Import
+  app.post("/api/order-items/import-xml", upload.single('xmlFile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "No XML file provided" 
+        });
+      }
+
+      const jobId = generateJobId();
+      const orderId = req.body.orderId ? parseInt(req.body.orderId) : null;
+      
+      orderItemImportJobs.set(jobId, {
+        id: jobId,
+        status: 'processing',
+        progress: 0,
+        processed: 0,
+        imported: 0,
+        skipped: 0,
+        errors: [],
+        details: [],
+        logs: [],
+        totalRows: 0
+      });
+
+      res.json({
+        success: true,
+        jobId,
+        message: "Order items import job started. Use the job ID to check progress."
+      });
+
+      processOrderItemsXmlImportAsync(jobId, req.file.buffer, orderId, orderItemImportJobs);
+
+    } catch (error) {
+      console.error("Order items XML import error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to start order items XML import",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Check order items import job status
+  app.get("/api/order-items/import-xml/:jobId/status", (req, res) => {
+    const { jobId } = req.params;
+    const job = orderItemImportJobs.get(jobId);
+    
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        error: "Job not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      job
+    });
   });
 
   // Check order import job status
@@ -8266,6 +8351,215 @@ export async function registerRoutes(app: Express): Promise<Server> {
       job.status = 'failed';
       if (!job.errors) job.errors = [];
       job.errors.push(error instanceof Error ? error.message : 'Unknown error');
+    }
+  }
+
+  // Process Order Items XML Import Async Function
+  async function processOrderItemsXmlImportAsync(
+    jobId: string, 
+    xmlBuffer: Buffer, 
+    orderId: number | null,
+    jobsMap: Map<string, any>
+  ) {
+    const job = jobsMap.get(jobId);
+    if (!job) return;
+
+    try {
+      const xmlContent = xmlBuffer.toString('utf-8');
+      const parser = new xml2js.Parser({ 
+        explicitArray: false,
+        mergeAttrs: true
+      });
+      
+      const result = await parser.parseStringPromise(xmlContent);
+      
+      if (!result.DATAPACKET || !result.DATAPACKET.ROWDATA || !result.DATAPACKET.ROWDATA.ROW) {
+        job.status = 'failed';
+        job.errors.push("Invalid XML format. Expected DATAPACKET structure.");
+        job.logs.push({
+          type: 'error',
+          message: 'Невірний формат XML файлу',
+          details: 'Очікується структура DATAPACKET/ROWDATA/ROW'
+        });
+        return;
+      }
+
+      const rows = Array.isArray(result.DATAPACKET.ROWDATA.ROW) 
+        ? result.DATAPACKET.ROWDATA.ROW 
+        : [result.DATAPACKET.ROWDATA.ROW];
+
+      job.totalRows = rows.length;
+      console.log(`Starting order items import with ${rows.length} rows`);
+      
+      // Get all products and orders for matching
+      const products = await storage.getProducts();
+      const orders = await storage.getOrders();
+      
+      // Process in batches
+      const BATCH_SIZE = 50;
+      
+      for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+        const batch = rows.slice(i, i + BATCH_SIZE);
+        
+        for (const row of batch) {
+          try {
+            await processOrderItemRow(row, job, products, orders, orderId);
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            job.details.push({
+              orderNumber: row.NAME_ZAKAZ || 'Unknown',
+              productSku: row.INDEX_LISTARTICLE || 'Unknown',
+              status: 'error',
+              message: errorMessage
+            });
+            job.errors.push(`Row ${job.processed + 1}: ${errorMessage}`);
+          }
+          
+          job.processed++;
+          job.progress = Math.round((job.processed / job.totalRows) * 100);
+          
+          if (job.processed % 10 === 0 || job.processed === job.totalRows) {
+            console.log(`Order items import progress: ${job.progress}% (${job.processed}/${job.totalRows})`);
+          }
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+
+      job.skipped = job.processed - job.imported - job.errors.length;
+      job.status = 'completed';
+      job.progress = 100;
+      
+      console.log(`Order items import completed: ${job.imported} imported, ${job.skipped} skipped, ${job.errors.length} errors`);
+      
+      job.logs.push({
+        type: 'info',
+        message: `Імпорт позицій завершено успішно`,
+        details: `Імпортовано: ${job.imported}, Пропущено: ${job.skipped}, Помилок: ${job.errors.length}`
+      });
+
+      setTimeout(() => {
+        orderItemImportJobs.delete(jobId);
+      }, 5 * 60 * 1000);
+
+    } catch (error) {
+      console.error("Async order items XML import error:", error);
+      const job = jobsMap.get(jobId);
+      if (job) {
+        job.status = 'failed';
+        job.progress = 0;
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        job.errors.push(errorMessage);
+        job.logs.push({
+          type: 'error',
+          message: 'Критична помилка імпорту позицій',
+          details: errorMessage
+        });
+      }
+    }
+  }
+
+  async function processOrderItemRow(row: any, job: any, products: any[], orders: any[], targetOrderId: number | null) {
+    // Validate required fields
+    if (!row.INDEX_LISTARTICLE) {
+      job.details.push({
+        orderNumber: row.NAME_ZAKAZ || 'Unknown',
+        productSku: 'Missing',
+        status: 'error',
+        message: 'Missing required INDEX_LISTARTICLE field'
+      });
+      job.errors.push(`Row ${job.processed + 1}: Missing INDEX_LISTARTICLE`);
+      return;
+    }
+
+    if (!row.NAME_ZAKAZ && !targetOrderId) {
+      job.details.push({
+        orderNumber: 'Missing',
+        productSku: row.INDEX_LISTARTICLE,
+        status: 'error',
+        message: 'Missing required NAME_ZAKAZ field and no target order specified'
+      });
+      job.errors.push(`Row ${job.processed + 1}: Missing NAME_ZAKAZ`);
+      return;
+    }
+
+    // Find product by SKU
+    const product = products.find(p => p.sku === row.INDEX_LISTARTICLE);
+    if (!product) {
+      job.details.push({
+        orderNumber: row.NAME_ZAKAZ || targetOrderId?.toString() || 'Unknown',
+        productSku: row.INDEX_LISTARTICLE,
+        status: 'error',
+        message: `Product with SKU ${row.INDEX_LISTARTICLE} not found`
+      });
+      job.errors.push(`Row ${job.processed + 1}: Product SKU ${row.INDEX_LISTARTICLE} not found`);
+      return;
+    }
+
+    // Find order by order number or use target order
+    let order = null;
+    if (targetOrderId) {
+      order = orders.find(o => o.id === targetOrderId);
+    } else {
+      order = orders.find(o => o.orderNumber === row.NAME_ZAKAZ);
+    }
+
+    if (!order) {
+      job.details.push({
+        orderNumber: row.NAME_ZAKAZ || targetOrderId?.toString() || 'Unknown',
+        productSku: row.INDEX_LISTARTICLE,
+        status: 'error',
+        message: targetOrderId 
+          ? `Order with ID ${targetOrderId} not found`
+          : `Order with number ${row.NAME_ZAKAZ} not found`
+      });
+      job.errors.push(`Row ${job.processed + 1}: Order not found`);
+      return;
+    }
+
+    // Parse numeric values
+    const parseDecimal = (value: string | number): string => {
+      if (!value) return "0";
+      const str = value.toString().replace(',', '.');
+      const num = parseFloat(str);
+      return isNaN(num) ? "0" : num.toFixed(2);
+    };
+
+    const quantity = parseDecimal(row.COUNT_DET || "0");
+    const unitPrice = parseDecimal(row.CENA || "0");
+    const costPrice = parseDecimal(row.PRICE_NET || "0");
+    const totalPrice = (parseFloat(quantity) * parseFloat(unitPrice)).toFixed(2);
+
+    try {
+      const orderItemData = {
+        orderId: order.id,
+        productId: product.id,
+        quantity: parseInt(quantity),
+        unitPrice: unitPrice,
+        totalPrice: totalPrice,
+        costPrice: costPrice || null,
+        serialNumbers: row.SERIAL_NUMBER || null,
+        notes: row.COMMENT || null,
+      };
+
+      await storage.createOrderItem(orderItemData);
+      
+      job.imported++;
+      job.details.push({
+        orderNumber: order.orderNumber,
+        productSku: product.sku,
+        status: 'imported',
+        message: `Imported: Qty ${quantity}, Price ${unitPrice}`
+      });
+
+    } catch (error) {
+      job.details.push({
+        orderNumber: order.orderNumber,
+        productSku: product.sku,
+        status: 'error',
+        message: `Failed to create order item: ${error instanceof Error ? error.message : 'Unknown error'}`
+      });
+      job.errors.push(`Row ${job.processed + 1}: Database error - ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
