@@ -1069,12 +1069,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Order Items XML Import
   app.post("/api/order-items/import-xml", upload.single('xmlFile'), async (req, res) => {
     try {
-      console.log('🚀 Order items import request received');
-      console.log('📁 File info:', req.file ? `${req.file.originalname} (${req.file.size} bytes)` : 'No file');
-      console.log('📝 Request body:', req.body);
-
       if (!req.file) {
-        console.log('❌ No XML file provided');
         return res.status(400).json({ 
           success: false, 
           error: "No XML file provided" 
@@ -1083,8 +1078,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const jobId = generateJobId();
       const orderId = req.body.orderId ? parseInt(req.body.orderId) : null;
-      
-      console.log(`✅ Creating job ${jobId} for order ${orderId || 'all orders'}`);
       
       orderItemImportJobs.set(jobId, {
         id: jobId,
@@ -1108,7 +1101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       processOrderItemsXmlImportAsync(jobId, req.file.buffer, orderId, orderItemImportJobs);
 
     } catch (error) {
-      console.error("❌ Order items XML import error:", error);
+      console.error("Order items XML import error:", error);
       res.status(500).json({ 
         success: false, 
         error: "Failed to start order items XML import",
@@ -8372,21 +8365,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!job) return;
 
     try {
-      console.log('🚀 Starting order items import with XML buffer size:', xmlBuffer.length);
-      
       const xmlContent = xmlBuffer.toString('utf-8');
-      console.log('📄 XML preview (first 500 chars):', xmlContent.substring(0, 500));
-      
       const parser = new xml2js.Parser({ 
         explicitArray: false,
         mergeAttrs: true
       });
       
       const result = await parser.parseStringPromise(xmlContent);
-      console.log('📊 Parsed XML structure keys:', Object.keys(result || {}));
       
       if (!result.DATAPACKET || !result.DATAPACKET.ROWDATA || !result.DATAPACKET.ROWDATA.ROW) {
-        console.log('❌ Invalid XML structure. Full result:', JSON.stringify(result, null, 2));
         job.status = 'failed';
         job.errors.push("Invalid XML format. Expected DATAPACKET structure.");
         job.logs.push({
@@ -8402,14 +8389,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         : [result.DATAPACKET.ROWDATA.ROW];
 
       job.totalRows = rows.length;
-      console.log(`✅ Found ${rows.length} rows to process`);
-      console.log('🔍 First row sample:', JSON.stringify(rows[0], null, 2));
       
       // Get all products and orders for matching
-      console.log('📋 Loading orders and products from database...');
       const products = await storage.getProducts();
       const orders = await storage.getOrders();
-      console.log(`📋 Loaded ${orders.length} orders and ${products.length} products`);
       
       // Process in batches
       const BATCH_SIZE = 50;
@@ -8418,14 +8401,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const batch = rows.slice(i, i + BATCH_SIZE);
         
         for (const row of batch) {
-          console.log(`\n🔄 About to process row ${job.processed + 1}/${job.totalRows}`);
-          console.log('📝 Row data:', JSON.stringify(row, null, 2));
-          
           try {
             await processOrderItemRow(row, job, products, orders, orderId);
-            console.log(`✅ Row ${job.processed + 1} processed successfully`);
           } catch (error) {
-            console.log(`❌ Error processing row ${job.processed + 1}:`, error);
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             job.details.push({
               orderNumber: row.NAME_ZAKAZ || 'Unknown',
@@ -8438,10 +8416,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           job.processed++;
           job.progress = Math.round((job.processed / job.totalRows) * 100);
-          
-          if (job.processed % 10 === 0 || job.processed === job.totalRows) {
-            console.log(`📊 Progress: ${job.progress}% (${job.processed}/${job.totalRows})`);
-          }
         }
 
         await new Promise(resolve => setTimeout(resolve, 10));
@@ -8451,7 +8425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       job.status = 'completed';
       job.progress = 100;
       
-      console.log(`🎉 Order items import completed: ${job.imported} imported, ${job.skipped} skipped, ${job.errors.length} errors`);
+      console.log(`Order items import completed: ${job.imported} imported, ${job.skipped} skipped, ${job.errors.length} errors`);
       
       job.logs.push({
         type: 'info',
@@ -8464,8 +8438,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }, 5 * 60 * 1000);
 
     } catch (error) {
-      console.error("❌ Async order items XML import error:", error);
-      console.error("❌ Error stack:", error instanceof Error ? error.stack : 'No stack trace');
+      console.error("Async order items XML import error:", error);
       const job = jobsMap.get(jobId);
       if (job) {
         job.status = 'failed';
@@ -8482,12 +8455,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   async function processOrderItemRow(row: any, job: any, products: any[], orders: any[], targetOrderId: number | null) {
-    console.log(`\n=== Processing row ${job.processed + 1} ===`);
-    console.log(`NAME_ZAKAZ: "${row.NAME_ZAKAZ}", INDEX_LISTARTICLE: "${row.INDEX_LISTARTICLE}"`);
-
     // Validate required fields
     if (!row.INDEX_LISTARTICLE) {
-      console.log('❌ Missing INDEX_LISTARTICLE field');
       job.details.push({
         orderNumber: String(row.NAME_ZAKAZ || 'Unknown'),
         productSku: 'Missing',
@@ -8512,7 +8481,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Find product by SKU only
     const product = products.find(p => p.sku === row.INDEX_LISTARTICLE);
     if (!product) {
-      console.log(`❌ Product not found for SKU: ${row.INDEX_LISTARTICLE}`);
       job.details.push({
         orderNumber: String(row.NAME_ZAKAZ || targetOrderId || 'Unknown'),
         productSku: row.INDEX_LISTARTICLE,
@@ -8521,25 +8489,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       job.errors.push(`Row ${job.processed + 1}: Product SKU ${row.INDEX_LISTARTICLE} not found`);
       return;
-    }
-    console.log(`✅ Product found: SKU="${product.sku}"`);;
+    };
 
     // Find order by order number, ID, or use target order
     let order = null;
     if (targetOrderId) {
       order = orders.find(o => o.id === targetOrderId);
-      console.log(`Looking for targetOrderId ${targetOrderId}: ${order ? '✅ FOUND' : '❌ NOT FOUND'}`);
     } else {
       // Try to find by order number first
       const searchOrderNumber = String(row.NAME_ZAKAZ);
       order = orders.find(o => o.orderNumber === searchOrderNumber);
-      console.log(`Looking for order number "${searchOrderNumber}": ${order ? '✅ FOUND' : '❌ NOT FOUND'}`);
       
       // If not found and NAME_ZAKAZ is numeric, try to find by ID
       if (!order && !isNaN(parseInt(row.NAME_ZAKAZ))) {
         const searchId = parseInt(row.NAME_ZAKAZ);
         order = orders.find(o => o.id === searchId);
-        console.log(`Looking for order ID ${searchId}: ${order ? '✅ FOUND' : '❌ NOT FOUND'}`);
       }
     }
 
@@ -8547,7 +8511,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const errorMsg = targetOrderId 
         ? `Order with ID ${targetOrderId} not found`
         : `Order with number "${row.NAME_ZAKAZ}" not found`;
-      console.log(`❌ ${errorMsg}`);
       job.details.push({
         orderNumber: String(row.NAME_ZAKAZ || targetOrderId || 'Unknown'),
         productSku: row.INDEX_LISTARTICLE,
@@ -8557,8 +8520,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       job.errors.push(`Row ${job.processed + 1}: Order not found`);
       return;
     }
-
-    console.log(`✅ Order found: ID=${order.id}, number="${order.orderNumber}"`);
 
     // Parse numeric values
     const parseDecimal = (value: string | number): string => {
