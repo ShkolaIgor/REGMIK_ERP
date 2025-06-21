@@ -566,7 +566,12 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
 
 export const insertOrderSchemaForm = insertOrderSchema.extend({
   statusId: z.number().int().positive("Статус обов'язковий"),
-  clientContactsId: z.number().int().positive().optional()
+  clientContactsId: z.number().int().positive().optional(),
+  // Дозволяємо строки для дат, оскільки з форми приходять строки
+  paymentDate: z.string().optional().or(z.date().optional()),
+  dueDate: z.string().optional().or(z.date().optional()),
+  shippedDate: z.string().optional().or(z.date().optional()),
+  productionApprovedAt: z.string().optional().or(z.date().optional())
 });
 
 export type Order = typeof orders.$inferSelect;
