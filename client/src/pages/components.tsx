@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Edit, Trash, Plus, Package, Search, Link, Upload, Filter, X } from "lucide-react";
 import { Component } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -56,6 +57,7 @@ export default function Components() {
     uktzedCode: "",
     minStock: "",
     maxStock: "",
+    isActive: true,
   });
 
   const queryClient = useQueryClient();
@@ -141,6 +143,7 @@ export default function Components() {
       uktzedCode: "",
       minStock: "",
       maxStock: "",
+      isActive: true,
     });
     setEditingComponent(null);
   };
@@ -153,6 +156,7 @@ export default function Components() {
       costPrice: formData.costPrice,
       minStock: formData.minStock ? parseInt(formData.minStock) : null,
       maxStock: formData.maxStock ? parseInt(formData.maxStock) : null,
+      isActive: formData.isActive,
     };
 
     if (editingComponent) {
@@ -176,6 +180,7 @@ export default function Components() {
       uktzedCode: component.uktzedCode || "",
       minStock: component.minStock?.toString() || "",
       maxStock: component.maxStock?.toString() || "",
+      isActive: component.isActive !== false,
     });
     setIsDialogOpen(true);
   };
@@ -253,6 +258,15 @@ export default function Components() {
     } else {
       setSortField(field);
       setSortDirection("asc");
+    }
+  };
+
+  const handleHeaderClick = (e: React.MouseEvent, field: string) => {
+    // Only handle sort if click is not on resize handle
+    const target = e.target as HTMLElement;
+    if (!target.classList.contains('resize-handle')) {
+      e.stopPropagation();
+      handleSort(field);
     }
   };
 
@@ -576,34 +590,40 @@ export default function Components() {
                   <TableHead 
                     className="cursor-pointer hover:bg-gray-50 resizable-header border-r"
                     style={{ width: columnWidths.name, minWidth: 150 }}
-                    onClick={() => handleSort("name")}
+                    onClick={(e) => handleHeaderClick(e, "name")}
                   >
-                    Назва
-                    {sortField === "name" && (
-                      <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                    )}
+                    <div className="flex items-center">
+                      Назва
+                      {sortField === "name" && (
+                        <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
                     <div className="resize-handle"></div>
                   </TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-gray-50 resizable-header border-r"
                     style={{ width: columnWidths.sku, minWidth: 100 }}
-                    onClick={() => handleSort("sku")}
+                    onClick={(e) => handleHeaderClick(e, "sku")}
                   >
-                    SKU
-                    {sortField === "sku" && (
-                      <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                    )}
+                    <div className="flex items-center">
+                      SKU
+                      {sortField === "sku" && (
+                        <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
                     <div className="resize-handle"></div>
                   </TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-gray-50 resizable-header border-r"
                     style={{ width: columnWidths.category, minWidth: 120 }}
-                    onClick={() => handleSort("category")}
+                    onClick={(e) => handleHeaderClick(e, "category")}
                   >
-                    Категорія
-                    {sortField === "category" && (
-                      <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                    )}
+                    <div className="flex items-center">
+                      Категорія
+                      {sortField === "category" && (
+                        <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
                     <div className="resize-handle"></div>
                   </TableHead>
                   <TableHead 
@@ -623,23 +643,27 @@ export default function Components() {
                   <TableHead 
                     className="cursor-pointer hover:bg-gray-50 resizable-header border-r"
                     style={{ width: columnWidths.costPrice, minWidth: 100 }}
-                    onClick={() => handleSort("costPrice")}
+                    onClick={(e) => handleHeaderClick(e, "costPrice")}
                   >
-                    Собівартість
-                    {sortField === "costPrice" && (
-                      <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                    )}
+                    <div className="flex items-center">
+                      Собівартість
+                      {sortField === "costPrice" && (
+                        <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
                     <div className="resize-handle"></div>
                   </TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-gray-50 resizable-header border-r"
                     style={{ width: columnWidths.supplier, minWidth: 120 }}
-                    onClick={() => handleSort("supplier")}
+                    onClick={(e) => handleHeaderClick(e, "supplier")}
                   >
-                    Постачальник
-                    {sortField === "supplier" && (
-                      <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                    )}
+                    <div className="flex items-center">
+                      Постачальник
+                      {sortField === "supplier" && (
+                        <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
                     <div className="resize-handle"></div>
                   </TableHead>
                   <TableHead style={{ width: columnWidths.actions, minWidth: 80 }}>
