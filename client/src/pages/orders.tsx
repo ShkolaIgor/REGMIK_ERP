@@ -1457,14 +1457,17 @@ export default function Orders() {
                 <Settings className="w-4 h-4 mr-2" />
                 Налаштування статусів
               </Button>
-              <OrdersXmlImport />
-              <OrderItemsXmlImport onImportComplete={() => {
-                queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-                toast({
-                  title: "Імпорт завершено",
-                  description: "Позиції замовлень успішно імпортовані",
-                });
-              }} />
+              <div className="flex gap-2">
+                {console.log('Rendering import components')}
+                <OrdersXmlImport />
+                <OrderItemsXmlImport onImportComplete={() => {
+                  queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+                  toast({
+                    title: "Імпорт завершено",
+                    description: "Позиції замовлень успішно імпортовані",
+                  });
+                }} />
+              </div>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button onClick={() => {

@@ -35,6 +35,7 @@ interface ImportResponse {
 }
 
 export function OrdersXmlImport() {
+  console.log('OrdersXmlImport component rendering');
   const [file, setFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [progress, setProgress] = useState(0);
