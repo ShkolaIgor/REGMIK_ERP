@@ -242,6 +242,10 @@ export default function Components() {
             <p className="text-gray-600">Управління компонентами для складу продуктів</p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowImportDialog(true)}>
+              <Upload className="mr-2 h-4 w-4" />
+              Імпорт компонентів
+            </Button>
             <Dialog open={isDialogOpen} onOpenChange={(open) => {
               setIsDialogOpen(open);
               if (!open) {
@@ -376,11 +380,6 @@ export default function Components() {
                 </form>
               </DialogContent>
             </Dialog>
-            
-            <Button variant="outline" onClick={() => setShowImportDialog(true)}>
-              <Upload className="mr-2 h-4 w-4" />
-              Імпорт компонентів
-            </Button>
           </div>
         </div>
 

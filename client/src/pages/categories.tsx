@@ -189,14 +189,7 @@ export default function Categories() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => {
-            setEditingCategory(null);
-            setIsDialogOpen(true);
-          }}>
-            <Plus className="mr-2 h-4 w-4" />
-            Додати категорію
-          </Button>
-          
+        
           <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
             <Button variant="outline" onClick={() => setShowImportDialog(true)}>
               <Upload className="mr-2 h-4 w-4" />
@@ -216,6 +209,13 @@ export default function Categories() {
               )}
             </DialogContent>
           </Dialog>
+          <Button onClick={() => {
+            setEditingCategory(null);
+            setIsDialogOpen(true);
+          }}>
+            <Plus className="mr-2 h-4 w-4" />
+            Додати категорію
+          </Button>
         </div>
       </div>
 
