@@ -679,8 +679,67 @@ export class DatabaseStorage implements IStorage {
 
   // Legacy method for backward compatibility
   async getOrders(): Promise<(Order & { items: (OrderItem & { product: Product })[] })[]> {
-    const result = await this.getOrdersPaginated({ page: 1, limit: 1000 });
-    return result.orders;
+    // For import operations, we need all orders without pagination
+    const ordersQuery = db
+      .select({
+        id: orders.id,
+        orderSequenceNumber: orders.orderSequenceNumber,
+        orderNumber: orders.orderNumber,
+        clientId: orders.clientId,
+        statusId: orders.statusId,
+        carrierId: orders.carrierId,
+        totalAmount: orders.totalAmount,
+        orderDate: orders.orderDate,
+        shippingDate: orders.shippingDate,
+        deliveryAddress: orders.deliveryAddress,
+        recipientName: orders.recipientName,
+        recipientPhone: orders.recipientPhone,
+        notes: orders.notes,
+        createdAt: orders.createdAt,
+        updatedAt: orders.updatedAt,
+      })
+      .from(orders);
+
+    const orderResults = await ordersQuery;
+    
+    // Get all order items for these orders
+    const orderItems = await db
+      .select({
+        id: orderItems.id,
+        orderId: orderItems.orderId,
+        productId: orderItems.productId,
+        quantity: orderItems.quantity,
+        unitPrice: orderItems.unitPrice,
+        totalPrice: orderItems.totalPrice,
+        costPrice: orderItems.costPrice,
+        notes: orderItems.notes,
+        product: {
+          id: products.id,
+          name: products.name,
+          sku: products.sku,
+          costPrice: products.costPrice,
+          retailPrice: products.retailPrice,
+          categoryId: products.categoryId,
+          companyId: products.companyId,
+        }
+      })
+      .from(orderItems)
+      .leftJoin(products, eq(orderItems.productId, products.id));
+
+    // Group items by order
+    const itemsMap = new Map<number, (OrderItem & { product: Product })[]>();
+    for (const item of orderItems) {
+      if (!itemsMap.has(item.orderId)) {
+        itemsMap.set(item.orderId, []);
+      }
+      itemsMap.get(item.orderId)!.push(item as OrderItem & { product: Product });
+    }
+
+    // Combine orders with their items
+    return orderResults.map(order => ({
+      ...order,
+      items: itemsMap.get(order.id) || []
+    }));
   }
 
   async getOrder(id: number): Promise<any> {
