@@ -8544,25 +8544,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const createdOrderItem = await storage.createOrderItem(orderItemData);
 
-      // Імпорт серійних номерів в окрему таблицю
+      // Імпорт серійних номерів в окрему таблицю з підтримкою діапазонів
       if (row.SERIAL_NUMBER && row.SERIAL_NUMBER.trim()) {
-        const serialNumbers = row.SERIAL_NUMBER.split(/[,\s]+/).filter((sn: string) => sn.trim());
-        for (const serialNumber of serialNumbers) {
-          const cleanSerial = serialNumber.trim();
-          if (cleanSerial) {
-            try {
-              await storage.createOrderItemSerialNumber({
-                orderItemId: createdOrderItem.id,
-                serialNumber: cleanSerial
-              });
-            } catch (serialError) {
-              console.error(`Failed to create serial number ${cleanSerial}:`, serialError);
-              job.logs.push({
-                type: 'warning',
-                message: `Не вдалося створити серійний номер: ${cleanSerial}`,
-                details: serialError instanceof Error ? serialError.message : 'Unknown error'
+        const serialNumbersText = row.SERIAL_NUMBER.trim();
+        const expandedSerialNumbers = parseSerialNumbers(serialNumbersText);
+        
+        for (const serialNumber of expandedSerialNumbers) {
+          try {
+            // Спочатку створюємо або знаходимо серійний номер в таблиці serial_numbers
+            const existingSerial = await storage.getSerialNumberByValue(serialNumber);
+            let serialNumberRecord;
+            
+            if (existingSerial) {
+              serialNumberRecord = existingSerial;
+            } else {
+              // Створюємо новий серійний номер
+              serialNumberRecord = await storage.createSerialNumber({
+                productId: product.id,
+                serialNumber: serialNumber,
+                status: 'sold',
+                orderId: order.id,
+                invoiceNumber: order.orderNumber,
+                saleDate: new Date()
               });
             }
+            
+            // Прив'язуємо до позиції замовлення
+            await storage.createOrderItemSerialNumber({
+              orderItemId: createdOrderItem.id,
+              serialNumberId: serialNumberRecord.id
+            });
+            
+          } catch (serialError) {
+            console.error(`Failed to create serial number ${serialNumber}:`, serialError);
+            job.logs.push({
+              type: 'warning',
+              message: `Не вдалося створити серійний номер: ${serialNumber}`,
+              details: serialError instanceof Error ? serialError.message : 'Unknown error'
+            });
           }
         }
       }
@@ -8584,6 +8603,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       job.errors.push(`Row ${job.processed + 1}: Database error - ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  }
+
+  // Функція для розбору серійних номерів з підтримкою діапазонів
+  function parseSerialNumbers(input: string): string[] {
+    const result: string[] = [];
+    const parts = input.split(/[,\s]+/).filter(part => part.trim());
+    
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (!trimmed) continue;
+      
+      // Перевіряємо, чи є це діапазон (наприклад "1111-2222")
+      const rangeMatch = trimmed.match(/^(\d+)-(\d+)$/);
+      if (rangeMatch) {
+        const start = parseInt(rangeMatch[1]);
+        const end = parseInt(rangeMatch[2]);
+        
+        // Генеруємо всі номери в діапазоні
+        for (let i = start; i <= end; i++) {
+          // Зберігаємо ведучі нулі з початкового номера
+          const paddedNumber = i.toString().padStart(rangeMatch[1].length, '0');
+          result.push(paddedNumber);
+        }
+      } else {
+        // Звичайний серійний номер
+        result.push(trimmed);
+      }
+    }
+    
+    return result;
   }
 
   async function processClientContactRow(row: any, job: any, existingClients: any[], existingContacts: any[]) {

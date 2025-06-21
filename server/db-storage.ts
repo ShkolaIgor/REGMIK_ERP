@@ -5334,18 +5334,39 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async createOrderItemSerialNumber(data: { orderItemId: number; serialNumber: string }): Promise<any> {
+  async createOrderItemSerialNumber(data: { orderItemId: number; serialNumberId: number }): Promise<any> {
     try {
       const result = await this.db.insert(orderItemSerialNumbers)
-        .values({
-          orderItemId: data.orderItemId,
-          serialNumber: data.serialNumber,
-          serialNumberId: null // Поки що не прив'язуємо до існуючих серійних номерів
-        })
+        .values(data)
         .returning();
       return result[0];
     } catch (error) {
       console.error('Error creating order item serial number:', error);
+      throw error;
+    }
+  }
+
+  async getSerialNumberByValue(serialNumber: string): Promise<any> {
+    try {
+      const result = await this.db.select()
+        .from(serialNumbers)
+        .where(eq(serialNumbers.serialNumber, serialNumber))
+        .limit(1);
+      return result[0];
+    } catch (error) {
+      console.error('Error getting serial number by value:', error);
+      throw error;
+    }
+  }
+
+  async createSerialNumber(data: any): Promise<any> {
+    try {
+      const result = await this.db.insert(serialNumbers)
+        .values(data)
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error creating serial number:', error);
       throw error;
     }
   }
