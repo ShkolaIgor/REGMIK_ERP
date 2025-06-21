@@ -340,7 +340,7 @@ export default function Products() {
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" title="Імпорт товарів з XML файлу">
                 <Upload className="h-4 w-4 mr-2" />
-                Імпорт XML
+                Імпорт товарів
               </Button>
             </DialogTrigger>
             <DialogContent>
