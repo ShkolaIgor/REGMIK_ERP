@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Package } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Upload } from "lucide-react";
 import type { ComponentCategory, InsertComponentCategory } from "@shared/schema";
+import { ComponentCategoriesXmlImport } from "@/components/ComponentCategoriesXmlImport";
+import { ImportWizard } from "@/components/ImportWizard";
 
 interface ComponentCategoryFormData {
   name: string;
@@ -22,6 +24,8 @@ export default function Categories() {
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ComponentCategory | null>(null);
+  const [showImportWizard, setShowImportWizard] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
   const [formData, setFormData] = useState<ComponentCategoryFormData>({
     name: "",
     description: "",
@@ -184,13 +188,35 @@ export default function Categories() {
             Управління категоріями електронних компонентів
           </p>
         </div>
-        <Button onClick={() => {
-          setEditingCategory(null);
-          setIsDialogOpen(true);
-        }}>
-          <Plus className="mr-2 h-4 w-4" />
-          Додати категорію
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => {
+            setEditingCategory(null);
+            setIsDialogOpen(true);
+          }}>
+            <Plus className="mr-2 h-4 w-4" />
+            Додати категорію
+          </Button>
+          
+          <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+            <Button variant="outline" onClick={() => setShowImportDialog(true)}>
+              <Upload className="mr-2 h-4 w-4" />
+              Імпорт категорій
+            </Button>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Імпорт категорій компонентів</DialogTitle>
+              </DialogHeader>
+              {showImportWizard ? (
+                <ImportWizard 
+                  importType="component-categories"
+                  onProceedToImport={() => setShowImportWizard(false)}
+                />
+              ) : (
+                <ComponentCategoriesXmlImport />
+              )}
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

@@ -9,9 +9,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit, Trash, Plus, Package, Search, Link } from "lucide-react";
+import { Edit, Trash, Plus, Package, Search, Link, Upload } from "lucide-react";
 import { Component } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { ComponentsXmlImport } from "@/components/ComponentsXmlImport";
+import { ImportWizard } from "@/components/ImportWizard";
 
 export default function Components() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -24,6 +26,8 @@ export default function Components() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [showImportWizard, setShowImportWizard] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -239,19 +243,20 @@ export default function Components() {
             <h1 className="text-3xl font-bold text-gray-900">Компоненти</h1>
             <p className="text-gray-600">Управління компонентами для складу продуктів</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) {
-              setEditingComponent(null);
-              resetForm();
-            }
-          }}>
-            <DialogTrigger asChild>
-              <Button onClick={() => setIsDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Додати компонент
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) {
+                setEditingComponent(null);
+                resetForm();
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button onClick={() => setIsDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Додати компонент
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>
@@ -367,8 +372,28 @@ export default function Components() {
                 </div>
               </form>
             </DialogContent>
-          </Dialog>
-        </div>
+            </Dialog>
+            
+            <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+              <Button variant="outline" onClick={() => setShowImportDialog(true)}>
+                <Upload className="mr-2 h-4 w-4" />
+                Імпорт компонентів
+              </Button>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Імпорт компонентів</DialogTitle>
+                </DialogHeader>
+                {showImportWizard ? (
+                  <ImportWizard 
+                    importType="components"
+                    onProceedToImport={() => setShowImportWizard(false)}
+                  />
+                ) : (
+                  <ComponentsXmlImport />
+                )}
+              </DialogContent>
+            </Dialog>
+          </div>
 
         {/* Фільтри і пошук */}
         <div className="flex flex-wrap gap-4">
