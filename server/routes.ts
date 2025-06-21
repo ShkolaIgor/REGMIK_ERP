@@ -1024,6 +1024,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     totalRows: number;
   }>();
 
+  // Component Categories XML Import with job tracking
+  const componentCategoryImportJobs = new Map<string, {
+    id: string;
+    status: 'processing' | 'completed' | 'failed';
+    progress: number;
+    processed: number;
+    imported: number;
+    updated: number;
+    skipped: number;
+    errors: string[];
+    details: Array<{
+      id: string;
+      name: string;
+      status: 'imported' | 'updated' | 'skipped' | 'error';
+      message: string;
+    }>;
+    totalRows: number;
+  }>();
+
+  // Components XML Import with job tracking
+  const componentImportJobs = new Map<string, {
+    id: string;
+    status: 'processing' | 'completed' | 'failed';
+    progress: number;
+    processed: number;
+    imported: number;
+    updated: number;
+    skipped: number;
+    errors: string[];
+    details: Array<{
+      sku: string;
+      name: string;
+      status: 'imported' | 'updated' | 'skipped' | 'error';
+      message: string;
+    }>;
+    totalRows: number;
+  }>();
+
   // Start XML import for orders
   app.post("/api/orders/import-xml", upload.single('xmlFile'), async (req, res) => {
     try {
@@ -9013,5 +9051,308 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  // Process Component Categories XML Import Async Function
+  async function processComponentCategoriesXmlImportAsync(
+    jobId: string, 
+    xmlBuffer: Buffer, 
+    jobsMap: Map<string, any>
+  ) {
+    const job = jobsMap.get(jobId);
+    if (!job) return;
+
+    try {
+      const xmlContent = xmlBuffer.toString('utf-8');
+      const parser = new xml2js.Parser({ 
+        explicitArray: false,
+        mergeAttrs: true
+      });
+      
+      const result = await parser.parseStringPromise(xmlContent);
+      
+      if (!result.DATAPACKET || !result.DATAPACKET.ROWDATA || !result.DATAPACKET.ROWDATA.ROW) {
+        job.status = 'failed';
+        job.errors.push("Invalid XML format. Expected DATAPACKET structure.");
+        return;
+      }
+
+      const rows = Array.isArray(result.DATAPACKET.ROWDATA.ROW) 
+        ? result.DATAPACKET.ROWDATA.ROW 
+        : [result.DATAPACKET.ROWDATA.ROW];
+
+      job.totalRows = rows.length;
+      
+      const BATCH_SIZE = 10;
+      
+      for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+        const batch = rows.slice(i, i + BATCH_SIZE);
+        
+        for (const row of batch) {
+          try {
+            await processComponentCategoryRow(row, job);
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            job.details.push({
+              id: String(row.ID_GROUP || 'Unknown'),
+              name: String(row.GROUP_NAME || 'Unknown'),
+              status: 'error',
+              message: errorMessage
+            });
+            job.errors.push(`Row ${job.processed + 1}: ${errorMessage}`);
+          }
+          
+          job.processed++;
+          job.progress = Math.round((job.processed / job.totalRows) * 100);
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      
+      job.skipped = job.processed - job.imported - job.updated - job.errors.length;
+      job.status = 'completed';
+      job.progress = 100;
+      
+      console.log(`Component categories import completed: ${job.imported} imported, ${job.updated} updated, ${job.skipped} skipped, ${job.errors.length} errors`);
+      
+      setTimeout(() => {
+        componentCategoryImportJobs.delete(jobId);
+      }, 5 * 60 * 1000);
+
+    } catch (error) {
+      console.error("Async component categories XML import error:", error);
+      const job = jobsMap.get(jobId);
+      if (job) {
+        job.status = 'failed';
+        job.progress = 0;
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        job.errors.push(errorMessage);
+      }
+    }
+  }
+
+  async function processComponentCategoryRow(row: any, job: any) {
+    if (!row.ID_GROUP) {
+      job.details.push({
+        id: 'Missing',
+        name: String(row.GROUP_NAME || 'Unknown'),
+        status: 'error',
+        message: 'Missing required ID_GROUP field'
+      });
+      job.errors.push(`Row ${job.processed + 1}: Missing ID_GROUP`);
+      return;
+    }
+
+    if (!row.GROUP_NAME) {
+      job.details.push({
+        id: String(row.ID_GROUP),
+        name: 'Missing',
+        status: 'error',
+        message: 'Missing required GROUP_NAME field'
+      });
+      job.errors.push(`Row ${job.processed + 1}: Missing GROUP_NAME`);
+      return;
+    }
+
+    const categoryData = {
+      id: parseInt(row.ID_GROUP),
+      name: String(row.GROUP_NAME),
+      isActive: true
+    };
+
+    try {
+      // Check if category exists
+      const existingCategory = await storage.getComponentCategory(categoryData.id);
+      
+      if (existingCategory) {
+        // Update existing category
+        await storage.updateComponentCategory(categoryData.id, {
+          name: categoryData.name,
+          isActive: categoryData.isActive
+        });
+        
+        job.updated++;
+        job.details.push({
+          id: String(categoryData.id),
+          name: categoryData.name,
+          status: 'updated',
+          message: 'Category updated successfully'
+        });
+      } else {
+        // Create new category
+        await storage.createComponentCategory(categoryData);
+        
+        job.imported++;
+        job.details.push({
+          id: String(categoryData.id),
+          name: categoryData.name,
+          status: 'imported',
+          message: 'Category imported successfully'
+        });
+      }
+    } catch (error) {
+      job.details.push({
+        id: String(categoryData.id),
+        name: categoryData.name,
+        status: 'error',
+        message: `Failed to process category: ${error instanceof Error ? error.message : 'Unknown error'}`
+      });
+      job.errors.push(`Row ${job.processed + 1}: Database error - ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  // Process Components XML Import Async Function
+  async function processComponentsXmlImportAsync(
+    jobId: string, 
+    xmlBuffer: Buffer, 
+    jobsMap: Map<string, any>
+  ) {
+    const job = jobsMap.get(jobId);
+    if (!job) return;
+
+    try {
+      const xmlContent = xmlBuffer.toString('utf-8');
+      const parser = new xml2js.Parser({ 
+        explicitArray: false,
+        mergeAttrs: true
+      });
+      
+      const result = await parser.parseStringPromise(xmlContent);
+      
+      if (!result.DATAPACKET || !result.DATAPACKET.ROWDATA || !result.DATAPACKET.ROWDATA.ROW) {
+        job.status = 'failed';
+        job.errors.push("Invalid XML format. Expected DATAPACKET structure.");
+        return;
+      }
+
+      const rows = Array.isArray(result.DATAPACKET.ROWDATA.ROW) 
+        ? result.DATAPACKET.ROWDATA.ROW 
+        : [result.DATAPACKET.ROWDATA.ROW];
+
+      job.totalRows = rows.length;
+      
+      const BATCH_SIZE = 10;
+      
+      for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+        const batch = rows.slice(i, i + BATCH_SIZE);
+        
+        for (const row of batch) {
+          try {
+            await processComponentRow(row, job);
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            job.details.push({
+              sku: String(row.ID_DETAIL || 'Unknown'),
+              name: String(row.DETAIL || 'Unknown'),
+              status: 'error',
+              message: errorMessage
+            });
+            job.errors.push(`Row ${job.processed + 1}: ${errorMessage}`);
+          }
+          
+          job.processed++;
+          job.progress = Math.round((job.processed / job.totalRows) * 100);
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      
+      job.skipped = job.processed - job.imported - job.updated - job.errors.length;
+      job.status = 'completed';
+      job.progress = 100;
+      
+      console.log(`Components import completed: ${job.imported} imported, ${job.updated} updated, ${job.skipped} skipped, ${job.errors.length} errors`);
+      
+      setTimeout(() => {
+        componentImportJobs.delete(jobId);
+      }, 5 * 60 * 1000);
+
+    } catch (error) {
+      console.error("Async components XML import error:", error);
+      const job = jobsMap.get(jobId);
+      if (job) {
+        job.status = 'failed';
+        job.progress = 0;
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        job.errors.push(errorMessage);
+      }
+    }
+  }
+
+  async function processComponentRow(row: any, job: any) {
+    if (!row.ID_DETAIL) {
+      job.details.push({
+        sku: 'Missing',
+        name: String(row.DETAIL || 'Unknown'),
+        status: 'error',
+        message: 'Missing required ID_DETAIL field'
+      });
+      job.errors.push(`Row ${job.processed + 1}: Missing ID_DETAIL`);
+      return;
+    }
+
+    if (!row.DETAIL) {
+      job.details.push({
+        sku: String(row.ID_DETAIL),
+        name: 'Missing',
+        status: 'error',
+        message: 'Missing required DETAIL field'
+      });
+      job.errors.push(`Row ${job.processed + 1}: Missing DETAIL`);
+      return;
+    }
+
+    const componentData = {
+      sku: String(row.ID_DETAIL),
+      name: String(row.DETAIL),
+      categoryId: row.INDEX_GROUP ? parseInt(row.INDEX_GROUP) : null,
+      notes: row.COMMENT || null,
+      isActive: row.ACTUAL === 'T' || row.ACTUAL === 'True' || row.ACTUAL === '1',
+      uktzedCode: row.CODE_CUST || null,
+      costPrice: "0"
+    };
+
+    try {
+      // Check if component exists by SKU
+      const existingComponent = await storage.getComponentBySku(componentData.sku);
+      
+      if (existingComponent) {
+        // Update existing component
+        await storage.updateComponent(existingComponent.id, {
+          name: componentData.name,
+          categoryId: componentData.categoryId,
+          notes: componentData.notes,
+          isActive: componentData.isActive,
+          uktzedCode: componentData.uktzedCode
+        });
+        
+        job.updated++;
+        job.details.push({
+          sku: componentData.sku,
+          name: componentData.name,
+          status: 'updated',
+          message: 'Component updated successfully'
+        });
+      } else {
+        // Create new component
+        await storage.createComponent(componentData);
+        
+        job.imported++;
+        job.details.push({
+          sku: componentData.sku,
+          name: componentData.name,
+          status: 'imported',
+          message: 'Component imported successfully'
+        });
+      }
+    } catch (error) {
+      job.details.push({
+        sku: componentData.sku,
+        name: componentData.name,
+        status: 'error',
+        message: `Failed to process component: ${error instanceof Error ? error.message : 'Unknown error'}`
+      });
+      job.errors.push(`Row ${job.processed + 1}: Database error - ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   return httpServer;
 }

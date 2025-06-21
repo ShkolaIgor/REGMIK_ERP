@@ -473,6 +473,8 @@ export const components = pgTable("components", {
   packageTypeId: integer("package_type_id").references(() => packageTypes.id),
   minStock: integer("min_stock"),
   maxStock: integer("max_stock"),
+  isActive: boolean("is_active").default(true),
+  notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
