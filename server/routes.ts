@@ -9444,7 +9444,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           categoryId: componentData.categoryId,
           notes: componentData.notes,
           isActive: componentData.isActive,
-          uktzedCode: componentData.uktzedCode
+          uktzedCode: componentData.uktzedCode,
+          unit: componentData.unit
         });
         
         job.updated++;
