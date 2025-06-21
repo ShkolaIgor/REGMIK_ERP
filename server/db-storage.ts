@@ -1150,9 +1150,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateComponent(id: number, componentData: Partial<InsertComponent>): Promise<Component | undefined> {
+    // Ensure unit field is never null
+    const updateData = {
+      ...componentData,
+      unit: componentData.unit || 'шт.'
+    };
+    
     const result = await db
       .update(components)
-      .set({ ...componentData })
+      .set(updateData)
       .where(eq(components.id, id))
       .returning();
     return result[0];
