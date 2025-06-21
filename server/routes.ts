@@ -1104,6 +1104,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Component Categories XML Import
+  app.post("/api/component-categories/import-xml", upload.single('xmlFile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "No XML file provided" 
+        });
+      }
+
+      const jobId = generateJobId();
+      
+      componentCategoryImportJobs.set(jobId, {
+        id: jobId,
+        status: 'processing',
+        progress: 0,
+        processed: 0,
+        imported: 0,
+        updated: 0,
+        skipped: 0,
+        errors: [],
+        details: [],
+        totalRows: 0
+      });
+
+      res.json({
+        success: true,
+        jobId,
+        message: "Component categories import job started. Use the job ID to check progress."
+      });
+
+      processComponentCategoriesXmlImportAsync(jobId, req.file.buffer, componentCategoryImportJobs);
+
+    } catch (error) {
+      console.error("Component categories XML import error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to start component categories XML import",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Get status for component categories XML import job
+  app.get("/api/component-categories/import-xml/:jobId/status", (req, res) => {
+    const jobId = req.params.jobId;
+    const job = componentCategoryImportJobs.get(jobId);
+    
+    if (!job) {
+      return res.status(404).json({ 
+        success: false, 
+        error: "Job not found" 
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: job
+    });
+  });
+
+  // Components XML Import
+  app.post("/api/components/import-xml", upload.single('xmlFile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "No XML file provided" 
+        });
+      }
+
+      const jobId = generateJobId();
+      
+      componentImportJobs.set(jobId, {
+        id: jobId,
+        status: 'processing',
+        progress: 0,
+        processed: 0,
+        imported: 0,
+        updated: 0,
+        skipped: 0,
+        errors: [],
+        details: [],
+        totalRows: 0
+      });
+
+      res.json({
+        success: true,
+        jobId,
+        message: "Components import job started. Use the job ID to check progress."
+      });
+
+      processComponentsXmlImportAsync(jobId, req.file.buffer, componentImportJobs);
+
+    } catch (error) {
+      console.error("Components XML import error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to start components XML import",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Get status for components XML import job
+  app.get("/api/components/import-xml/:jobId/status", (req, res) => {
+    const jobId = req.params.jobId;
+    const job = componentImportJobs.get(jobId);
+    
+    if (!job) {
+      return res.status(404).json({ 
+        success: false, 
+        error: "Job not found" 
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: job
+    });
+  });
+
   // Order Items XML Import
   app.post("/api/order-items/import-xml", upload.single('xmlFile'), async (req, res) => {
     try {
