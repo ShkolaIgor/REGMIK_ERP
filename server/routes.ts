@@ -8553,7 +8553,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         for (const serialNumber of expandedSerialNumbers) {
           try {
-            // Завжди створюємо новий серійний номер під час імпорту (дозволяємо дублікати)
+            // Завжди створюємо новий серійний номер під час імпорту для кожної позиції замовлення
+            // Це дозволяє одному серійному номеру бути в декількох позиціях
             const serialNumberRecord = await storage.createSerialNumber({
               productId: product.id,
               serialNumber: serialNumber,
@@ -8563,11 +8564,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               saleDate: new Date()
             });
             
-            // Прив'язуємо до позиції замовлення (дозволяємо дублікати)
+            // Прив'язуємо до позиції замовлення
             await storage.createOrderItemSerialNumber({
               orderItemId: createdOrderItem.id,
               serialNumberId: serialNumberRecord.id
             });
+            
+            console.log(`Created serial number ${serialNumber} for order item ${createdOrderItem.id}`);
             
           } catch (serialError) {
             console.error(`Failed to create serial number ${serialNumber}:`, serialError);
