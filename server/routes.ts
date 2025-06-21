@@ -8608,7 +8608,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const parts = input.split(',').map(part => part.trim()).filter(part => part);
     
     for (const part of parts) {
-      // Перевіряємо, чи є це діапазон з дефісом (наприклад "00059-00060")
+      // Перевіряємо, чи є це діапазон (наприклад "00059-00060")
       const rangeMatch = part.match(/^(\d+)-(\d+)$/);
       if (rangeMatch) {
         const startStr = rangeMatch[1];
@@ -8622,37 +8622,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const paddedNumber = i.toString().padStart(startStr.length, '0');
           result.push(paddedNumber);
         }
-      } 
-      // Перевіряємо, чи є це діапазон з косою рискою (наприклад "99019/093", "05050/301")
-      else if (part.includes('/')) {
-        const slashMatch = part.match(/^(\d+)\/(\d+)$/);
-        if (slashMatch) {
-          const prefix = slashMatch[1];
-          const suffix = slashMatch[2];
-          
-          // Якщо суфікс коротший за префікс, це діапазон
-          if (suffix.length < prefix.length) {
-            const prefixLength = prefix.length;
-            const suffixNum = parseInt(suffix);
-            const prefixNum = parseInt(prefix);
-            const prefixBase = prefix.slice(0, prefixLength - suffix.length);
-            
-            // Генеруємо діапазон від префікса до prefixBase + suffix
-            for (let i = prefixNum; i <= parseInt(prefixBase + suffix); i++) {
-              const paddedNumber = i.toString().padStart(prefixLength, '0');
-              result.push(paddedNumber);
-            }
-          } else {
-            // Якщо довжини однакові, це два окремі номери
-            result.push(prefix);
-            result.push(suffix);
-          }
-        } else {
-          // Якщо не відповідає паттерну, зберігаємо як є
-          result.push(part);
-        }
-      } 
-      else {
+      } else {
         // Звичайний серійний номер - зберігаємо як є
         result.push(part);
       }
