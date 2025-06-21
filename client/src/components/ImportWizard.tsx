@@ -103,6 +103,60 @@ const IMPORT_CONFIGS: Record<string, ImportRequirements> = {
       'Клієнт не знайдений',
       'Дублікат ID контакту'
     ]
+  },
+  'component-categories': {
+    requiredFields: ['ID_GROUP', 'GROUP_NAME'],
+    optionalFields: [],
+    dependencies: [],
+    sampleData: {
+      'ID_GROUP': 'Унікальний ID категорії',
+      'GROUP_NAME': 'Назва категорії компонентів'
+    },
+    validationRules: [
+      'ID_GROUP не може бути пустим',
+      'GROUP_NAME не може бути пустим',
+      'ID_GROUP повинен бути числом'
+    ],
+    commonIssues: [
+      'Дублікат ID категорії',
+      'Пуста назва категорії'
+    ]
+  },
+  'components': {
+    requiredFields: ['ID_DETAIL', 'DETAIL'],
+    optionalFields: ['INDEX_GROUP', 'COMMENT', 'ACTUAL', 'CODE_CUST'],
+    dependencies: ['Категорії компонентів повинні існувати (якщо вказано INDEX_GROUP)'],
+    sampleData: {
+      'ID_DETAIL': 'SKU компонента',
+      'DETAIL': 'Назва компонента',
+      'INDEX_GROUP': 'ID категорії компонента',
+      'COMMENT': 'Примітки',
+      'ACTUAL': 'Активність (T/F)',
+      'CODE_CUST': 'Код УКТЗЕД'
+    },
+    validationRules: [
+      'ID_DETAIL не може бути пустим',
+      'DETAIL не може бути пустим',
+      'INDEX_GROUP повинен бути числом (якщо вказано)',
+      'ACTUAL повинен бути T, F, True, False, 1 або 0'
+    ],
+    commonIssues: [
+      'Дублікат SKU компонента',
+      'Категорія не знайдена',
+      'Невірний формат поля ACTUAL'
+    ]
+  }
+};
+
+const getImportTitle = (type: string) => {
+  switch (type) {
+    case 'orders': return 'Імпорт замовлень';
+    case 'order-items': return 'Імпорт товарів замовлень';
+    case 'clients': return 'Імпорт клієнтів';
+    case 'client-contacts': return 'Імпорт контактів клієнтів';
+    case 'component-categories': return 'Імпорт категорій компонентів';
+    case 'components': return 'Імпорт компонентів';
+    default: return 'Імпорт даних';
   }
 };
 

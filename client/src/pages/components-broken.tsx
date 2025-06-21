@@ -53,38 +53,39 @@ export default function Components() {
     mutationFn: (data: any) => apiRequest("/api/components", { method: "POST", body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/components"] });
-      toast({
-        title: "Компонент створено",
-        description: "Новий компонент було успішно додано.",
-      });
       setIsDialogOpen(false);
       resetForm();
+      toast({
+        title: "Успіх",
+        description: "Компонент створено успішно",
+      });
     },
     onError: (error: any) => {
       toast({
         title: "Помилка",
-        description: "Не вдалося створити компонент.",
+        description: error.message || "Не вдалося створити компонент",
         variant: "destructive",
       });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
+    mutationFn: ({ id, data }: { id: number; data: any }) => 
       apiRequest(`/api/components/${id}`, { method: "PATCH", body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/components"] });
-      toast({
-        title: "Компонент оновлено",
-        description: "Компонент було успішно оновлено.",
-      });
       setIsDialogOpen(false);
+      setEditingComponent(null);
       resetForm();
+      toast({
+        title: "Успіх",
+        description: "Компонент оновлено успішно",
+      });
     },
     onError: (error: any) => {
       toast({
         title: "Помилка",
-        description: "Не вдалося оновити компонент.",
+        description: error.message || "Не вдалося оновити компонент",
         variant: "destructive",
       });
     },
@@ -95,14 +96,14 @@ export default function Components() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/components"] });
       toast({
-        title: "Компонент видалено",
-        description: "Компонент було успішно видалено.",
+        title: "Успіх",
+        description: "Компонент видалено успішно",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Помилка",
-        description: "Не вдалося видалити компонент.",
+        description: error.message || "Не вдалося видалити компонент",
         variant: "destructive",
       });
     },
@@ -122,7 +123,6 @@ export default function Components() {
       minStock: "",
       maxStock: "",
     });
-    setEditingComponent(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -227,8 +227,10 @@ export default function Components() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Завантаження...</div>
+      <div className="min-h-screen w-full bg-gray-50/30">
+        <div className="w-full px-6 py-6">
+          <div className="text-center">Завантаження...</div>
+        </div>
       </div>
     );
   }
@@ -255,126 +257,121 @@ export default function Components() {
                   Додати компонент
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingComponent ? "Редагувати компонент" : "Додати компонент"}
-                  </DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="name">Назва</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="sku">SKU</Label>
-                      <Input
-                        id="sku"
-                        value={formData.sku}
-                        onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="unit">Одиниця виміру</Label>
-                      <Input
-                        id="unit"
-                        value={formData.unit}
-                        onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="costPrice">Собівартість</Label>
-                      <Input
-                        id="costPrice"
-                        type="number"
-                        step="0.01"
-                        value={formData.costPrice}
-                        onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="supplier">Постачальник</Label>
-                      <Input
-                        id="supplier"
-                        value={formData.supplier}
-                        onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="partNumber">Номер деталі</Label>
-                      <Input
-                        id="partNumber"
-                        value={formData.partNumber}
-                        onChange={(e) => setFormData({ ...formData, partNumber: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="manufacturer">Виробник</Label>
-                      <Input
-                        id="manufacturer"
-                        value={formData.manufacturer}
-                        onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="uktzedCode">Код УКТЗЕД</Label>
-                      <Input
-                        id="uktzedCode"
-                        value={formData.uktzedCode}
-                        onChange={(e) => setFormData({ ...formData, uktzedCode: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="minStock">Мінімальний запас</Label>
-                      <Input
-                        id="minStock"
-                        type="number"
-                        value={formData.minStock}
-                        onChange={(e) => setFormData({ ...formData, minStock: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="maxStock">Максимальний запас</Label>
-                      <Input
-                        id="maxStock"
-                        type="number"
-                        value={formData.maxStock}
-                        onChange={(e) => setFormData({ ...formData, maxStock: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-span-2">
-                    <Label htmlFor="description">Опис</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      rows={3}
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingComponent ? "Редагувати компонент" : "Додати компонент"}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">Назва</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
                     />
                   </div>
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsDialogOpen(false)}
-                    >
-                      Скасувати
-                    </Button>
-                    <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                      {editingComponent ? "Оновити" : "Створити"}
-                    </Button>
+                  <div>
+                    <Label htmlFor="sku">SKU</Label>
+                    <Input
+                      id="sku"
+                      value={formData.sku}
+                      onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                      required
+                    />
                   </div>
-                </form>
-              </DialogContent>
+                  <div>
+                    <Label htmlFor="unit">Одиниця виміру</Label>
+                    <Input
+                      id="unit"
+                      value={formData.unit}
+                      onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="costPrice">Собівартість</Label>
+                    <Input
+                      id="costPrice"
+                      type="number"
+                      step="0.01"
+                      value={formData.costPrice}
+                      onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="supplier">Постачальник</Label>
+                    <Input
+                      id="supplier"
+                      value={formData.supplier}
+                      onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="partNumber">Артикул</Label>
+                    <Input
+                      id="partNumber"
+                      value={formData.partNumber}
+                      onChange={(e) => setFormData({ ...formData, partNumber: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="manufacturer">Виробник</Label>
+                    <Input
+                      id="manufacturer"
+                      value={formData.manufacturer}
+                      onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="uktzedCode">Код УКТЗЕД</Label>
+                    <Input
+                      id="uktzedCode"
+                      value={formData.uktzedCode}
+                      onChange={(e) => setFormData({ ...formData, uktzedCode: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="minStock">Мін. запас</Label>
+                    <Input
+                      id="minStock"
+                      type="number"
+                      value={formData.minStock}
+                      onChange={(e) => setFormData({ ...formData, minStock: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="maxStock">Макс. запас</Label>
+                    <Input
+                      id="maxStock"
+                      type="number"
+                      value={formData.maxStock}
+                      onChange={(e) => setFormData({ ...formData, maxStock: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="description">Опис</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Скасувати
+                  </Button>
+                  <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                    {editingComponent ? "Оновити" : "Створити"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
             </Dialog>
             
             <Button variant="outline" onClick={() => setShowImportDialog(true)}>
@@ -382,7 +379,22 @@ export default function Components() {
               Імпорт компонентів
             </Button>
           </div>
-        </div>
+          
+          <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Імпорт компонентів</DialogTitle>
+              </DialogHeader>
+              {showImportWizard ? (
+                <ImportWizard 
+                  importType="components"
+                  onProceedToImport={() => setShowImportWizard(false)}
+                />
+              ) : (
+                <ComponentsXmlImport />
+              )}
+            </DialogContent>
+          </Dialog>
 
         {/* Фільтри і пошук */}
         <div className="flex flex-wrap gap-4">
@@ -457,7 +469,7 @@ export default function Components() {
                     )}
                   </TableHead>
                   <TableHead>Опис</TableHead>
-                  <TableHead>Одиниця</TableHead>
+                  <TableHead>Одиниця виміру</TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-gray-50"
                     onClick={() => handleSort("costPrice")}
@@ -476,41 +488,69 @@ export default function Components() {
                       <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
                     )}
                   </TableHead>
+                  <TableHead>Артикул</TableHead>
+                  <TableHead>Виробник</TableHead>
+                  <TableHead>Код УКТЗЕД</TableHead>
+                  <TableHead>Мін. запас</TableHead>
+                  <TableHead>Макс. запас</TableHead>
                   <TableHead>Дії</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedComponents.map((component) => (
-                  <TableRow key={component.id}>
-                    <TableCell className="font-medium">{component.name}</TableCell>
-                    <TableCell>{component.sku}</TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {component.description || "—"}
-                    </TableCell>
-                    <TableCell>{component.unit}</TableCell>
-                    <TableCell>{component.costPrice}</TableCell>
-                    <TableCell>{component.supplier || "—"}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(component)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(component.id)}
-                          className="text-red-600"
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
+                {paginatedComponents.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={12} className="text-center py-8">
+                      <div className="flex flex-col items-center space-y-2">
+                        <Package className="w-8 h-8 text-gray-400" />
+                        <p className="text-gray-500">Компоненти не знайдено</p>
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  paginatedComponents.map((component: Component) => (
+                    <TableRow key={component.id}>
+                      <TableCell className="font-medium">{component.name}</TableCell>
+                      <TableCell>{component.sku}</TableCell>
+                      <TableCell>{component.description || "-"}</TableCell>
+                      <TableCell>{component.unit}</TableCell>
+                      <TableCell>₴{component.costPrice}</TableCell>
+                      <TableCell>{component.supplier || "-"}</TableCell>
+                      <TableCell>{component.partNumber || "-"}</TableCell>
+                      <TableCell>{component.manufacturer || "-"}</TableCell>
+                      <TableCell>{component.uktzedCode || "-"}</TableCell>
+                      <TableCell>{component.minStock || "-"}</TableCell>
+                      <TableCell>{component.maxStock || "-"}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(component)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(component.id)}
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedComponentForAlternatives(component);
+                              setIsAlternativesDialogOpen(true);
+                            }}
+                          >
+                            <Link className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -518,42 +558,47 @@ export default function Components() {
 
         {/* Пагінація нижня */}
         {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
-            >
-              Перша
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-            >
-              Попередня
-            </Button>
-            <span className="text-sm">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-500">
               Сторінка {currentPage} з {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Наступна
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage === totalPages}
-            >
-              Остання
-            </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                Перша
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                Попередня
+              </Button>
+              <span className="mx-2">
+                Сторінка {currentPage} з {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Наступна
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                Остання
+              </Button>
+            </div>
           </div>
         )}
 
@@ -569,23 +614,6 @@ export default function Components() {
                 Закрити
               </Button>
             </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Діалог імпорту */}
-        <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Імпорт компонентів</DialogTitle>
-            </DialogHeader>
-            {showImportWizard ? (
-              <ImportWizard 
-                importType="components"
-                onProceedToImport={() => setShowImportWizard(false)}
-              />
-            ) : (
-              <ComponentsXmlImport />
-            )}
           </DialogContent>
         </Dialog>
       </div>
