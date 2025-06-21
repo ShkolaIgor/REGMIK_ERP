@@ -5322,6 +5322,18 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem> {
+    try {
+      const result = await this.db.insert(orderItems)
+        .values(orderItem)
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error creating order item:', error);
+      throw error;
+    }
+  }
+
   async createPartialShipment(orderId: number, items: any[], shipmentData: any): Promise<any> {
     try {
       return await db.transaction(async (tx) => {
