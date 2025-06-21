@@ -703,7 +703,7 @@ export class DatabaseStorage implements IStorage {
     const orderResults = await ordersQuery;
     
     // Get all order items for these orders
-    const orderItems = await db
+    const orderItemsData = await db
       .select({
         id: orderItems.id,
         orderId: orderItems.orderId,
@@ -713,26 +713,45 @@ export class DatabaseStorage implements IStorage {
         totalPrice: orderItems.totalPrice,
         costPrice: orderItems.costPrice,
         notes: orderItems.notes,
-        product: {
-          id: products.id,
-          name: products.name,
-          sku: products.sku,
-          costPrice: products.costPrice,
-          retailPrice: products.retailPrice,
-          categoryId: products.categoryId,
-          companyId: products.companyId,
-        }
+        productId2: products.id,
+        productName: products.name,
+        productSku: products.sku,
+        productCostPrice: products.costPrice,
+        productRetailPrice: products.retailPrice,
+        productCategoryId: products.categoryId,
+        productCompanyId: products.companyId,
       })
       .from(orderItems)
       .leftJoin(products, eq(orderItems.productId, products.id));
 
     // Group items by order
     const itemsMap = new Map<number, (OrderItem & { product: Product })[]>();
-    for (const item of orderItems) {
+    for (const item of orderItemsData) {
       if (!itemsMap.has(item.orderId)) {
         itemsMap.set(item.orderId, []);
       }
-      itemsMap.get(item.orderId)!.push(item as OrderItem & { product: Product });
+      
+      const orderItem = {
+        id: item.id,
+        orderId: item.orderId,
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        totalPrice: item.totalPrice,
+        costPrice: item.costPrice,
+        notes: item.notes,
+        product: {
+          id: item.productId2,
+          name: item.productName,
+          sku: item.productSku,
+          costPrice: item.productCostPrice,
+          retailPrice: item.productRetailPrice,
+          categoryId: item.productCategoryId,
+          companyId: item.productCompanyId,
+        }
+      };
+      
+      itemsMap.get(item.orderId)!.push(orderItem as OrderItem & { product: Product });
     }
 
     // Combine orders with their items
