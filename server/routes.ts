@@ -8463,7 +8463,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Validate required fields
     if (!row.INDEX_LISTARTICLE) {
       job.details.push({
-        orderNumber: row.NAME_ZAKAZ || 'Unknown',
+        orderNumber: String(row.NAME_ZAKAZ || 'Unknown'),
         productSku: 'Missing',
         status: 'error',
         message: 'Missing required INDEX_LISTARTICLE field'
@@ -8487,7 +8487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const product = products.find(p => p.sku === row.INDEX_LISTARTICLE);
     if (!product) {
       job.details.push({
-        orderNumber: row.NAME_ZAKAZ || targetOrderId?.toString() || 'Unknown',
+        orderNumber: String(row.NAME_ZAKAZ || targetOrderId || 'Unknown'),
         productSku: row.INDEX_LISTARTICLE,
         status: 'error',
         message: `Product with SKU ${row.INDEX_LISTARTICLE} not found`
@@ -8515,7 +8515,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? `Order with ID ${targetOrderId} not found`
         : `Order with number/ID ${row.NAME_ZAKAZ} not found`;
       job.details.push({
-        orderNumber: row.NAME_ZAKAZ || targetOrderId?.toString() || 'Unknown',
+        orderNumber: String(row.NAME_ZAKAZ || targetOrderId || 'Unknown'),
         productSku: row.INDEX_LISTARTICLE,
         status: 'error',
         message: errorMsg
