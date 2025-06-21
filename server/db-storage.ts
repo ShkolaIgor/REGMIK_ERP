@@ -5361,9 +5361,18 @@ export class DatabaseStorage implements IStorage {
 
   async createSerialNumber(data: any): Promise<any> {
     try {
+      // Під час імпорту дозволяємо дублікати серійних номерів
       const result = await this.db.insert(serialNumbers)
         .values(data)
+        .onConflictDoNothing() // Ігноруємо конфлікти дублікатів під час імпорту
         .returning();
+      
+      // Якщо конфлікт, знаходимо існуючий запис
+      if (result.length === 0) {
+        const existing = await this.getSerialNumberByValue(data.serialNumber);
+        return existing;
+      }
+      
       return result[0];
     } catch (error) {
       console.error('Error creating serial number:', error);

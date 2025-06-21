@@ -8549,27 +8549,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const serialNumbersText = row.SERIAL_NUMBER.trim();
         const expandedSerialNumbers = parseSerialNumbers(serialNumbersText);
         
+        console.log(`Original serial numbers: ${serialNumbersText}, Expanded: ${expandedSerialNumbers.join(', ')}`);
+        
         for (const serialNumber of expandedSerialNumbers) {
           try {
-            // Спочатку створюємо або знаходимо серійний номер в таблиці serial_numbers
-            const existingSerial = await storage.getSerialNumberByValue(serialNumber);
-            let serialNumberRecord;
+            // Завжди створюємо новий серійний номер під час імпорту (дозволяємо дублікати)
+            const serialNumberRecord = await storage.createSerialNumber({
+              productId: product.id,
+              serialNumber: serialNumber,
+              status: 'sold',
+              orderId: order.id,
+              invoiceNumber: order.orderNumber,
+              saleDate: new Date()
+            });
             
-            if (existingSerial) {
-              serialNumberRecord = existingSerial;
-            } else {
-              // Створюємо новий серійний номер
-              serialNumberRecord = await storage.createSerialNumber({
-                productId: product.id,
-                serialNumber: serialNumber,
-                status: 'sold',
-                orderId: order.id,
-                invoiceNumber: order.orderNumber,
-                saleDate: new Date()
-              });
-            }
-            
-            // Прив'язуємо до позиції замовлення
+            // Прив'язуємо до позиції замовлення (дозволяємо дублікати)
             await storage.createOrderItemSerialNumber({
               orderItemId: createdOrderItem.id,
               serialNumberId: serialNumberRecord.id
@@ -8608,27 +8602,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Функція для розбору серійних номерів з підтримкою діапазонів
   function parseSerialNumbers(input: string): string[] {
     const result: string[] = [];
-    const parts = input.split(/[,\s]+/).filter(part => part.trim());
+    const parts = input.split(',').map(part => part.trim()).filter(part => part);
     
     for (const part of parts) {
-      const trimmed = part.trim();
-      if (!trimmed) continue;
-      
-      // Перевіряємо, чи є це діапазон (наприклад "1111-2222")
-      const rangeMatch = trimmed.match(/^(\d+)-(\d+)$/);
+      // Перевіряємо, чи є це діапазон (наприклад "00059-00060")
+      const rangeMatch = part.match(/^(\d+)-(\d+)$/);
       if (rangeMatch) {
-        const start = parseInt(rangeMatch[1]);
-        const end = parseInt(rangeMatch[2]);
+        const startStr = rangeMatch[1];
+        const endStr = rangeMatch[2];
+        const start = parseInt(startStr);
+        const end = parseInt(endStr);
         
-        // Генеруємо всі номери в діапазоні
+        // Генеруємо всі номери в діапазоні, зберігаючи оригінальний формат
         for (let i = start; i <= end; i++) {
           // Зберігаємо ведучі нулі з початкового номера
-          const paddedNumber = i.toString().padStart(rangeMatch[1].length, '0');
+          const paddedNumber = i.toString().padStart(startStr.length, '0');
           result.push(paddedNumber);
         }
       } else {
-        // Звичайний серійний номер
-        result.push(trimmed);
+        // Звичайний серійний номер - зберігаємо як є
+        result.push(part);
       }
     }
     
