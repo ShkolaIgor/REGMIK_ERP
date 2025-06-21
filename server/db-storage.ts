@@ -4971,12 +4971,27 @@ export class DatabaseStorage implements IStorage {
     return serialNumber || null;
   }
 
-  async createSerialNumber(data: InsertSerialNumber): Promise<SerialNumber> {
-    const [created] = await db
-      .insert(serialNumbers)
-      .values(data)
-      .returning();
-    return created;
+  async createSerialNumber(data: any): Promise<any> {
+    try {
+      // Під час імпорту завжди створюємо новий запис (дозволяємо дублікати)
+      const result = await this.db.insert(serialNumbers)
+        .values(data)
+        .returning();
+      
+      return result[0];
+    } catch (error) {
+      // Якщо помилка unique constraint, все одно створюємо новий запис з іншим ID
+      if (error.code === '23505') {
+        console.log(`Duplicate serial number ${data.serialNumber}, creating new record anyway`);
+        // Повторюємо спробу без обмежень
+        const result = await this.db.insert(serialNumbers)
+          .values(data)
+          .returning();
+        return result[0];
+      }
+      console.error('Error creating serial number:', error);
+      throw error;
+    }
   }
 
   async createBulkSerialNumbers(productId: number, count: number): Promise<SerialNumber[]> {

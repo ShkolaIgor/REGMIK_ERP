@@ -566,13 +566,15 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
 
 export const insertOrderSchemaForm = insertOrderSchema.extend({
   statusId: z.number().int().positive("Статус обов'язковий"),
-  clientContactsId: z.number().int().positive().optional(),
-  // Дозволяємо строки для дат, оскільки з форми приходять строки
-  paymentDate: z.string().optional().or(z.date().optional()),
-  dueDate: z.string().optional().or(z.date().optional()),
-  shippedDate: z.string().optional().or(z.date().optional()),
-  productionApprovedAt: z.string().optional().or(z.date().optional())
-});
+  clientContactsId: z.number().int().positive().optional()
+}).transform((data) => ({
+  ...data,
+  // Перетворюємо рядки дат у Date об'єкти або null
+  paymentDate: data.paymentDate ? (typeof data.paymentDate === 'string' ? new Date(data.paymentDate) : data.paymentDate) : null,
+  dueDate: data.dueDate ? (typeof data.dueDate === 'string' ? new Date(data.dueDate) : data.dueDate) : null,
+  shippedDate: data.shippedDate ? (typeof data.shippedDate === 'string' ? new Date(data.shippedDate) : data.shippedDate) : null,
+  productionApprovedAt: data.productionApprovedAt ? (typeof data.productionApprovedAt === 'string' ? new Date(data.productionApprovedAt) : data.productionApprovedAt) : null
+}));
 
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
