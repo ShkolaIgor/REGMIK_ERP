@@ -8527,7 +8527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const quantity = parseDecimal(row.COUNT_DET || "0");
     const unitPrice = parseDecimal(row.CENA || "0");
-    const costPrice = parseDecimal(row.PRICE_NET || "0");
+    const costPrice = row.PRICE_NET ? parseDecimal(row.PRICE_NET) : null;
     const totalPrice = (parseFloat(quantity) * parseFloat(unitPrice)).toFixed(2);
 
     try {
@@ -8537,12 +8537,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         quantity: parseInt(quantity),
         unitPrice: unitPrice,
         totalPrice: totalPrice,
-        costPrice: costPrice || null,
+        costPrice: costPrice,
         serialNumbers: row.SERIAL_NUMBER || null,
         notes: row.COMMENT || null,
       };
 
-      await storage.createOrderItem(orderItemData);
+      const createdOrderItem = await storage.createOrderItem(orderItemData);
+
+      // Імпорт серійних номерів в окрему таблицю
+      if (row.SERIAL_NUMBER && row.SERIAL_NUMBER.trim()) {
+        const serialNumbers = row.SERIAL_NUMBER.split(/[,\s]+/).filter((sn: string) => sn.trim());
+        for (const serialNumber of serialNumbers) {
+          const cleanSerial = serialNumber.trim();
+          if (cleanSerial) {
+            try {
+              await storage.createOrderItemSerialNumber({
+                orderItemId: createdOrderItem.id,
+                serialNumber: cleanSerial
+              });
+            } catch (serialError) {
+              console.error(`Failed to create serial number ${cleanSerial}:`, serialError);
+              job.logs.push({
+                type: 'warning',
+                message: `Не вдалося створити серійний номер: ${cleanSerial}`,
+                details: serialError instanceof Error ? serialError.message : 'Unknown error'
+              });
+            }
+          }
+        }
+      }
       
       job.imported++;
       job.details.push({

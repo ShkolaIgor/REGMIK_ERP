@@ -1745,7 +1745,8 @@ export type InsertSerialNumber = z.infer<typeof insertSerialNumberSchema>;
 export const orderItemSerialNumbers = pgTable("order_item_serial_numbers", {
   id: serial("id").primaryKey(),
   orderItemId: integer("order_item_id").references(() => orderItems.id).notNull(),
-  serialNumberId: integer("serial_number_id").references(() => serialNumbers.id).notNull(),
+  serialNumberId: integer("serial_number_id").references(() => serialNumbers.id),
+  serialNumber: text("serial_number"), // Пряме зберігання серійного номера як тексту
   assignedAt: timestamp("assigned_at").defaultNow(),
   assignedBy: integer("assigned_by").references(() => users.id),
   notes: text("notes"),

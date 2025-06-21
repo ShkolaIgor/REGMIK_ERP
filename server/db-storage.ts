@@ -5334,6 +5334,22 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async createOrderItemSerialNumber(data: { orderItemId: number; serialNumber: string }): Promise<any> {
+    try {
+      const result = await this.db.insert(orderItemSerialNumbers)
+        .values({
+          orderItemId: data.orderItemId,
+          serialNumber: data.serialNumber,
+          serialNumberId: null // Поки що не прив'язуємо до існуючих серійних номерів
+        })
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error creating order item serial number:', error);
+      throw error;
+    }
+  }
+
   async createPartialShipment(orderId: number, items: any[], shipmentData: any): Promise<any> {
     try {
       return await db.transaction(async (tx) => {
