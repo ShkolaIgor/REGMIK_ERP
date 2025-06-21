@@ -8,7 +8,7 @@ import { CheckCircle, AlertCircle, Info, ArrowRight, ArrowLeft, Upload } from 'l
 import { useQuery } from '@tanstack/react-query';
 
 interface ImportWizardProps {
-  importType: 'orders' | 'order-items' | 'clients' | 'client-contacts';
+  importType: 'orders' | 'order-items' | 'clients' | 'client-contacts' | 'component-categories' | 'components';
   onProceedToImport: () => void;
 }
 
