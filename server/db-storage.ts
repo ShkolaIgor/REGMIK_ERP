@@ -1139,6 +1139,11 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async getComponentBySku(sku: string): Promise<Component | undefined> {
+    const result = await db.select().from(components).where(eq(components.sku, sku));
+    return result[0];
+  }
+
   async createComponent(insertComponent: InsertComponent): Promise<Component> {
     const result = await db.insert(components).values(insertComponent).returning();
     return result[0];
