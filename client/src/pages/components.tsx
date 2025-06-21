@@ -9,11 +9,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit, Trash, Plus, Package, Search, Link, Upload } from "lucide-react";
+import { Edit, Trash, Plus, Package, Search, Link, Upload, Filter, X } from "lucide-react";
 import { Component } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { ComponentsXmlImport } from "@/components/ComponentsXmlImport";
 import { ImportWizard } from "@/components/ImportWizard";
+import { Badge } from "@/components/ui/badge";
 
 export default function Components() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -28,6 +29,21 @@ export default function Components() {
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [showImportWizard, setShowImportWizard] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [filterSupplier, setFilterSupplier] = useState<string>("all");
+  const [filterActive, setFilterActive] = useState<string>("all");
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Column widths state
+  const [columnWidths, setColumnWidths] = useState({
+    name: 200,
+    sku: 150,
+    category: 150,
+    description: 200,
+    unit: 100,
+    costPrice: 120,
+    supplier: 150,
+    actions: 100
+  });
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -47,6 +63,10 @@ export default function Components() {
 
   const { data: components = [], isLoading } = useQuery({
     queryKey: ["/api/components"],
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["/api/component-categories"],
   });
 
   const createMutation = useMutation({
@@ -173,8 +193,13 @@ export default function Components() {
                            (component.supplier && component.supplier.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesCategory = filterCategory === "all" || !filterCategory || 
                              (component.categoryId && component.categoryId.toString() === filterCategory);
+      const matchesSupplier = filterSupplier === "all" || !filterSupplier ||
+                             (component.supplier && component.supplier === filterSupplier);
+      const matchesActive = filterActive === "all" || 
+                           (filterActive === "active" && component.isActive !== false) ||
+                           (filterActive === "inactive" && component.isActive === false);
       
-      return matchesSearch && matchesCategory;
+      return matchesSearch && matchesCategory && matchesSupplier && matchesActive;
     })
     .sort((a, b) => {
       let aVal, bVal;
@@ -195,6 +220,12 @@ export default function Components() {
         case "supplier":
           aVal = (a.supplier || "").toLowerCase();
           bVal = (b.supplier || "").toLowerCase();
+          break;
+        case "category":
+          const categoryA = categories.find((cat: any) => cat.id === a.categoryId);
+          const categoryB = categories.find((cat: any) => cat.id === b.categoryId);
+          aVal = (categoryA?.name || "").toLowerCase();
+          bVal = (categoryB?.name || "").toLowerCase();
           break;
         case "createdAt":
           aVal = a.createdAt ? new Date(a.createdAt).getTime() : 0;
@@ -235,6 +266,27 @@ export default function Components() {
 
   return (
     <div className="min-h-screen w-full bg-gray-50/30">
+      <style jsx>{`
+        .resize-handle {
+          position: absolute;
+          right: 0;
+          top: 0;
+          bottom: 0;
+          width: 4px;
+          cursor: col-resize;
+          background: transparent;
+        }
+        .resize-handle:hover {
+          background: #3b82f6;
+        }
+        th {
+          position: relative;
+        }
+        .resizable-header {
+          resize: horizontal;
+          overflow: hidden;
+        }
+      `}</style>
       <div className="w-full px-6 py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -402,28 +454,93 @@ export default function Components() {
           </div>
         </div>
 
-        {/* Фільтри і пошук */}
-        <div className="flex flex-wrap gap-4">
-          <div className="flex-1 min-w-[200px]">
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Пошук за назвою, SKU або постачальником..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
+        {/* Пошук та фільтри */}
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-4">
+            <div className="flex-1 min-w-[200px]">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Пошук за назвою, SKU або постачальником..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
             </div>
+
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              Фільтри
+              {(filterCategory !== "all" || filterSupplier !== "all" || filterActive !== "all") && (
+                <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
+                  {[filterCategory, filterSupplier, filterActive].filter(f => f !== "all").length}
+                </Badge>
+              )}
+            </Button>
           </div>
 
-          <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Всі категорії" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Всі категорії</SelectItem>
-            </SelectContent>
-          </Select>
+          {showFilters && (
+            <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg">
+              <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Всі категорії" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Всі категорії</SelectItem>
+                  {categories.map((category: any) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filterSupplier} onValueChange={setFilterSupplier}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Всі постачальники" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Всі постачальники</SelectItem>
+                  {[...new Set(components.map((c: any) => c.supplier).filter(Boolean))].map((supplier: string) => (
+                    <SelectItem key={supplier} value={supplier}>
+                      {supplier}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filterActive} onValueChange={setFilterActive}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Статус" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Всі статуси</SelectItem>
+                  <SelectItem value="active">Активні</SelectItem>
+                  <SelectItem value="inactive">Неактивні</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {(filterCategory !== "all" || filterSupplier !== "all" || filterActive !== "all") && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setFilterCategory("all");
+                    setFilterSupplier("all");
+                    setFilterActive("all");
+                  }}
+                  className="flex items-center gap-1"
+                >
+                  <X className="h-4 w-4" />
+                  Очистити фільтри
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Пагінація верхня */}
@@ -452,75 +569,138 @@ export default function Components() {
         </div>
 
         <Card>
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-50"
+                    className="cursor-pointer hover:bg-gray-50 resizable-header border-r"
+                    style={{ width: columnWidths.name, minWidth: 150 }}
                     onClick={() => handleSort("name")}
                   >
                     Назва
                     {sortField === "name" && (
                       <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
                     )}
+                    <div className="resize-handle"></div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-50"
+                    className="cursor-pointer hover:bg-gray-50 resizable-header border-r"
+                    style={{ width: columnWidths.sku, minWidth: 100 }}
                     onClick={() => handleSort("sku")}
                   >
                     SKU
                     {sortField === "sku" && (
                       <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
                     )}
+                    <div className="resize-handle"></div>
                   </TableHead>
-                  <TableHead>Опис</TableHead>
-                  <TableHead>Одиниця</TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-50"
+                    className="cursor-pointer hover:bg-gray-50 resizable-header border-r"
+                    style={{ width: columnWidths.category, minWidth: 120 }}
+                    onClick={() => handleSort("category")}
+                  >
+                    Категорія
+                    {sortField === "category" && (
+                      <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                    )}
+                    <div className="resize-handle"></div>
+                  </TableHead>
+                  <TableHead 
+                    className="resizable-header border-r"
+                    style={{ width: columnWidths.description, minWidth: 150 }}
+                  >
+                    Опис
+                    <div className="resize-handle"></div>
+                  </TableHead>
+                  <TableHead 
+                    className="resizable-header border-r"
+                    style={{ width: columnWidths.unit, minWidth: 80 }}
+                  >
+                    Одиниця
+                    <div className="resize-handle"></div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 resizable-header border-r"
+                    style={{ width: columnWidths.costPrice, minWidth: 100 }}
                     onClick={() => handleSort("costPrice")}
                   >
                     Собівартість
                     {sortField === "costPrice" && (
                       <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
                     )}
+                    <div className="resize-handle"></div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-50"
+                    className="cursor-pointer hover:bg-gray-50 resizable-header border-r"
+                    style={{ width: columnWidths.supplier, minWidth: 120 }}
                     onClick={() => handleSort("supplier")}
                   >
                     Постачальник
                     {sortField === "supplier" && (
                       <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
                     )}
+                    <div className="resize-handle"></div>
                   </TableHead>
-                  <TableHead>Дії</TableHead>
+                  <TableHead style={{ width: columnWidths.actions, minWidth: 80 }}>
+                    Дії
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedComponents.map((component) => (
-                  <TableRow key={component.id}>
-                    <TableCell className="font-medium">{component.name}</TableCell>
-                    <TableCell>{component.sku}</TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {component.description || "—"}
-                    </TableCell>
-                    <TableCell>{component.unit}</TableCell>
-                    <TableCell>{component.costPrice}</TableCell>
-                    <TableCell>{component.supplier || "—"}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(component)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {paginatedComponents.map((component) => {
+                  const category = categories.find((cat: any) => cat.id === component.categoryId);
+                  return (
+                    <TableRow key={component.id}>
+                      <TableCell className="font-bold" style={{ width: columnWidths.name }}>
+                        {component.name}
+                      </TableCell>
+                      <TableCell style={{ width: columnWidths.sku }}>
+                        {component.sku}
+                      </TableCell>
+                      <TableCell style={{ width: columnWidths.category }}>
+                        {category ? (
+                          <Badge 
+                            variant="secondary" 
+                            className="text-xs"
+                            style={{ backgroundColor: category.color + '20', color: category.color }}
+                          >
+                            {category.name}
+                          </Badge>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell 
+                        className="max-w-xs truncate" 
+                        style={{ width: columnWidths.description }}
+                        title={component.description || ""}
+                      >
+                        {component.description || "—"}
+                      </TableCell>
+                      <TableCell style={{ width: columnWidths.unit }}>
+                        {component.unit}
+                      </TableCell>
+                      <TableCell style={{ width: columnWidths.costPrice }}>
+                        {component.costPrice}
+                      </TableCell>
+                      <TableCell style={{ width: columnWidths.supplier }}>
+                        {component.supplier || "—"}
+                      </TableCell>
+                      <TableCell style={{ width: columnWidths.actions }}>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(component)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>
