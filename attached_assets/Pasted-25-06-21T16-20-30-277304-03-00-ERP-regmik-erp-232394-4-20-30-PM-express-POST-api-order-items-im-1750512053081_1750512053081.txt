@@ -1,0 +1,24 @@
+25-06-21T16:20:30.277304+03:00 ERP regmik-erp[232394]: 4:20:30 PM [express] POST /api/order-items/import-xml 200 in 35ms :: {"success":true,"jobId":"import…
+2025-06-21T16:20:30.414784+03:00 ERP regmik-erp[232394]: ❌ Async order items XML import error: TypeError: Cannot convert undefined or null to object
+2025-06-21T16:20:30.414856+03:00 ERP regmik-erp[232394]:     at Function.entries (<anonymous>)
+2025-06-21T16:20:30.414871+03:00 ERP regmik-erp[232394]:     at orderSelectedFields (file:///opt/REGMIK_ERP/node_modules/drizzle-orm/utils.js:53:17)
+2025-06-21T16:20:30.414882+03:00 ERP regmik-erp[232394]:     at file:///opt/REGMIK_ERP/node_modules/drizzle-orm/utils.js:63:22
+2025-06-21T16:20:30.414893+03:00 ERP regmik-erp[232394]:     at Array.reduce (<anonymous>)
+2025-06-21T16:20:30.414904+03:00 ERP regmik-erp[232394]:     at orderSelectedFields (file:///opt/REGMIK_ERP/node_modules/drizzle-orm/utils.js:53:33)
+2025-06-21T16:20:30.414915+03:00 ERP regmik-erp[232394]:     at file:///opt/REGMIK_ERP/node_modules/drizzle-orm/pg-core/query-builders/select.js:684:26
+2025-06-21T16:20:30.414927+03:00 ERP regmik-erp[232394]:     at Object.startActiveSpan (file:///opt/REGMIK_ERP/node_modules/drizzle-orm/tracing.js:8:14)
+2025-06-21T16:20:30.414938+03:00 ERP regmik-erp[232394]:     at PgSelectBase._prepare (file:///opt/REGMIK_ERP/node_modules/drizzle-orm/pg-core/query-builders/select.js:683:19)
+2025-06-21T16:20:30.414948+03:00 ERP regmik-erp[232394]:     at file:///opt/REGMIK_ERP/node_modules/drizzle-orm/pg-core/query-builders/select.js:708:19
+2025-06-21T16:20:30.414961+03:00 ERP regmik-erp[232394]:     at Object.startActiveSpan (file:///opt/REGMIK_ERP/node_modules/drizzle-orm/tracing.js:8:14)
+2025-06-21T16:20:30.414987+03:00 ERP regmik-erp[232394]: ❌ Error stack: TypeError: Cannot convert undefined or null to object
+2025-06-21T16:20:30.414999+03:00 ERP regmik-erp[232394]:     at Function.entries (<anonymous>)
+2025-06-21T16:20:30.415009+03:00 ERP regmik-erp[232394]:     at orderSelectedFields (file:///opt/REGMIK_ERP/node_modules/drizzle-orm/utils.js:53:17)
+2025-06-21T16:20:30.415019+03:00 ERP regmik-erp[232394]:     at file:///opt/REGMIK_ERP/node_modules/drizzle-orm/utils.js:63:22
+2025-06-21T16:20:30.415029+03:00 ERP regmik-erp[232394]:     at Array.reduce (<anonymous>)
+2025-06-21T16:20:30.415039+03:00 ERP regmik-erp[232394]:     at orderSelectedFields (file:///opt/REGMIK_ERP/node_modules/drizzle-orm/utils.js:53:33)
+2025-06-21T16:20:30.415050+03:00 ERP regmik-erp[232394]:     at file:///opt/REGMIK_ERP/node_modules/drizzle-orm/pg-core/query-builders/select.js:684:26
+2025-06-21T16:20:30.415071+03:00 ERP regmik-erp[232394]:     at Object.startActiveSpan (file:///opt/REGMIK_ERP/node_modules/drizzle-orm/tracing.js:8:14)
+2025-06-21T16:20:30.415081+03:00 ERP regmik-erp[232394]:     at PgSelectBase._prepare (file:///opt/REGMIK_ERP/node_modules/drizzle-orm/pg-core/query-builders/select.js:683:19)
+2025-06-21T16:20:30.415091+03:00 ERP regmik-erp[232394]:     at file:///opt/REGMIK_ERP/node_modules/drizzle-orm/pg-core/query-builders/select.js:708:19
+2025-06-21T16:20:30.415102+03:00 ERP regmik-erp[232394]:     at Object.startActiveSpan (file:///opt/REGMIK_ERP/node_modules/drizzle-orm/tracing.js:8:14)
+2025-06-21T16:20:30.420539+03:00 ERP regmik-erp[232394]: 4:20:30 PM [express] GET /api/order-items/import-xml/import_1750512030246_uuqb1hfut/status 200 in 5m…
