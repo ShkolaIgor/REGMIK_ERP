@@ -1069,7 +1069,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Order Items XML Import
   app.post("/api/order-items/import-xml", upload.single('xmlFile'), async (req, res) => {
     try {
+      console.log('🚀 Order items import request received');
+      console.log('📁 File info:', req.file ? `${req.file.originalname} (${req.file.size} bytes)` : 'No file');
+      console.log('📝 Request body:', req.body);
+
       if (!req.file) {
+        console.log('❌ No XML file provided');
         return res.status(400).json({ 
           success: false, 
           error: "No XML file provided" 
@@ -1078,6 +1083,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const jobId = generateJobId();
       const orderId = req.body.orderId ? parseInt(req.body.orderId) : null;
+      
+      console.log(`✅ Creating job ${jobId} for order ${orderId || 'all orders'}`);
       
       orderItemImportJobs.set(jobId, {
         id: jobId,
@@ -1101,7 +1108,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       processOrderItemsXmlImportAsync(jobId, req.file.buffer, orderId, orderItemImportJobs);
 
     } catch (error) {
-      console.error("Order items XML import error:", error);
+      console.error("❌ Order items XML import error:", error);
       res.status(500).json({ 
         success: false, 
         error: "Failed to start order items XML import",
@@ -8457,7 +8464,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }, 5 * 60 * 1000);
 
     } catch (error) {
-      console.error("Async order items XML import error:", error);
+      console.error("❌ Async order items XML import error:", error);
+      console.error("❌ Error stack:", error instanceof Error ? error.stack : 'No stack trace');
       const job = jobsMap.get(jobId);
       if (job) {
         job.status = 'failed';
