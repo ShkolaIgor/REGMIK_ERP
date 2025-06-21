@@ -201,7 +201,8 @@ export function OrderItemsXmlImport({ orderId, onImportComplete }: OrderItemsXml
     const baseClasses = "px-2 py-1 text-xs rounded-full";
     switch (status) {
       case 'imported':
-        return <span className={`${baseClasses} bg-green-100 text-green-800`}>Імпортовано</span>;
+        return ;
+      //  return <span className={`${baseClasses} bg-green-100 text-green-800`}>Імпортовано</span>;
       case 'updated':
         return <span className={`${baseClasses} bg-blue-100 text-blue-800`}>Оновлено</span>;
       case 'skipped':
@@ -355,7 +356,7 @@ export function OrderItemsXmlImport({ orderId, onImportComplete }: OrderItemsXml
             </Card>
           )}
 
-          {/* Detailed Results */}
+          {/* Detailed Results 
           {job?.details && job.details.length > 0 && (
             <Card>
               <CardHeader>
@@ -382,7 +383,7 @@ export function OrderItemsXmlImport({ orderId, onImportComplete }: OrderItemsXml
               </CardContent>
             </Card>
           )}
-
+*/}
           {/* Error Messages */}
           {job && job.errors && job.errors.length > 0 && (
             <Card>
