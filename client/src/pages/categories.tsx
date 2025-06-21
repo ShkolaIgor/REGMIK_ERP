@@ -254,14 +254,6 @@ export default function Categories() {
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(category.id)}
-                    disabled={deleteMutation.isPending}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -337,23 +329,42 @@ export default function Categories() {
               </div>
             </div>
 
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCloseDialog}
-              >
-                Скасувати
-              </Button>
-              <Button 
-                type="submit"
-                disabled={createMutation.isPending || updateMutation.isPending}
-              >
-                {createMutation.isPending || updateMutation.isPending ? 
-                  "Збереження..." : 
-                  (editingCategory ? "Оновити" : "Створити")
-                }
-              </Button>
+            <div className="flex justify-between pt-4">
+              <div>
+                {editingCategory && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => {
+                      if (confirm("Ви впевнені, що хочете видалити цю категорію?")) {
+                        handleDelete(editingCategory.id);
+                      }
+                    }}
+                    disabled={deleteMutation.isPending}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Видалити
+                  </Button>
+                )}
+              </div>
+              <div className="flex space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCloseDialog}
+                >
+                  Скасувати
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={createMutation.isPending || updateMutation.isPending}
+                >
+                  {createMutation.isPending || updateMutation.isPending ? 
+                    "Збереження..." : 
+                    (editingCategory ? "Оновити" : "Створити")
+                  }
+                </Button>
+              </div>
             </div>
           </form>
         </DialogContent>

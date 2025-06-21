@@ -365,17 +365,36 @@ export default function Components() {
                       rows={3}
                     />
                   </div>
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsDialogOpen(false)}
-                    >
-                      Скасувати
-                    </Button>
-                    <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                      {editingComponent ? "Оновити" : "Створити"}
-                    </Button>
+                  <div className="flex justify-between">
+                    <div>
+                      {editingComponent && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={() => {
+                            if (confirm("Ви впевнені, що хочете видалити цей компонент?")) {
+                              handleDelete(editingComponent.id);
+                            }
+                          }}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash className="h-4 w-4 mr-2" />
+                          Видалити
+                        </Button>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsDialogOpen(false)}
+                      >
+                        Скасувати
+                      </Button>
+                      <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                        {editingComponent ? "Оновити" : "Створити"}
+                      </Button>
+                    </div>
                   </div>
                 </form>
               </DialogContent>
@@ -497,14 +516,6 @@ export default function Components() {
                           onClick={() => handleEdit(component)}
                         >
                           <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(component.id)}
-                          className="text-red-600"
-                        >
-                          <Trash className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
