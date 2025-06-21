@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { ImportWizard } from "@/components/ImportWizard";
 
 interface ImportJob {
   id: string;
@@ -41,6 +42,7 @@ export function OrdersXmlImport() {
   const [job, setJob] = useState<ImportJob | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
+  const [showWizard, setShowWizard] = useState(false);
   const { toast } = useToast();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -393,6 +395,7 @@ export function OrdersXmlImport() {
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
 

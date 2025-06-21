@@ -4985,6 +4985,32 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Statistics methods for import wizard
+  async getClientCount(): Promise<number> {
+    const result = await this.db.select({ count: sql<number>`count(*)` }).from(clients);
+    return result[0]?.count || 0;
+  }
+
+  async getOrderCount(): Promise<number> {
+    const result = await this.db.select({ count: sql<number>`count(*)` }).from(orders);
+    return result[0]?.count || 0;
+  }
+
+  async getProductCount(): Promise<number> {
+    const result = await this.db.select({ count: sql<number>`count(*)` }).from(products);
+    return result[0]?.count || 0;
+  }
+
+  async getCarrierCount(): Promise<number> {
+    const result = await this.db.select({ count: sql<number>`count(*)` }).from(carriers);
+    return result[0]?.count || 0;
+  }
+
+  async getContactCount(): Promise<number> {
+    const result = await this.db.select({ count: sql<number>`count(*)` }).from(clientContacts);
+    return result[0]?.count || 0;
+  }
+
   async createBulkSerialNumbers(productId: number, count: number): Promise<SerialNumber[]> {
     const serialNumbersData = [];
     const timestamp = Date.now();

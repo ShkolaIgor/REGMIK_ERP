@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { AlertCircle, Upload, CheckCircle, XCircle, FileText, Download } from 'lucide-react';
+import { ImportWizard } from '@/components/ImportWizard';
 
 interface ImportJob {
   id: string;
@@ -215,13 +216,18 @@ export function OrderItemsXmlImport({ orderId, onImportComplete }: OrderItemsXml
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Upload className="h-4 w-4 mr-2" />
-          Імпорт позицій
-        </Button>
-      </DialogTrigger>
+    <>
+      <ImportWizard 
+        importType="order-items"
+        onProceedToImport={() => setIsOpen(true)}
+      />
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Upload className="h-4 w-4 mr-2" />
+            Імпорт позицій
+          </Button>
+        </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Імпорт позицій замовлень з XML</DialogTitle>
