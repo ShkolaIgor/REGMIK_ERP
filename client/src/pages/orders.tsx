@@ -30,6 +30,7 @@ import { useSorting } from "@/hooks/useSorting";
 import { InlineSerialNumbers } from "@/components/InlineSerialNumbers";
 import { NovaPoshtaIntegration } from "@/components/NovaPoshtaIntegration";
 import { OrdersXmlImport } from "@/components/OrdersXmlImport";
+import { OrderItemsXmlImport } from "@/components/OrderItemsXmlImport";
 // Типи
 type Order = {
   id: number;
@@ -1457,6 +1458,13 @@ export default function Orders() {
                 Налаштування статусів
               </Button>
               <OrdersXmlImport />
+              <OrderItemsXmlImport onImportComplete={() => {
+                queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+                toast({
+                  title: "Імпорт завершено",
+                  description: "Позиції замовлень успішно імпортовані",
+                });
+              }} />
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button onClick={() => {
