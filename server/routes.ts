@@ -8543,6 +8543,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const unitPrice = parseDecimal(row.CENA || "0");
     const costPrice = row.PRICE_NET ? parseDecimal(row.PRICE_NET) : null;
     const totalPrice = (parseFloat(quantity) * parseFloat(unitPrice)).toFixed(2);
+    
+    console.log(`Parsed values - Quantity: ${quantity}, UnitPrice: ${unitPrice}, CostPrice: ${costPrice}, TotalPrice: ${totalPrice}`);
 
     try {
       const orderItemData = {
