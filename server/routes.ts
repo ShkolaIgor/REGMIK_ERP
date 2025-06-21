@@ -9429,7 +9429,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       notes: row.COMMENT || null,
       isActive: row.ACTUAL === 'T' || row.ACTUAL === 'True' || row.ACTUAL === '1',
       uktzedCode: row.CODE_CUST || null,
-      costPrice: "0"
+      costPrice: "0.0",
+      unit: "шт."
     };
 
     try {
