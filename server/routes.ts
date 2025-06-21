@@ -8460,13 +8460,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   async function processOrderItemRow(row: any, job: any, products: any[], orders: any[], targetOrderId: number | null) {
+    console.log(`Processing order item row: ${JSON.stringify(row)}`);
+    
     // Validate required fields
     if (!row.INDEX_LISTARTICLE) {
+      const errorMsg = 'Missing required INDEX_LISTARTICLE field';
+      console.log(`Error: ${errorMsg}`, row);
       job.details.push({
         orderNumber: row.NAME_ZAKAZ || 'Unknown',
         productSku: 'Missing',
         status: 'error',
-        message: 'Missing required INDEX_LISTARTICLE field'
+        message: errorMsg
       });
       job.errors.push(`Row ${job.processed + 1}: Missing INDEX_LISTARTICLE`);
       return;
@@ -8483,22 +8487,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return;
     }
 
-    // Find product by SKU or ID
-    let product = products.find(p => p.sku === row.INDEX_LISTARTICLE);
-    
-    // If not found by SKU, try to find by ID (for numeric SKUs)
-    if (!product && !isNaN(parseInt(row.INDEX_LISTARTICLE))) {
-      product = products.find(p => p.id === parseInt(row.INDEX_LISTARTICLE));
-    }
-    
+    // Find product by SKU only
+    const product = products.find(p => p.sku === row.INDEX_LISTARTICLE);
     if (!product) {
+      const errorMsg = `Product with SKU ${row.INDEX_LISTARTICLE} not found`;
+      console.log(`Error: ${errorMsg}. Available SKUs:`, products.slice(0, 5).map(p => p.sku));
       job.details.push({
         orderNumber: row.NAME_ZAKAZ || targetOrderId?.toString() || 'Unknown',
         productSku: row.INDEX_LISTARTICLE,
         status: 'error',
-        message: `Product with SKU/ID ${row.INDEX_LISTARTICLE} not found`
+        message: errorMsg
       });
-      job.errors.push(`Row ${job.processed + 1}: Product SKU/ID ${row.INDEX_LISTARTICLE} not found`);
+      job.errors.push(`Row ${job.processed + 1}: Product SKU ${row.INDEX_LISTARTICLE} not found`);
       return;
     }
 
@@ -8517,13 +8517,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     if (!order) {
+      const errorMsg = targetOrderId 
+        ? `Order with ID ${targetOrderId} not found`
+        : `Order with number/ID ${row.NAME_ZAKAZ} not found`;
+      console.log(`Error: ${errorMsg}. Available orders:`, orders.slice(0, 5).map(o => `${o.id}:${o.orderNumber}`));
       job.details.push({
         orderNumber: row.NAME_ZAKAZ || targetOrderId?.toString() || 'Unknown',
         productSku: row.INDEX_LISTARTICLE,
         status: 'error',
-        message: targetOrderId 
-          ? `Order with ID ${targetOrderId} not found`
-          : `Order with number/ID ${row.NAME_ZAKAZ} not found`
+        message: errorMsg
       });
       job.errors.push(`Row ${job.processed + 1}: Order not found`);
       return;
