@@ -8460,16 +8460,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   async function processOrderItemRow(row: any, job: any, products: any[], orders: any[], targetOrderId: number | null) {
-    console.log(`Processing row ${job.processed + 1}:`, {
-      ID_ZAKAZ: row.ID_ZAKAZ,
-      NAME_ZAKAZ: row.NAME_ZAKAZ,
-      INDEX_LISTARTICLE: row.INDEX_LISTARTICLE,
-      availableOrderNumbers: orders.slice(0, 10).map(o => o.orderNumber)
-    });
+    console.log(`\n=== Processing row ${job.processed + 1} ===`);
+    console.log(`NAME_ZAKAZ: "${row.NAME_ZAKAZ}", INDEX_LISTARTICLE: "${row.INDEX_LISTARTICLE}"`);
 
     // Validate required fields
     if (!row.INDEX_LISTARTICLE) {
-      console.log('Missing INDEX_LISTARTICLE field');
+      console.log('❌ Missing INDEX_LISTARTICLE field');
       job.details.push({
         orderNumber: String(row.NAME_ZAKAZ || 'Unknown'),
         productSku: 'Missing',
@@ -8494,7 +8490,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Find product by SKU only
     const product = products.find(p => p.sku === row.INDEX_LISTARTICLE);
     if (!product) {
-      console.log(`Product not found for SKU: ${row.INDEX_LISTARTICLE}`);
+      console.log(`❌ Product not found for SKU: ${row.INDEX_LISTARTICLE}`);
       job.details.push({
         orderNumber: String(row.NAME_ZAKAZ || targetOrderId || 'Unknown'),
         productSku: row.INDEX_LISTARTICLE,
@@ -8504,23 +8500,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       job.errors.push(`Row ${job.processed + 1}: Product SKU ${row.INDEX_LISTARTICLE} not found`);
       return;
     }
+    console.log(`✅ Product found: SKU="${product.sku}"`);;
 
     // Find order by order number, ID, or use target order
     let order = null;
     if (targetOrderId) {
       order = orders.find(o => o.id === targetOrderId);
-      console.log(`Looking for targetOrderId ${targetOrderId}, found: ${order ? 'YES' : 'NO'}`);
+      console.log(`Looking for targetOrderId ${targetOrderId}: ${order ? '✅ FOUND' : '❌ NOT FOUND'}`);
     } else {
       // Try to find by order number first
       const searchOrderNumber = String(row.NAME_ZAKAZ);
       order = orders.find(o => o.orderNumber === searchOrderNumber);
-      console.log(`Looking for order number "${searchOrderNumber}", found: ${order ? 'YES' : 'NO'}`);
+      console.log(`Looking for order number "${searchOrderNumber}": ${order ? '✅ FOUND' : '❌ NOT FOUND'}`);
       
       // If not found and NAME_ZAKAZ is numeric, try to find by ID
       if (!order && !isNaN(parseInt(row.NAME_ZAKAZ))) {
         const searchId = parseInt(row.NAME_ZAKAZ);
         order = orders.find(o => o.id === searchId);
-        console.log(`Looking for order ID ${searchId}, found: ${order ? 'YES' : 'NO'}`);
+        console.log(`Looking for order ID ${searchId}: ${order ? '✅ FOUND' : '❌ NOT FOUND'}`);
       }
     }
 
@@ -8528,7 +8525,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const errorMsg = targetOrderId 
         ? `Order with ID ${targetOrderId} not found`
         : `Order with number "${row.NAME_ZAKAZ}" not found`;
-      console.log(`ORDER NOT FOUND: ${errorMsg}`);
+      console.log(`❌ ${errorMsg}`);
       job.details.push({
         orderNumber: String(row.NAME_ZAKAZ || targetOrderId || 'Unknown'),
         productSku: row.INDEX_LISTARTICLE,
@@ -8539,8 +8536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return;
     }
 
-    console.log(`Order found: ID=${order.id}, orderNumber="${order.orderNumber}"`);
-    console.log(`Product found: ID=${product.id}, SKU="${product.sku}"`);
+    console.log(`✅ Order found: ID=${order.id}, number="${order.orderNumber}"`);
 
     // Parse numeric values
     const parseDecimal = (value: string | number): string => {
