@@ -8483,25 +8483,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return;
     }
 
-    // Find product by SKU
-    const product = products.find(p => p.sku === row.INDEX_LISTARTICLE);
+    // Find product by SKU or ID
+    let product = products.find(p => p.sku === row.INDEX_LISTARTICLE);
+    
+    // If not found by SKU, try to find by ID (for numeric SKUs)
+    if (!product && !isNaN(parseInt(row.INDEX_LISTARTICLE))) {
+      product = products.find(p => p.id === parseInt(row.INDEX_LISTARTICLE));
+    }
+    
     if (!product) {
       job.details.push({
         orderNumber: row.NAME_ZAKAZ || targetOrderId?.toString() || 'Unknown',
         productSku: row.INDEX_LISTARTICLE,
         status: 'error',
-        message: `Product with SKU ${row.INDEX_LISTARTICLE} not found`
+        message: `Product with SKU/ID ${row.INDEX_LISTARTICLE} not found`
       });
-      job.errors.push(`Row ${job.processed + 1}: Product SKU ${row.INDEX_LISTARTICLE} not found`);
+      job.errors.push(`Row ${job.processed + 1}: Product SKU/ID ${row.INDEX_LISTARTICLE} not found`);
       return;
     }
 
-    // Find order by order number or use target order
+    // Find order by order number, ID, or use target order
     let order = null;
     if (targetOrderId) {
       order = orders.find(o => o.id === targetOrderId);
     } else {
+      // Try to find by order number first
       order = orders.find(o => o.orderNumber === row.NAME_ZAKAZ);
+      
+      // If not found and NAME_ZAKAZ is numeric, try to find by ID
+      if (!order && !isNaN(parseInt(row.NAME_ZAKAZ))) {
+        order = orders.find(o => o.id === parseInt(row.NAME_ZAKAZ));
+      }
     }
 
     if (!order) {
@@ -8511,7 +8523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'error',
         message: targetOrderId 
           ? `Order with ID ${targetOrderId} not found`
-          : `Order with number ${row.NAME_ZAKAZ} not found`
+          : `Order with number/ID ${row.NAME_ZAKAZ} not found`
       });
       job.errors.push(`Row ${job.processed + 1}: Order not found`);
       return;
