@@ -1718,7 +1718,7 @@ export const serialNumbers = pgTable("serial_numbers", {
   id: serial("id").primaryKey(),
   productId: integer("product_id").references(() => products.id).notNull(),
   categoryId: integer("category_id").references(() => categories.id), // посилання на категорію для групового управління
-  serialNumber: text("serial_number").notNull().unique(),
+  serialNumber: text("serial_number").notNull(),
   status: text("status").notNull().default("available"), // available, reserved, sold, defective
   warehouseId: integer("warehouse_id").references(() => warehouses.id),
   orderId: integer("order_id").references(() => orders.id),
