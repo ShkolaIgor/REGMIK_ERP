@@ -8460,17 +8460,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   async function processOrderItemRow(row: any, job: any, products: any[], orders: any[], targetOrderId: number | null) {
-    console.log(`Processing order item row: ${JSON.stringify(row)}`);
-    
     // Validate required fields
     if (!row.INDEX_LISTARTICLE) {
-      const errorMsg = 'Missing required INDEX_LISTARTICLE field';
-      console.log(`Error: ${errorMsg}`, row);
       job.details.push({
         orderNumber: row.NAME_ZAKAZ || 'Unknown',
         productSku: 'Missing',
         status: 'error',
-        message: errorMsg
+        message: 'Missing required INDEX_LISTARTICLE field'
       });
       job.errors.push(`Row ${job.processed + 1}: Missing INDEX_LISTARTICLE`);
       return;
@@ -8490,13 +8486,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Find product by SKU only
     const product = products.find(p => p.sku === row.INDEX_LISTARTICLE);
     if (!product) {
-      const errorMsg = `Product with SKU ${row.INDEX_LISTARTICLE} not found`;
-      console.log(`Error: ${errorMsg}. Available SKUs:`, products.slice(0, 5).map(p => p.sku));
       job.details.push({
         orderNumber: row.NAME_ZAKAZ || targetOrderId?.toString() || 'Unknown',
         productSku: row.INDEX_LISTARTICLE,
         status: 'error',
-        message: errorMsg
+        message: `Product with SKU ${row.INDEX_LISTARTICLE} not found`
       });
       job.errors.push(`Row ${job.processed + 1}: Product SKU ${row.INDEX_LISTARTICLE} not found`);
       return;
@@ -8520,7 +8514,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const errorMsg = targetOrderId 
         ? `Order with ID ${targetOrderId} not found`
         : `Order with number/ID ${row.NAME_ZAKAZ} not found`;
-      console.log(`Error: ${errorMsg}. Available orders:`, orders.slice(0, 5).map(o => `${o.id}:${o.orderNumber}`));
       job.details.push({
         orderNumber: row.NAME_ZAKAZ || targetOrderId?.toString() || 'Unknown',
         productSku: row.INDEX_LISTARTICLE,
@@ -8543,8 +8536,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const unitPrice = parseDecimal(row.CENA || "0");
     const costPrice = row.PRICE_NET ? parseDecimal(row.PRICE_NET) : null;
     const totalPrice = (parseFloat(quantity) * parseFloat(unitPrice)).toFixed(2);
-    
-    console.log(`Parsed values - Quantity: ${quantity}, UnitPrice: ${unitPrice}, CostPrice: ${costPrice}, TotalPrice: ${totalPrice}`);
 
     try {
       const orderItemData = {
