@@ -1150,15 +1150,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateComponent(id: number, componentData: Partial<InsertComponent>): Promise<Component | undefined> {
+    // Filter out undefined values to prevent overwriting existing data with nulls
+    const cleanedData = Object.fromEntries(
+      Object.entries(componentData).filter(([_, value]) => value !== undefined)
+    );
+    
     // Ensure unit field is never null
-    const updateData = {
-      ...componentData,
-      unit: componentData.unit || 'шт.'
-    };
+    if (cleanedData.unit === null || cleanedData.unit === undefined) {
+      cleanedData.unit = 'шт.';
+    }
+    
+    console.log('DB updateComponent with cleaned data:', cleanedData);
     
     const result = await db
       .update(components)
-      .set(updateData)
+      .set(cleanedData)
       .where(eq(components.id, id))
       .returning();
     return result[0];

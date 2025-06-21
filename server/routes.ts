@@ -9438,15 +9438,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existingComponent = await storage.getComponentBySku(componentData.sku);
       
       if (existingComponent) {
-        // Update existing component
-        await storage.updateComponent(existingComponent.id, {
+        // Update existing component - ensure all required fields are present
+        const updateData = {
           name: componentData.name,
           categoryId: componentData.categoryId,
           notes: componentData.notes,
           isActive: componentData.isActive,
           uktzedCode: componentData.uktzedCode,
-          unit: componentData.unit
-        });
+          unit: componentData.unit || "шт.",
+          costPrice: componentData.costPrice || "0.0"
+        };
+        
+        console.log('Updating component with data:', updateData);
+        await storage.updateComponent(existingComponent.id, updateData);
         
         job.updated++;
         job.details.push({
