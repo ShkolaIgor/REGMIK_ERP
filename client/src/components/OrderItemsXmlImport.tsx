@@ -424,5 +424,6 @@ export function OrderItemsXmlImport({ orderId, onImportComplete }: OrderItemsXml
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

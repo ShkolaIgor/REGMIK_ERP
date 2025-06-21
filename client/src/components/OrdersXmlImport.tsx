@@ -196,13 +196,18 @@ export function OrdersXmlImport() {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Upload className="h-4 w-4 mr-2" />
-          Імпорт замовлень
-        </Button>
-      </DialogTrigger>
+    <>
+      <ImportWizard 
+        importType="orders"
+        onProceedToImport={() => setIsOpen(true)}
+      />
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Upload className="h-4 w-4 mr-2" />
+            Імпорт замовлень
+          </Button>
+        </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Імпорт замовлень з XML</DialogTitle>

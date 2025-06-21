@@ -8929,6 +8929,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Import statistics for wizard
+  app.get("/api/import-stats/:type", async (req, res) => {
+    try {
+      const { type } = req.params;
+      let stats = {};
+
+      switch (type) {
+        case 'orders':
+          const clientCount = await storage.getClientCount();
+          stats = {
+            clients: clientCount,
+            carriers: await storage.getCarrierCount()
+          };
+          break;
+        case 'order-items':
+          const orderCount = await storage.getOrderCount();
+          const productCount = await storage.getProductCount();
+          stats = {
+            orders: orderCount,
+            products: productCount
+          };
+          break;
+        case 'clients':
+          stats = {
+            existing_clients: await storage.getClientCount()
+          };
+          break;
+        case 'client-contacts':
+          stats = {
+            clients: await storage.getClientCount(),
+            existing_contacts: await storage.getContactCount()
+          };
+          break;
+        default:
+          stats = {};
+      }
+
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching import stats:", error);
+      res.status(500).json({ error: "Failed to fetch import stats" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
