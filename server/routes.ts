@@ -8534,6 +8534,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const costPrice = row.PRICE_NET ? parseDecimal(row.PRICE_NET) : null;
     const totalPrice = (parseFloat(quantity) * parseFloat(unitPrice)).toFixed(2);
 
+    // Parse serial numbers з перевіркою відповідності кількості
+    let serialNumbers: string[] = [];
+    let serialNumbersNote = '';
+    
+    if (row.SERIAL_NUMBER && row.SERIAL_NUMBER.trim()) {
+      const serialNumbersText = row.SERIAL_NUMBER.trim();
+      
+      // Функція для розширення діапазонів серійних номерів
+      function expandSerialRange(text: string): string[] {
+        const expanded: string[] = [];
+        
+        // Розділяємо по комах, крапках з комою
+        const parts = text.split(/[,;\n\r]+/).map(p => p.trim()).filter(p => p.length > 0);
+        
+        for (const part of parts) {
+          // Перевіряємо чи є діапазон (містить дефіс)
+          if (part.includes('-')) {
+            const [start, end] = part.split('-');
+            if (start && end) {
+              const startNum = parseInt(start);
+              const endNum = parseInt(end);
+              
+              // Якщо обидва числа валідні і початок менший за кінець
+              if (!isNaN(startNum) && !isNaN(endNum) && startNum <= endNum) {
+                const startStr = start.trim();
+                const endStr = end.trim();
+                
+                // Зберігаємо ведучі нулі
+                const startPadding = startStr.length;
+                const endPadding = endStr.length;
+                const maxPadding = Math.max(startPadding, endPadding);
+                
+                for (let i = startNum; i <= endNum; i++) {
+                  expanded.push(i.toString().padStart(maxPadding, '0'));
+                }
+              } else {
+                // Якщо не вдалося розпарсити як діапазон, додаємо як є
+                expanded.push(part);
+              }
+            } else {
+              expanded.push(part);
+            }
+          } else {
+            // Не діапазон, додаємо як є
+            expanded.push(part);
+          }
+        }
+        
+        return expanded;
+      }
+      
+      const parsedSerialNumbers = expandSerialRange(serialNumbersText);
+      const quantityInt = parseInt(quantity);
+      
+      // Перевіряємо чи кількість серійних номерів відповідає кількості товару
+      if (parsedSerialNumbers.length === quantityInt) {
+        // Кількість співпадає - зберігаємо серійні номери
+        serialNumbers = parsedSerialNumbers;
+      } else {
+        // Кількість не співпадає - додаємо в коментар і не зберігаємо в serial_numbers
+        serialNumbersNote = `Серійні номери (${parsedSerialNumbers.length} шт): ${parsedSerialNumbers.slice(0, 10).join(', ')}${parsedSerialNumbers.length > 10 ? '...' : ''}. Увага: кількість серійних номерів не відповідає кількості товару (${quantityInt} шт).`;
+        
+        job.details.push({
+          orderNumber: String(order.orderNumber || order.id),
+          productSku: product.sku,
+          status: 'imported',
+          message: `Позиція імпортована, але серійні номери додані в коментар через невідповідність кількості (${parsedSerialNumbers.length} SN ≠ ${quantityInt} qty)`
+        });
+      }
+    }
+
+    // Підготовка коментарів
+    let finalNotes = row.COMMENT || 'Imported from XML';
+    if (serialNumbersNote) {
+      finalNotes += `. ${serialNumbersNote}`;
+    }
+
     try {
       const orderItemData = {
         orderId: order.id,
@@ -8542,58 +8619,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         unitPrice: unitPrice,
         totalPrice: totalPrice,
         costPrice: costPrice,
-        serialNumbers: row.SERIAL_NUMBER || null,
-        notes: row.COMMENT || null,
+        serialNumbers: serialNumbers.length > 0 ? serialNumbers : null,
+        notes: finalNotes,
       };
 
       const createdOrderItem = await storage.createOrderItem(orderItemData);
-
-      // Імпорт серійних номерів в окрему таблицю з підтримкою діапазонів
-      if (row.SERIAL_NUMBER && row.SERIAL_NUMBER.trim()) {
-        const serialNumbersText = row.SERIAL_NUMBER.trim();
-        const expandedSerialNumbers = parseSerialNumbers(serialNumbersText);
-        
-        console.log(`Original serial numbers: ${serialNumbersText}, Expanded: ${expandedSerialNumbers.join(', ')}`);
-        
-        for (const serialNumber of expandedSerialNumbers) {
-          try {
-            // Завжди створюємо новий серійний номер під час імпорту для кожної позиції замовлення
-            // Це дозволяє одному серійному номеру бути в декількох позиціях
-            const serialNumberRecord = await storage.createSerialNumber({
-              productId: product.id,
-              serialNumber: serialNumber,
-              status: 'sold',
-              orderId: order.id,
-              invoiceNumber: order.orderNumber,
-              saleDate: new Date()
-            });
-            
-            // Прив'язуємо до позиції замовлення
-            await storage.createOrderItemSerialNumber({
-              orderItemId: createdOrderItem.id,
-              serialNumberId: serialNumberRecord.id
-            });
-            
-            console.log(`Created serial number ${serialNumber} for order item ${createdOrderItem.id}`);
-            
-          } catch (serialError) {
-            console.error(`Failed to create serial number ${serialNumber}:`, serialError);
-            job.logs.push({
-              type: 'warning',
-              message: `Не вдалося створити серійний номер: ${serialNumber}`,
-              details: serialError instanceof Error ? serialError.message : 'Unknown error'
-            });
-          }
-        }
-      }
       
       job.imported++;
-      job.details.push({
-        orderNumber: order.orderNumber,
-        productSku: product.sku,
-        status: 'imported',
-        message: `Imported: Qty ${quantity}, Price ${unitPrice}`
-      });
+      
+      // Якщо серійні номери не збережені через невідповідність кількості, не додаємо окремий запис
+      if (!serialNumbersNote) {
+        job.details.push({
+          orderNumber: order.orderNumber,
+          productSku: product.sku,
+          status: 'imported',
+          message: `Imported: Qty ${quantity}, Price ${unitPrice}${serialNumbers.length > 0 ? `, SN: ${serialNumbers.join(', ')}` : ''}`
+        });
+      }
 
     } catch (error) {
       job.details.push({
