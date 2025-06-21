@@ -1458,7 +1458,6 @@ export default function Orders() {
                 Налаштування статусів
               </Button>
               <div className="flex gap-2">
-                {console.log('Rendering import components')}
                 <OrdersXmlImport />
                 <OrderItemsXmlImport onImportComplete={() => {
                   queryClient.invalidateQueries({ queryKey: ["/api/orders"] });

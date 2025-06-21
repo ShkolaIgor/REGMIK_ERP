@@ -43,7 +43,6 @@ interface OrderItemsXmlImportProps {
 }
 
 export function OrderItemsXmlImport({ orderId, onImportComplete }: OrderItemsXmlImportProps) {
-  console.log('OrderItemsXmlImport component rendering');
   const [file, setFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [progress, setProgress] = useState(0);
