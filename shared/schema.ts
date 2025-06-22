@@ -819,6 +819,8 @@ export const clients = pgTable("clients", {
   warehouseRef: varchar("warehouse_ref", { length: 255 }), // ref відділення Нової Пошти
   
   isActive: boolean("is_active").default(true),
+  isCustomer: boolean("is_customer").default(false), // клієнт купує товари
+  isSupplier: boolean("is_supplier").default(false), // клієнт постачає товари
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
