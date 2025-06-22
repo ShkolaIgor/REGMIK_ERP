@@ -4800,6 +4800,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Supplier Document Types Endpoints
+  app.get('/api/supplier-document-types', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const types = await storage.getSupplierDocumentTypes();
+      res.json(types);
+    } catch (error) {
+      console.error('Error fetching supplier document types:', error);
+      res.status(500).json({ message: 'Failed to fetch supplier document types' });
+    }
+  });
+
+  app.post('/api/supplier-document-types', isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log('Creating supplier document type with data:', req.body);
+      const type = await storage.createSupplierDocumentType(req.body);
+      res.status(201).json(type);
+    } catch (error) {
+      console.error('Error creating supplier document type:', error);
+      res.status(500).json({ message: 'Failed to create supplier document type' });
+    }
+  });
+
+  app.put('/api/supplier-document-types/:id', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const type = await storage.updateSupplierDocumentType(id, req.body);
+      if (!type) {
+        return res.status(404).json({ message: 'Supplier document type not found' });
+      }
+      res.json(type);
+    } catch (error) {
+      console.error('Error updating supplier document type:', error);
+      res.status(500).json({ message: 'Failed to update supplier document type' });
+    }
+  });
+
+  app.delete('/api/supplier-document-types/:id', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteSupplierDocumentType(id);
+      if (!success) {
+        return res.status(404).json({ message: 'Supplier document type not found' });
+      }
+      res.json({ message: 'Supplier document type deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting supplier document type:', error);
+      res.status(500).json({ message: 'Failed to delete supplier document type' });
+    }
+  });
+
+  // Supplier Receipts Endpoints
+  app.get('/api/supplier-receipts', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const receipts = await storage.getSupplierReceipts();
+      res.json(receipts);
+    } catch (error) {
+      console.error('Error fetching supplier receipts:', error);
+      res.status(500).json({ message: 'Failed to fetch supplier receipts' });
+    }
+  });
+
+  app.get('/api/supplier-receipts/:id', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const receipt = await storage.getSupplierReceipt(id);
+      if (!receipt) {
+        return res.status(404).json({ message: 'Supplier receipt not found' });
+      }
+      const items = await storage.getSupplierReceiptItems(id);
+      res.json({ ...receipt, items });
+    } catch (error) {
+      console.error('Error fetching supplier receipt:', error);
+      res.status(500).json({ message: 'Failed to fetch supplier receipt' });
+    }
+  });
+
+  app.post('/api/supplier-receipts', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { items, ...receiptData } = req.body;
+      const receipt = await storage.createSupplierReceipt(receiptData);
+      
+      if (items && items.length > 0) {
+        for (const item of items) {
+          await storage.createSupplierReceiptItem({
+            ...item,
+            receiptId: receipt.id
+          });
+        }
+      }
+      
+      res.status(201).json(receipt);
+    } catch (error) {
+      console.error('Error creating supplier receipt:', error);
+      res.status(500).json({ message: 'Failed to create supplier receipt' });
+    }
+  });
+
+  app.put('/api/supplier-receipts/:id', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { items, ...receiptData } = req.body;
+      
+      const receipt = await storage.updateSupplierReceipt(id, receiptData);
+      if (!receipt) {
+        return res.status(404).json({ message: 'Supplier receipt not found' });
+      }
+
+      // Update items if provided
+      if (items) {
+        // Delete existing items
+        await storage.deleteSupplierReceiptItems(id);
+        
+        // Create new items
+        for (const item of items) {
+          await storage.createSupplierReceiptItem({
+            ...item,
+            receiptId: id
+          });
+        }
+      }
+      
+      res.json(receipt);
+    } catch (error) {
+      console.error('Error updating supplier receipt:', error);
+      res.status(500).json({ message: 'Failed to update supplier receipt' });
+    }
+  });
+
+  app.delete('/api/supplier-receipts/:id', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteSupplierReceipt(id);
+      if (!success) {
+        return res.status(404).json({ message: 'Supplier receipt not found' });
+      }
+      res.json({ message: 'Supplier receipt deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting supplier receipt:', error);
+      res.status(500).json({ message: 'Failed to delete supplier receipt' });
+    }
+  });
+
   // Supply Decision API routes
   app.get("/api/supply-decisions", async (req, res) => {
     try {
