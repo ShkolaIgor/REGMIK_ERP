@@ -261,7 +261,7 @@ export function ClientsXmlImport() {
                           <div className="text-gray-500">Пропущено</div>
                         </div>
                         <div className="text-center">
-                          <div className="font-medium text-red-600">{job.errors.length}</div>
+                          <div className="font-medium text-red-600">{job.errors?.length || 0}</div>
                           <div className="text-gray-500">Помилки</div>
                         </div>
                       </div>
