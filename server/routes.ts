@@ -6305,13 +6305,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       if (existingClient) {
-        job.details.push({
-          name: row.PREDPR,
-          status: 'skipped',
-          message: `Клієнт з external_id ${row.ID_PREDPR} вже існує`
-        });
-        job.skipped++;
-        return;
+        // Update existing client with new supplier/customer status
+        try {
+          await storage.updateClient(existingClient.id, {
+            isCustomer: isCustomer,
+            isSupplier: isSupplier,
+            isActive: row.ACTUAL === 'T' || row.ACTUAL === 'true'
+          });
+          
+          job.details.push({
+            name: row.PREDPR,
+            status: 'updated',
+            message: `Оновлено статус: ${isSupplier ? 'Постачальник' : ''}${isSupplier && isCustomer ? ', ' : ''}${isCustomer ? 'Покупець' : ''}`
+          });
+          job.imported++;
+          return;
+        } catch (updateError) {
+          job.details.push({
+            name: row.PREDPR,
+            status: 'error',
+            message: `Помилка оновлення: ${updateError instanceof Error ? updateError.message : String(updateError)}`
+          });
+          job.errors.push(`Row ${job.processed + 1} (${row.PREDPR}): Error updating existing client`);
+          return;
+        }
       }
     }
     
