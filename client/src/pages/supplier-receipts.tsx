@@ -707,6 +707,22 @@ export default function SupplierReceipts() {
           </DialogContent>
         </Dialog>
 
+        {/* Component Mapping Dialog */}
+        <ComponentMappingDialog
+          open={showMappingDialog}
+          onOpenChange={setShowMappingDialog}
+          components={components}
+          onMapComponent={(mapping) => {
+            toast({
+              title: "Співставлення збережено",
+              description: `"${mapping.supplierName}" співставлено з ${mapping.internalComponent.name}`
+            });
+          }}
+          supplierComponentNames={receipts.flatMap((r: any) => 
+            r.items?.map((i: any) => i.supplier_component_name).filter(Boolean) || []
+          )}
+        />
+
         {/* Import Dialog */}
         <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
           <DialogContent className="max-w-2xl">

@@ -4942,6 +4942,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Component Supplier Mapping Endpoints
+  app.get('/api/component-supplier-mappings', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const supplierId = req.query.supplierId ? parseInt(req.query.supplierId as string) : undefined;
+      const componentId = req.query.componentId ? parseInt(req.query.componentId as string) : undefined;
+      
+      const mappings = await storage.getComponentSupplierMappings(supplierId, componentId);
+      res.json(mappings);
+    } catch (error) {
+      console.error('Error fetching component supplier mappings:', error);
+      res.status(500).json({ message: 'Failed to fetch component supplier mappings' });
+    }
+  });
+
+  app.post('/api/component-supplier-mappings', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const mapping = await storage.createComponentSupplierMapping(req.body);
+      res.status(201).json(mapping);
+    } catch (error) {
+      console.error('Error creating component supplier mapping:', error);
+      res.status(500).json({ message: 'Failed to create component supplier mapping' });
+    }
+  });
+
+  app.get('/api/components/find-by-supplier-name/:supplierId/:name', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const supplierId = parseInt(req.params.supplierId);
+      const supplierComponentName = decodeURIComponent(req.params.name);
+      
+      const components = await storage.findComponentBySupplierName(supplierId, supplierComponentName);
+      res.json(components);
+    } catch (error) {
+      console.error('Error finding component by supplier name:', error);
+      res.status(500).json({ message: 'Failed to find component by supplier name' });
+    }
+  });
+
   // Supply Decision API routes
   app.get("/api/supply-decisions", async (req, res) => {
     try {

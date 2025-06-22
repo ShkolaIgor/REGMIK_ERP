@@ -8580,6 +8580,77 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+
+  // Component Supplier Mappings methods
+  async getComponentSupplierMappings(supplierId?: number, componentId?: number) {
+    try {
+      let query = 'SELECT * FROM component_supplier_mappings WHERE 1=1';
+      const params: any[] = [];
+      
+      if (supplierId) {
+        params.push(supplierId);
+        query += ` AND supplier_id = $${params.length}`;
+      }
+      
+      if (componentId) {
+        params.push(componentId);
+        query += ` AND component_id = $${params.length}`;
+      }
+      
+      query += ' ORDER BY created_at DESC';
+      
+      const result = await pool.query(query, params);
+      return result.rows;
+    } catch (error) {
+      console.error('Error fetching component supplier mappings:', error);
+      throw error;
+    }
+  }
+
+  async createComponentSupplierMapping(mapping: any) {
+    try {
+      const result = await pool.query(
+        `INSERT INTO component_supplier_mappings 
+         (component_id, supplier_id, supplier_component_name, supplier_sku, is_verified, notes) 
+         VALUES ($1, $2, $3, $4, $5, $6) 
+         ON CONFLICT (component_id, supplier_id, supplier_component_name) 
+         DO UPDATE SET 
+           supplier_sku = EXCLUDED.supplier_sku,
+           is_verified = EXCLUDED.is_verified,
+           notes = EXCLUDED.notes,
+           updated_at = CURRENT_TIMESTAMP
+         RETURNING *`,
+        [
+          mapping.componentId,
+          mapping.supplierId,
+          mapping.supplierComponentName,
+          mapping.supplierSku || null,
+          mapping.isVerified || false,
+          mapping.notes || null
+        ]
+      );
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error creating component supplier mapping:', error);
+      throw error;
+    }
+  }
+
+  async findComponentBySupplierName(supplierId: number, supplierComponentName: string) {
+    try {
+      const result = await pool.query(
+        `SELECT c.*, csm.supplier_component_name, csm.supplier_sku, csm.is_verified
+         FROM components c
+         INNER JOIN component_supplier_mappings csm ON c.id = csm.component_id
+         WHERE csm.supplier_id = $1 AND csm.supplier_component_name ILIKE $2`,
+        [supplierId, `%${supplierComponentName}%`]
+      );
+      return result.rows;
+    } catch (error) {
+      console.error('Error finding component by supplier name:', error);
+      throw error;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
