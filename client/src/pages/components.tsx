@@ -49,7 +49,7 @@ export default function Components() {
     name: "",
     sku: "",
     description: "",
-    unit: "",
+    unitId: 1,
     costPrice: "",
     supplier: "",
     partNumber: "",
@@ -69,6 +69,10 @@ export default function Components() {
 
   const { data: categories = [] } = useQuery({
     queryKey: ["/api/component-categories"],
+  });
+
+  const { data: units = [] } = useQuery({
+    queryKey: ["/api/units"],
   });
 
   const createMutation = useMutation({
@@ -135,7 +139,7 @@ export default function Components() {
       name: "",
       sku: "",
       description: "",
-      unit: "",
+      unitId: 1,
       costPrice: "",
       supplier: "",
       partNumber: "",
@@ -172,7 +176,7 @@ export default function Components() {
       name: component.name,
       sku: component.sku,
       description: component.description || "",
-      unit: component.unit,
+      unitId: component.unitId || 1,
       costPrice: component.costPrice,
       supplier: component.supplier || "",
       partNumber: component.partNumber || "",
@@ -352,13 +356,19 @@ export default function Components() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="unit">Одиниця виміру</Label>
-                      <Input
-                        id="unit"
-                        value={formData.unit}
-                        onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                        required
-                      />
+                      <Label htmlFor="unitId">Одиниця виміру</Label>
+                      <Select value={formData.unitId.toString()} onValueChange={(value) => setFormData({ ...formData, unitId: parseInt(value) })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Оберіть одиницю виміру" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {units.map((unit: any) => (
+                            <SelectItem key={unit.id} value={unit.id.toString()}>
+                              {unit.name} ({unit.shortName})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label htmlFor="costPrice">Собівартість</Label>
@@ -713,7 +723,7 @@ export default function Components() {
                         {component.description || "—"}
                       </TableCell>
                       <TableCell style={{ width: columnWidths.unit }}>
-                        {component.unit}
+                        {units.find((unit: any) => unit.id === component.unitId)?.shortName || "шт"}
                       </TableCell>
                       <TableCell style={{ width: columnWidths.costPrice }}>
                         {component.costPrice}
