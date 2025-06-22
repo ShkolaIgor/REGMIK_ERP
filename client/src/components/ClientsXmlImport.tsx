@@ -70,7 +70,7 @@ export function ClientsXmlImport() {
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('xmlFile', file);
 
       const response = await apiRequest('/api/clients/import-xml', {
         method: 'POST',
