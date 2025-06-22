@@ -16,16 +16,16 @@ import { SupplierReceiptsXmlImport } from "@/components/SupplierReceiptsXmlImpor
 
 interface SupplierReceipt {
   id: number;
-  receiptDate: string;
-  supplierId: number;
-  documentTypeId: number;
-  supplierDocumentDate: string | null;
-  supplierDocumentNumber: string | null;
-  totalAmount: string;
+  receipt_date: string;
+  supplier_id: number;
+  document_type_id: number;
+  supplier_document_date: string | null;
+  supplier_document_number: string | null;
+  total_amount: string;
   comment: string | null;
-  purchaseOrderId: number | null;
-  createdAt: string;
-  updatedAt: string;
+  purchase_order_id: number | null;
+  created_at: string;
+  updated_at: string;
   items?: SupplierReceiptItem[];
 }
 
@@ -215,14 +215,14 @@ export default function SupplierReceipts() {
   const handleEdit = (receipt: SupplierReceipt) => {
     setEditingReceipt(receipt);
     setFormData({
-      receiptDate: receipt.receiptDate.split('T')[0],
-      supplierId: receipt.supplierId.toString(),
-      documentTypeId: receipt.documentTypeId.toString(),
-      supplierDocumentDate: receipt.supplierDocumentDate?.split('T')[0] || '',
-      supplierDocumentNumber: receipt.supplierDocumentNumber || '',
-      totalAmount: receipt.totalAmount,
+      receiptDate: receipt.receipt_date.split('T')[0],
+      supplierId: receipt.supplier_id.toString(),
+      documentTypeId: receipt.document_type_id.toString(),
+      supplierDocumentDate: receipt.supplier_document_date?.split('T')[0] || '',
+      supplierDocumentNumber: receipt.supplier_document_number || '',
+      totalAmount: receipt.total_amount,
       comment: receipt.comment || '',
-      purchaseOrderId: receipt.purchaseOrderId?.toString() || '',
+      purchaseOrderId: receipt.purchase_order_id?.toString() || '',
       items: receipt.items || []
     });
     setIsDialogOpen(true);
@@ -285,11 +285,11 @@ export default function SupplierReceipts() {
     if (!searchQuery) return true;
     
     const searchLower = searchQuery.toLowerCase();
-    const supplier = suppliers.find((s: Supplier) => s.id === receipt.supplierId);
+    const supplier = suppliers.find((s: Supplier) => s.id === receipt.supplier_id);
     
     return (
       supplier?.name.toLowerCase().includes(searchLower) ||
-      receipt.supplierDocumentNumber?.toLowerCase().includes(searchLower) ||
+      receipt.supplier_document_number?.toLowerCase().includes(searchLower) ||
       receipt.comment?.toLowerCase().includes(searchLower)
     );
   });
@@ -365,30 +365,30 @@ export default function SupplierReceipts() {
               </thead>
               <tbody>
                 {currentReceipts.map((receipt: SupplierReceipt) => {
-                  const supplier = suppliers.find((s: Supplier) => s.id === receipt.supplierId);
-                  const documentType = documentTypes.find((dt: SupplierDocumentType) => dt.id === receipt.documentTypeId);
+                  const supplier = suppliers.find((s: Supplier) => s.id === receipt.supplier_id);
+                  const documentType = documentTypes.find((dt: SupplierDocumentType) => dt.id === receipt.document_type_id);
                   
                   return (
                     <tr key={receipt.id} className="border-b hover:bg-gray-50">
                       <td className="p-4">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-gray-400" />
-                          {new Date(receipt.receiptDate).toLocaleDateString('uk-UA')}
+                          {new Date(receipt.receipt_date).toLocaleDateString('uk-UA')}
                         </div>
                       </td>
                       <td className="p-4 font-medium">{supplier?.name || '—'}</td>
                       <td className="p-4">{documentType?.name || '—'}</td>
                       <td className="p-4">
                         <div className="flex flex-col">
-                          <span className="font-medium">{receipt.supplierDocumentNumber || '—'}</span>
-                          {receipt.supplierDocumentDate && (
+                          <span className="font-medium">{receipt.supplier_document_number || '—'}</span>
+                          {receipt.supplier_document_date && (
                             <span className="text-sm text-gray-500">
-                              від {new Date(receipt.supplierDocumentDate).toLocaleDateString('uk-UA')}
+                              від {new Date(receipt.supplier_document_date).toLocaleDateString('uk-UA')}
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="p-4 font-bold text-green-600">{receipt.totalAmount} ₴</td>
+                      <td className="p-4 font-bold text-green-600">{receipt.total_amount} ₴</td>
                       <td className="p-4">
                         <Button 
                           variant="outline" 
