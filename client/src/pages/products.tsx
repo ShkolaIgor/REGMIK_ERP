@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Upload, Download, Eye, FileText, AlertCircle, CheckCircle, Clock, X, Grid3X3, List } from "lucide-react";
+import { Plus, Search, Upload, Download, Eye, FileText, AlertCircle, CheckCircle, Clock, X, Grid3X3, List, Edit2, Trash2 } from "lucide-react";
 
 interface Product {
   id: number;
@@ -81,6 +82,7 @@ export default function Products() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [currentJob, setCurrentJob] = useState<ImportJob | null>(null);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   
   // Пагінація та фільтрація
   const [currentPage, setCurrentPage] = useState(1);
@@ -94,6 +96,11 @@ export default function Products() {
   // Завантаження товарів
   const { data: products = [], isLoading, error } = useQuery({
     queryKey: ["/api/products"],
+  });
+
+  // Завантаження категорій для форми
+  const { data: categories = [] } = useQuery({
+    queryKey: ["/api/categories"],
   });
 
   // Фільтрація товарів
@@ -453,17 +460,8 @@ export default function Products() {
                     onClick={() => setEditingProduct(product)}
                     className="flex-1"
                   >
-                    <Eye className="h-4 w-4 mr-1" />
+                    <Edit2 className="h-4 w-4 mr-1" />
                     Редагувати
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => deleteMutation.mutate(product.id)}
-                    disabled={deleteMutation.isPending}
-                    className="px-3"
-                  >
-                    <X className="h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
@@ -506,23 +504,13 @@ export default function Products() {
                       </Badge>
                     </td>
                     <td className="p-4">
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => setEditingProduct(product)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteMutation.mutate(product.id)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setEditingProduct(product)}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
                     </td>
                   </tr>
                 ))}
