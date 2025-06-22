@@ -6344,7 +6344,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await storage.updateClient(existingClient.id, { 
               taxCode: null,
               isActive: false,
-              notes: updatedNotes
+              notes: updatedNotes,
+              isCustomer: isCustomer,
+              isSupplier: isSupplier
             });
             console.log(`Removed taxCode, deactivated older client and added note, taxCode ${taxCode}, id: ${existingClient.id}`);
             // Continue with import to create new client with this taxCode
@@ -6377,7 +6379,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       notes = notes ? `${notes}. ${carrierNote}` : carrierNote;
     }
 
-
+    // Determine supplier and customer status from XML fields
+    const isSupplier = row.POSTAV === 'T' || row.POSTAV === 'true';
+    const isCustomer = row.POKUP !== 'F' && row.POKUP !== 'false'; // Customer unless explicitly marked as false
 
     const clientData = {
       taxCode: taxCode,
@@ -6387,6 +6391,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       physicalAddress: row.ADDRESS_PHYS || null,
       notes: notes || null,
       isActive: row.ACTUAL === 'T' || row.ACTUAL === 'true',
+      isCustomer: isCustomer,
+      isSupplier: isSupplier,
       source: 'xml_import',
       carrierId: carrierId,
       discount: row.SKIT ? parseFloat(row.SKIT.replace(',', '.')) : 0,
