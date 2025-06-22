@@ -8538,8 +8538,8 @@ export class DatabaseStorage implements IStorage {
   async createSupplierReceiptItem(insertItem: any) {
     try {
       const result = await pool.query(
-        'INSERT INTO supplier_receipt_items (receipt_id, component_id, quantity, unit_price, total_price) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [insertItem.receiptId, insertItem.componentId, insertItem.quantity, insertItem.unitPrice, insertItem.totalPrice]
+        'INSERT INTO supplier_receipt_items (receipt_id, component_id, quantity, unit_price, total_price, supplier_component_name) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+        [insertItem.receiptId, insertItem.componentId, insertItem.quantity, insertItem.unitPrice, insertItem.totalPrice, insertItem.supplierComponentName || null]
       );
       return result.rows[0];
     } catch (error) {
@@ -8551,8 +8551,8 @@ export class DatabaseStorage implements IStorage {
   async updateSupplierReceiptItem(id: number, itemData: any) {
     try {
       const result = await pool.query(
-        'UPDATE supplier_receipt_items SET component_id = $2, quantity = $3, unit_price = $4, total_price = $5 WHERE id = $1 RETURNING *',
-        [id, itemData.componentId, itemData.quantity, itemData.unitPrice, itemData.totalPrice]
+        'UPDATE supplier_receipt_items SET component_id = $2, quantity = $3, unit_price = $4, total_price = $5, supplier_component_name = $6 WHERE id = $1 RETURNING *',
+        [id, itemData.componentId, itemData.quantity, itemData.unitPrice, itemData.totalPrice, itemData.supplierComponentName || null]
       );
       return result.rows[0];
     } catch (error) {

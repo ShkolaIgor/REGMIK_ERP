@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Edit2, Trash2, Upload, FileText, Calendar, Package } from "lucide-react";
 import { SupplierReceiptsXmlImport } from "@/components/SupplierReceiptsXmlImport";
+import { ComponentMappingDialog } from "@/components/ComponentMappingDialog";
 
 interface SupplierReceipt {
   id: number;
@@ -73,6 +74,7 @@ export default function SupplierReceipts() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showMappingDialog, setShowMappingDialog] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -325,6 +327,10 @@ export default function SupplierReceipts() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Button onClick={() => setShowMappingDialog(true)} variant="outline">
+              <Package className="h-4 w-4 mr-2" />
+              Співставлення компонентів
+            </Button>
             <Button onClick={() => setShowImportDialog(true)} variant="outline">
               <Upload className="h-4 w-4 mr-2" />
               Імпорт XML
@@ -388,7 +394,7 @@ export default function SupplierReceipts() {
                           )}
                         </div>
                       </td>
-                      <td className="p-4 font-bold text-green-600">{receipt.total_amount} ₴</td>
+                      <td className="p-4 font-bold text-green-600">{parseFloat(receipt.total_amount).toLocaleString('uk-UA')} ₴</td>
                       <td className="p-4">
                         <Button 
                           variant="outline" 
