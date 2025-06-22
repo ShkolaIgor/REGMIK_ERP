@@ -4979,6 +4979,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get supplier receipt items
+  app.get('/api/supplier-receipt-items/:receiptId', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const receiptId = parseInt(req.params.receiptId);
+      const items = await storage.getSupplierReceiptItems(receiptId);
+      res.json(items);
+    } catch (error) {
+      console.error('Error fetching supplier receipt items:', error);
+      res.status(500).json({ message: 'Failed to fetch supplier receipt items' });
+    }
+  });
+
   // Supply Decision API routes
   app.get("/api/supply-decisions", async (req, res) => {
     try {

@@ -11,9 +11,122 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Edit2, Trash2, Upload, FileText, Calendar, Package } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, Upload, FileText, Calendar, Package, ChevronDown, ChevronRight } from "lucide-react";
 import { SupplierReceiptsXmlImport } from "@/components/SupplierReceiptsXmlImport";
 import { ComponentMappingDialog } from "@/components/ComponentMappingDialog";
+
+// Component to show receipt items when expanded
+function ReceiptItemsExpanded({ receiptId }: { receiptId: number }) {
+  const { data: receiptItems = [], isLoading } = useQuery({
+    queryKey: ["/api/supplier-receipt-items", receiptId],
+    enabled: !!receiptId,
+  });
+
+  const { data: componentsData = [] } = useQuery({
+    queryKey: ["/api/components"],
+  });
+  const components = Array.isArray(componentsData) ? componentsData : [];
+
+  if (isLoading) {
+    return (
+      <div className="p-6 text-center">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-2 text-sm text-gray-500">Завантаження позицій...</p>
+      </div>
+    );
+  }
+
+  if (!receiptItems.length) {
+    return (
+      <div className="p-6 text-center text-gray-500">
+        <Package className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+        <p>Позиції не знайдено</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6">
+      <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+        <Package className="h-4 w-4" />
+        Позиції приходу ({receiptItems.length})
+      </h4>
+      
+      <div className="bg-white rounded-lg border">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left p-3 font-medium text-gray-700">Компонент</th>
+                <th className="text-left p-3 font-medium text-gray-700">Назва постачальника</th>
+                <th className="text-left p-3 font-medium text-gray-700">Кількість</th>
+                <th className="text-left p-3 font-medium text-gray-700">Ціна за од.</th>
+                <th className="text-left p-3 font-medium text-gray-700">Сума</th>
+              </tr>
+            </thead>
+            <tbody>
+              {receiptItems.map((item: SupplierReceiptItem) => {
+                const component = components.find((c: Component) => c.id === item.component_id);
+                
+                return (
+                  <tr key={item.id} className="border-b hover:bg-gray-50">
+                    <td className="p-3">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-900">
+                          {component?.name || 'Компонент не знайдено'}
+                        </span>
+                        {component?.sku && (
+                          <span className="text-xs text-gray-500">
+                            Артикул: {component.sku}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-3">
+                      {item.supplier_component_name ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-900">{item.supplier_component_name}</span>
+                          {component && (
+                            <Badge variant="secondary" className="text-xs">
+                              Співставлено
+                            </Badge>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 italic">Не вказано</span>
+                      )}
+                    </td>
+                    <td className="p-3 font-medium">
+                      {parseFloat(item.quantity).toLocaleString('uk-UA')}
+                    </td>
+                    <td className="p-3">
+                      {parseFloat(item.unit_price).toLocaleString('uk-UA')} ₴
+                    </td>
+                    <td className="p-3 font-bold text-green-600">
+                      {parseFloat(item.total_price).toLocaleString('uk-UA')} ₴
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot className="bg-gray-50">
+              <tr>
+                <td colSpan={4} className="p-3 text-right font-medium text-gray-700">
+                  Загальна сума:
+                </td>
+                <td className="p-3 font-bold text-lg text-green-600">
+                  {receiptItems.reduce((sum, item) => 
+                    sum + parseFloat(item.total_price), 0
+                  ).toLocaleString('uk-UA')} ₴
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface SupplierReceipt {
   id: number;
@@ -32,11 +145,12 @@ interface SupplierReceipt {
 
 interface SupplierReceiptItem {
   id: number;
-  receiptId: number;
-  componentId: number;
+  receipt_id: number;
+  component_id: number;
   quantity: string;
-  unitPrice: string;
-  totalPrice: string;
+  unit_price: string;
+  total_price: string;
+  supplier_component_name?: string;
 }
 
 interface Supplier {
@@ -75,6 +189,7 @@ export default function SupplierReceipts() {
   const [pageSize, setPageSize] = useState(20);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showMappingDialog, setShowMappingDialog] = useState(false);
+  const [expandedReceiptId, setExpandedReceiptId] = useState<number | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -241,7 +356,7 @@ export default function SupplierReceipts() {
       ...prev,
       items: [
         ...prev.items,
-        { componentId: '', quantity: '', unitPrice: '', totalPrice: '' }
+        { componentId: '', quantity: '', unitPrice: '', totalPrice: '', supplierComponentName: '' }
       ]
     }));
   };
@@ -373,38 +488,62 @@ export default function SupplierReceipts() {
                 {currentReceipts.map((receipt: SupplierReceipt) => {
                   const supplier = suppliers.find((s: Supplier) => s.id === receipt.supplier_id);
                   const documentType = documentTypes.find((dt: SupplierDocumentType) => dt.id === receipt.document_type_id);
+                  const isExpanded = expandedReceiptId === receipt.id;
                   
                   return (
-                    <tr key={receipt.id} className="border-b hover:bg-gray-50">
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          {new Date(receipt.receipt_date).toLocaleDateString('uk-UA')}
-                        </div>
-                      </td>
-                      <td className="p-4 font-medium">{supplier?.name || '—'}</td>
-                      <td className="p-4">{documentType?.name || '—'}</td>
-                      <td className="p-4">
-                        <div className="flex flex-col">
-                          <span className="font-medium">{receipt.supplier_document_number || '—'}</span>
-                          {receipt.supplier_document_date && (
-                            <span className="text-sm text-gray-500">
-                              від {new Date(receipt.supplier_document_date).toLocaleDateString('uk-UA')}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4 font-bold text-green-600">{parseFloat(receipt.total_amount).toLocaleString('uk-UA')} ₴</td>
-                      <td className="p-4">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => handleEdit(receipt)}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
+                    <>
+                      <tr 
+                        key={receipt.id} 
+                        className="border-b hover:bg-gray-50 cursor-pointer"
+                        onClick={() => setExpandedReceiptId(isExpanded ? null : receipt.id)}
+                      >
+                        <td className="p-4">
+                          <div className="flex items-center gap-2">
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4 text-gray-400" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4 text-gray-400" />
+                            )}
+                            <Calendar className="h-4 w-4 text-gray-400" />
+                            {new Date(receipt.receipt_date).toLocaleDateString('uk-UA')}
+                          </div>
+                        </td>
+                        <td className="p-4 font-medium">{supplier?.name || '—'}</td>
+                        <td className="p-4">{documentType?.name || '—'}</td>
+                        <td className="p-4">
+                          <div className="flex flex-col">
+                            <span className="font-medium">{receipt.supplier_document_number || '—'}</span>
+                            {receipt.supplier_document_date && (
+                              <span className="text-sm text-gray-500">
+                                від {new Date(receipt.supplier_document_date).toLocaleDateString('uk-UA')}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-4 font-bold text-green-600">{parseFloat(receipt.total_amount).toLocaleString('uk-UA')} ₴</td>
+                        <td className="p-4">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(receipt);
+                            }}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                      
+                      {/* Expanded row with receipt items */}
+                      {isExpanded && (
+                        <tr className="bg-gray-50">
+                          <td colSpan={6} className="p-0">
+                            <ReceiptItemsExpanded receiptId={receipt.id} />
+                          </td>
+                        </tr>
+                      )}
+                    </>
                   );
                 })}
               </tbody>
@@ -564,7 +703,7 @@ export default function SupplierReceipts() {
                 {formData.items.map((item, index) => (
                   <div key={index} className="border rounded-lg p-4 mb-4">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div>
+                      <div className="space-y-2">
                         <Label>Компонент *</Label>
                         <Select
                           value={item.componentId}
@@ -581,6 +720,16 @@ export default function SupplierReceipts() {
                             ))}
                           </SelectContent>
                         </Select>
+                        
+                        <div>
+                          <Label className="text-xs text-gray-600">Назва у постачальника</Label>
+                          <Input
+                            placeholder="Введіть назву компонента у постачальника"
+                            value={item.supplierComponentName || ''}
+                            onChange={(e) => updateItem(index, 'supplierComponentName', e.target.value)}
+                            className="text-sm"
+                          />
+                        </div>
                       </div>
                       
                       <div>
