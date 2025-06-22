@@ -57,6 +57,7 @@ import OrderedProducts from "@/pages/ordered-products";
 import Scanner from "@/pages/scanner";
 import SerialNumbers from "@/pages/serial-numbers";
 import SerialNumberSettings from "@/pages/serial-number-settings";
+import SupplierReceipts from "@/pages/supplier-receipts";
 import Repairs from "@/pages/repairs";
 import Users from "@/pages/users";
 import Roles from "@/pages/roles";
@@ -230,6 +231,7 @@ function Router() {
         <Route path="/ordered-products" component={OrderedProducts} />
         <Route path="/serial-numbers" component={SerialNumbers} />
         <Route path="/serial-number-settings" component={SerialNumberSettings} />
+        <Route path="/supplier-receipts" component={SupplierReceipts} />
         <Route path="/repairs" component={Repairs} />
         <Route path="/currencies" component={Currencies} />
         <Route path="/currency-rates" component={CurrencyRates} />
