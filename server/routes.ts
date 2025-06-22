@@ -6103,12 +6103,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let xmlContent = fileBuffer.toString('utf-8');
       console.log(`XML content length: ${xmlContent.length}`);
       
-      // Fix common XML issues - more aggressive fixing
+      // Fix common XML issues - more comprehensive fixing
       xmlContent = xmlContent
-        .replace(/([a-zA-Zа-яА-Я0-9цуацу])([A-Z_]+=")/g, '$1" $2') // Add missing quote and space 
-        .replace(/([a-zA-Zа-яА-Я0-9цуацу]+)\s*([A-Z_]+=")/g, '$1" $2') // Ensure space before attributes
+        .replace(/([а-яА-Я0-9]+)([A-Z_]+=")/g, '$1" $2') // Add missing quote and space for Cyrillic
+        .replace(/([a-zA-Z0-9]+)([A-Z_]+=")/g, '$1" $2') // Add missing quote and space for Latin
         .replace(/"\s*([A-Z_]+=")/g, '" $1') // Ensure space between attributes
-        .replace(/(цуацу)(\s*NAME=")/g, '$1" $2'); // Specific fix for your XML
+        .replace(/([а-яцуацу]+)\s*([A-Z_]+=")/g, '$1" $2') // Specific Cyrillic patterns
+        .replace(/(цуацу)(\s*)([A-Z_]+=")/g, '$1" $3'); // Handle the specific "цуацу" case
       
       const parser = new xml2js.Parser({ 
         explicitArray: false,
