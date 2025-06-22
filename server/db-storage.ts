@@ -8468,10 +8468,11 @@ export class DatabaseStorage implements IStorage {
 
   async createSupplierReceipt(insertReceipt: any) {
     try {
+      console.log('Creating supplier receipt with data:', insertReceipt);
       const result = await pool.query(
         `INSERT INTO supplier_receipts 
-         (receipt_date, supplier_id, document_type_id, supplier_document_date, supplier_document_number, total_amount, comment) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+         (receipt_date, supplier_id, document_type_id, supplier_document_date, supplier_document_number, total_amount, comment, purchase_order_id) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
         [
           insertReceipt.receiptDate,
           insertReceipt.supplierId,
@@ -8479,9 +8480,11 @@ export class DatabaseStorage implements IStorage {
           insertReceipt.supplierDocumentDate || null,
           insertReceipt.supplierDocumentNumber || null,
           insertReceipt.totalAmount,
-          insertReceipt.comment || null
+          insertReceipt.comment || null,
+          insertReceipt.purchaseOrderId || null
         ]
       );
+      console.log('Created supplier receipt:', result.rows[0]);
       return result.rows[0];
     } catch (error) {
       console.error('Error creating supplier receipt:', error);
@@ -8527,7 +8530,9 @@ export class DatabaseStorage implements IStorage {
   // Supplier Receipt Items methods
   async getSupplierReceiptItems(receiptId: number) {
     try {
+      console.log('Fetching supplier receipt items for receipt ID:', receiptId);
       const result = await pool.query('SELECT * FROM supplier_receipt_items WHERE receipt_id = $1', [receiptId]);
+      console.log('Found supplier receipt items:', result.rows.length);
       return result.rows;
     } catch (error) {
       console.error('Error fetching supplier receipt items:', error);
@@ -8537,10 +8542,12 @@ export class DatabaseStorage implements IStorage {
 
   async createSupplierReceiptItem(insertItem: any) {
     try {
+      console.log('Creating supplier receipt item:', insertItem);
       const result = await pool.query(
         'INSERT INTO supplier_receipt_items (receipt_id, component_id, quantity, unit_price, total_price, supplier_component_name) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
         [insertItem.receiptId, insertItem.componentId, insertItem.quantity, insertItem.unitPrice, insertItem.totalPrice, insertItem.supplierComponentName || null]
       );
+      console.log('Created supplier receipt item:', result.rows[0]);
       return result.rows[0];
     } catch (error) {
       console.error('Error creating supplier receipt item:', error);

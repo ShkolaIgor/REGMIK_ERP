@@ -19,7 +19,7 @@ import React from 'react';
 // Component to show receipt items when expanded
 function ReceiptItemsExpanded({ receiptId }: { receiptId: number }) {
   const { data: receiptItems = [], isLoading } = useQuery({
-    queryKey: ["/api/supplier-receipt-items", receiptId],
+    queryKey: [`/api/supplier-receipt-items/${receiptId}`],
     enabled: !!receiptId,
   });
 
