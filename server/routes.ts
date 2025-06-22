@@ -6103,8 +6103,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const xmlContent = fileBuffer.toString('utf-8');
       console.log(`XML content length: ${xmlContent.length}`);
       
-      // Manual parsing for broken XML - extract ROW elements
-      const rowMatches = xmlContent.match(/<ROW[^>]*>/g);
+      // Manual parsing for broken XML - extract ROW elements  
+      const rowMatches = xmlContent.match(/<ROW[^>]*\/>/g);
       if (!rowMatches) {
         job.status = 'failed';
         job.errors.push("No ROW elements found in XML");
@@ -6115,10 +6115,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const rowString of rowMatches) {
         const row: any = {};
         
-        // Extract all attributes using regex
+        // Extract all attributes, handling the broken format
+        const cleanRow = rowString
+          .replace(/([а-яА-Я0-9цуацу]+)([A-Z_]+=")/g, '$1" $2') // Fix missing quote+space
+          .replace(/([^"\s])([A-Z_]+=")/g, '$1" $2'); // Fix any char followed by attribute
+        
         const attrRegex = /(\w+)="([^"]*)"/g;
         let match;
-        while ((match = attrRegex.exec(rowString)) !== null) {
+        while ((match = attrRegex.exec(cleanRow)) !== null) {
           row[match[1]] = match[2];
         }
         
