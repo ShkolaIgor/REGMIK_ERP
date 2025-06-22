@@ -41,6 +41,8 @@ const formSchema = z.object({
   warehouseRef: z.string().optional(),
   notes: z.string().optional(),
   isActive: z.boolean().default(true),
+  isCustomer: z.boolean().default(false),
+  isSupplier: z.boolean().default(false),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -159,6 +161,8 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
       website: "",
       notes: "",
       isActive: true,
+      isCustomer: false,
+      isSupplier: false,
     },
   });
 
@@ -190,6 +194,8 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
           website: editingClient.website || "",
           notes: editingClient.notes || "",
           isActive: editingClient.isActive ?? true,
+          isCustomer: editingClient.isCustomer ?? false,
+          isSupplier: editingClient.isSupplier ?? false,
         });
 
         // Set Nova Poshta selections if editing
@@ -693,28 +699,73 @@ export function ClientForm({ editingClient, onSubmit, onCancel, onDelete, isLoad
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="isActive"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>
-                  Активний клієнт
-                </FormLabel>
-                <p className="text-sm text-muted-foreground">
-                  Активні клієнти відображаються у списках та доступні для вибору
-                </p>
-              </div>
-            </FormItem>
-          )}
-        />
+        {/* Статуси клієнта */}
+        <div className="rounded-md border p-4 space-y-4">
+          <h3 className="text-sm font-medium">Статус клієнта</h3>
+          
+          <FormField
+            control={form.control}
+            name="isActive"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between">
+                <div className="space-y-0.5">
+                  <FormLabel>Активний клієнт</FormLabel>
+                  <p className="text-sm text-muted-foreground">
+                    Активні клієнти відображаються у списках
+                  </p>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="isCustomer"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between">
+                <div className="space-y-0.5">
+                  <FormLabel>Покупець</FormLabel>
+                  <p className="text-sm text-muted-foreground">
+                    Клієнт купує товари або послуги
+                  </p>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="isSupplier"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between">
+                <div className="space-y-0.5">
+                  <FormLabel>Постачальник</FormLabel>
+                  <p className="text-sm text-muted-foreground">
+                    Клієнт постачає товари або послуги
+                  </p>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className="flex justify-between items-center pt-4">
           {editingClient && onDelete ? (
