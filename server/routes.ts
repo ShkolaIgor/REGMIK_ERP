@@ -5886,8 +5886,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/clients", async (req, res) => {
     try {
       console.log("Creating client with data:", JSON.stringify(req.body, null, 2));
+      console.log("isCustomer value:", req.body.isCustomer);
+      console.log("isSupplier value:", req.body.isSupplier);
       const validatedData = insertClientSchema.parse(req.body);
+      console.log("After validation - isCustomer:", validatedData.isCustomer);
+      console.log("After validation - isSupplier:", validatedData.isSupplier);
       const client = await storage.createClient(validatedData);
+      console.log("Created client:", JSON.stringify(client, null, 2));
       res.status(201).json(client);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -5917,12 +5922,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/clients/:id", async (req, res) => {
     try {
       const id = req.params.id;
+      console.log("Updating client", id, "with data:", JSON.stringify(req.body, null, 2));
+      console.log("isCustomer value:", req.body.isCustomer);
+      console.log("isSupplier value:", req.body.isSupplier);
       // Виключаємо ID з даних оновлення, щоб не порушувати foreign key constraints
       const { id: clientId, ...updateData } = req.body;
+      console.log("Update data after removing ID:", JSON.stringify(updateData, null, 2));
       const client = await storage.updateClient(id, updateData);
       if (!client) {
         return res.status(404).json({ error: "Client not found" });
       }
+      console.log("Updated client:", JSON.stringify(client, null, 2));
       res.json(client);
     } catch (error) {
       console.error("Failed to update client:", error);
