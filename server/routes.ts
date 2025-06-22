@@ -31,6 +31,7 @@ import crypto from "crypto";
 import { sendEmail } from "./email-service";
 import multer from "multer";
 import xml2js from "xml2js";
+import { DOMParser } from "@xmldom/xmldom";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Simple auth setup
@@ -4983,7 +4984,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/import/supplier-receipts', isSimpleAuthenticated, async (req, res) => {
     try {
       const { xmlContent } = req.body;
-      const { DOMParser } = require('@xmldom/xmldom');
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
       const rows = xmlDoc.getElementsByTagName('ROW');
@@ -5036,7 +5036,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/import/supplier-receipt-items', isSimpleAuthenticated, async (req, res) => {
     try {
       const { xmlContent } = req.body;
-      const { DOMParser } = require('@xmldom/xmldom');
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
       const rows = xmlDoc.getElementsByTagName('ROW');
