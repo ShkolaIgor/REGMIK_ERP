@@ -4979,6 +4979,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Import supplier receipts from XML
+  app.post('/api/import/supplier-receipts', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { xmlContent } = req.body;
+      const { DOMParser } = require('@xmldom/xmldom');
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
+      const rows = xmlDoc.getElementsByTagName('ROW');
+
+      let imported = 0;
+      const errors: string[] = [];
+
+      for (let i = 0; i < rows.length; i++) {
+        try {
+          const row = rows[i];
+          const externalSupplierId = row.getAttribute('INDEX_PREDPR');
+          
+          // Find supplier by external_id
+          const supplier = await storage.getClientByExternalId(externalSupplierId);
+          if (!supplier) {
+            errors.push(`Supplier with external ID ${externalSupplierId} not found`);
+            continue;
+          }
+
+          const receiptData = {
+            receiptDate: row.getAttribute('DATE_INP') || new Date().toISOString().split('T')[0],
+            supplierId: supplier.id,
+            documentTypeId: parseInt(row.getAttribute('INDEX_DOC') || '1'),
+            supplierDocumentDate: row.getAttribute('DATE_POST') || null,
+            supplierDocumentNumber: row.getAttribute('NUMB_DOC') || null,
+            totalAmount: parseFloat(row.getAttribute('ACC_SUM') || '0'),
+            comment: row.getAttribute('COMMENT') || null,
+            purchaseOrderId: null
+          };
+
+          await storage.createSupplierReceipt(receiptData);
+          imported++;
+        } catch (error) {
+          errors.push(`Row ${i + 1}: ${error.message}`);
+        }
+      }
+
+      res.json({
+        total: rows.length,
+        imported,
+        errors
+      });
+    } catch (error) {
+      console.error('Error importing supplier receipts:', error);
+      res.status(500).json({ message: 'Failed to import supplier receipts' });
+    }
+  });
+
+  // Import supplier receipt items from XML
+  app.post('/api/import/supplier-receipt-items', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { xmlContent } = req.body;
+      const { DOMParser } = require('@xmldom/xmldom');
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
+      const rows = xmlDoc.getElementsByTagName('ROW');
+
+      let imported = 0;
+      const errors: string[] = [];
+
+      for (let i = 0; i < rows.length; i++) {
+        try {
+          const row = rows[i];
+          const receiptId = parseInt(row.getAttribute('INDEX_LISTPRIHOD') || '0');
+          const componentId = parseInt(row.getAttribute('INDEX_DETAIL') || '0');
+          const quantity = parseFloat(row.getAttribute('COUNT_DET') || '0');
+          const unitPrice = parseFloat(row.getAttribute('PRICE1') || '0');
+          const totalPrice = quantity * unitPrice;
+
+          if (!receiptId || !componentId) {
+            errors.push(`Row ${i + 1}: Missing receipt ID or component ID`);
+            continue;
+          }
+
+          const itemData = {
+            receiptId,
+            componentId,
+            quantity,
+            unitPrice,
+            totalPrice,
+            supplierComponentName: row.getAttribute('NOTE') || null
+          };
+
+          await storage.createSupplierReceiptItem(itemData);
+          imported++;
+        } catch (error) {
+          errors.push(`Row ${i + 1}: ${error.message}`);
+        }
+      }
+
+      res.json({
+        total: rows.length,
+        imported,
+        errors
+      });
+    } catch (error) {
+      console.error('Error importing supplier receipt items:', error);
+      res.status(500).json({ message: 'Failed to import supplier receipt items' });
+    }
+  });
+
   // Get supplier receipt items
   app.get('/api/supplier-receipt-items/:receiptId', isSimpleAuthenticated, async (req, res) => {
     try {

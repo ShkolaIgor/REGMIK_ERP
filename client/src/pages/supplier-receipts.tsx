@@ -14,6 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Edit2, Trash2, Upload, FileText, Calendar, Package, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Filter } from "lucide-react";
 import { SupplierReceiptsXmlImport } from "@/components/SupplierReceiptsXmlImport";
 import { ComponentMappingDialog } from "@/components/ComponentMappingDialog";
+import { SupplierReceiptsImport } from "@/components/SupplierReceiptsImport";
+import { SupplierReceiptItemsImport } from "@/components/SupplierReceiptItemsImport";
 import React from 'react';
 
 // Component to show receipt items when expanded
@@ -195,6 +197,8 @@ export default function SupplierReceipts() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [supplierFilter, setSupplierFilter] = useState<string>('');
   const [documentTypeFilter, setDocumentTypeFilter] = useState<string>('');
+  const [showReceiptsImportDialog, setShowReceiptsImportDialog] = useState(false);
+  const [showReceiptItemsImportDialog, setShowReceiptItemsImportDialog] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -504,10 +508,18 @@ export default function SupplierReceipts() {
               Управління приходами товарів ({filteredReceipts.length} з {receipts.length})
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button onClick={() => setShowMappingDialog(true)} variant="outline">
               <Package className="h-4 w-4 mr-2" />
               Співставлення компонентів
+            </Button>
+            <Button onClick={() => setShowReceiptsImportDialog(true)} variant="outline">
+              <Upload className="h-4 w-4 mr-2" />
+              Імпорт приходів
+            </Button>
+            <Button onClick={() => setShowReceiptItemsImportDialog(true)} variant="outline">
+              <FileText className="h-4 w-4 mr-2" />
+              Імпорт позицій
             </Button>
             <Button onClick={() => setShowImportDialog(true)} variant="outline">
               <Upload className="h-4 w-4 mr-2" />
@@ -973,7 +985,25 @@ export default function SupplierReceipts() {
           )}
         />
 
-        {/* Import Dialog */}
+        {/* Supplier Receipts Import Dialog */}
+        <SupplierReceiptsImport
+          open={showReceiptsImportDialog}
+          onOpenChange={setShowReceiptsImportDialog}
+          onImportComplete={() => {
+            queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
+          }}
+        />
+
+        {/* Supplier Receipt Items Import Dialog */}
+        <SupplierReceiptItemsImport
+          open={showReceiptItemsImportDialog}
+          onOpenChange={setShowReceiptItemsImportDialog}
+          onImportComplete={() => {
+            queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
+          }}
+        />
+
+        {/* Original XML Import Dialog */}
         <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>

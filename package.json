@@ -50,6 +50,7 @@
     "@types/pg": "^8.15.4",
     "@types/react-beautiful-dnd": "^13.1.8",
     "@types/xml2js": "^0.4.14",
+    "@xmldom/xmldom": "^0.9.8",
     "bcryptjs": "^3.0.2",
     "chart.js": "^4.4.9",
     "class-variance-authority": "^0.7.1",
