@@ -6100,46 +6100,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`Processing XML import for job ${jobId}`);
 
     try {
-      let xmlContent = fileBuffer.toString('utf-8');
+      const xmlContent = fileBuffer.toString('utf-8');
       console.log(`XML content length: ${xmlContent.length}`);
       
-      // Fix common XML issues - more comprehensive fixing
-      xmlContent = xmlContent
-        .replace(/([а-яА-Я0-9цуацу]+)([A-Z_]+=")/g, '$1" $2') // Add missing quote and space
-        .replace(/([a-zA-Z0-9]+)([A-Z_]+=")/g, '$1" $2') // Add missing quote and space for Latin
-        .replace(/"\s*([A-Z_]+=")/g, '" $1') // Ensure space between attributes
-        .replace(/(цуацу)(NAME=")/g, '$1" $2') // Specific fix for "цуацуNAME"
-        .replace(/([^"\s])([A-Z_]+=")/g, '$1" $2'); // Generic fix for any character followed by attribute
-      
-      const parser = new xml2js.Parser({ 
-        explicitArray: false,
-        mergeAttrs: true,
-        strict: false, // More lenient parsing
-        trim: true
-      });
-      
-      const result = await parser.parseStringPromise(xmlContent);
-      console.log(`XML parsed successfully`);
-      
-      if (!result.DATAPACKET || !result.DATAPACKET.ROWDATA || !result.DATAPACKET.ROWDATA.ROW) {
-        console.log('Invalid XML format detected');
-        console.log('Result structure:', JSON.stringify(result, null, 2));
+      // Manual parsing for broken XML - extract ROW elements
+      const rowMatches = xmlContent.match(/<ROW[^>]*>/g);
+      if (!rowMatches) {
         job.status = 'failed';
-        job.errors.push("Invalid XML format. Expected DATAPACKET structure.");
+        job.errors.push("No ROW elements found in XML");
+        return;
+      }
+      
+      const rows = [];
+      for (const rowString of rowMatches) {
+        const row: any = {};
+        
+        // Extract all attributes using regex
+        const attrRegex = /(\w+)="([^"]*)"/g;
+        let match;
+        while ((match = attrRegex.exec(rowString)) !== null) {
+          row[match[1]] = match[2];
+        }
+        
+        rows.push(row);
+      }
+      
+      console.log(`Manual parsing extracted ${rows.length} rows`);
+      console.log('First row:', rows[0]);
+      
+      if (rows.length === 0) {
+        job.status = 'failed';
+        job.errors.push("No valid rows found in XML");
         return;
       }
 
-      const rows = Array.isArray(result.DATAPACKET.ROWDATA.ROW) 
-        ? result.DATAPACKET.ROWDATA.ROW 
-        : [result.DATAPACKET.ROWDATA.ROW];
-
       job.totalRows = rows.length;
       console.log(`Starting client import with ${rows.length} rows`);
-      
-      // Log first row to see structure
-      if (rows.length > 0) {
-        console.log('First row structure:', JSON.stringify(rows[0], null, 2));
-      }
       
       // Get all carriers for matching by name (once at start)
       const carriers = await storage.getCarriers();
