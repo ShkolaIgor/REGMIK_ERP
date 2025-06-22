@@ -86,23 +86,29 @@ export function ClientsXmlImport() {
       // Poll for job status
       const interval = setInterval(async () => {
         try {
-          const statusResponse = await apiRequest(`/api/clients/import-xml/${response.jobId}/status`) as ImportJob;
-          setJob(statusResponse);
-          setProgress(statusResponse.progress);
+          const statusResponse = await apiRequest(`/api/clients/import-xml/${response.jobId}/status`) as { success: boolean; job: ImportJob };
+          const jobData = statusResponse.job;
+          setJob(jobData);
+          setProgress(jobData.progress || 0);
 
-          if (statusResponse.status === 'completed' || statusResponse.status === 'failed') {
+          if (jobData.status === 'completed' || jobData.status === 'failed') {
             clearInterval(interval);
             setIsImporting(false);
             
-            if (statusResponse.status === 'completed') {
+            if (jobData.status === 'completed') {
               toast({
                 title: "Імпорт завершено",
-                description: `Імпортовано ${statusResponse.imported} клієнтів, пропущено ${statusResponse.skipped}`,
+                description: `Імпортовано ${jobData.imported} клієнтів, пропущено ${jobData.skipped}`,
               });
+              
+              // Оновлюємо список клієнтів після успішного імпорту
+              setTimeout(() => {
+                window.location.reload();
+              }, 2000);
             } else {
               toast({
                 title: "Помилка імпорту",
-                description: "Імпорт не вдався",
+                description: "Імпорт завершився з помилками",
                 variant: "destructive",
               });
             }

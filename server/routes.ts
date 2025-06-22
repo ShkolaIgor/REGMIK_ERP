@@ -6466,6 +6466,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         job.errors.push(`Row ${job.processed + 1} (${row.PREDPR}): ${createErrorMessage}`);
       }
     }
+    
+    job.processed++;
+    job.progress = Math.round((job.processed / job.totalRows) * 100);
   }
 
   // Client Nova Poshta Settings API
