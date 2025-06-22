@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Upload, Download, Eye, FileText, AlertCircle, CheckCircle, Clock, X, Grid3X3, List, Edit2, Trash2 } from "lucide-react";
+import { Plus, Search, Upload, Download, Eye, FileText, AlertCircle, CheckCircle, Clock, X, Grid3X3, List, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
 interface Product {
   id: number;
@@ -89,6 +89,22 @@ export default function Products() {
   const [pageSize, setPageSize] = useState(20);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'cards'>('list');
+  
+  // Сортування
+  const [sortField, setSortField] = useState<keyof Product | ''>('');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  
+  // Ширина стовпців для товарів
+  const [columnWidths, setColumnWidths] = useState({
+    name: 200,
+    sku: 150,
+    description: 250,
+    costPrice: 120,
+    retailPrice: 120,
+    unit: 100,
+    status: 120,
+    actions: 100
+  });
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -103,7 +119,7 @@ export default function Products() {
     queryKey: ["/api/categories"],
   });
 
-  // Фільтрація товарів
+  // Фільтрація та сортування товарів
   const filteredProducts = products.filter((product: Product) => {
     if (!searchQuery) return true;
     
@@ -115,12 +131,45 @@ export default function Products() {
     );
   });
 
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (!sortField) return 0;
+    
+    let aValue = a[sortField];
+    let bValue = b[sortField];
+    
+    // Обробка порожніх значень
+    if (aValue === null || aValue === undefined) aValue = '';
+    if (bValue === null || bValue === undefined) bValue = '';
+    
+    // Числові поля
+    if (sortField === 'costPrice' || sortField === 'retailPrice') {
+      aValue = parseFloat(aValue as string) || 0;
+      bValue = parseFloat(bValue as string) || 0;
+    }
+    
+    // Дати
+    if (sortField === 'createdAt') {
+      aValue = new Date(aValue as Date).getTime();
+      bValue = new Date(bValue as Date).getTime();
+    }
+    
+    // Рядки
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      aValue = aValue.toLowerCase();
+      bValue = bValue.toLowerCase();
+    }
+    
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
   // Пагінація
-  const total = filteredProducts.length;
+  const total = sortedProducts.length;
   const totalPages = Math.ceil(total / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-  const currentProducts = filteredProducts.slice(startIndex, endIndex);
+  const currentProducts = sortedProducts.slice(startIndex, endIndex);
 
   // Скидаємо сторінку при зміні фільтру
   useEffect(() => {
@@ -288,6 +337,49 @@ export default function Products() {
     setSelectedFile(file || null);
   };
 
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'imported':
+      case 'updated':
+        return 'default';
+      case 'skipped':
+        return 'secondary';
+      case 'error':
+        return 'destructive';
+      default:
+        return 'secondary';
+    }
+  };
+
+  // Функція для сортування
+  const handleSort = (field: keyof Product) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1);
+  };
+
+  // Функція для отримання іконки сортування
+  const getSortIcon = (field: keyof Product) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-4 w-4 text-gray-400" />;
+    }
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="h-4 w-4 text-blue-600" />
+      : <ArrowDown className="h-4 w-4 text-blue-600" />;
+  };
+
+  // Функція для зміни ширини стовпців
+  const handleColumnResize = (column: string, width: number) => {
+    setColumnWidths(prev => ({
+      ...prev,
+      [column]: Math.max(80, width)
+    }));
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'imported':
@@ -300,20 +392,6 @@ export default function Products() {
         return <X className="h-4 w-4 text-red-500" />;
       default:
         return <Clock className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'imported':
-      case 'updated':
-        return 'default';
-      case 'skipped':
-        return 'secondary';
-      case 'error':
-        return 'destructive';
-      default:
-        return 'outline';
     }
   };
 
@@ -348,7 +426,7 @@ export default function Products() {
         <div>
           <h1 className="text-3xl font-bold">Товари</h1>
           <p className="text-muted-foreground">
-            Управління каталогом товарів ({filteredProducts.length} з {products.length})
+            Управління каталогом товарів ({sortedProducts.length} з {products.length})
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -510,35 +588,222 @@ export default function Products() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr className="border-b">
-                  <th className="text-left p-4 font-medium text-gray-900">Назва</th>
-                  <th className="text-left p-4 font-medium text-gray-900">SKU</th>
-                  <th className="text-left p-4 font-medium text-gray-900">Опис</th>
-                  <th className="text-left p-4 font-medium text-gray-900">Собівартість</th>
-                  <th className="text-left p-4 font-medium text-gray-900">Роздрібна ціна</th>
-                  <th className="text-left p-4 font-medium text-gray-900">Од. виміру</th>
-                  <th className="text-left p-4 font-medium text-gray-900">Статус</th>
-                  <th className="text-left p-4 font-medium text-gray-900">Дії</th>
+                  <th 
+                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100 select-none relative group"
+                    style={{ width: columnWidths.name }}
+                    onClick={() => handleSort('name')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold">Назва</span>
+                      {getSortIcon('name')}
+                    </div>
+                    <div
+                      className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-300 opacity-0 group-hover:opacity-100"
+                      onMouseDown={(e) => {
+                        const startX = e.clientX;
+                        const startWidth = columnWidths.name;
+                        const handleMouseMove = (e: MouseEvent) => {
+                          const newWidth = startWidth + (e.clientX - startX);
+                          handleColumnResize('name', newWidth);
+                        };
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
+                    />
+                  </th>
+                  <th 
+                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100 select-none relative group"
+                    style={{ width: columnWidths.sku }}
+                    onClick={() => handleSort('sku')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>SKU</span>
+                      {getSortIcon('sku')}
+                    </div>
+                    <div
+                      className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-300 opacity-0 group-hover:opacity-100"
+                      onMouseDown={(e) => {
+                        const startX = e.clientX;
+                        const startWidth = columnWidths.sku;
+                        const handleMouseMove = (e: MouseEvent) => {
+                          const newWidth = startWidth + (e.clientX - startX);
+                          handleColumnResize('sku', newWidth);
+                        };
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
+                    />
+                  </th>
+                  <th 
+                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100 select-none relative group"
+                    style={{ width: columnWidths.description }}
+                    onClick={() => handleSort('description')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>Опис</span>
+                      {getSortIcon('description')}
+                    </div>
+                    <div
+                      className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-300 opacity-0 group-hover:opacity-100"
+                      onMouseDown={(e) => {
+                        const startX = e.clientX;
+                        const startWidth = columnWidths.description;
+                        const handleMouseMove = (e: MouseEvent) => {
+                          const newWidth = startWidth + (e.clientX - startX);
+                          handleColumnResize('description', newWidth);
+                        };
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
+                    />
+                  </th>
+                  <th 
+                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100 select-none relative group"
+                    style={{ width: columnWidths.costPrice }}
+                    onClick={() => handleSort('costPrice')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>Собівартість</span>
+                      {getSortIcon('costPrice')}
+                    </div>
+                    <div
+                      className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-300 opacity-0 group-hover:opacity-100"
+                      onMouseDown={(e) => {
+                        const startX = e.clientX;
+                        const startWidth = columnWidths.costPrice;
+                        const handleMouseMove = (e: MouseEvent) => {
+                          const newWidth = startWidth + (e.clientX - startX);
+                          handleColumnResize('costPrice', newWidth);
+                        };
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
+                    />
+                  </th>
+                  <th 
+                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100 select-none relative group"
+                    style={{ width: columnWidths.retailPrice }}
+                    onClick={() => handleSort('retailPrice')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>Роздрібна ціна</span>
+                      {getSortIcon('retailPrice')}
+                    </div>
+                    <div
+                      className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-300 opacity-0 group-hover:opacity-100"
+                      onMouseDown={(e) => {
+                        const startX = e.clientX;
+                        const startWidth = columnWidths.retailPrice;
+                        const handleMouseMove = (e: MouseEvent) => {
+                          const newWidth = startWidth + (e.clientX - startX);
+                          handleColumnResize('retailPrice', newWidth);
+                        };
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
+                    />
+                  </th>
+                  <th 
+                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100 select-none relative group"
+                    style={{ width: columnWidths.unit }}
+                    onClick={() => handleSort('unit')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>Од. виміру</span>
+                      {getSortIcon('unit')}
+                    </div>
+                    <div
+                      className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-300 opacity-0 group-hover:opacity-100"
+                      onMouseDown={(e) => {
+                        const startX = e.clientX;
+                        const startWidth = columnWidths.unit;
+                        const handleMouseMove = (e: MouseEvent) => {
+                          const newWidth = startWidth + (e.clientX - startX);
+                          handleColumnResize('unit', newWidth);
+                        };
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
+                    />
+                  </th>
+                  <th 
+                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100 select-none relative group"
+                    style={{ width: columnWidths.status }}
+                    onClick={() => handleSort('isActive')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>Статус</span>
+                      {getSortIcon('isActive')}
+                    </div>
+                    <div
+                      className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-300 opacity-0 group-hover:opacity-100"
+                      onMouseDown={(e) => {
+                        const startX = e.clientX;
+                        const startWidth = columnWidths.status;
+                        const handleMouseMove = (e: MouseEvent) => {
+                          const newWidth = startWidth + (e.clientX - startX);
+                          handleColumnResize('status', newWidth);
+                        };
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
+                    />
+                  </th>
+                  <th 
+                    className="text-left p-4 font-medium text-gray-900"
+                    style={{ width: columnWidths.actions }}
+                  >
+                    <span>Дії</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {currentProducts.map((product: Product) => (
                   <tr key={product.id} className="border-b hover:bg-gray-50">
-                    <td className="p-4">
+                    <td className="p-4" style={{ width: columnWidths.name }}>
                       <div className="font-bold text-gray-900">{product.name}</div>
                     </td>
-                    <td className="p-4 text-gray-600">{product.sku}</td>
-                    <td className="p-4 text-gray-600 max-w-xs">
-                      <div className="truncate">{product.description || "—"}</div>
+                    <td className="p-4 text-gray-600" style={{ width: columnWidths.sku }}>{product.sku}</td>
+                    <td className="p-4 text-gray-600" style={{ width: columnWidths.description }}>
+                      <div className="truncate" title={product.description || ""}>{product.description || "—"}</div>
                     </td>
-                    <td className="p-4 text-gray-900 font-medium">{product.costPrice} ₴</td>
-                    <td className="p-4 text-gray-900 font-medium">{product.retailPrice} ₴</td>
-                    <td className="p-4 text-gray-600">{product.unit}</td>
-                    <td className="p-4">
+                    <td className="p-4 text-gray-900 font-medium" style={{ width: columnWidths.costPrice }}>{product.costPrice} ₴</td>
+                    <td className="p-4 text-gray-900 font-medium" style={{ width: columnWidths.retailPrice }}>{product.retailPrice} ₴</td>
+                    <td className="p-4 text-gray-600" style={{ width: columnWidths.unit }}>{product.unit}</td>
+                    <td className="p-4" style={{ width: columnWidths.status }}>
                       <Badge variant={product.isActive ? "default" : "secondary"}>
                         {product.isActive ? "Активний" : "Неактивний"}
                       </Badge>
                     </td>
-                    <td className="p-4">
+                    <td className="p-4" style={{ width: columnWidths.actions }}>
                       <Button 
                         variant="outline" 
                         size="sm" 
