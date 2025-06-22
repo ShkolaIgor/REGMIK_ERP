@@ -92,21 +92,24 @@ export default function SupplierReceipts() {
     queryKey: ["/api/supplier-receipts"],
   });
 
-  const { data: suppliers = [] } = useQuery({
+  const { data: suppliersData = { suppliers: [] } } = useQuery({
     queryKey: ["/api/suppliers"],
   });
+  const suppliers = suppliersData.suppliers || [];
 
-  const { data: components = [] } = useQuery({
+  const { data: componentsData = [] } = useQuery({
     queryKey: ["/api/components"],
   });
+  const components = Array.isArray(componentsData) ? componentsData : [];
 
   const { data: documentTypes = [] } = useQuery({
     queryKey: ["/api/supplier-document-types"],
   });
 
-  const { data: purchaseOrders = [] } = useQuery({
+  const { data: purchaseOrdersData = [] } = useQuery({
     queryKey: ["/api/purchase-orders"],
   });
+  const purchaseOrders = Array.isArray(purchaseOrdersData) ? purchaseOrdersData : [];
 
   // Mutations
   const createMutation = useMutation({
