@@ -6059,7 +6059,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Process import asynchronously
-      processXmlImportAsync(jobId, req.file.buffer);
+      processClientsXmlImportAsync(jobId, req.file.buffer);
 
     } catch (error) {
       console.error("XML import error:", error);
@@ -6090,7 +6090,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Async import processing function
-  async function processXmlImportAsync(jobId: string, fileBuffer: Buffer) {
+  async function processClientsXmlImportAsync(jobId: string, fileBuffer: Buffer) {
     const job = importJobs.get(jobId);
     if (!job) return;
 
@@ -6115,6 +6115,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       job.totalRows = rows.length;
       console.log(`Starting client import with ${rows.length} rows`);
+      
+      // Log first row to see available fields
+      if (rows.length > 0) {
+        console.log('First row fields:', Object.keys(rows[0]));
+        console.log('POSTAV value:', rows[0].POSTAV);
+        console.log('POKUP value:', rows[0].POKUP);
+      }
       
       // Get all carriers for matching by name (once at start)
       const carriers = await storage.getCarriers();
@@ -6399,6 +6406,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Determine supplier and customer status from XML fields
     const isSupplier = row.POSTAV === 'T' || row.POSTAV === 'true';
     const isCustomer = row.POKUP !== 'F' && row.POKUP !== 'false'; // Customer unless explicitly marked as false
+    
+    console.log(`Processing client ${row.PREDPR}: POSTAV=${row.POSTAV}, POKUP=${row.POKUP}, isSupplier=${isSupplier}, isCustomer=${isCustomer}`);
 
     const clientData = {
       taxCode: taxCode,
