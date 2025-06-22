@@ -16,8 +16,8 @@ interface SupplierDocumentType {
   id: number;
   name: string;
   description: string | null;
-  isActive: boolean;
-  createdAt: string;
+  is_active: boolean;
+  created_at: string;
 }
 
 export default function SupplierDocumentTypes() {
@@ -133,7 +133,7 @@ export default function SupplierDocumentTypes() {
     setFormData({
       name: type.name,
       description: type.description || '',
-      isActive: type.isActive
+      isActive: type.is_active
     });
     setIsDialogOpen(true);
   };
@@ -207,8 +207,8 @@ export default function SupplierDocumentTypes() {
                     <FileText className="h-5 w-5 text-blue-500" />
                     <CardTitle className="text-lg">{type.name}</CardTitle>
                   </div>
-                  <Badge variant={type.isActive ? "default" : "secondary"}>
-                    {type.isActive ? "Активний" : "Неактивний"}
+                  <Badge variant={type.is_active ? "default" : "secondary"}>
+                    {type.is_active ? "Активний" : "Неактивний"}
                   </Badge>
                 </div>
               </CardHeader>
@@ -218,7 +218,7 @@ export default function SupplierDocumentTypes() {
                 )}
                 
                 <div className="text-xs text-gray-500">
-                  Створено: {new Date(type.createdAt).toLocaleDateString('uk-UA')}
+                  Створено: {new Date(type.created_at).toLocaleDateString('uk-UA')}
                 </div>
                 
                 <div className="flex gap-2">
