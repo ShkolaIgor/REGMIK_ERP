@@ -72,6 +72,7 @@ const navigationItems = [
       { name: "Каталог товарів", href: "/inventory", icon: Package },
       { name: "Замовлені товари", href: "/ordered-products", icon: Package },
       { name: "Замовлення постачальникам", href: "/supplier-orders", icon: Package },
+      { name: "Приходи від постачальників", href: "/supplier-receipts", icon: PackageOpen },
       { name: "Переміщення між складами", href: "/warehouse-transfers", icon: PackageOpen },
       { name: "Інвентаризація", href: "/inventory-audits", icon: ClipboardList },
       { name: "Серійні номери", href: "/serial-numbers", icon: QrCode },
@@ -113,7 +114,8 @@ const navigationItems = [
       { name: "Відділи", href: "/departments", icon: Building2 },
       { name: "Склади", href: "/warehouses", icon: Warehouse },
       { name: "Перевізники", href: "/carriers", icon: Truck },
-      { name: "Валюти", href: "/currencies", icon: DollarSign }
+      { name: "Валюти", href: "/currencies", icon: DollarSign },
+      { name: "Типи документів постачальників", href: "/supplier-document-types", icon: FileText }
     ]
   },
   {
