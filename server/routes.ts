@@ -6105,11 +6105,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Fix common XML issues - more comprehensive fixing
       xmlContent = xmlContent
-        .replace(/([а-яА-Я0-9]+)([A-Z_]+=")/g, '$1" $2') // Add missing quote and space for Cyrillic
+        .replace(/([а-яА-Я0-9цуацу]+)([A-Z_]+=")/g, '$1" $2') // Add missing quote and space
         .replace(/([a-zA-Z0-9]+)([A-Z_]+=")/g, '$1" $2') // Add missing quote and space for Latin
         .replace(/"\s*([A-Z_]+=")/g, '" $1') // Ensure space between attributes
-        .replace(/([а-яцуацу]+)\s*([A-Z_]+=")/g, '$1" $2') // Specific Cyrillic patterns
-        .replace(/(цуацу)(\s*)([A-Z_]+=")/g, '$1" $3'); // Handle the specific "цуацу" case
+        .replace(/(цуацу)(NAME=")/g, '$1" $2') // Specific fix for "цуацуNAME"
+        .replace(/([^"\s])([A-Z_]+=")/g, '$1" $2'); // Generic fix for any character followed by attribute
       
       const parser = new xml2js.Parser({ 
         explicitArray: false,
@@ -6153,7 +6153,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         for (const row of batch) {
           try {
-            console.log(`Processing row ${job.processed + 1}: ${row.PREDPR || 'Unknown'}`);
+            const clientName = row.PREDPR || row.PREDP || row.R || 'Unknown';
+            console.log(`Processing row ${job.processed + 1}: ${clientName}`);
+            console.log('Row data keys:', Object.keys(row));
             await processClientRow(row, job, carriers, existingClients);
             console.log(`Row ${job.processed + 1} processed successfully`);
           } catch (error) {
