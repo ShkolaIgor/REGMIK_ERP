@@ -6092,51 +6092,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Async import processing function
   async function processXmlImportAsync(jobId: string, fileBuffer: Buffer) {
     const job = importJobs.get(jobId);
-    if (!job) {
-      console.log(`Job ${jobId} not found`);
-      return;
-    }
-
-    console.log(`Processing XML import for job ${jobId}`);
+    if (!job) return;
 
     try {
       const xmlContent = fileBuffer.toString('utf-8');
-      console.log(`XML content length: ${xmlContent.length}`);
+      const parser = new xml2js.Parser({ 
+        explicitArray: false,
+        mergeAttrs: true
+      });
       
-      // Manual parsing for broken XML - extract ROW elements  
-      const rowMatches = xmlContent.match(/<ROW[^>]*\/>/g);
-      if (!rowMatches) {
+      const result = await parser.parseStringPromise(xmlContent);
+      
+      if (!result.DATAPACKET || !result.DATAPACKET.ROWDATA || !result.DATAPACKET.ROWDATA.ROW) {
         job.status = 'failed';
-        job.errors.push("No ROW elements found in XML");
+        job.errors.push("Invalid XML format. Expected DATAPACKET structure.");
         return;
       }
-      
-      const rows = [];
-      for (const rowString of rowMatches) {
-        const row: any = {};
-        
-        // Extract all attributes, handling the broken format
-        const cleanRow = rowString
-          .replace(/([а-яА-Я0-9цуацу]+)([A-Z_]+=")/g, '$1" $2') // Fix missing quote+space
-          .replace(/([^"\s])([A-Z_]+=")/g, '$1" $2'); // Fix any char followed by attribute
-        
-        const attrRegex = /(\w+)="([^"]*)"/g;
-        let match;
-        while ((match = attrRegex.exec(cleanRow)) !== null) {
-          row[match[1]] = match[2];
-        }
-        
-        rows.push(row);
-      }
-      
-      console.log(`Manual parsing extracted ${rows.length} rows`);
-      console.log('First row:', rows[0]);
-      
-      if (rows.length === 0) {
-        job.status = 'failed';
-        job.errors.push("No valid rows found in XML");
-        return;
-      }
+
+      const rows = Array.isArray(result.DATAPACKET.ROWDATA.ROW) 
+        ? result.DATAPACKET.ROWDATA.ROW 
+        : [result.DATAPACKET.ROWDATA.ROW];
 
       job.totalRows = rows.length;
       console.log(`Starting client import with ${rows.length} rows`);
@@ -6153,14 +6128,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         for (const row of batch) {
           try {
-            const clientName = row.PREDPR || row.PREDP || row.R || 'Unknown';
-            console.log(`Processing row ${job.processed + 1}: ${clientName}`);
-            console.log('Row data keys:', Object.keys(row));
             await processClientRow(row, job, carriers, existingClients);
-            console.log(`Row ${job.processed + 1} processed successfully`);
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            console.error(`Error processing row ${job.processed + 1}:`, error);
             job.details.push({
               name: row.PREDPR || 'Unknown',
               status: 'error',
@@ -6171,7 +6141,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           job.processed++;
           job.progress = Math.round((job.processed / job.totalRows) * 100);
-          console.log(`Progress: ${job.progress}% (${job.processed}/${job.totalRows})`);
         }
 
         // Small delay between batches to prevent blocking
@@ -6191,62 +6160,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Async XML import error:", error);
       job.status = 'failed';
       job.errors.push(error instanceof Error ? error.message : 'Unknown error');
-      console.log(`Job ${jobId} failed with error:`, error);
-    } finally {
-      console.log(`Job ${jobId} finished with status: ${job.status}`);
     }
   }
 
   // Process individual client row
   async function processClientRow(row: any, job: any, carriers: any[], existingClients: any[]) {
-    // Handle split attributes by reconstructing them from broken XML parsing
-    if (!row.PREDPR && row.PREDP && row.R) {
-      row.PREDPR = row.PREDP + row.R;
-    }
-    if (!row.NAME && row.NAM && row.E) {
-      row.NAME = row.NAM + row.E;
-    }
-    if (!row.EDRPOU && row.EDRPO && row.U) {
-      row.EDRPOU = row.EDRPO + row.U;
-    }
-    if (!row.SKIT && row.SKI && row.T) {
-      row.SKIT = row.SKI + row.T;
-    }
-    if (!row.CITY && row.CIT && row.Y) {
-      row.CITY = row.CIT + row.Y;
-    }
-    if (!row.ACTUAL && row.L) {
-      row.ACTUAL = row.L;
-    }
-    if (!row.DATE_CREATE && row._CREATE) {
-      row.DATE_CREATE = row._CREATE;
-    }
-    if (!row.ADDRESS_PHYS && row._PHYS) {
-      row.ADDRESS_PHYS = row._PHYS;
-    }
-    if (!row.COMMENT && row.COMMEN) {
-      row.COMMENT = row.COMMEN;
-    }
-    if (!row.NAME_TRANSPORT && row._TRANSPORT) {
-      row.NAME_TRANSPORT = row._TRANSPORT;
-    }
-    if (!row.ID_PREDPR && row._PREDPR) {
-      row.ID_PREDPR = row._PREDPR;
-    }
-    if (!row.POSTAV && row.V) {
-      row.POSTAV = row.V;
-    }
-    if (!row.POKUP && row.P) {
-      row.POKUP = row.P;
-    }
-    
-    console.log('After reconstruction:', {
-      PREDPR: row.PREDPR,
-      ID_PREDPR: row.ID_PREDPR,
-      POKUP: row.POKUP,
-      POSTAV: row.POSTAV
-    });
-    
     if (!row.PREDPR) {
       job.details.push({
         name: row.NAME || 'Unknown',
@@ -6380,49 +6298,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Check for existing clients
     let existingClient = null;
     
-    // Check for duplicate external_id first - update instead of skip
+    // Check for duplicate external_id first
     if (row.ID_PREDPR) {
       existingClient = existingClients.find(client => 
         client.externalId === row.ID_PREDPR
       );
       
       if (existingClient) {
-        // Update existing client instead of skipping
-        const updateData = {
-          taxCode: taxCode,
+        job.details.push({
           name: row.PREDPR,
-          fullName: row.NAME || row.PREDPR,
-          clientTypeId: clientTypeId,
-          physicalAddress: row.ADDRESS_PHYS || null,
-          notes: notes || null,
-          isActive: row.ACTUAL === 'T' || row.ACTUAL === 'true',
-          carrierId: carrierId,
-          discount: row.SKIT ? parseFloat(row.SKIT.replace(',', '.')) : 0,
-          warehouseRef: warehouseRef,
-          cityRef: cityRef,
-          isCustomer: row.POKUP === 'T' || row.POKUP === 'true' || true, // Use POKUP field or default true
-          isSupplier: row.POSTAV === 'T' || row.POSTAV === 'true' || false, // Use POSTAV field
-          updatedAt: new Date()
-        };
-        
-        try {
-          await storage.updateClient(existingClient.id, updateData);
-          job.details.push({
-            name: row.PREDPR,
-            status: 'updated',
-            message: `Клієнт з external_id ${row.ID_PREDPR} оновлено`
-          });
-          job.imported++;
-          return;
-        } catch (updateError) {
-          job.details.push({
-            name: row.PREDPR,
-            status: 'error',
-            message: `Помилка оновлення: ${updateError instanceof Error ? updateError.message : String(updateError)}`
-          });
-          job.errors.push(`Row ${job.processed + 1} (${row.PREDPR}): Update error`);
-          return;
-        }
+          status: 'skipped',
+          message: `Клієнт з external_id ${row.ID_PREDPR} вже існує`
+        });
+        job.skipped++;
+        return;
       }
     }
     
@@ -6504,8 +6393,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       externalId: row.ID_PREDPR || null,
       warehouseRef: warehouseRef,
       cityRef: cityRef,
-      isCustomer: row.POKUP === 'T' || row.POKUP === 'true' || true, // Use POKUP field or default true
-      isSupplier: row.POSTAV === 'T' || row.POSTAV === 'true' || false, // Use POSTAV field
       createdAt: createdAt,
     };
 
