@@ -6298,20 +6298,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Check for existing clients
     let existingClient = null;
     
-    // Check for duplicate external_id first
+    // Check for duplicate external_id first - update instead of skip
     if (row.ID_PREDPR) {
       existingClient = existingClients.find(client => 
         client.externalId === row.ID_PREDPR
       );
       
       if (existingClient) {
-        job.details.push({
+        // Update existing client instead of skipping
+        const updateData = {
+          taxCode: taxCode,
           name: row.PREDPR,
-          status: 'skipped',
-          message: `Клієнт з external_id ${row.ID_PREDPR} вже існує`
-        });
-        job.skipped++;
-        return;
+          fullName: row.NAME || row.PREDPR,
+          clientTypeId: clientTypeId,
+          physicalAddress: row.ADDRESS_PHYS || null,
+          notes: notes || null,
+          isActive: row.ACTUAL === 'T' || row.ACTUAL === 'true',
+          carrierId: carrierId,
+          discount: row.SKIT ? parseFloat(row.SKIT.replace(',', '.')) : 0,
+          warehouseRef: warehouseRef,
+          cityRef: cityRef,
+          isCustomer: true, // Default to customer for XML imports
+          isSupplier: false,
+          updatedAt: new Date()
+        };
+        
+        try {
+          await storage.updateClient(existingClient.id, updateData);
+          job.details.push({
+            name: row.PREDPR,
+            status: 'updated',
+            message: `Клієнт з external_id ${row.ID_PREDPR} оновлено`
+          });
+          job.imported++;
+          return;
+        } catch (updateError) {
+          job.details.push({
+            name: row.PREDPR,
+            status: 'error',
+            message: `Помилка оновлення: ${updateError instanceof Error ? updateError.message : String(updateError)}`
+          });
+          job.errors.push(`Row ${job.processed + 1} (${row.PREDPR}): Update error`);
+          return;
+        }
       }
     }
     
@@ -6393,6 +6422,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       externalId: row.ID_PREDPR || null,
       warehouseRef: warehouseRef,
       cityRef: cityRef,
+      isCustomer: true, // Default to customer for XML imports
+      isSupplier: false,
       createdAt: createdAt,
     };
 
