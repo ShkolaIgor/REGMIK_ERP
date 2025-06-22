@@ -127,6 +127,7 @@ export default function Products() {
     setCurrentPage(1);
   }, [searchQuery]);
 
+  // Mutation для видалення товару
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       const response = await fetch(`/api/products/${id}`, { method: "DELETE" });
@@ -138,6 +139,8 @@ export default function Products() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setEditingProduct(null);
+      setShowDeleteAlert(false);
       toast({
         title: "Успіх",
         description: "Товар видалено успішно",
@@ -147,6 +150,38 @@ export default function Products() {
       toast({
         title: "Помилка",
         description: `Помилка видалення товару: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation для оновлення товару
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number, data: any }) => {
+      const response = await fetch(`/api/products/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update product');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setEditingProduct(null);
+      toast({
+        title: "Товар оновлено",
+        description: "Дані товару успішно збережено",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Помилка",
+        description: "Не вдалося оновити товар",
         variant: "destructive",
       });
     },
@@ -417,7 +452,7 @@ export default function Products() {
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <div className="space-y-1 flex-1">
-                    <CardTitle className="text-lg leading-6">{product.name}</CardTitle>
+                    <CardTitle className="text-lg leading-6 font-bold">{product.name}</CardTitle>
                     <CardDescription className="text-sm">
                       SKU: {product.sku}
                     </CardDescription>
@@ -489,7 +524,7 @@ export default function Products() {
                 {currentProducts.map((product: Product) => (
                   <tr key={product.id} className="border-b hover:bg-gray-50">
                     <td className="p-4">
-                      <div className="font-medium text-gray-900">{product.name}</div>
+                      <div className="font-bold text-gray-900">{product.name}</div>
                     </td>
                     <td className="p-4 text-gray-600">{product.sku}</td>
                     <td className="p-4 text-gray-600 max-w-xs">
@@ -705,7 +740,234 @@ export default function Products() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Діалог редагування товару */}
+      <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Редагування товару</DialogTitle>
+          </DialogHeader>
+          {editingProduct && (
+            <ProductEditForm 
+              product={editingProduct} 
+              categories={categories}
+              onSave={(data) => updateMutation.mutate({ id: editingProduct.id, data })}
+              onDelete={() => setShowDeleteAlert(true)}
+              isLoading={updateMutation.isPending}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* AlertDialog для підтвердження видалення */}
+      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Підтвердження видалення</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ви впевнені, що хочете видалити товар "{editingProduct?.name}"? 
+              Цю дію неможливо скасувати.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Скасувати</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => editingProduct && deleteMutation.mutate(editingProduct.id)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Видалити
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       </div>
     </div>
+  );
+}
+
+// Компонент форми редагування товару
+function ProductEditForm({ 
+  product, 
+  categories, 
+  onSave, 
+  onDelete, 
+  isLoading 
+}: {
+  product: Product;
+  categories: any[];
+  onSave: (data: any) => void;
+  onDelete: () => void;
+  isLoading: boolean;
+}) {
+  const [formData, setFormData] = useState({
+    name: product.name,
+    sku: product.sku,
+    description: product.description || '',
+    barcode: product.barcode || '',
+    categoryId: product.categoryId?.toString() || '',
+    costPrice: product.costPrice,
+    retailPrice: product.retailPrice,
+    productType: product.productType,
+    unit: product.unit,
+    minStock: product.minStock?.toString() || '',
+    maxStock: product.maxStock?.toString() || '',
+    isActive: product.isActive ?? true,
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const data = {
+      ...formData,
+      categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
+      minStock: formData.minStock ? parseInt(formData.minStock) : null,
+      maxStock: formData.maxStock ? parseInt(formData.maxStock) : null,
+    };
+    onSave(data);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="name">Назва товару</Label>
+          <Input
+            id="name"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="sku">SKU</Label>
+          <Input
+            id="sku"
+            value={formData.sku}
+            onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+            required
+          />
+        </div>
+        <div className="md:col-span-2">
+          <Label htmlFor="description">Опис</Label>
+          <Input
+            id="description"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          />
+        </div>
+        <div>
+          <Label htmlFor="barcode">Штрих-код</Label>
+          <Input
+            id="barcode"
+            value={formData.barcode}
+            onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+          />
+        </div>
+        <div>
+          <Label htmlFor="categoryId">Категорія</Label>
+          <Select value={formData.categoryId} onValueChange={(value) => setFormData({ ...formData, categoryId: value })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Оберіть категорію" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((category: any) => (
+                <SelectItem key={category.id} value={category.id.toString()}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="costPrice">Собівартість</Label>
+          <Input
+            id="costPrice"
+            value={formData.costPrice}
+            onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+            type="number"
+            step="0.01"
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="retailPrice">Роздрібна ціна</Label>
+          <Input
+            id="retailPrice"
+            value={formData.retailPrice}
+            onChange={(e) => setFormData({ ...formData, retailPrice: e.target.value })}
+            type="number"
+            step="0.01"
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="productType">Тип товару</Label>
+          <Select value={formData.productType} onValueChange={(value) => setFormData({ ...formData, productType: value })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Оберіть тип" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="simple">Простий товар</SelectItem>
+              <SelectItem value="kit">Комплект</SelectItem>
+              <SelectItem value="service">Послуга</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="unit">Одиниця виміру</Label>
+          <Input
+            id="unit"
+            value={formData.unit}
+            onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="minStock">Мінімальний залишок</Label>
+          <Input
+            id="minStock"
+            value={formData.minStock}
+            onChange={(e) => setFormData({ ...formData, minStock: e.target.value })}
+            type="number"
+          />
+        </div>
+        <div>
+          <Label htmlFor="maxStock">Максимальний залишок</Label>
+          <Input
+            id="maxStock"
+            value={formData.maxStock}
+            onChange={(e) => setFormData({ ...formData, maxStock: e.target.value })}
+            type="number"
+          />
+        </div>
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="isActive"
+            checked={formData.isActive}
+            onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+            className="h-4 w-4"
+          />
+          <Label htmlFor="isActive">Активний товар</Label>
+        </div>
+      </div>
+
+      <div className="flex justify-between">
+        <Button
+          type="button"
+          variant="destructive"
+          onClick={onDelete}
+          className="flex items-center gap-2"
+        >
+          <Trash2 className="h-4 w-4" />
+          Видалити товар
+        </Button>
+        
+        <div className="flex gap-2">
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? 'Збереження...' : 'Зберегти зміни'}
+          </Button>
+        </div>
+      </div>
+    </form>
   );
 }
