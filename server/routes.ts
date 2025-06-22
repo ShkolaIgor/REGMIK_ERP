@@ -6092,18 +6092,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Async import processing function
   async function processXmlImportAsync(jobId: string, fileBuffer: Buffer) {
     const job = importJobs.get(jobId);
-    if (!job) return;
+    if (!job) {
+      console.log(`Job ${jobId} not found`);
+      return;
+    }
+
+    console.log(`Processing XML import for job ${jobId}`);
 
     try {
-      const xmlContent = fileBuffer.toString('utf-8');
+      let xmlContent = fileBuffer.toString('utf-8');
+      console.log(`XML content length: ${xmlContent.length}`);
+      
+      // Fix common XML issues
+      xmlContent = xmlContent
+        .replace(/([a-zA-Zа-яА-Я0-9])\s+([A-Z_]+=")/g, '$1" $2') // Add missing quotes and spaces
+        .replace(/([a-zA-Zа-яА-Я0-9]+)\s*([A-Z_]+=")/g, '$1" $2') // Ensure space before attributes
+        .replace(/"\s*([A-Z_]+=")/g, '" $1'); // Ensure space between attributes
+      
       const parser = new xml2js.Parser({ 
         explicitArray: false,
-        mergeAttrs: true
+        mergeAttrs: true,
+        strict: false, // More lenient parsing
+        trim: true
       });
       
       const result = await parser.parseStringPromise(xmlContent);
+      console.log(`XML parsed successfully`);
       
       if (!result.DATAPACKET || !result.DATAPACKET.ROWDATA || !result.DATAPACKET.ROWDATA.ROW) {
+        console.log('Invalid XML format detected');
+        console.log('Result structure:', JSON.stringify(result, null, 2));
         job.status = 'failed';
         job.errors.push("Invalid XML format. Expected DATAPACKET structure.");
         return;
@@ -6115,6 +6133,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       job.totalRows = rows.length;
       console.log(`Starting client import with ${rows.length} rows`);
+      
+      // Log first row to see structure
+      if (rows.length > 0) {
+        console.log('First row structure:', JSON.stringify(rows[0], null, 2));
+      }
       
       // Get all carriers for matching by name (once at start)
       const carriers = await storage.getCarriers();
@@ -6128,9 +6151,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         for (const row of batch) {
           try {
+            console.log(`Processing row ${job.processed + 1}: ${row.PREDPR || 'Unknown'}`);
             await processClientRow(row, job, carriers, existingClients);
+            console.log(`Row ${job.processed + 1} processed successfully`);
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error(`Error processing row ${job.processed + 1}:`, error);
             job.details.push({
               name: row.PREDPR || 'Unknown',
               status: 'error',
@@ -6141,6 +6167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           job.processed++;
           job.progress = Math.round((job.processed / job.totalRows) * 100);
+          console.log(`Progress: ${job.progress}% (${job.processed}/${job.totalRows})`);
         }
 
         // Small delay between batches to prevent blocking
@@ -6160,6 +6187,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Async XML import error:", error);
       job.status = 'failed';
       job.errors.push(error instanceof Error ? error.message : 'Unknown error');
+      console.log(`Job ${jobId} failed with error:`, error);
+    } finally {
+      console.log(`Job ${jobId} finished with status: ${job.status}`);
     }
   }
 
@@ -6318,8 +6348,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           discount: row.SKIT ? parseFloat(row.SKIT.replace(',', '.')) : 0,
           warehouseRef: warehouseRef,
           cityRef: cityRef,
-          isCustomer: true, // Default to customer for XML imports
-          isSupplier: false,
+          isCustomer: row.POKUP === 'T' || row.POKUP === 'true' || true, // Use POKUP field or default true
+          isSupplier: row.POSTAV === 'T' || row.POSTAV === 'true' || false, // Use POSTAV field
           updatedAt: new Date()
         };
         
@@ -6422,8 +6452,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       externalId: row.ID_PREDPR || null,
       warehouseRef: warehouseRef,
       cityRef: cityRef,
-      isCustomer: true, // Default to customer for XML imports
-      isSupplier: false,
+      isCustomer: row.POKUP === 'T' || row.POKUP === 'true' || true, // Use POKUP field or default true
+      isSupplier: row.POSTAV === 'T' || row.POSTAV === 'true' || false, // Use POSTAV field
       createdAt: createdAt,
     };
 
