@@ -6199,6 +6199,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Process individual client row
   async function processClientRow(row: any, job: any, carriers: any[], existingClients: any[]) {
+    // Handle split attributes by reconstructing them from broken XML parsing
+    if (!row.PREDPR && row.PREDP && row.R) {
+      row.PREDPR = row.PREDP + row.R;
+    }
+    if (!row.NAME && row.NAM && row.E) {
+      row.NAME = row.NAM + row.E;
+    }
+    if (!row.EDRPOU && row.EDRPO && row.U) {
+      row.EDRPOU = row.EDRPO + row.U;
+    }
+    if (!row.SKIT && row.SKI && row.T) {
+      row.SKIT = row.SKI + row.T;
+    }
+    if (!row.CITY && row.CIT && row.Y) {
+      row.CITY = row.CIT + row.Y;
+    }
+    if (!row.ACTUAL && row.L) {
+      row.ACTUAL = row.L;
+    }
+    if (!row.DATE_CREATE && row._CREATE) {
+      row.DATE_CREATE = row._CREATE;
+    }
+    if (!row.ADDRESS_PHYS && row._PHYS) {
+      row.ADDRESS_PHYS = row._PHYS;
+    }
+    if (!row.COMMENT && row.COMMEN) {
+      row.COMMENT = row.COMMEN;
+    }
+    if (!row.NAME_TRANSPORT && row._TRANSPORT) {
+      row.NAME_TRANSPORT = row._TRANSPORT;
+    }
+    if (!row.ID_PREDPR && row._PREDPR) {
+      row.ID_PREDPR = row._PREDPR;
+    }
+    if (!row.POSTAV && row.V) {
+      row.POSTAV = row.V;
+    }
+    if (!row.POKUP && row.P) {
+      row.POKUP = row.P;
+    }
+    
+    console.log('After reconstruction:', {
+      PREDPR: row.PREDPR,
+      ID_PREDPR: row.ID_PREDPR,
+      POKUP: row.POKUP,
+      POSTAV: row.POSTAV
+    });
+    
     if (!row.PREDPR) {
       job.details.push({
         name: row.NAME || 'Unknown',
