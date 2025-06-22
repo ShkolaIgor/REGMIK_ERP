@@ -6103,11 +6103,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let xmlContent = fileBuffer.toString('utf-8');
       console.log(`XML content length: ${xmlContent.length}`);
       
-      // Fix common XML issues
+      // Fix common XML issues - more aggressive fixing
       xmlContent = xmlContent
-        .replace(/([a-zA-Zа-яА-Я0-9])\s+([A-Z_]+=")/g, '$1" $2') // Add missing quotes and spaces
-        .replace(/([a-zA-Zа-яА-Я0-9]+)\s*([A-Z_]+=")/g, '$1" $2') // Ensure space before attributes
-        .replace(/"\s*([A-Z_]+=")/g, '" $1'); // Ensure space between attributes
+        .replace(/([a-zA-Zа-яА-Я0-9цуацу])([A-Z_]+=")/g, '$1" $2') // Add missing quote and space 
+        .replace(/([a-zA-Zа-яА-Я0-9цуацу]+)\s*([A-Z_]+=")/g, '$1" $2') // Ensure space before attributes
+        .replace(/"\s*([A-Z_]+=")/g, '" $1') // Ensure space between attributes
+        .replace(/(цуацу)(\s*NAME=")/g, '$1" $2'); // Specific fix for your XML
       
       const parser = new xml2js.Parser({ 
         explicitArray: false,
