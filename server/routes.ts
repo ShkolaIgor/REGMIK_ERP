@@ -6408,6 +6408,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const isCustomer = row.POKUP !== 'F' && row.POKUP !== 'false'; // Customer unless explicitly marked as false
     
     console.log(`Processing client ${row.PREDPR}: POSTAV=${row.POSTAV}, POKUP=${row.POKUP}, isSupplier=${isSupplier}, isCustomer=${isCustomer}`);
+    
+    job.processed++;
+    job.progress = Math.round((job.processed / job.totalRows) * 100);
 
     const clientData = {
       taxCode: taxCode,
