@@ -6302,6 +6302,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
 
+    // Determine supplier and customer status from XML fields EARLY
+    const isSupplier = row.POSTAV === 'T' || row.POSTAV === 'true';
+    const isCustomer = row.POKUP !== 'F' && row.POKUP !== 'false'; // Customer unless explicitly marked as false
+
     // Check for existing clients
     let existingClient = null;
     
@@ -6403,14 +6407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       notes = notes ? `${notes}. ${carrierNote}` : carrierNote;
     }
 
-    // Determine supplier and customer status from XML fields
-    const isSupplier = row.POSTAV === 'T' || row.POSTAV === 'true';
-    const isCustomer = row.POKUP !== 'F' && row.POKUP !== 'false'; // Customer unless explicitly marked as false
-    
     console.log(`Processing client ${row.PREDPR}: POSTAV=${row.POSTAV}, POKUP=${row.POKUP}, isSupplier=${isSupplier}, isCustomer=${isCustomer}`);
-    
-    job.processed++;
-    job.progress = Math.round((job.processed / job.totalRows) * 100);
 
     const clientData = {
       taxCode: taxCode,
