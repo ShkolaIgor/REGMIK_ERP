@@ -47,7 +47,7 @@ export default function SupplierDocumentTypes() {
     mutationFn: async (data: any) => {
       return await apiRequest('/api/supplier-document-types', {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: data,
       });
     },
     onSuccess: () => {
@@ -69,7 +69,7 @@ export default function SupplierDocumentTypes() {
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
       return await apiRequest(`/api/supplier-document-types/${id}`, {
         method: 'PUT',
-        body: JSON.stringify(data),
+        body: data,
       });
     },
     onSuccess: () => {

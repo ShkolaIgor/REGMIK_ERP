@@ -8398,6 +8398,188 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Supplier Document Types methods
+  async getSupplierDocumentTypes() {
+    try {
+      const result = await pool.query('SELECT * FROM supplier_document_types ORDER BY name');
+      return result.rows;
+    } catch (error) {
+      console.error('Error fetching supplier document types:', error);
+      throw error;
+    }
+  }
+
+  async createSupplierDocumentType(insertType: any) {
+    try {
+      const result = await pool.query(
+        'INSERT INTO supplier_document_types (name, description, is_active) VALUES ($1, $2, $3) RETURNING *',
+        [insertType.name, insertType.description || null, insertType.isActive !== false]
+      );
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error creating supplier document type:', error);
+      throw error;
+    }
+  }
+
+  async updateSupplierDocumentType(id: number, typeData: any) {
+    try {
+      const result = await pool.query(
+        'UPDATE supplier_document_types SET name = $2, description = $3, is_active = $4 WHERE id = $1 RETURNING *',
+        [id, typeData.name, typeData.description || null, typeData.isActive !== false]
+      );
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error updating supplier document type:', error);
+      throw error;
+    }
+  }
+
+  async deleteSupplierDocumentType(id: number) {
+    try {
+      const result = await pool.query('DELETE FROM supplier_document_types WHERE id = $1', [id]);
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting supplier document type:', error);
+      throw error;
+    }
+  }
+
+  // Supplier Receipts methods
+  async getSupplierReceipts() {
+    try {
+      const result = await pool.query('SELECT * FROM supplier_receipts ORDER BY receipt_date DESC');
+      return result.rows;
+    } catch (error) {
+      console.error('Error fetching supplier receipts:', error);
+      throw error;
+    }
+  }
+
+  async getSupplierReceipt(id: number) {
+    try {
+      const result = await pool.query('SELECT * FROM supplier_receipts WHERE id = $1', [id]);
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error fetching supplier receipt:', error);
+      throw error;
+    }
+  }
+
+  async createSupplierReceipt(insertReceipt: any) {
+    try {
+      const result = await pool.query(
+        `INSERT INTO supplier_receipts 
+         (receipt_date, supplier_id, document_type_id, supplier_document_date, supplier_document_number, total_amount, comment) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        [
+          insertReceipt.receiptDate,
+          insertReceipt.supplierId,
+          insertReceipt.documentTypeId,
+          insertReceipt.supplierDocumentDate || null,
+          insertReceipt.supplierDocumentNumber || null,
+          insertReceipt.totalAmount,
+          insertReceipt.comment || null
+        ]
+      );
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error creating supplier receipt:', error);
+      throw error;
+    }
+  }
+
+  async updateSupplierReceipt(id: number, receiptData: any) {
+    try {
+      const result = await pool.query(
+        `UPDATE supplier_receipts 
+         SET receipt_date = $2, supplier_id = $3, document_type_id = $4, supplier_document_date = $5, 
+             supplier_document_number = $6, total_amount = $7, comment = $8, updated_at = NOW()
+         WHERE id = $1 RETURNING *`,
+        [
+          id,
+          receiptData.receiptDate,
+          receiptData.supplierId,
+          receiptData.documentTypeId,
+          receiptData.supplierDocumentDate || null,
+          receiptData.supplierDocumentNumber || null,
+          receiptData.totalAmount,
+          receiptData.comment || null
+        ]
+      );
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error updating supplier receipt:', error);
+      throw error;
+    }
+  }
+
+  async deleteSupplierReceipt(id: number) {
+    try {
+      const result = await pool.query('DELETE FROM supplier_receipts WHERE id = $1', [id]);
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting supplier receipt:', error);
+      throw error;
+    }
+  }
+
+  // Supplier Receipt Items methods
+  async getSupplierReceiptItems(receiptId: number) {
+    try {
+      const result = await pool.query('SELECT * FROM supplier_receipt_items WHERE receipt_id = $1', [receiptId]);
+      return result.rows;
+    } catch (error) {
+      console.error('Error fetching supplier receipt items:', error);
+      throw error;
+    }
+  }
+
+  async createSupplierReceiptItem(insertItem: any) {
+    try {
+      const result = await pool.query(
+        'INSERT INTO supplier_receipt_items (receipt_id, component_id, quantity, unit_price, total_price) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [insertItem.receiptId, insertItem.componentId, insertItem.quantity, insertItem.unitPrice, insertItem.totalPrice]
+      );
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error creating supplier receipt item:', error);
+      throw error;
+    }
+  }
+
+  async updateSupplierReceiptItem(id: number, itemData: any) {
+    try {
+      const result = await pool.query(
+        'UPDATE supplier_receipt_items SET component_id = $2, quantity = $3, unit_price = $4, total_price = $5 WHERE id = $1 RETURNING *',
+        [id, itemData.componentId, itemData.quantity, itemData.unitPrice, itemData.totalPrice]
+      );
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error updating supplier receipt item:', error);
+      throw error;
+    }
+  }
+
+  async deleteSupplierReceiptItem(id: number) {
+    try {
+      const result = await pool.query('DELETE FROM supplier_receipt_items WHERE id = $1', [id]);
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting supplier receipt item:', error);
+      throw error;
+    }
+  }
+
+  async deleteSupplierReceiptItems(receiptId: number) {
+    try {
+      const result = await pool.query('DELETE FROM supplier_receipt_items WHERE receipt_id = $1', [receiptId]);
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting supplier receipt items:', error);
+      throw error;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
