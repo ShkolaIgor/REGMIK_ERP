@@ -1493,6 +1493,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Units routes
+  app.get("/api/units", async (req, res) => {
+    try {
+      const units = await storage.getUnits();
+      res.json(units);
+    } catch (error) {
+      console.error("Error fetching units:", error);
+      res.status(500).json({ error: "Failed to fetch units" });
+    }
+  });
+
   app.get("/api/components/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);

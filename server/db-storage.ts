@@ -1134,6 +1134,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(components);
   }
 
+  async getUnits() {
+    return await db.select().from(units);
+  }
+
   async getComponent(id: number): Promise<Component | undefined> {
     const result = await db.select().from(components).where(eq(components.id, id));
     return result[0];
