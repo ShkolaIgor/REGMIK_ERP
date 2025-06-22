@@ -116,7 +116,7 @@ export default function SupplierReceipts() {
     mutationFn: async (data: any) => {
       return await apiRequest('/api/supplier-receipts', {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: data,
       });
     },
     onSuccess: () => {
@@ -138,7 +138,7 @@ export default function SupplierReceipts() {
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
       return await apiRequest(`/api/supplier-receipts/${id}`, {
         method: 'PUT',
-        body: JSON.stringify(data),
+        body: data,
       });
     },
     onSuccess: () => {
