@@ -139,6 +139,18 @@ const ClientsList = React.memo(({
                 {client.isActive ? "Активний" : "Неактивний"}
               </Badge>
 
+              {client.isCustomer && (
+                <Badge variant="outline" className="text-blue-600 border-blue-600 text-xs">
+                  Покупець
+                </Badge>
+              )}
+
+              {client.isSupplier && (
+                <Badge variant="outline" className="text-purple-600 border-purple-600 text-xs">
+                  Постачальник
+                </Badge>
+              )}
+
               {client.discount && parseFloat(client.discount) > 0 && (
                 <Badge variant="outline" className="text-green-600 text-xs">
                   <Percent className="h-3 w-3 mr-1" />
