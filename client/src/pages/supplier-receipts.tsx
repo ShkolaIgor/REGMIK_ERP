@@ -11,9 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Edit2, Trash2, Upload, FileText, Calendar, Package, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, Upload, FileText, Calendar, Package, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Filter } from "lucide-react";
 import { SupplierReceiptsXmlImport } from "@/components/SupplierReceiptsXmlImport";
 import { ComponentMappingDialog } from "@/components/ComponentMappingDialog";
+import React from 'react';
 
 // Component to show receipt items when expanded
 function ReceiptItemsExpanded({ receiptId }: { receiptId: number }) {
@@ -190,6 +191,10 @@ export default function SupplierReceipts() {
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showMappingDialog, setShowMappingDialog] = useState(false);
   const [expandedReceiptId, setExpandedReceiptId] = useState<number | null>(null);
+  const [sortField, setSortField] = useState<string>('receipt_date');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [supplierFilter, setSupplierFilter] = useState<string>('');
+  const [documentTypeFilter, setDocumentTypeFilter] = useState<string>('');
 
   // Form state
   const [formData, setFormData] = useState({
@@ -308,6 +313,7 @@ export default function SupplierReceipts() {
       purchaseOrderId: '',
       items: []
     });
+    setEditingReceipt(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -397,18 +403,75 @@ export default function SupplierReceipts() {
     setFormData(prev => ({ ...prev, totalAmount: total.toFixed(2) }));
   };
 
-  // Filter receipts
+  // Sort and filter function
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
+    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
+  };
+
+  // Filter and sort receipts
   const filteredReceipts = receipts.filter((receipt: SupplierReceipt) => {
-    if (!searchQuery) return true;
-    
-    const searchLower = searchQuery.toLowerCase();
     const supplier = suppliers.find((s: Supplier) => s.id === receipt.supplier_id);
+    const documentType = documentTypes.find((dt: SupplierDocumentType) => dt.id === receipt.document_type_id);
     
-    return (
-      supplier?.name.toLowerCase().includes(searchLower) ||
-      receipt.supplier_document_number?.toLowerCase().includes(searchLower) ||
-      receipt.comment?.toLowerCase().includes(searchLower)
-    );
+    // Search filter
+    if (searchQuery) {
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearch = 
+        supplier?.name.toLowerCase().includes(searchLower) ||
+        receipt.supplier_document_number?.toLowerCase().includes(searchLower) ||
+        receipt.comment?.toLowerCase().includes(searchLower);
+      if (!matchesSearch) return false;
+    }
+    
+    // Supplier filter
+    if (supplierFilter && supplier?.name !== supplierFilter) return false;
+    
+    // Document type filter
+    if (documentTypeFilter && documentType?.name !== documentTypeFilter) return false;
+    
+    return true;
+  }).sort((a: SupplierReceipt, b: SupplierReceipt) => {
+    let aValue: any = a[sortField as keyof SupplierReceipt];
+    let bValue: any = b[sortField as keyof SupplierReceipt];
+    
+    // Handle supplier name sorting
+    if (sortField === 'supplier_name') {
+      const supplierA = suppliers.find((s: Supplier) => s.id === a.supplier_id);
+      const supplierB = suppliers.find((s: Supplier) => s.id === b.supplier_id);
+      aValue = supplierA?.name || '';
+      bValue = supplierB?.name || '';
+    }
+    
+    // Handle document type sorting
+    if (sortField === 'document_type_name') {
+      const docTypeA = documentTypes.find((dt: SupplierDocumentType) => dt.id === a.document_type_id);
+      const docTypeB = documentTypes.find((dt: SupplierDocumentType) => dt.id === b.document_type_id);
+      aValue = docTypeA?.name || '';
+      bValue = docTypeB?.name || '';
+    }
+    
+    // Convert to appropriate types for comparison
+    if (sortField === 'total_amount') {
+      aValue = parseFloat(aValue || '0');
+      bValue = parseFloat(bValue || '0');
+    } else if (sortField === 'receipt_date' || sortField === 'supplier_document_date') {
+      aValue = new Date(aValue || 0);
+      bValue = new Date(bValue || 0);
+    }
+    
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
   });
 
   // Pagination
@@ -476,11 +539,51 @@ export default function SupplierReceipts() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr className="border-b">
-                  <th className="text-left p-4 font-medium text-gray-900">Дата отримання</th>
-                  <th className="text-left p-4 font-medium text-gray-900">Постачальник</th>
-                  <th className="text-left p-4 font-medium text-gray-900">Тип документу</th>
-                  <th className="text-left p-4 font-medium text-gray-900">№ документу</th>
-                  <th className="text-left p-4 font-medium text-gray-900">Сума</th>
+                  <th 
+                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('receipt_date')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Дата отримання
+                      {getSortIcon('receipt_date')}
+                    </div>
+                  </th>
+                  <th 
+                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('supplier_name')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Постачальник
+                      {getSortIcon('supplier_name')}
+                    </div>
+                  </th>
+                  <th 
+                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('document_type_name')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Тип документу
+                      {getSortIcon('document_type_name')}
+                    </div>
+                  </th>
+                  <th 
+                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('supplier_document_number')}
+                  >
+                    <div className="flex items-center gap-2">
+                      № документу
+                      {getSortIcon('supplier_document_number')}
+                    </div>
+                  </th>
+                  <th 
+                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('total_amount')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Сума
+                      {getSortIcon('total_amount')}
+                    </div>
+                  </th>
                   <th className="text-left p-4 font-medium text-gray-900">Дії</th>
                 </tr>
               </thead>
@@ -491,9 +594,8 @@ export default function SupplierReceipts() {
                   const isExpanded = expandedReceiptId === receipt.id;
                   
                   return (
-                    <>
+                    <React.Fragment key={receipt.id}>
                       <tr 
-                        key={receipt.id} 
                         className="border-b hover:bg-gray-50 cursor-pointer"
                         onClick={() => setExpandedReceiptId(isExpanded ? null : receipt.id)}
                       >
@@ -543,7 +645,7 @@ export default function SupplierReceipts() {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </React.Fragment>
                   );
                 })}
               </tbody>
@@ -838,7 +940,6 @@ export default function SupplierReceipts() {
                     variant="outline"
                     onClick={() => {
                       setIsDialogOpen(false);
-                      setEditingReceipt(null);
                       resetForm();
                     }}
                   >
