@@ -103,8 +103,8 @@ export function ClientsXmlImport() {
               
               // Оновлюємо список клієнтів після успішного імпорту
               setTimeout(() => {
-                window.location.reload();
-              }, 2000);
+                queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
+              }, 1000);
             } else {
               toast({
                 title: "Помилка імпорту",
