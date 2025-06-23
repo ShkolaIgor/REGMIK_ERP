@@ -8483,14 +8483,18 @@ export class DatabaseStorage implements IStorage {
         }
       };
       
-      // Validate supplier exists
-      const supplierCheck = await pool.query(
-        'SELECT id FROM suppliers WHERE id = $1',
+      // Validate client exists and is a supplier (since we use clients.id as supplier_id)
+      const clientCheck = await pool.query(
+        'SELECT id, name, is_supplier FROM clients WHERE id = $1',
         [insertReceipt.supplierId]
       );
       
-      if (supplierCheck.rows.length === 0) {
-        throw new Error(`Постачальник з ID ${insertReceipt.supplierId} не знайдений. Спочатку створіть постачальника.`);
+      if (clientCheck.rows.length === 0) {
+        throw new Error(`Клієнт з ID ${insertReceipt.supplierId} не знайдений. Спочатку створіть клієнта.`);
+      }
+      
+      if (!clientCheck.rows[0].is_supplier) {
+        throw new Error(`Клієнт "${clientCheck.rows[0].name}" не позначений як постачальник.`);
       }
       
       // Validate document type exists
@@ -8738,20 +8742,53 @@ export class DatabaseStorage implements IStorage {
           // Шукаємо постачальника за INDEX_PREDPR -> clients.external_id -> clients.id = supplier_id
           let supplierId = null;
           if (row.INDEX_PREDPR) {
-            const clientResult = await db.select({ id: clients.id })
+            const clientResult = await db.select({ 
+              id: clients.id, 
+              name: clients.name, 
+              isSupplier: clients.isSupplier 
+            })
               .from(clients)
-              .where(eq(clients.externalId, parseInt(row.INDEX_PREDPR)))
+              .where(eq(clients.externalId, row.INDEX_PREDPR.toString()))
               .limit(1);
             
             if (clientResult.length > 0) {
-              supplierId = clientResult[0].id;
+              const client = clientResult[0];
+              
+              // Перевіряємо чи клієнт може бути постачальником
+              if (!client.isSupplier) {
+                // Автоматично позначаємо як постачальника
+                await db.update(clients)
+                  .set({ isSupplier: true })
+                  .where(eq(clients.id, client.id));
+                
+                result.warnings.push({
+                  row: rowNumber,
+                  warning: `Клієнт "${client.name}" автоматично позначений як постачальник`,
+                  data: row
+                });
+              }
+              
+              supplierId = client.id;
             } else {
+              // Створюємо новий запис клієнта-постачальника
+              const newClient = await db.insert(clients)
+                .values({
+                  externalId: row.INDEX_PREDPR.toString(),
+                  name: `Постачальник #${row.INDEX_PREDPR} (Автоматично створений)`,
+                  clientTypeId: 1,
+                  isSupplier: true,
+                  isCustomer: false,
+                  isActive: true
+                })
+                .returning({ id: clients.id });
+              
+              supplierId = newClient[0].id;
+              
               result.warnings.push({
                 row: rowNumber,
-                warning: `Клієнт з external_id=${row.INDEX_PREDPR} не знайдений, прихід пропущено`,
+                warning: `Створено нового постачальника з external_id=${row.INDEX_PREDPR}`,
                 data: row
               });
-              continue;
             }
           } else {
             result.warnings.push({
