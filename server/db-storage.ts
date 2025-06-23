@@ -8839,8 +8839,48 @@ export class DatabaseStorage implements IStorage {
             purchaseOrderId: row.PURCHASE_ORDER_ID ? parseInt(row.PURCHASE_ORDER_ID) : null
           };
 
-          const receipt = await this.createSupplierReceipt(receiptData);
-          result.success++;
+          // Перевіряємо чи існує прихід з таким же постачальником, датою та номером документа
+          const existingReceipt = await pool.query(`
+            SELECT id FROM supplier_receipts 
+            WHERE supplier_id = $1 
+            AND supplier_document_number = $2 
+            AND supplier_document_date = $3
+          `, [receiptData.supplierId, receiptData.supplierDocumentNumber, receiptData.supplierDocumentDate]);
+
+          let receipt;
+          if (existingReceipt.rows.length > 0) {
+            // Оновлюємо існуючий запис
+            const receiptId = existingReceipt.rows[0].id;
+            receipt = await pool.query(`
+              UPDATE supplier_receipts 
+              SET receipt_date = $2, 
+                  document_type_id = $3, 
+                  total_amount = $4, 
+                  comment = $5, 
+                  purchase_order_id = $6,
+                  updated_at = NOW()
+              WHERE id = $1 
+              RETURNING *
+            `, [
+              receiptId,
+              receiptData.receiptDate,
+              receiptData.documentTypeId,
+              receiptData.totalAmount,
+              receiptData.comment,
+              receiptData.purchaseOrderId
+            ]);
+            
+            result.updated++;
+            result.warnings.push({
+              row: rowNumber,
+              warning: `Оновлено існуючий прихід ID=${receiptId}`,
+              data: row
+            });
+          } else {
+            // Створюємо новий запис
+            receipt = await this.createSupplierReceipt(receiptData);
+            result.success++;
+          }
 
         } catch (error) {
           result.errors.push({
