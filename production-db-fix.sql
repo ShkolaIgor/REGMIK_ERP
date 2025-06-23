@@ -1,19 +1,20 @@
 -- Production Database Schema Fix
--- Ensures all supplier receipt related tables exist with proper structure
+-- Critical fix for supplier_receipts table missing in production
+-- Run this script in production to resolve the table creation issue
 
--- 1. Create supplier_receipts table if missing
+-- 1. Create supplier_receipts table with exact structure from development
 CREATE TABLE IF NOT EXISTS supplier_receipts (
   id SERIAL PRIMARY KEY,
-  receipt_date TIMESTAMP NOT NULL,
+  receipt_date TIMESTAMP WITHOUT TIME ZONE NOT NULL,
   supplier_id INTEGER NOT NULL,
   document_type_id INTEGER NOT NULL,
-  supplier_document_date TIMESTAMP,
+  supplier_document_date TIMESTAMP WITHOUT TIME ZONE,
   supplier_document_number VARCHAR(255),
   total_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
   comment TEXT,
   purchase_order_id INTEGER,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
+  created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
 );
 
 -- 2. Add missing columns if they don't exist
