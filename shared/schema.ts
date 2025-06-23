@@ -783,6 +783,23 @@ export const insertSupplierSchema = createInsertSchema(suppliers).omit({
   updatedAt: true 
 });
 
+export const insertSupplierDocumentTypeSchema = createInsertSchema(supplierDocumentTypes).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSupplierReceiptSchema = createInsertSchema(supplierReceipts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSupplierReceiptItemSchema = createInsertSchema(supplierReceiptItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Таблиця операцій збірки та розбірки товарів
 export const assemblyOperations = pgTable("assembly_operations", {
   id: serial("id").primaryKey(),
@@ -1346,6 +1363,12 @@ export type ProductionTask = typeof productionTasks.$inferSelect;
 export type InsertProductionTask = z.infer<typeof insertProductionTaskSchema>;
 export type Supplier = typeof suppliers.$inferSelect;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
+export type SupplierDocumentType = typeof supplierDocumentTypes.$inferSelect;
+export type InsertSupplierDocumentType = z.infer<typeof insertSupplierDocumentTypeSchema>;
+export type SupplierReceipt = typeof supplierReceipts.$inferSelect;
+export type InsertSupplierReceipt = z.infer<typeof insertSupplierReceiptSchema>;
+export type SupplierReceiptItem = typeof supplierReceiptItems.$inferSelect;
+export type InsertSupplierReceiptItem = z.infer<typeof insertSupplierReceiptItemSchema>;
 export type EmailSettings = typeof emailSettings.$inferSelect;
 export type InsertEmailSettings = z.infer<typeof insertEmailSettingsSchema>;
 
