@@ -8518,9 +8518,10 @@ export class DatabaseStorage implements IStorage {
       
       const result = await pool.query(
         `INSERT INTO supplier_receipts 
-         (receipt_date, supplier_id, document_type_id, supplier_document_date, supplier_document_number, total_amount, comment, purchase_order_id) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+         (external_id, receipt_date, supplier_id, document_type_id, supplier_document_date, supplier_document_number, total_amount, comment, purchase_order_id) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
         [
+          insertReceipt.externalId || null,
           formatDate(insertReceipt.receiptDate),
           insertReceipt.supplierId,
           insertReceipt.documentTypeId,
@@ -8852,7 +8853,7 @@ export class DatabaseStorage implements IStorage {
           }
 
           const receiptData = {
-            externalId: row.ID_LISTPRIHOD || row.EXTERNAL_ID || null,
+            externalId: row.ID_LISTPRIHOD ? parseInt(row.ID_LISTPRIHOD) : null,
             receiptDate: convertDate(row.DATE_INP) || convertDate(row.DATE_POST) || convertDate(row.RECEIPT_DATE) || new Date().toISOString().split('T')[0],
             supplierId: supplierId,
             documentTypeId: documentTypeId,

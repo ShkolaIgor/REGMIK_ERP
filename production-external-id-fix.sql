@@ -1,7 +1,21 @@
 -- Add external_id column to supplier_receipts table in production
 -- This script adds the missing external_id field and updates existing records
 
--- Add external_id column if it doesn't exist
+-- Drop existing external_id column if it exists with wrong type
+DO $$ 
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'supplier_receipts' 
+    AND column_name = 'external_id'
+    AND data_type = 'character varying'
+  ) THEN
+    ALTER TABLE supplier_receipts DROP COLUMN external_id;
+    RAISE NOTICE 'Dropped existing varchar external_id column';
+  END IF;
+END $$;
+
+-- Add external_id column as integer
 DO $$ 
 BEGIN
   IF NOT EXISTS (
@@ -10,13 +24,13 @@ BEGIN
     AND column_name = 'external_id'
   ) THEN
     ALTER TABLE supplier_receipts 
-    ADD COLUMN external_id VARCHAR(255);
+    ADD COLUMN external_id INTEGER;
     
     -- Create index for better performance
     CREATE INDEX idx_supplier_receipts_external_id 
     ON supplier_receipts(external_id);
     
-    RAISE NOTICE 'Added external_id column and index to supplier_receipts';
+    RAISE NOTICE 'Added external_id integer column and index to supplier_receipts';
   ELSE
     RAISE NOTICE 'external_id column already exists in supplier_receipts';
   END IF;

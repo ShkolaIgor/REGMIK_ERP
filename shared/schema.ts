@@ -703,7 +703,7 @@ export const supplierDocumentTypes = pgTable("supplier_document_types", {
 // Таблиця приходів постачальників
 export const supplierReceipts = pgTable("supplier_receipts", {
   id: serial("id").primaryKey(),
-  externalId: varchar("external_id", { length: 255 }),
+  externalId: integer("external_id"),
   receiptDate: timestamp("receipt_date").notNull(),
   supplierId: integer("supplier_id").notNull(),
   documentTypeId: integer("document_type_id").references(() => supplierDocumentTypes.id).notNull(),
