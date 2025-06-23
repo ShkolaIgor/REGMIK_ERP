@@ -8659,15 +8659,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getClientByExternalId(externalId: string) {
-    try {
-      const result = await pool.query('SELECT * FROM clients WHERE external_id = $1', [externalId]);
-      return result.rows[0];
-    } catch (error) {
-      console.error('Error fetching client by external ID:', error);
-      throw error;
-    }
-  }
+
 }
 
 export const storage = new DatabaseStorage();
