@@ -8483,6 +8483,26 @@ export class DatabaseStorage implements IStorage {
         }
       };
       
+      // Validate supplier exists
+      const supplierCheck = await pool.query(
+        'SELECT id FROM suppliers WHERE id = $1',
+        [insertReceipt.supplierId]
+      );
+      
+      if (supplierCheck.rows.length === 0) {
+        throw new Error(`Постачальник з ID ${insertReceipt.supplierId} не знайдений. Спочатку створіть постачальника.`);
+      }
+      
+      // Validate document type exists
+      const docTypeCheck = await pool.query(
+        'SELECT id FROM supplier_document_types WHERE id = $1',
+        [insertReceipt.documentTypeId]
+      );
+      
+      if (docTypeCheck.rows.length === 0) {
+        throw new Error(`Тип документа з ID ${insertReceipt.documentTypeId} не знайдений.`);
+      }
+      
       const result = await pool.query(
         `INSERT INTO supplier_receipts 
          (receipt_date, supplier_id, document_type_id, supplier_document_date, supplier_document_number, total_amount, comment, purchase_order_id) 

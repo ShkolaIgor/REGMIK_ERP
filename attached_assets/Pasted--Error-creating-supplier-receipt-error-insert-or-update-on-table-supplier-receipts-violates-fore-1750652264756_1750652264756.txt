@@ -1,0 +1,23 @@
+ Error creating supplier receipt: error: insert or update on table "supplier_receipts" violates foreign key constraint "supplier_receipts_supplier_i>
+2025-06-23T07:17:30.526816+03:00 ERP regmik-erp[281861]:     at /opt/REGMIK_ERP/node_modules/pg-pool/index.js:45:11
+2025-06-23T07:17:30.526821+03:00 ERP regmik-erp[281861]:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-06-23T07:17:30.526827+03:00 ERP regmik-erp[281861]:     at async DatabaseStorage.createSupplierReceipt (file:///opt/REGMIK_ERP/dist/index.js:8279:26)
+2025-06-23T07:17:30.526832+03:00 ERP regmik-erp[281861]:     at async file:///opt/REGMIK_ERP/dist/index.js:14690:11 {
+2025-06-23T07:17:30.526837+03:00 ERP regmik-erp[281861]:   length: 308,
+2025-06-23T07:17:30.526844+03:00 ERP regmik-erp[281861]:   severity: 'ERROR',
+2025-06-23T07:17:30.526848+03:00 ERP regmik-erp[281861]:   code: '23503',
+2025-06-23T07:17:30.526854+03:00 ERP regmik-erp[281861]:   detail: 'Key (supplier_id)=(512) is not present in table "suppliers".',
+2025-06-23T07:17:30.526858+03:00 ERP regmik-erp[281861]:   hint: undefined,
+2025-06-23T07:17:30.526863+03:00 ERP regmik-erp[281861]:   position: undefined,
+2025-06-23T07:17:30.526868+03:00 ERP regmik-erp[281861]:   internalPosition: undefined,
+2025-06-23T07:17:30.526873+03:00 ERP regmik-erp[281861]:   internalQuery: undefined,
+2025-06-23T07:17:30.526877+03:00 ERP regmik-erp[281861]:   where: undefined,
+2025-06-23T07:17:30.526882+03:00 ERP regmik-erp[281861]:   schema: 'public',
+2025-06-23T07:17:30.526887+03:00 ERP regmik-erp[281861]:   table: 'supplier_receipts',
+2025-06-23T07:17:30.526892+03:00 ERP regmik-erp[281861]:   column: undefined,
+2025-06-23T07:17:30.526897+03:00 ERP regmik-erp[281861]:   dataType: undefined,
+2025-06-23T07:17:30.526901+03:00 ERP regmik-erp[281861]:   constraint: 'supplier_receipts_supplier_id_fkey',
+2025-06-23T07:17:30.526906+03:00 ERP regmik-erp[281861]:   file: 'ri_triggers.c',
+2025-06-23T07:17:30.526911+03:00 ERP regmik-erp[281861]:   line: '2596',
+2025-06-23T07:17:30.526916+03:00 ERP regmik-erp[281861]:   routine: 'ri_ReportViolation'
+2025-06-23T07:17:30.526921+03:00 ERP regmik-erp[281861]: }
