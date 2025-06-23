@@ -8469,15 +8469,29 @@ export class DatabaseStorage implements IStorage {
   async createSupplierReceipt(insertReceipt: any) {
     try {
       console.log('Creating supplier receipt with data:', insertReceipt);
+      
+      // Use existing parseDate function for consistent date formatting
+      const formatDate = (dateString: string | null) => {
+        if (!dateString) return null;
+        
+        try {
+          const parsedDate = this.parseDate(dateString);
+          return parsedDate ? parsedDate.toISOString().split('T')[0] : null;
+        } catch (error) {
+          console.warn('Date parsing failed for:', dateString, error);
+          return null;
+        }
+      };
+      
       const result = await pool.query(
         `INSERT INTO supplier_receipts 
          (receipt_date, supplier_id, document_type_id, supplier_document_date, supplier_document_number, total_amount, comment, purchase_order_id) 
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
         [
-          insertReceipt.receiptDate,
+          formatDate(insertReceipt.receiptDate),
           insertReceipt.supplierId,
           insertReceipt.documentTypeId,
-          insertReceipt.supplierDocumentDate || null,
+          formatDate(insertReceipt.supplierDocumentDate),
           insertReceipt.supplierDocumentNumber || null,
           insertReceipt.totalAmount,
           insertReceipt.comment || null,
