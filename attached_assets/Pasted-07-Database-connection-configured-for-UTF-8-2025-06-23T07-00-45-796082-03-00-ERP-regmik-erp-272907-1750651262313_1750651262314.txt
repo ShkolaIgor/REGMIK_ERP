@@ -1,0 +1,24 @@
+07]: Database connection configured for UTF-8
+2025-06-23T07:00:45.796082+03:00 ERP regmik-erp[272907]: Error creating supplier receipt: error: relation "supplier_receipts" does not exist
+2025-06-23T07:00:45.796090+03:00 ERP regmik-erp[272907]:     at /opt/REGMIK_ERP/node_modules/pg-pool/index.js:45:11
+2025-06-23T07:00:45.796095+03:00 ERP regmik-erp[272907]:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-06-23T07:00:45.796100+03:00 ERP regmik-erp[272907]:     at async DatabaseStorage.createSupplierReceipt (file:///opt/REGMIK_ERP/dist/index.js:8279:26)
+2025-06-23T07:00:45.796105+03:00 ERP regmik-erp[272907]:     at async file:///opt/REGMIK_ERP/dist/index.js:14690:11 {
+2025-06-23T07:00:45.796110+03:00 ERP regmik-erp[272907]:   length: 116,
+2025-06-23T07:00:45.796115+03:00 ERP regmik-erp[272907]:   severity: 'ERROR',
+2025-06-23T07:00:45.796120+03:00 ERP regmik-erp[272907]:   code: '42P01',
+2025-06-23T07:00:45.796124+03:00 ERP regmik-erp[272907]:   detail: undefined,
+2025-06-23T07:00:45.796129+03:00 ERP regmik-erp[272907]:   hint: undefined,
+2025-06-23T07:00:45.796134+03:00 ERP regmik-erp[272907]:   position: '13',
+2025-06-23T07:00:45.796138+03:00 ERP regmik-erp[272907]:   internalPosition: undefined,
+2025-06-23T07:00:45.796143+03:00 ERP regmik-erp[272907]:   internalQuery: undefined,
+2025-06-23T07:00:45.796147+03:00 ERP regmik-erp[272907]:   where: undefined,
+2025-06-23T07:00:45.796152+03:00 ERP regmik-erp[272907]:   schema: undefined,
+2025-06-23T07:00:45.796156+03:00 ERP regmik-erp[272907]:   table: undefined,
+2025-06-23T07:00:45.796160+03:00 ERP regmik-erp[272907]:   column: undefined,
+2025-06-23T07:00:45.796165+03:00 ERP regmik-erp[272907]:   dataType: undefined,
+2025-06-23T07:00:45.796170+03:00 ERP regmik-erp[272907]:   constraint: undefined,
+2025-06-23T07:00:45.796174+03:00 ERP regmik-erp[272907]:   file: 'parse_relation.c',
+2025-06-23T07:00:45.796178+03:00 ERP regmik-erp[272907]:   line: '1392',
+2025-06-23T07:00:45.796182+03:00 ERP regmik-erp[272907]:   routine: 'parserOpenTable'
+2025-06-23T07:00:45.796186+03:00 ERP regmik-erp[272907]: }
