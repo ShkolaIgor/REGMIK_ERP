@@ -8742,7 +8742,8 @@ export class DatabaseStorage implements IStorage {
           // Шукаємо постачальника за INDEX_PREDPR -> clients.external_id -> clients.id = supplier_id
           let supplierId = null;
           if (row.INDEX_PREDPR) {
-            const clientResult = await db.select({ 
+            // Спробуємо різні варіанти пошуку
+            let clientResult = await db.select({ 
               id: clients.id, 
               name: clients.name, 
               isSupplier: clients.isSupplier 
@@ -8750,6 +8751,18 @@ export class DatabaseStorage implements IStorage {
               .from(clients)
               .where(eq(clients.externalId, row.INDEX_PREDPR.toString()))
               .limit(1);
+            
+            // Якщо не знайшли за string, спробуємо як integer
+            if (clientResult.length === 0 && !isNaN(parseInt(row.INDEX_PREDPR))) {
+              clientResult = await db.select({ 
+                id: clients.id, 
+                name: clients.name, 
+                isSupplier: clients.isSupplier 
+              })
+                .from(clients)
+                .where(eq(clients.id, parseInt(row.INDEX_PREDPR)))
+                .limit(1);
+            }
             
             if (clientResult.length > 0) {
               const client = clientResult[0];
@@ -8770,25 +8783,12 @@ export class DatabaseStorage implements IStorage {
               
               supplierId = client.id;
             } else {
-              // Створюємо новий запис клієнта-постачальника
-              const newClient = await db.insert(clients)
-                .values({
-                  externalId: row.INDEX_PREDPR.toString(),
-                  name: `Постачальник #${row.INDEX_PREDPR} (Автоматично створений)`,
-                  clientTypeId: 1,
-                  isSupplier: true,
-                  isCustomer: false,
-                  isActive: true
-                })
-                .returning({ id: clients.id });
-              
-              supplierId = newClient[0].id;
-              
               result.warnings.push({
                 row: rowNumber,
-                warning: `Створено нового постачальника з external_id=${row.INDEX_PREDPR}`,
+                warning: `Клієнт з external_id=${row.INDEX_PREDPR} не знайдений в БД, прихід пропущено`,
                 data: row
               });
+              continue;
             }
           } else {
             result.warnings.push({
