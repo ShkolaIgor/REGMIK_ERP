@@ -8852,6 +8852,7 @@ export class DatabaseStorage implements IStorage {
           }
 
           const receiptData = {
+            externalId: row.ID_LISTPRIHOD || row.EXTERNAL_ID || null,
             receiptDate: convertDate(row.DATE_INP) || convertDate(row.DATE_POST) || convertDate(row.RECEIPT_DATE) || new Date().toISOString().split('T')[0],
             supplierId: supplierId,
             documentTypeId: documentTypeId,
@@ -8862,13 +8863,11 @@ export class DatabaseStorage implements IStorage {
             purchaseOrderId: row.PURCHASE_ORDER_ID ? parseInt(row.PURCHASE_ORDER_ID) : null
           };
 
-          // Перевіряємо чи існує прихід з таким же постачальником, датою та номером документа
+          // Перевіряємо чи існує прихід з таким же external_id
           const existingReceipt = await pool.query(`
             SELECT id FROM supplier_receipts 
-            WHERE supplier_id = $1 
-            AND supplier_document_number = $2 
-            AND supplier_document_date = $3
-          `, [receiptData.supplierId, receiptData.supplierDocumentNumber, receiptData.supplierDocumentDate]);
+            WHERE external_id = $1
+          `, [receiptData.externalId]);
 
           let receipt;
           if (existingReceipt.rows.length > 0) {
@@ -8877,17 +8876,23 @@ export class DatabaseStorage implements IStorage {
             receipt = await pool.query(`
               UPDATE supplier_receipts 
               SET receipt_date = $2, 
-                  document_type_id = $3, 
-                  total_amount = $4, 
-                  comment = $5, 
-                  purchase_order_id = $6,
+                  supplier_id = $3,
+                  document_type_id = $4, 
+                  supplier_document_date = $5,
+                  supplier_document_number = $6,
+                  total_amount = $7, 
+                  comment = $8, 
+                  purchase_order_id = $9,
                   updated_at = NOW()
               WHERE id = $1 
               RETURNING *
             `, [
               receiptId,
               receiptData.receiptDate,
+              receiptData.supplierId,
               receiptData.documentTypeId,
+              receiptData.supplierDocumentDate,
+              receiptData.supplierDocumentNumber,
               receiptData.totalAmount,
               receiptData.comment,
               receiptData.purchaseOrderId

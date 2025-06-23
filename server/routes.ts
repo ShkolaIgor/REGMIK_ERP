@@ -5017,23 +5017,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (let i = 0; i < rows.length; i++) {
         try {
           const row = rows[i];
-          const receiptId = parseInt(row.getAttribute('INDEX_LISTPRIHOD') || '0');
+          const externalReceiptId = row.getAttribute('INDEX_LISTPRIHOD') || '';
           const componentSku = row.getAttribute('INDEX_DETAIL') || '';
           const quantity = parseFloat((row.getAttribute('COUNT_DET') || '0').replace(',', '.'));
           const unitPrice = parseFloat((row.getAttribute('PRICE1') || '0').replace(',', '.'));
           const totalPrice = quantity * unitPrice;
 
-          if (!receiptId) {
-            errors.push(`Row ${i + 1}: Missing receipt ID`);
+          if (!externalReceiptId) {
+            errors.push(`Row ${i + 1}: Missing external receipt ID (INDEX_LISTPRIHOD)`);
             continue;
           }
 
-          // Перевіряємо чи існує прихід
-          const receiptCheck = await storage.getSupplierReceipt(receiptId);
-          if (!receiptCheck) {
-            errors.push(`Row ${i + 1}: Receipt ID ${receiptId} not found`);
+          // Шукаємо прихід за external_id
+          const receiptQuery = await pool.query(
+            'SELECT id FROM supplier_receipts WHERE external_id = $1', 
+            [externalReceiptId]
+          );
+          
+          if (receiptQuery.rows.length === 0) {
+            errors.push(`Row ${i + 1}: Receipt with external_id ${externalReceiptId} not found`);
             continue;
           }
+          
+          const receiptId = receiptQuery.rows[0].id;
 
           // Шукаємо компонент за SKU (INDEX_DETAIL)
           let validComponentId = null;
