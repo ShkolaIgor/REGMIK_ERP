@@ -455,18 +455,26 @@ export default function SupplierReceipts() {
     const supplierName = receipt.supplier_name || '';
     const documentTypeName = receipt.document_type_name || '';
     
+    // Skip records with missing supplier info for now (they should be fixed in DB)
+    // if (!supplierName && receipt.supplier_id) {
+    //   console.warn(`Receipt ${receipt.id} has supplier_id ${receipt.supplier_id} but no supplier name found`);
+    // }
+    
     // Search filter
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = 
         supplierName.toLowerCase().includes(searchLower) ||
         receipt.supplier_document_number?.toLowerCase().includes(searchLower) ||
-        receipt.comment?.toLowerCase().includes(searchLower);
+        receipt.comment?.toLowerCase().includes(searchLower) ||
+        receipt.id?.toString().includes(searchLower);
       if (!matchesSearch) return false;
     }
     
-    // Supplier filter
-    if (supplierFilter && supplierFilter !== 'all' && supplierName !== supplierFilter) return false;
+    // Supplier filter - show records without supplier name when "all" is selected
+    if (supplierFilter && supplierFilter !== 'all') {
+      if (!supplierName || supplierName !== supplierFilter) return false;
+    }
     
     // Document type filter
     if (documentTypeFilter && documentTypeFilter !== 'all' && documentTypeName !== documentTypeFilter) return false;
@@ -694,7 +702,13 @@ export default function SupplierReceipts() {
                             {new Date(receipt.receipt_date).toLocaleDateString('uk-UA')}
                           </div>
                         </td>
-                        <td className="p-4 font-medium">{receipt.supplier_name || '—'}</td>
+                        <td className="p-4 font-medium">
+                          {receipt.supplier_name || (
+                            <span className="text-red-500">
+                              Постачальник #{receipt.supplier_id} не знайдений
+                            </span>
+                          )}
+                        </td>
                         <td className="p-4">{receipt.document_type_name || '—'}</td>
                         <td className="p-4">
                           <div className="flex flex-col">
