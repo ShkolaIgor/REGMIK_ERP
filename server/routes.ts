@@ -5004,7 +5004,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Import supplier receipt items from XML
-  app.post('/api/import/supplier-receipt-items', isSimpleAuthenticated, async (req, res) => {
+  app.post('/api/import/supplier-receipt-items', async (req, res) => {
     try {
       const { xmlContent } = req.body;
       const parser = new DOMParser();
