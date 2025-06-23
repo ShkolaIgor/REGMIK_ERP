@@ -8590,9 +8590,22 @@ export class DatabaseStorage implements IStorage {
   async createSupplierReceiptItem(insertItem: any) {
     try {
       console.log('Creating supplier receipt item:', insertItem);
+      
+      // Перевіряємо чи існує компонент
+      if (insertItem.componentId) {
+        const componentCheck = await pool.query(
+          'SELECT id FROM components WHERE id = $1',
+          [insertItem.componentId]
+        );
+        
+        if (componentCheck.rows.length === 0) {
+          throw new Error(`Компонент з ID ${insertItem.componentId} не знайдений. Спочатку створіть компонент або залиште поле порожнім.`);
+        }
+      }
+      
       const result = await pool.query(
         'INSERT INTO supplier_receipt_items (receipt_id, component_id, quantity, unit_price, total_price, supplier_component_name) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-        [insertItem.receiptId, insertItem.componentId, insertItem.quantity, insertItem.unitPrice, insertItem.totalPrice, insertItem.supplierComponentName || null]
+        [insertItem.receiptId, insertItem.componentId || null, insertItem.quantity, insertItem.unitPrice, insertItem.totalPrice, insertItem.supplierComponentName || null]
       );
       console.log('Created supplier receipt item:', result.rows[0]);
       return result.rows[0];
