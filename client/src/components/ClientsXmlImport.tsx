@@ -248,6 +248,17 @@ export function ClientsXmlImport() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
+                    {/* Status Message */}
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(job?.status || 'processing')}
+                      <span className="text-sm font-medium">
+                        {job?.status === 'processing' && 'Обробка файлу...'}
+                        {job?.status === 'completed' && 'Імпорт завершено успішно'}
+                        {job?.status === 'failed' && 'Імпорт завершився з помилками'}
+                        {!job && isImporting && 'Ініціалізація імпорту...'}
+                      </span>
+                    </div>
+                    
                     <Progress value={progress} className="w-full" />
                     <div className="flex justify-between text-sm">
                       <span>Прогрес: {progress}%</span>
@@ -286,15 +297,22 @@ export function ClientsXmlImport() {
                 <CardContent>
                   <ScrollArea className="h-48">
                     <div className="space-y-2">
-                      {job.details.filter(detail => detail.status === 'error').map((detail, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(detail.status)}
-                            <span className="text-sm font-medium">{detail.name}</span>
+                      {job.details.map((detail, index) => (
+                        <div key={index} className="space-y-1">
+                          <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <div className="flex items-center gap-2">
+                              {getStatusIcon(detail.status)}
+                              <span className="text-sm font-medium">{detail.name}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {getStatusBadge(detail.status)}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            {getStatusBadge(detail.status)}
-                          </div>
+                          {detail.message && (
+                            <div className="ml-6 text-xs text-gray-600">
+                              {detail.message}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
