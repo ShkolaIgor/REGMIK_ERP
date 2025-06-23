@@ -9,12 +9,12 @@ CREATE TABLE IF NOT EXISTS supplier_receipts (
   supplier_id INTEGER NOT NULL,
   document_type_id INTEGER NOT NULL,
   supplier_document_date TIMESTAMP WITHOUT TIME ZONE,
-  supplier_document_number VARCHAR(255),
-  total_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+  supplier_document_number VARCHAR(100),
+  total_amount NUMERIC(10,2) NOT NULL DEFAULT 0,
   comment TEXT,
-  purchase_order_id INTEGER,
   created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+  purchase_order_id INTEGER
 );
 
 -- 2. Add missing columns if they don't exist
@@ -72,7 +72,16 @@ CREATE INDEX IF NOT EXISTS idx_supplier_receipts_receipt_date ON supplier_receip
 CREATE INDEX IF NOT EXISTS idx_supplier_receipt_items_receipt_id ON supplier_receipt_items(receipt_id);
 CREATE INDEX IF NOT EXISTS idx_supplier_receipt_items_component_id ON supplier_receipt_items(component_id);
 
--- 6. Verify tables exist
+-- 6. Insert default document types if they don't exist
+INSERT INTO supplier_document_types (name, description) 
+SELECT * FROM (VALUES 
+  ('Накладна', 'Товарна накладна від постачальника'),
+  ('Рахунок-фактура', 'Рахунок-фактура на товари'),
+  ('Акт приймання', 'Акт приймання товарів')
+) AS t(name, description)
+WHERE NOT EXISTS (SELECT 1 FROM supplier_document_types);
+
+-- 7. Verify tables exist and show status
 SELECT 
   t.table_name,
   CASE WHEN t.table_name IS NOT NULL THEN 'EXISTS' ELSE 'MISSING' END as status
