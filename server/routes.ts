@@ -5002,45 +5002,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-        try {
-          const row = rows[i];
-          const externalSupplierId = row.getAttribute('INDEX_PREDPR');
-          
-          // Find supplier by external_id
-          const supplier = await storage.getClientByExternalId(externalSupplierId);
-          if (!supplier) {
-            errors.push(`Supplier with external ID ${externalSupplierId} not found`);
-            continue;
-          }
-
-          const receiptData = {
-            receiptDate: row.getAttribute('DATE_INP') || new Date().toISOString().split('T')[0],
-            supplierId: supplier.id,
-            documentTypeId: parseInt(row.getAttribute('INDEX_DOC') || '1'),
-            supplierDocumentDate: row.getAttribute('DATE_POST') || null,
-            supplierDocumentNumber: row.getAttribute('NUMB_DOC') || null,
-            totalAmount: parseFloat(row.getAttribute('ACC_SUM') || '0'),
-            comment: row.getAttribute('COMMENT') || null,
-            purchaseOrderId: null
-          };
-
-          await storage.createSupplierReceipt(receiptData);
-          imported++;
-        } catch (error) {
-          errors.push(`Row ${i + 1}: ${error.message}`);
-        }
-      }
-
-      res.json({
-        total: rows.length,
-        imported,
-        errors
-      });
-    } catch (error) {
-      console.error('Error importing supplier receipts:', error);
-      res.status(500).json({ message: 'Failed to import supplier receipts' });
-    }
-  });
 
   // Import supplier receipt items from XML
   app.post('/api/import/supplier-receipt-items', isSimpleAuthenticated, async (req, res) => {
