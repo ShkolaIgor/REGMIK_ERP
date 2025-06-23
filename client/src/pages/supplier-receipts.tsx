@@ -344,7 +344,7 @@ export default function SupplierReceipts() {
     
     // Load receipt items
     try {
-      const itemsResponse = await fetch(`/api/supplier-receipt-items?receiptId=${receipt.id}`);
+      const itemsResponse = await fetch(`/api/supplier-receipt-items/${receipt.id}`);
       const items = itemsResponse.ok ? await itemsResponse.json() : [];
       
       setFormData({
