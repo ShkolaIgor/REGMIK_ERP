@@ -4984,14 +4984,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/import/supplier-receipts', isSimpleAuthenticated, async (req, res) => {
     try {
       const { xmlContent } = req.body;
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
-      const rows = xmlDoc.getElementsByTagName('ROW');
-
-      let imported = 0;
-      const errors: string[] = [];
-
-      for (let i = 0; i < rows.length; i++) {
+      const result = await storage.importSupplierReceiptsFromXml(xmlContent);
+      
+      res.json({
+        success: result.success > 0,
+        message: `Імпорт завершено. Успішно: ${result.success}, помилок: ${result.errors.length}, попереджень: ${result.warnings.length}`,
+        imported: result.success,
+        errors: result.errors,
+        warnings: result.warnings
+      });
+    } catch (error) {
+      console.error('Error importing supplier receipts:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Помилка імпорту приходів постачальників',
+        error: error instanceof Error ? error.message : 'Невідома помилка'
+      });
+    }
+  });
         try {
           const row = rows[i];
           const externalSupplierId = row.getAttribute('INDEX_PREDPR');

@@ -8693,6 +8693,114 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Import supplier receipts from XML with proper INDEX_PREDPR mapping
+  async importSupplierReceiptsFromXml(xmlContent: string): Promise<{
+    success: number;
+    errors: Array<{ row: number; error: string; data?: any }>;
+    warnings: Array<{ row: number; warning: string; data?: any }>;
+  }> {
+    const result = {
+      success: 0,
+      errors: [] as Array<{ row: number; error: string; data?: any }>,
+      warnings: [] as Array<{ row: number; warning: string; data?: any }>
+    };
+
+    try {
+      const { parseString } = await import('xml2js');
+      const parseXml = (xml: string): Promise<any> => {
+        return new Promise((resolve, reject) => {
+          parseString(xml, { 
+            explicitArray: false,
+            mergeAttrs: true 
+          }, (err: any, result: any) => {
+            if (err) reject(err);
+            else resolve(result);
+          });
+        });
+      };
+
+      const parsed = await parseXml(xmlContent);
+      
+      let rows: any[] = [];
+      if (parsed.DATAPACKET && parsed.DATAPACKET.ROWDATA && parsed.DATAPACKET.ROWDATA.ROW) {
+        rows = Array.isArray(parsed.DATAPACKET.ROWDATA.ROW) ? parsed.DATAPACKET.ROWDATA.ROW : [parsed.DATAPACKET.ROWDATA.ROW];
+      } else {
+        throw new Error("Невірний формат XML: очікується структура DATAPACKET/ROWDATA/ROW");
+      }
+
+      console.log(`Початок імпорту supplier receipts: знайдено ${rows.length} записів`);
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const rowNumber = i + 1;
+
+        try {
+          // Шукаємо постачальника за INDEX_PREDPR -> clients.external_id -> clients.id = supplier_id
+          let supplierId = null;
+          if (row.INDEX_PREDPR) {
+            const clientResult = await db.select({ id: clients.id })
+              .from(clients)
+              .where(eq(clients.externalId, parseInt(row.INDEX_PREDPR)))
+              .limit(1);
+            
+            if (clientResult.length > 0) {
+              supplierId = clientResult[0].id;
+            } else {
+              result.warnings.push({
+                row: rowNumber,
+                warning: `Клієнт з external_id=${row.INDEX_PREDPR} не знайдений, прихід пропущено`,
+                data: row
+              });
+              continue;
+            }
+          } else {
+            result.warnings.push({
+              row: rowNumber,
+              warning: `INDEX_PREDPR відсутній, прихід пропущено`,
+              data: row
+            });
+            continue;
+          }
+
+          // Визначаємо тип документа (за замовчуванням 1 - "Накладна")
+          let documentTypeId = 1;
+          if (row.DOCUMENT_TYPE_ID) {
+            documentTypeId = parseInt(row.DOCUMENT_TYPE_ID) || 1;
+          }
+
+          const receiptData = {
+            receiptDate: row.RECEIPT_DATE || new Date().toISOString().split('T')[0],
+            supplierId: supplierId,
+            documentTypeId: documentTypeId,
+            supplierDocumentDate: row.SUPPLIER_DOC_DATE || null,
+            supplierDocumentNumber: row.SUPPLIER_DOC_NUMBER || null,
+            totalAmount: this.parseDecimal(row.TOTAL_AMOUNT) || "0",
+            comment: row.COMMENT || null,
+            purchaseOrderId: row.PURCHASE_ORDER_ID ? parseInt(row.PURCHASE_ORDER_ID) : null
+          };
+
+          const receipt = await this.createSupplierReceipt(receiptData);
+          result.success++;
+
+        } catch (error) {
+          result.errors.push({
+            row: rowNumber,
+            error: error instanceof Error ? error.message : "Невідома помилка",
+            data: row
+          });
+        }
+      }
+
+    } catch (error) {
+      result.errors.push({
+        row: 0,
+        error: error instanceof Error ? error.message : "Помилка парсингу XML"
+      });
+    }
+
+    return result;
+  }
+
 
 }
 
