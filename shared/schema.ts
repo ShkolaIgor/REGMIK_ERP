@@ -691,6 +691,43 @@ export const suppliers = pgTable("suppliers", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Таблиця типів документів постачальників
+export const supplierDocumentTypes = pgTable("supplier_document_types", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Таблиця приходів постачальників
+export const supplierReceipts = pgTable("supplier_receipts", {
+  id: serial("id").primaryKey(),
+  receiptDate: timestamp("receipt_date").notNull(),
+  supplierId: integer("supplier_id").notNull(),
+  documentTypeId: integer("document_type_id").references(() => supplierDocumentTypes.id).notNull(),
+  supplierDocumentDate: timestamp("supplier_document_date"),
+  supplierDocumentNumber: varchar("supplier_document_number", { length: 100 }),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull().default("0"),
+  comment: text("comment"),
+  purchaseOrderId: integer("purchase_order_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Таблиця позицій приходів постачальників
+export const supplierReceiptItems = pgTable("supplier_receipt_items", {
+  id: serial("id").primaryKey(),
+  receiptId: integer("receipt_id").references(() => supplierReceipts.id).notNull(),
+  componentId: integer("component_id").references(() => components.id).notNull(),
+  quantity: decimal("quantity", { precision: 12, scale: 3 }).notNull().default("0"),
+  unitPrice: decimal("unit_price", { precision: 12, scale: 2 }).notNull().default("0"),
+  totalPrice: decimal("total_price", { precision: 12, scale: 2 }).notNull().default("0"),
+  supplierComponentName: varchar("supplier_component_name", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Таблиця замовлень постачальникам
 export const supplierOrders = pgTable("supplier_orders", {
   id: serial("id").primaryKey(),
