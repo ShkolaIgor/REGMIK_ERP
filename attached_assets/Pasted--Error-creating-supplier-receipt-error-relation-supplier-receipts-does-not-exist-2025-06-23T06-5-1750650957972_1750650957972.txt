@@ -1,0 +1,41 @@
+ Error creating supplier receipt: error: relation "supplier_receipts" does not exist
+2025-06-23T06:55:34.782882+03:00 ERP regmik-erp[263926]:     at /opt/REGMIK_ERP/node_modules/pg-pool/index.js:45:11
+2025-06-23T06:55:34.782892+03:00 ERP regmik-erp[263926]:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-06-23T06:55:34.782903+03:00 ERP regmik-erp[263926]:     at async DatabaseStorage.createSupplierReceipt (file:///opt/REGMIK_ERP/dist/index.js:8279:26)
+2025-06-23T06:55:34.782917+03:00 ERP regmik-erp[263926]:     at async file:///opt/REGMIK_ERP/dist/index.js:14690:11 {
+2025-06-23T06:55:34.782928+03:00 ERP regmik-erp[263926]:   length: 116,
+2025-06-23T06:55:34.782938+03:00 ERP regmik-erp[263926]:   severity: 'ERROR',
+2025-06-23T06:55:34.782949+03:00 ERP regmik-erp[263926]:   code: '42P01',
+2025-06-23T06:55:34.782962+03:00 ERP regmik-erp[263926]:   detail: undefined,
+2025-06-23T06:55:34.782972+03:00 ERP regmik-erp[263926]:   hint: undefined,
+2025-06-23T06:55:34.782982+03:00 ERP regmik-erp[263926]:   position: '13',
+2025-06-23T06:55:34.782993+03:00 ERP regmik-erp[263926]:   internalPosition: undefined,
+2025-06-23T06:55:34.783003+03:00 ERP regmik-erp[263926]:   internalQuery: undefined,
+2025-06-23T06:55:34.783013+03:00 ERP regmik-erp[263926]:   where: undefined,
+2025-06-23T06:55:34.783024+03:00 ERP regmik-erp[263926]:   schema: undefined,
+2025-06-23T06:55:34.783034+03:00 ERP regmik-erp[263926]:   table: undefined,
+2025-06-23T06:55:34.783045+03:00 ERP regmik-erp[263926]:   column: undefined,
+2025-06-23T06:55:34.783055+03:00 ERP regmik-erp[263926]:   dataType: undefined,
+2025-06-23T06:55:34.783073+03:00 ERP regmik-erp[263926]:   constraint: undefined,
+2025-06-23T06:55:34.783090+03:00 ERP regmik-erp[263926]:   file: 'parse_relation.c',
+2025-06-23T06:55:34.783100+03:00 ERP regmik-erp[263926]:   line: '1392',
+2025-06-23T06:55:34.783110+03:00 ERP regmik-erp[263926]:   routine: 'parserOpenTable'
+2025-06-23T06:55:34.783121+03:00 ERP regmik-erp[263926]: }
+2025-06-23T06:55:34.792081+03:00 ERP regmik-erp[263926]: Creating supplier receipt with data: {
+2025-06-23T06:55:34.792142+03:00 ERP regmik-erp[263926]:   receiptDate: '11.10.2018',
+2025-06-23T06:55:34.792159+03:00 ERP regmik-erp[263926]:   supplierId: 2,
+2025-06-23T06:55:34.792175+03:00 ERP regmik-erp[263926]:   documentTypeId: 3,
+2025-06-23T06:55:34.792191+03:00 ERP regmik-erp[263926]:   supplierDocumentDate: '11.10.2018',
+2025-06-23T06:55:34.792213+03:00 ERP regmik-erp[263926]:   supplierDocumentNumber: null,
+2025-06-23T06:55:34.792233+03:00 ERP regmik-erp[263926]:   totalAmount: 0,
+2025-06-23T06:55:34.792250+03:00 ERP regmik-erp[263926]:   comment: null,
+2025-06-23T06:55:34.792266+03:00 ERP regmik-erp[263926]:   purchaseOrderId: null
+2025-06-23T06:55:34.792283+03:00 ERP regmik-erp[263926]: }
+2025-06-23T06:55:34.792311+03:00 ERP regmik-erp[263926]: Database connection configured for UTF-8
+2025-06-23T06:55:34.792488+03:00 ERP regmik-erp[263926]: Error creating supplier receipt: error: relation "supplier_receipts" does not exist
+2025-06-23T06:55:34.792512+03:00 ERP regmik-erp[263926]:     at /opt/REGMIK_ERP/node_modules/pg-pool/index.js:45:11
+2025-06-23T06:55:34.792529+03:00 ERP regmik-erp[263926]:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-06-23T06:55:34.792546+03:00 ERP regmik-erp[263926]:     at async DatabaseStorage.createSupplierReceipt (file:///opt/REGMIK_ERP/dist/index.js:8279:26)
+2025-06-23T06:55:34.792563+03:00 ERP regmik-erp[263926]:     at async file:///opt/REGMIK_ERP/dist/index.js:14690:11 {
+2025-06-23T06:55:34.792580+03:00 ERP regmik-erp[263926]:   length: 116,
+2025-06-23T06:55:34.792596+03:00 ERP regmik-erp[263926]:   severity: 'ERROR',
