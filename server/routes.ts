@@ -5018,9 +5018,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const row = rows[i];
           const receiptId = parseInt(row.getAttribute('INDEX_LISTPRIHOD') || '0');
-          const componentId = parseInt(row.getAttribute('INDEX_DETAIL') || '0');
-          const quantity = parseFloat(row.getAttribute('COUNT_DET') || '0');
-          const unitPrice = parseFloat(row.getAttribute('PRICE1') || '0');
+          const componentSku = row.getAttribute('INDEX_DETAIL') || '';
+          const quantity = parseFloat((row.getAttribute('COUNT_DET') || '0').replace(',', '.'));
+          const unitPrice = parseFloat((row.getAttribute('PRICE1') || '0').replace(',', '.'));
           const totalPrice = quantity * unitPrice;
 
           if (!receiptId) {
@@ -5035,23 +5035,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
 
-          // Перевіряємо чи існує компонент (якщо вказано)
+          // Шукаємо компонент за SKU (INDEX_DETAIL)
           let validComponentId = null;
-          if (componentId) {
+          if (componentSku) {
             try {
-              const componentCheck = await pool.query('SELECT id FROM components WHERE id = $1', [componentId]);
+              const componentCheck = await pool.query('SELECT id FROM components WHERE sku = $1', [componentSku]);
               if (componentCheck.rows.length > 0) {
-                validComponentId = componentId;
+                validComponentId = componentCheck.rows[0].id;
               } else {
                 // Створюємо компонент з мінімальною інформацією
                 const newComponent = await pool.query(
                   'INSERT INTO components (name, sku, cost_price, category_id, is_active, created_at) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id',
-                  [`Компонент ID-${componentId}`, `AUTO-${componentId}`, '0', 1, true]
+                  [`Компонент ${componentSku}`, componentSku, unitPrice.toString(), 1, true]
                 );
                 validComponentId = newComponent.rows[0].id;
               }
             } catch (error) {
-              errors.push(`Row ${i + 1}: Error checking component ${componentId}: ${error.message}`);
+              errors.push(`Row ${i + 1}: Error checking component ${componentSku}: ${error.message}`);
               continue;
             }
           }
@@ -5068,7 +5068,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.createSupplierReceiptItem(itemData);
           imported++;
         } catch (error) {
-          errors.push(`Row ${i + 1}: ${error.message}`);
+          const errorMsg = error instanceof Error ? error.message : 'Невідома помилка';
+          errors.push(`Row ${i + 1}: ${errorMsg}`);
+          console.error(`Error processing row ${i + 1}:`, error);
         }
       }
 
