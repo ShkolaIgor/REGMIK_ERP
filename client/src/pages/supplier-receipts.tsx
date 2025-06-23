@@ -195,8 +195,8 @@ export default function SupplierReceipts() {
   const [expandedReceiptId, setExpandedReceiptId] = useState<number | null>(null);
   const [sortField, setSortField] = useState<string>('receipt_date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [supplierFilter, setSupplierFilter] = useState<string>('');
-  const [documentTypeFilter, setDocumentTypeFilter] = useState<string>('');
+  const [supplierFilter, setSupplierFilter] = useState<string>('all');
+  const [documentTypeFilter, setDocumentTypeFilter] = useState<string>('all');
   const [showReceiptsImportDialog, setShowReceiptsImportDialog] = useState(false);
   const [showReceiptItemsImportDialog, setShowReceiptItemsImportDialog] = useState(false);
 
@@ -466,10 +466,10 @@ export default function SupplierReceipts() {
     }
     
     // Supplier filter
-    if (supplierFilter && supplierName !== supplierFilter) return false;
+    if (supplierFilter && supplierFilter !== 'all' && supplierName !== supplierFilter) return false;
     
     // Document type filter
-    if (documentTypeFilter && documentTypeName !== documentTypeFilter) return false;
+    if (documentTypeFilter && documentTypeFilter !== 'all' && documentTypeName !== documentTypeFilter) return false;
     
     return true;
   }).sort((a: any, b: any) => {
@@ -576,7 +576,7 @@ export default function SupplierReceipts() {
                 <SelectValue placeholder="Фільтр за постачальником" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Усі постачальники</SelectItem>
+                <SelectItem value="all">Усі постачальники</SelectItem>
                 {[...new Set(receipts.map((r: any) => r.supplier_name).filter(Boolean))].map((name) => (
                   <SelectItem key={name} value={name as string}>
                     {name}
@@ -590,7 +590,7 @@ export default function SupplierReceipts() {
                 <SelectValue placeholder="Фільтр за типом документу" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Усі типи документів</SelectItem>
+                <SelectItem value="all">Усі типи документів</SelectItem>
                 {[...new Set(receipts.map((r: any) => r.document_type_name).filter(Boolean))].map((name) => (
                   <SelectItem key={name} value={name as string}>
                     {name}
@@ -602,14 +602,14 @@ export default function SupplierReceipts() {
           
           <div className="flex items-center justify-between text-sm text-gray-600">
             <span>Знайдено записів: {filteredReceipts.length}</span>
-            {(searchQuery || supplierFilter || documentTypeFilter) && (
+            {(searchQuery || (supplierFilter && supplierFilter !== 'all') || (documentTypeFilter && documentTypeFilter !== 'all')) && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
                   setSearchQuery('');
-                  setSupplierFilter('');
-                  setDocumentTypeFilter('');
+                  setSupplierFilter('all');
+                  setDocumentTypeFilter('all');
                   setCurrentPage(1);
                 }}
               >
