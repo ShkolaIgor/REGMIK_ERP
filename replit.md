@@ -121,5 +121,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Changelog
 
-Changelog:
-- June 23, 2025. Initial setup
+## Recent Changes
+
+### June 23, 2025
+- Fixed supplier receipts XML import with external_id field as integer type
+- ID_LISTPRIHOD now correctly stores in supplier_receipts.external_id 
+- Updated supplier receipt items import to use external_id lookup instead of direct ID
+- INDEX_LISTPRIHOD searches supplier_receipts by external_id to find receipt_id
+- INDEX_DETAIL uses component SKU for lookup in components table
+- Fixed decimal number parsing with comma separator (Ukrainian format)
+- Added comprehensive foreign key validation and component auto-creation
+
+### Initial Setup
+- June 23, 2025. Initial ERP system setup with Ukrainian localization
