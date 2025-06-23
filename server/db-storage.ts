@@ -8808,15 +8808,11 @@ export class DatabaseStorage implements IStorage {
             continue;
           }
 
-          // Визначаємо тип документа (за замовчуванням 1 - "Накладна")
-          let documentTypeId = 1;
-          if (row.DOCUMENT_TYPE_ID) {
-            documentTypeId = parseInt(row.DOCUMENT_TYPE_ID) || 1;
-          }
+
 
           // Конвертуємо дату з DD.MM.YYYY до YYYY-MM-DD
           const convertDate = (dateStr: string) => {
-            if (!dateStr) return null;
+            if (!dateStr || dateStr.trim() === '') return null;
             const parts = dateStr.split('.');
             if (parts.length === 3) {
               return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
@@ -8824,8 +8820,16 @@ export class DatabaseStorage implements IStorage {
             return dateStr;
           };
 
+          // Визначаємо тип документа з INDEX_DOC або за замовчуванням
+          let documentTypeId = 1;
+          if (row.INDEX_DOC) {
+            documentTypeId = parseInt(row.INDEX_DOC) || 1;
+          } else if (row.DOCUMENT_TYPE_ID) {
+            documentTypeId = parseInt(row.DOCUMENT_TYPE_ID) || 1;
+          }
+
           const receiptData = {
-            receiptDate: convertDate(row.DATE_INP) || convertDate(row.RECEIPT_DATE) || new Date().toISOString().split('T')[0],
+            receiptDate: convertDate(row.DATE_INP) || convertDate(row.DATE_POST) || convertDate(row.RECEIPT_DATE) || new Date().toISOString().split('T')[0],
             supplierId: supplierId,
             documentTypeId: documentTypeId,
             supplierDocumentDate: convertDate(row.DATE_POST) || convertDate(row.SUPPLIER_DOC_DATE) || null,
