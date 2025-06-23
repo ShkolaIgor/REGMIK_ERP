@@ -8738,13 +8738,14 @@ export class DatabaseStorage implements IStorage {
           // Шукаємо постачальника за INDEX_PREDPR -> clients.external_id -> clients.id = supplier_id
           let supplierId = null;
           if (row.INDEX_PREDPR) {
-            const clientResult = await db.select({ id: clients.id })
+            const clientResult = await db.select({ id: clients.id, name: clients.name })
               .from(clients)
               .where(eq(clients.externalId, parseInt(row.INDEX_PREDPR)))
               .limit(1);
             
             if (clientResult.length > 0) {
               supplierId = clientResult[0].id;
+              console.log(`Found client for INDEX_PREDPR=${row.INDEX_PREDPR}: client_id=${supplierId}, name=${clientResult[0].name}`);
             } else {
               result.warnings.push({
                 row: rowNumber,
@@ -8760,6 +8761,42 @@ export class DatabaseStorage implements IStorage {
               data: row
             });
             continue;
+          }
+
+          // Перевіряємо чи існує запис в suppliers з таким же ID як clients.id
+          const supplierExists = await pool.query('SELECT id FROM suppliers WHERE id = $1', [supplierId]);
+          if (supplierExists.rows.length === 0) {
+            // Створюємо запис постачальника з тим же ID що й у клієнта
+            try {
+              const client = await db.select().from(clients).where(eq(clients.id, supplierId)).limit(1);
+              if (client.length > 0) {
+                const clientData = client[0];
+                await pool.query(
+                  `INSERT INTO suppliers (id, name, contact_person, client_type_id, email, phone, address, is_active, created_at, updated_at)
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+                   ON CONFLICT (id) DO NOTHING`,
+                  [
+                    supplierId,
+                    clientData.name,
+                    clientData.fullName || 'Контакт не вказан',
+                    clientData.clientTypeId,
+                    clientData.email,
+                    clientData.phone,
+                    clientData.legalAddress,
+                    true
+                  ]
+                );
+                console.log(`Created supplier record for client_id=${supplierId}, name=${clientData.name}`);
+              }
+            } catch (createError) {
+              console.error(`Error creating supplier for client_id=${supplierId}:`, createError);
+              result.warnings.push({
+                row: rowNumber,
+                warning: `Не вдалося створити постачальника для client_id=${supplierId}`,
+                data: row
+              });
+              continue;
+            }
           }
 
           // Визначаємо тип документа (за замовчуванням 1 - "Накладна")

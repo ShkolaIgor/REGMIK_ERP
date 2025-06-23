@@ -1,0 +1,31 @@
+ Error creating supplier receipt: Error: Постачальник з ID 4546 не знайдений. Спочатку створіть постачальника.
+2025-06-23T07:31:02.462006+03:00 ERP regmik-erp[308582]:     at DatabaseStorage.createSupplierReceipt (file:///opt/REGMIK_ERP/dist/index.js:8345:19)
+2025-06-23T07:31:02.462011+03:00 ERP regmik-erp[308582]:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-06-23T07:31:02.462015+03:00 ERP regmik-erp[308582]:     at async DatabaseStorage.importSupplierReceiptsFromXml (file:///opt/REGMIK_ERP/dist/index.js:8596:31)
+2025-06-23T07:31:02.462020+03:00 ERP regmik-erp[308582]:     at async file:///opt/REGMIK_ERP/dist/index.js:14826:22
+2025-06-23T07:31:02.462261+03:00 ERP regmik-erp[308582]: Creating supplier receipt with data: {
+2025-06-23T07:31:02.462266+03:00 ERP regmik-erp[308582]:   receiptDate: '2025-06-23',
+2025-06-23T07:31:02.462270+03:00 ERP regmik-erp[308582]:   supplierId: 804,
+2025-06-23T07:31:02.462274+03:00 ERP regmik-erp[308582]:   documentTypeId: 1,
+2025-06-23T07:31:02.462279+03:00 ERP regmik-erp[308582]:   supplierDocumentDate: null,
+2025-06-23T07:31:02.462283+03:00 ERP regmik-erp[308582]:   supplierDocumentNumber: null,
+2025-06-23T07:31:02.462287+03:00 ERP regmik-erp[308582]:   totalAmount: '0',
+2025-06-23T07:31:02.462291+03:00 ERP regmik-erp[308582]:   comment: null,
+2025-06-23T07:31:02.462295+03:00 ERP regmik-erp[308582]:   purchaseOrderId: null
+2025-06-23T07:31:02.462299+03:00 ERP regmik-erp[308582]: }
+2025-06-23T07:31:02.462401+03:00 ERP regmik-erp[308582]: Error creating supplier receipt: Error: Постачальник з ID 804 не знайдений. Спочатку створіть постачальника.
+2025-06-23T07:31:02.462406+03:00 ERP regmik-erp[308582]:     at DatabaseStorage.createSupplierReceipt (file:///opt/REGMIK_ERP/dist/index.js:8345:19)
+2025-06-23T07:31:02.462410+03:00 ERP regmik-erp[308582]:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-06-23T07:31:02.462415+03:00 ERP regmik-erp[308582]:     at async DatabaseStorage.importSupplierReceiptsFromXml (file:///opt/REGMIK_ERP/dist/index.js:8596:31)
+2025-06-23T07:31:02.462420+03:00 ERP regmik-erp[308582]:     at async file:///opt/REGMIK_ERP/dist/index.js:14826:22
+2025-06-23T07:31:02.462563+03:00 ERP regmik-erp[308582]: Creating supplier receipt with data: {
+2025-06-23T07:31:02.462567+03:00 ERP regmik-erp[308582]:   receiptDate: '2025-06-23',
+2025-06-23T07:31:02.462571+03:00 ERP regmik-erp[308582]:   supplierId: 6,
+2025-06-23T07:31:02.462576+03:00 ERP regmik-erp[308582]:   documentTypeId: 1,
+2025-06-23T07:31:02.462580+03:00 ERP regmik-erp[308582]:   supplierDocumentDate: null,
+2025-06-23T07:31:02.462584+03:00 ERP regmik-erp[308582]:   supplierDocumentNumber: null,
+2025-06-23T07:31:02.462588+03:00 ERP regmik-erp[308582]:   totalAmount: '0',
+2025-06-23T07:31:02.462594+03:00 ERP regmik-erp[308582]:   comment: null,
+2025-06-23T07:31:02.462598+03:00 ERP regmik-erp[308582]:   purchaseOrderId: null
+2025-06-23T07:31:02.462602+03:00 ERP regmik-erp[308582]: }
+2025-06-23T07:31:02.462690+03:0
