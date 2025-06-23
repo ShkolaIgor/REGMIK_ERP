@@ -189,7 +189,7 @@ export default function SupplierReceipts() {
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(10);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showMappingDialog, setShowMappingDialog] = useState(false);
   const [expandedReceiptId, setExpandedReceiptId] = useState<number | null>(null);
@@ -339,19 +339,46 @@ export default function SupplierReceipts() {
     }
   };
 
-  const handleEdit = (receipt: SupplierReceipt) => {
+  const handleEdit = async (receipt: any) => {
     setEditingReceipt(receipt);
-    setFormData({
-      receiptDate: receipt.receipt_date.split('T')[0],
-      supplierId: receipt.supplier_id.toString(),
-      documentTypeId: receipt.document_type_id.toString(),
-      supplierDocumentDate: receipt.supplier_document_date?.split('T')[0] || '',
-      supplierDocumentNumber: receipt.supplier_document_number || '',
-      totalAmount: receipt.total_amount,
-      comment: receipt.comment || '',
-      purchaseOrderId: receipt.purchase_order_id?.toString() || '',
-      items: receipt.items || []
-    });
+    
+    // Load receipt items
+    try {
+      const itemsResponse = await fetch(`/api/supplier-receipt-items?receiptId=${receipt.id}`);
+      const items = itemsResponse.ok ? await itemsResponse.json() : [];
+      
+      setFormData({
+        receiptDate: receipt.receipt_date ? receipt.receipt_date.split('T')[0] : new Date().toISOString().split('T')[0],
+        supplierId: receipt.supplier_id?.toString() || '',
+        documentTypeId: receipt.document_type_id?.toString() || '1',
+        supplierDocumentDate: receipt.supplier_document_date ? receipt.supplier_document_date.split('T')[0] : '',
+        supplierDocumentNumber: receipt.supplier_document_number || '',
+        totalAmount: receipt.total_amount?.toString() || '0',
+        comment: receipt.comment || '',
+        purchaseOrderId: receipt.purchase_order_id?.toString() || '',
+        items: items.map((item: any) => ({
+          componentId: item.component_id?.toString() || '',
+          quantity: item.quantity?.toString() || '',
+          unitPrice: item.unit_price?.toString() || '',
+          totalPrice: item.total_price?.toString() || '',
+          supplierComponentName: item.supplier_component_name || ''
+        }))
+      });
+    } catch (error) {
+      console.error('Error loading receipt items:', error);
+      setFormData({
+        receiptDate: receipt.receipt_date ? receipt.receipt_date.split('T')[0] : new Date().toISOString().split('T')[0],
+        supplierId: receipt.supplier_id?.toString() || '',
+        documentTypeId: receipt.document_type_id?.toString() || '1',
+        supplierDocumentDate: receipt.supplier_document_date ? receipt.supplier_document_date.split('T')[0] : '',
+        supplierDocumentNumber: receipt.supplier_document_number || '',
+        totalAmount: receipt.total_amount?.toString() || '0',
+        comment: receipt.comment || '',
+        purchaseOrderId: receipt.purchase_order_id?.toString() || '',
+        items: []
+      });
+    }
+    
     setIsDialogOpen(true);
   };
 
@@ -529,16 +556,66 @@ export default function SupplierReceipts() {
           </div>
         </div>
 
-        {/* Search */}
-        <div className="flex items-center gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Пошук за постачальником, номером документа..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+        {/* Search and Filters */}
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Пошук за постачальником, номером документу або коментарем..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            
+            <Select value={supplierFilter} onValueChange={setSupplierFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Фільтр за постачальником" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Усі постачальники</SelectItem>
+                {[...new Set(receipts.map((r: any) => r.supplier_name).filter(Boolean))].map((name) => (
+                  <SelectItem key={name} value={name as string}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={documentTypeFilter} onValueChange={setDocumentTypeFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Фільтр за типом документу" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Усі типи документів</SelectItem>
+                {[...new Set(receipts.map((r: any) => r.document_type_name).filter(Boolean))].map((name) => (
+                  <SelectItem key={name} value={name as string}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <span>Знайдено записів: {filteredReceipts.length}</span>
+            {(searchQuery || supplierFilter || documentTypeFilter) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSupplierFilter('');
+                  setDocumentTypeFilter('');
+                  setCurrentPage(1);
+                }}
+              >
+                Очистити фільтри
+              </Button>
+            )}
           </div>
         </div>
 
@@ -660,13 +737,45 @@ export default function SupplierReceipts() {
           </div>
         </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between">
+        {/* Enhanced Pagination */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t">
+          <div className="flex items-center gap-4">
             <div className="text-sm text-gray-500">
               Показано {startIndex + 1}-{Math.min(endIndex, total)} з {total} результатів
             </div>
             <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">Рядків на сторінці:</label>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(value) => {
+                  setPageSize(parseInt(value));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                Перша
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -675,7 +784,50 @@ export default function SupplierReceipts() {
               >
                 Попередня
               </Button>
-              <span className="text-sm">{currentPage} з {totalPages}</span>
+              
+              <div className="flex items-center gap-1">
+                {currentPage > 3 && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(1)}
+                    >
+                      1
+                    </Button>
+                    {currentPage > 4 && <span className="text-gray-400">...</span>}
+                  </>
+                )}
+                
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const pageNum = Math.max(1, Math.min(totalPages, currentPage - 2 + i));
+                  if (pageNum < 1 || pageNum > totalPages) return null;
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                }).filter(Boolean)}
+                
+                {currentPage < totalPages - 2 && (
+                  <>
+                    {currentPage < totalPages - 3 && <span className="text-gray-400">...</span>}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(totalPages)}
+                    >
+                      {totalPages}
+                    </Button>
+                  </>
+                )}
+              </div>
+              
               <Button
                 variant="outline"
                 size="sm"
@@ -684,9 +836,17 @@ export default function SupplierReceipts() {
               >
                 Наступна
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                Остання
+              </Button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Create/Edit Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

@@ -8830,7 +8830,7 @@ export class DatabaseStorage implements IStorage {
             documentTypeId: documentTypeId,
             supplierDocumentDate: convertDate(row.DATE_POST) || convertDate(row.SUPPLIER_DOC_DATE) || null,
             supplierDocumentNumber: row.NUMB_DOC || row.SUPPLIER_DOC_NUMBER || null,
-            totalAmount: this.parseDecimal(row.ACC_SUM || row.TOTAL_AMOUNT) || "0",
+            totalAmount: this.parseDecimal(row.ACC_SUM || row.TOTAL_AMOUNT || row.SUM_UAH) || "0",
             comment: row.COMMENT || null,
             purchaseOrderId: row.PURCHASE_ORDER_ID ? parseInt(row.PURCHASE_ORDER_ID) : null
           };
