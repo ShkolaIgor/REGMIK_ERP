@@ -8863,6 +8863,8 @@ export class DatabaseStorage implements IStorage {
             purchaseOrderId: row.PURCHASE_ORDER_ID ? parseInt(row.PURCHASE_ORDER_ID) : null
           };
 
+          console.log('Creating supplier receipt with data:', receiptData);
+
           // Перевіряємо чи існує прихід з таким же external_id
           const existingReceipt = await pool.query(`
             SELECT id FROM supplier_receipts 
