@@ -8448,7 +8448,16 @@ export class DatabaseStorage implements IStorage {
   // Supplier Receipts methods
   async getSupplierReceipts() {
     try {
-      const result = await pool.query('SELECT * FROM supplier_receipts ORDER BY receipt_date DESC');
+      const result = await pool.query(`
+        SELECT 
+          sr.*,
+          c.name as supplier_name,
+          sdt.name as document_type_name
+        FROM supplier_receipts sr
+        LEFT JOIN clients c ON sr.supplier_id = c.id
+        LEFT JOIN supplier_document_types sdt ON sr.document_type_id = sdt.id
+        ORDER BY sr.receipt_date DESC
+      `);
       return result.rows;
     } catch (error) {
       console.error('Error fetching supplier receipts:', error);
@@ -8806,12 +8815,12 @@ export class DatabaseStorage implements IStorage {
           }
 
           const receiptData = {
-            receiptDate: row.RECEIPT_DATE || new Date().toISOString().split('T')[0],
+            receiptDate: row.DATE_INP || row.RECEIPT_DATE || new Date().toISOString().split('T')[0],
             supplierId: supplierId,
             documentTypeId: documentTypeId,
-            supplierDocumentDate: row.SUPPLIER_DOC_DATE || null,
-            supplierDocumentNumber: row.SUPPLIER_DOC_NUMBER || null,
-            totalAmount: this.parseDecimal(row.TOTAL_AMOUNT) || "0",
+            supplierDocumentDate: row.DATE_POST || row.SUPPLIER_DOC_DATE || null,
+            supplierDocumentNumber: row.NUMB_DOC || row.SUPPLIER_DOC_NUMBER || null,
+            totalAmount: this.parseDecimal(row.ACC_SUM || row.TOTAL_AMOUNT) || "0",
             comment: row.COMMENT || null,
             purchaseOrderId: row.PURCHASE_ORDER_ID ? parseInt(row.PURCHASE_ORDER_ID) : null
           };

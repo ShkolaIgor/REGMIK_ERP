@@ -423,45 +423,42 @@ export default function SupplierReceipts() {
   };
 
   // Filter and sort receipts
-  const filteredReceipts = receipts.filter((receipt: SupplierReceipt) => {
-    const supplier = suppliers.find((s: Supplier) => s.id === receipt.supplier_id);
-    const documentType = documentTypes.find((dt: SupplierDocumentType) => dt.id === receipt.document_type_id);
+  const filteredReceipts = receipts.filter((receipt: any) => {
+    // Use supplier_name from JOIN query instead of looking up
+    const supplierName = receipt.supplier_name || '';
+    const documentTypeName = receipt.document_type_name || '';
     
     // Search filter
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = 
-        supplier?.name.toLowerCase().includes(searchLower) ||
+        supplierName.toLowerCase().includes(searchLower) ||
         receipt.supplier_document_number?.toLowerCase().includes(searchLower) ||
         receipt.comment?.toLowerCase().includes(searchLower);
       if (!matchesSearch) return false;
     }
     
     // Supplier filter
-    if (supplierFilter && supplier?.name !== supplierFilter) return false;
+    if (supplierFilter && supplierName !== supplierFilter) return false;
     
     // Document type filter
-    if (documentTypeFilter && documentType?.name !== documentTypeFilter) return false;
+    if (documentTypeFilter && documentTypeName !== documentTypeFilter) return false;
     
     return true;
-  }).sort((a: SupplierReceipt, b: SupplierReceipt) => {
-    let aValue: any = a[sortField as keyof SupplierReceipt];
-    let bValue: any = b[sortField as keyof SupplierReceipt];
+  }).sort((a: any, b: any) => {
+    let aValue: any = a[sortField];
+    let bValue: any = b[sortField];
     
-    // Handle supplier name sorting
+    // Handle supplier name sorting - now using supplier_name from JOIN
     if (sortField === 'supplier_name') {
-      const supplierA = suppliers.find((s: Supplier) => s.id === a.supplier_id);
-      const supplierB = suppliers.find((s: Supplier) => s.id === b.supplier_id);
-      aValue = supplierA?.name || '';
-      bValue = supplierB?.name || '';
+      aValue = a.supplier_name || '';
+      bValue = b.supplier_name || '';
     }
     
-    // Handle document type sorting
+    // Handle document type sorting - now using document_type_name from JOIN
     if (sortField === 'document_type_name') {
-      const docTypeA = documentTypes.find((dt: SupplierDocumentType) => dt.id === a.document_type_id);
-      const docTypeB = documentTypes.find((dt: SupplierDocumentType) => dt.id === b.document_type_id);
-      aValue = docTypeA?.name || '';
-      bValue = docTypeB?.name || '';
+      aValue = a.document_type_name || '';
+      bValue = b.document_type_name || '';
     }
     
     // Convert to appropriate types for comparison
@@ -600,9 +597,7 @@ export default function SupplierReceipts() {
                 </tr>
               </thead>
               <tbody>
-                {currentReceipts.map((receipt: SupplierReceipt) => {
-                  const supplier = suppliers.find((s: Supplier) => s.id === receipt.supplier_id);
-                  const documentType = documentTypes.find((dt: SupplierDocumentType) => dt.id === receipt.document_type_id);
+                {currentReceipts.map((receipt: any) => {
                   const isExpanded = expandedReceiptId === receipt.id;
                   
                   return (
@@ -622,8 +617,8 @@ export default function SupplierReceipts() {
                             {new Date(receipt.receipt_date).toLocaleDateString('uk-UA')}
                           </div>
                         </td>
-                        <td className="p-4 font-medium">{supplier?.name || '—'}</td>
-                        <td className="p-4">{documentType?.name || '—'}</td>
+                        <td className="p-4 font-medium">{receipt.supplier_name || '—'}</td>
+                        <td className="p-4">{receipt.document_type_name || '—'}</td>
                         <td className="p-4">
                           <div className="flex flex-col">
                             <span className="font-medium">{receipt.supplier_document_number || '—'}</span>
