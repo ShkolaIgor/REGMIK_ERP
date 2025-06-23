@@ -8591,7 +8591,17 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log('Creating supplier receipt item:', insertItem);
       
-      // Перевіряємо чи існує компонент
+      // Перевіряємо чи існує прихід
+      const receiptCheck = await pool.query(
+        'SELECT id FROM supplier_receipts WHERE id = $1',
+        [insertItem.receiptId]
+      );
+      
+      if (receiptCheck.rows.length === 0) {
+        throw new Error(`Прихід з ID ${insertItem.receiptId} не знайдений.`);
+      }
+
+      // Перевіряємо чи існує компонент (якщо вказано)
       if (insertItem.componentId) {
         const componentCheck = await pool.query(
           'SELECT id FROM components WHERE id = $1',

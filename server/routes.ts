@@ -5023,18 +5023,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const unitPrice = parseFloat(row.getAttribute('PRICE1') || '0');
           const totalPrice = quantity * unitPrice;
 
-          if (!receiptId || !componentId) {
-            errors.push(`Row ${i + 1}: Missing receipt ID or component ID`);
+          if (!receiptId) {
+            errors.push(`Row ${i + 1}: Missing receipt ID`);
             continue;
+          }
+
+          // Перевіряємо чи існує прихід
+          const receiptCheck = await storage.getSupplierReceipt(receiptId);
+          if (!receiptCheck) {
+            errors.push(`Row ${i + 1}: Receipt ID ${receiptId} not found`);
+            continue;
+          }
+
+          // Перевіряємо чи існує компонент (якщо вказано)
+          let validComponentId = null;
+          if (componentId) {
+            try {
+              const componentCheck = await pool.query('SELECT id FROM components WHERE id = $1', [componentId]);
+              if (componentCheck.rows.length > 0) {
+                validComponentId = componentId;
+              } else {
+                // Створюємо компонент з мінімальною інформацією
+                const newComponent = await pool.query(
+                  'INSERT INTO components (name, sku, cost_price, category_id, is_active, created_at) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id',
+                  [`Компонент ID-${componentId}`, `AUTO-${componentId}`, '0', 1, true]
+                );
+                validComponentId = newComponent.rows[0].id;
+              }
+            } catch (error) {
+              errors.push(`Row ${i + 1}: Error checking component ${componentId}: ${error.message}`);
+              continue;
+            }
           }
 
           const itemData = {
             receiptId,
-            componentId,
+            componentId: validComponentId,
             quantity,
             unitPrice,
             totalPrice,
-            supplierComponentName: row.getAttribute('NOTE') || null
+            supplierComponentName: row.getAttribute('NOTE') || row.getAttribute('NAME_DETAIL') || null
           };
 
           await storage.createSupplierReceiptItem(itemData);
