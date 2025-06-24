@@ -718,7 +718,7 @@ export default function SupplierReceipts() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Усі постачальники</SelectItem>
-                {[...new Set(receipts.map((r: any) => r.supplier_name).filter(Boolean))].map((name) => (
+                {[...new Set(supplierReceipts.map((r: any) => r.supplier_name).filter(Boolean))].map((name) => (
                   <SelectItem key={name} value={name as string}>
                     {name}
                   </SelectItem>
@@ -732,7 +732,7 @@ export default function SupplierReceipts() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Усі типи документів</SelectItem>
-                {[...new Set(receipts.map((r: any) => r.document_type_name).filter(Boolean))].map((name) => (
+                {[...new Set(supplierReceipts.map((r: any) => r.document_type_name).filter(Boolean))].map((name) => (
                   <SelectItem key={name} value={name as string}>
                     {name}
                   </SelectItem>
