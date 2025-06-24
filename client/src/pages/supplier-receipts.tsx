@@ -560,9 +560,9 @@ export default function SupplierReceipts() {
 
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="bg-gray-50 px-4 py-2 border-b">
+        {/*<div className="bg-gray-50 px-4 py-2 border-b">
           <h4 className="font-medium text-gray-700">Позиції документу</h4>
-        </div>
+        </div>*/}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50">
