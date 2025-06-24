@@ -117,6 +117,9 @@ interface DataTableProps {
   title?: string;
   storageKey: string; // Unique key for saving settings
   cardTemplate?: (item: any) => React.ReactNode;
+  expandableContent?: (item: any) => React.ReactNode;
+  expandedItems?: Set<string | number>;
+  onToggleExpand?: (itemId: string | number) => void;
 }
 
 const defaultColumnSettings: ColumnSettings = {
@@ -164,7 +167,10 @@ export function DataTable({
   actions,
   title,
   storageKey,
-  cardTemplate
+  cardTemplate,
+  expandableContent,
+  expandedItems = new Set(),
+  onToggleExpand
 }: DataTableProps) {
   // Load settings from localStorage
   const [settings, setSettings] = useState<DataTableSettings>(() => {
