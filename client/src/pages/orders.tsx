@@ -14,9 +14,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Combobox } from "@/components/ui/combobox";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DataTable, DataTableColumn } from "@/components/DataTable";
-// import { PaymentDialog } from "@/components/payment-dialog"; // Temporarily disabled
-import { UkrainianDate } from "@/components/ukrainian-date";
-// import { InlineSerialNumbers } from "@/components/inline-serial-numbers"; // Temporarily disabled
+import { PaymentDialog } from "@/components/PaymentDialog";
+import { UkrainianDate } from "@/components/ui/ukrainian-date";
+// import { InlineSerialNumbers } from "@/components/InlineSerialNumbers"; // Temporarily disabled
 import { 
   Plus, 
   Edit, 
@@ -239,9 +239,14 @@ export default function Orders() {
       render: (value, row) => {
         if (!row.paymentDate) {
           return (
-            <Button variant="outline" size="sm">
-              💳 Оплатити
-            </Button>
+            <PaymentDialog
+              orderId={row.id}
+              orderNumber={row.orderNumber}
+              totalAmount={row.totalAmount}
+              currentPaymentType={row.paymentType || "none"}
+              currentPaidAmount={row.paidAmount || "0"}
+              isProductionApproved={row.productionApproved || false}
+            />
           );
         }
         return (
