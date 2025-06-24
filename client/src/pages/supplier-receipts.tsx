@@ -243,6 +243,18 @@ export default function SupplierReceipts() {
   // DataTable columns configuration
   const columns: DataTableColumn[] = [
     {
+      key: 'supplier_name',
+      label: 'Постачальник',
+      sortable: true,
+      filterable: true,
+      render: (value, row) => (
+        <div className="flex items-center space-x-2">
+          <Building2 className="h-4 w-4 text-orange-600" />
+          <span>{value || 'Невідомо'}</span>
+        </div>
+      )
+    },
+    {
       key: 'supplier_document_number',
       label: 'Документ',
       sortable: true,
@@ -256,18 +268,6 @@ export default function SupplierReceipts() {
               <div className="text-xs text-gray-500">ID: {row.id}</div>
             )}*/}
           </div>
-        </div>
-      )
-    },
-    {
-      key: 'supplier_name',
-      label: 'Постачальник',
-      sortable: true,
-      filterable: true,
-      render: (value, row) => (
-        <div className="flex items-center space-x-2">
-          <Building2 className="h-4 w-4 text-orange-600" />
-          <span>{value || 'Невідомо'}</span>
         </div>
       )
     },
