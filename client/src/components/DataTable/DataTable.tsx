@@ -157,19 +157,33 @@ export function DataTable({
     localStorage.setItem(`datatable-${storageKey}`, JSON.stringify(settings));
   }, [settings, storageKey]);
 
+  // Get all available fields from data
+  const getAllDataFields = () => {
+    if (!data || data.length === 0) return [];
+    const sampleItem = data[0];
+    return Object.keys(sampleItem);
+  };
+
   // Initialize column order and settings
   useEffect(() => {
-    if (settings.columnOrder.length === 0) {
-      setSettings(prev => ({
-        ...prev,
-        columnOrder: columns.map(col => col.key),
-        columnSettings: columns.reduce((acc, col) => {
-          acc[col.key] = { ...defaultColumnSettings };
-          return acc;
-        }, {} as Record<string, ColumnSettings>)
-      }));
-    }
-  }, [columns, settings.columnOrder.length]);
+    const allColumnKeys = columns.map(col => col.key);
+    const allDataFields = getAllDataFields();
+    const allFields = [...new Set([...allColumnKeys, ...allDataFields])];
+    
+    setSettings(prev => {
+      const newColumnSettings = { ...prev.columnSettings };
+      allFields.forEach(key => {
+        if (!newColumnSettings[key]) {
+          newColumnSettings[key] = { ...defaultColumnSettings };
+        }
+      });
+      
+      if (prev.columnOrder.length === 0) {
+        return { ...prev, columnSettings: newColumnSettings, columnOrder: allColumnKeys };
+      }
+      return { ...prev, columnSettings: newColumnSettings };
+    });
+  }, [columns, data]);
 
   // Filter and search data
   const filteredData = useMemo(() => {
@@ -499,12 +513,22 @@ export function DataTable({
                 <div>
                   <Label className="text-base font-semibold">Налаштування стовпців</Label>
                   <div className="space-y-4 mt-4">
-                    {columns.map((column) => {
-                      const columnSettings = settings.columnSettings[column.key] || defaultColumnSettings;
-                      return (
-                        <div key={column.key} className="border rounded-lg p-4 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <Label className="font-medium">{fieldLabel}</Label>
+                    {(() => {
+                      const getAllDataFields = () => {
+                        if (!data || data.length === 0) return [];
+                        const sampleItem = data[0];
+                        return Object.keys(sampleItem);
+                      };
+                      
+                      return getAllDataFields().map((fieldKey) => {
+                        const column = columns.find(col => col.key === fieldKey);
+                        const columnSettings = settings.columnSettings[fieldKey] || defaultColumnSettings;
+                        const fieldLabel = column?.label || fieldKey;
+                        
+                        return (
+                          <div key={fieldKey} className="border rounded-lg p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <Label className="font-medium">{fieldLabel}</Label>
                             <div className="flex items-center space-x-4">
                               <div className="flex items-center space-x-2">
                                 <Checkbox
@@ -514,7 +538,7 @@ export function DataTable({
                                       ...prev,
                                       columnSettings: {
                                         ...prev.columnSettings,
-                                        [column.key]: {
+                                        [fieldKey]: {
                                           ...columnSettings,
                                           visible: checked as boolean
                                         }
@@ -532,7 +556,7 @@ export function DataTable({
                                       ...prev,
                                       columnSettings: {
                                         ...prev.columnSettings,
-                                        [column.key]: {
+                                        [fieldKey]: {
                                           ...columnSettings,
                                           filterable: checked as boolean
                                         }
@@ -556,7 +580,7 @@ export function DataTable({
                                     ...prev,
                                     columnSettings: {
                                       ...prev.columnSettings,
-                                      [column.key]: {
+                                      [fieldKey]: {
                                         ...columnSettings,
                                         textColor: e.target.value
                                       }
@@ -576,7 +600,7 @@ export function DataTable({
                                     ...prev,
                                     columnSettings: {
                                       ...prev.columnSettings,
-                                      [column.key]: {
+                                      [fieldKey]: {
                                         ...columnSettings,
                                         backgroundColor: e.target.value
                                       }
@@ -598,7 +622,7 @@ export function DataTable({
                                     ...prev,
                                     columnSettings: {
                                       ...prev.columnSettings,
-                                      [column.key]: {
+                                      [fieldKey]: {
                                         ...columnSettings,
                                         fontSize: parseInt(value)
                                       }
@@ -629,7 +653,7 @@ export function DataTable({
                                     ...prev,
                                     columnSettings: {
                                       ...prev.columnSettings,
-                                      [column.key]: {
+                                      [fieldKey]: {
                                         ...columnSettings,
                                         fontWeight: value
                                       }
@@ -655,7 +679,7 @@ export function DataTable({
                                     ...prev,
                                     columnSettings: {
                                       ...prev.columnSettings,
-                                      [column.key]: {
+                                      [fieldKey]: {
                                         ...columnSettings,
                                         fontStyle: value
                                       }
@@ -674,8 +698,9 @@ export function DataTable({
                             </div>
                           </div>
                         </div>
-                      );
-                    })}
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
 
@@ -871,7 +896,7 @@ export function DataTable({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 px-6 border-t">
           <div className="flex items-center gap-4">
             <div className="text-sm text-gray-500">
               Показано {((currentPage - 1) * settings.pageSize) + 1}-{Math.min(currentPage * settings.pageSize, sortedData.length)} з {sortedData.length} результатів
