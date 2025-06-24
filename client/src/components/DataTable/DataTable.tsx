@@ -282,7 +282,7 @@ export function DataTable({
     )}>
       <table className="w-full">
         <thead
-          className={cn(settings.showVerticalLines ? "border-b" : "")}
+          className="border-b"
           style={{
             backgroundColor: settings.headerBackgroundColor,
             color: settings.headerTextColor,
@@ -348,8 +348,7 @@ export function DataTable({
               <tr
                 key={index}
                 className={cn(
-                  "transition-all duration-300 ease-in-out",
-                  settings.showVerticalLines ? "border-b" : "",
+                  "border-b transition-all duration-300 ease-in-out",
                   onRowClick && "cursor-pointer",
                   settings.enableRowHover && "hover:shadow-lg hover:bg-blue-50/50 hover:scale-[1.005] hover:border-blue-200"
                 )}
