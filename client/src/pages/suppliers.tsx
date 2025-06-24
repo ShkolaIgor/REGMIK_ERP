@@ -253,11 +253,22 @@ export default function Suppliers() {
       )}
 
       <div className="pt-2 border-t">
-        <div className="flex justify-between text-xs text-gray-500">
-          <span>Створено: {supplier.createdAt ? new Date(supplier.createdAt).toLocaleDateString('uk-UA') : 'Невідомо'}</span>
-          {supplier.updatedAt && supplier.updatedAt !== supplier.createdAt && (
-            <span>Оновлено: {new Date(supplier.updatedAt).toLocaleDateString('uk-UA')}</span>
-          )}
+        <div className="flex justify-between items-center">
+          <div className="text-xs text-gray-500">
+            <div>Створено: {supplier.createdAt ? new Date(supplier.createdAt).toLocaleDateString('uk-UA') : 'Невідомо'}</div>
+            {supplier.updatedAt && supplier.updatedAt !== supplier.createdAt && (
+              <div>Оновлено: {new Date(supplier.updatedAt).toLocaleDateString('uk-UA')}</div>
+            )}
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => handleEdit(supplier)}
+            className="h-8 w-8 p-0 hover:bg-blue-50 hover:scale-110 transition-all duration-200"
+            title="Редагувати постачальника"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </div>
