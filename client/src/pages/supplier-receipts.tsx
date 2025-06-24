@@ -521,6 +521,13 @@ export default function SupplierReceipts() {
     }
   };
 
+  const toggleExpand = (receiptId: number) => {
+    setExpandedReceiptId(expandedReceiptId === receiptId ? null : receiptId);
+  };
+
+  // Use supplierReceipts as receipts for compatibility
+  const receipts = supplierReceipts;
+
   const addItem = () => {
     setFormData(prev => ({
       ...prev,
@@ -761,9 +768,10 @@ export default function SupplierReceipts() {
         </div>
 
         {/* DataTable */}
+        {/* DataTable */}
         <div className="bg-white w-full px-3 py-1 rounded-xl shadow-sm border border-gray-200/50 overflow-hidden">
           <DataTable
-            data={currentReceipts}
+            data={filteredReceipts}
             columns={columns}
             loading={isLoading}
             title="Список приходів від постачальників"
