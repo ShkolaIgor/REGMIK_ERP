@@ -234,13 +234,12 @@ export function DataTable({
     onFilter?.(newFilters);
   };
 
-  const orderedColumns = useMemo(() => {
+  // Get visible columns based on settings
+  const visibleColumns = useMemo(() => {
     return settings.columnOrder
       .map(key => columns.find(col => col.key === key))
-      .filter(Boolean) as DataTableColumn[];
-  }, [columns, settings.columnOrder]);
-
-  const visibleColumns = orderedColumns.filter(col => settings.columnSettings[col.key]?.visible !== false);
+      .filter((col): col is DataTableColumn => !!col && (settings.columnSettings[col.key]?.visible !== false));
+  }, [columns, settings.columnOrder, settings.columnSettings]);
 
   const getSortIcon = (columnKey: string) => {
     if (settings.sortField !== columnKey) return <ArrowUpDown className="h-4 w-4" />;
@@ -278,39 +277,30 @@ export function DataTable({
             backgroundColor: settings.headerBackgroundColor,
             color: settings.headerTextColor,
             fontSize: `${settings.headerFontSize}px`,
-            fontWeight: settings.headerFontWeight,
-            fontStyle: settings.headerFontStyle
+            fontWeight: settings.headerFontWeight
           }}
         >
           <tr>
-            {visibleColumns.map((column) => {
-              const columnSettings = settings.columnSettings[column.key] || defaultColumnSettings;
-              return (
-                <th
-                  key={column.key}
-                  className="px-4 py-3 text-left cursor-pointer select-none border-r last:border-r-0"
-                  style={{ 
-                    width: settings.columnWidths[column.key] || column.width,
-                    minWidth: column.minWidth || 100,
-                    backgroundColor: columnSettings.backgroundColor,
-                    color: columnSettings.textColor,
-                    fontSize: `${columnSettings.fontSize}px`,
-                    fontWeight: columnSettings.fontWeight,
-                    fontStyle: columnSettings.fontStyle
-                  }}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, column.key)}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => handleDrop(e, column.key)}
-                  onClick={() => column.sortable && handleSort(column.key)}
-                >
-                  <div className="flex items-center gap-2">
-                    <span>{column.label}</span>
-                    {column.sortable && getSortIcon(column.key)}
-                  </div>
-                </th>
-              );
-            })}
+            {visibleColumns.map((column) => (
+              <th
+                key={column.key}
+                className="px-4 py-3 text-left cursor-pointer hover:bg-gray-50 border-r last:border-r-0"
+                draggable
+                onDragStart={(e) => handleDragStart(e, column.key)}
+                onDrop={(e) => handleDrop(e, column.key)}
+                onDragOver={(e) => e.preventDefault()}
+                onClick={() => handleSort(column.key)}
+              >
+                <div className="flex items-center gap-2">
+                  <span>{column.label}</span>
+                  {settings.sortField === column.key && (
+                    settings.sortDirection === 'asc' ? 
+                      <ChevronUp className="h-4 w-4" /> : 
+                      <ChevronDown className="h-4 w-4" />
+                  )}
+                </div>
+              </th>
+            ))}
             {actions && <th className="px-4 py-3 w-20">Дії</th>}
           </tr>
         </thead>
