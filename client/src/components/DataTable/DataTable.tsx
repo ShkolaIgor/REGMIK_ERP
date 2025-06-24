@@ -469,22 +469,31 @@ export function DataTable({
             <CardContent className="p-4">
               {cardTemplate ? cardTemplate(row) : (
                 <div className="space-y-2">
-                  {visibleColumns.slice(0, 3).map((column) => (
-                    <div key={column.key} className="flex justify-between">
-                      <span className="font-medium">{column.label}:</span>
-                      <span>
-                        {column.render ? 
-                          column.render(row[column.key], row) : 
-                        column.type === 'rating' ?
-                          <StarRating rating={parseFloat(row[column.key]) || 0} /> :
-                          String(row[column.key] || '')
-                        }
-                      </span>
-                    </div>
-                  ))}
+                  {visibleColumns.slice(0, 5).map((column) => {
+                    const columnSettings = settings.columnSettings[column.key] || defaultColumnSettings;
+                    if (!columnSettings.visible) return null;
+                    
+                    return (
+                      <div key={column.key} className="flex justify-between items-center">
+                        <span className="font-medium text-sm">{column.label}:</span>
+                        <span className="text-sm">
+                          {column.render ? 
+                            column.render(row[column.key], row) : 
+                            column.type === 'rating' ?
+                              <StarRating rating={parseFloat(row[column.key]) || 0} /> :
+                            column.type === 'badge' ?
+                              <Badge variant="outline">{row[column.key]}</Badge> :
+                              String(row[column.key] || '')
+                          }
+                        </span>
+                      </div>
+                    );
+                  })}
                   {actions && (
-                    <div className="pt-2 border-t">
-                      {actions(row)}
+                    <div className="pt-2 border-t flex justify-end">
+                      <div className="flex gap-1">
+                        {actions(row)}
+                      </div>
                     </div>
                   )}
                 </div>
