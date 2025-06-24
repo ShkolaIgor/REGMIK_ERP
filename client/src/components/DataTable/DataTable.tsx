@@ -345,9 +345,9 @@ export function DataTable({
               <tr
                 key={index}
                 className={cn(
-                  "border-b transition-colors",
-                  settings.enableRowHover && "hover:bg-blue-50 hover:shadow-sm",
-                  onRowClick && "cursor-pointer"
+                  "border-b transition-all duration-200",
+                  onRowClick && "cursor-pointer",
+                  settings.enableRowHover && "hover:shadow-md"
                 )}
                 style={{
                   backgroundColor: settings.rowBackgroundColor,
@@ -355,6 +355,18 @@ export function DataTable({
                   fontSize: `${settings.fontSize}px`,
                   fontWeight: settings.fontWeight,
                   fontStyle: settings.fontStyle
+                }}
+                onMouseEnter={(e) => {
+                  if (settings.enableRowHover) {
+                    e.currentTarget.style.backgroundColor = '#eff6ff';
+                    e.currentTarget.style.transform = 'scale(1.005)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (settings.enableRowHover) {
+                    e.currentTarget.style.backgroundColor = settings.rowBackgroundColor;
+                    e.currentTarget.style.transform = 'scale(1)';
+                  }
                 }}
                 onClick={() => onRowClick?.(row)}
               >
