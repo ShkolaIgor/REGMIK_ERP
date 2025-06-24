@@ -259,11 +259,13 @@ export default function SupplierReceipts() {
       label: 'Документ',
       sortable: true,
       filterable: true,
+      /*render: (value, row) => ( */
       render: (value, row) => (
         <div className="flex items-center space-x-2">
           <FileText className="h-4 w-4 text-blue-600" />
           <div>
             <div className="font-medium">{value || 'Без номера'}</div>
+            <div className="text-xs text-gray-500">{row.document_type_name}</div>
             {/*{row.id && (
               <div className="text-xs text-gray-500">ID: {row.id}</div>
             )}*/}
@@ -289,15 +291,15 @@ export default function SupplierReceipts() {
       render: (value) => (
         <div className="font-medium">{parseFloat(value).toFixed(2)} ₴</div>
       )
-    },
-    {
+    }//,
+    /*{
       key: 'document_type_name',
       label: 'Тип документу',
       filterable: true,
       render: (value) => (
         <span className="text-sm">{value || '-'}</span>
       )
-    }
+    }*/
   ];
 
   // Картковий шаблон
