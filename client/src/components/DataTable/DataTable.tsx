@@ -159,7 +159,7 @@ export function DataTable({
         columnSettings: columns.reduce((acc, col) => {
           acc[col.key] = { ...defaultColumnSettings };
           return acc;
-        }, {} as Record<string, boolean>)
+        }, {} as Record<string, ColumnSettings>)
       }));
     }
   }, [columns, settings.columnOrder.length]);
@@ -467,69 +467,210 @@ export function DataTable({
                 <DialogTitle>Налаштування таблиці</DialogTitle>
               </DialogHeader>
               <div className="space-y-6">
-                {/* Column Visibility */}
+                {/* Column Settings */}
                 <div>
-                  <Label className="text-base font-semibold">Відображення стовпців</Label>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {columns.map((column) => (
-                      <div key={column.key} className="flex items-center space-x-2">
-                        <Checkbox
-                          checked={settings.columnVisibility[column.key]}
-                          onCheckedChange={(checked) =>
-                            setSettings(prev => ({
-                              ...prev,
-                              columnVisibility: {
-                                ...prev.columnVisibility,
-                                [column.key]: checked as boolean
-                              }
-                            }))
-                          }
-                        />
-                        <Label>{column.label}</Label>
-                      </div>
-                    ))}
+                  <Label className="text-base font-semibold">Налаштування стовпців</Label>
+                  <div className="space-y-4 mt-4">
+                    {columns.map((column) => {
+                      const columnSettings = settings.columnSettings[column.key] || defaultColumnSettings;
+                      return (
+                        <div key={column.key} className="border rounded-lg p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Label className="font-medium">{column.label}</Label>
+                            <div className="flex items-center space-x-4">
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  checked={columnSettings.visible}
+                                  onCheckedChange={(checked) =>
+                                    setSettings(prev => ({
+                                      ...prev,
+                                      columnSettings: {
+                                        ...prev.columnSettings,
+                                        [column.key]: {
+                                          ...columnSettings,
+                                          visible: checked as boolean
+                                        }
+                                      }
+                                    }))
+                                  }
+                                />
+                                <Label className="text-sm">Відображати</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  checked={columnSettings.filterable}
+                                  onCheckedChange={(checked) =>
+                                    setSettings(prev => ({
+                                      ...prev,
+                                      columnSettings: {
+                                        ...prev.columnSettings,
+                                        [column.key]: {
+                                          ...columnSettings,
+                                          filterable: checked as boolean
+                                        }
+                                      }
+                                    }))
+                                  }
+                                />
+                                <Label className="text-sm">Фільтрувати</Label>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label className="text-sm">Колір тексту</Label>
+                              <Input
+                                type="color"
+                                value={columnSettings.textColor}
+                                onChange={(e) =>
+                                  setSettings(prev => ({
+                                    ...prev,
+                                    columnSettings: {
+                                      ...prev.columnSettings,
+                                      [column.key]: {
+                                        ...columnSettings,
+                                        textColor: e.target.value
+                                      }
+                                    }
+                                  }))
+                                }
+                                className="h-8"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm">Колір фону</Label>
+                              <Input
+                                type="color"
+                                value={columnSettings.backgroundColor}
+                                onChange={(e) =>
+                                  setSettings(prev => ({
+                                    ...prev,
+                                    columnSettings: {
+                                      ...prev.columnSettings,
+                                      [column.key]: {
+                                        ...columnSettings,
+                                        backgroundColor: e.target.value
+                                      }
+                                    }
+                                  }))
+                                }
+                                className="h-8"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-3 gap-4">
+                            <div>
+                              <Label className="text-sm">Розмір шрифту</Label>
+                              <Select 
+                                value={columnSettings.fontSize.toString()} 
+                                onValueChange={(value) =>
+                                  setSettings(prev => ({
+                                    ...prev,
+                                    columnSettings: {
+                                      ...prev.columnSettings,
+                                      [column.key]: {
+                                        ...columnSettings,
+                                        fontSize: parseInt(value)
+                                      }
+                                    }
+                                  }))
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="10">10px</SelectItem>
+                                  <SelectItem value="12">12px</SelectItem>
+                                  <SelectItem value="14">14px</SelectItem>
+                                  <SelectItem value="16">16px</SelectItem>
+                                  <SelectItem value="18">18px</SelectItem>
+                                  <SelectItem value="20">20px</SelectItem>
+                                  <SelectItem value="24">24px</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-sm">Жирність</Label>
+                              <Select 
+                                value={columnSettings.fontWeight} 
+                                onValueChange={(value: 'normal' | 'bold') =>
+                                  setSettings(prev => ({
+                                    ...prev,
+                                    columnSettings: {
+                                      ...prev.columnSettings,
+                                      [column.key]: {
+                                        ...columnSettings,
+                                        fontWeight: value
+                                      }
+                                    }
+                                  }))
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="normal">Звичайний</SelectItem>
+                                  <SelectItem value="bold">Жирний</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-sm">Курсив</Label>
+                              <Select 
+                                value={columnSettings.fontStyle} 
+                                onValueChange={(value: 'normal' | 'italic') =>
+                                  setSettings(prev => ({
+                                    ...prev,
+                                    columnSettings: {
+                                      ...prev.columnSettings,
+                                      [column.key]: {
+                                        ...columnSettings,
+                                        fontStyle: value
+                                      }
+                                    }
+                                  }))
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="normal">Звичайний</SelectItem>
+                                  <SelectItem value="italic">Курсив</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Row Styling */}
+                {/* General Font Settings */}
                 <div>
-                  <Label className="text-base font-semibold">Оформлення рядків</Label>
-                  <div className="grid grid-cols-2 gap-4 mt-2">
+                  <Label className="text-base font-semibold">Загальні налаштування шрифту</Label>
+                  <div className="grid grid-cols-3 gap-4 mt-3">
                     <div>
-                      <Label>Розмір шрифту: {settings.fontSize}px</Label>
+                      <Label className="text-sm">Розмір шрифту (рядки)</Label>
                       <Slider
                         value={[settings.fontSize]}
                         onValueChange={([value]) => setSettings(prev => ({ ...prev, fontSize: value }))}
                         min={10}
-                        max={20}
+                        max={24}
                         step={1}
-                        className="mt-1"
+                        className="mt-2"
                       />
+                      <div className="text-xs text-center mt-1">{settings.fontSize}px</div>
                     </div>
                     <div>
-                      <Label>Тип шрифту</Label>
-                      <Select
-                        value={settings.fontFamily}
-                        onValueChange={(value) => setSettings(prev => ({ ...prev, fontFamily: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="system">Системний</SelectItem>
-                          <SelectItem value="serif">Serif</SelectItem>
-                          <SelectItem value="sans-serif">Sans-serif</SelectItem>
-                          <SelectItem value="monospace">Monospace</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Жирність шрифту</Label>
-                      <Select
-                        value={settings.fontWeight}
-                        onValueChange={(value: 'normal' | 'bold') => setSettings(prev => ({ ...prev, fontWeight: value }))}
-                      >
-                        <SelectTrigger>
+                      <Label className="text-sm">Жирність</Label>
+                      <Select value={settings.fontWeight} onValueChange={(value: 'normal' | 'bold') => setSettings(prev => ({ ...prev, fontWeight: value }))}>
+                        <SelectTrigger className="mt-2">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -539,12 +680,9 @@ export function DataTable({
                       </Select>
                     </div>
                     <div>
-                      <Label>Стиль шрифту</Label>
-                      <Select
-                        value={settings.fontStyle}
-                        onValueChange={(value: 'normal' | 'italic') => setSettings(prev => ({ ...prev, fontStyle: value }))}
-                      >
-                        <SelectTrigger>
+                      <Label className="text-sm">Стиль</Label>
+                      <Select value={settings.fontStyle} onValueChange={(value: 'normal' | 'italic') => setSettings(prev => ({ ...prev, fontStyle: value }))}>
+                        <SelectTrigger className="mt-2">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -554,6 +692,27 @@ export function DataTable({
                       </Select>
                     </div>
                   </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <Label className="text-sm">Колір фону рядків</Label>
+                      <Input
+                        type="color"
+                        value={settings.rowBackgroundColor}
+                        onChange={(e) => setSettings(prev => ({ ...prev, rowBackgroundColor: e.target.value }))}
+                        className="mt-1 h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm">Колір тексту рядків</Label>
+                      <Input
+                        type="color"
+                        value={settings.rowTextColor}
+                        onChange={(e) => setSettings(prev => ({ ...prev, rowTextColor: e.target.value }))}
+                        className="mt-1 h-8"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Header Styling */}
@@ -561,7 +720,7 @@ export function DataTable({
                   <Label className="text-base font-semibold">Оформлення заголовків</Label>
                   <div className="grid grid-cols-2 gap-4 mt-2">
                     <div>
-                      <Label>Розмір шрифту: {settings.headerFontSize}px</Label>
+                      <Label className="text-sm">Розмір шрифту: {settings.headerFontSize}px</Label>
                       <Slider
                         value={[settings.headerFontSize]}
                         onValueChange={([value]) => setSettings(prev => ({ ...prev, headerFontSize: value }))}
@@ -572,7 +731,7 @@ export function DataTable({
                       />
                     </div>
                     <div>
-                      <Label>Жирність шрифту</Label>
+                      <Label className="text-sm">Жирність шрифту</Label>
                       <Select
                         value={settings.headerFontWeight}
                         onValueChange={(value: 'normal' | 'bold') => setSettings(prev => ({ ...prev, headerFontWeight: value }))}
@@ -585,6 +744,24 @@ export function DataTable({
                           <SelectItem value="bold">Жирний</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div>
+                      <Label className="text-sm">Колір фону заголовків</Label>
+                      <Input
+                        type="color"
+                        value={settings.headerBackgroundColor}
+                        onChange={(e) => setSettings(prev => ({ ...prev, headerBackgroundColor: e.target.value }))}
+                        className="mt-1 h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm">Колір тексту заголовків</Label>
+                      <Input
+                        type="color"
+                        value={settings.headerTextColor}
+                        onChange={(e) => setSettings(prev => ({ ...prev, headerTextColor: e.target.value }))}
+                        className="mt-1 h-8"
+                      />
                     </div>
                   </div>
                 </div>
