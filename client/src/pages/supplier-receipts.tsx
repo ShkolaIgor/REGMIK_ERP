@@ -16,7 +16,7 @@ import { SupplierReceiptsXmlImport } from "@/components/SupplierReceiptsXmlImpor
 import { ComponentMappingDialog } from "@/components/ComponentMappingDialog";
 import { SupplierReceiptsImport } from "@/components/SupplierReceiptsImport";
 import { SupplierReceiptItemsImport } from "@/components/SupplierReceiptItemsImport";
-import DataTable, { type DataTableColumn } from '@/components/DataTable';
+import { DataTable, type DataTableColumn } from '@/components/DataTable';
 import React from 'react';
 
 // Component to show receipt items when expanded
@@ -628,128 +628,38 @@ export default function SupplierReceipts() {
           </div>
         </div>
 
-        {/* Receipts List */}
-        <div className="bg-white rounded-lg border">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr className="border-b">
-                  <th 
-                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('receipt_date')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Дата отримання
-                      {getSortIcon('receipt_date')}
-                    </div>
-                  </th>
-                  <th 
-                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('supplier_name')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Постачальник
-                      {getSortIcon('supplier_name')}
-                    </div>
-                  </th>
-                  <th 
-                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('document_type_name')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Тип документу
-                      {getSortIcon('document_type_name')}
-                    </div>
-                  </th>
-                  <th 
-                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('supplier_document_number')}
-                  >
-                    <div className="flex items-center gap-2">
-                      № документу
-                      {getSortIcon('supplier_document_number')}
-                    </div>
-                  </th>
-                  <th 
-                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('total_amount')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Сума
-                      {getSortIcon('total_amount')}
-                    </div>
-                  </th>
-                  <th className="text-left p-4 font-medium text-gray-900">Дії</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentReceipts.map((receipt: any) => {
-                  const isExpanded = expandedReceiptId === receipt.id;
-                  
-                  return (
-                    <React.Fragment key={receipt.id}>
-                      <tr 
-                        className="border-b hover:bg-gray-50 cursor-pointer"
-                        onClick={() => setExpandedReceiptId(isExpanded ? null : receipt.id)}
-                      >
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
-                            {isExpanded ? (
-                              <ChevronDown className="h-4 w-4 text-gray-400" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4 text-gray-400" />
-                            )}
-                            <Calendar className="h-4 w-4 text-gray-400" />
-                            {new Date(receipt.receipt_date).toLocaleDateString('uk-UA')}
-                          </div>
-                        </td>
-                        <td className="p-4 font-medium">
-                          {receipt.supplier_name || (
-                            <span className="text-red-500">
-                              Постачальник #{receipt.supplier_id} не знайдений
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-4">{receipt.document_type_name || '—'}</td>
-                        <td className="p-4">
-                          <div className="flex flex-col">
-                            <span className="font-medium">{receipt.supplier_document_number || '—'}</span>
-                            {receipt.supplier_document_date && (
-                              <span className="text-sm text-gray-500">
-                                від {new Date(receipt.supplier_document_date).toLocaleDateString('uk-UA')}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-4 font-bold text-green-600">{parseFloat(receipt.total_amount).toLocaleString('uk-UA')} ₴</td>
-                        <td className="p-4">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEdit(receipt);
-                            }}
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                      
-                      {/* Expanded row with receipt items */}
-                      {isExpanded && (
-                        <tr className="bg-gray-50">
-                          <td colSpan={6} className="p-0">
-                            <ReceiptItemsExpanded receiptId={receipt.id} />
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        {/* DataTable */}
+        <div className="bg-white w-full px-3 py-1 rounded-xl shadow-sm border border-gray-200/50 overflow-hidden">
+          <DataTable
+            data={filteredReceipts}
+            columns={columns}
+            loading={isLoading}
+            title="Список приходів від постачальників"
+            storageKey="supplier-receipts"
+            cardTemplate={cardTemplate}
+            actions={(receipt) => (
+              <div className="flex items-center gap-1">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleEdit(receipt)}
+                  className="h-8 w-8 p-0 hover:bg-blue-50 hover:scale-110 transition-all duration-200"
+                  title="Редагувати прихід"
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => toggleExpand(receipt.id)}
+                  className="h-8 w-8 p-0 hover:bg-green-50 hover:scale-110 transition-all duration-200"
+                  title="Переглянути позиції"
+                >
+                  <Package className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          />
         </div>
 
         {/* Enhanced Pagination */}
