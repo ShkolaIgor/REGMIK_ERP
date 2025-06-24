@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, DataTableColumn } from "@/components/DataTable";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,28 +23,74 @@ export default function Components() {
   const [selectedComponentForAlternatives, setSelectedComponentForAlternatives] = useState<Component | null>(null);
   const [isAlternativesDialogOpen, setIsAlternativesDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortField, setSortField] = useState<string>("name");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-  const [filterCategory, setFilterCategory] = useState<string>("all");
   const [showImportWizard, setShowImportWizard] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
-  const [filterSupplier, setFilterSupplier] = useState<string>("all");
-  const [filterActive, setFilterActive] = useState<string>("all");
-  const [showFilters, setShowFilters] = useState(false);
   
-  // Column widths state
-  const [columnWidths, setColumnWidths] = useState({
-    name: 200,
-    sku: 150,
-    category: 150,
-    description: 200,
-    unit: 100,
-    costPrice: 120,
-    supplier: 150,
-    actions: 100
-  });
+  // DataTable columns
+  const columns: DataTableColumn[] = [
+    {
+      key: 'name',
+      label: 'Назва',
+      sortable: true,
+      filterable: true,
+      render: (value) => <span className="font-bold">{value}</span>
+    },
+    {
+      key: 'sku',
+      label: 'SKU',
+      sortable: true,
+      filterable: true
+    },
+    {
+      key: 'category',
+      label: 'Категорія',
+      sortable: true,
+      filterable: true,
+      render: (value, row) => {
+        const category = categories.find((cat: any) => cat.id === row.categoryId);
+        return category ? (
+          <Badge 
+            variant="secondary" 
+            className="text-xs"
+            style={{ backgroundColor: category.color + '20', color: category.color }}
+          >
+            {category.name}
+          </Badge>
+        ) : (
+          <span className="text-gray-400">—</span>
+        );
+      }
+    },
+    {
+      key: 'description',
+      label: 'Опис',
+      filterable: true,
+      render: (value) => (
+        <span className="max-w-xs truncate block" title={value || ""}>
+          {value || "—"}
+        </span>
+      )
+    },
+    {
+      key: 'unit',
+      label: 'Одиниця',
+      render: (value, row) => 
+        units.find((unit: any) => unit.id === row.unitId)?.shortName || "шт"
+    },
+    {
+      key: 'costPrice',
+      label: 'Собівартість',
+      sortable: true,
+      filterable: true
+    },
+    {
+      key: 'supplier',
+      label: 'Постачальник',
+      sortable: true,
+      filterable: true,
+      render: (value) => value || "—"
+    }
+  ];
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -602,194 +648,27 @@ export default function Components() {
           </div>
         </div>
 
-        <Card>
-          <CardContent className="p-0 overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-gray-50 resizable-header border-r"
-                    style={{ width: columnWidths.name, minWidth: 150 }}
-                    onClick={(e) => handleHeaderClick(e, "name")}
-                  >
-                    <div className="flex items-center">
-                      Назва
-                      {sortField === "name" && (
-                        <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                      )}
-                    </div>
-                    <div className="resize-handle"></div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-gray-50 resizable-header border-r"
-                    style={{ width: columnWidths.sku, minWidth: 100 }}
-                    onClick={(e) => handleHeaderClick(e, "sku")}
-                  >
-                    <div className="flex items-center">
-                      SKU
-                      {sortField === "sku" && (
-                        <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                      )}
-                    </div>
-                    <div className="resize-handle"></div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-gray-50 resizable-header border-r"
-                    style={{ width: columnWidths.category, minWidth: 120 }}
-                    onClick={(e) => handleHeaderClick(e, "category")}
-                  >
-                    <div className="flex items-center">
-                      Категорія
-                      {sortField === "category" && (
-                        <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                      )}
-                    </div>
-                    <div className="resize-handle"></div>
-                  </TableHead>
-                  <TableHead 
-                    className="resizable-header border-r"
-                    style={{ width: columnWidths.description, minWidth: 150 }}
-                  >
-                    Опис
-                    <div className="resize-handle"></div>
-                  </TableHead>
-                  <TableHead 
-                    className="resizable-header border-r"
-                    style={{ width: columnWidths.unit, minWidth: 80 }}
-                  >
-                    Одиниця
-                    <div className="resize-handle"></div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-gray-50 resizable-header border-r"
-                    style={{ width: columnWidths.costPrice, minWidth: 100 }}
-                    onClick={(e) => handleHeaderClick(e, "costPrice")}
-                  >
-                    <div className="flex items-center">
-                      Собівартість
-                      {sortField === "costPrice" && (
-                        <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                      )}
-                    </div>
-                    <div className="resize-handle"></div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-gray-50 resizable-header border-r"
-                    style={{ width: columnWidths.supplier, minWidth: 120 }}
-                    onClick={(e) => handleHeaderClick(e, "supplier")}
-                  >
-                    <div className="flex items-center">
-                      Постачальник
-                      {sortField === "supplier" && (
-                        <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                      )}
-                    </div>
-                    <div className="resize-handle"></div>
-                  </TableHead>
-                  <TableHead style={{ width: columnWidths.actions, minWidth: 80 }}>
-                    Дії
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedComponents.map((component) => {
-                  const category = categories.find((cat: any) => cat.id === component.categoryId);
-                  return (
-                    <TableRow key={component.id}>
-                      <TableCell className="font-bold" style={{ width: columnWidths.name }}>
-                        {component.name}
-                      </TableCell>
-                      <TableCell style={{ width: columnWidths.sku }}>
-                        {component.sku}
-                      </TableCell>
-                      <TableCell style={{ width: columnWidths.category }}>
-                        {category ? (
-                          <Badge 
-                            variant="secondary" 
-                            className="text-xs"
-                            style={{ backgroundColor: category.color + '20', color: category.color }}
-                          >
-                            {category.name}
-                          </Badge>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell 
-                        className="max-w-xs truncate" 
-                        style={{ width: columnWidths.description }}
-                        title={component.description || ""}
-                      >
-                        {component.description || "—"}
-                      </TableCell>
-                      <TableCell style={{ width: columnWidths.unit }}>
-                        {units.find((unit: any) => unit.id === component.unitId)?.shortName || "шт"}
-                      </TableCell>
-                      <TableCell style={{ width: columnWidths.costPrice }}>
-                        {component.costPrice}
-                      </TableCell>
-                      <TableCell style={{ width: columnWidths.supplier }}>
-                        {component.supplier || "—"}
-                      </TableCell>
-                      <TableCell style={{ width: columnWidths.actions }}>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(component)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <DataTable
+          data={components}
+          columns={columns}
+          loading={isLoading}
+          searchable={true}
+          onSearch={(query) => setSearchTerm(query)}
+          actions={(row) => (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleEdit(row)}
+              title="Редагувати"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          )}
+          title="Компоненти"
+          storageKey="components-table"
+        />
 
-        {/* Пагінація нижня */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
-            >
-              Перша
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-            >
-              Попередня
-            </Button>
-            <span className="text-sm">
-              Сторінка {currentPage} з {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Наступна
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage === totalPages}
-            >
-              Остання
-            </Button>
-          </div>
-        )}
+
 
         {/* Діалог управління аналогами */}
         <Dialog open={isAlternativesDialogOpen} onOpenChange={setIsAlternativesDialogOpen}>
