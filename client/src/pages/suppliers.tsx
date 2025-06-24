@@ -111,6 +111,13 @@ export default function Suppliers() {
       )
     },
     {
+      key: 'taxCode',
+      label: 'ЄДРПОУ/ІПН',
+      sortable: true,
+      filterable: true,
+      render: (value) => value || 'Не вказано'
+    },
+    {
       key: 'contactPerson',
       label: 'Контактна особа',
       sortable: true,
