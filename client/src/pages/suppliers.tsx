@@ -105,17 +105,13 @@ export default function Suppliers() {
         <div>
           <div className="font-medium">{value}</div>
           {row.taxCode && (
-            <div className="text-sm text-gray-500">{row.taxCode}</div>
+            <div className="text-sm">
+              <span className="text-gray-600">ЄДРПОУ:</span>{' '}
+              <span className="font-medium text-blue-600">{row.taxCode}</span>
+            </div>
           )}
         </div>
       )
-    },
-    {
-      key: 'taxCode',
-      label: 'ЄДРПОУ/ІПН',
-      sortable: true,
-      filterable: true,
-      render: (value) => value || 'Не вказано'
     },
     {
       key: 'contactPerson',
