@@ -534,6 +534,106 @@ export default function SupplierReceipts() {
   // Use supplierReceipts as receipts for compatibility
   const receipts = supplierReceipts;
 
+  // Receipt items component for expanded view
+  const ReceiptItemsView = ({ receiptId }: { receiptId: number }) => {
+    const { data: receiptItems = [], isLoading: itemsLoading } = useQuery({
+      queryKey: [`/api/supplier-receipt-items/${receiptId}`],
+      enabled: expandedItems.has(receiptId),
+    });
+
+    if (itemsLoading) {
+      return (
+        <div className="p-4 text-center">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-sm text-gray-600 mt-2">Завантаження позицій...</p>
+        </div>
+      );
+    }
+
+    if (!receiptItems || receiptItems.length === 0) {
+      return (
+        <div className="p-4 text-center">
+          <p className="text-sm text-gray-600">Позиції не знайдено</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-gray-50 px-4 py-2 border-b">
+          <h4 className="font-medium text-gray-700">Позиції документу</h4>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="p-3 text-left font-medium text-gray-600">Компонент</th>
+                <th className="p-3 text-left font-medium text-gray-600">SKU</th>
+                <th className="p-3 text-left font-medium text-gray-600">Назва постачальника</th>
+                <th className="p-3 text-right font-medium text-gray-600">Кількість</th>
+                <th className="p-3 text-right font-medium text-gray-600">Ціна за од.</th>
+                <th className="p-3 text-right font-medium text-gray-600">Сума</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {receiptItems.map((item: any, index: number) => (
+                <tr key={index} className="hover:bg-gray-50">
+                  <td className="p-3">
+                    {item.component_name ? (
+                      <div>
+                        <div className="font-medium">{item.component_name}</div>
+                        {item.component_description && (
+                          <div className="text-xs text-gray-500">{item.component_description}</div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 italic">Не вказано</span>
+                    )}
+                  </td>
+                  <td className="p-3">
+                    {item.component_sku ? (
+                      <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">{item.component_sku}</span>
+                    ) : (
+                      <span className="text-gray-400 italic">Не вказано</span>
+                    )}
+                  </td>
+                  <td className="p-3">
+                    {item.supplier_component_name ? (
+                      <span className="text-sm">{item.supplier_component_name}</span>
+                    ) : (
+                      <span className="text-gray-400 italic">Не вказано</span>
+                    )}
+                  </td>
+                  <td className="p-3 text-right font-medium">
+                    {parseFloat(item.quantity).toLocaleString('uk-UA')}
+                  </td>
+                  <td className="p-3 text-right">
+                    {parseFloat(item.unit_price).toLocaleString('uk-UA')} ₴
+                  </td>
+                  <td className="p-3 text-right font-bold text-green-600">
+                    {parseFloat(item.total_price).toLocaleString('uk-UA')} ₴
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot className="bg-gray-50">
+              <tr>
+                <td colSpan={5} className="p-3 text-right font-medium text-gray-700">
+                  Загальна сума:
+                </td>
+                <td className="p-3 text-right font-bold text-lg text-green-600">
+                  {receiptItems.reduce((sum: number, item: any) => 
+                    sum + parseFloat(item.total_price), 0
+                  ).toLocaleString('uk-UA')} ₴
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
   // Receipt items expandable content
   const renderExpandableContent = (receipt: any) => {
     return <ReceiptItemsView receiptId={receipt.id} />;
