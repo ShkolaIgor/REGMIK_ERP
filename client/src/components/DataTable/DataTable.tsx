@@ -276,10 +276,13 @@ export function DataTable({
   };
 
   const renderTableView = () => (
-    <div className="overflow-auto border rounded-lg">
+    <div className={cn(
+      "overflow-auto rounded-lg",
+      settings.showVerticalLines ? "border" : ""
+    )}>
       <table className="w-full">
         <thead
-          className="border-b"
+          className={cn(settings.showVerticalLines ? "border-b" : "")}
           style={{
             backgroundColor: settings.headerBackgroundColor,
             color: settings.headerTextColor,
@@ -345,7 +348,8 @@ export function DataTable({
               <tr
                 key={index}
                 className={cn(
-                  "border-b transition-all duration-300 ease-in-out",
+                  "transition-all duration-300 ease-in-out",
+                  settings.showVerticalLines ? "border-b" : "",
                   onRowClick && "cursor-pointer",
                   settings.enableRowHover && "hover:shadow-lg hover:bg-blue-50/50 hover:scale-[1.005] hover:border-blue-200"
                 )}
