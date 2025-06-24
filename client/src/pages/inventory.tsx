@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, DataTableColumn } from "@/components/DataTable";
 import { ProductForm } from "@/components/ProductForm";
 import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, getStockStatus } from "@/lib/utils";
