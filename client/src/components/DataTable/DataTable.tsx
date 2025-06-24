@@ -230,7 +230,7 @@ export function DataTable({
   };
 
   const handleFilter = (key: string, value: any) => {
-    const newFilters = { ...filters, [key]: value };
+    const newFilters = { ...filters, [key]: value === 'all' ? '' : value };
     setFilters(newFilters);
     setCurrentPage(1);
     onFilter?.(newFilters);
@@ -788,7 +788,7 @@ export function DataTable({
                     <SelectValue placeholder={`Фільтр: ${column.label}`} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Всі</SelectItem>
+                    <SelectItem value="all">Всі</SelectItem>
                     {Array.from(new Set(data.map(item => String(item[column.key] || ''))))
                       .filter(Boolean)
                       .sort()
