@@ -215,7 +215,7 @@ export default function SupplierReceipts() {
   });
 
   // Queries
-  const { data: receipts = [], isLoading } = useQuery({
+  const { data: supplierReceipts = [], isLoading } = useQuery({
     queryKey: ["/api/supplier-receipts"],
   });
 
@@ -670,7 +670,7 @@ export default function SupplierReceipts() {
           <div>
             <h1 className="text-3xl font-bold">Приходи від постачальників</h1>
             <p className="text-muted-foreground">
-              Управління приходами товарів ({filteredReceipts.length} з {receipts.length})
+              Управління приходами товарів ({filteredReceipts.length} з {supplierReceipts.length})
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -763,7 +763,7 @@ export default function SupplierReceipts() {
         {/* DataTable */}
         <div className="bg-white w-full px-3 py-1 rounded-xl shadow-sm border border-gray-200/50 overflow-hidden">
           <DataTable
-            data={filteredReceipts}
+            data={currentReceipts}
             columns={columns}
             loading={isLoading}
             title="Список приходів від постачальників"
