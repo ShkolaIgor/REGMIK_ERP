@@ -490,27 +490,36 @@ export default function Suppliers() {
   }
 
   return (
-    <div className="w-full px-4 py-3">
-      {/* Header with title and action buttons */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Постачальники</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Загалом: {total} постачальник{total === 1 ? '' : total > 4 ? 'ів' : 'и'}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button onClick={() => setIsImportDialogOpen(true)} variant="outline">
-            <Upload className="h-4 w-4 mr-2" />
-            Імпорт XML
-          </Button>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Додати постачальника
+    <div className="min-h-screen bg-gray-50/30">
+      <div className="w-full px-6 py-6">
+        {/* Header with title and action buttons */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200/50 p-6 mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Постачальники</h1>
+              <p className="text-base text-gray-600 mt-2 flex items-center gap-2">
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {total}
+                </span>
+                постачальник{total === 1 ? '' : total > 4 ? 'ів' : 'и'}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button 
+                onClick={() => setIsImportDialogOpen(true)} 
+                variant="outline"
+                className="shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Імпорт XML
               </Button>
-            </DialogTrigger>
+              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Додати постачальника
+                  </Button>
+                </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Додати нового постачальника</DialogTitle>
@@ -644,8 +653,9 @@ export default function Suppliers() {
               </form>
             </DialogContent>
           </Dialog>
+            </div>
+          </div>
         </div>
-      </div>
 
       {/* Import Dialog */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
@@ -915,26 +925,29 @@ export default function Suppliers() {
         </DialogContent>
       </Dialog>
 
-      {/* DataTable */}
-      <DataTable
-        data={suppliers}
-        columns={columns}
-        loading={isLoading}
-        title="Постачальники"
-        storageKey="suppliers"
-        cardTemplate={cardTemplate}
-        actions={(supplier) => (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => handleEdit(supplier)}
-            className="h-8 w-8 p-0"
-            title="Редагувати постачальника"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-        )}
-      />
+        {/* DataTable */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200/50 overflow-hidden">
+          <DataTable
+            data={suppliers}
+            columns={columns}
+            loading={isLoading}
+            title="Постачальники"
+            storageKey="suppliers"
+            cardTemplate={cardTemplate}
+            actions={(supplier) => (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleEdit(supplier)}
+                className="h-8 w-8 p-0 hover:bg-blue-50 hover:scale-110 transition-all duration-200"
+                title="Редагувати постачальника"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
+          />
+        </div>
+      </div>
     </div>
   );
 }
