@@ -191,6 +191,25 @@ export default function Suppliers() {
         </div>
       )}
       
+      {supplier.rating && supplier.rating > 0 && (
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium">Рейтинг:</span>
+          <div className="flex items-center">
+            {Array.from({ length: 5 }, (_, i) => (
+              <span
+                key={i}
+                className={`text-base ${
+                  i < supplier.rating ? 'text-yellow-400' : 'text-gray-300'
+                }`}
+              >
+                ★
+              </span>
+            ))}
+            <span className="text-sm text-gray-600 ml-1">({supplier.rating}/5)</span>
+          </div>
+        </div>
+      )}
+      
       {(supplier.phone || supplier.email) && (
         <div className="text-sm">
           <span className="font-medium">Контакти:</span>
@@ -924,17 +943,6 @@ export default function Suppliers() {
             title="Список постачальників"
             storageKey="suppliers"
             cardTemplate={cardTemplate}
-            actions={(supplier) => (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => handleEdit(supplier)}
-                className="h-8 w-8 p-0 hover:bg-blue-50 hover:scale-110 transition-all duration-200"
-                title="Редагувати постачальника"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-            )}
           />
         </div>
       </div>
