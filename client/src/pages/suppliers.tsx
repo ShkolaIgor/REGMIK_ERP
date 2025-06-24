@@ -74,7 +74,7 @@ export default function Suppliers() {
     description: "",
     paymentTerms: "",
     deliveryTerms: "",
-    rating: 5,
+    rating: 0,
     isActive: true,
     clientTypeId: 3 // Default to "Постачальник"
   });

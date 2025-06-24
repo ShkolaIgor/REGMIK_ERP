@@ -2381,9 +2381,9 @@ export default function Orders() {
 
         {/* Orders Table */}
         <Card>
-          <CardHeader>
+          {/*<CardHeader>
             <CardTitle>Список замовлень</CardTitle>
-          </CardHeader>
+          </CardHeader>*/}
           <CardContent>
             {orders.length === 0 ? (
               <div className="text-center py-8">
