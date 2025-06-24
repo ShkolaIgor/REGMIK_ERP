@@ -252,9 +252,9 @@ export default function SupplierReceipts() {
           <FileText className="h-4 w-4 text-blue-600" />
           <div>
             <div className="font-medium">{value || 'Без номера'}</div>
-            {row.id && (
+            {/*{row.id && (
               <div className="text-xs text-gray-500">ID: {row.id}</div>
-            )}
+            )}*/}
           </div>
         </div>
       )
