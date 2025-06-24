@@ -179,53 +179,77 @@ export default function Orders() {
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [showPaginationSettings, setShowPaginationSettings] = useState(false);
   
-  // Стан для керування порядком стовпців
-  const [columnOrder, setColumnOrder] = useState(() => {
-    // Очищуємо старі налаштування щоб застосувати новий порядок стовпців
-    localStorage.removeItem('orders-column-order');
-    const saved = localStorage.getItem('orders-column-order');
-    return saved ? JSON.parse(saved) : [
-      'orderSequenceNumber',
-      'orderNumber', 
-      'clientName',
-      'paymentDate',
-      'dueDate',
-      'totalAmount',
-      'shippedDate',
-      'status',
-      'actions'
-    ];
-  });
+
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Функція обробки перетягування стовпців
-  const handleColumnDragEnd = (result: any) => {
-    if (!result.destination) return;
 
-    const newColumnOrder = Array.from(columnOrder);
-    const [reorderedItem] = newColumnOrder.splice(result.source.index, 1);
-    newColumnOrder.splice(result.destination.index, 0, reorderedItem);
 
-    setColumnOrder(newColumnOrder);
-    localStorage.setItem('orders-column-order', JSON.stringify(newColumnOrder));
-  };
+  // DataTable columns
+  const columns: DataTableColumn[] = [
+    {
+      key: 'orderNumber',
+      label: 'Номер замовлення',
+      sortable: true,
+      filterable: true,
+      render: (value, row) => (
+        <div className="font-semibold text-center text-lg p-2 rounded">
+          {isOrderOverdue(row) && <div className="text-xs text-red-600 font-bold mb-1">ПРОСТРОЧЕНО</div>}
+          {row.orderNumber || row.orderSequenceNumber}
+        </div>
+      )
+    },
+    {
+      key: 'client',
+      label: 'Клієнт',
+      sortable: true,
+      filterable: true,
+      render: (value, row) => (
+        <div>
+          <div className="font-medium">{row.client?.name || 'Невідомий клієнт'}</div>
+          {row.client?.taxCode && (
+            <div className="text-sm text-gray-500">ЄДРПОУ: {row.client.taxCode}</div>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'totalAmount',
+      label: 'Сума',
+      sortable: true,
+      render: (value) => <div className="font-medium">{formatCurrency(parseFloat(value))}</div>
+    },
+    {
+      key: 'status',
+      label: 'Статус',
+      sortable: true,
+      filterable: true,
+      render: (value, row) => {
+        const statusInfo = orderStatuses?.find((s: any) => s.id === row.statusId);
+        return statusInfo ? (
+          <Badge 
+            style={{ 
+              color: statusInfo.textColor, 
+              backgroundColor: statusInfo.backgroundColor 
+            }}
+          >
+            {statusInfo.name}
+          </Badge>
+        ) : (
+          <Badge variant="secondary">{value}</Badge>
+        );
+      }
+    },
+    {
+      key: 'createdAt',
+      label: 'Дата створення',
+      sortable: true,
+      render: (value) => value ? new Date(value).toLocaleDateString('uk-UA') : '—'
+    }
+  ];
 
-  // Мапа назв стовпців
-  const columnLabels = {
-    orderSequenceNumber: 'Замовлення',
-    orderNumber: 'Рахунок',
-    clientName: 'Клієнт',
-    paymentDate: 'Дата оплати',
-    dueDate: 'Термін виконання',
-    totalAmount: 'Сума',
-    shippedDate: 'Відвантаження',
-    status: 'Статус',
-    actions: 'Дії'
-  };
-
-  // Функція рендерингу контенту стовпця
+  // Функція рендерингу контенту стовпця (залишена для сумісності)
   const renderColumnContent = (columnKey: string, order: any) => {
     
     switch (columnKey) {
