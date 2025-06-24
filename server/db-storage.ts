@@ -8579,7 +8579,22 @@ export class DatabaseStorage implements IStorage {
   async getSupplierReceiptItems(receiptId: number) {
     try {
       console.log('Fetching supplier receipt items for receipt ID:', receiptId);
-      const result = await pool.query('SELECT * FROM supplier_receipt_items WHERE receipt_id = $1', [receiptId]);
+      const result = await pool.query(`
+        SELECT 
+          sri.id,
+          sri.receipt_id,
+          sri.component_id,
+          sri.quantity,
+          sri.unit_price,
+          sri.total_price,
+          sri.supplier_component_name,
+          c.name as component_name,
+          c.sku as component_sku,
+          c.description as component_description
+        FROM supplier_receipt_items sri
+        LEFT JOIN components c ON sri.component_id = c.id
+        WHERE sri.receipt_id = $1
+      `, [receiptId]);
       console.log('Found supplier receipt items:', result.rows.length);
       return result.rows;
     } catch (error) {
