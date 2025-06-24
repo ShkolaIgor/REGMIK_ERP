@@ -238,6 +238,138 @@ export default function SupplierReceipts() {
   });
   const purchaseOrders = Array.isArray(purchaseOrdersData) ? purchaseOrdersData : [];
 
+
+
+  // DataTable columns configuration
+  const columns: DataTableColumn[] = [
+    {
+      key: 'supplier_document_number',
+      label: 'Документ',
+      sortable: true,
+      filterable: true,
+      render: (value, row) => (
+        <div className="flex items-center space-x-2">
+          <FileText className="h-4 w-4 text-blue-600" />
+          <div>
+            <div className="font-medium">{value || 'Без номера'}</div>
+            {row.id && (
+              <div className="text-xs text-gray-500">ID: {row.id}</div>
+            )}
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'supplier_name',
+      label: 'Постачальник',
+      sortable: true,
+      filterable: true,
+      render: (value, row) => (
+        <div className="flex items-center space-x-2">
+          <Building2 className="h-4 w-4 text-orange-600" />
+          <span>{value || 'Невідомо'}</span>
+        </div>
+      )
+    },
+    {
+      key: 'receipt_date',
+      label: 'Дата',
+      sortable: true,
+      render: (value) => (
+        <div className="flex items-center space-x-2">
+          <Calendar className="h-4 w-4 text-gray-500" />
+          <span>{new Date(value).toLocaleDateString('uk-UA')}</span>
+        </div>
+      )
+    },
+    {
+      key: 'total_amount',
+      label: 'Сума',
+      sortable: true,
+      render: (value) => (
+        <div className="font-medium">{parseFloat(value).toFixed(2)} ₴</div>
+      )
+    },
+    {
+      key: 'document_type_name',
+      label: 'Тип документу',
+      filterable: true,
+      render: (value) => (
+        <span className="text-sm">{value || '-'}</span>
+      )
+    }
+  ];
+
+  // Картковий шаблон
+  const cardTemplate = (receipt: any) => (
+    <div className="space-y-3">
+      <div className="flex items-start space-x-3">
+        <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+        <div className="min-w-0 flex-1">
+          <div className="font-medium text-lg leading-tight">
+            {receipt.supplier_document_number || 'Без номера документа'}
+          </div>
+          <div className="text-sm text-gray-500 mt-1">
+            ID: {receipt.id}
+          </div>
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-sm font-medium">Постачальник:</span>
+          <span className="text-sm font-bold">{receipt.supplier_name || "Невідомо"}</span>
+        </div>
+        
+        <div className="flex justify-between items-center">
+          <span className="text-sm font-medium">Дата:</span>
+          <span className="text-sm">{new Date(receipt.receipt_date).toLocaleDateString('uk-UA')}</span>
+        </div>
+        
+        <div className="flex justify-between items-center">
+          <span className="text-sm font-medium">Сума:</span>
+          <span className="text-sm font-bold">{parseFloat(receipt.total_amount).toFixed(2)} ₴</span>
+        </div>
+
+        {receipt.document_type_name && (
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium">Тип документу:</span>
+            <span className="text-sm">{receipt.document_type_name}</span>
+          </div>
+        )}
+      </div>
+
+      {receipt.comment && (
+        <div className="text-sm">
+          <span className="font-medium">Коментар:</span>
+          <p className="text-gray-500 text-xs mt-1 line-clamp-2">{receipt.comment}</p>
+        </div>
+      )}
+      
+      {/* Кнопки дій */}
+      <div className="flex justify-end pt-2 border-t gap-2">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => handleEdit(receipt)}
+          className="h-8 w-8 p-0 hover:bg-blue-50 hover:scale-110 transition-all duration-200"
+          title="Редагувати прихід"
+        >
+          <Edit2 className="h-4 w-4" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => toggleExpand(receipt.id)}
+          className="h-8 w-8 p-0 hover:bg-green-50 hover:scale-110 transition-all duration-200"
+          title="Переглянути позиції"
+        >
+          <Package className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+
   // Mutations
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -451,7 +583,7 @@ export default function SupplierReceipts() {
   };
 
   // Filter and sort receipts
-  const filteredReceipts = receipts.filter((receipt: any) => {
+  const filteredReceipts = supplierReceipts.filter((receipt: any) => {
     // Use supplier_name from JOIN query instead of looking up
     const supplierName = receipt.supplier_name || '';
     const documentTypeName = receipt.document_type_name || '';
