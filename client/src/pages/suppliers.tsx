@@ -491,7 +491,7 @@ export default function Suppliers() {
 
   return (
     <div className="min-h-screen bg-gray-50/30">
-      <div className="w-full px-6 py-6">
+      <div className="w-full px-1 py-1"> {/*відступи для контенту*/}
         {/* Header with title and action buttons */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200/50 p-6 mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -926,12 +926,12 @@ export default function Suppliers() {
       </Dialog>
 
         {/* DataTable */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200/50 overflow-hidden">
+        <div className="bg-white w-full px-3 py-1 rounded-xl shadow-sm border border-gray-200/50 overflow-hidden">
           <DataTable
             data={suppliers}
             columns={columns}
             loading={isLoading}
-            title="Постачальники"
+            title="Список постачальників"
             storageKey="suppliers"
             cardTemplate={cardTemplate}
             actions={(supplier) => (
