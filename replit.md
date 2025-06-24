@@ -123,6 +123,18 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### June 24, 2025
+- Created universal DataTable component for all system lists with:
+  - Advanced pagination with configurable page sizes and first/last page navigation
+  - Drag-and-drop column reordering, click-to-sort, resizable columns with persistence
+  - Font customization (size, family, weight, style) for rows and headers separately
+  - Background and text color customization for rows and headers
+  - Unified search and filtering design across all pages
+  - Table/cards view toggle with custom card templates
+  - Settings persistence in localStorage per table
+- Migrated supplier-receipts and components pages to use DataTable
+- Removed duplicate pagination and sorting code across pages
+
 ### June 23, 2025
 - Fixed supplier receipts XML import with external_id field as integer type
 - ID_LISTPRIHOD now correctly stores in supplier_receipts.external_id 
