@@ -11,11 +11,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Edit2, Trash2, Upload, FileText, Calendar, Package, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Filter } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, Upload, FileText, Calendar, Package, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Filter, Building2, AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { SupplierReceiptsXmlImport } from "@/components/SupplierReceiptsXmlImport";
 import { ComponentMappingDialog } from "@/components/ComponentMappingDialog";
 import { SupplierReceiptsImport } from "@/components/SupplierReceiptsImport";
 import { SupplierReceiptItemsImport } from "@/components/SupplierReceiptItemsImport";
+import DataTable, { type DataTableColumn } from '@/components/DataTable';
 import React from 'react';
 
 // Component to show receipt items when expanded
