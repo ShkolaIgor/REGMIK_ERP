@@ -12,6 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Trash2, Edit, Plus, Upload, FileX, CheckCircle, XCircle, AlertCircle, Eye, Building2, Search, User } from "lucide-react";
+import { DataTable, type DataTableColumn } from "@/components/DataTable";
 
 interface Supplier {
   id: number;
@@ -49,34 +50,7 @@ interface ImportJob {
   totalRows: number;
 }
 
-// Компонент пошуку з автофокусом
-function SearchInput({ value, onChange }: { 
-  value: string; 
-  onChange: (value: string) => void; 
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, []);
-
-  return (
-    <div className="relative max-w-md">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-      <Input
-        ref={inputRef}
-        type="text"
-        placeholder="Пошук постачальників за назвою, ЄДРПОУ або контактами..."
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="pl-10"
-        autoComplete="off"
-      />
-    </div>
-  );
-}
 
 export default function Suppliers() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -86,11 +60,8 @@ export default function Suppliers() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [currentJob, setCurrentJob] = useState<ImportJob | null>(null);
   
-  // Пагінація та фільтрація
-  const [currentPage, setCurrentPage] = useState(1);
+  // Пошук
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const pageSize = 12;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -111,39 +82,173 @@ export default function Suppliers() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Обробник зміни пошуку
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
-  };
-
-  // Дебаунс для пошуку
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-      setCurrentPage(1);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
   const { data: suppliersData, isLoading } = useQuery({
-    queryKey: ["/api/suppliers", currentPage, pageSize, debouncedSearch],
+    queryKey: ["/api/suppliers"],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: pageSize.toString(),
-      });
-      if (debouncedSearch) {
-        params.append('search', debouncedSearch);
-      }
-      const response = await fetch(`/api/suppliers?${params}`);
+      const response = await fetch('/api/suppliers?limit=1000');
       if (!response.ok) throw new Error('Failed to fetch suppliers');
       return response.json();
     },
   });
 
   const suppliers = suppliersData?.suppliers || [];
-  const totalPages = suppliersData?.totalPages || 1;
   const total = suppliersData?.total || 0;
+
+  // Колонки для DataTable
+  const columns: DataTableColumn[] = [
+    {
+      key: 'name',
+      label: 'Назва',
+      sortable: true,
+      filterable: true,
+      render: (value, row) => (
+        <div>
+          <div className="font-medium">{value}</div>
+          {row.fullName && <div className="text-sm text-gray-500">{row.fullName}</div>}
+        </div>
+      )
+    },
+    {
+      key: 'taxCode',
+      label: 'ЄДРПОУ/ІПН',
+      sortable: true,
+      filterable: true,
+      render: (value) => value || 'Не вказано'
+    },
+    {
+      key: 'contactPerson',
+      label: 'Контактна особа',
+      sortable: true,
+      filterable: true,
+      render: (value) => value || '-'
+    },
+    {
+      key: 'phone',
+      label: 'Телефон',
+      filterable: true,
+      render: (value) => value || '-'
+    },
+    {
+      key: 'email',
+      label: 'Email',
+      filterable: true,
+      render: (value) => value || '-'
+    },
+    {
+      key: 'rating',
+      label: 'Рейтинг',
+      sortable: true,
+      render: (value) => (
+        <Badge variant="outline">
+          {value}/5
+        </Badge>
+      )
+    },
+    {
+      key: 'isActive',
+      label: 'Статус',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <Badge variant={value ? "default" : "secondary"}>
+          {value ? "Активний" : "Неактивний"}
+        </Badge>
+      )
+    }
+  ];
+
+  // Картковий шаблон
+  const cardTemplate = (supplier: Supplier) => (
+    <div className="space-y-3">
+      <div className="flex items-start space-x-3">
+        <Building2 className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
+        <div className="min-w-0 flex-1">
+          <div className="font-medium text-lg leading-tight">{supplier.name}</div>
+          {supplier.fullName && (
+            <div className="text-sm text-gray-500 mt-1 line-clamp-2">
+              {supplier.fullName}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-sm font-medium">ЄДРПОУ/ІПН:</span>
+          <span className="text-sm font-bold">{supplier.taxCode || "Не вказано"}</span>
+        </div>
+        
+        <div className="flex flex-wrap gap-2">
+          <Badge variant={supplier.isActive ? "default" : "secondary"} className="text-xs">
+            {supplier.isActive ? "Активний" : "Неактивний"}
+          </Badge>
+          {supplier.rating && supplier.rating > 0 && (
+            <Badge variant="outline" className="text-xs">
+              Рейтинг: {supplier.rating}/5
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      {supplier.contactPerson && (
+        <div className="text-sm">
+          <span className="font-medium">Контактна особа:</span>
+          <p className="text-gray-500 text-xs mt-1">{supplier.contactPerson}</p>
+        </div>
+      )}
+      
+      {(supplier.phone || supplier.email) && (
+        <div className="text-sm">
+          <span className="font-medium">Контакти:</span>
+          <div className="text-xs mt-1 space-y-1">
+            {supplier.phone && (
+              <p className="text-gray-500">📞 {supplier.phone}</p>
+            )}
+            {supplier.email && (
+              <p className="text-gray-500">✉️ {supplier.email}</p>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {supplier.address && (
+        <div className="text-sm">
+          <span className="font-medium">Адреса:</span>
+          <p className="text-gray-500 text-xs mt-1 line-clamp-2">{supplier.address}</p>
+        </div>
+      )}
+      
+      {(supplier.paymentTerms || supplier.deliveryTerms) && (
+        <div className="text-sm">
+          <span className="font-medium">Умови:</span>
+          <div className="text-xs mt-1 space-y-1">
+            {supplier.paymentTerms && (
+              <p className="text-gray-500">💰 {supplier.paymentTerms}</p>
+            )}
+            {supplier.deliveryTerms && (
+              <p className="text-gray-500">🚚 {supplier.deliveryTerms}</p>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {supplier.description && (
+        <div className="text-sm">
+          <span className="font-medium">Примітки:</span>
+          <p className="text-gray-500 text-xs mt-1 line-clamp-2">{supplier.description}</p>
+        </div>
+      )}
+
+      <div className="pt-2 border-t">
+        <div className="flex justify-between text-xs text-gray-500">
+          <span>Створено: {supplier.createdAt ? new Date(supplier.createdAt).toLocaleDateString('uk-UA') : 'Невідомо'}</span>
+          {supplier.updatedAt && supplier.updatedAt !== supplier.createdAt && (
+            <span>Оновлено: {new Date(supplier.updatedAt).toLocaleDateString('uk-UA')}</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -538,14 +643,6 @@ export default function Suppliers() {
         </div>
       </div>
 
-      {/* Search Section */}
-      <div className="mb-6">
-        <SearchInput 
-          value={searchQuery} 
-          onChange={handleSearchChange}
-        />
-      </div>
-
       {/* Import Dialog */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogContent>
@@ -814,171 +911,25 @@ export default function Suppliers() {
         </DialogContent>
       </Dialog>
 
-      {/* Suppliers List */}
-      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        {suppliers.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-8">
-              <FileX className="h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Постачальники відсутні</h3>
-              <p className="text-gray-500 text-center mb-4">
-                У вас ще немає постачальників. Додайте першого постачальника або імпортуйте дані з XML файлу.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          suppliers.map((supplier: Supplier) => (
-            <Card key={supplier.id}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start space-x-3 mb-3">
-                  <Building2 className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <CardTitle className="text-lg leading-tight">{supplier.name}</CardTitle>
-                    {supplier.fullName && (
-                      <CardDescription className="text-sm mt-1 line-clamp-2">
-                        {supplier.fullName}
-                      </CardDescription>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-foreground">ЄДРПОУ/ІПН:</span>
-                    <span className="text-sm font-bold text-foreground">{supplier.taxCode || "Не вказано"}</span>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant={supplier.isActive ? "default" : "secondary"} className="text-xs">
-                      {supplier.isActive ? "Активний" : "Неактивний"}
-                    </Badge>
-                    {supplier.rating && supplier.rating > 0 && (
-                      <Badge variant="outline" className="text-xs">
-                        Рейтинг: {supplier.rating}/5
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="pt-0 space-y-3">
-                {supplier.contactPerson && (
-                  <div className="text-sm">
-                    <span className="font-medium text-foreground">Контактна особа:</span>
-                    <p className="text-muted-foreground text-xs mt-1">{supplier.contactPerson}</p>
-                  </div>
-                )}
-                
-                {(supplier.phone || supplier.email) && (
-                  <div className="text-sm">
-                    <span className="font-medium text-foreground">Контакти:</span>
-                    <div className="text-xs mt-1 space-y-1">
-                      {supplier.phone && (
-                        <p className="text-muted-foreground">📞 {supplier.phone}</p>
-                      )}
-                      {supplier.email && (
-                        <p className="text-muted-foreground">✉️ {supplier.email}</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-                
-                {supplier.address && (
-                  <div className="text-sm">
-                    <span className="font-medium text-foreground">Адреса:</span>
-                    <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{supplier.address}</p>
-                  </div>
-                )}
-                
-                {(supplier.paymentTerms || supplier.deliveryTerms) && (
-                  <div className="text-sm">
-                    <span className="font-medium text-foreground">Умови:</span>
-                    <div className="text-xs mt-1 space-y-1">
-                      {supplier.paymentTerms && (
-                        <p className="text-muted-foreground">💰 {supplier.paymentTerms}</p>
-                      )}
-                      {supplier.deliveryTerms && (
-                        <p className="text-muted-foreground">🚚 {supplier.deliveryTerms}</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-                
-                {supplier.description && (
-                  <div className="text-sm">
-                    <span className="font-medium text-foreground">Примітки:</span>
-                    <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{supplier.description}</p>
-                  </div>
-                )}
-
-                {/* Дати створення та оновлення */}
-                <div className="pt-2 border-t border-border">
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Створено: {supplier.createdAt ? new Date(supplier.createdAt).toLocaleDateString('uk-UA') : 'Невідомо'}</span>
-                    {supplier.updatedAt && supplier.updatedAt !== supplier.createdAt && (
-                      <span>Оновлено: {new Date(supplier.updatedAt).toLocaleDateString('uk-UA')}</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex justify-end pt-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleEdit(supplier)} 
-                    className="h-8"
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                    Редагувати
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+      {/* DataTable */}
+      <DataTable
+        data={suppliers}
+        columns={columns}
+        loading={isLoading}
+        title="Постачальники"
+        storageKey="suppliers"
+        cardTemplate={cardTemplate}
+        actions={(supplier) => (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => handleEdit(supplier)} 
+          >
+            <Edit className="h-4 w-4 mr-1" />
+            Редагувати
+          </Button>
         )}
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center space-x-2 mt-6">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-          >
-            Попередня
-          </Button>
-          
-          <div className="flex space-x-1">
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
-              if (pageNum > totalPages) return null;
-              
-              return (
-                <Button
-                  key={pageNum}
-                  variant={currentPage === pageNum ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCurrentPage(pageNum)}
-                  className="w-10"
-                >
-                  {pageNum}
-                </Button>
-              );
-            })}
-          </div>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-            disabled={currentPage === totalPages}
-          >
-            Наступна
-          </Button>
-        </div>
-      )}
+      />
     </div>
   );
 }
