@@ -327,6 +327,7 @@ export function DataTable({
           }}
         >
           <tr>
+            {expandableContent && <th className="px-4 py-3 w-8"></th>}
             {visibleColumns.map((column) => (
               <th
                 key={column.key}
@@ -369,35 +370,52 @@ export function DataTable({
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan={visibleColumns.length + (actions ? 1 : 0)} className="px-4 py-8 text-center">
+              <td colSpan={visibleColumns.length + (actions ? 1 : 0) + (expandableContent ? 1 : 0)} className="px-4 py-8 text-center">
                 Завантаження...
               </td>
             </tr>
           ) : paginatedData.length === 0 ? (
             <tr>
-              <td colSpan={visibleColumns.length + (actions ? 1 : 0)} className="px-4 py-8 text-center text-gray-500">
+              <td colSpan={visibleColumns.length + (actions ? 1 : 0) + (expandableContent ? 1 : 0)} className="px-4 py-8 text-center text-gray-500">
                 Дані не знайдено
               </td>
             </tr>
           ) : (
-            paginatedData.map((row, index) => (
-              <tr
-                key={index}
-                className={cn(
-                  "border-b transition-all duration-300 ease-in-out",
-                  onRowClick && "cursor-pointer",
-                  settings.enableRowHover && "hover:shadow-lg hover:bg-blue-50/50 hover:scale-[1.005] hover:border-blue-200"
-                )}
-                style={{
-                  backgroundColor: settings.rowBackgroundColor,
-                  color: settings.rowTextColor,
-                  fontSize: `${settings.fontSize}px`,
-                  fontWeight: settings.fontWeight,
-                  fontStyle: settings.fontStyle
-                }}
-                onClick={() => onRowClick?.(row)}
-              >
-                {visibleColumns.map((column) => {
+            paginatedData.map((row, index) => {
+              const itemId = row.id || index;
+              const isExpanded = expandedItems.has(itemId);
+              
+              return (
+                <React.Fragment key={itemId}>
+                  <tr
+                    className={cn(
+                      "border-b transition-all duration-300 ease-in-out",
+                      (onRowClick || expandableContent) && "cursor-pointer",
+                      settings.enableRowHover && "hover:shadow-lg hover:bg-blue-50/50 hover:scale-[1.005] hover:border-blue-200"
+                    )}
+                    style={{
+                      backgroundColor: settings.rowBackgroundColor,
+                      color: settings.rowTextColor,
+                      fontSize: `${settings.fontSize}px`,
+                      fontWeight: settings.fontWeight,
+                      fontStyle: settings.fontStyle
+                    }}
+                    onClick={() => {
+                      if (expandableContent) {
+                        onToggleExpand?.(itemId);
+                      } else {
+                        onRowClick?.(row);
+                      }
+                    }}
+                  >
+                    {expandableContent && (
+                      <td className="px-4 py-3 w-8">
+                        <ChevronRight 
+                          className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} 
+                        />
+                      </td>
+                    )}
+                    {visibleColumns.map((column) => {
                   const columnSettings = settings.columnSettings[column.key] || defaultColumnSettings;
                   return (
                     <td 
@@ -426,23 +444,34 @@ export function DataTable({
                       }
                     </td>
                   );
-                })}
-                {actions && (
-                  <td 
-                    className={cn(
-                      "px-4 py-3",
-                      settings.showVerticalLines ? "border-r-0" : ""
+                    })}
+                    {actions && (
+                      <td 
+                        className={cn(
+                          "px-4 py-3",
+                          settings.showVerticalLines ? "border-r-0" : ""
+                        )}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex items-center gap-1">
+                          {actions(row)}
+                        </div>
+                      </td>
                     )}
-                  >
-                    <TooltipProvider>
-                      <div className="flex items-center gap-1">
-                        {actions(row)}
-                      </div>
-                    </TooltipProvider>
-                  </td>
-                )}
-              </tr>
-            ))
+                  </tr>
+                  {expandableContent && isExpanded && (
+                    <tr>
+                      <td 
+                        colSpan={visibleColumns.length + (actions ? 1 : 0) + (expandableContent ? 1 : 0)} 
+                        className="px-4 py-4 bg-gray-50 border-b"
+                      >
+                        {expandableContent(row)}
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })
           )}
         </tbody>
       </table>
