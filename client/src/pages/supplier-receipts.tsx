@@ -193,7 +193,7 @@ export default function SupplierReceipts() {
   const [pageSize, setPageSize] = useState(10);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showMappingDialog, setShowMappingDialog] = useState(false);
-  const [expandedReceiptId, setExpandedReceiptId] = useState<number | null>(null);
+  const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
   const [sortField, setSortField] = useState<string>('receipt_date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [supplierFilter, setSupplierFilter] = useState<string>('all');
@@ -522,7 +522,13 @@ export default function SupplierReceipts() {
   };
 
   const toggleExpand = (receiptId: number) => {
-    setExpandedReceiptId(expandedReceiptId === receiptId ? null : receiptId);
+    const newExpanded = new Set(expandedItems);
+    if (newExpanded.has(receiptId)) {
+      newExpanded.delete(receiptId);
+    } else {
+      newExpanded.add(receiptId);
+    }
+    setExpandedItems(newExpanded);
   };
 
   // Use supplierReceipts as receipts for compatibility
@@ -768,7 +774,6 @@ export default function SupplierReceipts() {
         </div>
 
         {/* DataTable */}
-        {/* DataTable */}
         <div className="bg-white w-full px-3 py-1 rounded-xl shadow-sm border border-gray-200/50 overflow-hidden">
           <DataTable
             data={filteredReceipts}
@@ -777,25 +782,22 @@ export default function SupplierReceipts() {
             title="Список приходів від постачальників"
             storageKey="supplier-receipts"
             cardTemplate={cardTemplate}
+            expandableContent={renderExpandableContent}
+            expandedItems={expandedItems}
+            onToggleExpand={toggleExpand}
             actions={(receipt) => (
               <div className="flex items-center gap-1">
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => handleEdit(receipt)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEdit(receipt);
+                  }}
                   className="h-8 w-8 p-0 hover:bg-blue-50 hover:scale-110 transition-all duration-200"
                   title="Редагувати прихід"
                 >
                   <Edit2 className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => toggleExpand(receipt.id)}
-                  className="h-8 w-8 p-0 hover:bg-green-50 hover:scale-110 transition-all duration-200"
-                  title="Переглянути позиції"
-                >
-                  <Package className="h-4 w-4" />
                 </Button>
               </div>
             )}
