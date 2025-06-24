@@ -504,7 +504,7 @@ export function DataTable({
                       return (
                         <div key={column.key} className="border rounded-lg p-4 space-y-3">
                           <div className="flex items-center justify-between">
-                            <Label className="font-medium">{column.label}</Label>
+                            <Label className="font-medium">{fieldLabel}</Label>
                             <div className="flex items-center space-x-4">
                               <div className="flex items-center space-x-2">
                                 <Checkbox
