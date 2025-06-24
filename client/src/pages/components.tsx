@@ -241,7 +241,84 @@ export default function Components() {
     }
   };
 
+  const filteredAndSortedComponents = components
+    .filter(component => {
+      const matchesSearch = component.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           component.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (component.supplier && component.supplier.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesCategory = filterCategory === "all" || !filterCategory || 
+                             (component.categoryId && component.categoryId.toString() === filterCategory);
+      const matchesSupplier = filterSupplier === "all" || !filterSupplier ||
+                             (component.supplier && component.supplier === filterSupplier);
+      const matchesActive = filterActive === "all" || 
+                           (filterActive === "active" && component.isActive !== false) ||
+                           (filterActive === "inactive" && component.isActive === false);
+      
+      return matchesSearch && matchesCategory && matchesSupplier && matchesActive;
+    })
+    .sort((a, b) => {
+      let aVal, bVal;
+      
+      switch (sortField) {
+        case "name":
+          aVal = a.name.toLowerCase();
+          bVal = b.name.toLowerCase();
+          break;
+        case "sku":
+          aVal = a.sku.toLowerCase();
+          bVal = b.sku.toLowerCase();
+          break;
+        case "costPrice":
+          aVal = parseFloat(a.costPrice);
+          bVal = parseFloat(b.costPrice);
+          break;
+        case "supplier":
+          aVal = (a.supplier || "").toLowerCase();
+          bVal = (b.supplier || "").toLowerCase();
+          break;
+        case "category":
+          const categoryA = categories.find((cat: any) => cat.id === a.categoryId);
+          const categoryB = categories.find((cat: any) => cat.id === b.categoryId);
+          aVal = (categoryA?.name || "").toLowerCase();
+          bVal = (categoryB?.name || "").toLowerCase();
+          break;
+        case "createdAt":
+          aVal = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          bVal = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          break;
+        default:
+          return 0;
+      }
+      
+      if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
 
+  // Pagination
+  const totalItems = filteredAndSortedComponents.length;
+  const totalPages = pageSize === -1 ? 1 : Math.ceil(totalItems / pageSize);
+  const startIndex = pageSize === -1 ? 0 : (currentPage - 1) * pageSize;
+  const endIndex = pageSize === -1 ? totalItems : startIndex + pageSize;
+  const paginatedComponents = filteredAndSortedComponents.slice(startIndex, endIndex);
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const handleHeaderClick = (e: React.MouseEvent, field: string) => {
+    // Only handle sort if click is not on resize handle
+    const target = e.target as HTMLElement;
+    if (!target.classList.contains('resize-handle')) {
+      e.stopPropagation();
+      handleSort(field);
+    }
+  };
 
   if (isLoading) {
     return (

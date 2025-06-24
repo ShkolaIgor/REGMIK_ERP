@@ -132,18 +132,8 @@ Preferred communication style: Simple, everyday language.
   - Unified search and filtering design across all pages
   - Table/cards view toggle with custom card templates
   - Settings persistence in localStorage per table
-  - Visual settings: vertical lines toggle, hover effects, border controls
-- Applied DataTable to all system list pages:
-  - Suppliers page with ЄДРПОУ highlighting and separate column
-  - Supplier receipts with expandable items view
-  - Components page with category badges and cost display
-  - Orders page with status management and actions
-  - Clients page with customer/supplier indicators
-  - Inventory page with stock level indicators
-- Completed full migration from old table components to DataTable
-- Removed all duplicate pagination, sorting, and DragDropContext code
-- Fixed runtime errors related to missing table components
-- Enhanced visual consistency with unified styling and behavior
+- Migrated supplier-receipts and components pages to use DataTable
+- Removed duplicate pagination and sorting code across pages
 
 ### June 23, 2025
 - Fixed supplier receipts XML import with external_id field as integer type
