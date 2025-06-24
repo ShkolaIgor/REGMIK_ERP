@@ -569,7 +569,6 @@ export default function SupplierReceipts() {
               <tr>
                 <th className="p-3 text-left font-medium text-gray-600">Компонент</th>
                 <th className="p-3 text-left font-medium text-gray-600">SKU</th>
-                <th className="p-3 text-left font-medium text-gray-600">Назва постачальника</th>
                 <th className="p-3 text-right font-medium text-gray-600">Кількість</th>
                 <th className="p-3 text-right font-medium text-gray-600">Ціна за од.</th>
                 <th className="p-3 text-right font-medium text-gray-600">Сума</th>
@@ -597,13 +596,6 @@ export default function SupplierReceipts() {
                       <span className="text-gray-400 italic">Не вказано</span>
                     )}
                   </td>
-                  <td className="p-3">
-                    {item.supplier_component_name ? (
-                      <span className="text-sm">{item.supplier_component_name}</span>
-                    ) : (
-                      <span className="text-gray-400 italic">Не вказано</span>
-                    )}
-                  </td>
                   <td className="p-3 text-right font-medium">
                     {parseFloat(item.quantity).toLocaleString('uk-UA')}
                   </td>
@@ -618,7 +610,7 @@ export default function SupplierReceipts() {
             </tbody>
             <tfoot className="bg-gray-50">
               <tr>
-                <td colSpan={5} className="p-3 text-right font-medium text-gray-700">
+                <td colSpan={4} className="p-3 text-right font-medium text-gray-700">
                   Загальна сума:
                 </td>
                 <td className="p-3 text-right font-bold text-lg text-green-600">
