@@ -307,11 +307,11 @@ export default function SupplierReceipts() {
         <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
         <div className="min-w-0 flex-1">
           <div className="font-medium text-lg leading-tight">
-            {receipt.supplier_document_number || 'Без номера документа'}
+            {receipt.supplier_document_number || '–'}
           </div>
-          <div className="text-sm text-gray-500 mt-1">
+          {/*<div className="text-sm text-gray-500 mt-1">
             ID: {receipt.id}
-          </div>
+          </div>*/}
         </div>
       </div>
       
