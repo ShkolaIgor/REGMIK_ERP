@@ -534,6 +534,11 @@ export default function SupplierReceipts() {
   // Use supplierReceipts as receipts for compatibility
   const receipts = supplierReceipts;
 
+  // Receipt items expandable content
+  const renderExpandableContent = (receipt: any) => {
+    return <ReceiptItemsView receiptId={receipt.id} />;
+  };
+
   const addItem = () => {
     setFormData(prev => ({
       ...prev,
