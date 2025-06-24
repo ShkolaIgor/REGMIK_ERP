@@ -104,16 +104,11 @@ export default function Suppliers() {
       render: (value, row) => (
         <div>
           <div className="font-medium">{value}</div>
-          {row.fullName && <div className="text-sm text-gray-500">{row.fullName}</div>}
+          {row.taxCode && (
+            <div className="text-sm text-gray-500">{row.taxCode}</div>
+          )}
         </div>
       )
-    },
-    {
-      key: 'taxCode',
-      label: 'ЄДРПОУ/ІПН',
-      sortable: true,
-      filterable: true,
-      render: (value) => value || 'Не вказано'
     },
     {
       key: 'contactPerson',
@@ -139,9 +134,18 @@ export default function Suppliers() {
       label: 'Рейтинг',
       sortable: true,
       render: (value) => (
-        <Badge variant="outline">
-          {value}/5
-        </Badge>
+        <div className="flex items-center">
+          {[...Array(5)].map((_, i) => (
+            <span
+              key={i}
+              className={`text-lg ${
+                i < value ? 'text-yellow-400' : 'text-gray-300'
+              }`}
+            >
+              ★
+            </span>
+          ))}
+        </div>
       )
     },
     {
