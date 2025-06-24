@@ -1,6 +1,0 @@
-UPDATED: production-fix-immediate.sql now includes supplier_document_types table creation
-
-EXECUTE THIS IN PRODUCTION:
-psql -d $DATABASE_URL -f production-fix-immediate.sql
-
-This will create ALL required tables in the correct order.

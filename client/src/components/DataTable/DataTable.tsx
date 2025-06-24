@@ -286,12 +286,19 @@ export function DataTable({
             {visibleColumns.map((column) => (
               <th
                 key={column.key}
-                className="px-4 py-3 text-left cursor-pointer hover:bg-gray-50 border-r last:border-r-0"
+                className={cn(
+                  "px-4 py-3 text-left cursor-pointer hover:bg-gray-50 resize-x",
+                  settings.showVerticalLines ? "border-r last:border-r-0" : ""
+                )}
                 draggable
                 onDragStart={(e) => handleDragStart(e, column.key)}
                 onDrop={(e) => handleDrop(e, column.key)}
                 onDragOver={(e) => e.preventDefault()}
                 onClick={() => handleSort(column.key)}
+                style={{
+                  width: settings.columnWidths[column.key] || column.width,
+                  minWidth: column.minWidth || 100
+                }}
               >
                 <div className="flex items-center gap-2">
                   <span>{column.label}</span>
@@ -303,7 +310,16 @@ export function DataTable({
                 </div>
               </th>
             ))}
-            {actions && <th className="px-4 py-3 w-20">Дії</th>}
+            {actions && (
+              <th 
+                className={cn(
+                  "px-4 py-3 w-20",
+                  settings.showVerticalLines ? "border-r-0" : ""
+                )}
+              >
+                Дії
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -324,7 +340,8 @@ export function DataTable({
               <tr
                 key={index}
                 className={cn(
-                  "border-b hover:bg-gray-50 transition-colors",
+                  "border-b transition-colors",
+                  settings.enableRowHover && "hover:bg-blue-50 hover:shadow-sm",
                   onRowClick && "cursor-pointer"
                 )}
                 style={{
@@ -341,13 +358,18 @@ export function DataTable({
                   return (
                     <td 
                       key={column.key} 
-                      className="px-4 py-3 border-r last:border-r-0"
+                      className={cn(
+                        "px-4 py-3",
+                        settings.showVerticalLines ? "border-r last:border-r-0" : ""
+                      )}
                       style={{
                         backgroundColor: columnSettings.backgroundColor,
                         color: columnSettings.textColor,
                         fontSize: `${columnSettings.fontSize}px`,
                         fontWeight: columnSettings.fontWeight,
-                        fontStyle: columnSettings.fontStyle
+                        fontStyle: columnSettings.fontStyle,
+                        width: settings.columnWidths[column.key] || column.width,
+                        minWidth: column.minWidth || 100
                       }}
                     >
                       {column.render ? 
@@ -360,8 +382,15 @@ export function DataTable({
                   );
                 })}
                 {actions && (
-                  <td className="px-4 py-3">
-                    {actions(row)}
+                  <td 
+                    className={cn(
+                      "px-4 py-3",
+                      settings.showVerticalLines ? "border-r-0" : ""
+                    )}
+                  >
+                    <div className="flex items-center gap-1">
+                      {actions(row)}
+                    </div>
                   </td>
                 )}
               </tr>
@@ -754,6 +783,31 @@ export function DataTable({
                         onChange={(e) => setSettings(prev => ({ ...prev, headerTextColor: e.target.value }))}
                         className="mt-1 h-8"
                       />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Visual Settings */}
+                <div>
+                  <Label className="text-base font-semibold">Візуальні налаштування</Label>
+                  <div className="grid grid-cols-2 gap-4 mt-3">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={settings.showVerticalLines}
+                        onCheckedChange={(checked) =>
+                          setSettings(prev => ({ ...prev, showVerticalLines: checked as boolean }))
+                        }
+                      />
+                      <Label className="text-sm">Показувати вертикальні лінії</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={settings.enableRowHover}
+                        onCheckedChange={(checked) =>
+                          setSettings(prev => ({ ...prev, enableRowHover: checked as boolean }))
+                        }
+                      />
+                      <Label className="text-sm">Підсвітка рядка при наведенні</Label>
                     </div>
                   </div>
                 </div>

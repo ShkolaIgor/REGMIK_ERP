@@ -1,8 +1,0 @@
-
-CRITICAL: The production-fix-immediate.sql script needs to be executed in production NOW.
-
-Commands to run in production:
-1. psql -d $DATABASE_URL -f production-fix-immediate.sql
-
-This will immediately create the missing supplier_receipts table and resolve the error.
-
