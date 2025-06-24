@@ -106,7 +106,7 @@ export default function Suppliers() {
           <div className="font-medium">{value}</div>
           {row.taxCode && (
             <div className="text-sm">
-              <span className="text-gray-600">ЄДРПОУ:</span>{' '}
+              {/*<span className="text-gray-600">ЄДРПОУ:</span>{' '}*/}
               <span className="font-medium text-blue-600">{row.taxCode}</span>
             </div>
           )}
@@ -168,19 +168,38 @@ export default function Suppliers() {
       
       <div className="space-y-2">
         <div className="flex justify-between items-center">
-          <span className="text-sm font-medium">ЄДРПОУ/ІПН:</span>
-          <span className="text-sm font-bold">{supplier.taxCode || "Не вказано"}</span>
+          {/*<span className="text-sm font-medium">ЄДРПОУ/ІПН:</span>*/}
+          <span className="text-sm font-bold">{supplier.taxCode || ""}</span>
         </div>
         
         <div className="flex flex-wrap gap-2">
           <Badge variant={supplier.isActive ? "default" : "secondary"} className="text-xs">
             {supplier.isActive ? "Активний" : "Неактивний"}
           </Badge>
+
           {supplier.rating && supplier.rating > 0 && (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium">Рейтинг:</span>
+              <div className="flex items-center">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <span
+                    key={i}
+                    className={`text-base ${
+                      i < supplier.rating ? 'text-yellow-400' : 'text-gray-300'
+                    }`}
+                  >
+                    ★
+                  </span>
+                ))}
+                <span className="text-sm text-gray-600 ml-1">({supplier.rating}/5)</span>
+              </div>
+            </div>
+          )}
+          {/*supplier.rating && supplier.rating > 0 && (
             <Badge variant="outline" className="text-xs">
               Рейтинг: {supplier.rating}/5
             </Badge>
-          )}
+          )*/}
         </div>
       </div>
 
@@ -188,25 +207,6 @@ export default function Suppliers() {
         <div className="text-sm">
           <span className="font-medium">Контактна особа:</span>
           <p className="text-gray-500 text-xs mt-1">{supplier.contactPerson}</p>
-        </div>
-      )}
-      
-      {supplier.rating && supplier.rating > 0 && (
-        <div className="flex items-center space-x-2">
-          <span className="text-sm font-medium">Рейтинг:</span>
-          <div className="flex items-center">
-            {Array.from({ length: 5 }, (_, i) => (
-              <span
-                key={i}
-                className={`text-base ${
-                  i < supplier.rating ? 'text-yellow-400' : 'text-gray-300'
-                }`}
-              >
-                ★
-              </span>
-            ))}
-            <span className="text-sm text-gray-600 ml-1">({supplier.rating}/5)</span>
-          </div>
         </div>
       )}
       
@@ -943,6 +943,17 @@ export default function Suppliers() {
             title="Список постачальників"
             storageKey="suppliers"
             cardTemplate={cardTemplate}
+            actions={(supplier) => (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleEdit(supplier)}
+                className="h-8 w-8 p-0 hover:bg-blue-50 hover:scale-110 transition-all duration-200"
+                title="Редагувати постачальника"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
           />
         </div>
       </div>
