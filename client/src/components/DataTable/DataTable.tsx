@@ -27,6 +27,7 @@ import {
   Bold,
   Italic
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 export interface DataTableColumn {
@@ -68,6 +69,8 @@ export interface DataTableSettings {
   headerFontSize: number;
   headerFontWeight: 'normal' | 'bold';
   headerFontStyle: 'normal' | 'italic';
+  showVerticalLines: boolean;
+  enableRowHover: boolean;
 }
 
 interface DataTableProps {
@@ -113,7 +116,9 @@ const defaultSettings: DataTableSettings = {
   headerTextColor: '#374151',
   headerFontSize: 14,
   headerFontWeight: 'bold',
-  headerFontStyle: 'normal'
+  headerFontStyle: 'normal',
+  showVerticalLines: true,
+  enableRowHover: true
 };
 
 export function DataTable({
@@ -388,9 +393,11 @@ export function DataTable({
                       settings.showVerticalLines ? "border-r-0" : ""
                     )}
                   >
-                    <div className="flex items-center gap-1">
-                      {actions(row)}
-                    </div>
+                    <TooltipProvider>
+                      <div className="flex items-center gap-1">
+                        {actions(row)}
+                      </div>
+                    </TooltipProvider>
                   </td>
                 )}
               </tr>
