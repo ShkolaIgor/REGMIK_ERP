@@ -38,16 +38,25 @@ export interface DataTableColumn {
   type?: 'text' | 'number' | 'date' | 'boolean' | 'badge' | 'custom';
 }
 
+export interface ColumnSettings {
+  visible: boolean;
+  filterable: boolean;
+  textColor: string;
+  backgroundColor: string;
+  fontSize: number;
+  fontWeight: 'normal' | 'bold';
+  fontStyle: 'normal' | 'italic';
+}
+
 export interface DataTableSettings {
   pageSize: number;
   columnOrder: string[];
   columnWidths: Record<string, number>;
-  columnVisibility: Record<string, boolean>;
+  columnSettings: Record<string, ColumnSettings>;
   sortField: string;
   sortDirection: 'asc' | 'desc';
   viewMode: 'table' | 'cards';
   fontSize: number;
-  fontFamily: string;
   fontWeight: 'normal' | 'bold';
   fontStyle: 'normal' | 'italic';
   rowBackgroundColor: string;
@@ -75,16 +84,25 @@ interface DataTableProps {
   cardTemplate?: (item: any) => React.ReactNode;
 }
 
+const defaultColumnSettings: ColumnSettings = {
+  visible: true,
+  filterable: true,
+  textColor: '#000000',
+  backgroundColor: '#ffffff',
+  fontSize: 14,
+  fontWeight: 'normal',
+  fontStyle: 'normal'
+};
+
 const defaultSettings: DataTableSettings = {
   pageSize: 25,
   columnOrder: [],
   columnWidths: {},
-  columnVisibility: {},
+  columnSettings: {},
   sortField: '',
   sortDirection: 'asc',
   viewMode: 'table',
   fontSize: 14,
-  fontFamily: 'system',
   fontWeight: 'normal',
   fontStyle: 'normal',
   rowBackgroundColor: '#ffffff',
@@ -132,14 +150,14 @@ export function DataTable({
     localStorage.setItem(`datatable-${storageKey}`, JSON.stringify(settings));
   }, [settings, storageKey]);
 
-  // Initialize column order and visibility
+  // Initialize column order and settings
   useEffect(() => {
     if (settings.columnOrder.length === 0) {
       setSettings(prev => ({
         ...prev,
         columnOrder: columns.map(col => col.key),
-        columnVisibility: columns.reduce((acc, col) => {
-          acc[col.key] = true;
+        columnSettings: columns.reduce((acc, col) => {
+          acc[col.key] = { ...defaultColumnSettings };
           return acc;
         }, {} as Record<string, boolean>)
       }));
@@ -222,7 +240,7 @@ export function DataTable({
       .filter(Boolean) as DataTableColumn[];
   }, [columns, settings.columnOrder]);
 
-  const visibleColumns = orderedColumns.filter(col => settings.columnVisibility[col.key]);
+  const visibleColumns = orderedColumns.filter(col => settings.columnSettings[col.key]?.visible !== false);
 
   const getSortIcon = (columnKey: string) => {
     if (settings.sortField !== columnKey) return <ArrowUpDown className="h-4 w-4" />;
@@ -265,26 +283,34 @@ export function DataTable({
           }}
         >
           <tr>
-            {visibleColumns.map((column) => (
-              <th
-                key={column.key}
-                className="px-4 py-3 text-left cursor-pointer select-none border-r last:border-r-0"
-                style={{ 
-                  width: settings.columnWidths[column.key] || column.width,
-                  minWidth: column.minWidth || 100
-                }}
-                draggable
-                onDragStart={(e) => handleDragStart(e, column.key)}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => handleDrop(e, column.key)}
-                onClick={() => column.sortable && handleSort(column.key)}
-              >
-                <div className="flex items-center gap-2">
-                  <span>{column.label}</span>
-                  {column.sortable && getSortIcon(column.key)}
-                </div>
-              </th>
-            ))}
+            {visibleColumns.map((column) => {
+              const columnSettings = settings.columnSettings[column.key] || defaultColumnSettings;
+              return (
+                <th
+                  key={column.key}
+                  className="px-4 py-3 text-left cursor-pointer select-none border-r last:border-r-0"
+                  style={{ 
+                    width: settings.columnWidths[column.key] || column.width,
+                    minWidth: column.minWidth || 100,
+                    backgroundColor: columnSettings.backgroundColor,
+                    color: columnSettings.textColor,
+                    fontSize: `${columnSettings.fontSize}px`,
+                    fontWeight: columnSettings.fontWeight,
+                    fontStyle: columnSettings.fontStyle
+                  }}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, column.key)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => handleDrop(e, column.key)}
+                  onClick={() => column.sortable && handleSort(column.key)}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>{column.label}</span>
+                    {column.sortable && getSortIcon(column.key)}
+                  </div>
+                </th>
+              );
+            })}
             {actions && <th className="px-4 py-3 w-20">Дії</th>}
           </tr>
         </thead>
@@ -313,22 +339,34 @@ export function DataTable({
                   backgroundColor: settings.rowBackgroundColor,
                   color: settings.rowTextColor,
                   fontSize: `${settings.fontSize}px`,
-                  fontFamily: settings.fontFamily,
                   fontWeight: settings.fontWeight,
                   fontStyle: settings.fontStyle
                 }}
                 onClick={() => onRowClick?.(row)}
               >
-                {visibleColumns.map((column) => (
-                  <td key={column.key} className="px-4 py-3 border-r last:border-r-0">
-                    {column.render ? 
-                      column.render(row[column.key], row) : 
-                      column.type === 'badge' ? 
-                        <Badge variant="outline">{row[column.key]}</Badge> :
-                        String(row[column.key] || '')
-                    }
-                  </td>
-                ))}
+                {visibleColumns.map((column) => {
+                  const columnSettings = settings.columnSettings[column.key] || defaultColumnSettings;
+                  return (
+                    <td 
+                      key={column.key} 
+                      className="px-4 py-3 border-r last:border-r-0"
+                      style={{
+                        backgroundColor: columnSettings.backgroundColor,
+                        color: columnSettings.textColor,
+                        fontSize: `${columnSettings.fontSize}px`,
+                        fontWeight: columnSettings.fontWeight,
+                        fontStyle: columnSettings.fontStyle
+                      }}
+                    >
+                      {column.render ? 
+                        column.render(row[column.key], row) : 
+                        column.type === 'badge' ? 
+                          <Badge variant="outline">{row[column.key]}</Badge> :
+                          String(row[column.key] || '')
+                      }
+                    </td>
+                  );
+                })}
                 {actions && (
                   <td className="px-4 py-3">
                     {actions(row)}
@@ -360,7 +398,6 @@ export function DataTable({
               backgroundColor: settings.rowBackgroundColor,
               color: settings.rowTextColor,
               fontSize: `${settings.fontSize}px`,
-              fontFamily: settings.fontFamily,
               fontWeight: settings.fontWeight,
               fontStyle: settings.fontStyle
             }}
