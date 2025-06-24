@@ -25,10 +25,40 @@ import {
   Palette,
   Type,
   Bold,
-  Italic
+  Italic,
+  Star
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+
+// StarRating component for displaying rating
+const StarRating = ({ rating, maxStars = 5 }: { rating: number; maxStars?: number }) => {
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 !== 0;
+  
+  return (
+    <div className="flex items-center gap-1">
+      {Array.from({ length: maxStars }, (_, i) => {
+        if (i < fullStars) {
+          return <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />;
+        } else if (i === fullStars && hasHalfStar) {
+          return (
+            <div key={i} className="relative">
+              <Star className="h-4 w-4 text-gray-300" />
+              <Star 
+                className="h-4 w-4 fill-yellow-400 text-yellow-400 absolute top-0 left-0" 
+                style={{ clipPath: 'inset(0 50% 0 0)' }}
+              />
+            </div>
+          );
+        } else {
+          return <Star key={i} className="h-4 w-4 text-gray-300" />;
+        }
+      })}
+      <span className="text-sm text-gray-600 ml-1">({rating.toFixed(1)})</span>
+    </div>
+  );
+};
 
 export interface DataTableColumn {
   key: string;
@@ -38,7 +68,7 @@ export interface DataTableColumn {
   render?: (value: any, row: any) => React.ReactNode;
   width?: number;
   minWidth?: number;
-  type?: 'text' | 'number' | 'date' | 'boolean' | 'badge' | 'custom';
+  type?: 'text' | 'number' | 'date' | 'boolean' | 'badge' | 'rating' | 'custom';
 }
 
 export interface ColumnSettings {
@@ -384,6 +414,8 @@ export function DataTable({
                         column.render(row[column.key], row) : 
                         column.type === 'badge' ? 
                           <Badge variant="outline">{row[column.key]}</Badge> :
+                        column.type === 'rating' ?
+                          <StarRating rating={parseFloat(row[column.key]) || 0} /> :
                           String(row[column.key] || '')
                       }
                     </td>
@@ -443,6 +475,8 @@ export function DataTable({
                       <span>
                         {column.render ? 
                           column.render(row[column.key], row) : 
+                        column.type === 'rating' ?
+                          <StarRating rating={parseFloat(row[column.key]) || 0} /> :
                           String(row[column.key] || '')
                         }
                       </span>

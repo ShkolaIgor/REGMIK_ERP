@@ -6372,7 +6372,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Existing client is older - remove taxCode, deactivate and add note, then continue with import
           try {
             const existingNotes = existingClient.notes || '';
-            const taxCodeNote = `ЄДРПОУ1: ${taxCode}`;
+            const taxCodeNote = `ЄДРПОУ: ${taxCode}`;
             const updatedNotes = existingNotes ? `${existingNotes}. ${taxCodeNote}` : taxCodeNote;
             
             await storage.updateClient(existingClient.id, { 
