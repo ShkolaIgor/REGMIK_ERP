@@ -8830,7 +8830,7 @@ export class DatabaseStorage implements IStorage {
         throw new Error("Невірний формат XML: очікується структура DATAPACKET/ROWDATA/ROW");
       }
 
-      console.log(`Початок імпорту supplier receipts: знайдено ${rows.length} записів`);
+
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
@@ -8846,29 +8846,18 @@ export class DatabaseStorage implements IStorage {
           // Шукаємо постачальника за INDEX_PREDPR -> suppliers.external_id -> suppliers.id = supplier_id
           let supplierId = null;
           if (row.INDEX_PREDPR) {
-            console.log(`🔍 Searching for supplier with INDEX_PREDPR=${row.INDEX_PREDPR} in SUPPLIERS table`);
-            
             // Шукаємо в таблиці suppliers за external_id
             const supplierResult = await pool.query(
               'SELECT id, name, external_id FROM suppliers WHERE external_id = $1',
               [parseInt(row.INDEX_PREDPR)]
             );
             
-            console.log(`📊 Supplier search result: ${supplierResult.rows.length} found:`, supplierResult.rows);
-            
             if (supplierResult.rows.length > 0) {
               supplierId = supplierResult.rows[0].id;
-              console.log(`✅ Found supplier: ${supplierResult.rows[0].name} (ID: ${supplierId})`);
             } else {
-              // Показуємо доступних постачальників для діагностики
-              const availableSuppliers = await pool.query(
-                'SELECT id, name, external_id FROM suppliers WHERE external_id IS NOT NULL ORDER BY external_id'
-              );
-              console.log(`❌ Supplier not found. Available suppliers:`, availableSuppliers.rows);
-              
               result.warnings.push({
                 row: rowNumber,
-                warning: `Постачальник з external_id=${row.INDEX_PREDPR} не знайдений в таблиці suppliers. Доступні: ${availableSuppliers.rows.map(s => s.external_id).join(', ')}`,
+                warning: `Постачальник з external_id=${row.INDEX_PREDPR} не знайдений в таблиці suppliers`,
                 data: row
               });
               continue;
@@ -8914,7 +8903,7 @@ export class DatabaseStorage implements IStorage {
             purchaseOrderId: row.PURCHASE_ORDER_ID ? parseInt(row.PURCHASE_ORDER_ID) : null
           };
 
-          console.log('Creating supplier receipt with data:', receiptData);
+
 
           // Перевіряємо чи існує прихід з таким же external_id
           const existingReceipt = await pool.query(`

@@ -63,6 +63,15 @@ export function SupplierReceiptsXmlImport({ onClose }: { onClose: () => void }) 
   });
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [importStats, setImportStats] = useState({
+    total: 0,
+    processed: 0,
+    successful: 0,
+    errors: 0
+  });
+  const [currentItem, setCurrentItem] = useState<string>('');
+  const [documentTypeId, setDocumentTypeId] = useState<string>('');
 
   // Queries
   const { data: suppliers = [] } = useQuery({
@@ -92,12 +101,133 @@ export function SupplierReceiptsXmlImport({ onClose }: { onClose: () => void }) 
     }
   };
 
-  // Import mutation
-  const importMutation = useMutation({
-    mutationFn: async () => {
-      setIsImporting(true);
-      
-      try {
+  const handleImport = async () => {
+    if (!xmlContent.trim()) {
+      toast({
+        title: "Помилка",
+        description: "Будь ласка, завантажте XML файл",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!documentTypeId) {
+      toast({
+        title: "Помилка", 
+        description: "Будь ласка, оберіть тип документа",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsImporting(true);
+    setImportResult(null);
+    setProgress(0);
+    setImportStats({ total: 0, processed: 0, successful: 0, errors: 0 });
+    setCurrentItem('');
+
+    try {
+      const response = await fetch('/api/import/supplier-receipts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ xmlContent, documentTypeId }),
+      });
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No response body');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              if (data.type === 'start') {
+                setCurrentItem(data.message || 'Початок імпорту...');
+              } else if (data.type === 'progress') {
+                setImportStats(prev => ({
+                  ...prev,
+                  total: data.total,
+                  processed: data.processed
+                }));
+                setCurrentItem(data.currentItem || '');
+                setProgress((data.processed / data.total) * 100);
+              } else if (data.type === 'complete') {
+                setImportStats({
+                  total: data.total,
+                  processed: data.processed,
+                  successful: data.successful,
+                  errors: data.errors
+                });
+                setProgress(100);
+                setIsImporting(false);
+                setImportResult({
+                  success: data.success,
+                  message: data.message,
+                  imported: data.imported,
+                  skipped: 0,
+                  errors: data.errorDetails || [],
+                  details: []
+                });
+                setCurrentItem('');
+                
+                queryClient.invalidateQueries({ queryKey: ['/api/supplier-receipts'] });
+                
+                if (data.success) {
+                  toast({ title: "Імпорт завершено успішно" });
+                }
+              } else if (data.type === 'error') {
+                setIsImporting(false);
+                setImportResult({
+                  success: false,
+                  message: data.message,
+                  imported: 0,
+                  skipped: 0,
+                  errors: [data.error],
+                  details: []
+                });
+                toast({ 
+                  title: "Помилка імпорту", 
+                  description: data.message,
+                  variant: "destructive" 
+                });
+              }
+            } catch (e) {
+              console.error('Error parsing SSE data:', e);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      setIsImporting(false);
+      const errorMessage = error instanceof Error ? error.message : 'Невідома помилка';
+      setImportResult({
+        success: false,
+        message: `Помилка імпорту: ${errorMessage}`,
+        imported: 0,
+        skipped: 0,
+        errors: [errorMessage],
+        details: []
+      });
+      toast({ 
+        title: "Помилка імпорту", 
+        description: errorMessage,
+        variant: "destructive" 
+      });
+    }
+  };
         // Parse XML content
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
@@ -390,11 +520,28 @@ export function SupplierReceiptsXmlImport({ onClose }: { onClose: () => void }) 
             </div>
           </div>
 
+          {/* Document type selection */}
+          <div>
+            <Label htmlFor="documentType">Тип документа *</Label>
+            <Select value={documentTypeId} onValueChange={setDocumentTypeId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Оберіть тип документа" />
+              </SelectTrigger>
+              <SelectContent>
+                {documentTypes.map((type: any) => (
+                  <SelectItem key={type.id} value={type.id.toString()}>
+                    {type.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Import button */}
           <div className="flex justify-end">
             <Button 
-              onClick={() => importMutation.mutate()}
-              disabled={!selectedFile || isImporting}
+              onClick={handleImport}
+              disabled={!selectedFile || !documentTypeId || isImporting}
             >
               {isImporting ? 'Імпорт...' : 'Почати імпорт'}
             </Button>
@@ -404,11 +551,34 @@ export function SupplierReceiptsXmlImport({ onClose }: { onClose: () => void }) 
 
       {/* Import progress */}
       {isImporting && (
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>Імпорт приходів...</span>
+        <div className="space-y-4">
+          <div>
+            <div className="flex justify-between text-sm mb-2">
+              <span>Прогрес імпорту</span>
+              <span>{importStats.processed} / {importStats.total}</span>
+            </div>
+            <Progress value={progress} className="w-full" />
+            {currentItem && (
+              <div className="text-sm text-gray-600 mt-2">
+                Обробляється: {currentItem}
+              </div>
+            )}
           </div>
-          <Progress value={50} className="w-full" />
+          
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div className="text-center">
+              <div className="text-lg font-semibold text-blue-600">{importStats.processed}</div>
+              <div className="text-gray-600">Оброблено</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-green-600">{importStats.successful}</div>
+              <div className="text-gray-600">Успішно</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-red-600">{importStats.errors}</div>
+              <div className="text-gray-600">Помилки</div>
+            </div>
+          </div>
         </div>
       )}
 
