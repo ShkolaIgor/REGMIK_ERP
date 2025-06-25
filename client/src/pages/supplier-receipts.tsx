@@ -1064,11 +1064,25 @@ export default function SupplierReceipts() {
                       <SelectValue placeholder="Оберіть постачальника" />
                     </SelectTrigger>
                     <SelectContent>
-                      {suppliers.map((supplier: Supplier) => (
-                        <SelectItem key={supplier.id} value={supplier.id.toString()}>
-                          {supplier.name}
+                      {suppliersLoading ? (
+                        <SelectItem value="" disabled>
+                          Завантаження постачальників...
                         </SelectItem>
-                      ))}
+                      ) : suppliersError ? (
+                        <SelectItem value="" disabled>
+                          Помилка завантаження постачальників
+                        </SelectItem>
+                      ) : suppliers && suppliers.length > 0 ? (
+                        suppliers.map((supplier: Supplier) => (
+                          <SelectItem key={supplier.id} value={supplier.id.toString()}>
+                            {supplier.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          Постачальники не знайдені
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
