@@ -150,6 +150,8 @@ Preferred communication style: Simple, everyday language.
 - Виправлено помилку з undefined у логах постачальників
 - Виправлено проблему з неправильним відображенням кількості товарів у пагінації
 - Додано totalItems параметр для правильного підрахунку результатів у DataTable
+- ВИПРАВЛЕНО: Пагінація товарів тепер працює правильно - показує точну кількість відповідно до налаштувань
+- Видалено дублювання методу getSuppliersPaginated у DatabaseStorage класі
 
 ### June 24, 2025
 - Created universal DataTable component for all system lists with:
