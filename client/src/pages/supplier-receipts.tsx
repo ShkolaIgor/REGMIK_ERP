@@ -1,17 +1,19 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Plus } from "lucide-react";
+import { Plus, Package, FileText, TrendingUp, Calendar, Search, Filter, Download, Upload } from "lucide-react";
 import { DataTable } from "@/components/DataTable/DataTable";
 
 // Interfaces
@@ -82,6 +84,8 @@ type SupplierReceiptFormData = z.infer<typeof supplierReceiptSchema>;
 export default function SupplierReceipts() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingReceipt, setEditingReceipt] = useState<SupplierReceipt | null>(null);
+  const [supplierFilter, setSupplierFilter] = useState("all");
+  const [documentTypeFilter, setDocumentTypeFilter] = useState("all");
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
 
   const { toast } = useToast();
@@ -166,6 +170,33 @@ export default function SupplierReceipts() {
       toast({ title: "Помилка видалення приходу", description: error.message, variant: "destructive" });
     },
   });
+
+  // Statistics
+  const statistics = useMemo(() => {
+    const totalReceipts = receiptsArray.length;
+    const totalAmount = receiptsArray.reduce((sum: number, receipt: any) => sum + parseFloat(receipt.total_amount || '0'), 0);
+    const uniqueSuppliers = new Set(receiptsArray.map((r: any) => r.supplier_id)).size;
+    const thisMonthReceipts = receiptsArray.filter((receipt: any) => {
+      const receiptDate = new Date(receipt.receipt_date);
+      const now = new Date();
+      return receiptDate.getMonth() === now.getMonth() && receiptDate.getFullYear() === now.getFullYear();
+    }).length;
+
+    return { totalReceipts, totalAmount, uniqueSuppliers, thisMonthReceipts };
+  }, [receiptsArray]);
+
+  // Filter receipts
+  const filteredReceipts = useMemo(() => {
+    return receiptsArray.filter((receipt: any) => {
+      const supplierName = receipt.supplier_name || '';
+      const documentTypeName = receipt.document_type_name || '';
+      
+      const matchesSupplier = supplierFilter === 'all' || supplierName === supplierFilter;
+      const matchesDocumentType = documentTypeFilter === 'all' || documentTypeName === documentTypeFilter;
+      
+      return matchesSupplier && matchesDocumentType;
+    });
+  }, [receiptsArray, supplierFilter, documentTypeFilter]);
 
   // Handlers
   const onSubmit = (data: SupplierReceiptFormData) => {
@@ -281,206 +312,307 @@ export default function SupplierReceipts() {
 
   // DataTable columns
   const columns = [
-    { key: 'id', label: 'ID', sortable: true },
-    { key: 'receipt_date', label: 'Дата приходу', sortable: true },
-    { key: 'supplier_name', label: 'Постачальник', sortable: true },
-    { key: 'document_type_name', label: 'Тип документу', sortable: true },
-    { key: 'supplier_document_number', label: 'Номер документу', sortable: true },
-    { key: 'total_amount', label: 'Сума', sortable: true },
-    { key: 'purchase_order_number', label: 'Замовлення', sortable: true },
+    { key: 'id', header: 'ID', sortable: true },
+    { key: 'receipt_date', header: 'Дата приходу', sortable: true },
+    { key: 'supplier_name', header: 'Постачальник', sortable: true },
+    { key: 'document_type_name', header: 'Тип документу', sortable: true },
+    { key: 'supplier_document_number', header: 'Номер документу', sortable: true },
+    { key: 'total_amount', header: 'Сума', sortable: true },
+    { key: 'purchase_order_number', header: 'Замовлення', sortable: true },
   ];
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Приходи від постачальників</h1>
-          <p className="text-gray-600">Управління документами постачальників</p>
-        </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Новий прихід
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Каталог приходів від постачальників</h1>
+            <p className="text-gray-600">Управління документами постачальників та контроль приходів товарів</p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <Button variant="outline" size="sm">
+              <Upload className="h-4 w-4 mr-2" />
+              Імпорт XML
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>
-                {editingReceipt ? 'Редагувати прихід' : 'Створити новий прихід'}
-              </DialogTitle>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="receipt_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Дата приходу</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="supplier_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Постачальник</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Експорт
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Новий прихід
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingReceipt ? 'Редагувати прихід' : 'Створити новий прихід'}
+                  </DialogTitle>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="receipt_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Дата приходу</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="supplier_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Постачальник</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Оберіть постачальника" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {suppliers.map((supplier: any) => (
+                                  <SelectItem key={supplier.id} value={supplier.id.toString()}>
+                                    {supplier.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="document_type_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Тип документу</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Оберіть тип документу" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {documentTypes.map((type: any) => (
+                                  <SelectItem key={type.id} value={type.id.toString()}>
+                                    {type.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="purchase_order_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Замовлення (опціонально)</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Оберіть замовлення" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="">Без замовлення</SelectItem>
+                                {purchaseOrders.map((order: any) => (
+                                  <SelectItem key={order.id} value={order.id.toString()}>
+                                    {order.orderNumber}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="supplier_document_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Дата документу постачальника</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="supplier_document_number"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Номер документу постачальника</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="total_amount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Загальна сума</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="comment"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Коментар</FormLabel>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Оберіть постачальника" />
-                            </SelectTrigger>
+                            <Textarea {...field} />
                           </FormControl>
-                          <SelectContent>
-                            {suppliers.map((supplier: any) => (
-                              <SelectItem key={supplier.id} value={supplier.id.toString()}>
-                                {supplier.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="document_type_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Тип документу</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Оберіть тип документу" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {documentTypes.map((type: any) => (
-                              <SelectItem key={type.id} value={type.id.toString()}>
-                                {type.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="purchase_order_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Замовлення (опціонально)</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Оберіть замовлення" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="">Без замовлення</SelectItem>
-                            {purchaseOrders.map((order: any) => (
-                              <SelectItem key={order.id} value={order.id.toString()}>
-                                {order.orderNumber}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="supplier_document_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Дата документу постачальника</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="supplier_document_number"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Номер документу постачальника</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="total_amount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Загальна сума</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.01" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="comment"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Коментар</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex justify-end space-x-2">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Скасувати
-                  </Button>
-                  <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                    {createMutation.isPending || updateMutation.isPending ? 'Збереження...' : 'Зберегти'}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex justify-end space-x-2">
+                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                        Скасувати
+                      </Button>
+                      <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                        {createMutation.isPending || updateMutation.isPending ? 'Збереження...' : 'Зберегти'}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-blue-700">Загальна кількість приходів</CardTitle>
+            <Package className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-900">{statistics.totalReceipts}</div>
+            <p className="text-xs text-blue-600 mt-1">Всього документів у системі</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-green-700">Загальна сума приходів</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-900">{statistics.totalAmount.toFixed(2)} грн</div>
+            <p className="text-xs text-green-600 mt-1">Сума всіх приходів</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-purple-700">Активні постачальники</CardTitle>
+            <FileText className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-900">{statistics.uniqueSuppliers}</div>
+            <p className="text-xs text-purple-600 mt-1">Постачальників з приходами</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-orange-700">Приходи цього місяця</CardTitle>
+            <Calendar className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-900">{statistics.thisMonthReceipts}</div>
+            <p className="text-xs text-orange-600 mt-1">Документів за поточний місяць</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white p-4 rounded-lg border">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Filter className="h-4 w-4 text-gray-500" />
+              <span className="text-sm font-medium">Фільтри:</span>
+            </div>
+            <Select value={supplierFilter} onValueChange={setSupplierFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Фільтр за постачальником" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Усі постачальники</SelectItem>
+                {[...new Set(receiptsArray.map((r: any) => r.supplier_name).filter(Boolean))].map((name) => (
+                  <SelectItem key={name as string} value={name as string}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={documentTypeFilter} onValueChange={setDocumentTypeFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Фільтр за типом документу" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Усі типи документів</SelectItem>
+                {[...new Set(receiptsArray.map((r: any) => r.document_type_name).filter(Boolean))].map((name) => (
+                  <SelectItem key={name as string} value={name as string}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <span>Знайдено: {filteredReceipts.length} з {receiptsArray.length} приходів</span>
+          </div>
+        </div>
       </div>
 
       {/* DataTable */}
       <DataTable
-        data={receiptsArray}
+        data={filteredReceipts}
         columns={columns}
         searchable={true}
+        expandable={true}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onToggleExpand={toggleExpand}
         expandedItems={expandedItems}
-        renderExpandedContent={(item: any) => <ReceiptItemsView receiptId={item.id} />}
+        renderExpandedContent={(item) => <ReceiptItemsView receiptId={item.id} />}
         loading={isLoading}
       />
     </div>
