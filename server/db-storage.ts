@@ -8470,10 +8470,10 @@ export class DatabaseStorage implements IStorage {
       const result = await pool.query(`
         SELECT 
           sr.*,
-          c.name as supplier_name,
+          s.name as supplier_name,
           sdt.name as document_type_name
         FROM supplier_receipts sr
-        LEFT JOIN clients c ON sr.supplier_id = c.id
+        LEFT JOIN suppliers s ON sr.supplier_id = s.id
         LEFT JOIN supplier_document_types sdt ON sr.document_type_id = sdt.id
         ORDER BY sr.receipt_date DESC
       `);
@@ -8511,10 +8511,10 @@ export class DatabaseStorage implements IStorage {
         }
       };
       
-      // Validate supplier exists in suppliers table
+      // Validate supplier exists in suppliers table (not clients!)
       console.log('Checking supplier ID:', insertReceipt.supplierId);
       const supplierCheck = await pool.query(
-        'SELECT id, name FROM suppliers WHERE id = $1',
+        'SELECT id, name, external_id FROM suppliers WHERE id = $1',
         [insertReceipt.supplierId]
       );
       
@@ -8523,10 +8523,10 @@ export class DatabaseStorage implements IStorage {
       if (supplierCheck.rows.length === 0) {
         // Let's see what suppliers are actually available
         const availableSuppliers = await pool.query(
-          'SELECT id, name FROM suppliers ORDER BY id'
+          'SELECT id, name, external_id FROM suppliers ORDER BY id'
         );
         console.log('Available suppliers:', availableSuppliers.rows);
-        throw new Error(`Постачальник з ID ${insertReceipt.supplierId} не знайдений. Спочатку створіть постачальника.`);
+        throw new Error(`Постачальник з ID ${insertReceipt.supplierId} не знайдений в таблиці suppliers. Спочатку створіть постачальника.`);
       }
       
       // Validate document type exists
