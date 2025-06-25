@@ -189,8 +189,7 @@ export default function SupplierReceipts() {
   const [editingReceipt, setEditingReceipt] = useState<SupplierReceipt | null>(null);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+
   const [showXmlImport, setShowXmlImport] = useState(false);
   const [showMappingDialog, setShowMappingDialog] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
@@ -766,12 +765,7 @@ export default function SupplierReceipts() {
     return 0;
   });
 
-  // Pagination
-  const total = filteredReceipts.length;
-  const totalPages = Math.ceil(total / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const currentReceipts = filteredReceipts.slice(startIndex, endIndex);
+
 
   if (isLoading) {
     return (
@@ -874,7 +868,7 @@ export default function SupplierReceipts() {
                   setSearchQuery('');
                   setSupplierFilter('all');
                   setDocumentTypeFilter('all');
-                  setCurrentPage(1);
+
                 }}
               >
                 Очистити фільтри
