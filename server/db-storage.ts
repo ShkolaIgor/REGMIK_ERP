@@ -422,13 +422,13 @@ export class DatabaseStorage implements IStorage {
 
     // Get total count
     const totalQuery = whereCondition 
-      ? this.db.select({ count: sql<number>`count(*)` }).from(products).where(whereCondition)
-      : this.db.select({ count: sql<number>`count(*)` }).from(products);
+      ? db.select({ count: sql<number>`count(*)` }).from(products).where(whereCondition)
+      : db.select({ count: sql<number>`count(*)` }).from(products);
     
     const [{ count: total }] = await totalQuery;
 
     // Get paginated data
-    let query = this.db.select().from(products);
+    let query = db.select().from(products);
     
     if (whereCondition) {
       query = query.where(whereCondition);
