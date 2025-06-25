@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Upload, Download, Eye, FileText, AlertCircle, CheckCircle, Clock, X, Grid3X3, List, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { DataTable } from "@/components/DataTable/DataTable";
 
 interface Product {
   id: number;
