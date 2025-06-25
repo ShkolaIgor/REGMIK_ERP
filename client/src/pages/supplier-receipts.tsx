@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Plus, Package, FileText, TrendingUp, Calendar, Search, Filter, Download, Upload } from "lucide-react";
@@ -32,39 +33,6 @@ interface SupplierReceipt {
   supplier_name?: string;
   document_type_name?: string;
   purchase_order_number?: string;
-}
-
-interface SupplierReceiptItem {
-  id: number;
-  receipt_id: number;
-  component_id: number;
-  quantity: string;
-  unit_price: string;
-  total_price: string;
-  supplier_component_name?: string;
-}
-
-interface Supplier {
-  id: number;
-  name: string;
-}
-
-interface Component {
-  id: number;
-  name: string;
-  sku: string;
-  costPrice: string;
-}
-
-interface SupplierDocumentType {
-  id: number;
-  name: string;
-}
-
-interface PurchaseOrder {
-  id: number;
-  orderNumber: string;
-  supplierId: number;
 }
 
 // Form schema
@@ -310,17 +278,6 @@ export default function SupplierReceipts() {
     );
   };
 
-  // DataTable columns
-  const columns = [
-    { key: 'id', header: 'ID', sortable: true },
-    { key: 'receipt_date', header: 'Дата приходу', sortable: true },
-    { key: 'supplier_name', header: 'Постачальник', sortable: true },
-    { key: 'document_type_name', header: 'Тип документу', sortable: true },
-    { key: 'supplier_document_number', header: 'Номер документу', sortable: true },
-    { key: 'total_amount', header: 'Сума', sortable: true },
-    { key: 'purchase_order_number', header: 'Замовлення', sortable: true },
-  ];
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -515,109 +472,168 @@ export default function SupplierReceipts() {
             </Dialog>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-700">Загальна кількість приходів</CardTitle>
-            <Package className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-900">{statistics.totalReceipts}</div>
-            <p className="text-xs text-blue-600 mt-1">Всього документів у системі</p>
-          </CardContent>
-        </Card>
+      <main className="p-6 space-y-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Загальна кількість приходів</p>
+                  <p className="text-3xl font-semibold text-gray-900">{statistics.totalReceipts}</p>
+                  <p className="text-sm text-green-600 mt-1">Всього документів</p>
+                </div>
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Package className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-700">Загальна сума приходів</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-900">{statistics.totalAmount.toFixed(2)} грн</div>
-            <p className="text-xs text-green-600 mt-1">Сума всіх приходів</p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Загальна сума приходів</p>
+                  <p className="text-3xl font-semibold text-gray-900">{statistics.totalAmount.toFixed(2)} ₴</p>
+                  <p className="text-sm text-green-600 mt-1">Сума всіх приходів</p>
+                </div>
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-700">Активні постачальники</CardTitle>
-            <FileText className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-900">{statistics.uniqueSuppliers}</div>
-            <p className="text-xs text-purple-600 mt-1">Постачальників з приходами</p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Активні постачальники</p>
+                  <p className="text-3xl font-semibold text-gray-900">{statistics.uniqueSuppliers}</p>
+                  <p className="text-sm text-blue-600 mt-1">Постачальників з приходами</p>
+                </div>
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-purple-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-orange-700">Приходи цього місяця</CardTitle>
-            <Calendar className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-900">{statistics.thisMonthReceipts}</div>
-            <p className="text-xs text-orange-600 mt-1">Документів за поточний місяць</p>
-          </CardContent>
-        </Card>
-      </div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Приходи цього місяця</p>
+                  <p className="text-3xl font-semibold text-gray-900">{statistics.thisMonthReceipts}</p>
+                  <p className="text-sm text-orange-600 mt-1">За поточний місяць</p>
+                </div>
+                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <Calendar className="w-6 h-6 text-orange-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-lg border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-gray-500" />
-              <span className="text-sm font-medium">Фільтри:</span>
+        {/* Filters */}
+        <div className="bg-white p-4 rounded-lg border">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Filter className="h-4 w-4 text-gray-500" />
+                <span className="text-sm font-medium">Фільтри:</span>
+              </div>
+              <Select value={supplierFilter} onValueChange={setSupplierFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Фільтр за постачальником" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Усі постачальники</SelectItem>
+                  {[...new Set(receiptsArray.map((r: any) => r.supplier_name).filter(Boolean))].map((name) => (
+                    <SelectItem key={name as string} value={name as string}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={documentTypeFilter} onValueChange={setDocumentTypeFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Фільтр за типом документу" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Усі типи документів</SelectItem>
+                  {[...new Set(receiptsArray.map((r: any) => r.document_type_name).filter(Boolean))].map((name) => (
+                    <SelectItem key={name as string} value={name as string}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={supplierFilter} onValueChange={setSupplierFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Фільтр за постачальником" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Усі постачальники</SelectItem>
-                {[...new Set(receiptsArray.map((r: any) => r.supplier_name).filter(Boolean))].map((name) => (
-                  <SelectItem key={name as string} value={name as string}>
-                    {name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={documentTypeFilter} onValueChange={setDocumentTypeFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Фільтр за типом документу" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Усі типи документів</SelectItem>
-                {[...new Set(receiptsArray.map((r: any) => r.document_type_name).filter(Boolean))].map((name) => (
-                  <SelectItem key={name as string} value={name as string}>
-                    {name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>Знайдено: {filteredReceipts.length} з {receiptsArray.length} приходів</span>
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <span>Знайдено: {filteredReceipts.length} з {receiptsArray.length} приходів</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* DataTable */}
-      <DataTable
-        data={filteredReceipts}
-        columns={columns}
-        searchable={true}
-        expandable={true}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onToggleExpand={toggleExpand}
-        expandedItems={expandedItems}
-        renderExpandedContent={(item) => <ReceiptItemsView receiptId={item.id} />}
-        loading={isLoading}
-      />
+        {/* DataTable */}
+        <DataTable
+          data={filteredReceipts}
+          columns={[
+            { key: 'id', label: 'ID', sortable: true },
+            { key: 'receipt_date', label: 'Дата приходу', sortable: true },
+            { key: 'supplier_name', label: 'Постачальник', sortable: true },
+            { key: 'document_type_name', label: 'Тип документу', sortable: true },
+            { key: 'supplier_document_number', label: 'Номер документу', sortable: true },
+            { key: 'total_amount', label: 'Сума', sortable: true },
+            { key: 'purchase_order_number', label: 'Замовлення', sortable: true },
+          ]}
+          loading={isLoading}
+          title="Список приходів від постачальників"
+          storageKey="supplier-receipts"
+          cardTemplate={(receipt) => (
+            <Card className="hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-1 flex-1">
+                    <CardTitle className="text-lg leading-6 font-bold">
+                      {receipt.supplier_name || 'Невідомий постачальник'}
+                    </CardTitle>
+                    <CardDescription className="text-sm">
+                      {receipt.document_type_name} • {new Date(receipt.receipt_date).toLocaleDateString('uk-UA')}
+                    </CardDescription>
+                  </div>
+                  <Badge className="bg-blue-100 text-blue-800">
+                    {receipt.supplier_document_number || `#${receipt.id}`}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Сума:</span>
+                    <span className="font-medium">{parseFloat(receipt.total_amount).toFixed(2)} ₴</span>
+                  </div>
+                  {receipt.purchase_order_number && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Замовлення:</span>
+                      <span className="text-blue-600">{receipt.purchase_order_number}</span>
+                    </div>
+                  )}
+                  {receipt.comment && (
+                    <div className="text-sm text-gray-600 mt-2 line-clamp-2">
+                      {receipt.comment}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        />
+      </main>
     </div>
   );
 }
