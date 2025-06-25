@@ -189,6 +189,7 @@ export default function ProductsPage() {
           currentPage={currentPage}
           totalPages={totalPages}
           pageSize={pageSize}
+          totalItems={totalItems}
           onPageChange={setCurrentPage}
           onPageSizeChange={(size) => {
             console.log('Products: Page size changed to:', size);

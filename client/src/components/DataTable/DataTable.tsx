@@ -996,7 +996,7 @@ export function DataTable({
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t">
           <div className="flex items-center gap-4">
             <div className="text-sm text-gray-500">
-              Показано {((currentPage - 1) * effectivePageSize) + 1}-{Math.min(currentPage * effectivePageSize, data.length)} з загальної кількості результатів
+              Показано {((currentPage - 1) * effectivePageSize) + 1}-{Math.min(currentPage * effectivePageSize, totalItems || data.length)} з {totalItems || data.length} результатів
             </div>
             {onPageSizeChange && (
               <div className="flex items-center gap-2">

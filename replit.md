@@ -148,6 +148,8 @@ Preferred communication style: Simple, everyday language.
 - Виправлено автозаповнення логіну/паролю на iOS - додано name атрибути та autoComplete
 - Покращено відображення товарів у DataTable з правильними назвами колонок та форматуванням цін
 - Виправлено помилку з undefined у логах постачальників
+- Виправлено проблему з неправильним відображенням кількості товарів у пагінації
+- Додано totalItems параметр для правильного підрахунку результатів у DataTable
 
 ### June 24, 2025
 - Created universal DataTable component for all system lists with:
