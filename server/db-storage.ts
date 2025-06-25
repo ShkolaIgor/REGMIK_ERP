@@ -1167,10 +1167,10 @@ export class DatabaseStorage implements IStorage {
         createdAt: suppliers.createdAt,
         categoryId: suppliers.categoryId,
         externalId: suppliers.externalId,
-        categoryName: supplierCategories.name
+        categoryName: categories.name
       })
       .from(suppliers)
-      .leftJoin(supplierCategories, eq(suppliers.categoryId, supplierCategories.id));
+      .leftJoin(categories, eq(suppliers.categoryId, categories.id));
 
       // Add search filter
       if (search) {

@@ -118,6 +118,7 @@ interface DataTableProps {
   title?: string;
   storageKey: string; // Unique key for saving settings
   cardTemplate?: (item: any) => React.ReactNode;
+  totalItems?: number;
   expandableContent?: (item: any) => React.ReactNode;
   expandedItems?: Set<string | number>;
   onToggleExpand?: (itemId: string | number) => void;
