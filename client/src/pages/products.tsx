@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Upload, Download, Eye, FileText, AlertCircle, CheckCircle, Clock, X, Grid3X3, List, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Upload, Edit2, Trash2 } from "lucide-react";
 import { DataTable } from "@/components/DataTable/DataTable";
 
 interface Product {
@@ -47,135 +47,34 @@ interface ImportJob {
   totalRows: number;
 }
 
-// Компонент пошукового поля з автофокусом
-function SearchInput({ value, onChange }: { 
-  value: string; 
-  onChange: (value: string) => void; 
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, []);
-
-  return (
-    <div className="relative max-w-md">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-      <Input
-        ref={inputRef}
-        type="text"
-        placeholder="Пошук товарів за назвою, SKU або описом..."
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="pl-10"
-        autoComplete="off"
-      />
-    </div>
-  );
-}
-
-export default function Products() {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [isImportDetailsOpen, setIsImportDetailsOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [currentJob, setCurrentJob] = useState<ImportJob | null>(null);
-  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
-  
-  // Пагінація та фільтрація
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'list' | 'cards'>('list');
-  
-  // Сортування
-  const [sortField, setSortField] = useState<keyof Product | ''>('');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  
-  // Ширина стовпців для товарів
-  const [columnWidths, setColumnWidths] = useState({
-    name: 200,
-    sku: 150,
-    description: 250,
-    costPrice: 120,
-    retailPrice: 120,
-    unit: 100,
-    status: 120,
-    actions: 100
-  });
-
+export default function ProductsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importJob, setImportJob] = useState<ImportJob | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Завантаження товарів
-  const { data: products = [], isLoading, error } = useQuery({
-    queryKey: ["/api/products"],
+  const { data: products = [], isLoading, isError } = useQuery({
+    queryKey: ['/api/products'],
   });
 
-  // Завантаження категорій для форми
   const { data: categories = [] } = useQuery({
-    queryKey: ["/api/categories"],
+    queryKey: ['/api/product-categories'],
   });
 
-  // Фільтрація та сортування товарів
-  const filteredProducts = products.filter((product: Product) => {
-    if (!searchQuery) return true;
-    
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      product.name.toLowerCase().includes(searchLower) ||
-      product.sku.toLowerCase().includes(searchLower) ||
-      (product.description && product.description.toLowerCase().includes(searchLower))
-    );
-  });
+  // Обробники подій
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+  };
 
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (!sortField) return 0;
-    
-    let aValue = a[sortField];
-    let bValue = b[sortField];
-    
-    // Обробка порожніх значень
-    if (aValue === null || aValue === undefined) aValue = '';
-    if (bValue === null || bValue === undefined) bValue = '';
-    
-    // Числові поля
-    if (sortField === 'costPrice' || sortField === 'retailPrice') {
-      aValue = parseFloat(aValue as string) || 0;
-      bValue = parseFloat(bValue as string) || 0;
-    }
-    
-    // Дати
-    if (sortField === 'createdAt') {
-      aValue = new Date(aValue as Date).getTime();
-      bValue = new Date(bValue as Date).getTime();
-    }
-    
-    // Рядки
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      aValue = aValue.toLowerCase();
-      bValue = bValue.toLowerCase();
-    }
-    
-    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-    return 0;
-  });
-
-  // Пагінація
-  const total = sortedProducts.length;
-  const totalPages = Math.ceil(total / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const currentProducts = sortedProducts.slice(startIndex, endIndex);
-
-  // Скидаємо сторінку при зміні фільтру
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
+  const handleDelete = (product: Product) => {
+    setProductToDelete(product);
+    setShowDeleteAlert(true);
+  };
 
   // Mutation для видалення товару
   const deleteMutation = useMutation({
@@ -189,7 +88,7 @@ export default function Products() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      setEditingProduct(null);
+      setProductToDelete(null);
       setShowDeleteAlert(false);
       toast({
         title: "Успіх",
@@ -205,215 +104,13 @@ export default function Products() {
     },
   });
 
-  // Mutation для оновлення товару
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number, data: any }) => {
-      const response = await fetch(`/api/products/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to update product');
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      setEditingProduct(null);
-      toast({
-        title: "Товар оновлено",
-        description: "Дані товару успішно збережено",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Помилка",
-        description: "Не вдалося оновити товар",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const importMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('xmlFile', file);
-      
-      const response = await fetch('/api/products/import-xml', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return response.json();
-    },
-    onSuccess: (data) => {
-      if (data.success) {
-        setCurrentJob({ 
-          id: data.jobId, 
-          status: 'processing', 
-          progress: 0, 
-          processed: 0, 
-          imported: 0, 
-          skipped: 0, 
-          errors: [], 
-          details: [], 
-          totalRows: 0 
-        });
-        setIsImportDialogOpen(false);
-        setIsImportDetailsOpen(true);
-        pollJobStatus(data.jobId);
-      }
-    },
-    onError: (error) => {
-      toast({
-        title: "Помилка імпорту",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const pollJobStatus = async (jobId: string) => {
-    const maxAttempts = 60; // 5 хвилин (60 * 5 секунд)
-    let attempts = 0;
-
-    const poll = async () => {
-      try {
-        const response = await fetch(`/api/products/import-xml/${jobId}/status`);
-        if (!response.ok) throw new Error('Failed to check job status');
-        
-        const data = await response.json();
-        if (data.success && data.job) {
-          setCurrentJob(data.job);
-          
-          if (data.job.status === 'completed' || data.job.status === 'failed') {
-            if (data.job.status === 'completed') {
-              queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-              toast({
-                title: "Імпорт завершено",
-                description: `Імпортовано: ${data.job.imported}, Пропущено: ${data.job.skipped}`,
-              });
-            } else {
-              toast({
-                title: "Помилка імпорту",
-                description: "Імпорт завершився з помилкою",
-                variant: "destructive",
-              });
-            }
-            return;
-          }
-        }
-        
-        attempts++;
-        if (attempts < maxAttempts) {
-          setTimeout(poll, 5000); // Перевіряємо кожні 5 секунд
-        }
-      } catch (error) {
-        console.error('Error polling job status:', error);
-        attempts++;
-        if (attempts < maxAttempts) {
-          setTimeout(poll, 5000);
-        }
-      }
-    };
-
-    poll();
-  };
-
-  const handleImport = () => {
-    if (selectedFile) {
-      importMutation.mutate(selectedFile);
-    }
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    setSelectedFile(file || null);
-  };
-
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'imported':
-      case 'updated':
-        return 'default';
-      case 'skipped':
-        return 'secondary';
-      case 'error':
-        return 'destructive';
-      default:
-        return 'secondary';
-    }
-  };
-
-  // Функція для сортування
-  const handleSort = (field: keyof Product) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-    setCurrentPage(1);
-  };
-
-  // Функція для отримання іконки сортування
-  const getSortIcon = (field: keyof Product) => {
-    if (sortField !== field) {
-      return <ArrowUpDown className="h-4 w-4 text-gray-400" />;
-    }
-    return sortDirection === 'asc' 
-      ? <ArrowUp className="h-4 w-4 text-blue-600" />
-      : <ArrowDown className="h-4 w-4 text-blue-600" />;
-  };
-
-  // Функція для зміни ширини стовпців
-  const handleColumnResize = (column: string, width: number) => {
-    setColumnWidths(prev => ({
-      ...prev,
-      [column]: Math.max(80, width)
-    }));
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'imported':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'updated':
-        return <CheckCircle className="h-4 w-4 text-blue-500" />;
-      case 'skipped':
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
-      case 'error':
-        return <X className="h-4 w-4 text-red-500" />;
-      default:
-        return <Clock className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  if (isLoading) {
+  if (isError) {
     return (
       <div className="min-h-screen w-full bg-gray-50/30">
-        <div className="w-full px-6 py-6">
-          <div className="flex justify-center items-center h-64">
-            <div className="text-lg">Завантаження товарів...</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen w-full bg-gray-50/30">
-        <div className="w-full px-6 py-6">
-          <div className="flex justify-center items-center h-64">
-            <div className="text-lg text-red-600">Помилка завантаження товарів</div>
+        <div className="container mx-auto p-6">
+          <div className="text-center py-12">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Помилка завантаження товарів</h2>
+            <p className="text-gray-600">Спробуйте оновити сторінку</p>
           </div>
         </div>
       </div>
@@ -422,112 +119,101 @@ export default function Products() {
 
   return (
     <div className="min-h-screen w-full bg-gray-50/30">
-      <div className="w-full px-6 py-6 space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Товари</h1>
-          <p className="text-muted-foreground">
-            Управління каталогом товарів ({sortedProducts.length} з {products.length})
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Перемикач видів відображення */}
-          <div className="flex border rounded-lg p-1">
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-              className="h-8 px-3"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'cards' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('cards')}
-              className="h-8 px-3"
-            >
-              <Grid3X3 className="h-4 w-4" />
+      <div className="container mx-auto p-6 space-y-6">
+        {/* Заголовок */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h1 className="text-3xl font-bold tracking-tight">Товари</h1>
+          <div className="flex gap-2">
+            <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Імпорт XML
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Імпорт товарів з XML</DialogTitle>
+                </DialogHeader>
+                {/* Вміст діалогу імпорту тут */}
+              </DialogContent>
+            </Dialog>
+            
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Додати товар
             </Button>
           </div>
-          
-          {/* Кнопки імпорту та експорту */}
-          <Button variant="outline" size="sm" title="Експорт товарів">
-            <Download className="h-4 w-4 mr-2" />
-            Експорт
-          </Button>
-          
-          <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" title="Імпорт товарів з XML файлу">
-                <Upload className="h-4 w-4 mr-2" />
-                Імпорт товарів
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Імпорт товарів з XML</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="xmlFile">Виберіть XML файл</Label>
-                  <Input
-                    id="xmlFile"
-                    type="file"
-                    accept=".xml"
-                    onChange={handleFileChange}
-                  />
-                </div>
-                {selectedFile && (
-                  <div className="text-sm text-muted-foreground">
-                    Обраний файл: {selectedFile.name}
-                  </div>
-                )}
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsImportDialogOpen(false)}
-                  >
-                    Скасувати
-                  </Button>
-                  <Button
-                    onClick={handleImport}
-                    disabled={!selectedFile || importMutation.isPending}
-                  >
-                    {importMutation.isPending ? 'Завантаження...' : 'Імпортувати'}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-          
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Додати товар
-          </Button>
         </div>
-      </div>
 
-      {/* Пошук */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center">
-        <SearchInput value={searchQuery} onChange={setSearchQuery} />
-        {searchQuery && (
-          <Button
-            variant="ghost"
-            onClick={() => setSearchQuery('')}
-            className="sm:ml-auto"
-          >
-            Очистити фільтр
-          </Button>
-        )}
-      </div>
-
-      {/* Відображення товарів */}
-      {viewMode === 'cards' ? (
-        /* Вид карточками */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {currentProducts.map((product: Product) => (
-            <Card key={product.id} className="hover:shadow-md transition-shadow">
+        {/* DataTable компонент */}
+        <DataTable
+          data={products}
+          columns={[
+            {
+              key: 'name',
+              label: 'Назва',
+              sortable: true,
+              render: (value, row) => (
+                <div>
+                  <div className="font-medium">{value}</div>
+                  {row.description && (
+                    <div className="text-sm text-gray-500 truncate">{row.description}</div>
+                  )}
+                </div>
+              )
+            },
+            {
+              key: 'sku',
+              label: 'SKU',
+              sortable: true,
+              width: '150px'
+            },
+            {
+              key: 'costPrice',
+              label: 'Собівартість',
+              sortable: true,
+              width: '120px',
+              render: (value) => `${value} ₴`
+            },
+            {
+              key: 'retailPrice',
+              label: 'Роздрібна ціна',
+              sortable: true,
+              width: '120px',
+              render: (value) => `${value} ₴`
+            },
+            {
+              key: 'unit',
+              label: 'Од. виміру',
+              sortable: true,
+              width: '100px'
+            },
+            {
+              key: 'isActive',
+              label: 'Статус',
+              sortable: true,
+              width: '100px',
+              type: 'badge',
+              render: (value) => (
+                <Badge variant={value ? "default" : "secondary"}>
+                  {value ? "Активний" : "Неактивний"}
+                </Badge>
+              )
+            },
+            {
+              key: 'createdAt',
+              label: 'Дата створення',
+              sortable: true,
+              width: '150px',
+              render: (value) => new Date(value).toLocaleDateString('uk-UA')
+            }
+          ]}
+          loading={isLoading}
+          title="Список товарів"
+          storageKey="products"
+          cardTemplate={(product) => (
+            <Card className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <div className="space-y-1 flex-1">
@@ -566,674 +252,61 @@ export default function Products() {
                     <span>{new Date(product.createdAt).toLocaleDateString('uk-UA')}</span>
                   </div>
                 </div>
-
-                <div className="flex gap-2 pt-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setEditingProduct(product)}
-                    className="flex-1"
-                  >
-                    <Edit2 className="h-4 w-4 mr-1" />
-                    Редагувати
-                  </Button>
-                </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      ) : (
-        /* Вид списком */
-        <div className="bg-white rounded-lg border">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr className="border-b">
-                  <th 
-                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100 select-none relative group"
-                    style={{ width: columnWidths.name }}
-                    onClick={() => handleSort('name')}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold">Назва</span>
-                      {getSortIcon('name')}
-                    </div>
-                    <div
-                      className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-300 opacity-0 group-hover:opacity-100"
-                      onMouseDown={(e) => {
-                        const startX = e.clientX;
-                        const startWidth = columnWidths.name;
-                        const handleMouseMove = (e: MouseEvent) => {
-                          const newWidth = startWidth + (e.clientX - startX);
-                          handleColumnResize('name', newWidth);
-                        };
-                        const handleMouseUp = () => {
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    />
-                  </th>
-                  <th 
-                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100 select-none relative group"
-                    style={{ width: columnWidths.sku }}
-                    onClick={() => handleSort('sku')}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>SKU</span>
-                      {getSortIcon('sku')}
-                    </div>
-                    <div
-                      className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-300 opacity-0 group-hover:opacity-100"
-                      onMouseDown={(e) => {
-                        const startX = e.clientX;
-                        const startWidth = columnWidths.sku;
-                        const handleMouseMove = (e: MouseEvent) => {
-                          const newWidth = startWidth + (e.clientX - startX);
-                          handleColumnResize('sku', newWidth);
-                        };
-                        const handleMouseUp = () => {
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    />
-                  </th>
-                  <th 
-                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100 select-none relative group"
-                    style={{ width: columnWidths.description }}
-                    onClick={() => handleSort('description')}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>Опис</span>
-                      {getSortIcon('description')}
-                    </div>
-                    <div
-                      className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-300 opacity-0 group-hover:opacity-100"
-                      onMouseDown={(e) => {
-                        const startX = e.clientX;
-                        const startWidth = columnWidths.description;
-                        const handleMouseMove = (e: MouseEvent) => {
-                          const newWidth = startWidth + (e.clientX - startX);
-                          handleColumnResize('description', newWidth);
-                        };
-                        const handleMouseUp = () => {
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    />
-                  </th>
-                  <th 
-                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100 select-none relative group"
-                    style={{ width: columnWidths.costPrice }}
-                    onClick={() => handleSort('costPrice')}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>Собівартість</span>
-                      {getSortIcon('costPrice')}
-                    </div>
-                    <div
-                      className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-300 opacity-0 group-hover:opacity-100"
-                      onMouseDown={(e) => {
-                        const startX = e.clientX;
-                        const startWidth = columnWidths.costPrice;
-                        const handleMouseMove = (e: MouseEvent) => {
-                          const newWidth = startWidth + (e.clientX - startX);
-                          handleColumnResize('costPrice', newWidth);
-                        };
-                        const handleMouseUp = () => {
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    />
-                  </th>
-                  <th 
-                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100 select-none relative group"
-                    style={{ width: columnWidths.retailPrice }}
-                    onClick={() => handleSort('retailPrice')}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>Роздрібна ціна</span>
-                      {getSortIcon('retailPrice')}
-                    </div>
-                    <div
-                      className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-300 opacity-0 group-hover:opacity-100"
-                      onMouseDown={(e) => {
-                        const startX = e.clientX;
-                        const startWidth = columnWidths.retailPrice;
-                        const handleMouseMove = (e: MouseEvent) => {
-                          const newWidth = startWidth + (e.clientX - startX);
-                          handleColumnResize('retailPrice', newWidth);
-                        };
-                        const handleMouseUp = () => {
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    />
-                  </th>
-                  <th 
-                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100 select-none relative group"
-                    style={{ width: columnWidths.unit }}
-                    onClick={() => handleSort('unit')}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>Од. виміру</span>
-                      {getSortIcon('unit')}
-                    </div>
-                    <div
-                      className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-300 opacity-0 group-hover:opacity-100"
-                      onMouseDown={(e) => {
-                        const startX = e.clientX;
-                        const startWidth = columnWidths.unit;
-                        const handleMouseMove = (e: MouseEvent) => {
-                          const newWidth = startWidth + (e.clientX - startX);
-                          handleColumnResize('unit', newWidth);
-                        };
-                        const handleMouseUp = () => {
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    />
-                  </th>
-                  <th 
-                    className="text-left p-4 font-medium text-gray-900 cursor-pointer hover:bg-gray-100 select-none relative group"
-                    style={{ width: columnWidths.status }}
-                    onClick={() => handleSort('isActive')}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>Статус</span>
-                      {getSortIcon('isActive')}
-                    </div>
-                    <div
-                      className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-300 opacity-0 group-hover:opacity-100"
-                      onMouseDown={(e) => {
-                        const startX = e.clientX;
-                        const startWidth = columnWidths.status;
-                        const handleMouseMove = (e: MouseEvent) => {
-                          const newWidth = startWidth + (e.clientX - startX);
-                          handleColumnResize('status', newWidth);
-                        };
-                        const handleMouseUp = () => {
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    />
-                  </th>
-                  <th 
-                    className="text-left p-4 font-medium text-gray-900"
-                    style={{ width: columnWidths.actions }}
-                  >
-                    <span>Дії</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentProducts.map((product: Product) => (
-                  <tr key={product.id} className="border-b hover:bg-gray-50">
-                    <td className="p-4" style={{ width: columnWidths.name }}>
-                      <div className="font-bold text-gray-900">{product.name}</div>
-                    </td>
-                    <td className="p-4 text-gray-600" style={{ width: columnWidths.sku }}>{product.sku}</td>
-                    <td className="p-4 text-gray-600" style={{ width: columnWidths.description }}>
-                      <div className="truncate" title={product.description || ""}>{product.description || "—"}</div>
-                    </td>
-                    <td className="p-4 text-gray-900 font-medium" style={{ width: columnWidths.costPrice }}>{product.costPrice} ₴</td>
-                    <td className="p-4 text-gray-900 font-medium" style={{ width: columnWidths.retailPrice }}>{product.retailPrice} ₴</td>
-                    <td className="p-4 text-gray-600" style={{ width: columnWidths.unit }}>{product.unit}</td>
-                    <td className="p-4" style={{ width: columnWidths.status }}>
-                      <Badge variant={product.isActive ? "default" : "secondary"}>
-                        {product.isActive ? "Активний" : "Неактивний"}
-                      </Badge>
-                    </td>
-                    <td className="p-4" style={{ width: columnWidths.actions }}>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setEditingProduct(product)}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Пагінація */}
-      {currentProducts.length > 0 && (
-        <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <p className="text-sm text-muted-foreground">
-              Показано {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, total)} з {total} товарів
-            </p>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">На сторінці:</span>
-              <Select value={pageSize.toString()} onValueChange={(value) => {
-                setPageSize(Number(value));
-                setCurrentPage(1);
-              }}>
-                <SelectTrigger className="w-20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                  <SelectItem value="1000">Всі</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
-            >
-              ««
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-            >
-              Попередня
-            </Button>
-            <div className="flex items-center space-x-1">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-
-                return (
-                  <Button
-                    key={pageNum}
-                    variant={currentPage === pageNum ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setCurrentPage(pageNum)}
-                    className="min-w-[32px] h-8"
-                  >
-                    {pageNum}
-                  </Button>
-                );
-              })}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Наступна
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage === totalPages}
-            >
-              »»
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Повідомлення коли немає товарів */}
-      {currentProducts.length === 0 && (
-        <div className="text-center py-12">
-          <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium mb-2">
-            {searchQuery ? 'Товари не знайдені' : 'Немає товарів'}
-          </h3>
-          <p className="text-muted-foreground mb-4">
-            {searchQuery 
-              ? `Не знайдено товарів за запитом "${searchQuery}"`
-              : 'Почніть з додавання першого товару або імпорту з XML'
-            }
-          </p>
-          {!searchQuery && (
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Додати товар
-            </Button>
           )}
-        </div>
-      )}
-
-      {/* Діалог деталей імпорту */}
-      <Dialog open={isImportDetailsOpen} onOpenChange={setIsImportDetailsOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Деталі імпорту товарів</DialogTitle>
-          </DialogHeader>
-          
-          {currentJob && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <div className="text-muted-foreground">Статус</div>
-                  <Badge variant={
-                    currentJob.status === 'completed' ? 'default' :
-                    currentJob.status === 'failed' ? 'destructive' : 'secondary'
-                  }>
-                    {currentJob.status === 'processing' ? 'Обробка' :
-                     currentJob.status === 'completed' ? 'Завершено' : 'Помилка'}
-                  </Badge>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">Прогрес</div>
-                  <div className="font-medium">{currentJob.progress}%</div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">Оброблено</div>
-                  <div className="font-medium">{currentJob.processed} / {currentJob.totalRows}</div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">Імпортовано</div>
-                  <div className="font-medium text-green-600">{currentJob.imported}</div>
-                </div>
-              </div>
-
-              {currentJob.status === 'processing' && (
-                <Progress value={currentJob.progress} className="w-full" />
-              )}
-
-              {currentJob.errors.length > 0 && (
-                <div>
-                  <h4 className="font-medium text-red-600 mb-2">Помилки:</h4>
-                  <div className="bg-red-50 p-3 rounded-md text-sm text-red-800 max-h-32 overflow-y-auto">
-                    {currentJob.errors.map((error, index) => (
-                      <div key={index}>{error}</div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {currentJob.details.length > 0 && (
-                <div>
-                  <h4 className="font-medium mb-2">Деталі обробки:</h4>
-                  <div className="max-h-64 overflow-y-auto space-y-2">
-                    {currentJob.details.map((detail, index) => (
-                      <div key={index} className="flex items-center gap-2 text-sm p-2 bg-gray-50 rounded">
-                        {getStatusIcon(detail.status)}
-                        <span className="font-medium">{detail.name}</span>
-                        <Badge variant={getStatusBadgeVariant(detail.status)} className="ml-auto">
-                          {detail.status === 'imported' ? 'Імпорт' :
-                           detail.status === 'updated' ? 'Оновлено' :
-                           detail.status === 'skipped' ? 'Пропущено' : 'Помилка'}
-                        </Badge>
-                        {detail.message && (
-                          <span className="text-muted-foreground ml-2">{detail.message}</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+          actions={(product) => (
+            <div className="flex items-center gap-1">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEdit(product);
+                }}
+                className="h-8 w-8 p-0 hover:bg-blue-50 hover:scale-110 transition-all duration-200"
+                title="Редагувати товар"
+              >
+                <Edit2 className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(product);
+                }}
+                className="h-8 w-8 p-0 hover:bg-red-50 hover:scale-110 transition-all duration-200 text-red-600 hover:text-red-700"
+                title="Видалити товар"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+        />
 
-      {/* Діалог редагування товару */}
-      <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Редагування товару</DialogTitle>
-          </DialogHeader>
-          {editingProduct && (
-            <ProductEditForm 
-              product={editingProduct} 
-              categories={categories}
-              onSave={(data) => updateMutation.mutate({ id: editingProduct.id, data })}
-              onDelete={() => setShowDeleteAlert(true)}
-              isLoading={updateMutation.isPending}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* AlertDialog для підтвердження видалення */}
-      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Підтвердження видалення</AlertDialogTitle>
-            <AlertDialogDescription>
-              Ви впевнені, що хочете видалити товар "{editingProduct?.name}"? 
-              Цю дію неможливо скасувати.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Скасувати</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => editingProduct && deleteMutation.mutate(editingProduct.id)}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Видалити
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        {/* AlertDialog для підтвердження видалення */}
+        <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Підтвердження видалення</AlertDialogTitle>
+              <AlertDialogDescription>
+                Ви впевнені, що хочете видалити товар "{productToDelete?.name}"? 
+                Цю дію неможливо скасувати.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Скасувати</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => productToDelete && deleteMutation.mutate(productToDelete.id)}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Видалити
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
-  );
-}
-
-// Компонент форми редагування товару
-function ProductEditForm({ 
-  product, 
-  categories, 
-  onSave, 
-  onDelete, 
-  isLoading 
-}: {
-  product: Product;
-  categories: any[];
-  onSave: (data: any) => void;
-  onDelete: () => void;
-  isLoading: boolean;
-}) {
-  const [formData, setFormData] = useState({
-    name: product.name,
-    sku: product.sku,
-    description: product.description || '',
-    barcode: product.barcode || '',
-    categoryId: product.categoryId?.toString() || '',
-    costPrice: product.costPrice,
-    retailPrice: product.retailPrice,
-    productType: product.productType,
-    unit: product.unit,
-    minStock: product.minStock?.toString() || '',
-    maxStock: product.maxStock?.toString() || '',
-    isActive: product.isActive ?? true,
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const data = {
-      ...formData,
-      categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
-      minStock: formData.minStock ? parseInt(formData.minStock) : null,
-      maxStock: formData.maxStock ? parseInt(formData.maxStock) : null,
-    };
-    onSave(data);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="name">Назва товару</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="sku">SKU</Label>
-          <Input
-            id="sku"
-            value={formData.sku}
-            onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-            required
-          />
-        </div>
-        <div className="md:col-span-2">
-          <Label htmlFor="description">Опис</Label>
-          <Input
-            id="description"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          />
-        </div>
-        <div>
-          <Label htmlFor="barcode">Штрих-код</Label>
-          <Input
-            id="barcode"
-            value={formData.barcode}
-            onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-          />
-        </div>
-        <div>
-          <Label htmlFor="categoryId">Категорія</Label>
-          <Select value={formData.categoryId} onValueChange={(value) => setFormData({ ...formData, categoryId: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Оберіть категорію" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((category: any) => (
-                <SelectItem key={category.id} value={category.id.toString()}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="costPrice">Собівартість</Label>
-          <Input
-            id="costPrice"
-            value={formData.costPrice}
-            onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
-            type="number"
-            step="0.01"
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="retailPrice">Роздрібна ціна</Label>
-          <Input
-            id="retailPrice"
-            value={formData.retailPrice}
-            onChange={(e) => setFormData({ ...formData, retailPrice: e.target.value })}
-            type="number"
-            step="0.01"
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="productType">Тип товару</Label>
-          <Select value={formData.productType} onValueChange={(value) => setFormData({ ...formData, productType: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Оберіть тип" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="simple">Простий товар</SelectItem>
-              <SelectItem value="kit">Комплект</SelectItem>
-              <SelectItem value="service">Послуга</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="unit">Одиниця виміру</Label>
-          <Input
-            id="unit"
-            value={formData.unit}
-            onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="minStock">Мінімальний залишок</Label>
-          <Input
-            id="minStock"
-            value={formData.minStock}
-            onChange={(e) => setFormData({ ...formData, minStock: e.target.value })}
-            type="number"
-          />
-        </div>
-        <div>
-          <Label htmlFor="maxStock">Максимальний залишок</Label>
-          <Input
-            id="maxStock"
-            value={formData.maxStock}
-            onChange={(e) => setFormData({ ...formData, maxStock: e.target.value })}
-            type="number"
-          />
-        </div>
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="isActive"
-            checked={formData.isActive}
-            onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-            className="h-4 w-4"
-          />
-          <Label htmlFor="isActive">Активний товар</Label>
-        </div>
-      </div>
-
-      <div className="flex justify-between">
-        <Button
-          type="button"
-          variant="destructive"
-          onClick={onDelete}
-          className="flex items-center gap-2"
-        >
-          <Trash2 className="h-4 w-4" />
-          Видалити товар
-        </Button>
-        
-        <div className="flex gap-2">
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Збереження...' : 'Зберегти зміни'}
-          </Button>
-        </div>
-      </div>
-    </form>
   );
 }
