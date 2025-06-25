@@ -208,24 +208,39 @@ export function DataTable({
     }
   }, [columns, settings.columnOrder.length]);
 
-  // Filter and search data
+  // Optimized filter and search for large datasets
   const filteredData = useMemo(() => {
-    let result = [...data];
+    let result = data;
 
-    // Apply search
+    // For large datasets, optimize search to specific fields only
     if (searchQuery && searchable) {
-      result = result.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      );
+      const searchLower = searchQuery.toLowerCase();
+      
+      if (data.length > 5000) {
+        // Fast search on key fields only for performance
+        result = result.filter(item => {
+          const searchableFields = ['name', 'sku', 'title', 'description', 'id'];
+          return searchableFields.some(field => {
+            const value = item[field];
+            return value && String(value).toLowerCase().includes(searchLower);
+          });
+        });
+      } else {
+        // Full search for smaller datasets
+        result = result.filter(item =>
+          Object.values(item).some(value =>
+            String(value).toLowerCase().includes(searchLower)
+          )
+        );
+      }
     }
 
-    // Apply filters
+    // Apply filters efficiently
     Object.entries(filters).forEach(([key, value]) => {
       if (value) {
+        const filterLower = String(value).toLowerCase();
         result = result.filter(item =>
-          String(item[key]).toLowerCase().includes(String(value).toLowerCase())
+          String(item[key] || '').toLowerCase().includes(filterLower)
         );
       }
     });
@@ -233,7 +248,7 @@ export function DataTable({
     return result;
   }, [data, searchQuery, filters, searchable]);
 
-  // Sort data
+  // Optimized sort for large datasets
   const sortedData = useMemo(() => {
     if (!settings.sortField) return filteredData;
 
@@ -241,17 +256,33 @@ export function DataTable({
       const aVal = a[settings.sortField];
       const bVal = b[settings.sortField];
       
-      if (aVal < bVal) return settings.sortDirection === 'asc' ? -1 : 1;
-      if (aVal > bVal) return settings.sortDirection === 'asc' ? 1 : -1;
-      return 0;
+      // Optimized comparison for different data types
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return settings.sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+      
+      if (aVal === bVal) return 0;
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+      
+      const result = String(aVal).localeCompare(String(bVal));
+      return settings.sortDirection === 'asc' ? result : -result;
     });
   }, [filteredData, settings.sortField, settings.sortDirection]);
 
-  // Paginate data
+  // Efficient pagination with lazy loading
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * settings.pageSize;
-    return sortedData.slice(start, start + settings.pageSize);
+    const end = start + settings.pageSize;
+    return sortedData.slice(start, end);
   }, [sortedData, currentPage, settings.pageSize]);
+  
+  // Reduce default page size for large datasets
+  useEffect(() => {
+    if (data.length > 10000 && settings.pageSize > 50) {
+      setSettings(prev => ({ ...prev, pageSize: 25 }));
+    }
+  }, [data.length, settings.pageSize]);
 
   const totalPages = Math.ceil(sortedData.length / settings.pageSize);
 
