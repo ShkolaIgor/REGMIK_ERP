@@ -585,94 +585,19 @@ export default function SupplierReceipts() {
         <DataTable
           data={filteredReceipts}
           columns={[
-            { 
-              key: 'id', 
-              label: 'ID', 
-              sortable: true,
-              width: '80px'
-            },
-            { 
-              key: 'receipt_date', 
-              label: 'Дата приходу', 
-              sortable: true,
-              width: '120px',
-              render: (value) => new Date(value).toLocaleDateString('uk-UA')
-            },
-            { 
-              key: 'supplier_name', 
-              label: 'Постачальник', 
-              sortable: true,
-              width: '200px'
-            },
-            { 
-              key: 'document_type_name', 
-              label: 'Тип документу', 
-              sortable: true,
-              width: '150px'
-            },
-            { 
-              key: 'supplier_document_number', 
-              label: 'Номер документу', 
-              sortable: true,
-              width: '150px'
-            },
-            { 
-              key: 'total_amount', 
-              label: 'Сума', 
-              sortable: true,
-              width: '120px',
-              render: (value) => `${parseFloat(value).toFixed(2)} ₴`
-            },
-            { 
-              key: 'purchase_order_number', 
-              label: 'Замовлення', 
-              sortable: true,
-              width: '120px'
-            },
+            { key: 'id', label: 'ID', sortable: true },
+            { key: 'receipt_date', label: 'Дата приходу', sortable: true },
+            { key: 'supplier_name', label: 'Постачальник', sortable: true },
+            { key: 'document_type_name', label: 'Тип документу', sortable: true },
+            { key: 'supplier_document_number', label: 'Номер документу', sortable: true },
+            { key: 'total_amount', label: 'Сума', sortable: true },
+            { key: 'purchase_order_number', label: 'Замовлення', sortable: true },
           ]}
           loading={isLoading}
           title="Список приходів від постачальників"
           storageKey="supplier-receipts"
           onEdit={handleEdit}
           onDelete={handleDelete}
-          cardTemplate={(receipt) => (
-            <Card className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1 flex-1">
-                    <CardTitle className="text-lg leading-6 font-bold">
-                      {receipt.supplier_name || 'Невідомий постачальник'}
-                    </CardTitle>
-                    <CardDescription className="text-sm">
-                      {receipt.document_type_name} • {new Date(receipt.receipt_date).toLocaleDateString('uk-UA')}
-                    </CardDescription>
-                  </div>
-                  <Badge className="bg-blue-100 text-blue-800">
-                    {receipt.supplier_document_number || `#${receipt.id}`}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Сума:</span>
-                    <span className="font-medium">{parseFloat(receipt.total_amount).toFixed(2)} ₴</span>
-                  </div>
-                  {receipt.purchase_order_number && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Замовлення:</span>
-                      <span className="text-blue-600">{receipt.purchase_order_number}</span>
-                    </div>
-                  )}
-                  {receipt.comment && (
-                    <div className="text-sm text-gray-600 mt-2 line-clamp-2">
-                      {receipt.comment}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
         />
       </main>
     </div>
