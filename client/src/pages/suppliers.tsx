@@ -108,8 +108,9 @@ export default function Suppliers() {
   });
 
   const suppliers = suppliersResponse?.data || suppliersResponse?.suppliers || [];
-  const totalItems = suppliersResponse?.total || 0;
-  const totalPages = suppliersResponse?.totalPages || Math.ceil(totalItems / pageSize);
+  const total = suppliersResponse?.total || 0;
+  const totalItems = total;
+  const totalPages = suppliersResponse?.totalPages || Math.ceil(total / pageSize);
 
   // Колонки для DataTable
   const columns: DataTableColumn[] = [
