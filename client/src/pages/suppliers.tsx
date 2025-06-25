@@ -110,7 +110,7 @@ export default function Suppliers() {
   const suppliers = suppliersResponse?.data || suppliersResponse?.suppliers || [];
   const total = suppliersResponse?.total || 0;
   const totalItems = total;
-  const totalPages = suppliersResponse?.totalPages || Math.ceil(total / pageSize);
+  const totalPages = suppliersResponse?.totalPages || Math.ceil(total / (pageSize || 25));
 
   // Колонки для DataTable
   const columns: DataTableColumn[] = [

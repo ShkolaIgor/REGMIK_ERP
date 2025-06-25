@@ -261,7 +261,7 @@ export function DataTable({
 
   // Paginate data - only if server pagination is not used
   const paginatedData = useMemo(() => {
-    if (totalPages && totalPages > 0) {
+    if (typeof totalPages === 'number' && totalPages > 0) {
       // Server-side pagination - return data as is
       return sortedData;
     }
