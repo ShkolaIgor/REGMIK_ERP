@@ -585,17 +585,56 @@ export default function SupplierReceipts() {
         <DataTable
           data={filteredReceipts}
           columns={[
-            { key: 'id', label: 'ID', sortable: true },
-            { key: 'receipt_date', label: 'Дата приходу', sortable: true },
-            { key: 'supplier_name', label: 'Постачальник', sortable: true },
-            { key: 'document_type_name', label: 'Тип документу', sortable: true },
-            { key: 'supplier_document_number', label: 'Номер документу', sortable: true },
-            { key: 'total_amount', label: 'Сума', sortable: true },
-            { key: 'purchase_order_number', label: 'Замовлення', sortable: true },
+            { 
+              key: 'id', 
+              label: 'ID', 
+              sortable: true,
+              width: '80px'
+            },
+            { 
+              key: 'receipt_date', 
+              label: 'Дата приходу', 
+              sortable: true,
+              width: '120px',
+              render: (value) => new Date(value).toLocaleDateString('uk-UA')
+            },
+            { 
+              key: 'supplier_name', 
+              label: 'Постачальник', 
+              sortable: true,
+              width: '200px'
+            },
+            { 
+              key: 'document_type_name', 
+              label: 'Тип документу', 
+              sortable: true,
+              width: '150px'
+            },
+            { 
+              key: 'supplier_document_number', 
+              label: 'Номер документу', 
+              sortable: true,
+              width: '150px'
+            },
+            { 
+              key: 'total_amount', 
+              label: 'Сума', 
+              sortable: true,
+              width: '120px',
+              render: (value) => `${parseFloat(value).toFixed(2)} ₴`
+            },
+            { 
+              key: 'purchase_order_number', 
+              label: 'Замовлення', 
+              sortable: true,
+              width: '120px'
+            },
           ]}
           loading={isLoading}
           title="Список приходів від постачальників"
           storageKey="supplier-receipts"
+          onEdit={handleEdit}
+          onDelete={handleDelete}
           cardTemplate={(receipt) => (
             <Card className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
