@@ -531,18 +531,19 @@ export default function SupplierReceipts() {
     }
   };
 
-  const toggleExpand = (receiptId: number) => {
+  const toggleExpand = (receiptId: string | number) => {
+    const id = typeof receiptId === 'string' ? parseInt(receiptId) : receiptId;
     const newExpanded = new Set(expandedItems);
-    if (newExpanded.has(receiptId)) {
-      newExpanded.delete(receiptId);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
     } else {
-      newExpanded.add(receiptId);
+      newExpanded.add(id);
     }
     setExpandedItems(newExpanded);
   };
 
-  // Use supplierReceipts as receipts for compatibility
-  const receipts = supplierReceipts;
+  // Use receiptsArray as receipts for compatibility
+  const receipts = receiptsArray;
 
   // Receipt items component for expanded view
   const ReceiptItemsView = ({ receiptId }: { receiptId: number }) => {
@@ -703,7 +704,7 @@ export default function SupplierReceipts() {
   };
 
   // Filter and sort receipts
-  const filteredReceipts = supplierReceipts.filter((receipt: any) => {
+  const filteredReceipts = receiptsArray.filter((receipt: any) => {
     // Use supplier_name from JOIN query instead of looking up
     const supplierName = receipt.supplier_name || '';
     const documentTypeName = receipt.document_type_name || '';
@@ -766,10 +767,10 @@ export default function SupplierReceipts() {
 
 
   // Статистичні дані
-  const totalReceipts = supplierReceipts.length;
-  const totalAmount = supplierReceipts.reduce((sum: number, receipt: any) => sum + parseFloat(receipt.total_amount || '0'), 0);
-  const uniqueSuppliers = new Set(supplierReceipts.map((r: any) => r.supplier_id)).size;
-  const thisMonthReceipts = supplierReceipts.filter((receipt: any) => {
+  const totalReceipts = receiptsArray.length;
+  const totalAmount = receiptsArray.reduce((sum: number, receipt: any) => sum + parseFloat(receipt.total_amount || '0'), 0);
+  const uniqueSuppliers = new Set(receiptsArray.map((r: any) => r.supplier_id)).size;
+  const thisMonthReceipts = receiptsArray.filter((receipt: any) => {
     const receiptDate = new Date(receipt.receipt_date);
     const now = new Date();
     return receiptDate.getMonth() === now.getMonth() && receiptDate.getFullYear() === now.getFullYear();
@@ -918,7 +919,7 @@ export default function SupplierReceipts() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Усі постачальники</SelectItem>
-                {[...new Set(supplierReceipts.map((r: any) => r.supplier_name).filter(Boolean))].map((name) => (
+                {[...new Set(receiptsArray.map((r: any) => r.supplier_name).filter(Boolean))].map((name) => (
                   <SelectItem key={name} value={name as string}>
                     {name}
                   </SelectItem>
@@ -932,7 +933,7 @@ export default function SupplierReceipts() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Усі типи документів</SelectItem>
-                {[...new Set(supplierReceipts.map((r: any) => r.document_type_name).filter(Boolean))].map((name) => (
+                {[...new Set(receiptsArray.map((r: any) => r.document_type_name).filter(Boolean))].map((name) => (
                   <SelectItem key={name} value={name as string}>
                     {name}
                   </SelectItem>
