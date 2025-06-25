@@ -324,24 +324,27 @@ export default function SupplierReceipts() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+      <header className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white p-6 rounded-lg shadow-lg">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Каталог приходів від постачальників</h1>
-            <p className="text-gray-600">Управління документами постачальників та контроль приходів товарів</p>
+          <div className="flex items-center space-x-4">
+            <h2 className="text-2xl font-semibold text-white">Каталог приходів від постачальників</h2>
+            <Badge className="bg-green-100 text-green-800">
+              <div className="w-2 h-2 bg-green-500 rounded-full mr-1" />
+              Онлайн
+            </Badge>
           </div>
-          <div className="flex items-center space-x-3">
-            <Button variant="outline" size="sm">
+          <div className="flex items-center space-x-4">
+            <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
               <Upload className="h-4 w-4 mr-2" />
               Імпорт XML
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
               <Download className="h-4 w-4 mr-2" />
               Експорт
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button className="bg-white text-blue-600 hover:bg-gray-100">
                   <Plus className="h-4 w-4 mr-2" />
                   Новий прихід
                 </Button>
