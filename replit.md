@@ -146,6 +146,8 @@ Preferred communication style: Simple, everyday language.
 - Додано безпечні перевірки масивів у DataTable компоненті для запобігання runtime помилок
 - Система стабільно працює з серверною пагінацією та універсальним DataTable компонентом
 - Виправлено автозаповнення логіну/паролю на iOS - додано name атрибути та autoComplete
+- Покращено відображення товарів у DataTable з правильними назвами колонок та форматуванням цін
+- Виправлено помилку з undefined у логах постачальників
 
 ### June 24, 2025
 - Created universal DataTable component for all system lists with:

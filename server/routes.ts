@@ -2139,10 +2139,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const result = await storage.getSuppliersPaginated(page, pageSize, searchTerm, sortField, sortDirection);
       console.log('Suppliers result:', { 
-        dataLength: result.data.length, 
-        total: result.total, 
-        page: result.page, 
-        pageSize: result.pageSize 
+        dataLength: result?.data?.length || 0, 
+        total: result?.total || 0, 
+        page: result?.page || 0, 
+        pageSize: result?.pageSize || 0 
       });
       
       res.json(result);
