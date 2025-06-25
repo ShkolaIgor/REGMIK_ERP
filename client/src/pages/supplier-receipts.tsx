@@ -243,6 +243,7 @@ export default function SupplierReceipts() {
   console.log('Suppliers in component:', suppliers);
   console.log('Suppliers loading:', suppliersLoading);
   console.log('Suppliers error:', suppliersError);
+  console.log('Suppliers length:', suppliers?.length);
 
   const { data: componentsData = [] } = useQuery({
     queryKey: ["/api/components"],
@@ -1082,11 +1083,14 @@ export default function SupplierReceipts() {
                           Помилка завантаження постачальників
                         </SelectItem>
                       ) : suppliers && suppliers.length > 0 ? (
-                        suppliers.map((supplier: Supplier) => (
-                          <SelectItem key={supplier.id} value={supplier.id.toString()}>
-                            {supplier.name}
-                          </SelectItem>
-                        ))
+                        suppliers.map((supplier: Supplier) => {
+                          console.log('Rendering supplier:', supplier);
+                          return (
+                            <SelectItem key={supplier.id} value={supplier.id.toString()}>
+                              {supplier.name}
+                            </SelectItem>
+                          );
+                        })
                       ) : (
                         <SelectItem value="" disabled>
                           Постачальники не знайдені
