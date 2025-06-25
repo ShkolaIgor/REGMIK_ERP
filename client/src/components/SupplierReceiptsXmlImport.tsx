@@ -228,15 +228,48 @@ export function SupplierReceiptsXmlImport({ onClose }: { onClose: () => void }) 
       });
     }
   };
-        // Parse XML content
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
-        
-        // Check for XML parsing errors
-        const parseError = xmlDoc.querySelector('parsererror');
-        if (parseError) {
-          throw new Error('Помилка парсингу XML файлу');
-        }
+
+  const updateMapping = (section: 'receiptFields' | 'itemFields', index: number, field: 'xmlPath', value: string) => {
+    setMapping(prev => ({
+      ...prev,
+      [section]: prev[section].map((item, i) => 
+        i === index ? { ...item, [field]: value } : item
+      )
+    }));
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'imported':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'error':
+        return <X className="h-4 w-4 text-red-500" />;
+      default:
+        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+    }
+  };
+
+  const downloadTemplate = () => {
+    const template = `<?xml version="1.0" encoding="UTF-8"?>
+<DOCUMENT>
+  <ROW DATE_INP="15.01.2024" DATE_POST="14.01.2024" COMMENT="Прихід товару за накладною" INDEX_PREDPR="1" INDEX_DOC="2" ID_LISTPRIHOD="1" NUMB_DOC="7025" ACC_SUM="1500,00"/>
+  <ROW DATE_INP="16.01.2024" DATE_POST="15.01.2024" COMMENT="Другий прихід" INDEX_PREDPR="6" INDEX_DOC="1" ID_LISTPRIHOD="2" NUMB_DOC="7026" ACC_SUM="2500,50"/>
+  <ROW DATE_INP="17.01.2024" DATE_POST="16.01.2024" COMMENT="Третій прихід" INDEX_PREDPR="10801" INDEX_DOC="2" ID_LISTPRIHOD="3" NUMB_DOC="7027" ACC_SUM="3000,75"/>
+  <ROW DATE_INP="18.01.2024" DATE_POST="17.01.2024" COMMENT="Четвертий прихід" INDEX_PREDPR="874" INDEX_DOC="1" ID_LISTPRIHOD="4" NUMB_DOC="7028" ACC_SUM="4500,25"/>
+  <!-- INDEX_PREDPR має відповідати полю external_id в таблиці suppliers -->
+  <!-- Доступні external_id: 1 (Радіокомплект), 6 (VD MAIS), 874 (Постачальник 874), 10801 (Корякіна Наталія), 10808 (Єрохіна Олена) -->
+</DOCUMENT>`;
+
+    const blob = new Blob([template], { type: 'application/xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'supplier_receipts_template.xml';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
         // Extract receipts data from ROW elements
         const receipts = Array.from(xmlDoc.querySelectorAll('ROW')).map(receiptNode => {

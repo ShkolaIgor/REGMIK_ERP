@@ -191,7 +191,7 @@ export default function SupplierReceipts() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showXmlImport, setShowXmlImport] = useState(false);
   const [showMappingDialog, setShowMappingDialog] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
   const [sortField, setSortField] = useState<string>('receipt_date');
@@ -222,28 +222,15 @@ export default function SupplierReceipts() {
   const { data: suppliers = [], isLoading: suppliersLoading, error: suppliersError } = useQuery({
     queryKey: ["/api/suppliers"],
     select: (data: any) => {
-      console.log('Suppliers API response:', data);
-      console.log('Suppliers data type:', typeof data);
-      console.log('Is array:', Array.isArray(data));
-      // Handle both paginated response and direct array
       if (data && data.suppliers) {
-        console.log('Using paginated response:', data.suppliers);
         return data.suppliers;
       }
-      const result = Array.isArray(data) ? data : [];
-      console.log('Final suppliers result:', result);
-      return result;
+      return Array.isArray(data) ? data : [];
     },
-    retry: (failureCount, error) => {
-      console.log('Suppliers query retry:', failureCount, error);
-      return failureCount < 3;
-    }
+    retry: 3
   });
 
-  console.log('Suppliers in component:', suppliers);
-  console.log('Suppliers loading:', suppliersLoading);
-  console.log('Suppliers error:', suppliersError);
-  console.log('Suppliers length:', suppliers?.length);
+
 
   const { data: componentsData = [] } = useQuery({
     queryKey: ["/api/components"],
@@ -822,7 +809,7 @@ export default function SupplierReceipts() {
               <FileText className="h-4 w-4 mr-2" />
               Імпорт позицій
             </Button>
-            <Button onClick={() => setShowImportDialog(true)} variant="outline">
+            <Button onClick={() => setShowXmlImport(true)} variant="outline">
               <Upload className="h-4 w-4 mr-2" />
               Імпорт XML
             </Button>
@@ -1369,15 +1356,15 @@ export default function SupplierReceipts() {
           }}
         />
 
-        {/* Original XML Import Dialog */}
-        <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Імпорт приходів з XML</DialogTitle>
-            </DialogHeader>
-            <SupplierReceiptsXmlImport onClose={() => setShowImportDialog(false)} />
-          </DialogContent>
-        </Dialog>
+        {/* XML Import Dialog */}
+        {showXmlImport && (
+          <SupplierReceiptsXmlImport 
+            onClose={() => {
+              setShowXmlImport(false);
+              queryClient.invalidateQueries({ queryKey: ['/api/supplier-receipts'] });
+            }} 
+          />
+        )}
       </div>
     </div>
   );
