@@ -134,6 +134,10 @@ Preferred communication style: Simple, everyday language.
 - Додано детальне логування для API запитів постачальників
 - Покращено обробку помилок та станів завантаження у компонентах
 - Виправлено API endpoint для отримання списку постачальників з правильною пагінацією
+- Додано skeleton loading функціонал до DataTable компоненту для покращення UX
+- Виправлено помилки filterCategory та pageSize на сторінці Компоненти
+- Реалізовано професійний skeleton loading для табличного та карткового режимів
+- Додано анімацію skeleton для заголовків, рядків та карток з реалістичними пропорціями
 
 ### June 24, 2025
 - Created universal DataTable component for all system lists with:

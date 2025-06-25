@@ -28,6 +28,10 @@ export default function Components() {
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterSupplier, setFilterSupplier] = useState("all");
   const [filterActive, setFilterActive] = useState("all");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState("");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   
   // DataTable columns
   const columns: DataTableColumn[] = [
