@@ -204,7 +204,7 @@ export function DataTable({
   }, [settings, storageKey]);
 
   // Use external page size if provided, otherwise use settings page size
-  const effectivePageSize = pageSize !== undefined ? pageSize : settings.pageSize;
+  const effectivePageSize = externalPageSize !== undefined ? externalPageSize : settings.pageSize;
 
   // Initialize column order and settings
   useEffect(() => {
