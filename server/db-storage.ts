@@ -8486,7 +8486,7 @@ export class DatabaseStorage implements IStorage {
         FROM supplier_receipts sr
         LEFT JOIN suppliers s ON sr.supplier_id = s.id
         LEFT JOIN supplier_document_types sdt ON sr.document_type_id = sdt.id
-        ORDER BY sr.receipt_date DESC
+        ORDER BY sr.created_at DESC
       `);
       return result.rows;
     } catch (error) {

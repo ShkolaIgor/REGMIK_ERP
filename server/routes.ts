@@ -4887,20 +4887,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Handle supplier lookup by external_id if provided (INDEX_PREDPR mapping)
       if (supplierExternalId) {
-        console.log(`Looking up supplier by external_id: ${supplierExternalId}`);
+        console.log(`🔍 Looking up supplier by external_id: ${supplierExternalId} in SUPPLIERS table`);
         const supplier = await storage.getSupplierByExternalId(supplierExternalId);
         if (!supplier) {
           // List available suppliers with their external_ids for debugging
           const allSuppliers = await storage.getSuppliers();
           const suppliersWithExternalId = allSuppliers.filter(s => s.externalId !== null);
-          console.log(`Total suppliers: ${allSuppliers.length}, with external_id: ${suppliersWithExternalId.length}`);
-          console.log('Available suppliers with external_ids:', suppliersWithExternalId.map(s => ({ id: s.id, name: s.name, external_id: s.externalId })));
+          console.log(`❌ Supplier not found! Total suppliers: ${allSuppliers.length}, with external_id: ${suppliersWithExternalId.length}`);
+          console.log('📋 Available suppliers with external_ids:', suppliersWithExternalId.map(s => ({ id: s.id, name: s.name, external_id: s.externalId })));
           return res.status(400).json({ 
-            message: `Постачальник з external_id ${supplierExternalId} не знайдений. INDEX_PREDPR: ${supplierExternalId}. Доступні external_id: ${suppliersWithExternalId.map(s => s.externalId).join(', ')}` 
+            message: `Постачальник з external_id ${supplierExternalId} не знайдений в таблиці suppliers. INDEX_PREDPR: ${supplierExternalId}. Доступні external_id: ${suppliersWithExternalId.map(s => s.externalId).join(', ')}` 
           });
         }
         receiptData.supplierId = supplier.id;
-        console.log(`Found supplier by external_id ${supplierExternalId}: ${supplier.name} (ID: ${supplier.id})`);
+        console.log(`✅ Found supplier by external_id ${supplierExternalId}: ${supplier.name} (ID: ${supplier.id})`);
       }
       
       const receipt = await storage.createSupplierReceipt(receiptData);
