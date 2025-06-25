@@ -414,7 +414,7 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
   };
 
   const getProductName = (productId: number) => {
-    const product = products.find((p: any) => p.id === productId);
+    const product = (Array.isArray(products) ? products : products?.data || []).find((p: any) => p.id === productId);
     return product?.name || "Невідомий продукт";
   };
 
@@ -461,7 +461,7 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                         <SelectValue placeholder="Виберіть продукт" />
                       </SelectTrigger>
                       <SelectContent>
-                        {products.map((product: any) => (
+                        {(Array.isArray(products) ? products : products?.data || []).map((product: any) => (
                           <SelectItem key={product.id} value={product.id.toString()}>
                             {product.name}
                           </SelectItem>
@@ -591,7 +591,7 @@ export function TechCardForm({ isOpen, onClose, techCard }: TechCardFormProps) {
                       <SelectValue placeholder="Продукт" />
                     </SelectTrigger>
                     <SelectContent>
-                      {products.map((product: any) => (
+                      {(Array.isArray(products) ? products : products?.data || []).map((product: any) => (
                         <SelectItem key={product.id} value={product.id.toString()}>
                           {product.name}
                         </SelectItem>

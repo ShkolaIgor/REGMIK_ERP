@@ -215,7 +215,7 @@ export default function Inventory() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Загальна кількість товарів</p>
-                  <p className="text-3xl font-semibold text-gray-900">{products.length}</p>
+                  <p className="text-3xl font-semibold text-gray-900">{Array.isArray(products) ? products.length : products?.data?.length || 0}</p>
                   <p className="text-sm text-green-600 mt-1">+12% цього місяця</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -267,7 +267,7 @@ export default function Inventory() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Загальна кількість SKU</p>
-                  <p className="text-3xl font-semibold text-gray-900">{products.length}</p>
+                  <p className="text-3xl font-semibold text-gray-900">{Array.isArray(products) ? products.length : products?.data?.length || 0}</p>
                   <p className="text-sm text-blue-600 mt-1">Унікальних позицій</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">

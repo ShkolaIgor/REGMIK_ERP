@@ -167,7 +167,7 @@ export default function BOMPage() {
     );
   }
 
-  const parentProducts = (products as Product[] || []).filter((p: Product) => {
+  const parentProducts = (Array.isArray(products) ? products : products?.data || []).filter((p: Product) => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          p.sku.toLowerCase().includes(searchQuery.toLowerCase());
     const isParentType = p.productType === "товар" || p.productType === "комплект" || p.productType === "product" ||
