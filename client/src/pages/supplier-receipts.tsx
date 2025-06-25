@@ -219,10 +219,16 @@ export default function SupplierReceipts() {
     queryKey: ["/api/supplier-receipts"],
   });
 
-  const { data: suppliersData = { suppliers: [] } } = useQuery({
+  const { data: suppliers = [] } = useQuery({
     queryKey: ["/api/suppliers"],
+    select: (data: any) => {
+      // Handle both paginated response and direct array
+      if (data && data.suppliers) {
+        return data.suppliers;
+      }
+      return Array.isArray(data) ? data : [];
+    }
   });
-  const suppliers = suppliersData.suppliers || [];
 
   const { data: componentsData = [] } = useQuery({
     queryKey: ["/api/components"],
