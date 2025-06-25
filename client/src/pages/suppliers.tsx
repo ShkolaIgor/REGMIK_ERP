@@ -99,8 +99,14 @@ export default function Suppliers() {
         sortField,
         sortDirection
       });
-      const response = await fetch(`/api/suppliers?${params}`);
+      const response = await fetch(`/api/suppliers?${params}`, {
+        credentials: 'include'
+      });
       if (!response.ok) {
+        if (response.status === 401) {
+          window.location.href = '/api/login';
+          return;
+        }
         throw new Error(`Failed to fetch suppliers: ${response.status}`);
       }
       return response.json();
