@@ -647,10 +647,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/products", async (req, res) => {
     try {
       const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 10;
+      const pageSize = parseInt(req.query.pageSize as string) || 25;
       const search = req.query.search as string || '';
       const sortField = req.query.sortField as string || 'name';
       const sortDirection = req.query.sortDirection as string || 'asc';
+      
+      console.log('Products API called with:', { page, pageSize, search, sortField, sortDirection });
       
       const result = await storage.getProductsPaginated({
         page,
@@ -658,6 +660,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         search,
         sortField,
         sortDirection
+      });
+      
+      console.log('Products API result:', { 
+        dataLength: result?.data?.length || 0, 
+        total: result?.total || 0,
+        page: result?.page || 0,
+        pageSize: result?.pageSize || 0 
       });
       
       res.json(result);

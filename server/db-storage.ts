@@ -385,6 +385,8 @@ export class DatabaseStorage implements IStorage {
     const { page, pageSize, search = '', sortField = 'name', sortDirection = 'asc' } = params;
     const offset = (page - 1) * pageSize;
 
+    console.log('getProductsPaginated called with:', { page, pageSize, search, sortField, sortDirection, offset });
+
     // Build search condition
     let whereCondition;
     if (search) {
@@ -395,54 +397,65 @@ export class DatabaseStorage implements IStorage {
       );
     }
 
-    // Build sort condition
-    let orderBy;
-    const direction = sortDirection === 'desc' ? desc : undefined;
+    // Build sort condition  
+    const direction = sortDirection === 'desc' ? desc : asc;
+    let orderByColumn;
     switch (sortField) {
       case 'name':
-        orderBy = direction ? desc(products.name) : products.name;
+        orderByColumn = products.name;
         break;
       case 'sku':
-        orderBy = direction ? desc(products.sku) : products.sku;
+        orderByColumn = products.sku;
         break;
       case 'costPrice':
-        orderBy = direction ? desc(products.costPrice) : products.costPrice;
+        orderByColumn = products.costPrice;
         break;
       case 'retailPrice':
-        orderBy = direction ? desc(products.retailPrice) : products.retailPrice;
+        orderByColumn = products.retailPrice;
         break;
       case 'createdAt':
-        orderBy = direction ? desc(products.createdAt) : products.createdAt;
+        orderByColumn = products.createdAt;
         break;
       default:
-        orderBy = direction ? desc(products.name) : products.name;
+        orderByColumn = products.name;
     }
 
     // Get total count
     const totalQuery = whereCondition 
-      ? db.select({ count: sql<number>`count(*)` }).from(products).where(whereCondition)
-      : db.select({ count: sql<number>`count(*)` }).from(products);
+      ? this.db.select({ count: sql<number>`count(*)` }).from(products).where(whereCondition)
+      : this.db.select({ count: sql<number>`count(*)` }).from(products);
     
     const [{ count: total }] = await totalQuery;
 
     // Get paginated data
-    let query = db.select().from(products);
+    let query = this.db.select().from(products);
     
     if (whereCondition) {
       query = query.where(whereCondition);
     }
     
     const data = await query
-      .orderBy(orderBy)
+      .orderBy(direction(orderByColumn))
       .limit(pageSize)
       .offset(offset);
+
+    const totalPages = Math.ceil(total / pageSize);
+
+    console.log('getProductsPaginated result:', { 
+      dataLength: data.length, 
+      total, 
+      page, 
+      pageSize, 
+      totalPages,
+      offset
+    });
 
     return {
       data,
       total,
       page,
       pageSize,
-      totalPages: Math.ceil(total / pageSize)
+      totalPages
     };
   }
 
