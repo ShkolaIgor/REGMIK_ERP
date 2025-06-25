@@ -1053,6 +1053,17 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(suppliers);
   }
 
+  async getAllSuppliers(): Promise<Supplier[]> {
+    try {
+      const result = await db.select().from(suppliers).orderBy(suppliers.name);
+      console.log('getAllSuppliers result:', result.length, 'suppliers');
+      return result;
+    } catch (error) {
+      console.error('Error in getAllSuppliers:', error);
+      throw error;
+    }
+  }
+
   async getSuppliersPaginated(page: number, limit: number, search: string): Promise<{
     suppliers: Supplier[];
     total: number;
