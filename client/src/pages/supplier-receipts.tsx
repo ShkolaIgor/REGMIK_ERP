@@ -281,27 +281,29 @@ export default function SupplierReceipts() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white p-6 rounded-lg shadow-lg">
+      <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h2 className="text-2xl font-semibold text-white">Каталог приходів від постачальників</h2>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              Каталог приходів від постачальників
+            </h1>
             <Badge className="bg-green-100 text-green-800">
               <div className="w-2 h-2 bg-green-500 rounded-full mr-1" />
               Онлайн
             </Badge>
           </div>
           <div className="flex items-center space-x-4">
-            <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+            <Button variant="outline" className="border-purple-200 text-purple-600 hover:bg-purple-50">
               <Upload className="h-4 w-4 mr-2" />
               Імпорт XML
             </Button>
-            <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+            <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
               <Download className="h-4 w-4 mr-2" />
               Експорт
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-white text-blue-600 hover:bg-gray-100">
+                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700">
                   <Plus className="h-4 w-4 mr-2" />
                   Новий прихід
                 </Button>
@@ -472,66 +474,66 @@ export default function SupplierReceipts() {
             </Dialog>
           </div>
         </div>
-      </header>
+      </div>
 
       <main className="p-6 space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-lg transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Загальна кількість приходів</p>
-                  <p className="text-3xl font-semibold text-gray-900">{statistics.totalReceipts}</p>
-                  <p className="text-sm text-green-600 mt-1">Всього документів</p>
+                  <p className="text-sm text-blue-700 font-medium">Загальна кількість приходів</p>
+                  <p className="text-3xl font-bold text-blue-900">{statistics.totalReceipts}</p>
+                  <p className="text-sm text-blue-600 mt-1">Всього документів у системі</p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Package className="w-6 h-6 text-blue-600" />
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+                  <Package className="w-7 h-7 text-white" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-lg transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Загальна сума приходів</p>
-                  <p className="text-3xl font-semibold text-gray-900">{statistics.totalAmount.toFixed(2)} ₴</p>
-                  <p className="text-sm text-green-600 mt-1">Сума всіх приходів</p>
+                  <p className="text-sm text-emerald-700 font-medium">Загальна сума приходів</p>
+                  <p className="text-3xl font-bold text-emerald-900">{statistics.totalAmount.toFixed(2)} ₴</p>
+                  <p className="text-sm text-emerald-600 mt-1">Сума всіх приходів</p>
                 </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-green-600" />
+                <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
+                  <TrendingUp className="w-7 h-7 text-white" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-lg transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Активні постачальники</p>
-                  <p className="text-3xl font-semibold text-gray-900">{statistics.uniqueSuppliers}</p>
-                  <p className="text-sm text-blue-600 mt-1">Постачальників з приходами</p>
+                  <p className="text-sm text-purple-700 font-medium">Активні постачальники</p>
+                  <p className="text-3xl font-bold text-purple-900">{statistics.uniqueSuppliers}</p>
+                  <p className="text-sm text-purple-600 mt-1">Постачальників з приходами</p>
                 </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-purple-600" />
+                <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
+                  <FileText className="w-7 h-7 text-white" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-lg transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Приходи цього місяця</p>
-                  <p className="text-3xl font-semibold text-gray-900">{statistics.thisMonthReceipts}</p>
+                  <p className="text-sm text-orange-700 font-medium">Приходи цього місяця</p>
+                  <p className="text-3xl font-bold text-orange-900">{statistics.thisMonthReceipts}</p>
                   <p className="text-sm text-orange-600 mt-1">За поточний місяць</p>
                 </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-orange-600" />
+                <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-md">
+                  <Calendar className="w-7 h-7 text-white" />
                 </div>
               </div>
             </CardContent>
