@@ -349,7 +349,7 @@ export default function Inventory() {
             <div className="flex items-center justify-between">
               <CardTitle>Каталог товарів</CardTitle>
               <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <span>Показано: {filteredProducts.length} з {products.length}</span>
+                <span>Показано: {filteredProducts.length} з {Array.isArray(products) ? products.length : products?.data?.length || 0}</span>
               </div>
             </div>
           </CardHeader>

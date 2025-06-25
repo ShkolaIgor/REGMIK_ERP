@@ -245,7 +245,7 @@ export default function Recipes() {
                                 <SelectValue placeholder="Оберіть продукт" />
                               </SelectTrigger>
                               <SelectContent>
-                                {products.map((product) => (
+                                {(Array.isArray(products) ? products : products?.data || []).map((product) => (
                                   <SelectItem key={product.id} value={product.id.toString()}>
                                     {product.name}
                                   </SelectItem>

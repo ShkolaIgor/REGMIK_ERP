@@ -219,7 +219,7 @@ export default function Scanner() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Загальна кількість товарів</p>
-                <p className="text-2xl font-semibold text-gray-900">{products.length}</p>
+                <p className="text-2xl font-semibold text-gray-900">{Array.isArray(products) ? products.length : products?.data?.length || 0}</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Package className="w-6 h-6 text-blue-600" />
