@@ -93,7 +93,7 @@ export default function ProductsPage() {
   });
 
   const products = productsResponse?.data || [];
-  const totalItems = productsResponse?.total || 0;
+  const totalItems = parseInt(productsResponse?.total?.toString() || '0');
   const totalPages = productsResponse?.totalPages || 0;
 
   const { data: categories = [] } = useQuery({
