@@ -113,14 +113,15 @@ export default function Suppliers() {
     },
   });
 
-  const suppliers = suppliersResponse?.data || suppliersResponse?.suppliers || [];
-  const total = suppliersResponse?.total || 0;
+  const suppliers = Array.isArray(suppliersResponse) ? suppliersResponse : (suppliersResponse?.data || suppliersResponse?.suppliers || []);
+  const total = suppliersResponse?.total || suppliers.length;
   const totalItems = total;
   const totalPages = suppliersResponse?.totalPages || Math.ceil(total / supplierPageSize);
 
   console.log('Suppliers response:', suppliersResponse);
   console.log('Suppliers data:', suppliers);
   console.log('Total:', total);
+  console.log('IsArray suppliersResponse:', Array.isArray(suppliersResponse));
   
   if (error && error.message.includes('401')) {
     // Redirect to login if not authenticated
