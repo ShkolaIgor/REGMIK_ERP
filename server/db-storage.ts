@@ -369,6 +369,83 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(products);
   }
 
+  async getProductsPaginated(params: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    sortField?: string;
+    sortDirection?: string;
+  }): Promise<{
+    data: Product[];
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  }> {
+    const { page, pageSize, search = '', sortField = 'name', sortDirection = 'asc' } = params;
+    const offset = (page - 1) * pageSize;
+
+    // Build search condition
+    let whereCondition;
+    if (search) {
+      whereCondition = or(
+        ilike(products.name, `%${search}%`),
+        ilike(products.sku, `%${search}%`),
+        ilike(products.description, `%${search}%`)
+      );
+    }
+
+    // Build sort condition
+    let orderBy;
+    const direction = sortDirection === 'desc' ? desc : undefined;
+    switch (sortField) {
+      case 'name':
+        orderBy = direction ? desc(products.name) : products.name;
+        break;
+      case 'sku':
+        orderBy = direction ? desc(products.sku) : products.sku;
+        break;
+      case 'costPrice':
+        orderBy = direction ? desc(products.costPrice) : products.costPrice;
+        break;
+      case 'retailPrice':
+        orderBy = direction ? desc(products.retailPrice) : products.retailPrice;
+        break;
+      case 'createdAt':
+        orderBy = direction ? desc(products.createdAt) : products.createdAt;
+        break;
+      default:
+        orderBy = direction ? desc(products.name) : products.name;
+    }
+
+    // Get total count
+    const totalQuery = whereCondition 
+      ? db.select({ count: sql<number>`count(*)` }).from(products).where(whereCondition)
+      : db.select({ count: sql<number>`count(*)` }).from(products);
+    
+    const [{ count: total }] = await totalQuery;
+
+    // Get paginated data
+    let query = db.select().from(products);
+    
+    if (whereCondition) {
+      query = query.where(whereCondition);
+    }
+    
+    const data = await query
+      .orderBy(orderBy)
+      .limit(pageSize)
+      .offset(offset);
+
+    return {
+      data,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize)
+    };
+  }
+
   async getProduct(id: number): Promise<Product | undefined> {
     const result = await db.select().from(products).where(eq(products.id, id));
     return result[0] || undefined;

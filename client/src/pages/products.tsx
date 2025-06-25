@@ -149,6 +149,24 @@ export default function ProductsPage() {
         {/* DataTable компонент */}
         <DataTable
           data={products}
+          loading={isLoading}
+          searchTerm={searchTerm}
+          onSearch={setSearchTerm}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCurrentPage(1);
+          }}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSort={(field, direction) => {
+            setSortField(field);
+            setSortDirection(direction);
+            setCurrentPage(1);
+          }}
           columns={[
             {
               key: 'name',
@@ -209,7 +227,6 @@ export default function ProductsPage() {
               render: (value) => new Date(value).toLocaleDateString('uk-UA')
             }
           ]}
-          loading={isLoading}
           title="Список товарів"
           storageKey="products"
           cardTemplate={(product) => (

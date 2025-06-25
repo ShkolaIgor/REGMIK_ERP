@@ -643,12 +643,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Products
+  // Products with pagination
   app.get("/api/products", async (req, res) => {
     try {
-      const products = await storage.getProducts();
-      res.json(products);
+      const page = parseInt(req.query.page as string) || 1;
+      const pageSize = parseInt(req.query.pageSize as string) || 10;
+      const search = req.query.search as string || '';
+      const sortField = req.query.sortField as string || 'name';
+      const sortDirection = req.query.sortDirection as string || 'asc';
+      
+      const result = await storage.getProductsPaginated({
+        page,
+        pageSize,
+        search,
+        sortField,
+        sortDirection
+      });
+      
+      res.json(result);
     } catch (error) {
+      console.error("Error fetching products:", error);
       res.status(500).json({ error: "Failed to fetch products" });
     }
   });
