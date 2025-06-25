@@ -450,7 +450,7 @@ function ProductEditForm({
     sku: product.sku,
     description: product.description || '',
     barcode: product.barcode || '',
-    categoryId: product.categoryId?.toString() || '',
+    categoryId: product.categoryId?.toString() || '0',
     costPrice: product.costPrice,
     retailPrice: product.retailPrice,
     productType: product.productType,
@@ -464,7 +464,7 @@ function ProductEditForm({
     e.preventDefault();
     const data = {
       ...formData,
-      categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
+      categoryId: formData.categoryId && formData.categoryId !== '0' ? parseInt(formData.categoryId) : null,
       minStock: formData.minStock ? parseInt(formData.minStock) : null,
       maxStock: formData.maxStock ? parseInt(formData.maxStock) : null,
     };
@@ -522,7 +522,7 @@ function ProductEditForm({
               <SelectValue placeholder="Оберіть категорію" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Без категорії</SelectItem>
+              <SelectItem value="0">Без категорії</SelectItem>
               {categories.map((category: any) => (
                 <SelectItem key={category.id} value={category.id.toString()}>
                   {category.name}
