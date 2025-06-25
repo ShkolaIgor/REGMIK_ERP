@@ -8493,12 +8493,20 @@ export class DatabaseStorage implements IStorage {
       };
       
       // Validate client exists and is a supplier (since we use clients.id as supplier_id)
+      console.log('Checking supplier ID:', insertReceipt.supplierId);
       const clientCheck = await pool.query(
         'SELECT id, name, is_supplier FROM clients WHERE id = $1',
         [insertReceipt.supplierId]
       );
       
+      console.log('Client check result:', clientCheck.rows);
+      
       if (clientCheck.rows.length === 0) {
+        // Let's see what suppliers are actually available
+        const availableSuppliers = await pool.query(
+          'SELECT id, name FROM clients WHERE is_supplier = true ORDER BY id'
+        );
+        console.log('Available suppliers:', availableSuppliers.rows);
         throw new Error(`Клієнт з ID ${insertReceipt.supplierId} не знайдений. Спочатку створіть клієнта.`);
       }
       
