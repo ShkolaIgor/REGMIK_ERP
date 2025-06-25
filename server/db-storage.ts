@@ -1154,7 +1154,7 @@ export class DatabaseStorage implements IStorage {
     try {
       const offset = (page - 1) * pageSize;
       
-      let query = this.db.select({
+      let query = db.select({
         id: suppliers.id,
         name: suppliers.name,
         fullName: suppliers.fullName,
