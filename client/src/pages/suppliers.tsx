@@ -62,7 +62,7 @@ export default function Suppliers() {
   
   // State для серверної пагінації
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [supplierPageSize, setSupplierPageSize] = useState(25);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -90,11 +90,11 @@ export default function Suppliers() {
   const queryClient = useQueryClient();
 
   const { data: suppliersResponse, isLoading, error } = useQuery({
-    queryKey: ["/api/suppliers", currentPage, pageSize, searchTerm, sortField, sortDirection],
+    queryKey: ["/api/suppliers", currentPage, supplierPageSize, searchTerm, sortField, sortDirection],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: currentPage.toString(),
-        pageSize: pageSize.toString(),
+        pageSize: supplierPageSize.toString(),
         search: searchTerm,
         sortField,
         sortDirection
@@ -110,7 +110,7 @@ export default function Suppliers() {
   const suppliers = suppliersResponse?.data || suppliersResponse?.suppliers || [];
   const total = suppliersResponse?.total || 0;
   const totalItems = total;
-  const totalPages = suppliersResponse?.totalPages || Math.ceil(total / (pageSize || 25));
+  const totalPages = suppliersResponse?.totalPages || Math.ceil(total / supplierPageSize);
 
   // Колонки для DataTable
   const columns: DataTableColumn[] = [
@@ -973,10 +973,10 @@ export default function Suppliers() {
             onSearch={setSearchTerm}
             currentPage={currentPage}
             totalPages={totalPages}
-            pageSize={pageSize}
+            pageSize={supplierPageSize}
             onPageChange={setCurrentPage}
             onPageSizeChange={(size) => {
-              setPageSize(size);
+              setSupplierPageSize(size);
               setCurrentPage(1);
             }}
             sortField={sortField}
