@@ -216,6 +216,9 @@ export function DataTable({
     localStorage.setItem(`datatable-${storageKey}`, JSON.stringify(settings));
   }, [settings, storageKey]);
 
+  // Use external page size if provided, otherwise use settings page size
+  const effectivePageSize = pageSize || settings.pageSize;
+
   // Initialize column order and settings
   useEffect(() => {
     if (settings.columnOrder.length === 0) {
@@ -271,11 +274,11 @@ export function DataTable({
 
   // Paginate data
   const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * settings.pageSize;
-    return sortedData.slice(start, start + settings.pageSize);
-  }, [sortedData, currentPage, settings.pageSize]);
+    const start = (currentPage - 1) * effectivePageSize;
+    return sortedData.slice(start, start + effectivePageSize);
+  }, [sortedData, currentPage, effectivePageSize]);
 
-  const totalPages = Math.ceil(sortedData.length / settings.pageSize);
+  const totalPages = Math.ceil(sortedData.length / effectivePageSize);
 
   const handleSort = (columnKey: string) => {
     const newDirection = settings.sortField === columnKey && settings.sortDirection === 'asc' ? 'desc' : 'asc';

@@ -82,36 +82,27 @@ export default function Suppliers() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: suppliersData, isLoading, error } = useQuery({
-    queryKey: ["/api/suppliers"],
+  const { data: suppliersResponse, isLoading, error } = useQuery({
+    queryKey: ["/api/suppliers", currentPage, pageSize, searchTerm, sortField, sortDirection],
     queryFn: async () => {
-      console.log('Fetching suppliers for list page...');
-      const response = await fetch('/api/suppliers?page=1&limit=1000');
-      console.log('Suppliers API response status:', response.status);
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        pageSize: pageSize.toString(),
+        search: searchTerm,
+        sortField,
+        sortDirection
+      });
+      const response = await fetch(`/api/suppliers?${params}`);
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Suppliers API error:', errorText);
         throw new Error(`Failed to fetch suppliers: ${response.status}`);
       }
-      const data = await response.json();
-      console.log('Suppliers API response data:', data);
-      return data;
+      return response.json();
     },
-    retry: (failureCount, error) => {
-      console.log('Suppliers query retry:', failureCount, error);
-      return failureCount < 3;
-    }
   });
 
-  console.log('Suppliers data in component:', suppliersData);
-  console.log('Suppliers loading:', isLoading);
-  console.log('Suppliers error:', error);
-
-  const suppliers = suppliersData?.suppliers || suppliersData || [];
-  const total = suppliersData?.total || suppliers.length;
-  
-  console.log('Processed suppliers:', suppliers);
-  console.log('Suppliers count:', suppliers.length);
+  const suppliers = suppliersResponse?.data || suppliersResponse?.suppliers || [];
+  const totalItems = suppliersResponse?.total || 0;
+  const totalPages = suppliersResponse?.totalPages || Math.ceil(totalItems / pageSize);
 
   // Колонки для DataTable
   const columns: DataTableColumn[] = [
@@ -970,6 +961,23 @@ export default function Suppliers() {
             data={suppliers}
             columns={columns}
             loading={isLoading}
+            searchTerm={searchTerm}
+            onSearch={setSearchTerm}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={(field, direction) => {
+              setSortField(field);
+              setSortDirection(direction);
+              setCurrentPage(1);
+            }}
             title="Список постачальників"
             storageKey="suppliers"
             cardTemplate={cardTemplate}
