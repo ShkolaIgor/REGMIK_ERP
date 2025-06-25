@@ -65,7 +65,6 @@ export interface DataTableColumn {
   key: string;
   label: string;
   sortable?: boolean;
-  filterable?: boolean;
   render?: (value: any, row: any) => React.ReactNode;
   width?: number;
   minWidth?: number;
@@ -74,7 +73,6 @@ export interface DataTableColumn {
 
 export interface ColumnSettings {
   visible: boolean;
-  filterable: boolean;
   textColor: string;
   backgroundColor: string;
   fontSize: number;
@@ -109,9 +107,7 @@ interface DataTableProps {
   columns: DataTableColumn[];
   loading?: boolean;
   searchable?: boolean;
-  filterable?: boolean;
   onSearch?: (query: string) => void;
-  onFilter?: (filters: Record<string, any>) => void;
   onSort?: (field: string, direction: 'asc' | 'desc') => void;
   onRowClick?: (row: any) => void;
   actions?: (row: any) => React.ReactNode;
@@ -125,7 +121,6 @@ interface DataTableProps {
 
 const defaultColumnSettings: ColumnSettings = {
   visible: true,
-  filterable: true,
   textColor: '#000000',
   backgroundColor: '#ffffff',
   fontSize: 14,
@@ -160,9 +155,7 @@ export function DataTable({
   columns,
   loading = false,
   searchable = true,
-  filterable = true,
   onSearch,
-  onFilter,
   onSort,
   onRowClick,
   actions,
@@ -184,7 +177,6 @@ export function DataTable({
   });
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState<Record<string, any>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -208,7 +200,7 @@ export function DataTable({
     }
   }, [columns, settings.columnOrder.length]);
 
-  // Optimized filter and search for large datasets
+  // Optimized search for large datasets
   const filteredData = useMemo(() => {
     let result = data;
 
@@ -235,18 +227,8 @@ export function DataTable({
       }
     }
 
-    // Apply filters efficiently
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) {
-        const filterLower = String(value).toLowerCase();
-        result = result.filter(item =>
-          String(item[key] || '').toLowerCase().includes(filterLower)
-        );
-      }
-    });
-
     return result;
-  }, [data, searchQuery, filters, searchable]);
+  }, [data, searchQuery, searchable]);
 
   // Optimized sort for large datasets
   const sortedData = useMemo(() => {
@@ -300,13 +282,6 @@ export function DataTable({
     setSearchQuery(query);
     setCurrentPage(1);
     onSearch?.(query);
-  };
-
-  const handleFilter = (key: string, value: any) => {
-    const newFilters = { ...filters, [key]: value === 'all' ? '' : value };
-    setFilters(newFilters);
-    setCurrentPage(1);
-    onFilter?.(newFilters);
   };
 
   // Get visible columns based on settings
