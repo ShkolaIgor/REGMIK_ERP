@@ -259,13 +259,18 @@ export function DataTable({
     });
   }, [filteredData, settings.sortField, settings.sortDirection]);
 
-  // Paginate data
+  // Paginate data - only if server pagination is not used
   const paginatedData = useMemo(() => {
+    if (totalPages && totalPages > 0) {
+      // Server-side pagination - return data as is
+      return sortedData;
+    }
+    // Client-side pagination
     const start = (currentPage - 1) * effectivePageSize;
     return sortedData.slice(start, start + effectivePageSize);
-  }, [sortedData, currentPage, effectivePageSize]);
+  }, [sortedData, currentPage, effectivePageSize, totalPages]);
 
-  const totalPages = Math.ceil(sortedData.length / effectivePageSize);
+  const calculatedTotalPages = totalPages || Math.ceil(sortedData.length / effectivePageSize);
 
   const handleSort = (columnKey: string) => {
     const newDirection = settings.sortField === columnKey && settings.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -964,7 +969,7 @@ export function DataTable({
       {settings.viewMode === 'table' ? renderTableView() : renderCardView()}
 
       {/* Pagination */}
-      {totalPages > 1 && (
+      {calculatedTotalPages > 1 && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t">
           <div className="flex items-center gap-4">
             <div className="text-sm text-gray-500">
@@ -976,7 +981,7 @@ export function DataTable({
                 <Select
                   value={effectivePageSize.toString()}
                   onValueChange={(value) => {
-                    onPageSizeChange(parseInt(value));
+                    onPageSizeChange?.(parseInt(value));
                   }}
                 >
                   <SelectTrigger className="w-20">
@@ -1013,19 +1018,19 @@ export function DataTable({
             </Button>
             
             <div className="flex items-center gap-1">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              {Array.from({ length: Math.min(5, calculatedTotalPages) }, (_, i) => {
                 let pageNum;
-                if (totalPages <= 5) {
+                if (calculatedTotalPages <= 5) {
                   pageNum = i + 1;
                 } else if (currentPage <= 3) {
                   pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
+                } else if (currentPage >= calculatedTotalPages - 2) {
+                  pageNum = calculatedTotalPages - 4 + i;
                 } else {
                   pageNum = currentPage - 2 + i;
                 }
                 
-                if (pageNum < 1 || pageNum > totalPages) return null;
+                if (pageNum < 1 || pageNum > calculatedTotalPages) return null;
                 
                 return (
                   <Button
@@ -1043,16 +1048,16 @@ export function DataTable({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange?.(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
+              onClick={() => onPageChange?.(Math.min(calculatedTotalPages, currentPage + 1))}
+              disabled={currentPage === calculatedTotalPages}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange?.(totalPages)}
-              disabled={currentPage === totalPages}
+              onClick={() => onPageChange?.(calculatedTotalPages)}
+              disabled={currentPage === calculatedTotalPages}
             >
               <ChevronsRight className="h-4 w-4" />
             </Button>
