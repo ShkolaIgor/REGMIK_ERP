@@ -219,9 +219,10 @@ export default function SupplierReceipts() {
     queryKey: ["/api/supplier-receipts"],
   });
 
-  const { data: suppliers = [] } = useQuery({
+  const { data: suppliers = [], isLoading: suppliersLoading, error: suppliersError } = useQuery({
     queryKey: ["/api/suppliers"],
     select: (data: any) => {
+      console.log('Suppliers API response:', data);
       // Handle both paginated response and direct array
       if (data && data.suppliers) {
         return data.suppliers;
@@ -229,6 +230,10 @@ export default function SupplierReceipts() {
       return Array.isArray(data) ? data : [];
     }
   });
+
+  console.log('Suppliers in component:', suppliers);
+  console.log('Suppliers loading:', suppliersLoading);
+  console.log('Suppliers error:', suppliersError);
 
   const { data: componentsData = [] } = useQuery({
     queryKey: ["/api/components"],
