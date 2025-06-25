@@ -220,6 +220,14 @@ export function DataTable({
 
   // Use external page size if provided, otherwise use settings page size
   const effectivePageSize = externalPageSize !== undefined ? externalPageSize : settings.pageSize;
+  
+  console.log('DataTable render:', {
+    externalPageSize,
+    settingsPageSize: settings.pageSize,
+    effectivePageSize,
+    dataLength: data?.length,
+    totalPages
+  });
 
   // Initialize column order and settings
   useEffect(() => {
@@ -996,6 +1004,7 @@ export function DataTable({
                 <Select
                   value={effectivePageSize.toString()}
                   onValueChange={(value) => {
+                    console.log('DataTable: Page size changing from', effectivePageSize, 'to', value);
                     onPageSizeChange?.(parseInt(value));
                   }}
                 >

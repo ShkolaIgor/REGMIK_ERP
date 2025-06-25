@@ -994,6 +994,7 @@ export default function Suppliers() {
             pageSize={supplierPageSize}
             onPageChange={setCurrentPage}
             onPageSizeChange={(size) => {
+              console.log('Page size changed to:', size);
               setSupplierPageSize(size);
               setCurrentPage(1);
             }}
