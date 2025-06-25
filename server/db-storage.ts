@@ -1050,7 +1050,8 @@ export class DatabaseStorage implements IStorage {
 
   // Suppliers
   async getSuppliers(): Promise<Supplier[]> {
-    return await db.select().from(suppliers);
+    // Return ALL suppliers without limit for external_id lookup
+    return await db.select().from(suppliers).orderBy(suppliers.id);
   }
 
   async getAllSuppliers(): Promise<Supplier[]> {
@@ -1114,7 +1115,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSupplierByExternalId(externalId: number): Promise<Supplier | undefined> {
+    console.log(`Searching for supplier with external_id: ${externalId}`);
     const result = await db.select().from(suppliers).where(eq(suppliers.externalId, externalId));
+    console.log(`Found ${result.length} suppliers with external_id ${externalId}:`, result);
     return result[0];
   }
 

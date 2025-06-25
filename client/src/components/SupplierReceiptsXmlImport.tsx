@@ -275,8 +275,9 @@ export function SupplierReceiptsXmlImport({ onClose }: { onClose: () => void }) 
   <ROW DATE_INP="15.01.2024" DATE_POST="14.01.2024" COMMENT="Прихід товару за накладною" INDEX_PREDPR="1" INDEX_DOC="2" ID_LISTPRIHOD="1" NUMB_DOC="7025" ACC_SUM="1500,00"/>
   <ROW DATE_INP="16.01.2024" DATE_POST="15.01.2024" COMMENT="Другий прихід" INDEX_PREDPR="6" INDEX_DOC="1" ID_LISTPRIHOD="2" NUMB_DOC="7026" ACC_SUM="2500,50"/>
   <ROW DATE_INP="17.01.2024" DATE_POST="16.01.2024" COMMENT="Третій прихід" INDEX_PREDPR="10801" INDEX_DOC="2" ID_LISTPRIHOD="3" NUMB_DOC="7027" ACC_SUM="3000,75"/>
+  <ROW DATE_INP="18.01.2024" DATE_POST="17.01.2024" COMMENT="Четвертий прихід" INDEX_PREDPR="804" INDEX_DOC="1" ID_LISTPRIHOD="4" NUMB_DOC="7028" ACC_SUM="4500,25"/>
   <!-- INDEX_PREDPR має відповідати полю external_id в таблиці suppliers -->
-  <!-- Доступні external_id: 1 (Радіокомплект), 6 (VD MAIS), 10801 (Корякіна Наталія), 10808 (Єрохіна Олена) -->
+  <!-- Доступні external_id: 1 (Радіокомплект), 6 (VD MAIS), 804 (Постачальник 804), 10801 (Корякіна Наталія), 10808 (Єрохіна Олена) -->
 </DOCUMENT>`;
 
     const blob = new Blob([template], { type: 'application/xml' });

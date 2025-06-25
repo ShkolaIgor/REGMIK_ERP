@@ -4892,9 +4892,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!supplier) {
           // List available suppliers with their external_ids for debugging
           const allSuppliers = await storage.getSuppliers();
-          console.log('Available suppliers with external_ids:', allSuppliers.map(s => ({ id: s.id, name: s.name, external_id: s.externalId })));
+          const suppliersWithExternalId = allSuppliers.filter(s => s.externalId !== null);
+          console.log(`Total suppliers: ${allSuppliers.length}, with external_id: ${suppliersWithExternalId.length}`);
+          console.log('Available suppliers with external_ids:', suppliersWithExternalId.map(s => ({ id: s.id, name: s.name, external_id: s.externalId })));
           return res.status(400).json({ 
-            message: `Постачальник з external_id ${supplierExternalId} не знайдений. INDEX_PREDPR: ${supplierExternalId}` 
+            message: `Постачальник з external_id ${supplierExternalId} не знайдений. INDEX_PREDPR: ${supplierExternalId}. Доступні external_id: ${suppliersWithExternalId.map(s => s.externalId).join(', ')}` 
           });
         }
         receiptData.supplierId = supplier.id;
