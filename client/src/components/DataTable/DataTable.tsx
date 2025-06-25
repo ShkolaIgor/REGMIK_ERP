@@ -130,19 +130,6 @@ interface DataTableProps {
   onPageSizeChange?: (size: number) => void;
   sortField?: string;
   sortDirection?: 'asc' | 'desc';
-  cardTemplate?: (item: any) => React.ReactNode;
-  expandableContent?: (item: any) => React.ReactNode;
-  expandedItems?: Set<string | number>;
-  onToggleExpand?: (itemId: string | number) => void;
-  // Server pagination props
-  searchTerm?: string;
-  currentPage?: number;
-  totalPages?: number;
-  pageSize?: number;
-  onPageChange?: (page: number) => void;
-  onPageSizeChange?: (size: number) => void;
-  sortField?: string;
-  sortDirection?: 'asc' | 'desc';
 }
 
 const defaultColumnSettings: ColumnSettings = {
