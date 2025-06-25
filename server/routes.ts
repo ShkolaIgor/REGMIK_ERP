@@ -5003,26 +5003,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Import supplier receipts from XML
+  // Import supplier receipts from XML with SSE progress updates
   app.post('/api/import/supplier-receipts', isSimpleAuthenticated, async (req, res) => {
     try {
+      // Set headers for Server-Sent Events
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Cache-Control'
+      });
+
       const { xmlContent } = req.body;
-      const result = await storage.importSupplierReceiptsFromXml(xmlContent);
       
-      res.json({
+      // Send initial progress
+      res.write(`data: ${JSON.stringify({ type: 'start', message: 'Початок імпорту...' })}\n\n`);
+      
+      const result = await storage.importSupplierReceiptsFromXml(xmlContent, (processed, total, item) => {
+        // Send progress updates during import
+        res.write(`data: ${JSON.stringify({ 
+          type: 'progress', 
+          processed, 
+          total,
+          currentItem: item
+        })}\n\n`);
+      });
+      
+      // Send final result
+      res.write(`data: ${JSON.stringify({
+        type: 'complete',
         success: result.success > 0,
         message: `Імпорт завершено. Успішно: ${result.success}, помилок: ${result.errors.length}, попереджень: ${result.warnings.length}`,
+        total: result.success + result.errors.length,
+        processed: result.success + result.errors.length,
+        successful: result.success,
+        errors: result.errors.length,
         imported: result.success,
-        errors: result.errors,
+        errorDetails: result.errors,
         warnings: result.warnings
-      });
+      })}\n\n`);
+      
+      res.end();
     } catch (error) {
       console.error('Error importing supplier receipts:', error);
-      res.status(500).json({ 
+      res.write(`data: ${JSON.stringify({
+        type: 'error',
         success: false,
         message: 'Помилка імпорту приходів постачальників',
         error: error instanceof Error ? error.message : 'Невідома помилка'
-      });
+      })}\n\n`);
+      res.end();
     }
   });
 

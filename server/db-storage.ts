@@ -8792,8 +8792,11 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Import supplier receipts from XML with proper INDEX_PREDPR mapping
-  async importSupplierReceiptsFromXml(xmlContent: string): Promise<{
+  // Import supplier receipts from XML with proper INDEX_PREDPR mapping and progress callback
+  async importSupplierReceiptsFromXml(
+    xmlContent: string, 
+    progressCallback?: (processed: number, total: number, currentItem: string) => void
+  ): Promise<{
     success: number;
     errors: Array<{ row: number; error: string; data?: any }>;
     warnings: Array<{ row: number; warning: string; data?: any }>;
@@ -8833,54 +8836,39 @@ export class DatabaseStorage implements IStorage {
         const row = rows[i];
         const rowNumber = i + 1;
 
+        // Send progress update
+        const currentItem = `Прихід ${row.ID_LISTPRIHOD || rowNumber}`;
+        if (progressCallback) {
+          progressCallback(i + 1, rows.length, currentItem);
+        }
+
         try {
-          // Шукаємо постачальника за INDEX_PREDPR -> clients.external_id -> clients.id = supplier_id
+          // Шукаємо постачальника за INDEX_PREDPR -> suppliers.external_id -> suppliers.id = supplier_id
           let supplierId = null;
           if (row.INDEX_PREDPR) {
-            // Спробуємо різні варіанти пошуку
-            let clientResult = await db.select({ 
-              id: clients.id, 
-              name: clients.name, 
-              isSupplier: clients.isSupplier 
-            })
-              .from(clients)
-              .where(eq(clients.externalId, row.INDEX_PREDPR.toString()))
-              .limit(1);
+            console.log(`🔍 Searching for supplier with INDEX_PREDPR=${row.INDEX_PREDPR} in SUPPLIERS table`);
             
-            // Якщо не знайшли за string, спробуємо як integer
-            if (clientResult.length === 0 && !isNaN(parseInt(row.INDEX_PREDPR))) {
-              clientResult = await db.select({ 
-                id: clients.id, 
-                name: clients.name, 
-                isSupplier: clients.isSupplier 
-              })
-                .from(clients)
-                .where(eq(clients.id, parseInt(row.INDEX_PREDPR)))
-                .limit(1);
-            }
+            // Шукаємо в таблиці suppliers за external_id
+            const supplierResult = await pool.query(
+              'SELECT id, name, external_id FROM suppliers WHERE external_id = $1',
+              [parseInt(row.INDEX_PREDPR)]
+            );
             
-            if (clientResult.length > 0) {
-              const client = clientResult[0];
-              
-              // Перевіряємо чи клієнт може бути постачальником
-              if (!client.isSupplier) {
-                // Автоматично позначаємо як постачальника
-                await db.update(clients)
-                  .set({ isSupplier: true })
-                  .where(eq(clients.id, client.id));
-                
-                result.warnings.push({
-                  row: rowNumber,
-                  warning: `Клієнт "${client.name}" автоматично позначений як постачальник`,
-                  data: row
-                });
-              }
-              
-              supplierId = client.id;
+            console.log(`📊 Supplier search result: ${supplierResult.rows.length} found:`, supplierResult.rows);
+            
+            if (supplierResult.rows.length > 0) {
+              supplierId = supplierResult.rows[0].id;
+              console.log(`✅ Found supplier: ${supplierResult.rows[0].name} (ID: ${supplierId})`);
             } else {
+              // Показуємо доступних постачальників для діагностики
+              const availableSuppliers = await pool.query(
+                'SELECT id, name, external_id FROM suppliers WHERE external_id IS NOT NULL ORDER BY external_id'
+              );
+              console.log(`❌ Supplier not found. Available suppliers:`, availableSuppliers.rows);
+              
               result.warnings.push({
                 row: rowNumber,
-                warning: `Клієнт з external_id=${row.INDEX_PREDPR} не знайдений в БД, прихід пропущено`,
+                warning: `Постачальник з external_id=${row.INDEX_PREDPR} не знайдений в таблиці suppliers. Доступні: ${availableSuppliers.rows.map(s => s.external_id).join(', ')}`,
                 data: row
               });
               continue;
