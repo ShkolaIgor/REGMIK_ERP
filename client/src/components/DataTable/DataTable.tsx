@@ -180,7 +180,22 @@ export function DataTable({
   cardTemplate,
   expandableContent,
   expandedItems = new Set(),
-  onToggleExpand
+  onToggleExpand,
+  // Server pagination props
+  searchTerm,
+  currentPage: externalCurrentPage,
+  totalPages,
+  pageSize: externalPageSize,
+  onPageChange,
+  onPageSizeChange,
+  sortField: externalSortField,
+  sortDirection: externalSortDirection,
+  enableSearch = true,
+  enablePagination = true,
+  enableColumnToggle = true,
+  enableViewToggle = true,
+  settingsKey = 'default',
+  className
 }: DataTableProps) {
   // Load settings from localStorage
   const [settings, setSettings] = useState<DataTableSettings>(() => {
