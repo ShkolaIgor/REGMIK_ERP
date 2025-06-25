@@ -1,26 +1,27 @@
-import { useState, useRef } from "react";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
-import { Upload, FileText, CheckCircle, AlertCircle, X, Download } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
-
-interface XmlField {
-  xmlPath: string;
-  dbField: string;
-  required: boolean;
-  description: string;
-}
+import React, { useState, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Upload, FileText, Download, CheckCircle, AlertCircle, X } from 'lucide-react';
 
 interface ImportMapping {
-  receiptFields: XmlField[];
-  itemFields: XmlField[];
+  receiptFields: {
+    xmlPath: string;
+    dbField: string;
+    required: boolean;
+    description: string;
+  }[];
+  itemFields: {
+    xmlPath: string;
+    dbField: string;
+    required: boolean;
+    description: string;
+  }[];
 }
 
 interface ImportResult {
@@ -29,11 +30,11 @@ interface ImportResult {
   imported: number;
   skipped: number;
   errors: string[];
-  details: Array<{
+  details: {
     receiptNumber: string;
-    status: 'imported' | 'updated' | 'skipped' | 'error';
-    message?: string;
-  }>;
+    status: 'imported' | 'error' | 'skipped';
+    message: string;
+  }[];
 }
 
 export function SupplierReceiptsXmlImport({ onClose }: { onClose: () => void }) {
@@ -52,17 +53,19 @@ export function SupplierReceiptsXmlImport({ onClose }: { onClose: () => void }) 
       { xmlPath: 'NUMB_DOC', dbField: 'supplierDocumentNumber', required: false, description: 'Номер документу постачальника (NUMB_DOC)' },
       { xmlPath: 'ACC_SUM', dbField: 'totalAmount', required: false, description: 'Загальна сума (ACC_SUM)' },
       { xmlPath: 'COMMENT', dbField: 'comment', required: false, description: 'Коментар (COMMENT)' },
-      { xmlPath: 'ID_LISTPRIHOD', dbField: 'externalId', required: true, description: 'Зовнішній ID приходу (ID_LISTPRIHOD)' },
+      { xmlPath: 'ID_LISTPRIHOD', dbField: 'externalId', required: false, description: 'Зовнішній ID запису (ID_LISTPRIHOD -> external_id)' }
     ],
     itemFields: [
-      { xmlPath: 'COMPONENT_ID', dbField: 'componentId', required: true, description: 'ID компонента' },
-      { xmlPath: 'QUANTITY', dbField: 'quantity', required: true, description: 'Кількість' },
-      { xmlPath: 'UNIT_PRICE', dbField: 'unitPrice', required: true, description: 'Ціна за одиницю' },
-      { xmlPath: 'TOTAL_PRICE', dbField: 'totalPrice', required: true, description: 'Загальна ціна за позицію' },
+      { xmlPath: 'INDEX_DETAIL', dbField: 'componentId', required: true, description: 'ID компоненту (INDEX_DETAIL)' },
+      { xmlPath: 'KOL', dbField: 'quantity', required: true, description: 'Кількість (KOL)' },
+      { xmlPath: 'PRICE', dbField: 'unitPrice', required: false, description: 'Ціна за одиницю (PRICE)' },
+      { xmlPath: 'SUMMA', dbField: 'totalPrice', required: false, description: 'Загальна сума (SUMMA)' },
+      { xmlPath: 'NAIM', dbField: 'supplierComponentName', required: false, description: 'Назва компоненту у постачальника (NAIM)' }
     ]
   });
-  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  
   const [isImporting, setIsImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [progress, setProgress] = useState(0);
   const [importStats, setImportStats] = useState({
     total: 0,
@@ -229,26 +232,6 @@ export function SupplierReceiptsXmlImport({ onClose }: { onClose: () => void }) 
     }
   };
 
-  const updateMapping = (section: 'receiptFields' | 'itemFields', index: number, field: 'xmlPath', value: string) => {
-    setMapping(prev => ({
-      ...prev,
-      [section]: prev[section].map((item, i) => 
-        i === index ? { ...item, [field]: value } : item
-      )
-    }));
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'imported':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'error':
-        return <X className="h-4 w-4 text-red-500" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
-    }
-  };
-
   const downloadTemplate = () => {
     const template = `<?xml version="1.0" encoding="UTF-8"?>
 <DOCUMENT>
@@ -280,28 +263,6 @@ export function SupplierReceiptsXmlImport({ onClose }: { onClose: () => void }) 
       default:
         return <AlertCircle className="h-4 w-4 text-yellow-500" />;
     }
-  };
-
-  const downloadTemplate = () => {
-    const template = `<?xml version="1.0" encoding="UTF-8"?>
-<DOCUMENT>
-  <ROW DATE_INP="15.01.2024" DATE_POST="14.01.2024" COMMENT="Прихід товару за накладною" INDEX_PREDPR="1" INDEX_DOC="2" ID_LISTPRIHOD="1" NUMB_DOC="7025" ACC_SUM="1500,00"/>
-  <ROW DATE_INP="16.01.2024" DATE_POST="15.01.2024" COMMENT="Другий прихід" INDEX_PREDPR="6" INDEX_DOC="1" ID_LISTPRIHOD="2" NUMB_DOC="7026" ACC_SUM="2500,50"/>
-  <ROW DATE_INP="17.01.2024" DATE_POST="16.01.2024" COMMENT="Третій прихід" INDEX_PREDPR="10801" INDEX_DOC="2" ID_LISTPRIHOD="3" NUMB_DOC="7027" ACC_SUM="3000,75"/>
-  <ROW DATE_INP="18.01.2024" DATE_POST="17.01.2024" COMMENT="Четвертий прихід" INDEX_PREDPR="874" INDEX_DOC="1" ID_LISTPRIHOD="4" NUMB_DOC="7028" ACC_SUM="4500,25"/>
-  <!-- INDEX_PREDPR має відповідати полю external_id в таблиці suppliers -->
-  <!-- Доступні external_id: 1 (Радіокомплект), 6 (VD MAIS), 874 (Постачальник 874), 10801 (Корякіна Наталія), 10808 (Єрохіна Олена) -->
-</DOCUMENT>`;
-
-    const blob = new Blob([template], { type: 'application/xml' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'supplier_receipts_template.xml';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
 
   return (
@@ -347,65 +308,9 @@ export function SupplierReceiptsXmlImport({ onClose }: { onClose: () => void }) 
             </AlertDescription>
           </Alert>
 
-          {/* Receipt fields mapping */}
-          <div>
-            <h3 className="text-lg font-medium mb-4">Поля приходу</h3>
-            <div className="space-y-3">
-              {mapping.receiptFields.map((field, index) => (
-                <div key={field.dbField} className="grid grid-cols-3 gap-4 items-center">
-                  <div>
-                    <Label className="text-sm">
-                      {field.description} {field.required && <span className="text-red-500">*</span>}
-                    </Label>
-                  </div>
-                  <div>
-                    <Input
-                      value={field.xmlPath}
-                      onChange={(e) => updateMapping('receiptFields', index, 'xmlPath', e.target.value)}
-                      placeholder="XML шлях"
-                    />
-                  </div>
-                  <div>
-                    <Badge variant={field.required ? "destructive" : "secondary"}>
-                      {field.required ? "Обов'язкове" : "Опціональне"}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Item fields mapping */}
-          <div>
-            <h3 className="text-lg font-medium mb-4">Поля позицій</h3>
-            <div className="space-y-3">
-              {mapping.itemFields.map((field, index) => (
-                <div key={field.dbField} className="grid grid-cols-3 gap-4 items-center">
-                  <div>
-                    <Label className="text-sm">
-                      {field.description} {field.required && <span className="text-red-500">*</span>}
-                    </Label>
-                  </div>
-                  <div>
-                    <Input
-                      value={field.xmlPath}
-                      onChange={(e) => updateMapping('itemFields', index, 'xmlPath', e.target.value)}
-                      placeholder="XML шлях"
-                    />
-                  </div>
-                  <div>
-                    <Badge variant={field.required ? "destructive" : "secondary"}>
-                      {field.required ? "Обов'язкове" : "Опціональне"}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* Document type selection */}
           <div>
-            <Label htmlFor="documentType">Тип документа *</Label>
+            <Label>Тип документу *</Label>
             <Select value={documentTypeId} onValueChange={setDocumentTypeId}>
               <SelectTrigger>
                 <SelectValue placeholder="Оберіть тип документа" />
