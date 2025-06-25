@@ -45,14 +45,14 @@ export function SupplierReceiptsXmlImport({ onClose }: { onClose: () => void }) 
   const [xmlContent, setXmlContent] = useState<string>('');
   const [mapping, setMapping] = useState<ImportMapping>({
     receiptFields: [
-      { xmlPath: 'RECEIPT_DATE', dbField: 'receiptDate', required: true, description: 'Дата отримання товару' },
-      { xmlPath: 'SUPPLIER_ID', dbField: 'supplierId', required: true, description: 'ID постачальника' },
-      { xmlPath: 'DOCUMENT_TYPE_ID', dbField: 'documentTypeId', required: true, description: 'ID типу документу' },
-      { xmlPath: 'SUPPLIER_DOC_DATE', dbField: 'supplierDocumentDate', required: false, description: 'Дата документу постачальника' },
-      { xmlPath: 'SUPPLIER_DOC_NUMBER', dbField: 'supplierDocumentNumber', required: false, description: 'Номер документу постачальника' },
-      { xmlPath: 'TOTAL_AMOUNT', dbField: 'totalAmount', required: true, description: 'Загальна сума' },
-      { xmlPath: 'COMMENT', dbField: 'comment', required: false, description: 'Коментар' },
-      { xmlPath: 'PURCHASE_ORDER_ID', dbField: 'purchaseOrderId', required: false, description: 'ID замовлення постачальнику' },
+      { xmlPath: 'DATE_INP', dbField: 'receiptDate', required: true, description: 'Дата отримання товару (DATE_INP -> created_at)' },
+      { xmlPath: 'INDEX_PREDPR', dbField: 'supplierId', required: true, description: 'ID постачальника (INDEX_PREDPR -> external_id lookup)' },
+      { xmlPath: 'INDEX_DOC', dbField: 'documentTypeId', required: true, description: 'ID типу документу (INDEX_DOC)' },
+      { xmlPath: 'DATE_POST', dbField: 'supplierDocumentDate', required: false, description: 'Дата документу постачальника (DATE_POST)' },
+      { xmlPath: 'NUMB_DOC', dbField: 'supplierDocumentNumber', required: false, description: 'Номер документу постачальника (NUMB_DOC)' },
+      { xmlPath: 'ACC_SUM', dbField: 'totalAmount', required: false, description: 'Загальна сума (ACC_SUM)' },
+      { xmlPath: 'COMMENT', dbField: 'comment', required: false, description: 'Коментар (COMMENT)' },
+      { xmlPath: 'ID_LISTPRIHOD', dbField: 'externalId', required: true, description: 'Зовнішній ID приходу (ID_LISTPRIHOD)' },
     ],
     itemFields: [
       { xmlPath: 'COMPONENT_ID', dbField: 'componentId', required: true, description: 'ID компонента' },
@@ -108,23 +108,33 @@ export function SupplierReceiptsXmlImport({ onClose }: { onClose: () => void }) 
           throw new Error('Помилка парсингу XML файлу');
         }
 
-        // Extract receipts data
-        const receipts = Array.from(xmlDoc.querySelectorAll('RECEIPT')).map(receiptNode => {
+        // Extract receipts data from ROW elements
+        const receipts = Array.from(xmlDoc.querySelectorAll('ROW')).map(receiptNode => {
           const receiptData: any = {};
           
-          // Map receipt fields
+          // Map receipt fields from XML attributes
           mapping.receiptFields.forEach(field => {
-            const element = receiptNode.querySelector(field.xmlPath);
-            if (element) {
-              let value = element.textContent?.trim() || '';
-              
-              // Type conversion for specific fields
-              if (field.dbField === 'supplierId' || field.dbField === 'documentTypeId' || field.dbField === 'purchaseOrderId') {
+            let value = receiptNode.getAttribute(field.xmlPath) || '';
+            
+            if (value || !field.required) {
+              // Special handling for supplier ID lookup
+              if (field.dbField === 'supplierId' && field.xmlPath === 'INDEX_PREDPR') {
+                // Will be resolved on backend by external_id lookup
+                receiptData['supplierExternalId'] = value ? parseInt(value) : null;
+              } else if (field.dbField === 'documentTypeId' || field.dbField === 'externalId') {
                 receiptData[field.dbField] = value ? parseInt(value) : null;
               } else if (field.dbField === 'totalAmount') {
-                receiptData[field.dbField] = parseFloat(value) || 0;
+                // Handle Ukrainian decimal format (comma as decimal separator)
+                const normalizedValue = value.replace(',', '.');
+                receiptData[field.dbField] = parseFloat(normalizedValue) || 0;
               } else if (field.dbField === 'receiptDate' || field.dbField === 'supplierDocumentDate') {
-                receiptData[field.dbField] = value || null;
+                // Convert DD.MM.YYYY to YYYY-MM-DD format
+                if (value && value.includes('.')) {
+                  const [day, month, year] = value.split('.');
+                  receiptData[field.dbField] = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                } else {
+                  receiptData[field.dbField] = value || null;
+                }
               } else {
                 receiptData[field.dbField] = value || null;
               }
@@ -260,32 +270,10 @@ export function SupplierReceiptsXmlImport({ onClose }: { onClose: () => void }) 
 
   const downloadTemplate = () => {
     const template = `<?xml version="1.0" encoding="UTF-8"?>
-<RECEIPTS>
-  <RECEIPT>
-    <RECEIPT_DATE>2024-01-15</RECEIPT_DATE>
-    <SUPPLIER_ID>1</SUPPLIER_ID>
-    <DOCUMENT_TYPE_ID>1</DOCUMENT_TYPE_ID>
-    <SUPPLIER_DOC_DATE>2024-01-14</SUPPLIER_DOC_DATE>
-    <SUPPLIER_DOC_NUMBER>ТТН-001</SUPPLIER_DOC_NUMBER>
-    <TOTAL_AMOUNT>1500.00</TOTAL_AMOUNT>
-    <COMMENT>Прихід товару за накладною</COMMENT>
-    <PURCHASE_ORDER_ID>1</PURCHASE_ORDER_ID>
-    <ITEMS>
-      <ITEM>
-        <COMPONENT_ID>1</COMPONENT_ID>
-        <QUANTITY>10.000</QUANTITY>
-        <UNIT_PRICE>100.00</UNIT_PRICE>
-        <TOTAL_PRICE>1000.00</TOTAL_PRICE>
-      </ITEM>
-      <ITEM>
-        <COMPONENT_ID>2</COMPONENT_ID>
-        <QUANTITY>5.000</QUANTITY>
-        <UNIT_PRICE>100.00</UNIT_PRICE>
-        <TOTAL_PRICE>500.00</TOTAL_PRICE>
-      </ITEM>
-    </ITEMS>
-  </RECEIPT>
-</RECEIPTS>`;
+<DOCUMENT>
+  <ROW DATE_INP="15.01.2024" DATE_POST="14.01.2024" COMMENT="Прихід товару за накладною" INDEX_PREDPR="338" INDEX_DOC="2" ID_LISTPRIHOD="1" NUMB_DOC="7025" ACC_SUM="1500,00"/>
+  <ROW DATE_INP="16.01.2024" DATE_POST="15.01.2024" COMMENT="Другий прихід" INDEX_PREDPR="339" INDEX_DOC="1" ID_LISTPRIHOD="2" NUMB_DOC="7026" ACC_SUM="2500,50"/>
+</DOCUMENT>`;
 
     const blob = new Blob([template], { type: 'application/xml' });
     const url = URL.createObjectURL(blob);

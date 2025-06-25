@@ -4883,7 +4883,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/supplier-receipts', isSimpleAuthenticated, async (req, res) => {
     try {
-      const { items, ...receiptData } = req.body;
+      const { items, supplierExternalId, ...receiptData } = req.body;
+      
+      // Handle supplier lookup by external_id if provided
+      if (supplierExternalId && !receiptData.supplierId) {
+        console.log(`Looking up supplier by external_id: ${supplierExternalId}`);
+        const supplier = await storage.getSupplierByExternalId(supplierExternalId);
+        if (!supplier) {
+          return res.status(400).json({ 
+            message: `Постачальник з external_id ${supplierExternalId} не знайдений` 
+          });
+        }
+        receiptData.supplierId = supplier.id;
+        console.log(`Found supplier: ${supplier.name} (ID: ${supplier.id})`);
+      }
+      
       const receipt = await storage.createSupplierReceipt(receiptData);
       
       if (items && items.length > 0) {

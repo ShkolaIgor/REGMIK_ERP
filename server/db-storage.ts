@@ -1113,6 +1113,11 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async getSupplierByExternalId(externalId: number): Promise<Supplier | undefined> {
+    const result = await db.select().from(suppliers).where(eq(suppliers.externalId, externalId));
+    return result[0];
+  }
+
   async createSupplier(insertSupplier: InsertSupplier): Promise<Supplier> {
     const result = await db.insert(suppliers).values(insertSupplier).returning();
     return result[0];

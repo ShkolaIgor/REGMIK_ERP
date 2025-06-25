@@ -123,6 +123,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### June 25, 2025
+- Виправлено відображення списку постачальників на головній сторінці Постачальники
+- Додано детальне логування для API запитів постачальників
+- Покращено обробку помилок та станів завантаження у компонентах
+- Виправлено API endpoint для отримання списку постачальників з правильною пагінацією
+
 ### June 24, 2025
 - Created universal DataTable component for all system lists with:
   - Advanced pagination with configurable page sizes and first/last page navigation
