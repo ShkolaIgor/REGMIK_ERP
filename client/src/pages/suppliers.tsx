@@ -82,17 +82,36 @@ export default function Suppliers() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: suppliersData, isLoading } = useQuery({
+  const { data: suppliersData, isLoading, error } = useQuery({
     queryKey: ["/api/suppliers"],
     queryFn: async () => {
-      const response = await fetch('/api/suppliers?limit=1000');
-      if (!response.ok) throw new Error('Failed to fetch suppliers');
-      return response.json();
+      console.log('Fetching suppliers for list page...');
+      const response = await fetch('/api/suppliers?page=1&limit=1000');
+      console.log('Suppliers API response status:', response.status);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Suppliers API error:', errorText);
+        throw new Error(`Failed to fetch suppliers: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log('Suppliers API response data:', data);
+      return data;
     },
+    retry: (failureCount, error) => {
+      console.log('Suppliers query retry:', failureCount, error);
+      return failureCount < 3;
+    }
   });
 
-  const suppliers = suppliersData?.suppliers || [];
-  const total = suppliersData?.total || 0;
+  console.log('Suppliers data in component:', suppliersData);
+  console.log('Suppliers loading:', isLoading);
+  console.log('Suppliers error:', error);
+
+  const suppliers = suppliersData?.suppliers || suppliersData || [];
+  const total = suppliersData?.total || suppliers.length;
+  
+  console.log('Processed suppliers:', suppliers);
+  console.log('Suppliers count:', suppliers.length);
 
   // Колонки для DataTable
   const columns: DataTableColumn[] = [
