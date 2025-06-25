@@ -1115,9 +1115,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSupplierByExternalId(externalId: number): Promise<Supplier | undefined> {
-    console.log(`Searching for supplier with external_id: ${externalId}`);
+    console.log(`Searching for supplier with external_id: ${externalId} in SUPPLIERS table`);
+    
+    // Make sure we're using the suppliers table, not clients
     const result = await db.select().from(suppliers).where(eq(suppliers.externalId, externalId));
-    console.log(`Found ${result.length} suppliers with external_id ${externalId}:`, result);
+    console.log(`Found ${result.length} suppliers with external_id ${externalId} in suppliers table:`, result);
+    
+    if (result.length === 0) {
+      // Debug: check if external_id exists in clients table (wrong table)
+      const clientCheck = await pool.query('SELECT id, name, external_id FROM clients WHERE external_id = $1', [externalId]);
+      if (clientCheck.rows.length > 0) {
+        console.log(`WARNING: external_id ${externalId} found in CLIENTS table instead of SUPPLIERS:`, clientCheck.rows);
+      }
+    }
+    
     return result[0];
   }
 
