@@ -145,6 +145,7 @@ Preferred communication style: Simple, everyday language.
 - Виправлено помилку products.map у cost-calculations.tsx з правильною обробкою API відповідей
 - Додано безпечні перевірки масивів у DataTable компоненті для запобігання runtime помилок
 - Система стабільно працює з серверною пагінацією та універсальним DataTable компонентом
+- Виправлено автозаповнення логіну/паролю на iOS - додано name атрибути та autoComplete
 
 ### June 24, 2025
 - Created universal DataTable component for all system lists with:
