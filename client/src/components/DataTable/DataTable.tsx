@@ -657,24 +657,7 @@ export function DataTable({
                                 />
                                 <Label className="text-sm">Відображати</Label>
                               </div>
-                              <div className="flex items-center space-x-2">
-                                <Checkbox
-                                  checked={columnSettings.filterable}
-                                  onCheckedChange={(checked) =>
-                                    setSettings(prev => ({
-                                      ...prev,
-                                      columnSettings: {
-                                        ...prev.columnSettings,
-                                        [column.key]: {
-                                          ...columnSettings,
-                                          filterable: checked as boolean
-                                        }
-                                      }
-                                    }))
-                                  }
-                                />
-                                <Label className="text-sm">Фільтрувати</Label>
-                              </div>
+
                             </div>
                           </div>
                           

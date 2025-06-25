@@ -253,7 +253,6 @@ export default function SupplierReceipts() {
       key: 'supplier_name',
       label: 'Постачальник',
       sortable: true,
-      filterable: true,
       render: (value, row) => (
         <div className="flex items-center space-x-2">
           <Building2 className="h-4 w-4 text-orange-600" />
@@ -265,8 +264,6 @@ export default function SupplierReceipts() {
       key: 'supplier_document_number',
       label: 'Документ',
       sortable: true,
-      filterable: true,
-      /*render: (value, row) => ( */
       render: (value, row) => (
         <div className="flex items-center space-x-2">
           <FileText className="h-4 w-4 text-blue-600" />
@@ -302,7 +299,6 @@ export default function SupplierReceipts() {
     /*{
       key: 'document_type_name',
       label: 'Тип документу',
-      filterable: true,
       render: (value) => (
         <span className="text-sm">{value || '-'}</span>
       )
