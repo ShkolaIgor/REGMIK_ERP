@@ -1131,6 +1131,95 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(suppliers).orderBy(suppliers.id);
   }
 
+  async getSuppliersPaginated(page: number = 1, pageSize: number = 25, search?: string, sortField?: string, sortDirection?: 'asc' | 'desc'): Promise<{
+    data: Supplier[];
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  }> {
+    try {
+      const offset = (page - 1) * pageSize;
+      
+      let query = this.db.select({
+        id: suppliers.id,
+        name: suppliers.name,
+        fullName: suppliers.fullName,
+        email: suppliers.email,
+        phone: suppliers.phone,
+        address: suppliers.address,
+        contactPerson: suppliers.contactPerson,
+        notes: suppliers.notes,
+        isActive: suppliers.isActive,
+        createdAt: suppliers.createdAt,
+        categoryId: suppliers.categoryId,
+        externalId: suppliers.externalId,
+        categoryName: supplierCategories.name
+      })
+      .from(suppliers)
+      .leftJoin(supplierCategories, eq(suppliers.categoryId, supplierCategories.id));
+
+      // Add search filter
+      if (search) {
+        query = query.where(
+          or(
+            ilike(suppliers.name, `%${search}%`),
+            ilike(suppliers.fullName, `%${search}%`),
+            ilike(suppliers.email, `%${search}%`),
+            ilike(suppliers.phone, `%${search}%`)
+          )
+        );
+      }
+
+      // Add sorting
+      const validSortFields = ['name', 'fullName', 'email', 'phone', 'createdAt'];
+      const validField = validSortFields.includes(sortField || '') ? sortField : 'name';
+      const direction = sortDirection === 'desc' ? desc : asc;
+      
+      query = query.orderBy(direction(suppliers[validField as keyof typeof suppliers]));
+
+      // Get total count
+      let countQuery = this.db.select({ count: sql<number>`count(*)` }).from(suppliers);
+      if (search) {
+        countQuery = countQuery.where(
+          or(
+            ilike(suppliers.name, `%${search}%`),
+            ilike(suppliers.fullName, `%${search}%`),
+            ilike(suppliers.email, `%${search}%`),
+            ilike(suppliers.phone, `%${search}%`)
+          )
+        );
+      }
+
+      const [{ count: total }] = await countQuery;
+      
+      // Add pagination
+      const data = await query.limit(pageSize).offset(offset);
+
+      const totalPages = Math.ceil(total / pageSize);
+
+      console.log('Suppliers query result:', { 
+        total, 
+        page, 
+        pageSize, 
+        offset, 
+        dataLength: data.length,
+        totalPages
+      });
+
+      return {
+        data: data as Supplier[],
+        total,
+        page,
+        pageSize,
+        totalPages
+      };
+    } catch (error) {
+      console.error('Error getting suppliers:', error);
+      throw error;
+    }
+  }
+
   async getAllSuppliers(): Promise<Supplier[]> {
     try {
       const result = await db.select().from(suppliers).orderBy(suppliers.name);
