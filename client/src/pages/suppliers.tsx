@@ -60,6 +60,13 @@ export default function Suppliers() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [currentJob, setCurrentJob] = useState<ImportJob | null>(null);
   
+  // State для серверної пагінації
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortField, setSortField] = useState('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  
   // Пошук
   const [searchQuery, setSearchQuery] = useState("");
 
