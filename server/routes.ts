@@ -4885,17 +4885,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { items, supplierExternalId, ...receiptData } = req.body;
       
-      // Handle supplier lookup by external_id if provided
-      if (supplierExternalId && !receiptData.supplierId) {
+      // Handle supplier lookup by external_id if provided (INDEX_PREDPR mapping)
+      if (supplierExternalId) {
         console.log(`Looking up supplier by external_id: ${supplierExternalId}`);
         const supplier = await storage.getSupplierByExternalId(supplierExternalId);
         if (!supplier) {
+          // List available suppliers with their external_ids for debugging
+          const allSuppliers = await storage.getSuppliers();
+          console.log('Available suppliers with external_ids:', allSuppliers.map(s => ({ id: s.id, name: s.name, external_id: s.externalId })));
           return res.status(400).json({ 
-            message: `Постачальник з external_id ${supplierExternalId} не знайдений` 
+            message: `Постачальник з external_id ${supplierExternalId} не знайдений. INDEX_PREDPR: ${supplierExternalId}` 
           });
         }
         receiptData.supplierId = supplier.id;
-        console.log(`Found supplier: ${supplier.name} (ID: ${supplier.id})`);
+        console.log(`Found supplier by external_id ${supplierExternalId}: ${supplier.name} (ID: ${supplier.id})`);
       }
       
       const receipt = await storage.createSupplierReceipt(receiptData);

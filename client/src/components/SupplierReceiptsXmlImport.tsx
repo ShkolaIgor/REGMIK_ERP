@@ -46,7 +46,7 @@ export function SupplierReceiptsXmlImport({ onClose }: { onClose: () => void }) 
   const [mapping, setMapping] = useState<ImportMapping>({
     receiptFields: [
       { xmlPath: 'DATE_INP', dbField: 'receiptDate', required: true, description: 'Дата отримання товару (DATE_INP -> created_at)' },
-      { xmlPath: 'INDEX_PREDPR', dbField: 'supplierId', required: true, description: 'ID постачальника (INDEX_PREDPR -> external_id lookup)' },
+      { xmlPath: 'INDEX_PREDPR', dbField: 'supplierId', required: true, description: 'external_id постачальника (INDEX_PREDPR -> знаходить suppliers.external_id)' },
       { xmlPath: 'INDEX_DOC', dbField: 'documentTypeId', required: true, description: 'ID типу документу (INDEX_DOC)' },
       { xmlPath: 'DATE_POST', dbField: 'supplierDocumentDate', required: false, description: 'Дата документу постачальника (DATE_POST)' },
       { xmlPath: 'NUMB_DOC', dbField: 'supplierDocumentNumber', required: false, description: 'Номер документу постачальника (NUMB_DOC)' },
@@ -117,10 +117,11 @@ export function SupplierReceiptsXmlImport({ onClose }: { onClose: () => void }) 
             let value = receiptNode.getAttribute(field.xmlPath) || '';
             
             if (value || !field.required) {
-              // Special handling for supplier ID lookup
+              // Special handling for supplier ID lookup by external_id
               if (field.dbField === 'supplierId' && field.xmlPath === 'INDEX_PREDPR') {
-                // Will be resolved on backend by external_id lookup
+                // Store external_id for backend lookup, not direct supplier ID
                 receiptData['supplierExternalId'] = value ? parseInt(value) : null;
+                // Don't set supplierId directly as it will be resolved on backend
               } else if (field.dbField === 'documentTypeId' || field.dbField === 'externalId') {
                 receiptData[field.dbField] = value ? parseInt(value) : null;
               } else if (field.dbField === 'totalAmount') {
@@ -271,8 +272,11 @@ export function SupplierReceiptsXmlImport({ onClose }: { onClose: () => void }) 
   const downloadTemplate = () => {
     const template = `<?xml version="1.0" encoding="UTF-8"?>
 <DOCUMENT>
-  <ROW DATE_INP="15.01.2024" DATE_POST="14.01.2024" COMMENT="Прихід товару за накладною" INDEX_PREDPR="338" INDEX_DOC="2" ID_LISTPRIHOD="1" NUMB_DOC="7025" ACC_SUM="1500,00"/>
-  <ROW DATE_INP="16.01.2024" DATE_POST="15.01.2024" COMMENT="Другий прихід" INDEX_PREDPR="339" INDEX_DOC="1" ID_LISTPRIHOD="2" NUMB_DOC="7026" ACC_SUM="2500,50"/>
+  <ROW DATE_INP="15.01.2024" DATE_POST="14.01.2024" COMMENT="Прихід товару за накладною" INDEX_PREDPR="1" INDEX_DOC="2" ID_LISTPRIHOD="1" NUMB_DOC="7025" ACC_SUM="1500,00"/>
+  <ROW DATE_INP="16.01.2024" DATE_POST="15.01.2024" COMMENT="Другий прихід" INDEX_PREDPR="6" INDEX_DOC="1" ID_LISTPRIHOD="2" NUMB_DOC="7026" ACC_SUM="2500,50"/>
+  <ROW DATE_INP="17.01.2024" DATE_POST="16.01.2024" COMMENT="Третій прихід" INDEX_PREDPR="10801" INDEX_DOC="2" ID_LISTPRIHOD="3" NUMB_DOC="7027" ACC_SUM="3000,75"/>
+  <!-- INDEX_PREDPR має відповідати полю external_id в таблиці suppliers -->
+  <!-- Доступні external_id: 1 (Радіокомплект), 6 (VD MAIS), 10801 (Корякіна Наталія), 10808 (Єрохіна Олена) -->
 </DOCUMENT>`;
 
     const blob = new Blob([template], { type: 'application/xml' });
