@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Upload, Edit2, Trash2 } from "lucide-react";
+import { Plus, Upload, Edit2, Trash2, Package, CheckCircle, Grid3X3, DollarSign } from "lucide-react";
 import { DataTable } from "@/components/DataTable/DataTable";
 
 interface Product {
@@ -118,12 +118,18 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gray-50/30">
-      <div className="container mx-auto p-6 space-y-6">
-        {/* Заголовок */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h1 className="text-3xl font-bold tracking-tight">Товари</h1>
-          <div className="flex gap-2">
+    <div className="flex-1 overflow-auto">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <h2 className="text-2xl font-semibold text-gray-900">Каталог товарів</h2>
+            <Badge className="bg-green-100 text-green-800">
+              <div className="w-2 h-2 bg-green-500 rounded-full mr-1" />
+              Онлайн
+            </Badge>
+          </div>
+          <div className="flex items-center space-x-4">
             <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
               <DialogTrigger asChild>
                 <Button variant="outline">
@@ -144,6 +150,77 @@ export default function ProductsPage() {
               Додати товар
             </Button>
           </div>
+        </div>
+      </header>
+
+      <main className="p-6 space-y-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Загальна кількість товарів</p>
+                  <p className="text-3xl font-semibold text-gray-900">{products.length}</p>
+                  <p className="text-sm text-green-600 mt-1">Всього позицій</p>
+                </div>
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Package className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Активні товари</p>
+                  <p className="text-3xl font-semibold text-gray-900">
+                    {products.filter((p: Product) => p.isActive).length}
+                  </p>
+                  <p className="text-sm text-green-600 mt-1">В продажу</p>
+                </div>
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Категорії</p>
+                  <p className="text-3xl font-semibold text-gray-900">{categories.length}</p>
+                  <p className="text-sm text-blue-600 mt-1">Різних типів</p>
+                </div>
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <Grid3X3 className="w-6 h-6 text-purple-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Середня ціна</p>
+                  <p className="text-3xl font-semibold text-gray-900">
+                    {products.length > 0 
+                      ? Math.round(products.reduce((sum: number, p: Product) => sum + parseFloat(p.retailPrice), 0) / products.length)
+                      : 0} ₴
+                  </p>
+                  <p className="text-sm text-orange-600 mt-1">За товар</p>
+                </div>
+                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-orange-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* DataTable компонент */}
@@ -351,7 +428,7 @@ export default function ProductsPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
+      </main>
     </div>
   );
 }
