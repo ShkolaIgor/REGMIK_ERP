@@ -57,10 +57,33 @@ export default function ProductsPage() {
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importJob, setImportJob] = useState<ImportJob | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // State для серверної пагінації
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortField, setSortField] = useState('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  const { data: products = [], isLoading, isError } = useQuery({
-    queryKey: ['/api/products'],
+  const { data: productsResponse, isLoading, isError } = useQuery({
+    queryKey: ['/api/products', currentPage, pageSize, searchTerm, sortField, sortDirection],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        pageSize: pageSize.toString(),
+        search: searchTerm,
+        sortField,
+        sortDirection
+      });
+      const response = await fetch(`/api/products?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch products');
+      return response.json();
+    },
   });
+
+  const products = productsResponse?.data || [];
+  const totalItems = productsResponse?.total || 0;
+  const totalPages = productsResponse?.totalPages || 0;
 
   const { data: categories = [] } = useQuery({
     queryKey: ['/api/product-categories'],
