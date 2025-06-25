@@ -983,7 +983,7 @@ export default function Suppliers() {
         {/* DataTable */}
         <div className="bg-white w-full px-3 py-1 rounded-xl shadow-sm border border-gray-200/50 overflow-hidden">
           <DataTable
-            data={suppliers}
+            data={suppliers || []}
             columns={columns}
             loading={isLoading}
             searchTerm={searchTerm}
