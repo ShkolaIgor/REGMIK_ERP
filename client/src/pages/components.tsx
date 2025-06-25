@@ -25,6 +25,8 @@ export default function Components() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showImportWizard, setShowImportWizard] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   
   // DataTable columns
   const columns: DataTableColumn[] = [
