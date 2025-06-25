@@ -30,9 +30,11 @@ export default function CostCalculationsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: products = [] } = useQuery({
+  const { data: productsResponse } = useQuery({
     queryKey: ["/api/products"],
   });
+  
+  const products = Array.isArray(productsResponse) ? productsResponse : (productsResponse?.data || []);
 
   const { data: calculations = [], isLoading } = useQuery({
     queryKey: ["/api/cost-calculations"],

@@ -141,6 +141,10 @@ Preferred communication style: Simple, everyday language.
 - Виправлено проблему з автентифікацією - додано credentials: 'include' та редірект на логін при 401
 - Додано кнопку "Увійти знову" при помилках автентифікації
 - Усунено всі помилки pageSize/externalPageSize у DataTable та компонентах
+- Виправлено помилки filterCategory у components.tsx - додано відсутні state змінні
+- Виправлено помилку products.map у cost-calculations.tsx з правильною обробкою API відповідей
+- Додано безпечні перевірки масивів у DataTable компоненті для запобігання runtime помилок
+- Система стабільно працює з серверною пагінацією та універсальним DataTable компонентом
 
 ### June 24, 2025
 - Created universal DataTable component for all system lists with:
