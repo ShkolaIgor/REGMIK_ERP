@@ -2112,22 +2112,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Suppliers API
-  app.get("/api/suppliers", async (req, res) => {
+  // Suppliers API  
+  app.get("/api/suppliers", isSimpleAuthenticated, async (req, res) => {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 12;
+      // Check if pagination parameters are provided
+      const page = req.query.page ? parseInt(req.query.page as string) : null;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : null;
       const search = req.query.search as string || '';
       
-      console.log(`Getting suppliers: page=${page}, limit=${limit}, search="${search}"`);
-      const result = await storage.getSuppliersPaginated(page, limit, search);
-      console.log(`Suppliers result:`, { 
-        type: typeof result, 
-        isArray: Array.isArray(result),
-        hasSuppliers: result && 'suppliers' in result,
-        keys: result && typeof result === 'object' ? Object.keys(result) : 'not object'
-      });
-      res.json(result);
+      if (page && limit) {
+        // Return paginated response for main suppliers page
+        console.log(`Getting suppliers paginated: page=${page}, limit=${limit}, search="${search}"`);
+        const result = await storage.getSuppliersPaginated(page, limit, search);
+        res.json(result);
+      } else {
+        // Return simple array for dropdowns/selects
+        console.log('Getting all suppliers for dropdown');
+        const suppliers = await storage.getAllSuppliers();
+        console.log('Suppliers fetched:', suppliers.length);
+        res.json(suppliers);
+      }
     } catch (error) {
       console.error("Failed to get suppliers:", error);
       res.status(500).json({ error: "Failed to get suppliers" });
