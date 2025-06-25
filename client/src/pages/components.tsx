@@ -40,20 +40,17 @@ export default function Components() {
       key: 'name',
       label: 'Назва',
       sortable: true,
-      filterable: true,
       render: (value) => <span className="font-bold">{value}</span>
     },
     {
       key: 'sku',
       label: 'SKU',
-      sortable: true,
-      filterable: true
+      sortable: true
     },
     {
       key: 'category',
       label: 'Категорія',
       sortable: true,
-      filterable: true,
       render: (value, row) => {
         const category = categories.find((cat: any) => cat.id === row.categoryId);
         return category ? (

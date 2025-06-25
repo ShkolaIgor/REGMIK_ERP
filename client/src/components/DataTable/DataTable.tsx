@@ -957,8 +957,8 @@ export function DataTable({
         </div>
       </div>
 
-      {/* Search and Filters */}
-      {(searchable || filterable) && (
+      {/* Search */}
+      {searchable && (
         <div className="flex flex-wrap items-center gap-4">
           {searchable && (
             <div className="flex-1 min-w-64">
@@ -973,29 +973,7 @@ export function DataTable({
               </div>
             </div>
           )}
-          
-          {filterable && visibleColumns.filter(col => settings.columnSettings[col.key]?.filterable === true).length > 0 && (
-            <div className="flex gap-2">
-              {visibleColumns.filter(col => settings.columnSettings[col.key]?.filterable === true).map((column) => (
-                <Select key={column.key} onValueChange={(value) => handleFilter(column.key, value)}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder={`Фільтр: ${column.label}`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Всі</SelectItem>
-                    {Array.from(new Set(data.map(item => String(item[column.key] || ''))))
-                      .filter(Boolean)
-                      .sort()
-                      .map((value) => (
-                        <SelectItem key={value} value={value}>
-                          {value}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              ))}
-            </div>
-          )}
+
         </div>
       )}
 
