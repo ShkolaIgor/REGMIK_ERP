@@ -252,6 +252,26 @@ export default function ProductsPage() {
                     <span>{new Date(product.createdAt).toLocaleDateString('uk-UA')}</span>
                   </div>
                 </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleEdit(product)}
+                    className="flex-1"
+                  >
+                    <Edit2 className="h-4 w-4 mr-1" />
+                    Редагувати
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleDelete(product)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -285,6 +305,31 @@ export default function ProductsPage() {
           )}
         />
 
+        {/* Діалог редагування товару */}
+        <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Редагування товару</DialogTitle>
+            </DialogHeader>
+            {editingProduct && (
+              <ProductEditForm 
+                product={editingProduct} 
+                categories={categories}
+                onSave={(data) => {
+                  // Тут буде логіка збереження
+                  console.log('Saving product:', data);
+                  setEditingProduct(null);
+                  toast({
+                    title: "Товар оновлено",
+                    description: "Дані товару успішно збережено",
+                  });
+                }}
+                onCancel={() => setEditingProduct(null)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
         {/* AlertDialog для підтвердження видалення */}
         <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
           <AlertDialogContent>
@@ -308,5 +353,202 @@ export default function ProductsPage() {
         </AlertDialog>
       </div>
     </div>
+  );
+}
+
+// Компонент форми редагування товару
+function ProductEditForm({ 
+  product, 
+  categories, 
+  onSave, 
+  onCancel 
+}: {
+  product: Product;
+  categories: any[];
+  onSave: (data: any) => void;
+  onCancel: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    name: product.name,
+    sku: product.sku,
+    description: product.description || '',
+    barcode: product.barcode || '',
+    categoryId: product.categoryId?.toString() || '',
+    costPrice: product.costPrice,
+    retailPrice: product.retailPrice,
+    productType: product.productType,
+    unit: product.unit,
+    minStock: product.minStock?.toString() || '',
+    maxStock: product.maxStock?.toString() || '',
+    isActive: product.isActive ?? true,
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const data = {
+      ...formData,
+      categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
+      minStock: formData.minStock ? parseInt(formData.minStock) : null,
+      maxStock: formData.maxStock ? parseInt(formData.maxStock) : null,
+    };
+    onSave(data);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="name">Назва товару *</Label>
+          <Input
+            id="name"
+            value={formData.name}
+            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="sku">SKU *</Label>
+          <Input
+            id="sku"
+            value={formData.sku}
+            onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
+            required
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="description">Опис</Label>
+        <Input
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="barcode">Штрих-код</Label>
+          <Input
+            id="barcode"
+            value={formData.barcode}
+            onChange={(e) => setFormData(prev => ({ ...prev, barcode: e.target.value }))}
+          />
+        </div>
+        <div>
+          <Label htmlFor="categoryId">Категорія</Label>
+          <Select
+            value={formData.categoryId}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, categoryId: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Оберіть категорію" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Без категорії</SelectItem>
+              {categories.map((category: any) => (
+                <SelectItem key={category.id} value={category.id.toString()}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="costPrice">Собівартість *</Label>
+          <Input
+            id="costPrice"
+            type="number"
+            step="0.01"
+            value={formData.costPrice}
+            onChange={(e) => setFormData(prev => ({ ...prev, costPrice: e.target.value }))}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="retailPrice">Роздрібна ціна *</Label>
+          <Input
+            id="retailPrice"
+            type="number"
+            step="0.01"
+            value={formData.retailPrice}
+            onChange={(e) => setFormData(prev => ({ ...prev, retailPrice: e.target.value }))}
+            required
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="productType">Тип товару</Label>
+          <Select
+            value={formData.productType}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, productType: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="product">Товар</SelectItem>
+              <SelectItem value="service">Послуга</SelectItem>
+              <SelectItem value="kit">Комплект</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="unit">Одиниця виміру *</Label>
+          <Input
+            id="unit"
+            value={formData.unit}
+            onChange={(e) => setFormData(prev => ({ ...prev, unit: e.target.value }))}
+            required
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="minStock">Мінімальний залишок</Label>
+          <Input
+            id="minStock"
+            type="number"
+            value={formData.minStock}
+            onChange={(e) => setFormData(prev => ({ ...prev, minStock: e.target.value }))}
+          />
+        </div>
+        <div>
+          <Label htmlFor="maxStock">Максимальний залишок</Label>
+          <Input
+            id="maxStock"
+            type="number"
+            value={formData.maxStock}
+            onChange={(e) => setFormData(prev => ({ ...prev, maxStock: e.target.value }))}
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="isActive"
+          checked={formData.isActive}
+          onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+          className="rounded"
+        />
+        <Label htmlFor="isActive">Активний товар</Label>
+      </div>
+
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Скасувати
+        </Button>
+        <Button type="submit">
+          Зберегти зміни
+        </Button>
+      </div>
+    </form>
   );
 }
