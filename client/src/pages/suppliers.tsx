@@ -118,6 +118,17 @@ export default function Suppliers() {
   const totalItems = total;
   const totalPages = suppliersResponse?.totalPages || Math.ceil(total / supplierPageSize);
 
+  console.log('Suppliers response:', suppliersResponse);
+  console.log('Suppliers data:', suppliers);
+  console.log('Total:', total);
+  
+  if (error && error.message.includes('401')) {
+    // Redirect to login if not authenticated
+    setTimeout(() => {
+      window.location.href = '/api/login';
+    }, 1000);
+  }
+
   // Колонки для DataTable
   const columns: DataTableColumn[] = [
     {
