@@ -383,6 +383,7 @@ export default function SupplierReceipts() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
       setIsDialogOpen(false);
+      setEditingReceipt(null);
       resetForm();
       toast({ title: "Прихід створено успішно" });
     },
@@ -427,7 +428,9 @@ export default function SupplierReceipts() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
       setShowDeleteAlert(false);
+      setIsDialogOpen(false);
       setEditingReceipt(null);
+      resetForm();
       toast({ title: "Прихід видалено успішно" });
     },
     onError: (error) => {
