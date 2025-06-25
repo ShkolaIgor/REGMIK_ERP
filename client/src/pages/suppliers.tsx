@@ -136,19 +136,16 @@ export default function Suppliers() {
       key: 'contactPerson',
       label: 'Контактна особа',
       sortable: true,
-      filterable: true,
       render: (value) => value || '-'
     },
     {
       key: 'phone',
       label: 'Телефон',
-      filterable: true,
       render: (value) => value || '-'
     },
     {
       key: 'email',
       label: 'Email',
-      filterable: true,
       render: (value) => value || '-'
     },
     {
@@ -161,7 +158,6 @@ export default function Suppliers() {
       key: 'isActive',
       label: 'Статус',
       sortable: true,
-      filterable: true,
       render: (value) => (
         <Badge variant={value ? "default" : "secondary"}>
           {value ? "Активний" : "Неактивний"}

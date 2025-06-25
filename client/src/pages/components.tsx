@@ -69,7 +69,6 @@ export default function Components() {
     {
       key: 'description',
       label: 'Опис',
-      filterable: true,
       render: (value) => (
         <span className="max-w-xs truncate block" title={value || ""}>
           {value || "—"}
@@ -85,14 +84,12 @@ export default function Components() {
     {
       key: 'costPrice',
       label: 'Собівартість',
-      sortable: true,
-      filterable: true
+      sortable: true
     },
     {
       key: 'supplier',
       label: 'Постачальник',
       sortable: true,
-      filterable: true,
       render: (value) => value || "—"
     }
   ];
