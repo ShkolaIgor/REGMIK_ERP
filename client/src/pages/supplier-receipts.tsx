@@ -915,7 +915,7 @@ export default function SupplierReceipts() {
         </div>
 
         {/* Enhanced Pagination */}
-        {total > 0 && (
+        {/*        {total > 0 && (
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t">
             <div className="flex items-center gap-4">
               <div className="text-sm text-gray-500">
@@ -1028,7 +1028,7 @@ export default function SupplierReceipts() {
             )}
           </div>
         )}
-
+        */}  
         {/* Create/Edit Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
