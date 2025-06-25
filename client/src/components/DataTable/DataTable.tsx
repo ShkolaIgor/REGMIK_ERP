@@ -370,11 +370,28 @@ export function DataTable({
         </thead>
         <tbody>
           {loading ? (
-            <tr>
-              <td colSpan={visibleColumns.length + (actions ? 1 : 0) + (expandableContent ? 1 : 0)} className="px-4 py-8 text-center">
-                Завантаження...
-              </td>
-            </tr>
+            Array.from({ length: settings.pageSize }).map((_, rowIndex) => (
+              <tr key={rowIndex} className="border-b">
+                {expandableContent && (
+                  <td className="px-4 py-3 w-8">
+                    <Skeleton className="h-4 w-4" />
+                  </td>
+                )}
+                {visibleColumns.map((column, colIndex) => (
+                  <td key={colIndex} className="px-4 py-3">
+                    <Skeleton className="h-4 w-full" />
+                  </td>
+                ))}
+                {actions && (
+                  <td className="px-4 py-3 w-20">
+                    <div className="flex gap-1">
+                      <Skeleton className="h-6 w-6" />
+                      <Skeleton className="h-6 w-6" />
+                    </div>
+                  </td>
+                )}
+              </tr>
+            ))
           ) : paginatedData.length === 0 ? (
             <tr>
               <td colSpan={visibleColumns.length + (actions ? 1 : 0) + (expandableContent ? 1 : 0)} className="px-4 py-8 text-center text-gray-500">
