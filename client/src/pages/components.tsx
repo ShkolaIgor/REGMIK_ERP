@@ -25,11 +25,6 @@ export default function Components() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showImportWizard, setShowImportWizard] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
-  const [filterCategory, setFilterCategory] = useState("all");
-  const [filterSupplier, setFilterSupplier] = useState("all");
-  const [filterActive, setFilterActive] = useState("all");
   
   // DataTable columns
   const columns: DataTableColumn[] = [

@@ -118,19 +118,9 @@ interface DataTableProps {
   title?: string;
   storageKey: string; // Unique key for saving settings
   cardTemplate?: (item: any) => React.ReactNode;
-  totalItems?: number;
   expandableContent?: (item: any) => React.ReactNode;
   expandedItems?: Set<string | number>;
   onToggleExpand?: (itemId: string | number) => void;
-  // Server pagination props
-  searchTerm?: string;
-  currentPage?: number;
-  totalPages?: number;
-  pageSize?: number;
-  onPageChange?: (page: number) => void;
-  onPageSizeChange?: (size: number) => void;
-  sortField?: string;
-  sortDirection?: 'asc' | 'desc';
 }
 
 const defaultColumnSettings: ColumnSettings = {
@@ -181,22 +171,7 @@ export function DataTable({
   cardTemplate,
   expandableContent,
   expandedItems = new Set(),
-  onToggleExpand,
-  // Server pagination props
-  searchTerm,
-  currentPage: externalCurrentPage,
-  totalPages,
-  pageSize: externalPageSize,
-  onPageChange,
-  onPageSizeChange,
-  sortField: externalSortField,
-  sortDirection: externalSortDirection,
-  enableSearch = true,
-  enablePagination = true,
-  enableColumnToggle = true,
-  enableViewToggle = true,
-  settingsKey = 'default',
-  className
+  onToggleExpand
 }: DataTableProps) {
   // Load settings from localStorage
   const [settings, setSettings] = useState<DataTableSettings>(() => {
@@ -218,17 +193,6 @@ export function DataTable({
   useEffect(() => {
     localStorage.setItem(`datatable-${storageKey}`, JSON.stringify(settings));
   }, [settings, storageKey]);
-
-  // Use external page size if provided, otherwise use settings page size
-  const effectivePageSize = externalPageSize !== undefined ? externalPageSize : settings.pageSize;
-  
-  console.log('DataTable render:', {
-    externalPageSize,
-    settingsPageSize: settings.pageSize,
-    effectivePageSize,
-    dataLength: data?.length,
-    totalPages
-  });
 
   // Initialize column order and settings
   useEffect(() => {
@@ -283,18 +247,13 @@ export function DataTable({
     });
   }, [filteredData, settings.sortField, settings.sortDirection]);
 
-  // Paginate data - only if server pagination is not used
+  // Paginate data
   const paginatedData = useMemo(() => {
-    if (typeof totalPages === 'number' && totalPages > 0) {
-      // Server-side pagination - return data as is
-      return sortedData;
-    }
-    // Client-side pagination
-    const start = (currentPage - 1) * effectivePageSize;
-    return sortedData.slice(start, start + effectivePageSize);
-  }, [sortedData, currentPage, effectivePageSize, totalPages]);
+    const start = (currentPage - 1) * settings.pageSize;
+    return sortedData.slice(start, start + settings.pageSize);
+  }, [sortedData, currentPage, settings.pageSize]);
 
-  const calculatedTotalPages = totalPages || Math.ceil(sortedData.length / effectivePageSize);
+  const totalPages = Math.ceil(sortedData.length / settings.pageSize);
 
   const handleSort = (columnKey: string) => {
     const newDirection = settings.sortField === columnKey && settings.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -993,42 +952,40 @@ export function DataTable({
       {settings.viewMode === 'table' ? renderTableView() : renderCardView()}
 
       {/* Pagination */}
-      {calculatedTotalPages > 1 && (
+      {totalPages > 1 && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t">
           <div className="flex items-center gap-4">
             <div className="text-sm text-gray-500">
-              Показано {((currentPage - 1) * effectivePageSize) + 1}-{Math.min(currentPage * effectivePageSize, totalItems || data.length)} з {totalItems || data.length} результатів
+              Показано {((currentPage - 1) * settings.pageSize) + 1}-{Math.min(currentPage * settings.pageSize, sortedData.length)} з {sortedData.length} результатів
             </div>
-            {onPageSizeChange && (
-              <div className="flex items-center gap-2">
-                <Label className="text-sm text-gray-600">Рядків на сторінці:</Label>
-                <Select
-                  value={effectivePageSize.toString()}
-                  onValueChange={(value) => {
-                    console.log('DataTable: Page size changing from', effectivePageSize, 'to', value);
-                    onPageSizeChange?.(parseInt(value));
-                  }}
-                >
-                  <SelectTrigger className="w-20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-gray-600">Рядків на сторінці:</Label>
+              <Select
+                value={settings.pageSize.toString()}
+                onValueChange={(value) => {
+                  setSettings(prev => ({ ...prev, pageSize: parseInt(value) }));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange?.(1)}
+              onClick={() => setCurrentPage(1)}
               disabled={currentPage === 1}
             >
               <ChevronsLeft className="h-4 w-4" />
@@ -1036,33 +993,33 @@ export function DataTable({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange?.(Math.max(1, currentPage - 1))}
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             
             <div className="flex items-center gap-1">
-              {Array.from({ length: Math.min(5, calculatedTotalPages) }, (_, i) => {
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum;
-                if (calculatedTotalPages <= 5) {
+                if (totalPages <= 5) {
                   pageNum = i + 1;
                 } else if (currentPage <= 3) {
                   pageNum = i + 1;
-                } else if (currentPage >= calculatedTotalPages - 2) {
-                  pageNum = calculatedTotalPages - 4 + i;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
                 } else {
                   pageNum = currentPage - 2 + i;
                 }
                 
-                if (pageNum < 1 || pageNum > calculatedTotalPages) return null;
+                if (pageNum < 1 || pageNum > totalPages) return null;
                 
                 return (
                   <Button
                     key={pageNum}
                     variant={currentPage === pageNum ? "default" : "outline"}
                     size="sm"
-                    onClick={() => onPageChange?.(pageNum)}
+                    onClick={() => setCurrentPage(pageNum)}
                   >
                     {pageNum}
                   </Button>
@@ -1073,16 +1030,16 @@ export function DataTable({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange?.(Math.min(calculatedTotalPages, currentPage + 1))}
-              disabled={currentPage === calculatedTotalPages}
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange?.(calculatedTotalPages)}
-              disabled={currentPage === calculatedTotalPages}
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
             >
               <ChevronsRight className="h-4 w-4" />
             </Button>

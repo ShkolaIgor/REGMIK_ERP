@@ -57,44 +57,10 @@ export default function ProductsPage() {
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importJob, setImportJob] = useState<ImportJob | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  // State для серверної пагінації
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState('name');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  const { data: productsResponse, isLoading, isError } = useQuery({
-    queryKey: ['/api/products', currentPage, pageSize, searchTerm, sortField, sortDirection],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        pageSize: pageSize.toString(),
-        search: searchTerm,
-        sortField,
-        sortDirection
-      });
-      
-      console.log('Products API call:', params.toString());
-      const response = await fetch(`/api/products?${params}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to fetch products');
-      const result = await response.json();
-      console.log('Products API response:', { 
-        dataLength: result?.data?.length || 0, 
-        total: result?.total || 0,
-        page: result?.page || 0,
-        pageSize: result?.pageSize || 0
-      });
-      return result;
-    },
+  const { data: products = [], isLoading, isError } = useQuery({
+    queryKey: ['/api/products'],
   });
-
-  const products = productsResponse?.data || [];
-  const totalItems = parseInt(productsResponse?.total?.toString() || '0');
-  const totalPages = productsResponse?.totalPages || 0;
 
   const { data: categories = [] } = useQuery({
     queryKey: ['/api/product-categories'],
@@ -183,26 +149,6 @@ export default function ProductsPage() {
         {/* DataTable компонент */}
         <DataTable
           data={products}
-          loading={isLoading}
-          searchTerm={searchTerm}
-          onSearch={setSearchTerm}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          pageSize={pageSize}
-          totalItems={totalItems}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={(size) => {
-            console.log('Products: Page size changed to:', size);
-            setPageSize(size);
-            setCurrentPage(1);
-          }}
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={(field, direction) => {
-            setSortField(field);
-            setSortDirection(direction);
-            setCurrentPage(1);
-          }}
           columns={[
             {
               key: 'name',
@@ -263,6 +209,7 @@ export default function ProductsPage() {
               render: (value) => new Date(value).toLocaleDateString('uk-UA')
             }
           ]}
+          loading={isLoading}
           title="Список товарів"
           storageKey="products"
           cardTemplate={(product) => (

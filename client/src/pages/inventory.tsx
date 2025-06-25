@@ -71,7 +71,7 @@ export default function Inventory() {
   };
 
   // Filter products based on search and filters
-  const filteredProducts = (Array.isArray(products) ? products : products?.data || []).filter((product: any) => {
+  const filteredProducts = products.filter((product: any) => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          product.sku.toLowerCase().includes(searchQuery.toLowerCase());
     
@@ -215,7 +215,7 @@ export default function Inventory() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Загальна кількість товарів</p>
-                  <p className="text-3xl font-semibold text-gray-900">{Array.isArray(products) ? products.length : products?.data?.length || 0}</p>
+                  <p className="text-3xl font-semibold text-gray-900">{products.length}</p>
                   <p className="text-sm text-green-600 mt-1">+12% цього місяця</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -267,7 +267,7 @@ export default function Inventory() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Загальна кількість SKU</p>
-                  <p className="text-3xl font-semibold text-gray-900">{Array.isArray(products) ? products.length : products?.data?.length || 0}</p>
+                  <p className="text-3xl font-semibold text-gray-900">{products.length}</p>
                   <p className="text-sm text-blue-600 mt-1">Унікальних позицій</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -349,7 +349,7 @@ export default function Inventory() {
             <div className="flex items-center justify-between">
               <CardTitle>Каталог товарів</CardTitle>
               <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <span>Показано: {filteredProducts.length} з {Array.isArray(products) ? products.length : products?.data?.length || 0}</span>
+                <span>Показано: {filteredProducts.length} з {products.length}</span>
               </div>
             </div>
           </CardHeader>

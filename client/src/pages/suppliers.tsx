@@ -60,13 +60,6 @@ export default function Suppliers() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [currentJob, setCurrentJob] = useState<ImportJob | null>(null);
   
-  // State для серверної пагінації
-  const [currentPage, setCurrentPage] = useState(1);
-  const [supplierPageSize, setSupplierPageSize] = useState(25);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState('name');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  
   // Пошук
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -89,46 +82,36 @@ export default function Suppliers() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: suppliersResponse, isLoading, error } = useQuery({
-    queryKey: ["/api/suppliers", currentPage, supplierPageSize, searchTerm, sortField, sortDirection],
+  const { data: suppliersData, isLoading, error } = useQuery({
+    queryKey: ["/api/suppliers"],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        pageSize: supplierPageSize.toString(),
-        search: searchTerm,
-        sortField,
-        sortDirection
-      });
-      const response = await fetch(`/api/suppliers?${params}`, {
-        credentials: 'include'
-      });
+      console.log('Fetching suppliers for list page...');
+      const response = await fetch('/api/suppliers?page=1&limit=1000');
+      console.log('Suppliers API response status:', response.status);
       if (!response.ok) {
-        if (response.status === 401) {
-          window.location.href = '/api/login';
-          return;
-        }
+        const errorText = await response.text();
+        console.error('Suppliers API error:', errorText);
         throw new Error(`Failed to fetch suppliers: ${response.status}`);
       }
-      return response.json();
+      const data = await response.json();
+      console.log('Suppliers API response data:', data);
+      return data;
     },
+    retry: (failureCount, error) => {
+      console.log('Suppliers query retry:', failureCount, error);
+      return failureCount < 3;
+    }
   });
 
-  const suppliers = Array.isArray(suppliersResponse) ? suppliersResponse : (suppliersResponse?.data || suppliersResponse?.suppliers || []);
-  const total = suppliersResponse?.total || suppliers.length;
-  const totalItems = total;
-  const totalPages = suppliersResponse?.totalPages || Math.ceil(total / supplierPageSize);
+  console.log('Suppliers data in component:', suppliersData);
+  console.log('Suppliers loading:', isLoading);
+  console.log('Suppliers error:', error);
 
-  console.log('Suppliers response:', suppliersResponse);
-  console.log('Suppliers data:', suppliers);
-  console.log('Total:', total);
-  console.log('IsArray suppliersResponse:', Array.isArray(suppliersResponse));
+  const suppliers = suppliersData?.suppliers || suppliersData || [];
+  const total = suppliersData?.total || suppliers.length;
   
-  if (error && error.message.includes('401')) {
-    // Redirect to login if not authenticated
-    setTimeout(() => {
-      window.location.href = '/api/login';
-    }, 1000);
-  }
+  console.log('Processed suppliers:', suppliers);
+  console.log('Suppliers count:', suppliers.length);
 
   // Колонки для DataTable
   const columns: DataTableColumn[] = [
@@ -984,27 +967,9 @@ export default function Suppliers() {
         {/* DataTable */}
         <div className="bg-white w-full px-3 py-1 rounded-xl shadow-sm border border-gray-200/50 overflow-hidden">
           <DataTable
-            data={suppliers || []}
+            data={suppliers}
             columns={columns}
             loading={isLoading}
-            searchTerm={searchTerm}
-            onSearch={setSearchTerm}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            pageSize={supplierPageSize}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={(size) => {
-              console.log('Page size changed to:', size);
-              setSupplierPageSize(size);
-              setCurrentPage(1);
-            }}
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSort={(field, direction) => {
-              setSortField(field);
-              setSortDirection(direction);
-              setCurrentPage(1);
-            }}
             title="Список постачальників"
             storageKey="suppliers"
             cardTemplate={cardTemplate}

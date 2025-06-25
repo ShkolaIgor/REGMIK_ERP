@@ -173,7 +173,7 @@ export default function ProductionPlanning() {
   };
 
   const getSemiFabricatedProducts = () => {
-    return (Array.isArray(products) ? products : products?.data || []).filter((p: any) => p.productType === "semifinished" || p.productType === "component");
+    return products.filter((p: any) => p.productType === "semifinished" || p.productType === "component");
   };
 
   return (
@@ -199,7 +199,7 @@ export default function ProductionPlanning() {
                     <SelectValue placeholder="Оберіть продукт" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(Array.isArray(products) ? products : products?.data || []).map((product: any) => (
+                    {products.map((product: any) => (
                       <SelectItem key={product.id} value={product.id.toString()}>
                         {product.name} ({product.sku})
                       </SelectItem>

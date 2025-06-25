@@ -30,11 +30,9 @@ export default function CostCalculationsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: productsResponse } = useQuery({
+  const { data: products = [] } = useQuery({
     queryKey: ["/api/products"],
   });
-  
-  const products = Array.isArray(productsResponse) ? productsResponse : (productsResponse?.data || []);
 
   const { data: calculations = [], isLoading } = useQuery({
     queryKey: ["/api/cost-calculations"],
@@ -244,7 +242,7 @@ export default function CostCalculationsPage() {
                         <SelectValue placeholder="Виберіть продукт" />
                       </SelectTrigger>
                       <SelectContent>
-                        {(products as Product[] || []).map((product) => (
+                        {(products as Product[]).map((product) => (
                           <SelectItem key={product.id} value={product.id.toString()}>
                             {product.name} ({product.sku})
                           </SelectItem>

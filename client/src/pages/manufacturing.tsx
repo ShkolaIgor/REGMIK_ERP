@@ -444,7 +444,7 @@ export default function Manufacturing() {
                         <SelectValue placeholder="Оберіть товар" />
                       </SelectTrigger>
                       <SelectContent>
-                        {(Array.isArray(products) ? products : products?.data || []).map((product: any) => (
+                        {products.map((product: any) => (
                           <SelectItem key={product.id} value={product.id.toString()}>
                             {product.name} ({product.sku})
                           </SelectItem>

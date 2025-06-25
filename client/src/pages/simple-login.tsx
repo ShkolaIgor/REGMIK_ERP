@@ -68,20 +68,15 @@ export default function SimpleLogin() {
             <CardTitle className="text-center">Вхід в систему</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4" autoComplete="on">
+            <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="username">Логін</Label>
                 <Input
                   id="username"
-                  name="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Введіть логін"
-                  autoComplete="username"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck="false"
                   required
                 />
               </div>
@@ -91,12 +86,10 @@ export default function SimpleLogin() {
                 <div className="relative">
                   <Input
                     id="password"
-                    name="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Введіть пароль"
-                    autoComplete="current-password"
                     required
                   />
                   <Button

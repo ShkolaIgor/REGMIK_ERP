@@ -643,35 +643,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Products with pagination
+  // Products
   app.get("/api/products", async (req, res) => {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 25;
-      const search = req.query.search as string || '';
-      const sortField = req.query.sortField as string || 'name';
-      const sortDirection = req.query.sortDirection as string || 'asc';
-      
-      console.log('Products API called with:', { page, pageSize, search, sortField, sortDirection });
-      
-      const result = await storage.getProductsPaginated({
-        page,
-        pageSize,
-        search,
-        sortField,
-        sortDirection
-      });
-      
-      console.log('Products API result:', { 
-        dataLength: result?.data?.length || 0, 
-        total: result?.total || 0,
-        page: result?.page || 0,
-        pageSize: result?.pageSize || 0 
-      });
-      
-      res.json(result);
+      const products = await storage.getProducts();
+      res.json(products);
     } catch (error) {
-      console.error("Error fetching products:", error);
       res.status(500).json({ error: "Failed to fetch products" });
     }
   });
@@ -2138,26 +2115,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Suppliers API  
   app.get("/api/suppliers", isSimpleAuthenticated, async (req, res) => {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 25;
-      const searchTerm = req.query.search as string || '';
-      const sortField = req.query.sortField as string || 'name';
-      const sortDirection = req.query.sortDirection as string || 'asc';
-
-      console.log('Getting suppliers with pagination:', { page, pageSize, searchTerm, sortField, sortDirection });
+      // Check if pagination parameters are provided
+      const page = req.query.page ? parseInt(req.query.page as string) : null;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : null;
+      const search = req.query.search as string || '';
       
-      const result = await storage.getSuppliersPaginated(page, pageSize, searchTerm, sortField, sortDirection);
-      console.log('Suppliers result:', { 
-        dataLength: result?.data?.length || 0, 
-        total: result?.total || 0, 
-        page: result?.page || 0, 
-        pageSize: result?.pageSize || 0 
-      });
-      
-      res.json(result);
+      if (page && limit) {
+        // Return paginated response for main suppliers page
+        console.log(`Getting suppliers paginated: page=${page}, limit=${limit}, search="${search}"`);
+        const result = await storage.getSuppliersPaginated(page, limit, search);
+        res.json(result);
+      } else {
+        // Return simple array for dropdowns/selects
+        console.log('Getting all suppliers for dropdown');
+        const suppliers = await storage.getAllSuppliers();
+        console.log('Suppliers fetched:', suppliers.length);
+        res.json(suppliers);
+      }
     } catch (error) {
-      console.error('Error fetching suppliers:', error);
-      res.status(500).json({ message: 'Failed to fetch suppliers' });
+      console.error("Failed to get suppliers:", error);
+      res.status(500).json({ error: "Failed to get suppliers" });
     }
   });
 

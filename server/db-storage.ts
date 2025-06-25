@@ -1,4 +1,4 @@
-import { eq, sql, desc, asc, and, gte, lte, lt, isNull, isNotNull, ne, or, not, inArray, ilike } from "drizzle-orm";
+import { eq, sql, desc, and, gte, lte, lt, isNull, isNotNull, ne, or, not, inArray, ilike } from "drizzle-orm";
 import { db, pool } from "./db";
 import { IStorage } from "./storage";
 import {
@@ -367,96 +367,6 @@ export class DatabaseStorage implements IStorage {
   // Products
   async getProducts(): Promise<Product[]> {
     return await db.select().from(products);
-  }
-
-  async getProductsPaginated(params: {
-    page: number;
-    pageSize: number;
-    search?: string;
-    sortField?: string;
-    sortDirection?: string;
-  }): Promise<{
-    data: Product[];
-    total: number;
-    page: number;
-    pageSize: number;
-    totalPages: number;
-  }> {
-    const { page, pageSize, search = '', sortField = 'name', sortDirection = 'asc' } = params;
-    const offset = (page - 1) * pageSize;
-
-    console.log('getProductsPaginated called with:', { page, pageSize, search, sortField, sortDirection, offset });
-
-    // Build search condition
-    let whereCondition;
-    if (search) {
-      whereCondition = or(
-        ilike(products.name, `%${search}%`),
-        ilike(products.sku, `%${search}%`),
-        ilike(products.description, `%${search}%`)
-      );
-    }
-
-    // Build sort condition  
-    const direction = sortDirection === 'desc' ? desc : asc;
-    let orderByColumn;
-    switch (sortField) {
-      case 'name':
-        orderByColumn = products.name;
-        break;
-      case 'sku':
-        orderByColumn = products.sku;
-        break;
-      case 'costPrice':
-        orderByColumn = products.costPrice;
-        break;
-      case 'retailPrice':
-        orderByColumn = products.retailPrice;
-        break;
-      case 'createdAt':
-        orderByColumn = products.createdAt;
-        break;
-      default:
-        orderByColumn = products.name;
-    }
-
-    // Get total count
-    const totalQuery = whereCondition 
-      ? db.select({ count: sql<number>`count(*)` }).from(products).where(whereCondition)
-      : db.select({ count: sql<number>`count(*)` }).from(products);
-    
-    const [{ count: total }] = await totalQuery;
-
-    // Get paginated data
-    let query = db.select().from(products);
-    
-    if (whereCondition) {
-      query = query.where(whereCondition);
-    }
-    
-    const data = await query
-      .orderBy(direction(orderByColumn))
-      .limit(pageSize)
-      .offset(offset);
-
-    const totalPages = Math.ceil(total / pageSize);
-
-    console.log('getProductsPaginated result:', { 
-      dataLength: data.length, 
-      total, 
-      page, 
-      pageSize, 
-      totalPages,
-      offset
-    });
-
-    return {
-      data,
-      total,
-      page,
-      pageSize,
-      totalPages
-    };
   }
 
   async getProduct(id: number): Promise<Product | undefined> {
@@ -1144,95 +1054,6 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(suppliers).orderBy(suppliers.id);
   }
 
-  async getSuppliersPaginated(page: number = 1, pageSize: number = 25, search?: string, sortField?: string, sortDirection?: 'asc' | 'desc'): Promise<{
-    data: Supplier[];
-    total: number;
-    page: number;
-    pageSize: number;
-    totalPages: number;
-  }> {
-    try {
-      const offset = (page - 1) * pageSize;
-      
-      let query = db.select({
-        id: suppliers.id,
-        name: suppliers.name,
-        fullName: suppliers.fullName,
-        email: suppliers.email,
-        phone: suppliers.phone,
-        address: suppliers.address,
-        contactPerson: suppliers.contactPerson,
-        notes: suppliers.notes,
-        isActive: suppliers.isActive,
-        createdAt: suppliers.createdAt,
-        categoryId: suppliers.categoryId,
-        externalId: suppliers.externalId,
-        categoryName: categories.name
-      })
-      .from(suppliers)
-      .leftJoin(categories, eq(suppliers.categoryId, categories.id));
-
-      // Add search filter
-      if (search) {
-        query = query.where(
-          or(
-            ilike(suppliers.name, `%${search}%`),
-            ilike(suppliers.fullName, `%${search}%`),
-            ilike(suppliers.email, `%${search}%`),
-            ilike(suppliers.phone, `%${search}%`)
-          )
-        );
-      }
-
-      // Add sorting
-      const validSortFields = ['name', 'fullName', 'email', 'phone', 'createdAt'];
-      const validField = validSortFields.includes(sortField || '') ? sortField : 'name';
-      const direction = sortDirection === 'desc' ? desc : asc;
-      
-      query = query.orderBy(direction(suppliers[validField as keyof typeof suppliers]));
-
-      // Get total count
-      let countQuery = this.db.select({ count: sql<number>`count(*)` }).from(suppliers);
-      if (search) {
-        countQuery = countQuery.where(
-          or(
-            ilike(suppliers.name, `%${search}%`),
-            ilike(suppliers.fullName, `%${search}%`),
-            ilike(suppliers.email, `%${search}%`),
-            ilike(suppliers.phone, `%${search}%`)
-          )
-        );
-      }
-
-      const [{ count: total }] = await countQuery;
-      
-      // Add pagination
-      const data = await query.limit(pageSize).offset(offset);
-
-      const totalPages = Math.ceil(total / pageSize);
-
-      console.log('Suppliers query result:', { 
-        total, 
-        page, 
-        pageSize, 
-        offset, 
-        dataLength: data.length,
-        totalPages
-      });
-
-      return {
-        data: data as Supplier[],
-        total,
-        page,
-        pageSize,
-        totalPages
-      };
-    } catch (error) {
-      console.error('Error getting suppliers:', error);
-      throw error;
-    }
-  }
-
   async getAllSuppliers(): Promise<Supplier[]> {
     try {
       const result = await db.select().from(suppliers).orderBy(suppliers.name);
@@ -1242,6 +1063,50 @@ export class DatabaseStorage implements IStorage {
       console.error('Error in getAllSuppliers:', error);
       throw error;
     }
+  }
+
+  async getSuppliersPaginated(page: number, limit: number, search: string): Promise<{
+    suppliers: Supplier[];
+    total: number;
+    totalPages: number;
+  }> {
+    const offset = (page - 1) * limit;
+    
+    // Базовий запит
+    let query = db.select().from(suppliers);
+    let countQuery = db.select({ count: sql<number>`count(*)` }).from(suppliers);
+    
+    // Додаємо пошук якщо є
+    if (search) {
+      const searchCondition = or(
+        ilike(suppliers.name, `%${search}%`),
+        ilike(suppliers.fullName, `%${search}%`),
+        ilike(suppliers.taxCode, `%${search}%`),
+        ilike(suppliers.contactPerson, `%${search}%`),
+        ilike(suppliers.email, `%${search}%`),
+        ilike(suppliers.phone, `%${search}%`)
+      );
+      query = query.where(searchCondition);
+      countQuery = countQuery.where(searchCondition);
+    }
+    
+    // Додаємо сортування, пагінацію
+    query = query.orderBy(desc(suppliers.createdAt)).limit(limit).offset(offset);
+    
+    // Виконуємо запити
+    const [suppliersResult, countResult] = await Promise.all([
+      query,
+      countQuery
+    ]);
+    
+    const total = countResult[0]?.count || 0;
+    const totalPages = Math.ceil(total / limit);
+    
+    return {
+      suppliers: suppliersResult,
+      total,
+      totalPages
+    };
   }
 
   async getSupplier(id: number): Promise<Supplier | undefined> {

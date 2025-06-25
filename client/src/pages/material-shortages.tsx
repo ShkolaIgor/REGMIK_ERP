@@ -322,7 +322,7 @@ export default function MaterialShortagesPage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {(Array.isArray(products) ? products : products?.data || []).map((product: any) => (
+                              {products.map((product: any) => (
                                 <SelectItem key={product.id} value={product.id.toString()}>
                                   {product.name}
                                 </SelectItem>
