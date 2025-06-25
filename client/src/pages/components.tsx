@@ -32,6 +32,7 @@ export default function Components() {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [showFilters, setShowFilters] = useState(false);
   
   // DataTable columns
   const columns: DataTableColumn[] = [
