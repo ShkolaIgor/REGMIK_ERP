@@ -223,11 +223,20 @@ export default function SupplierReceipts() {
     queryKey: ["/api/suppliers"],
     select: (data: any) => {
       console.log('Suppliers API response:', data);
+      console.log('Suppliers data type:', typeof data);
+      console.log('Is array:', Array.isArray(data));
       // Handle both paginated response and direct array
       if (data && data.suppliers) {
+        console.log('Using paginated response:', data.suppliers);
         return data.suppliers;
       }
-      return Array.isArray(data) ? data : [];
+      const result = Array.isArray(data) ? data : [];
+      console.log('Final suppliers result:', result);
+      return result;
+    },
+    retry: (failureCount, error) => {
+      console.log('Suppliers query retry:', failureCount, error);
+      return failureCount < 3;
     }
   });
 
