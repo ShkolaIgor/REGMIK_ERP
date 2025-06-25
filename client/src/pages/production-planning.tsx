@@ -173,7 +173,7 @@ export default function ProductionPlanning() {
   };
 
   const getSemiFabricatedProducts = () => {
-    return products.filter((p: any) => p.productType === "semifinished" || p.productType === "component");
+    return (Array.isArray(products) ? products : products?.data || []).filter((p: any) => p.productType === "semifinished" || p.productType === "component");
   };
 
   return (

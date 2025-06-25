@@ -33,7 +33,7 @@ export default function Scanner() {
     setScannedCode(barcode);
 
     // Пошук в товарах
-    const productResults = products.filter((product: any) => 
+    const productResults = (Array.isArray(products) ? products : products?.data || []).filter((product: any) => 
       product.barcode === barcode || 
       product.sku === barcode ||
       product.name.toLowerCase().includes(barcode.toLowerCase())

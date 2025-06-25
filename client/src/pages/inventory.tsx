@@ -71,7 +71,7 @@ export default function Inventory() {
   };
 
   // Filter products based on search and filters
-  const filteredProducts = products.filter((product: any) => {
+  const filteredProducts = (Array.isArray(products) ? products : products?.data || []).filter((product: any) => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          product.sku.toLowerCase().includes(searchQuery.toLowerCase());
     
