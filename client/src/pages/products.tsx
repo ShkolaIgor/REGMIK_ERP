@@ -60,7 +60,7 @@ export default function ProductsPage() {
   
   // State для серверної пагінації
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -75,9 +75,20 @@ export default function ProductsPage() {
         sortField,
         sortDirection
       });
-      const response = await fetch(`/api/products?${params}`);
+      
+      console.log('Products API call:', params.toString());
+      const response = await fetch(`/api/products?${params}`, {
+        credentials: 'include'
+      });
       if (!response.ok) throw new Error('Failed to fetch products');
-      return response.json();
+      const result = await response.json();
+      console.log('Products API response:', { 
+        dataLength: result?.data?.length || 0, 
+        total: result?.total || 0,
+        page: result?.page || 0,
+        pageSize: result?.pageSize || 0
+      });
+      return result;
     },
   });
 
@@ -180,6 +191,7 @@ export default function ProductsPage() {
           pageSize={pageSize}
           onPageChange={setCurrentPage}
           onPageSizeChange={(size) => {
+            console.log('Products: Page size changed to:', size);
             setPageSize(size);
             setCurrentPage(1);
           }}
