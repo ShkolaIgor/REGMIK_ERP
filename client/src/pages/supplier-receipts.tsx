@@ -1,137 +1,22 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Edit2, Trash2, Upload, FileText, Calendar, Package, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Filter, Building2, AlertCircle, CheckCircle, Clock } from "lucide-react";
-import { SupplierReceiptsXmlImport } from "@/components/SupplierReceiptsXmlImport";
-import { ComponentMappingDialog } from "@/components/ComponentMappingDialog";
-import { SupplierReceiptsImport } from "@/components/SupplierReceiptsImport";
-import { SupplierReceiptItemsImport } from "@/components/SupplierReceiptItemsImport";
-import { DataTable, type DataTableColumn } from '@/components/DataTable';
-import React from 'react';
+import { apiRequest } from "@/lib/queryClient";
+import { Plus, Package, FileText, TrendingUp, Calendar, Search, Filter, Download, Upload } from "lucide-react";
+import { DataTable } from "@/components/DataTable/DataTable";
 
-// Component to show receipt items when expanded
-function ReceiptItemsExpanded({ receiptId }: { receiptId: number }) {
-  const { data: receiptItems = [], isLoading } = useQuery({
-    queryKey: [`/api/supplier-receipt-items/${receiptId}`],
-    enabled: !!receiptId,
-  });
-
-  const { data: componentsData = [] } = useQuery({
-    queryKey: ["/api/components"],
-  });
-  const components = Array.isArray(componentsData) ? componentsData : [];
-
-  if (isLoading) {
-    return (
-      <div className="p-6 text-center">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-2 text-sm text-gray-500">Завантаження позицій...</p>
-      </div>
-    );
-  }
-
-  if (!receiptItems.length) {
-    return (
-      <div className="p-6 text-center text-gray-500">
-        <Package className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-        <p>Позиції не знайдено</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-6">
-      <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-        <Package className="h-4 w-4" />
-        Позиції приходу ({receiptItems.length})
-      </h4>
-      
-      <div className="bg-white rounded-lg border">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left p-3 font-medium text-gray-700">Компонент</th>
-                <th className="text-left p-3 font-medium text-gray-700">Назва постачальника</th>
-                <th className="text-left p-3 font-medium text-gray-700">Кількість</th>
-                <th className="text-left p-3 font-medium text-gray-700">Ціна за од.</th>
-                <th className="text-left p-3 font-medium text-gray-700">Сума</th>
-              </tr>
-            </thead>
-            <tbody>
-              {receiptItems.map((item: SupplierReceiptItem) => {
-                const component = components.find((c: Component) => c.id === item.component_id);
-                
-                return (
-                  <tr key={item.id} className="border-b hover:bg-gray-50">
-                    <td className="p-3">
-                      <div className="flex flex-col">
-                        <span className="font-medium text-gray-900">
-                          {component?.name || 'Компонент не знайдено'}
-                        </span>
-                        {component?.sku && (
-                          <span className="text-xs text-gray-500">
-                            Артикул: {component.sku}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-3">
-                      {item.supplier_component_name ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-900">{item.supplier_component_name}</span>
-                          {component && (
-                            <Badge variant="secondary" className="text-xs">
-                              Співставлено
-                            </Badge>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 italic">Не вказано</span>
-                      )}
-                    </td>
-                    <td className="p-3 font-medium">
-                      {parseFloat(item.quantity).toLocaleString('uk-UA')}
-                    </td>
-                    <td className="p-3">
-                      {parseFloat(item.unit_price).toLocaleString('uk-UA')} ₴
-                    </td>
-                    <td className="p-3 font-bold text-green-600">
-                      {parseFloat(item.total_price).toLocaleString('uk-UA')} ₴
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-            <tfoot className="bg-gray-50">
-              <tr>
-                <td colSpan={4} className="p-3 text-right font-medium text-gray-700">
-                  Загальна сума:
-                </td>
-                <td className="p-3 font-bold text-lg text-green-600">
-                  {receiptItems.reduce((sum, item) => 
-                    sum + parseFloat(item.total_price), 0
-                  ).toLocaleString('uk-UA')} ₴
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-}
-
+// Interfaces
 interface SupplierReceipt {
   id: number;
   receipt_date: string;
@@ -144,7 +29,9 @@ interface SupplierReceipt {
   purchase_order_id: number | null;
   created_at: string;
   updated_at: string;
-  items?: SupplierReceiptItem[];
+  supplier_name?: string;
+  document_type_name?: string;
+  purchase_order_number?: string;
 }
 
 interface SupplierReceiptItem {
@@ -180,739 +67,508 @@ interface PurchaseOrder {
   supplierId: number;
 }
 
+// Form schema
+const supplierReceiptSchema = z.object({
+  receipt_date: z.string().min(1, "Дата обов'язкова"),
+  supplier_id: z.string().min(1, "Постачальник обов'язковий"),
+  document_type_id: z.string().min(1, "Тип документу обов'язковий"),
+  supplier_document_date: z.string().optional(),
+  supplier_document_number: z.string().optional(),
+  total_amount: z.string().min(1, "Сума обов'язкова"),
+  comment: z.string().optional(),
+  purchase_order_id: z.string().optional(),
+});
+
+type SupplierReceiptFormData = z.infer<typeof supplierReceiptSchema>;
+
 export default function SupplierReceipts() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
-  // State
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingReceipt, setEditingReceipt] = useState<SupplierReceipt | null>(null);
-  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const [showXmlImport, setShowXmlImport] = useState(false);
-  const [showMappingDialog, setShowMappingDialog] = useState(false);
+  const [supplierFilter, setSupplierFilter] = useState("all");
+  const [documentTypeFilter, setDocumentTypeFilter] = useState("all");
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
-  const [sortField, setSortField] = useState<string>('receipt_date');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [supplierFilter, setSupplierFilter] = useState<string>('all');
-  const [documentTypeFilter, setDocumentTypeFilter] = useState<string>('all');
-  const [showReceiptsImportDialog, setShowReceiptsImportDialog] = useState(false);
-  const [showReceiptItemsImportDialog, setShowReceiptItemsImportDialog] = useState(false);
 
-  // Form state
-  const [formData, setFormData] = useState({
-    receiptDate: new Date().toISOString().split('T')[0],
-    supplierId: '',
-    documentTypeId: '',
-    supplierDocumentDate: '',
-    supplierDocumentNumber: '',
-    totalAmount: '',
-    comment: '',
-    purchaseOrderId: '',
-    items: [] as any[]
-  });
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Queries
-  const { data: supplierReceipts = [], isLoading } = useQuery({
+  const { data: supplierReceiptsData = [], isLoading } = useQuery({
     queryKey: ["/api/supplier-receipts"],
   });
-  
-  const receiptsArray = Array.isArray(supplierReceipts) ? supplierReceipts : [];
+  const receiptsArray = Array.isArray(supplierReceiptsData) ? supplierReceiptsData : [];
 
-  const { data: suppliers = [], isLoading: suppliersLoading, error: suppliersError } = useQuery({
+  const { data: suppliersData = [] } = useQuery({
     queryKey: ["/api/suppliers"],
-    select: (data: any) => {
-      if (data && data.suppliers) {
-        return data.suppliers;
-      }
-      return Array.isArray(data) ? data : [];
-    },
-    retry: 3
   });
-
-
+  const suppliers = Array.isArray(suppliersData) ? suppliersData : [];
 
   const { data: componentsData = [] } = useQuery({
     queryKey: ["/api/components"],
   });
   const components = Array.isArray(componentsData) ? componentsData : [];
 
-  const { data: documentTypes = [] } = useQuery({
+  const { data: documentTypesData = [] } = useQuery({
     queryKey: ["/api/supplier-document-types"],
   });
+  const documentTypes = Array.isArray(documentTypesData) ? documentTypesData : [];
 
   const { data: purchaseOrdersData = [] } = useQuery({
     queryKey: ["/api/purchase-orders"],
   });
   const purchaseOrders = Array.isArray(purchaseOrdersData) ? purchaseOrdersData : [];
 
-
-
-  // DataTable columns configuration
-  const columns: DataTableColumn[] = [
-    {
-      key: 'supplier_name',
-      label: 'Постачальник',
-      sortable: true,
-      render: (value, row) => (
-        <div className="flex items-center space-x-2">
-          <Building2 className="h-4 w-4 text-orange-600" />
-          <span>{value || 'Невідомо'}</span>
-        </div>
-      )
+  // Form
+  const form = useForm<SupplierReceiptFormData>({
+    resolver: zodResolver(supplierReceiptSchema),
+    defaultValues: {
+      receipt_date: "",
+      supplier_id: "",
+      document_type_id: "",
+      supplier_document_date: "",
+      supplier_document_number: "",
+      total_amount: "",
+      comment: "",
+      purchase_order_id: "",
     },
-    {
-      key: 'supplier_document_number',
-      label: 'Документ',
-      sortable: true,
-      render: (value, row) => (
-        <div className="flex items-center space-x-2">
-          <FileText className="h-4 w-4 text-blue-600" />
-          <div>
-            <div className="font-medium">{value || 'Без номера'}</div>
-            <div className="text-xs text-gray-500">{row.document_type_name}</div>
-            {/*{row.id && (
-              <div className="text-xs text-gray-500">ID: {row.id}</div>
-            )}*/}
-          </div>
-        </div>
-      )
-    },
-    {
-      key: 'receipt_date',
-      label: 'Дата',
-      sortable: true,
-      render: (value) => (
-        <div className="flex items-center space-x-2">
-          <Calendar className="h-4 w-4 text-gray-500" />
-          <span>{new Date(value).toLocaleDateString('uk-UA')}</span>
-        </div>
-      )
-    },
-    {
-      key: 'total_amount',
-      label: 'Сума',
-      sortable: true,
-      render: (value) => (
-        <div className="font-medium">{parseFloat(value).toFixed(2)} ₴</div>
-      )
-    }//,
-    /*{
-      key: 'document_type_name',
-      label: 'Тип документу',
-      render: (value) => (
-        <span className="text-sm">{value || '-'}</span>
-      )
-    }*/
-  ];
-
-  // Картковий шаблон
-  const cardTemplate = (receipt: any) => (
-    <div className="space-y-3">
-      <div className="flex items-start space-x-3">
-        <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-        <div className="min-w-0 flex-1">
-          <div className="font-medium text-lg leading-tight">
-            {receipt.supplier_document_number || '–'}
-          </div>
-          {/*<div className="text-sm text-gray-500 mt-1">
-            ID: {receipt.id}
-          </div>*/}
-        </div>
-      </div>
-      
-      <div className="space-y-2">
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium">Постачальник:</span>
-          <span className="text-sm font-bold">{receipt.supplier_name || "Невідомо"}</span>
-        </div>
-        
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium">Дата:</span>
-          <span className="text-sm">{new Date(receipt.receipt_date).toLocaleDateString('uk-UA')}</span>
-        </div>
-        
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium">Сума:</span>
-          <span className="text-sm font-bold">{parseFloat(receipt.total_amount).toFixed(2)} ₴</span>
-        </div>
-
-        {receipt.document_type_name && (
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium">Тип документу:</span>
-            <span className="text-sm">{receipt.document_type_name}</span>
-          </div>
-        )}
-      </div>
-
-      {receipt.comment && (
-        <div className="text-sm">
-          <span className="font-medium">Коментар:</span>
-          <p className="text-gray-500 text-xs mt-1 line-clamp-2">{receipt.comment}</p>
-        </div>
-      )}
-      
-      {/* Кнопки дій */}
-      <div className="flex justify-end pt-2 border-t gap-2">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => handleEdit(receipt)}
-          className="h-8 w-8 p-0 hover:bg-blue-50 hover:scale-110 transition-all duration-200"
-          title="Редагувати прихід"
-        >
-          <Edit2 className="h-4 w-4" />
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => toggleExpand(receipt.id)}
-          className="h-8 w-8 p-0 hover:bg-green-50 hover:scale-110 transition-all duration-200"
-          title="Переглянути позиції"
-        >
-          <Package className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
+  });
 
   // Mutations
   const createMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return await apiRequest('/api/supplier-receipts', {
-        method: 'POST',
-        body: data,
-      });
-    },
+    mutationFn: (data: any) => apiRequest("/api/supplier-receipts", "POST", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
       setIsDialogOpen(false);
-      setEditingReceipt(null);
-      resetForm();
+      form.reset();
       toast({ title: "Прихід створено успішно" });
     },
-    onError: (error) => {
-      toast({ 
-        title: "Помилка створення приходу", 
-        description: error.message,
-        variant: "destructive" 
-      });
+    onError: (error: any) => {
+      toast({ title: "Помилка створення приходу", description: error.message, variant: "destructive" });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return await apiRequest(`/api/supplier-receipts/${id}`, {
-        method: 'PUT',
-        body: data,
-      });
-    },
+    mutationFn: ({ id, ...data }: any) => apiRequest(`/api/supplier-receipts/${id}`, "PUT", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
       setIsDialogOpen(false);
       setEditingReceipt(null);
-      resetForm();
+      form.reset();
       toast({ title: "Прихід оновлено успішно" });
     },
-    onError: (error) => {
-      toast({ 
-        title: "Помилка оновлення приходу", 
-        description: error.message,
-        variant: "destructive" 
-      });
+    onError: (error: any) => {
+      toast({ title: "Помилка оновлення приходу", description: error.message, variant: "destructive" });
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      return await apiRequest(`/api/supplier-receipts/${id}`, {
-        method: 'DELETE',
-      });
-    },
+    mutationFn: (id: number) => apiRequest(`/api/supplier-receipts/${id}`, "DELETE"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
-      setShowDeleteAlert(false);
-      setIsDialogOpen(false);
-      setEditingReceipt(null);
-      resetForm();
       toast({ title: "Прихід видалено успішно" });
     },
-    onError: (error) => {
-      toast({ 
-        title: "Помилка видалення приходу", 
-        description: error.message,
-        variant: "destructive" 
-      });
+    onError: (error: any) => {
+      toast({ title: "Помилка видалення приходу", description: error.message, variant: "destructive" });
     },
   });
 
-  // Handlers
-  const resetForm = () => {
-    setFormData({
-      receiptDate: new Date().toISOString().split('T')[0],
-      supplierId: '',
-      documentTypeId: '',
-      supplierDocumentDate: '',
-      supplierDocumentNumber: '',
-      totalAmount: '',
-      comment: '',
-      purchaseOrderId: '',
-      items: []
-    });
-    setEditingReceipt(null);
-  };
+  // Statistics
+  const statistics = useMemo(() => {
+    const totalReceipts = receiptsArray.length;
+    const totalAmount = receiptsArray.reduce((sum: number, receipt: any) => sum + parseFloat(receipt.total_amount || '0'), 0);
+    const uniqueSuppliers = new Set(receiptsArray.map((r: any) => r.supplier_id)).size;
+    const thisMonthReceipts = receiptsArray.filter((receipt: any) => {
+      const receiptDate = new Date(receipt.receipt_date);
+      const now = new Date();
+      return receiptDate.getMonth() === now.getMonth() && receiptDate.getFullYear() === now.getFullYear();
+    }).length;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const data = {
-      ...formData,
-      supplierId: parseInt(formData.supplierId),
-      documentTypeId: parseInt(formData.documentTypeId),
-      totalAmount: parseFloat(formData.totalAmount),
-      purchaseOrderId: formData.purchaseOrderId ? parseInt(formData.purchaseOrderId) : null,
-      supplierDocumentDate: formData.supplierDocumentDate || null,
+    return { totalReceipts, totalAmount, uniqueSuppliers, thisMonthReceipts };
+  }, [receiptsArray]);
+
+  // Filter receipts
+  const filteredReceipts = useMemo(() => {
+    return receiptsArray.filter((receipt: any) => {
+      const supplierName = receipt.supplier_name || '';
+      const documentTypeName = receipt.document_type_name || '';
+      
+      const matchesSupplier = supplierFilter === 'all' || supplierName === supplierFilter;
+      const matchesDocumentType = documentTypeFilter === 'all' || documentTypeName === documentTypeFilter;
+      
+      return matchesSupplier && matchesDocumentType;
+    });
+  }, [receiptsArray, supplierFilter, documentTypeFilter]);
+
+  // Handlers
+  const onSubmit = (data: SupplierReceiptFormData) => {
+    const formattedData = {
+      ...data,
+      supplier_id: parseInt(data.supplier_id),
+      document_type_id: parseInt(data.document_type_id),
+      purchase_order_id: data.purchase_order_id ? parseInt(data.purchase_order_id) : null,
+      total_amount: parseFloat(data.total_amount),
     };
 
     if (editingReceipt) {
-      updateMutation.mutate({ id: editingReceipt.id, data });
+      updateMutation.mutate({ id: editingReceipt.id, ...formattedData });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(formattedData);
     }
   };
 
-  const handleEdit = async (receipt: any) => {
+  const handleEdit = (receipt: SupplierReceipt) => {
     setEditingReceipt(receipt);
-    
-    // Load receipt items
-    try {
-      const itemsResponse = await fetch(`/api/supplier-receipt-items/${receipt.id}`);
-      const items = itemsResponse.ok ? await itemsResponse.json() : [];
-      
-      setFormData({
-        receiptDate: receipt.receipt_date ? receipt.receipt_date.split('T')[0] : new Date().toISOString().split('T')[0],
-        supplierId: receipt.supplier_id?.toString() || '',
-        documentTypeId: receipt.document_type_id?.toString() || '1',
-        supplierDocumentDate: receipt.supplier_document_date ? receipt.supplier_document_date.split('T')[0] : '',
-        supplierDocumentNumber: receipt.supplier_document_number || '',
-        totalAmount: receipt.total_amount?.toString() || '0',
-        comment: receipt.comment || '',
-        purchaseOrderId: receipt.purchase_order_id?.toString() || '',
-        items: items.map((item: any) => ({
-          componentId: item.component_id?.toString() || '',
-          quantity: item.quantity?.toString() || '',
-          unitPrice: item.unit_price?.toString() || '',
-          totalPrice: item.total_price?.toString() || '',
-          supplierComponentName: item.supplier_component_name || ''
-        }))
-      });
-    } catch (error) {
-      console.error('Error loading receipt items:', error);
-      setFormData({
-        receiptDate: receipt.receipt_date ? receipt.receipt_date.split('T')[0] : new Date().toISOString().split('T')[0],
-        supplierId: receipt.supplier_id?.toString() || '',
-        documentTypeId: receipt.document_type_id?.toString() || '1',
-        supplierDocumentDate: receipt.supplier_document_date ? receipt.supplier_document_date.split('T')[0] : '',
-        supplierDocumentNumber: receipt.supplier_document_number || '',
-        totalAmount: receipt.total_amount?.toString() || '0',
-        comment: receipt.comment || '',
-        purchaseOrderId: receipt.purchase_order_id?.toString() || '',
-        items: []
-      });
-    }
-    
+    form.reset({
+      receipt_date: receipt.receipt_date.split('T')[0],
+      supplier_id: receipt.supplier_id.toString(),
+      document_type_id: receipt.document_type_id.toString(),
+      supplier_document_date: receipt.supplier_document_date?.split('T')[0] || '',
+      supplier_document_number: receipt.supplier_document_number || '',
+      total_amount: receipt.total_amount,
+      comment: receipt.comment || '',
+      purchase_order_id: receipt.purchase_order_id?.toString() || '',
+    });
     setIsDialogOpen(true);
   };
 
-  const handleDelete = () => {
-    if (editingReceipt) {
-      deleteMutation.mutate(editingReceipt.id);
+  const handleDelete = (id: number) => {
+    if (confirm('Ви впевнені, що хочете видалити цей прихід?')) {
+      deleteMutation.mutate(id);
     }
   };
 
   const toggleExpand = (receiptId: string | number) => {
     const id = typeof receiptId === 'string' ? parseInt(receiptId) : receiptId;
-    const newExpanded = new Set(expandedItems);
-    if (newExpanded.has(id)) {
-      newExpanded.delete(id);
-    } else {
-      newExpanded.add(id);
-    }
-    setExpandedItems(newExpanded);
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
   };
-
-  // Use receiptsArray as receipts for compatibility
-  const receipts = receiptsArray;
 
   // Receipt items component for expanded view
   const ReceiptItemsView = ({ receiptId }: { receiptId: number }) => {
-    const { data: receiptItems = [], isLoading: itemsLoading } = useQuery({
+    const { data: receiptItemsData = [], isLoading: itemsLoading } = useQuery({
       queryKey: [`/api/supplier-receipt-items/${receiptId}`],
-      enabled: expandedItems.has(receiptId),
+      enabled: !!receiptId,
     });
+    
+    const receiptItems = Array.isArray(receiptItemsData) ? receiptItemsData : [];
 
     if (itemsLoading) {
-      return (
-        <div className="p-4 text-center">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="text-sm text-gray-600 mt-2">Завантаження позицій...</p>
-        </div>
-      );
+      return <div className="p-4 text-center">Завантаження...</div>;
     }
 
-    if (!receiptItems || receiptItems.length === 0) {
-      return (
-        <div className="p-4 text-center">
-          <p className="text-sm text-gray-600">Позиції не знайдено</p>
-        </div>
-      );
+    if (!receiptItems.length) {
+      return <div className="p-4 text-center text-gray-500">Немає позицій</div>;
     }
 
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        {/*<div className="bg-gray-50 px-4 py-2 border-b">
-          <h4 className="font-medium text-gray-700">Позиції документу</h4>
-        </div>*/}
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="p-3 text-left font-medium text-gray-600">Компонент</th>
-                <th className="p-3 text-left font-medium text-gray-600">SKU</th>
-                <th className="p-3 text-right font-medium text-gray-600">Кількість</th>
-                <th className="p-3 text-right font-medium text-gray-600">Ціна за од.</th>
-                <th className="p-3 text-right font-medium text-gray-600">Сума</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {receiptItems.map((item: any, index: number) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  <td className="p-3">
-                    {item.component_name ? (
-                      <div>
-                        <div className="font-medium">{item.component_name}</div>
-                        {item.component_description && (
-                          <div className="text-xs text-gray-500">{item.component_description}</div>
-                        )}
+      <div className="border-t bg-gray-50 p-4">
+        <h4 className="font-medium mb-3">Позиції документу:</h4>
+        <div className="space-y-2">
+          {receiptItems.map((item: any) => {
+            const component = components.find((c: any) => c.id === item.component_id);
+            return (
+              <div key={item.id} className="bg-white p-3 rounded border">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">
+                      {component?.name || 'Невідомий компонент'} ({component?.sku || 'N/A'})
+                    </div>
+                    {item.supplier_component_name && (
+                      <div className="text-xs text-gray-600 mt-1">
+                        Назва постачальника: {item.supplier_component_name}
                       </div>
-                    ) : (
-                      <span className="text-gray-400 italic">Не вказано</span>
                     )}
-                  </td>
-                  <td className="p-3">
-                    {item.component_sku ? (
-                      <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">{item.component_sku}</span>
-                    ) : (
-                      <span className="text-gray-400 italic">Не вказано</span>
-                    )}
-                  </td>
-                  <td className="p-3 text-right font-medium">
-                    {parseFloat(item.quantity).toLocaleString('uk-UA')}
-                  </td>
-                  <td className="p-3 text-right">
-                    {parseFloat(item.unit_price).toLocaleString('uk-UA')} ₴
-                  </td>
-                  <td className="p-3 text-right font-bold text-green-600">
-                    {parseFloat(item.total_price).toLocaleString('uk-UA')} ₴
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot className="bg-gray-50">
-              <tr>
-                <td colSpan={4} className="p-3 text-right font-medium text-gray-700">
-                  Загальна сума:
-                </td>
-                <td className="p-3 text-right font-bold text-lg text-green-600">
-                  {receiptItems.reduce((sum: number, item: any) => 
-                    sum + parseFloat(item.total_price), 0
-                  ).toLocaleString('uk-UA')} ₴
-                </td>
-              </tr>
-            </tfoot>
-          </table>
+                  </div>
+                  <div className="text-right ml-4">
+                    <div className="text-sm">
+                      Кількість: <span className="font-medium">{item.quantity}</span>
+                    </div>
+                    <div className="text-sm">
+                      Ціна: <span className="font-medium">{parseFloat(item.unit_price).toFixed(2)} грн</span>
+                    </div>
+                    <div className="text-sm font-medium text-blue-600">
+                      Всього: {parseFloat(item.total_price).toFixed(2)} грн
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
-      </div>
-    );
-  };
-
-  // Receipt items expandable content
-  const renderExpandableContent = (receipt: any) => {
-    return <ReceiptItemsView receiptId={receipt.id} />;
-  };
-
-  const addItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      items: [
-        ...prev.items,
-        { componentId: '', quantity: '', unitPrice: '', totalPrice: '', supplierComponentName: '' }
-      ]
-    }));
-  };
-
-  const updateItem = (index: number, field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      items: prev.items.map((item, i) => {
-        if (i === index) {
-          const updatedItem = { ...item, [field]: value };
-          
-          // Auto-calculate total price
-          if (field === 'quantity' || field === 'unitPrice') {
-            const quantity = parseFloat(field === 'quantity' ? value : item.quantity) || 0;
-            const unitPrice = parseFloat(field === 'unitPrice' ? value : item.unitPrice) || 0;
-            updatedItem.totalPrice = (quantity * unitPrice).toFixed(2);
-          }
-          
-          return updatedItem;
-        }
-        return item;
-      })
-    }));
-  };
-
-  const removeItem = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      items: prev.items.filter((_, i) => i !== index)
-    }));
-  };
-
-  // Calculate total automatically
-  const calculateTotal = () => {
-    const total = formData.items.reduce((sum, item) => {
-      return sum + (parseFloat(item.totalPrice) || 0);
-    }, 0);
-    setFormData(prev => ({ ...prev, totalAmount: total.toFixed(2) }));
-  };
-
-  // Sort and filter function
-  const handleSort = (field: string) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-
-  const getSortIcon = (field: string) => {
-    if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
-    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
-  };
-
-  // Filter and sort receipts
-  const filteredReceipts = receiptsArray.filter((receipt: any) => {
-    // Use supplier_name from JOIN query instead of looking up
-    const supplierName = receipt.supplier_name || '';
-    const documentTypeName = receipt.document_type_name || '';
-    
-    // Skip records with missing supplier info for now (they should be fixed in DB)
-    // if (!supplierName && receipt.supplier_id) {
-    //   console.warn(`Receipt ${receipt.id} has supplier_id ${receipt.supplier_id} but no supplier name found`);
-    // }
-    
-    // Search filter
-    if (searchQuery) {
-      const searchLower = searchQuery.toLowerCase();
-      const matchesSearch = 
-        supplierName.toLowerCase().includes(searchLower) ||
-        receipt.supplier_document_number?.toLowerCase().includes(searchLower) ||
-        receipt.comment?.toLowerCase().includes(searchLower) ||
-        receipt.id?.toString().includes(searchLower);
-      if (!matchesSearch) return false;
-    }
-    
-    // Supplier filter - show records without supplier name when "all" is selected
-    if (supplierFilter && supplierFilter !== 'all') {
-      if (!supplierName || supplierName !== supplierFilter) return false;
-    }
-    
-    // Document type filter
-    if (documentTypeFilter && documentTypeFilter !== 'all' && documentTypeName !== documentTypeFilter) return false;
-    
-    return true;
-  }).sort((a: any, b: any) => {
-    let aValue: any = a[sortField];
-    let bValue: any = b[sortField];
-    
-    // Handle supplier name sorting - now using supplier_name from JOIN
-    if (sortField === 'supplier_name') {
-      aValue = a.supplier_name || '';
-      bValue = b.supplier_name || '';
-    }
-    
-    // Handle document type sorting - now using document_type_name from JOIN
-    if (sortField === 'document_type_name') {
-      aValue = a.document_type_name || '';
-      bValue = b.document_type_name || '';
-    }
-    
-    // Convert to appropriate types for comparison
-    if (sortField === 'total_amount') {
-      aValue = parseFloat(aValue || '0');
-      bValue = parseFloat(bValue || '0');
-    } else if (sortField === 'receipt_date' || sortField === 'supplier_document_date') {
-      aValue = new Date(aValue || 0);
-      bValue = new Date(bValue || 0);
-    }
-    
-    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-    return 0;
-  });
-
-
-
-  // Статистичні дані
-  const totalReceipts = receiptsArray.length;
-  const totalAmount = receiptsArray.reduce((sum: number, receipt: any) => sum + parseFloat(receipt.total_amount || '0'), 0);
-  const uniqueSuppliers = new Set(receiptsArray.map((r: any) => r.supplier_id)).size;
-  const thisMonthReceipts = receiptsArray.filter((receipt: any) => {
-    const receiptDate = new Date(receipt.receipt_date);
-    const now = new Date();
-    return receiptDate.getMonth() === now.getMonth() && receiptDate.getFullYear() === now.getFullYear();
-  }).length;
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen w-full bg-gray-50/30">
-        <div className="w-full px-6 py-6">
-          <div className="flex justify-center items-center h-64">
-            <div className="text-lg">Завантаження приходів...</div>
+        <div className="mt-3 pt-3 border-t">
+          <div className="text-right font-medium">
+            Загальна сума позицій: {receiptItems.reduce((sum: number, item: any) => sum + parseFloat(item.total_price || '0'), 0).toFixed(2)} грн
           </div>
         </div>
       </div>
     );
-  }
+  };
+
+  // DataTable columns
+  const columns = [
+    { key: 'id', header: 'ID', sortable: true },
+    { key: 'receipt_date', header: 'Дата приходу', sortable: true },
+    { key: 'supplier_name', header: 'Постачальник', sortable: true },
+    { key: 'document_type_name', header: 'Тип документу', sortable: true },
+    { key: 'supplier_document_number', header: 'Номер документу', sortable: true },
+    { key: 'total_amount', header: 'Сума', sortable: true },
+    { key: 'purchase_order_number', header: 'Замовлення', sortable: true },
+  ];
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-white to-green-50">
-      <main className="w-full px-6 py-8 space-y-8">
-        {/* Професійний Header */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-r from-blue-600 to-green-600 p-3 rounded-xl shadow-lg">
-                <FileText className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                  Приходи від постачальників
-                </h1>
-                <p className="text-gray-600 text-lg mt-1">
-                  Управління приходами товарів та документообігом
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-full border border-green-200">
-                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-green-700 font-medium text-sm">Онлайн</span>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <Button onClick={() => setShowMappingDialog(true)} variant="outline" size="sm">
-                  <Package className="h-4 w-4 mr-2" />
-                  Співставлення
-                </Button>
-                <Button onClick={() => setShowReceiptsImportDialog(true)} variant="outline" size="sm">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Імпорт приходів
-                </Button>
-                <Button onClick={() => setShowReceiptItemsImportDialog(true)} variant="outline" size="sm">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Імпорт позицій
-                </Button>
-                <Button onClick={() => setShowXmlImport(true)} variant="outline" size="sm">
-                  <Upload className="h-4 w-4 mr-2" />
-                  XML імпорт
-                </Button>
-                <Button onClick={() => setIsDialogOpen(true)} className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Каталог приходів від постачальників</h1>
+            <p className="text-gray-600">Управління документами постачальників та контроль приходів товарів</p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <Button variant="outline" size="sm">
+              <Upload className="h-4 w-4 mr-2" />
+              Імпорт XML
+            </Button>
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Експорт
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
                   <Plus className="h-4 w-4 mr-2" />
                   Новий прихід
                 </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Статистичні картки */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-blue-600 text-sm font-medium mb-2">Всього приходів</p>
-                    <p className="text-3xl font-bold text-blue-800">{totalReceipts}</p>
-                  </div>
-                  <div className="bg-blue-200 p-3 rounded-xl">
-                    <FileText className="w-6 h-6 text-blue-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-green-600 text-sm font-medium mb-2">Загальна сума</p>
-                    <p className="text-3xl font-bold text-green-800">{totalAmount.toLocaleString('uk-UA')} ₴</p>
-                  </div>
-                  <div className="bg-green-200 p-3 rounded-xl">
-                    <Package className="w-6 h-6 text-green-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-purple-600 text-sm font-medium mb-2">Постачальників</p>
-                    <p className="text-3xl font-bold text-purple-800">{uniqueSuppliers}</p>
-                  </div>
-                  <div className="bg-purple-200 p-3 rounded-xl">
-                    <Building2 className="w-6 h-6 text-purple-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-orange-600 text-sm font-medium mb-2">За цей місяць</p>
-                    <p className="text-3xl font-bold text-orange-800">{thisMonthReceipts}</p>
-                  </div>
-                  <div className="bg-orange-200 p-3 rounded-xl">
-                    <Calendar className="w-6 h-6 text-orange-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingReceipt ? 'Редагувати прихід' : 'Створити новий прихід'}
+                  </DialogTitle>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="receipt_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Дата приходу</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="supplier_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Постачальник</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Оберіть постачальника" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {suppliers.map((supplier: any) => (
+                                  <SelectItem key={supplier.id} value={supplier.id.toString()}>
+                                    {supplier.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="document_type_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Тип документу</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Оберіть тип документу" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {documentTypes.map((type: any) => (
+                                  <SelectItem key={type.id} value={type.id.toString()}>
+                                    {type.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="purchase_order_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Замовлення (опціонально)</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Оберіть замовлення" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="">Без замовлення</SelectItem>
+                                {purchaseOrders.map((order: any) => (
+                                  <SelectItem key={order.id} value={order.id.toString()}>
+                                    {order.orderNumber}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="supplier_document_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Дата документу постачальника</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="supplier_document_number"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Номер документу постачальника</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="total_amount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Загальна сума</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="comment"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Коментар</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex justify-end space-x-2">
+                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                        Скасувати
+                      </Button>
+                      <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                        {createMutation.isPending || updateMutation.isPending ? 'Збереження...' : 'Зберегти'}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
+      </div>
 
-        {/* Search and Filters */}
-        <div className="flex flex-col gap-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Пошук за постачальником, номером документу або коментарем..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-blue-700">Загальна кількість приходів</CardTitle>
+            <Package className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-900">{statistics.totalReceipts}</div>
+            <p className="text-xs text-blue-600 mt-1">Всього документів у системі</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-green-700">Загальна сума приходів</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-900">{statistics.totalAmount.toFixed(2)} грн</div>
+            <p className="text-xs text-green-600 mt-1">Сума всіх приходів</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-purple-700">Активні постачальники</CardTitle>
+            <FileText className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-900">{statistics.uniqueSuppliers}</div>
+            <p className="text-xs text-purple-600 mt-1">Постачальників з приходами</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-orange-700">Приходи цього місяця</CardTitle>
+            <Calendar className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-900">{statistics.thisMonthReceipts}</div>
+            <p className="text-xs text-orange-600 mt-1">Документів за поточний місяць</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white p-4 rounded-lg border">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Filter className="h-4 w-4 text-gray-500" />
+              <span className="text-sm font-medium">Фільтри:</span>
             </div>
-            
             <Select value={supplierFilter} onValueChange={setSupplierFilter}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Фільтр за постачальником" />
@@ -920,13 +576,12 @@ export default function SupplierReceipts() {
               <SelectContent>
                 <SelectItem value="all">Усі постачальники</SelectItem>
                 {[...new Set(receiptsArray.map((r: any) => r.supplier_name).filter(Boolean))].map((name) => (
-                  <SelectItem key={name} value={name as string}>
+                  <SelectItem key={name as string} value={name as string}>
                     {name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-
             <Select value={documentTypeFilter} onValueChange={setDocumentTypeFilter}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Фільтр за типом документу" />
@@ -934,401 +589,32 @@ export default function SupplierReceipts() {
               <SelectContent>
                 <SelectItem value="all">Усі типи документів</SelectItem>
                 {[...new Set(receiptsArray.map((r: any) => r.document_type_name).filter(Boolean))].map((name) => (
-                  <SelectItem key={name} value={name as string}>
+                  <SelectItem key={name as string} value={name as string}>
                     {name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          
           <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>Знайдено записів: {filteredReceipts.length}</span>
-            {(searchQuery || (supplierFilter && supplierFilter !== 'all') || (documentTypeFilter && documentTypeFilter !== 'all')) && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setSearchQuery('');
-                  setSupplierFilter('all');
-                  setDocumentTypeFilter('all');
-
-                }}
-              >
-                Очистити фільтри
-              </Button>
-            )}
+            <span>Знайдено: {filteredReceipts.length} з {receiptsArray.length} приходів</span>
           </div>
         </div>
+      </div>
 
-        {/* DataTable */}
-        <div className="bg-white w-full px-3 py-1 rounded-xl shadow-sm border border-gray-200/50 overflow-hidden">
-          <DataTable
-            data={filteredReceipts}
-            columns={columns}
-            loading={isLoading}
-            title="Список приходів від постачальників"
-            storageKey="supplier-receipts"
-            cardTemplate={cardTemplate}
-            expandableContent={renderExpandableContent}
-            expandedItems={expandedItems}
-            onToggleExpand={toggleExpand}
-            actions={(receipt) => (
-              <div className="flex items-center gap-1">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEdit(receipt);
-                  }}
-                  className="h-8 w-8 p-0 hover:bg-blue-50 hover:scale-110 transition-all duration-200"
-                  title="Редагувати прихід"
-                >
-                  <Edit2 className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          />
-        </div>
-
-        {/* Create/Edit Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingReceipt ? 'Редагувати прихід' : 'Новий прихід від постачальника'}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Main fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="receiptDate">Дата отримання *</Label>
-                  <Input
-                    id="receiptDate"
-                    type="date"
-                    value={formData.receiptDate}
-                    onChange={(e) => setFormData(prev => ({ ...prev, receiptDate: e.target.value }))}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="supplierId">Постачальник *</Label>
-                  <Select
-                    value={formData.supplierId}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, supplierId: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Оберіть постачальника" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {suppliersLoading ? (
-                        <SelectItem value="" disabled>
-                          Завантаження постачальників...
-                        </SelectItem>
-                      ) : suppliersError ? (
-                        <SelectItem value="" disabled>
-                          Помилка завантаження постачальників
-                        </SelectItem>
-                      ) : suppliers && suppliers.length > 0 ? (
-                        suppliers.map((supplier: Supplier) => {
-                          console.log('Rendering supplier:', supplier);
-                          return (
-                            <SelectItem key={supplier.id} value={supplier.id.toString()}>
-                              {supplier.name}
-                            </SelectItem>
-                          );
-                        })
-                      ) : (
-                        <SelectItem value="" disabled>
-                          Постачальники не знайдені
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="documentTypeId">Тип документу *</Label>
-                  <Select
-                    value={formData.documentTypeId}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, documentTypeId: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Оберіть тип документу" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {documentTypes.map((type: SupplierDocumentType) => (
-                        <SelectItem key={type.id} value={type.id.toString()}>
-                          {type.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="purchaseOrderId">Замовлення постачальнику</Label>
-                  <Select
-                    value={formData.purchaseOrderId}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, purchaseOrderId: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Оберіть замовлення (необов'язково)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {purchaseOrders.map((order: PurchaseOrder) => (
-                        <SelectItem key={order.id} value={order.id.toString()}>
-                          {order.orderNumber}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="supplierDocumentDate">Дата документу постачальника</Label>
-                  <Input
-                    id="supplierDocumentDate"
-                    type="date"
-                    value={formData.supplierDocumentDate}
-                    onChange={(e) => setFormData(prev => ({ ...prev, supplierDocumentDate: e.target.value }))}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="supplierDocumentNumber">Номер документу постачальника</Label>
-                  <Input
-                    id="supplierDocumentNumber"
-                    value={formData.supplierDocumentNumber}
-                    onChange={(e) => setFormData(prev => ({ ...prev, supplierDocumentNumber: e.target.value }))}
-                    placeholder="Номер накладної, рахунку тощо"
-                  />
-                </div>
-              </div>
-
-              {/* Comment */}
-              <div>
-                <Label htmlFor="comment">Коментар</Label>
-                <Textarea
-                  id="comment"
-                  value={formData.comment}
-                  onChange={(e) => setFormData(prev => ({ ...prev, comment: e.target.value }))}
-                  placeholder="Додаткова інформація про прихід"
-                />
-              </div>
-
-              {/* Items */}
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <Label>Позиції приходу</Label>
-                  <Button type="button" onClick={addItem} variant="outline" size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Додати позицію
-                  </Button>
-                </div>
-                
-                {formData.items.map((item, index) => (
-                  <div key={index} className="border rounded-lg p-4 mb-4">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <Label>Компонент *</Label>
-                        <Select
-                          value={item.componentId}
-                          onValueChange={(value) => updateItem(index, 'componentId', value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Оберіть компонент" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {components.map((component: Component) => (
-                              <SelectItem key={component.id} value={component.id.toString()}>
-                                {component.name} ({component.sku})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        
-                        <div>
-                          <Label className="text-xs text-gray-600">Назва у постачальника</Label>
-                          <Input
-                            placeholder="Введіть назву компонента у постачальника"
-                            value={item.supplierComponentName || ''}
-                            onChange={(e) => updateItem(index, 'supplierComponentName', e.target.value)}
-                            className="text-sm"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <Label>Кількість *</Label>
-                        <Input
-                          type="number"
-                          step="0.001"
-                          value={item.quantity}
-                          onChange={(e) => updateItem(index, 'quantity', e.target.value)}
-                          onBlur={calculateTotal}
-                          required
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label>Ціна за одиницю *</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={item.unitPrice}
-                          onChange={(e) => updateItem(index, 'unitPrice', e.target.value)}
-                          onBlur={calculateTotal}
-                          required
-                        />
-                      </div>
-                      
-                      <div className="flex items-end gap-2">
-                        <div className="flex-1">
-                          <Label>Загальна ціна</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={item.totalPrice}
-                            readOnly
-                            className="bg-gray-50"
-                          />
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeItem(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Total amount */}
-              <div>
-                <Label htmlFor="totalAmount">Загальна сума *</Label>
-                <Input
-                  id="totalAmount"
-                  type="number"
-                  step="0.01"
-                  value={formData.totalAmount}
-                  onChange={(e) => setFormData(prev => ({ ...prev, totalAmount: e.target.value }))}
-                  required
-                />
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={calculateTotal}
-                  className="mt-2"
-                >
-                  Розрахувати автоматично
-                </Button>
-              </div>
-
-              {/* Actions */}
-              <div className="flex justify-between">
-                <div>
-                  {editingReceipt && (
-                    <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" type="button">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Видалити
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Підтвердження видалення</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Ви впевнені, що хочете видалити цей прихід? Цю дію неможливо скасувати.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Скасувати</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleDelete}>
-                            Видалити
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setIsDialogOpen(false);
-                      resetForm();
-                    }}
-                  >
-                    Скасувати
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={createMutation.isPending || updateMutation.isPending}
-                  >
-                    {editingReceipt ? 'Зберегти' : 'Створити'}
-                  </Button>
-                </div>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Component Mapping Dialog */}
-        <ComponentMappingDialog
-          open={showMappingDialog}
-          onOpenChange={setShowMappingDialog}
-          components={components}
-          onMapComponent={(mapping) => {
-            toast({
-              title: "Співставлення збережено",
-              description: `"${mapping.supplierName}" співставлено з ${mapping.internalComponent.name}`
-            });
-          }}
-          supplierComponentNames={receipts.flatMap((r: any) => 
-            r.items?.map((i: any) => i.supplier_component_name).filter(Boolean) || []
-          )}
-        />
-
-        {/* Supplier Receipts Import Dialog */}
-        <SupplierReceiptsImport
-          open={showReceiptsImportDialog}
-          onOpenChange={setShowReceiptsImportDialog}
-          onImportComplete={() => {
-            queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
-          }}
-        />
-
-        {/* Supplier Receipt Items Import Dialog */}
-        <SupplierReceiptItemsImport
-          open={showReceiptItemsImportDialog}
-          onOpenChange={setShowReceiptItemsImportDialog}
-          onImportComplete={() => {
-            queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
-          }}
-        />
-
-        {/* XML Import Dialog */}
-        {showXmlImport && (
-          <SupplierReceiptsXmlImport 
-            onClose={() => {
-              setShowXmlImport(false);
-              queryClient.invalidateQueries({ queryKey: ['/api/supplier-receipts'] });
-            }} 
-          />
-        )}
-      </main>
+      {/* DataTable */}
+      <DataTable
+        data={filteredReceipts}
+        columns={columns}
+        searchable={true}
+        expandable={true}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onToggleExpand={toggleExpand}
+        expandedItems={expandedItems}
+        renderExpandedContent={(item) => <ReceiptItemsView receiptId={item.id} />}
+        loading={isLoading}
+      />
     </div>
   );
 }
