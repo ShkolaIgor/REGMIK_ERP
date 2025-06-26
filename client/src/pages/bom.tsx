@@ -381,20 +381,11 @@ export default function BOMPage() {
       {/* Content */}
       <div className="w-full space-y-6 flex-1 overflow-auto">
         {/* Product Selection */}
-        <Card>
-          {/*<CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Склад продукту
-          </CardTitle>
-          <CardDescription>
-            Оберіть продукт для перегляду та редагування його складу
-          </CardDescription>
-        </CardHeader>*/}
-        <CardContent>
+      
           <DataTable 
             data={parentProducts} 
             title="Список продуктів"
+            description="Оберіть продукт для перегляду та редагування його складу"
             storageKey="bom-product-selection"
             columns={[
               { 
@@ -425,8 +416,7 @@ export default function BOMPage() {
               </div>
             )}
           />
-        </CardContent>
-      </Card>
+
 
       {/* Components Management */}
       {selectedProductId && (

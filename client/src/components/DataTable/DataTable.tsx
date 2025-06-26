@@ -26,6 +26,7 @@ import {
   Type,
   Bold,
   Italic,
+  FileText,
   Star
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -112,6 +113,8 @@ interface DataTableProps {
   onRowClick?: (row: any) => void;
   actions?: (row: any) => React.ReactNode;
   title?: string;
+  description?: string;
+  searchPlaceholder?: string;
   storageKey: string; // Unique key for saving settings
   cardTemplate?: (item: any) => React.ReactNode;
   expandableContent?: (item: any) => React.ReactNode;
@@ -146,7 +149,7 @@ const defaultSettings: DataTableSettings = {
   headerFontSize: 14,
   headerFontWeight: 'bold',
   headerFontStyle: 'normal',
-  showVerticalLines: true,
+  showVerticalLines: false,
   enableRowHover: true
 };
 
@@ -160,6 +163,8 @@ export function DataTable({
   onRowClick,
   actions,
   title,
+  description,
+  searchPlaceholder,
   storageKey,
   cardTemplate,
   expandableContent,
@@ -594,10 +599,24 @@ export function DataTable({
   );
 
   return (
+    <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-xl">
+       <div className="p-4">     
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        {title && <h2 className="text-2xl font-bold">{title}</h2>}
+      <div className="flex items-center justify-between">     
+        
+        <div className="p-4">    
+        <div className="flex items-center space-x-3">
+        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+          <FileText className="w-4 h-4 text-white" />
+        </div>
+        <div>
+          {title && <h2 className="text-2xl font-bold">{title}</h2>}
+          {description && <p className="text-gray-400">{description}</p>}
+        </div>
+        </div>
+        </div>
+        
         <div className="flex items-center gap-2">
           {/* View Mode Toggle */}
           <div className="flex border rounded-lg p-1">
@@ -950,7 +969,7 @@ export function DataTable({
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Пошук..."
+                  placeholder={searchPlaceholder ?? "Пошук..."}
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
                   className="pl-10"
@@ -958,7 +977,6 @@ export function DataTable({
               </div>
             </div>
           )}
-
         </div>
       )}
 
@@ -1061,5 +1079,7 @@ export function DataTable({
         </div>
       )}
     </div>
+    </div>
+      </div>
   );
 }

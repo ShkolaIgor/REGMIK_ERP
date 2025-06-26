@@ -715,32 +715,20 @@ export default function Clients() {
           </Card>
         </div>
 
-        {/* DataTable Section */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-xl">
-          <div className="p-8">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <FileText className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">База клієнтів</h2>
-                  <p className="text-gray-600">Повний перелік клієнтів з фільтрацією та пошуком</p>
-                </div>
-              </div>
-            </div>
-            
-            <DataTable
+        
+        {/* DataTable Section */}            
+        <div className="w-full space-y-6 flex-1 overflow-auto">
+        <DataTable
               data={processedClients}
               columns={columns}
+              title="Список клієнтів"
+              description="Оберіть клієнта для перегляду та редагування"
               searchPlaceholder="Пошук клієнтів за назвою, ЄДРПОУ або типом..."
               pageSize={20}
               cardTemplate={clientCardTemplate}
               tableName="clients"
               onRowClick={(client) => handleEdit(client)}
-            />
-          </div>
-        </div>
+        />
 
       {/* Client Contacts Popup */}
       {contactsPopup && (
@@ -769,5 +757,6 @@ export default function Clients() {
       </Dialog>
       </div>
     </div>
+      </div>
   );
 }

@@ -396,27 +396,18 @@ export default function SupplierReceipts() {
           </Card>
         </div>
 
-        {/* Content */}
-        <div className="w-full space-y-6 flex-1 overflow-auto">
-          {/* Product Selection */}
-          <Card>
-            {/*<CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Список приходів від постачальників
-            </CardTitle>
-            <CardDescription>
-              Оберіть продукт для перегляду та редагування його складу
-            </CardDescription>
-          </CardHeader>*/}
-          <CardContent>
+      {/* Content */}
+      <div className="w-full space-y-6 flex-1 overflow-auto">
+      {/* Product Selection */}
+
         {/* DataTable */}
         <DataTable
           data={receiptsArray}
           columns={columns}
           loading={isLoading}
           title="Список приходів від постачальників"
-          //description="Оберіть продукт для перегляду та редагування його складу"
+          description="Оберіть прихід для перегляду та редагування"
+          searchPlaceholder="Пошук клієнтів за назвою, ЄДРПОУ або типом..."
           storageKey="supplier-receipts"
           actions={(receipt) => (
             <div className="flex items-center gap-1">
@@ -449,9 +440,7 @@ export default function SupplierReceipts() {
             });
           }}
         />
-          </CardContent>
-            </Card>
-          </div>
+      </div>
 
       {/* Dialog for Create/Edit Receipt */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
