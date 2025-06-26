@@ -175,9 +175,11 @@ export function DataTable({
   const [settings, setSettings] = useState<DataTableSettings>(() => {
     try {
       const saved = localStorage.getItem(`datatable-${storageKey}`);
-      return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
+      const loadedSettings = saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
+      // Force pageSize to 10 for better pagination visibility
+      return { ...loadedSettings, pageSize: 10 };
     } catch {
-      return defaultSettings;
+      return { ...defaultSettings, pageSize: 10 };
     }
   });
 
