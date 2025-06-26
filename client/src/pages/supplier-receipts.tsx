@@ -260,43 +260,79 @@ export default function SupplierReceipts() {
     }
 
     return (
-      <div className="border-t bg-gray-50 p-4">
-        <h4 className="font-medium mb-3">Позиції документу:</h4>
-        <div className="space-y-2">
-          {receiptItems.map((item: any) => {
-            const component = components.find((c: any) => c.id === item.component_id);
-            return (
-              <div key={item.id} className="bg-white p-3 rounded border">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">
-                      {component?.name || 'Невідомий компонент'} ({component?.sku || 'N/A'})
-                    </div>
-                    {item.supplier_component_name && (
-                      <div className="text-xs text-gray-600 mt-1">
-                        Назва постачальника: {item.supplier_component_name}
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-right ml-4">
-                    <div className="text-sm">
-                      Кількість: <span className="font-medium">{item.quantity}</span>
-                    </div>
-                    <div className="text-sm">
-                      Ціна: <span className="font-medium">{parseFloat(item.unit_price).toFixed(2)} грн</span>
-                    </div>
-                    <div className="text-sm font-medium text-blue-600">
-                      Всього: {parseFloat(item.total_price).toFixed(2)} грн
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <div className="mt-3 pt-3 border-t">
-          <div className="text-right font-medium">
-            Загальна сума позицій: {receiptItems.reduce((sum: number, item: any) => sum + parseFloat(item.total_price || '0'), 0).toFixed(2)} грн
+      <div className="border-t bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-blue-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+            <h4 className="text-lg font-semibold text-white">Позиції документу</h4>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+                <tr>
+                  <th className="text-left px-6 py-4 font-semibold text-gray-700 border-b">Компонент</th>
+                  <th className="text-center px-4 py-4 font-semibold text-gray-700 border-b w-24">Кількість</th>
+                  <th className="text-center px-4 py-4 font-semibold text-gray-700 border-b w-28">Ціна за од.</th>
+                  <th className="text-center px-4 py-4 font-semibold text-gray-700 border-b w-28">Загальна сума</th>
+                </tr>
+              </thead>
+              <tbody>
+                {receiptItems.map((item: any, index: number) => {
+                  const component = components.find((c: any) => c.id === item.component_id);
+                  return (
+                    <tr 
+                      key={item.id} 
+                      className={`hover:bg-blue-50 transition-colors ${
+                        index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                      }`}
+                    >
+                      <td className="px-6 py-4 border-b border-gray-100">
+                        <div>
+                          <div className="font-medium text-gray-900">
+                            {component?.name || 'Невідомий компонент'}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            SKU: {component?.sku || 'N/A'}
+                          </div>
+                          {item.supplier_component_name && (
+                            <div className="text-xs text-blue-600 mt-1">
+                              Назва у постачальника: {item.supplier_component_name}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-center border-b border-gray-100">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                          {item.quantity}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-center border-b border-gray-100">
+                        <span className="font-medium text-gray-900">
+                          {parseFloat(item.unit_price).toFixed(2)} ₴
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-center border-b border-gray-100">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                          {parseFloat(item.total_price).toFixed(2)} ₴
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot className="bg-gradient-to-r from-gray-100 to-gray-200">
+                <tr>
+                  <td colSpan={3} className="px-6 py-4 text-right font-semibold text-gray-700 border-t-2 border-gray-300">
+                    Загальна сума позицій:
+                  </td>
+                  <td className="px-4 py-4 text-center border-t-2 border-gray-300">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-base font-bold bg-green-200 text-green-900">
+                      {receiptItems.reduce((sum: number, item: any) => sum + parseFloat(item.total_price), 0).toFixed(2)} ₴
+                    </span>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
         </div>
       </div>
