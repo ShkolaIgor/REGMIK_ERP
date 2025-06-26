@@ -9978,6 +9978,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const parentProduct = parentProducts.find((p: any) => p.sku === indexListarticle);
           
           if (!parentProduct) {
+            console.log(`Available product SKUs:`, parentProducts.map(p => p.sku).slice(0, 10));
             errors.push(`Батьківський продукт з SKU "${indexListarticle}" не знайдено`);
             continue;
           }
@@ -9987,6 +9988,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const component = components.find((c: any) => c.sku === indexDetail);
           
           if (!component) {
+            console.log(`Available component SKUs:`, components.map(c => c.sku).slice(0, 10));
             errors.push(`Компонент з SKU "${indexDetail}" не знайдено`);
             continue;
           }
@@ -10009,8 +10011,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               quantity: quantity.toString(),
               isOptional: false
             });
-            console.log(`Оновлено компонент ${indexDetail} в продукті ${indexListarticle}`);
-          } else {
+            } else {
             // Додаємо новий компонент
             await storage.addProductComponent({
               parentProductId: parentProduct.id,
@@ -10019,7 +10020,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
               isOptional: false,
               notes: `Імпортовано з XML: ${new Date().toISOString()}`
             });
-            console.log(`Додано компонент ${indexDetail} до продукту ${indexListarticle}`);
           }
           
           imported++;
