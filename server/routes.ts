@@ -9961,9 +9961,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       for (const row of bomRows) {
         try {
-          const indexListarticle = row.INDEX_LISTARTICLE;
-          const indexDetail = row.INDEX_DETAIL;
-          const countDet = row.COUNT_DET;
+          // Отримуємо дані з атрибутів XML (структура $)
+          const attributes = row.$ || row;
+          
+          const indexListarticle = attributes.INDEX_LISTARTICLE || row.INDEX_LISTARTICLE;
+          const indexDetail = attributes.INDEX_DETAIL || row.INDEX_DETAIL;
+          const countDet = attributes.COUNT_DET || row.COUNT_DET;
           
           if (!indexListarticle || !indexDetail || !countDet) {
             errors.push(`Пропущено рядок: відсутні обов'язкові поля INDEX_LISTARTICLE, INDEX_DETAIL або COUNT_DET`);
@@ -9972,21 +9975,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Знаходимо батьківський продукт за SKU (INDEX_LISTARTICLE)
           const parentProducts = await storage.getProducts();
-          const parentProduct = parentProducts.find((p: any) => p.sku === indexListarticle);
+          console.log(`Looking for parent product with SKU: ${indexListarticle}`);
+          console.log(`Available products:`, parentProducts.map((p: any) => ({ id: p.id, sku: p.sku, name: p.name })));
+          
+          // Пробуємо знайти батьківський продукт за SKU або ID
+          let parentProduct = parentProducts.find((p: any) => p.sku === indexListarticle);
+          if (!parentProduct && !isNaN(parseInt(indexListarticle))) {
+            parentProduct = parentProducts.find((p: any) => p.id === parseInt(indexListarticle));
+          }
           
           if (!parentProduct) {
-            errors.push(`Батьківський продукт з SKU "${indexListarticle}" не знайдено`);
+            errors.push(`Батьківський продукт з SKU/ID "${indexListarticle}" не знайдено`);
             continue;
           }
+          
+          console.log(`Found parent product:`, { id: parentProduct.id, sku: parentProduct.sku, name: parentProduct.name });
           
           // Знаходимо компонент за SKU (INDEX_DETAIL)
           const components = await storage.getComponents();
-          const component = components.find((c: any) => c.sku === indexDetail);
+          console.log(`Looking for component with SKU: ${indexDetail}`);
+          console.log(`Available components:`, components.map((c: any) => ({ id: c.id, sku: c.sku, name: c.name })));
+          
+          // Пробуємо знайти компонент за SKU або ID
+          let component = components.find((c: any) => c.sku === indexDetail);
+          if (!component && !isNaN(parseInt(indexDetail))) {
+            component = components.find((c: any) => c.id === parseInt(indexDetail));
+          }
           
           if (!component) {
-            errors.push(`Компонент з SKU "${indexDetail}" не знайдено`);
+            errors.push(`Компонент з SKU/ID "${indexDetail}" не знайдено`);
             continue;
           }
+          
+          console.log(`Found component:`, { id: component.id, sku: component.sku, name: component.name });
           
           // Парсимо кількість (замінюємо кому на крапку для українського формату)
           const quantity = parseFloat(countDet.toString().replace(',', '.'));
