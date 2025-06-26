@@ -9961,16 +9961,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       for (const row of bomRows) {
         try {
-          console.log('Processing BOM row:', JSON.stringify(row, null, 2));
-          
           // Отримуємо дані з атрибутів XML (структура $)
           const attributes = row.$ || row;
           
           const indexListarticle = attributes.INDEX_LISTARTICLE || row.INDEX_LISTARTICLE;
           const indexDetail = attributes.INDEX_DETAIL || row.INDEX_DETAIL;
           const countDet = attributes.COUNT_DET || row.COUNT_DET;
-          
-          console.log('Extracted fields:', { indexListarticle, indexDetail, countDet });
           
           if (!indexListarticle || !indexDetail || !countDet) {
             console.log('Missing required fields in row:', { indexListarticle, indexDetail, countDet });
@@ -9988,15 +9984,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
           
-          // Знаходимо компонент за SKU (INDEX_DETAIL)
-          const components = await storage.getComponents();
-          const component = components.find((c: any) => c.sku === indexDetail);
+          // Знаходимо продукт-компонент за SKU (INDEX_DETAIL)
+          // Спочатку шукаємо в продуктах
+          const componentProduct = parentProducts.find((p: any) => p.sku === indexDetail);
           
-          if (!component) {
-            console.log(`Available component SKUs:`, components.map(c => c.sku).slice(0, 10));
-            errors.push(`Компонент з SKU "${indexDetail}" не знайдено`);
+          console.log(`Searching for component with SKU: ${indexDetail}`);
+          console.log(`Found componentProduct:`, componentProduct);
+          
+          if (!componentProduct) {
+            console.log(`Available product SKUs for components:`, parentProducts.map(p => p.sku).slice(0, 10));
+            errors.push(`Продукт-компонент з SKU "${indexDetail}" не знайдено в таблиці products`);
             continue;
           }
+          
+          console.log(`Using componentProduct.id: ${componentProduct.id}`);
           
           // Парсимо кількість (замінюємо кому на крапку для українського формату)
           const quantity = parseFloat(countDet.toString().replace(',', '.'));
@@ -10008,7 +10009,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Перевіряємо чи компонент вже існує в BOM
           const existingComponents = await storage.getProductComponents(parentProduct.id);
-          const existingComponent = existingComponents.find((pc: any) => pc.componentProductId === component.id);
+          const existingComponent = existingComponents.find((pc: any) => pc.componentProductId === componentProduct.id);
           
           if (existingComponent) {
             // Оновлюємо існуючий компонент
@@ -10016,11 +10017,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               quantity: quantity.toString(),
               isOptional: false
             });
-            } else {
+          } else {
             // Додаємо новий компонент
             await storage.addProductComponent({
               parentProductId: parentProduct.id,
-              componentProductId: component.id,
+              componentProductId: componentProduct.id,
               quantity: quantity.toString(),
               isOptional: false,
               notes: `Імпортовано з XML: ${new Date().toISOString()}`
