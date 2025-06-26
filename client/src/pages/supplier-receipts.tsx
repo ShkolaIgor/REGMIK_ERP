@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Plus, Package, FileText, TrendingUp, Calendar, Search, Filter, Download, Upload } from "lucide-react";
+import { Plus, Package, FileText, TrendingUp, Calendar, Search, Filter, Download, Upload, Edit, Trash2 } from "lucide-react";
 import { DataTable } from "@/components/DataTable/DataTable";
 
 // Interfaces
@@ -658,22 +658,32 @@ export default function SupplierReceipts() {
           title="Список приходів від постачальників"
           storageKey="supplier-receipts"
           actions={(receipt) => (
-            <>
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleEdit(receipt)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEdit(receipt);
+                }}
+                className="h-8 w-8 p-0"
+                title="Редагувати"
               >
-                Редагувати
+                <Edit className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleDelete(receipt.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(receipt.id);
+                }}
+                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                title="Видалити"
               >
-                Видалити
+                <Trash2 className="h-4 w-4" />
               </Button>
-            </>
+            </div>
           )}
           expandableContent={(receipt) => <ReceiptItemsView receiptId={receipt.id} />}
           expandedItems={expandedItems}
