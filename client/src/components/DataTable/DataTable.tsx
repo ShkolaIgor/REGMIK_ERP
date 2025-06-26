@@ -441,6 +441,8 @@ export function DataTable({
                     )}
                     {visibleColumns.map((column) => {
                   const columnSettings = settings.columnSettings[column.key] || defaultColumnSettings;
+                  const cellValue = row[column.key];
+                  console.log(`Cell value for ${column.key}:`, cellValue, 'from row:', row);
                   return (
                     <td 
                       key={column.key} 
@@ -459,12 +461,12 @@ export function DataTable({
                       }}
                     >
                       {column.render ? 
-                        column.render(row[column.key], row) : 
+                        column.render(cellValue, row) : 
                         column.type === 'badge' ? 
-                          <Badge variant="outline">{row[column.key]}</Badge> :
+                          <Badge variant="outline">{cellValue}</Badge> :
                         column.type === 'rating' ?
-                          <StarRating rating={parseFloat(row[column.key]) || 0} /> :
-                          String(row[column.key] || '')
+                          <StarRating rating={parseFloat(cellValue) || 0} /> :
+                          String(cellValue || '')
                       }
                     </td>
                   );
@@ -486,7 +488,7 @@ export function DataTable({
                   {expandableContent && isExpanded && (
                     <tr>
                       <td 
-                        colSpan={visibleColumns.length + (actions ? 1 : 0) + (expandableContent ? 1 : 0)} 
+                        colSpan={visibleColumns.length + (actions ? 1 : 0) + 1} 
                         className="px-4 py-4 bg-gray-50 border-b"
                       >
                         {expandableContent(row)}

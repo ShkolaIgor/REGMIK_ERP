@@ -220,6 +220,9 @@ export default function BOMPage() {
     return isParentType && matchesSearch;
   });
 
+  console.log("BOM parentProducts:", parentProducts);
+  console.log("First product:", parentProducts[0]);
+
   // Фільтруємо доступні компоненти
   const filteredComponents = (availableComponents as any[] || []);
 
@@ -391,14 +394,12 @@ export default function BOMPage() {
               { 
                 key: 'name', 
                 label: 'Назва продукту', 
-                sortable: true, 
-                searchable: true 
+                sortable: true
               },
               { 
                 key: 'sku', 
                 label: 'SKU', 
-                sortable: true, 
-                searchable: true 
+                sortable: true
               },
               { 
                 key: 'productType', 
@@ -410,7 +411,7 @@ export default function BOMPage() {
               console.log("Setting selectedProductId to:", product.id);
               setSelectedProductId(product.id);
             }}
-            selectedRowId={selectedProductId}
+
             cardTemplate={(product: Product) => (
               <div className="space-y-2">
                 <h4 className="font-medium">{product.name}</h4>
