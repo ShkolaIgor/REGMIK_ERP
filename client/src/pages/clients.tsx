@@ -764,7 +764,7 @@ export default function Clients() {
             searchPlaceholder="Пошук клієнтів за назвою, ЄДРПОУ або типом..."
             loading={isLoading}
             cardTemplate={clientCardTemplate}
-            storageKey="clients"
+            storageKey="clients-v2"
             onRowClick={(client) => handleEdit(client)}
             actions={(client) => (
               <Button
