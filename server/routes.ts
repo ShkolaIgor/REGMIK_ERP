@@ -9979,11 +9979,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
           
-          // Знаходимо продукт-компонент за SKU (INDEX_DETAIL)
-          const componentProduct = parentProducts.find((p: any) => p.sku === indexDetail);
+          // Знаходимо компонент за SKU (INDEX_DETAIL) в таблиці components
+          const allComponents = await storage.getComponents();
+          const componentItem = allComponents.find((c: any) => c.sku === indexDetail);
           
-          if (!componentProduct) {
-            errors.push(`Продукт-компонент з SKU "${indexDetail}" не знайдено в таблиці products`);
+          if (!componentItem) {
+            errors.push(`Компонент з SKU "${indexDetail}" не знайдено в таблиці components`);
             continue;
           }
           

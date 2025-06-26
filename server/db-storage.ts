@@ -1460,35 +1460,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Product Components (BOM)
-  async getProductComponents(productId: number): Promise<(ProductComponent & { component: Product })[]> {
+  async getProductComponents(productId: number): Promise<(ProductComponent & { component: any })[]> {
     const result = await db.select({
       id: productComponents.id,
       parentProductId: productComponents.parentProductId,
       componentProductId: productComponents.componentProductId,
       quantity: productComponents.quantity,
-      unitId: productComponents.unitId,
+      unit: productComponents.unit,
       isOptional: productComponents.isOptional,
       notes: productComponents.notes,
       createdAt: productComponents.createdAt,
       component: {
-        id: products.id,
-        name: products.name,
-        description: products.description,
-        sku: products.sku,
-        barcode: products.barcode,
-        categoryId: products.categoryId,
-        costPrice: products.costPrice,
-        retailPrice: products.retailPrice,
-        photo: products.photo,
-        productType: products.productType,
-        unit: products.unit,
-        minStock: products.minStock,
-        maxStock: products.maxStock,
-        createdAt: products.createdAt
+        id: components.id,
+        name: components.name,
+        description: components.description,
+        sku: components.sku,
+        barcode: components.barcode,
+        categoryId: components.categoryId,
+        costPrice: components.costPrice,
+        retailPrice: components.retailPrice,
+        photo: components.photo,
+        productType: components.productType,
+        unit: components.unit,
+        minStock: components.minStock,
+        maxStock: components.maxStock,
+        isActive: components.isActive,
+        createdAt: components.createdAt
       }
     })
     .from(productComponents)
-    .leftJoin(products, eq(productComponents.componentProductId, products.id))
+    .leftJoin(components, eq(productComponents.componentProductId, components.id))
     .where(eq(productComponents.parentProductId, productId));
 
     return result.map(row => ({
@@ -1496,7 +1497,7 @@ export class DatabaseStorage implements IStorage {
       parentProductId: row.parentProductId,
       componentProductId: row.componentProductId,
       quantity: row.quantity,
-      unitId: row.unitId,
+      unit: row.unit,
       isOptional: row.isOptional,
       notes: row.notes,
       createdAt: row.createdAt,
