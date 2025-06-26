@@ -9895,5 +9895,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
 
+  // BOM XML Import API
+  app.post("/api/import-bom", isSimpleAuthenticated, upload.single('xmlFile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "No XML file provided" 
+        });
+      }
+
+      console.log('Starting BOM XML import');
+      const xmlContent = req.file.buffer.toString('utf-8');
+      
+      // Parse XML content
+      const parser = new xml2js.Parser({ explicitArray: false });
+      const result = await parser.parseStringPromise(xmlContent);
+      
+      let imported = 0;
+      let errors: string[] = [];
+      
+      // Extract BOM data from XML
+      const bomData = result?.ROW || [];
+      const bomRows = Array.isArray(bomData) ? bomData : [bomData];
+      
+      console.log(`Found ${bomRows.length} BOM rows to process`);
+      
+      for (const row of bomRows) {
+        try {
+          const indexListarticle = row.INDEX_LISTARTICLE;
+          const indexDetail = row.INDEX_DETAIL;
+          const countDet = row.COUNT_DET;
+          
+          if (!indexListarticle || !indexDetail || !countDet) {
+            errors.push(`Пропущено рядок: відсутні обов'язкові поля INDEX_LISTARTICLE, INDEX_DETAIL або COUNT_DET`);
+            continue;
+          }
+          
+          // Знаходимо батьківський продукт за SKU (INDEX_LISTARTICLE)
+          const parentProducts = await storage.getProducts();
+          const parentProduct = parentProducts.find((p: any) => p.sku === indexListarticle);
+          
+          if (!parentProduct) {
+            errors.push(`Батьківський продукт з SKU "${indexListarticle}" не знайдено`);
+            continue;
+          }
+          
+          // Знаходимо компонент за SKU (INDEX_DETAIL)
+          const components = await storage.getComponents();
+          const component = components.find((c: any) => c.sku === indexDetail);
+          
+          if (!component) {
+            errors.push(`Компонент з SKU "${indexDetail}" не знайдено`);
+            continue;
+          }
+          
+          // Парсимо кількість (замінюємо кому на крапку для українського формату)
+          const quantity = parseFloat(countDet.toString().replace(',', '.'));
+          
+          if (isNaN(quantity)) {
+            errors.push(`Некоректна кількість "${countDet}" для компонента ${indexDetail}`);
+            continue;
+          }
+          
+          // Перевіряємо чи компонент вже існує в BOM
+          const existingComponents = await storage.getProductComponents(parentProduct.id);
+          const existingComponent = existingComponents.find((pc: any) => pc.componentProductId === component.id);
+          
+          if (existingComponent) {
+            // Оновлюємо існуючий компонент
+            await storage.updateProductComponent(existingComponent.id, {
+              quantity: quantity.toString(),
+              isOptional: false,
+              unit: 'шт'
+            });
+            console.log(`Оновлено компонент ${indexDetail} в продукті ${indexListarticle}`);
+          } else {
+            // Додаємо новий компонент
+            await storage.addProductComponent({
+              parentProductId: parentProduct.id,
+              componentProductId: component.id,
+              quantity: quantity.toString(),
+              isOptional: false,
+              unit: 'шт',
+              notes: `Імпортовано з XML: ${new Date().toISOString()}`
+            });
+            console.log(`Додано компонент ${indexDetail} до продукту ${indexListarticle}`);
+          }
+          
+          imported++;
+          
+        } catch (rowError) {
+          console.error('Error processing BOM row:', rowError);
+          errors.push(`Помилка обробки рядка: ${rowError instanceof Error ? rowError.message : 'Unknown error'}`);
+        }
+      }
+      
+      console.log(`BOM import completed. Imported: ${imported}, Errors: ${errors.length}`);
+      
+      res.json({
+        success: true,
+        imported,
+        total: bomRows.length,
+        errors: errors.length,
+        errorDetails: errors,
+        message: `Успішно імпортовано ${imported} компонентів BOM з ${bomRows.length} рядків`
+      });
+      
+    } catch (error) {
+      console.error('BOM XML import error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to import BOM XML",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   return httpServer;
 }
