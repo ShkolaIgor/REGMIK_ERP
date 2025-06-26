@@ -262,18 +262,19 @@ export default function SupplierReceipts() {
     return (
       <div className="border-t bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
         <div className="bg-white rounded-lg shadow-sm border border-blue-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+          {/*<div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2">
             <h4 className="text-lg font-semibold text-white">Позиції документу</h4>
-          </div>
+          </div>*/}
           
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                 <tr>
-                  <th className="text-left px-6 py-4 font-semibold text-gray-700 border-b">Компонент</th>
-                  <th className="text-center px-4 py-4 font-semibold text-gray-700 border-b w-24">Кількість</th>
-                  <th className="text-center px-4 py-4 font-semibold text-gray-700 border-b w-28">Ціна за од.</th>
-                  <th className="text-center px-4 py-4 font-semibold text-gray-700 border-b w-28">Загальна сума</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 border-b">Компонент</th>
+                  <th className="text-center px-4 py-3 font-medium text-gray-700 border-b w-23">SKU</th>
+                  <th className="text-center px-4 py-3 font-medium text-gray-700 border-b w-23">Кількість</th>
+                  <th className="text-center px-4 py-3 font-medium text-gray-700 border-b w-23">Ціна за од.</th>
+                  <th className="text-center px-4 py-3 font-medium text-gray-700 border-b w-23">Cума</th>
                 </tr>
               </thead>
               <tbody>
@@ -286,14 +287,14 @@ export default function SupplierReceipts() {
                         index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                       }`}
                     >
-                      <td className="px-6 py-4 border-b border-gray-100">
+                      <td className="px-6 py-2 border-b border-gray-100">
                         <div>
                           <div className="font-medium text-gray-900">
-                            {component?.name || 'Невідомий компонент'}
+                            {component?.name || '-'}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          {/*<div className="text-sm text-gray-500">
                             SKU: {component?.sku || 'N/A'}
-                          </div>
+                          </div>*/}
                           {item.supplier_component_name && (
                             <div className="text-xs text-blue-600 mt-1">
                               Назва у постачальника: {item.supplier_component_name}
@@ -301,17 +302,22 @@ export default function SupplierReceipts() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-center border-b border-gray-100">
+                      <td className="px-4 py-1 text-center border-b border-gray-100">
+                        <span className="font-medium text-gray-900">
+                          {component?.sku || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-1 text-center border-b border-gray-100">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                           {item.quantity}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-center border-b border-gray-100">
+                      <td className="px-4 py-1 text-center border-b border-gray-100">
                         <span className="font-medium text-gray-900">
                           {parseFloat(item.unit_price).toFixed(2)} ₴
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-center border-b border-gray-100">
+                      <td className="px-7 py-1 text-center border-b border-gray-100">
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
                           {parseFloat(item.total_price).toFixed(2)} ₴
                         </span>
@@ -322,10 +328,10 @@ export default function SupplierReceipts() {
               </tbody>
               <tfoot className="bg-gradient-to-r from-gray-100 to-gray-200">
                 <tr>
-                  <td colSpan={3} className="px-6 py-4 text-right font-semibold text-gray-700 border-t-2 border-gray-300">
+                  <td colSpan={4} className="px-5 py-2 text-right font-semibold text-gray-700 border-t-2 border-gray-300">
                     Загальна сума позицій:
                   </td>
-                  <td className="px-4 py-4 text-center border-t-2 border-gray-300">
+                  <td className="px-5 py-2 text-center border-t-2 border-gray-300">
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-base font-bold bg-green-200 text-green-900">
                       {receiptItems.reduce((sum: number, item: any) => sum + parseFloat(item.total_price), 0).toFixed(2)} ₴
                     </span>
