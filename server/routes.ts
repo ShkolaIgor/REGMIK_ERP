@@ -8,6 +8,7 @@ import { novaPoshtaApi } from "./nova-poshta-api";
 import { novaPoshtaCache } from "./nova-poshta-cache";
 import { pool, db } from "./db";
 import { eq } from "drizzle-orm";
+import { productComponents } from "@shared/schema";
 import { 
   insertProductSchema, insertOrderSchemaForm, insertRecipeSchema,
   insertProductionTaskSchema, insertCategorySchema, insertUnitSchema, insertWarehouseSchema,

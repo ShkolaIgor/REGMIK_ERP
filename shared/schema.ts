@@ -545,7 +545,7 @@ export const envelopePrintSettings = pgTable("envelope_print_settings", {
 export const productComponents = pgTable("product_components", {
   id: serial("id").primaryKey(),
   parentProductId: integer("parent_product_id").references(() => products.id).notNull(),
-  componentProductId: integer("component_product_id").references(() => products.id),
+  componentProductId: integer("component_product_id").references(() => components.id),
   quantity: decimal("quantity", { precision: 10, scale: 4 }).notNull(),
   unitId: integer("unit_id").references(() => units.id).notNull().default(1),
   isOptional: boolean("is_optional").default(false),
