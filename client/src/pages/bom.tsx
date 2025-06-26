@@ -18,6 +18,7 @@ import { Plus, Trash2, Package, Component, Calculator, Download, Upload, AlertTr
 import { insertProductComponentSchema } from "@shared/schema";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
+import { DataTable } from "@/components/DataTable/DataTable";
 
 type Product = {
   id: number;
@@ -389,28 +390,28 @@ export default function BOMPage() {
             columns={[
               { 
                 key: 'name', 
-                header: 'Назва продукту', 
+                label: 'Назва продукту', 
                 sortable: true, 
                 searchable: true 
               },
               { 
                 key: 'sku', 
-                header: 'SKU', 
+                label: 'SKU', 
                 sortable: true, 
                 searchable: true 
               },
               { 
                 key: 'productType', 
-                header: 'Тип продукту', 
+                label: 'Тип продукту', 
                 sortable: true 
               }
             ]}
-            onRowClick={(product) => {
+            onRowClick={(product: Product) => {
               console.log("Setting selectedProductId to:", product.id);
               setSelectedProductId(product.id);
             }}
             selectedRowId={selectedProductId}
-            cardTemplate={(product) => (
+            cardTemplate={(product: Product) => (
               <div className="space-y-2">
                 <h4 className="font-medium">{product.name}</h4>
                 <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
