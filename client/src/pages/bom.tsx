@@ -220,8 +220,7 @@ export default function BOMPage() {
     return isParentType && matchesSearch;
   });
 
-  console.log("BOM parentProducts:", parentProducts);
-  console.log("First product:", parentProducts[0]);
+
 
   // Фільтруємо доступні компоненти
   const filteredComponents = (availableComponents as any[] || []);
@@ -390,6 +389,7 @@ export default function BOMPage() {
         <CardContent>
           <DataTable 
             data={parentProducts} 
+            storageKey="bom-product-selection"
             columns={[
               { 
                 key: 'name', 
@@ -411,7 +411,6 @@ export default function BOMPage() {
               console.log("Setting selectedProductId to:", product.id);
               setSelectedProductId(product.id);
             }}
-
             cardTemplate={(product: Product) => (
               <div className="space-y-2">
                 <h4 className="font-medium">{product.name}</h4>
@@ -419,9 +418,6 @@ export default function BOMPage() {
                 <Badge variant="outline">{product.productType}</Badge>
               </div>
             )}
-            tableId="bom-products"
-            defaultView="cards"
-            defaultPageSize={12}
           />
         </CardContent>
       </Card>

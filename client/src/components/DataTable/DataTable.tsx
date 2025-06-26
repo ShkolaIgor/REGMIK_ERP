@@ -442,7 +442,6 @@ export function DataTable({
                     {visibleColumns.map((column) => {
                   const columnSettings = settings.columnSettings[column.key] || defaultColumnSettings;
                   const cellValue = row[column.key];
-                  console.log(`Cell value for ${column.key}:`, cellValue, 'from row:', row);
                   return (
                     <td 
                       key={column.key} 
