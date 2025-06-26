@@ -766,6 +766,16 @@ export default function Clients() {
             cardTemplate={clientCardTemplate}
             storageKey="clients"
             onRowClick={(client) => handleEdit(client)}
+            actions={(client) => (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleEdit(client)}
+                className="h-8 w-8 p-0"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
           />
 
       {/* Client Contacts Popup */}
