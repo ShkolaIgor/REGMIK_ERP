@@ -414,7 +414,7 @@ export function DataTable({
               const itemId = row.id || index;
               const isExpanded = expandedItems.has(itemId);
               
-              const mainRow = (
+              return (
                 <tr
                   key={`row-${itemId}`}
                   className={cn(
@@ -490,20 +490,7 @@ export function DataTable({
                   )}
                 </tr>
               );
-
-              const expandedRow = expandableContent && isExpanded ? (
-                <tr key={`expanded-${itemId}`}>
-                  <td 
-                    colSpan={visibleColumns.length + (actions ? 1 : 0) + 1} 
-                    className="px-4 py-4 bg-gray-50 border-b"
-                  >
-                    {expandableContent(row)}
-                  </td>
-                </tr>
-              ) : null;
-
-              return [mainRow, expandedRow].filter(Boolean);
-            }).flat()
+            })
           )}
         </tbody>
       </table>
