@@ -527,13 +527,31 @@ export default function SupplierReceipts() {
                         </FormItem>
                       )}
                     />
-                    <div className="flex justify-end space-x-2">
-                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        Скасувати
-                      </Button>
-                      <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                        {createMutation.isPending || updateMutation.isPending ? 'Збереження...' : 'Зберегти'}
-                      </Button>
+                    <div className="flex justify-between space-x-2">
+                      {editingReceipt && (
+                        <Button 
+                          type="button" 
+                          variant="destructive" 
+                          onClick={() => {
+                            if (confirm('Ви впевнені, що хочете видалити цей прихід? Цю дію неможливо скасувати.')) {
+                              handleDelete(editingReceipt.id);
+                            }
+                          }}
+                          disabled={deleteMutation.isPending}
+                          className="flex items-center gap-2"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          {deleteMutation.isPending ? 'Видалення...' : 'Видалити'}
+                        </Button>
+                      )}
+                      <div className="flex space-x-2 ml-auto">
+                        <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                          Скасувати
+                        </Button>
+                        <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                          {createMutation.isPending || updateMutation.isPending ? 'Збереження...' : 'Зберегти'}
+                        </Button>
+                      </div>
                     </div>
                   </form>
                 </Form>
@@ -676,18 +694,6 @@ export default function SupplierReceipts() {
                 title="Редагувати"
               >
                 <Edit className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(receipt.id);
-                }}
-                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                title="Видалити"
-              >
-                <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           )}
