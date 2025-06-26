@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -98,7 +98,7 @@ export default function SupplierReceipts() {
       supplier_document_number: "",
       total_amount: "",
       comment: "",
-      purchase_order_id: "",
+      purchase_order_id: "none",
     },
   });
 
@@ -198,7 +198,7 @@ export default function SupplierReceipts() {
       ...data,
       supplier_id: parseInt(data.supplier_id),
       document_type_id: parseInt(data.document_type_id),
-      purchase_order_id: data.purchase_order_id ? parseInt(data.purchase_order_id) : null,
+      purchase_order_id: (data.purchase_order_id && data.purchase_order_id !== "none") ? parseInt(data.purchase_order_id) : null,
       total_amount: parseFloat(data.total_amount),
     };
 
@@ -219,7 +219,7 @@ export default function SupplierReceipts() {
       supplier_document_number: receipt.supplier_document_number || '',
       total_amount: receipt.total_amount,
       comment: receipt.comment || '',
-      purchase_order_id: receipt.purchase_order_id?.toString() || '',
+      purchase_order_id: receipt.purchase_order_id?.toString() || 'none',
     });
     setIsDialogOpen(true);
   };
@@ -383,7 +383,7 @@ export default function SupplierReceipts() {
                       supplier_document_number: "",
                       total_amount: "",
                       comment: "",
-                      purchase_order_id: "",
+                      purchase_order_id: "none",
                     });
                     setIsDialogOpen(true);
                   }}
@@ -397,6 +397,9 @@ export default function SupplierReceipts() {
                   <DialogTitle>
                     {editingReceipt ? 'Редагувати прихід' : 'Створити новий прихід'}
                   </DialogTitle>
+                  <DialogDescription>
+                    {editingReceipt ? 'Внесіть зміни до інформації про прихід від постачальника' : 'Заповніть форму для створення нового приходу від постачальника'}
+                  </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -477,7 +480,7 @@ export default function SupplierReceipts() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="">Без замовлення</SelectItem>
+                                <SelectItem value="none">Без замовлення</SelectItem>
                                 {purchaseOrders.map((order: any) => (
                                   <SelectItem key={order.id} value={order.id.toString()}>
                                     {order.orderNumber}
