@@ -9975,39 +9975,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Знаходимо батьківський продукт за SKU (INDEX_LISTARTICLE)
           const parentProducts = await storage.getProducts();
-          console.log(`Looking for parent product with SKU: ${indexListarticle}`);
-          console.log(`Available products:`, parentProducts.map((p: any) => ({ id: p.id, sku: p.sku, name: p.name })));
-          
-          // Пробуємо знайти батьківський продукт за SKU або ID
-          let parentProduct = parentProducts.find((p: any) => p.sku === indexListarticle);
-          if (!parentProduct && !isNaN(parseInt(indexListarticle))) {
-            parentProduct = parentProducts.find((p: any) => p.id === parseInt(indexListarticle));
-          }
+          const parentProduct = parentProducts.find((p: any) => p.sku === indexListarticle);
           
           if (!parentProduct) {
-            errors.push(`Батьківський продукт з SKU/ID "${indexListarticle}" не знайдено`);
+            errors.push(`Батьківський продукт з SKU "${indexListarticle}" не знайдено`);
             continue;
           }
-          
-          console.log(`Found parent product:`, { id: parentProduct.id, sku: parentProduct.sku, name: parentProduct.name });
           
           // Знаходимо компонент за SKU (INDEX_DETAIL)
           const components = await storage.getComponents();
-          console.log(`Looking for component with SKU: ${indexDetail}`);
-          console.log(`Available components:`, components.map((c: any) => ({ id: c.id, sku: c.sku, name: c.name })));
-          
-          // Пробуємо знайти компонент за SKU або ID
-          let component = components.find((c: any) => c.sku === indexDetail);
-          if (!component && !isNaN(parseInt(indexDetail))) {
-            component = components.find((c: any) => c.id === parseInt(indexDetail));
-          }
+          const component = components.find((c: any) => c.sku === indexDetail);
           
           if (!component) {
-            errors.push(`Компонент з SKU/ID "${indexDetail}" не знайдено`);
+            errors.push(`Компонент з SKU "${indexDetail}" не знайдено`);
             continue;
           }
-          
-          console.log(`Found component:`, { id: component.id, sku: component.sku, name: component.name });
           
           // Парсимо кількість (замінюємо кому на крапку для українського формату)
           const quantity = parseFloat(countDet.toString().replace(',', '.'));
@@ -10025,8 +10007,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Оновлюємо існуючий компонент
             await storage.updateProductComponent(existingComponent.id, {
               quantity: quantity.toString(),
-              isOptional: false,
-              unit: 'шт'
+              isOptional: false
             });
             console.log(`Оновлено компонент ${indexDetail} в продукті ${indexListarticle}`);
           } else {
@@ -10036,7 +10017,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
               componentProductId: component.id,
               quantity: quantity.toString(),
               isOptional: false,
-              unit: 'шт',
               notes: `Імпортовано з XML: ${new Date().toISOString()}`
             });
             console.log(`Додано компонент ${indexDetail} до продукту ${indexListarticle}`);
