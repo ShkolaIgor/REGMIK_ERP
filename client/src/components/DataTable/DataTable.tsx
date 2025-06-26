@@ -728,6 +728,7 @@ export function DataTable({
                                 <SelectContent>
                                   <SelectItem value="10">10px</SelectItem>
                                   <SelectItem value="12">12px</SelectItem>
+                                  <SelectItem value="13">13px</SelectItem>
                                   <SelectItem value="14">14px</SelectItem>
                                   <SelectItem value="16">16px</SelectItem>
                                   <SelectItem value="18">18px</SelectItem>
