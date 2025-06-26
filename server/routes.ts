@@ -9961,6 +9961,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       for (const row of bomRows) {
         try {
+          console.log('Processing BOM row:', JSON.stringify(row, null, 2));
+          
           // Отримуємо дані з атрибутів XML (структура $)
           const attributes = row.$ || row;
           
@@ -9968,7 +9970,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const indexDetail = attributes.INDEX_DETAIL || row.INDEX_DETAIL;
           const countDet = attributes.COUNT_DET || row.COUNT_DET;
           
+          console.log('Extracted fields:', { indexListarticle, indexDetail, countDet });
+          
           if (!indexListarticle || !indexDetail || !countDet) {
+            console.log('Missing required fields in row:', { indexListarticle, indexDetail, countDet });
             errors.push(`Пропущено рядок: відсутні обов'язкові поля INDEX_LISTARTICLE, INDEX_DETAIL або COUNT_DET`);
             continue;
           }
