@@ -306,7 +306,7 @@ export default function Clients() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const { data: clientsData, isLoading } = useQuery({
+  const { data: clientsData, isLoading, isError, error: clientsError } = useQuery({
     queryKey: ["/api/clients", currentPage, pageSize, debouncedSearch],
     queryFn: async () => {
       const params = new URLSearchParams({
