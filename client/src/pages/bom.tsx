@@ -232,8 +232,6 @@ export default function BOMPage() {
     return isParentType && matchesSearch;
   });
 
-
-
   // Фільтруємо доступні компоненти
   const filteredComponents = (availableComponents as any[] || []);
 
@@ -271,21 +269,7 @@ export default function BOMPage() {
                 </div>
               </div>
             </div>
-            <Badge variant="secondary" className="flex items-center">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-1" />
-              Онлайн
-            </Badge>
-          </div>
           <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Пошук продуктів..."
-                className="w-80 pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
             <Button 
               variant="outline" 
               onClick={() => setIsImportDialogOpen(true)}
@@ -297,13 +281,20 @@ export default function BOMPage() {
               Імпорт BOM
               {!isAuthenticated && <AlertTriangle className="ml-2 h-4 w-4 text-orange-500" />}
             </Button>
+            <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
+              <Download className="h-4 w-4 mr-2" />
+              Експорт
+            </Button>
             {selectedProductId && (
-              <Button onClick={handleAddComponent}>
+              <Button 
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                onClick={handleAddComponent}>
                 <Plus className="mr-2 h-4 w-4" />
                 Додати компонент
               </Button>
             )}
           </div>
+            </div>
         </div>
       </div>
 
@@ -386,24 +377,24 @@ export default function BOMPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
 
       {/* Content */}
-      <div className="w-full px-8 py-6 space-y-6 flex-1 overflow-auto">
+      <div className="w-full space-y-6 flex-1 overflow-auto">
         {/* Product Selection */}
         <Card>
-        <CardHeader>
+          {/*<CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
-            Оберіть продукт
+            Склад продукту
           </CardTitle>
           <CardDescription>
             Оберіть продукт для перегляду та редагування його складу
           </CardDescription>
-        </CardHeader>
+        </CardHeader>*/}
         <CardContent>
           <DataTable 
             data={parentProducts} 
+            title="Список продуктів"
             storageKey="bom-product-selection"
             columns={[
               { 
@@ -735,5 +726,6 @@ export default function BOMPage() {
       </Dialog>
       </div>
     </div>
+      </div>
   );
 }

@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Card, CardContent } from "@/components/ui/card";
+//import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
@@ -13,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Plus, Package, FileText, TrendingUp, Calendar, Download, Upload, Edit } from "lucide-react";
+import { Plus, Package, FileText, TrendingUp, Calendar, Download, Upload, HandPlatter, Edit } from "lucide-react";
 import { DataTable, DataTableColumn } from "@/components/DataTable";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
 
@@ -268,19 +269,17 @@ export default function SupplierReceipts() {
       <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
         <div className="w-full px-8 py-8">
           <div className="flex items-center justify-between">
-            <div className="space-y-3">
-              <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                Каталог приходів постачальників
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <HandPlatter className="w-6 h-6 text-white" />
+            </div>
+            <div >
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                Приходи постачальників
               </h1>
-              <p className="text-gray-600 text-lg">Керування документами надходжень товарів та матеріалів</p>
-              <div className="flex items-center space-x-4">
-                <Badge className="bg-green-100 text-green-800 px-3 py-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2" />
-                  Активний модуль
-                </Badge>
-                <Badge variant="outline" className="px-3 py-1">
-                  Управління запасами
-                </Badge>
+              <p className="text-gray-600 mt-1">Керування документами надходжень товарів та матеріалів</p>
+            </div>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -397,12 +396,27 @@ export default function SupplierReceipts() {
           </Card>
         </div>
 
+        {/* Content */}
+        <div className="w-full space-y-6 flex-1 overflow-auto">
+          {/* Product Selection */}
+          <Card>
+            {/*<CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Список приходів від постачальників
+            </CardTitle>
+            <CardDescription>
+              Оберіть продукт для перегляду та редагування його складу
+            </CardDescription>
+          </CardHeader>*/}
+          <CardContent>
         {/* DataTable */}
         <DataTable
           data={receiptsArray}
           columns={columns}
           loading={isLoading}
           title="Список приходів від постачальників"
+          //description="Оберіть продукт для перегляду та редагування його складу"
           storageKey="supplier-receipts"
           actions={(receipt) => (
             <div className="flex items-center gap-1">
@@ -435,7 +449,9 @@ export default function SupplierReceipts() {
             });
           }}
         />
-      </div>
+          </CardContent>
+            </Card>
+          </div>
 
       {/* Dialog for Create/Edit Receipt */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -619,6 +635,7 @@ export default function SupplierReceipts() {
           </Form>
         </DialogContent>
       </Dialog>
+    </div>
     </div>
   );
 }
