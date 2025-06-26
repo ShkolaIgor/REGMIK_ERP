@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Plus, Package, FileText, TrendingUp, Calendar, Search, Filter, Download, Upload, Edit, Trash2 } from "lucide-react";
 import { DataTable } from "@/components/DataTable/DataTable";
+import { UkrainianDate } from "@/components/ui/ukrainian-date";
 
 // Interfaces
 interface SupplierReceipt {
@@ -671,7 +672,12 @@ export default function SupplierReceipts() {
           data={filteredReceipts}
           columns={[
             { key: 'id', label: 'ID', sortable: true },
-            { key: 'receipt_date', label: 'Дата приходу', sortable: true },
+            { 
+              key: 'receipt_date', 
+              label: 'Дата приходу', 
+              sortable: true,
+              render: (value: any) => <UkrainianDate date={value} format="short" />
+            },
             { key: 'supplier_name', label: 'Постачальник', sortable: true },
             { key: 'document_type_name', label: 'Тип документу', sortable: true },
             { key: 'supplier_document_number', label: 'Номер документу', sortable: true },
