@@ -9906,6 +9906,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log('Starting BOM XML import');
+      console.log('XML structure keys:', Object.keys(result));
+      console.log('Full XML structure:', JSON.stringify(result, null, 2));
       const xmlContent = req.file.buffer.toString('utf-8');
       
       // Parse XML content
@@ -9915,11 +9917,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let imported = 0;
       let errors: string[] = [];
       
-      // Extract BOM data from XML
-      const bomData = result?.ROW || [];
-      const bomRows = Array.isArray(bomData) ? bomData : [bomData];
+      // Extract BOM data from XML - перевіряємо різні можливі структури
+      let bomData = [];
+      
+      // Перевіряємо стандартну структуру DATAPACKET
+      if (result?.DATAPACKET?.ROWDATA?.ROW) {
+        bomData = result.DATAPACKET.ROWDATA.ROW;
+      } 
+      // Перевіряємо просту структуру ROW
+      else if (result?.ROW) {
+        bomData = result.ROW;
+      }
+      // Перевіряємо структуру LIST_ARTICLE
+      else if (result?.LIST_ARTICLE) {
+        bomData = result.LIST_ARTICLE;
+      }
+      // Перевіряємо root елементи
+      else if (result && typeof result === 'object') {
+        const keys = Object.keys(result);
+        const potentialDataKey = keys.find(key => 
+          Array.isArray(result[key]) || 
+          (result[key] && typeof result[key] === 'object')
+        );
+        if (potentialDataKey) {
+          bomData = result[potentialDataKey];
+        }
+      }
+      
+      const bomRows = Array.isArray(bomData) ? bomData : (bomData ? [bomData] : []);
       
       console.log(`Found ${bomRows.length} BOM rows to process`);
+      if (bomRows.length > 0) {
+        console.log('First row sample:', JSON.stringify(bomRows[0], null, 2));
+      } else {
+        console.log('No BOM rows found. Possible data structures:');
+        if (result) {
+          Object.keys(result).forEach(key => {
+            console.log(`- ${key}:`, typeof result[key], Array.isArray(result[key]) ? `[${result[key].length} items]` : '');
+          });
+        }
+      }
       
       for (const row of bomRows) {
         try {

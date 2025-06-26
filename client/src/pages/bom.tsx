@@ -186,6 +186,16 @@ export default function BOMPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Перевіряємо автентифікацію
+    if (!isAuthenticated) {
+      toast({
+        title: "Потрібна авторизація",
+        description: "Для імпорту BOM потрібно увійти в систему. Логін: admin, пароль: admin123",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!file.name.toLowerCase().endsWith('.xml')) {
       toast({
         title: "Помилка",
@@ -279,10 +289,13 @@ export default function BOMPage() {
             <Button 
               variant="outline" 
               onClick={() => setIsImportDialogOpen(true)}
-              className="border-purple-200 text-purple-600 hover:bg-purple-50"
+              className={`border-purple-200 text-purple-600 hover:bg-purple-50 ${!isAuthenticated ? 'opacity-50' : ''}`}
+              disabled={!isAuthenticated}
+              title={!isAuthenticated ? "Потрібна авторизація для імпорту BOM" : ""}
             >
               <Upload className="mr-2 h-4 w-4" />
               Імпорт BOM
+              {!isAuthenticated && <AlertTriangle className="ml-2 h-4 w-4 text-orange-500" />}
             </Button>
             {selectedProductId && (
               <Button onClick={handleAddComponent}>
