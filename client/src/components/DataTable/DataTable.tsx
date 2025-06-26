@@ -272,6 +272,15 @@ export function DataTable({
   }, [data.length, settings.pageSize]);
 
   const totalPages = Math.ceil(sortedData.length / settings.pageSize);
+  
+  // Debug pagination
+  console.log('Pagination debug:', {
+    dataLength: data.length,
+    sortedDataLength: sortedData.length,
+    pageSize: settings.pageSize,
+    totalPages,
+    currentPage
+  });
 
   const handleSort = (columnKey: string) => {
     const newDirection = settings.sortField === columnKey && settings.sortDirection === 'asc' ? 'desc' : 'asc';
