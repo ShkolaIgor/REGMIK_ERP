@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Trash2, Package, Component, Calculator, Download, Upload, AlertTriangle, Search, Layers } from "lucide-react";
+import { Plus, Trash2, Package, Component, Calculator, Download, Upload, AlertTriangle, Search, Layers, FileText } from "lucide-react";
 import { insertProductComponentSchema } from "@shared/schema";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
@@ -705,6 +705,7 @@ export default function BOMPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
