@@ -547,7 +547,7 @@ export function DataTable({
           <Card 
             key={index} 
             className={cn(
-              "cursor-pointer hover:shadow-md transition-shadow",
+              "cursor-pointer hover:shadow-md transition-shadow min-h-[280px] flex flex-col",
               onRowClick && "cursor-pointer"
             )}
             style={{
@@ -559,31 +559,31 @@ export function DataTable({
             }}
             onClick={() => onRowClick?.(row)}
           >
-            <CardContent className="p-4">
+            <CardContent className="p-6 flex-1 flex flex-col">
               {cardTemplate ? cardTemplate(row) : (
-                <div className="space-y-2">
-                  {visibleColumns.slice(0, 5).map((column) => {
+                <div className="space-y-3 flex-1">
+                  {visibleColumns.slice(0, 6).map((column) => {
                     const columnSettings = settings.columnSettings[column.key] || defaultColumnSettings;
                     if (!columnSettings.visible) return null;
                     
                     return (
-                      <div key={column.key} className="flex justify-between items-center">
-                        <span className="font-medium text-sm">{column.label}:</span>
-                        <span className="text-sm">
+                      <div key={column.key} className="flex justify-between items-start gap-2">
+                        <span className="font-medium text-sm text-muted-foreground min-w-0 flex-shrink-0">{column.label}:</span>
+                        <div className="text-sm text-right min-w-0 flex-1">
                           {column.render ? 
                             column.render(row[column.key], row) : 
                             column.type === 'rating' ?
                               <StarRating rating={parseFloat(row[column.key]) || 0} /> :
                             column.type === 'badge' ?
                               <Badge variant="outline">{row[column.key]}</Badge> :
-                              String(row[column.key] || '')
+                              <span className="break-words">{String(row[column.key] || '')}</span>
                           }
-                        </span>
+                        </div>
                       </div>
                     );
                   })}
                   {actions && !cardTemplate && (
-                    <div className="pt-2 border-t flex justify-end">
+                    <div className="pt-3 mt-auto border-t flex justify-end">
                       <div className="flex gap-1">
                         {actions(row)}
                       </div>
