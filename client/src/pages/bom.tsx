@@ -19,6 +19,7 @@ import { insertProductComponentSchema } from "@shared/schema";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { DataTable } from "@/components/DataTable/DataTable";
+import { useAuth } from "@/hooks/useAuth";
 
 type Product = {
   id: number;
@@ -55,6 +56,7 @@ export default function BOMPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { isAuthenticated, isLoading } = useAuth();
 
   const form = useForm<ComponentFormData>({
     resolver: zodResolver(componentFormSchema),
