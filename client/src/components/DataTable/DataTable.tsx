@@ -502,8 +502,13 @@ export function DataTable({
                 </tr>
               ) : null;
 
-              return [mainRow, expandedRow].filter(Boolean);
-            }).flat()
+              return (
+                <React.Fragment key={`fragment-${itemId}`}>
+                  {mainRow}
+                  {expandedRow}
+                </React.Fragment>
+              );
+            })
           )}
         </tbody>
       </table>
