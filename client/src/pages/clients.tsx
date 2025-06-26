@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ClientContactsXmlImport } from "@/components/ClientContactsXmlImport";
 import { ClientsXmlImport } from "@/components/ClientsXmlImport";
-import { SimpleTable } from "@/components/SimpleTable";
+import { DataTable } from "@/components/DataTable/DataTable";
 import { 
   Search, Plus, Edit, User, Building2, Truck, Package, Percent,
   Users, Phone, Mail, MapPin, UserPlus, Trash2, MoreVertical, Upload, FileText, Download 
@@ -754,13 +754,18 @@ export default function Clients() {
         </div>
 
         
-        {/* SimpleTable Section */}            
+        {/* DataTable Section */}            
         <div className="w-full space-y-6 flex-1 overflow-auto">
-          <SimpleTable
-            data={clients}
+          <DataTable
+            data={processedClients}
             columns={columns}
+            title="Список клієнтів"
+            description="Оберіть клієнта для перегляду та редагування"
+            searchPlaceholder="Пошук клієнтів за назвою, ЄДРПОУ або типом..."
             loading={isLoading}
-            onEdit={handleEdit}
+            cardTemplate={clientCardTemplate}
+            storageKey="clients"
+            onRowClick={(client) => handleEdit(client)}
           />
 
       {/* Client Contacts Popup */}
