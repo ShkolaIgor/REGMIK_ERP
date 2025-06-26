@@ -9947,16 +9947,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const bomRows = Array.isArray(bomData) ? bomData : (bomData ? [bomData] : []);
       
-      console.log(`Found ${bomRows.length} BOM rows to process`);
-      if (bomRows.length > 0) {
-        console.log('First row sample:', JSON.stringify(bomRows[0], null, 2));
-      } else {
-        console.log('No BOM rows found. Possible data structures:');
-        if (result) {
-          Object.keys(result).forEach(key => {
-            console.log(`- ${key}:`, typeof result[key], Array.isArray(result[key]) ? `[${result[key].length} items]` : '');
-          });
-        }
+      if (bomRows.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'У XML файлі не знайдено даних BOM для імпорту'
+        });
       }
       
       for (const row of bomRows) {
@@ -9985,19 +9980,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Знаходимо продукт-компонент за SKU (INDEX_DETAIL)
-          // Спочатку шукаємо в продуктах
           const componentProduct = parentProducts.find((p: any) => p.sku === indexDetail);
           
-          console.log(`Searching for component with SKU: ${indexDetail}`);
-          console.log(`Found componentProduct:`, componentProduct);
-          
           if (!componentProduct) {
-            console.log(`Available product SKUs for components:`, parentProducts.map(p => p.sku).slice(0, 10));
             errors.push(`Продукт-компонент з SKU "${indexDetail}" не знайдено в таблиці products`);
             continue;
           }
-          
-          console.log(`Using componentProduct.id: ${componentProduct.id}`);
           
           // Парсимо кількість (замінюємо кому на крапку для українського формату)
           const quantity = parseFloat(countDet.toString().replace(',', '.'));
