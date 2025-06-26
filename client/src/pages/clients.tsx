@@ -326,8 +326,7 @@ export default function Clients() {
   const totalPages = clientsData?.totalPages || 1;
   const total = clientsData?.total || 0;
 
-  // Тимчасове логування для діагностики
-  console.log('Clients data:', { clients, isLoading, isError, error: clientsError });
+
 
   // Завантаження типів клієнтів
   const { data: clientTypes = [] } = useQuery({
