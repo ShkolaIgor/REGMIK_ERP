@@ -50,6 +50,7 @@ type ComponentFormData = z.infer<typeof componentFormSchema>;
 export default function BOMPage() {
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -133,6 +134,27 @@ export default function BOMPage() {
     }
   });
 
+  const importBOMMutation = useMutation({
+    mutationFn: (formData: FormData) => 
+      apiRequest("/api/import-bom", "POST", formData),
+    onSuccess: (result: any) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/products/${selectedProductId}/components`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setIsImportDialogOpen(false);
+      toast({
+        title: "Імпорт завершено",
+        description: `Успішно імпортовано ${result.imported} компонентів BOM`
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка імпорту",
+        description: error.message || "Не вдалося імпортувати файл BOM",
+        variant: "destructive"
+      });
+    }
+  });
+
   const onSubmit = (data: ComponentFormData) => {
     if (!selectedProductId) return;
     
@@ -155,6 +177,28 @@ export default function BOMPage() {
     form.setValue("parentProductId", selectedProductId);
     console.log("Setting dialog open to true");
     setIsAddDialogOpen(true);
+  };
+
+  const handleImportBOM = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.xml')) {
+      toast({
+        title: "Помилка",
+        description: "Будь ласка, оберіть XML файл",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('xmlFile', file);
+    
+    importBOMMutation.mutate(formData);
+    
+    // Очищаємо input для повторного вибору того ж файлу
+    event.target.value = '';
   };
 
   if (isLoadingProducts) {
@@ -218,6 +262,14 @@ export default function BOMPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsImportDialogOpen(true)}
+              className="border-purple-200 text-purple-600 hover:bg-purple-50"
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Імпорт BOM
+            </Button>
             {selectedProductId && (
               <Button onClick={handleAddComponent}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -516,6 +568,51 @@ export default function BOMPage() {
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import BOM Dialog */}
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Імпорт BOM з XML</DialogTitle>
+            <DialogDescription>
+              Оберіть XML файл для імпорту компонентів складу продукту (BOM)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <Label htmlFor="xml-file" className="cursor-pointer">
+                <span className="text-sm font-medium text-blue-600 hover:text-blue-500">
+                  Клікніть для вибору файлу
+                </span>
+                <span className="text-sm text-gray-500 block mt-1">
+                  або перетягніть XML файл сюди
+                </span>
+              </Label>
+              <Input
+                id="xml-file"
+                type="file"
+                accept=".xml"
+                onChange={handleImportBOM}
+                className="hidden"
+              />
+            </div>
+            <div className="text-xs text-gray-500 bg-blue-50 p-3 rounded">
+              <strong>Формат XML:</strong> Файл повинен містити структуру з полями INDEX_LISTARTICLE, INDEX_DETAIL, COUNT_DET для кожного компонента.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setIsImportDialogOpen(false)}
+              disabled={importBOMMutation.isPending}
+            >
+              Скасувати
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       </div>
