@@ -9996,9 +9996,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
           
-          // Перевіряємо чи компонент вже існує в BOM
-          const existingComponents = await storage.getProductComponents(parentProduct.id);
-          const existingComponent = existingComponents.find((pc: any) => pc.componentProductId === componentProduct.id);
+          // Перевіряємо чи компонент вже існує в BOM (використовуємо прямий SQL запит)
+          const existingComponentsResult = await db.select()
+            .from(productComponents)
+            .where(eq(productComponents.parentProductId, parentProduct.id));
+          const existingComponent = existingComponentsResult.find((pc: any) => pc.componentProductId === componentItem.id);
           
           if (existingComponent) {
             // Оновлюємо існуючий компонент
@@ -10010,7 +10012,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Додаємо новий компонент
             await storage.addProductComponent({
               parentProductId: parentProduct.id,
-              componentProductId: componentProduct.id,
+              componentProductId: componentItem.id,
               quantity: quantity.toString(),
               isOptional: false,
               notes: `Імпортовано з XML: ${new Date().toISOString()}`

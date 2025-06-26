@@ -1461,48 +1461,37 @@ export class DatabaseStorage implements IStorage {
 
   // Product Components (BOM)
   async getProductComponents(productId: number): Promise<(ProductComponent & { component: any })[]> {
-    const result = await db.select({
-      id: productComponents.id,
-      parentProductId: productComponents.parentProductId,
-      componentProductId: productComponents.componentProductId,
-      quantity: productComponents.quantity,
-      unit: productComponents.unit,
-      isOptional: productComponents.isOptional,
-      notes: productComponents.notes,
-      createdAt: productComponents.createdAt,
-      component: {
-        id: components.id,
-        name: components.name,
-        description: components.description,
-        sku: components.sku,
-        barcode: components.barcode,
-        categoryId: components.categoryId,
-        costPrice: components.costPrice,
-        retailPrice: components.retailPrice,
-        photo: components.photo,
-        productType: components.productType,
-        unit: components.unit,
-        minStock: components.minStock,
-        maxStock: components.maxStock,
-        isActive: components.isActive,
-        createdAt: components.createdAt
-      }
-    })
-    .from(productComponents)
-    .leftJoin(components, eq(productComponents.componentProductId, components.id))
-    .where(eq(productComponents.parentProductId, productId));
+    // Спочатку отримуємо всі product_components для даного продукту
+    const productComponentsData = await db.select()
+      .from(productComponents)
+      .where(eq(productComponents.parentProductId, productId));
 
-    return result.map(row => ({
-      id: row.id,
-      parentProductId: row.parentProductId,
-      componentProductId: row.componentProductId,
-      quantity: row.quantity,
-      unit: row.unit,
-      isOptional: row.isOptional,
-      notes: row.notes,
-      createdAt: row.createdAt,
-      component: row.component!
-    }));
+    // Потім для кожного компонента отримуємо дані з таблиці components
+    const result = [];
+    for (const pc of productComponentsData) {
+      let componentData = null;
+      if (pc.componentProductId) {
+        const [component] = await db.select()
+          .from(components)
+          .where(eq(components.id, pc.componentProductId))
+          .limit(1);
+        componentData = component || null;
+      }
+
+      result.push({
+        id: pc.id,
+        parentProductId: pc.parentProductId,
+        componentProductId: pc.componentProductId,
+        quantity: pc.quantity,
+        unit: pc.unit,
+        isOptional: pc.isOptional,
+        notes: pc.notes,
+        createdAt: pc.createdAt,
+        component: componentData
+      });
+    }
+
+    return result;
   }
 
   async addProductComponent(insertComponent: InsertProductComponent): Promise<ProductComponent> {
