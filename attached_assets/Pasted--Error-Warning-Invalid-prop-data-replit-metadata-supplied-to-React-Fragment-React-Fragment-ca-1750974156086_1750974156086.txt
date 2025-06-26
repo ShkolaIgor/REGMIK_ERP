@@ -1,0 +1,33 @@
+[Error] Warning: Invalid prop `data-replit-metadata` supplied to `React.Fragment`. React.Fragment can only have `key` and `children` props.
+DataTable@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/components/DataTable/DataTable.tsx:141:7
+div
+div
+div
+Clients@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/pages/clients.tsx:536:51
+Route@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:323:20
+Switch@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:379:25
+div
+main
+div
+Layout@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/components/Layout.tsx:155:34
+Router@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/src/App.tsx:89:49
+TooltipProviderProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js:38:52
+TooltipProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js:69:12
+QueryClientProvider@https://3c2c7a34-437b-4cc6-bd2a-ac2fbc7eb5cd-00-2i9xniom6qmuw.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js:2805:9
+App
+	printWarning (react_jsx-dev-runtime.js:64)
+	error (react_jsx-dev-runtime.js:48)
+	validateFragmentProps (react_jsx-dev-runtime.js:796)
+	jsxWithValidation (react_jsx-dev-runtime.js:874)
+	map
+	renderTableView (DataTable.tsx:444)
+	DataTable (DataTable.tsx:1808)
+	renderWithHooks (chunk-RPCDYKBN.js:11548)
+	updateFunctionComponent (chunk-RPCDYKBN.js:14582)
+	beginWork$1 (chunk-RPCDYKBN.js:19753)
+	performUnitOfWork (chunk-RPCDYKBN.js:19198)
+	workLoopSync (chunk-RPCDYKBN.js:19137)
+	renderRootSync (chunk-RPCDYKBN.js:19116)
+	performSyncWorkOnRoot (chunk-RPCDYKBN.js:18874)
+	flushSyncCallbacks (chunk-RPCDYKBN.js:9119)
+	(anonymous function) (chunk-RPCDYKBN.js:18627)
