@@ -285,7 +285,7 @@ export default function SupplierReceipts() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-              Каталог приходів від постачальників
+              Приходи від постачальників
             </h1>
             <Badge className="bg-green-100 text-green-800">
               <div className="w-2 h-2 bg-green-500 rounded-full mr-1" />
@@ -548,19 +548,6 @@ export default function SupplierReceipts() {
                 <Filter className="h-4 w-4 text-gray-500" />
                 <span className="text-sm font-medium">Фільтри:</span>
               </div>
-              <Select value={supplierFilter} onValueChange={setSupplierFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Фільтр за постачальником" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Усі постачальники</SelectItem>
-                  {[...new Set(receiptsArray.map((r: any) => r.supplier_name).filter(Boolean))].map((name) => (
-                    <SelectItem key={name as string} value={name as string}>
-                      {name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               <Select value={documentTypeFilter} onValueChange={setDocumentTypeFilter}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Фільтр за типом документу" />
