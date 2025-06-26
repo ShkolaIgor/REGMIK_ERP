@@ -596,8 +596,25 @@ export default function SupplierReceipts() {
           loading={isLoading}
           title="Список приходів від постачальників"
           storageKey="supplier-receipts"
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          actions={(receipt) => (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleEdit(receipt)}
+              >
+                Редагувати
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDelete(receipt.id)}
+              >
+                Видалити
+              </Button>
+            </>
+          )}
+          expandableContent={(receipt) => <ReceiptItemsView receiptId={receipt.id} />}
         />
       </main>
     </div>
