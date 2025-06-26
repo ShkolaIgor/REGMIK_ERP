@@ -54,6 +54,7 @@ export default function SupplierReceipts() {
   const [editingReceipt, setEditingReceipt] = useState<SupplierReceipt | null>(null);
   const [supplierFilter, setSupplierFilter] = useState("all");
   const [documentTypeFilter, setDocumentTypeFilter] = useState("all");
+  const [periodFilter, setPeriodFilter] = useState("all");
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
 
   const { toast } = useToast();
@@ -158,13 +159,37 @@ export default function SupplierReceipts() {
     return receiptsArray.filter((receipt: any) => {
       const supplierName = receipt.supplier_name || '';
       const documentTypeName = receipt.document_type_name || '';
+      const receiptDate = new Date(receipt.receipt_date);
+      const now = new Date();
       
       const matchesSupplier = supplierFilter === 'all' || supplierName === supplierFilter;
       const matchesDocumentType = documentTypeFilter === 'all' || documentTypeName === documentTypeFilter;
       
-      return matchesSupplier && matchesDocumentType;
+      // Period filter
+      let matchesPeriod = true;
+      if (periodFilter !== 'all') {
+        const timeDiff = now.getTime() - receiptDate.getTime();
+        const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+        
+        switch (periodFilter) {
+          case 'week':
+            matchesPeriod = daysDiff <= 7;
+            break;
+          case 'month':
+            matchesPeriod = daysDiff <= 30;
+            break;
+          case 'quarter':
+            matchesPeriod = daysDiff <= 90;
+            break;
+          case 'year':
+            matchesPeriod = daysDiff <= 365;
+            break;
+        }
+      }
+      
+      return matchesSupplier && matchesDocumentType && matchesPeriod;
     });
-  }, [receiptsArray, supplierFilter, documentTypeFilter]);
+  }, [receiptsArray, supplierFilter, documentTypeFilter, periodFilter]);
 
   // Handlers
   const onSubmit = (data: SupplierReceiptFormData) => {
@@ -561,6 +586,19 @@ export default function SupplierReceipts() {
                   ))}
                 </SelectContent>
               </Select>
+              
+              <Select value={periodFilter} onValueChange={setPeriodFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Фільтр за періодом" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Усі періоди</SelectItem>
+                  <SelectItem value="week">Останній тиждень</SelectItem>
+                  <SelectItem value="month">Останній місяць</SelectItem>
+                  <SelectItem value="quarter">Останній квартал</SelectItem>
+                  <SelectItem value="year">Останній рік</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center justify-between text-sm text-gray-600">
               <span>Знайдено: {filteredReceipts.length} з {receiptsArray.length} приходів</span>
@@ -602,6 +640,19 @@ export default function SupplierReceipts() {
             </>
           )}
           expandableContent={(receipt) => <ReceiptItemsView receiptId={receipt.id} />}
+          expandedItems={expandedItems}
+          onToggleExpand={(itemId) => {
+            const id = typeof itemId === 'string' ? parseInt(itemId) : itemId;
+            setExpandedItems(prev => {
+              const newSet = new Set(prev);
+              if (newSet.has(id)) {
+                newSet.delete(id);
+              } else {
+                newSet.add(id);
+              }
+              return newSet;
+            });
+          }}
         />
       </main>
     </div>
