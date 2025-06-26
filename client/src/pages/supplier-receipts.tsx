@@ -604,7 +604,7 @@ export default function SupplierReceipts() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-emerald-700 font-medium">Загальна сума приходів</p>
-                  <p className="text-3xl font-bold text-emerald-900">{statistics.totalAmount.toFixed(0)} ₴</p>
+                  <p className="text-3xl font-bold text-emerald-900">{statistics.totalAmount.toLocaleString('uk-UA', { maximumFractionDigits: 0 })} ₴</p>
                   <p className="text-sm text-emerald-600 mt-1">Сума всіх приходів</p>
                 </div>
                 <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
