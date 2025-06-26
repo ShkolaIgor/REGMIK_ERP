@@ -325,7 +325,7 @@ export function DataTable({
 
   const renderTableView = () => (
     <div className={cn(
-      "overflow-auto rounded-lg",
+      "overflow-x-auto rounded-lg",
       settings.showVerticalLines ? "border" : ""
     )}>
       <table className="w-full">
