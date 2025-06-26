@@ -384,28 +384,43 @@ export default function BOMPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {parentProducts.map((product: Product) => (
-              <Card 
-                key={product.id} 
-                className={`cursor-pointer transition-colors hover:bg-accent ${
-                  selectedProductId === product.id ? "border-primary bg-accent" : ""
-                }`}
-                onClick={() => {
-                  console.log("Setting selectedProductId to:", product.id);
-                  setSelectedProductId(product.id);
-                }}
-              >
-                <CardContent className="p-4">
-                  <div className="space-y-2">
-                    <h4 className="font-medium">{product.name}</h4>
-                    <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
-                    <Badge variant="outline">{product.productType}</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <DataTable 
+            data={parentProducts} 
+            columns={[
+              { 
+                key: 'name', 
+                header: 'Назва продукту', 
+                sortable: true, 
+                searchable: true 
+              },
+              { 
+                key: 'sku', 
+                header: 'SKU', 
+                sortable: true, 
+                searchable: true 
+              },
+              { 
+                key: 'productType', 
+                header: 'Тип продукту', 
+                sortable: true 
+              }
+            ]}
+            onRowClick={(product) => {
+              console.log("Setting selectedProductId to:", product.id);
+              setSelectedProductId(product.id);
+            }}
+            selectedRowId={selectedProductId}
+            cardTemplate={(product) => (
+              <div className="space-y-2">
+                <h4 className="font-medium">{product.name}</h4>
+                <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
+                <Badge variant="outline">{product.productType}</Badge>
+              </div>
+            )}
+            tableId="bom-products"
+            defaultView="cards"
+            defaultPageSize={12}
+          />
         </CardContent>
       </Card>
 
