@@ -9905,14 +9905,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      console.log('Starting BOM XML import');
-      console.log('XML structure keys:', Object.keys(result));
-      console.log('Full XML structure:', JSON.stringify(result, null, 2));
       const xmlContent = req.file.buffer.toString('utf-8');
+      console.log('Starting BOM XML import');
       
       // Parse XML content
       const parser = new xml2js.Parser({ explicitArray: false });
       const result = await parser.parseStringPromise(xmlContent);
+      
+      console.log('XML structure keys:', Object.keys(result));
+      console.log('Full XML structure:', JSON.stringify(result, null, 2));
       
       let imported = 0;
       let errors: string[] = [];
