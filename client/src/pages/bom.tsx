@@ -320,7 +320,7 @@ export default function BOMPage() {
                     <Layers className="w-4 h-4 text-emerald-600" />
                     <p className="text-sm text-emerald-700 font-medium">Компонентів</p>
                   </div>
-                  <p className="text-3xl font-bold text-emerald-900 mb-1">{components.length}</p>
+                  <p className="text-3xl font-bold text-emerald-900 mb-1">{(components as any[] || []).length}</p>
                   <p className="text-xs text-emerald-600">Всього у складі</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
@@ -358,7 +358,7 @@ export default function BOMPage() {
                     <FileText className="w-4 h-4 text-orange-600" />
                     <p className="text-sm text-orange-700 font-medium">Активні компоненти</p>
                   </div>
-                  <p className="text-3xl font-bold text-orange-900 mb-1">{selectedProduct ? components.filter(c => c.parentProductId === selectedProductId).length : 0}</p>
+                  <p className="text-3xl font-bold text-orange-900 mb-1">{selectedProduct ? (components as any[] || []).filter((c: any) => c.parentProductId === selectedProductId).length : 0}</p>
                   <p className="text-xs text-orange-600">У обраному товарі</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
@@ -422,17 +422,17 @@ export default function BOMPage() {
                 <CardDescription>
                   Компоненти та матеріали, що входять до складу продукту
                 </CardDescription>
-                {components && (components as ProductComponent[]).length > 0 && (
+                {components && Array.isArray(components) && components.length > 0 ? (
                   <div className="mt-2 flex items-center gap-4">
                     <Badge variant="outline" className="flex items-center gap-1">
                       <Calculator className="h-3 w-3" />
                       Загальна вартість: {totalCost.toFixed(2)} грн
                     </Badge>
                     <Badge variant="secondary">
-                      Компонентів: {(components as ProductComponent[]).length}
+                      Компонентів: {components.length}
                     </Badge>
                   </div>
-                )}
+                ) : null}
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm">
