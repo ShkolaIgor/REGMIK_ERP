@@ -132,7 +132,7 @@ const defaultColumnSettings: ColumnSettings = {
 };
 
 const defaultSettings: DataTableSettings = {
-  pageSize: 25,
+  pageSize: 10,
   columnOrder: [],
   columnWidths: {},
   columnSettings: {},
@@ -272,15 +272,6 @@ export function DataTable({
   }, [data.length, settings.pageSize]);
 
   const totalPages = Math.ceil(sortedData.length / settings.pageSize);
-  
-  // Debug pagination
-  console.log('Pagination debug:', {
-    dataLength: data.length,
-    sortedDataLength: sortedData.length,
-    pageSize: settings.pageSize,
-    totalPages,
-    currentPage
-  });
 
   const handleSort = (columnKey: string) => {
     const newDirection = settings.sortField === columnKey && settings.sortDirection === 'asc' ? 'desc' : 'asc';
