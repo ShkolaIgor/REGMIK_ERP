@@ -413,37 +413,75 @@ export default function Clients() {
       key: "name",
       label: "Назва клієнта",
       sortable: true,
-      width: 200
+      width: 200,
+      render: (value: string, client: any) => (
+        <div className="font-medium">{value}</div>
+      )
     },
     {
       key: "taxCode", 
       label: "ЄДРПОУ/ІПН",
       sortable: true,
-      width: 150
+      width: 150,
+      render: (value: string) => (
+        <span className="font-mono text-sm">{value}</span>
+      )
     },
     {
       key: "clientType",
       label: "Тип",
       sortable: true,
-      width: 120
+      width: 120,
+      render: (value: string, client: any) => {
+        const clientType = clientTypes?.find((type: any) => type.id === client.clientTypeId);
+        return (
+          <div className="flex items-center gap-2">
+            {clientType?.name === "Юридична особа" ? (
+              <Building2 className="h-4 w-4 text-blue-600" />
+            ) : (
+              <User className="h-4 w-4 text-green-600" />
+            )}
+            <span className="text-sm">{value}</span>
+          </div>
+        );
+      }
     },
     {
       key: "isActive",
       label: "Статус",
       sortable: true,
-      width: 100
+      width: 100,
+      render: (value: boolean) => (
+        <Badge variant={value ? "default" : "secondary"} className="text-xs">
+          {value ? "Активний" : "Неактивний"}
+        </Badge>
+      )
     },
     {
       key: "discount",
       label: "Знижка",
       sortable: true,
-      width: 100
+      width: 100,
+      render: (value: string, client: any) => {
+        const discountValue = parseFloat(client.discount || "0");
+        return discountValue > 0 ? (
+          <Badge variant="outline" className="text-green-600 text-xs">
+            <Percent className="h-3 w-3 mr-1" />
+            -{discountValue}%
+          </Badge>
+        ) : (
+          <span className="text-muted-foreground text-sm">0%</span>
+        );
+      }
     },
     {
       key: "createdAt",
       label: "Створено",
       sortable: true,
-      width: 120
+      width: 120,
+      render: (value: string) => (
+        <span className="text-sm text-muted-foreground">{value}</span>
+      )
     }
   ];
 
@@ -453,9 +491,7 @@ export default function Clients() {
     return {
       ...client,
       clientType: clientType?.name || "Невизначено",
-      discount: client.discount ? `${client.discount}%` : "0%",
-      createdAt: new Date(client.createdAt).toLocaleDateString('uk-UA'),
-      isActive: client.isActive ? "Активний" : "Неактивний"
+      createdAt: new Date(client.createdAt).toLocaleDateString('uk-UA')
     };
   });
 
