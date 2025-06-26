@@ -9896,7 +9896,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // BOM XML Import API
-  app.post("/api/import-bom", isSimpleAuthenticated, upload.single('xmlFile'), async (req, res) => {
+  app.post("/api/import-bom", upload.single('xmlFile'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ 
