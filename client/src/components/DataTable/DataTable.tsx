@@ -972,6 +972,11 @@ export function DataTable({
       {/* Data Display */}
       {settings.viewMode === 'table' ? renderTableView() : renderCardView()}
 
+      {/* Pagination Debug */}
+      <div className="text-xs bg-yellow-100 p-2 mb-2 rounded">
+        Debug: total={sortedData.length}, pageSize={settings.pageSize}, totalPages={totalPages}, condition={(totalPages > 1 || sortedData.length > settings.pageSize)}
+      </div>
+
       {/* Pagination */}
       {(totalPages > 1 || sortedData.length > settings.pageSize) && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t">
