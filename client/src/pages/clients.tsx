@@ -13,12 +13,80 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ClientContactsXmlImport } from "@/components/ClientContactsXmlImport";
 import { ClientsXmlImport } from "@/components/ClientsXmlImport";
+import { DataTable } from "@/components/DataTable/DataTable";
 import { 
   Search, Plus, Edit, User, Building2, Truck, Package, Percent,
-  Users, Phone, Mail, MapPin, UserPlus, Trash2, MoreVertical, Upload, FileText 
+  Users, Phone, Mail, MapPin, UserPlus, Trash2, MoreVertical, Upload, FileText, Download 
 } from "lucide-react";
 import { Client, type InsertClient } from "@shared/schema";
 import ClientForm from "@/components/ClientForm";
+
+// ClientContactsPopup компонент
+function ClientContactsPopup({ 
+  clientId, 
+  clientName, 
+  isOpen, 
+  onClose 
+}: { 
+  clientId: number; 
+  clientName: string; 
+  isOpen: boolean; 
+  onClose: () => void; 
+}) {
+  const { data: contacts = [] } = useQuery({
+    queryKey: [`/api/client-contacts/${clientId}`],
+    enabled: isOpen && !!clientId
+  });
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Контакти клієнта: {clientName}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          {contacts.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">
+              У цього клієнта поки немає контактів
+            </p>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {contacts.map((contact: any) => (
+                <Card key={contact.id} className="p-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold">{contact.fullName}</h4>
+                      {contact.isMain && (
+                        <Badge variant="outline" className="text-xs">
+                          Основний
+                        </Badge>
+                      )}
+                    </div>
+                    {contact.position && (
+                      <p className="text-sm text-muted-foreground">{contact.position}</p>
+                    )}
+                    {contact.primaryPhone && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span>{contact.primaryPhone}</span>
+                      </div>
+                    )}
+                    {contact.email && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span>{contact.email}</span>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 // Schema for contact form
 const contactFormSchema = z.object({
@@ -339,56 +407,340 @@ export default function Clients() {
     }
   };
 
+  // Підготовка даних для DataTable
+  const columns = [
+    {
+      key: "name",
+      label: "Назва клієнта",
+      sortable: true,
+      width: 200
+    },
+    {
+      key: "taxCode", 
+      label: "ЄДРПОУ/ІПН",
+      sortable: true,
+      width: 150
+    },
+    {
+      key: "clientType",
+      label: "Тип",
+      sortable: true,
+      width: 120
+    },
+    {
+      key: "isActive",
+      label: "Статус",
+      sortable: true,
+      width: 100
+    },
+    {
+      key: "discount",
+      label: "Знижка",
+      sortable: true,
+      width: 100
+    },
+    {
+      key: "createdAt",
+      label: "Створено",
+      sortable: true,
+      width: 120
+    }
+  ];
+
+  // Обробка даних для відображення в таблиці
+  const processedClients = clients.map(client => {
+    const clientType = clientTypes?.find((type: any) => type.id === client.clientTypeId);
+    return {
+      ...client,
+      clientType: clientType?.name || "Невизначено",
+      discount: client.discount ? `${client.discount}%` : "0%",
+      createdAt: new Date(client.createdAt).toLocaleDateString('uk-UA'),
+      isActive: client.isActive ? "Активний" : "Неактивний"
+    };
+  });
+
+  // Card template для відображення клієнтів у режимі карток
+  const clientCardTemplate = (client: any) => (
+    <Card key={client.id} className="h-full">
+      <CardHeader className="pb-3">
+        <div className="flex items-start space-x-3 mb-3">
+          {(() => {
+            const clientType = clientTypes?.find((type: any) => type.id === client.clientTypeId);
+            return clientType?.name === "Юридична особа" ? (
+              <Building2 className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            ) : (
+              <User className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+            );
+          })()}
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-lg leading-tight">{client.name}</CardTitle>
+          </div>
+        </div>
+        
+        <div className="flex justify-between items-center mb-3">
+          <CardDescription className="text-sm">
+            {(() => {
+              const clientType = clientTypes?.find((type: any) => type.id === client.clientTypeId);
+              return clientType?.name === "Фізична особа" ? "ІПН" : "ЄДРПОУ";
+            })()}: <span className="font-bold text-base text-foreground">{client.taxCode}</span>
+          </CardDescription>
+          <div className="flex space-x-1 flex-shrink-0">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => openAddContactDialog(client.id.toString())}
+              className="text-blue-600 hover:text-blue-700 h-8 w-8 p-0"
+              title="Додати контакт"
+            >
+              <UserPlus className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleViewContacts(client.id, client.name)}
+              className="text-indigo-600 hover:text-indigo-700 h-8 w-8 p-0"
+              title="Переглянути всі контакти"
+            >
+              <Users className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => window.location.href = `/clients/${client.id}/nova-poshta-settings`}
+              className="text-green-600 hover:text-green-700 h-8 w-8 p-0"
+              title="API налаштування Нової Пошти"
+            >
+              <Truck className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => window.location.href = `/clients/${client.id}/delivery-settings`}
+              className="text-purple-600 hover:text-purple-700 h-8 w-8 p-0"
+              title="Налаштування доставки"
+            >
+              <Package className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => handleEdit(client)} className="h-8 w-8 p-0">
+              <Edit className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Badge variant={client.isActive ? "default" : "secondary"} className="text-xs">
+            {client.isActive ? "Активний" : "Неактивний"}
+          </Badge>
+
+          {client.isCustomer && (
+            <Badge variant="outline" className="text-blue-600 border-blue-600 text-xs">
+              Покупець
+            </Badge>
+          )}
+
+          {client.isSupplier && (
+            <Badge variant="outline" className="text-purple-600 border-purple-600 text-xs">
+              Постачальник
+            </Badge>
+          )}
+
+          {client.discount && parseFloat(client.discount) > 0 && (
+            <Badge variant="outline" className="text-green-600 text-xs">
+              <Percent className="h-3 w-3 mr-1" />
+              -{client.discount}%
+            </Badge>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="space-y-3 text-sm">
+          {client.fullName && (
+            <div>
+              <span className="font-medium text-foreground">Повна назва:</span>
+              <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{client.fullName}</p>
+            </div>
+          )}
+          {client.legalAddress && (
+            <div>
+              <span className="font-medium text-foreground">Юридична адреса:</span>
+              <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{client.legalAddress}</p>
+            </div>
+          )}
+          {client.physicalAddress && !client.addressesMatch && (
+            <div>
+              <span className="font-medium text-foreground">Фактична адреса:</span>
+              <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{client.physicalAddress}</p>
+            </div>
+          )}
+          {client.notes && (
+            <div>
+              <span className="font-medium text-foreground">Примітки:</span>
+              <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{client.notes}</p>
+            </div>
+          )}
+          
+          {/* Дати створення та оновлення */}
+          <div className="pt-2 border-t border-border">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Створено: {new Date(client.createdAt).toLocaleDateString('uk-UA')}</span>
+              {client.updatedAt && client.updatedAt !== client.createdAt && (
+                <span>Оновлено: {new Date(client.updatedAt).toLocaleDateString('uk-UA')}</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="w-full px-4 py-3">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Клієнти</h1>
-          <p className="text-muted-foreground">
-            Управління клієнтами з ЄДРПОУ або ІПН
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2">
-          {/*  <Button 
-            variant="outline"
-            onClick={() => setIsImportDialogOpen(true)}
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            Імпорт клієнтів XML 1
-          </Button>
-          */}
-          <ClientsXmlImport />
-          <ClientContactsXmlImport />
-          <Button onClick={() => {
-            setEditingClient(null);
-            setIsDialogOpen(true);
-          }}>
-            <Plus className="mr-2 h-4 w-4" />
-            Додати клієнта
-          </Button>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header Section */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
+        <div className="w-full px-8 py-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                    Клієнти
+                  </h1>
+                  <p className="text-gray-600 mt-1">Управління базою клієнтів з ЄДРПОУ або ІПН</p>
+                </div>
+              </div>
+            </div>
+          <div className="flex items-center space-x-4">
+            <ClientsXmlImport />
+            <ClientContactsXmlImport />
+            <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
+              <Download className="h-4 w-4 mr-2" />
+              Експорт
+            </Button>
+            <Button 
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+              onClick={() => {
+                setEditingClient(null);
+                setIsDialogOpen(true);
+              }}>
+              <Plus className="mr-2 h-4 w-4" />
+              Додати клієнта
+            </Button>
+          </div>
+            </div>
         </div>
       </div>
 
-      {/* Поле пошуку */}
-      <div className="mb-6">
-        <SearchInput 
-          value={searchQuery}
-          onChange={handleSearchChange}
-        />
-        {debouncedSearch && (
-          <p className="text-sm text-muted-foreground mt-2">
-            Знайдено: {total} клієнтів за запитом "{debouncedSearch}"
-          </p>
-        )}
-      </div>
+      {/* Statistics Cards */}
+      <div className="w-full px-8 py-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Users className="w-4 h-4 text-blue-600" />
+                    <p className="text-sm text-blue-700 font-medium">Всього клієнтів</p>
+                  </div>
+                  <p className="text-3xl font-bold text-blue-900 mb-1">{total}</p>
+                  <p className="text-xs text-blue-600">Активних та неактивних</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-      <ClientsList 
-        clients={clients}
-        clientTypes={clientTypes}
-        onEdit={handleEdit}
-        onAddContact={openAddContactDialog}
-        onViewContacts={handleViewContacts}
-      />
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <User className="w-4 h-4 text-emerald-600" />
+                    <p className="text-sm text-emerald-700 font-medium">Покупці</p>
+                  </div>
+                  <p className="text-3xl font-bold text-emerald-900 mb-1">{clients.filter(c => c.isCustomer).length}</p>
+                  <p className="text-xs text-emerald-600">Активних покупців</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <User className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Truck className="w-4 h-4 text-purple-600" />
+                    <p className="text-sm text-purple-700 font-medium">Постачальники</p>
+                  </div>
+                  <p className="text-3xl font-bold text-purple-900 mb-1">{clients.filter(c => c.isSupplier).length}</p>
+                  <p className="text-xs text-purple-600">Активних постачальників</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Truck className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Building2 className="w-4 h-4 text-orange-600" />
+                    <p className="text-sm text-orange-700 font-medium">Юридичні особи</p>
+                  </div>
+                  <p className="text-3xl font-bold text-orange-900 mb-1">{clients.filter(c => {
+                    const clientType = clientTypes?.find((type: any) => type.id === c.clientTypeId);
+                    return clientType?.name === "Юридична особа";
+                  }).length}</p>
+                  <p className="text-xs text-orange-600">Компаній у системі</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Building2 className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* DataTable Section */}
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-xl">
+          <div className="p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">База клієнтів</h2>
+                  <p className="text-gray-600">Повний перелік клієнтів з фільтрацією та пошуком</p>
+                </div>
+              </div>
+            </div>
+            
+            <DataTable
+              data={processedClients}
+              columns={columns}
+              searchPlaceholder="Пошук клієнтів за назвою, ЄДРПОУ або типом..."
+              pageSize={20}
+              cardTemplate={clientCardTemplate}
+              tableName="clients"
+              onRowClick={(client) => handleEdit(client)}
+            />
+          </div>
+        </div>
 
       {/* Client Contacts Popup */}
       {contactsPopup && (
@@ -400,327 +752,22 @@ export default function Clients() {
         />
       )}
 
-      {/* Пагінація */}
-      {clients.length > 0 && (
-        <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <p className="text-sm text-muted-foreground">
-              Показано {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, total)} з {total} клієнтів
-            </p>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">На сторінці:</span>
-              <Select value={pageSize.toString()} onValueChange={(value) => {
-                setPageSize(Number(value));
-                setCurrentPage(1);
-              }}>
-                <SelectTrigger className="w-20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                  <SelectItem value="1000">Всі</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
-            >
-              Перша
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-            >
-              Попередня
-            </Button>
-            <div className="flex items-center space-x-1">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-                
-                return (
-                  <Button
-                    key={pageNum}
-                    variant={currentPage === pageNum ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setCurrentPage(pageNum)}
-                  >
-                    {pageNum}
-                  </Button>
-                );
-              })}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Наступна
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage === totalPages}
-            >
-              Остання
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {clients.length === 0 && !isLoading && (
-        <Card>
-          <CardContent className="p-6 text-center">
-            <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">
-              {debouncedSearch ? "Клієнти не знайдені" : "Немає клієнтів"}
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              {debouncedSearch 
-                ? `За запитом "${debouncedSearch}" нічого не знайдено`
-                : "Додайте першого клієнта з ЄДРПОУ або ІПН"
-              }
-            </p>
-            {!debouncedSearch && (
-              <Button onClick={() => setIsDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Додати клієнта
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Діалог редагування клієнта */}
+      {/* Dialog for creating/editing clients */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>
               {editingClient ? "Редагувати клієнта" : "Додати клієнта"}
             </DialogTitle>
           </DialogHeader>
           <ClientForm
-            editingClient={editingClient}
+            client={editingClient}
             onSubmit={handleSubmit}
-            onCancel={() => {
-              setIsDialogOpen(false);
-              setEditingClient(null);
-            }}
-            onDelete={editingClient ? () => handleDelete(editingClient.id.toString()) : undefined}
-            onViewContacts={(clientId, clientName) => {
-              setContactsPopup({ clientId, clientName });
-              setIsDialogOpen(false);
-            }}
+            onDelete={editingClient ? handleDelete : undefined}
           />
         </DialogContent>
       </Dialog>
-     
-      {/* Import XML Dialog
-      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Імпорт клієнтів з XML old</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <input
-                type="file"
-                accept=".xml"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    
-                    // Викликаємо API для імпорту клієнтів
-                    fetch('/api/clients/import', {
-                      method: 'POST',
-                      body: formData,
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                      if (data.success) {
-                        toast({
-                          title: "Імпорт завершено",
-                          description: `Імпортовано ${data.imported} клієнтів`,
-                        });
-                        queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
-                        setIsImportDialogOpen(false);
-                      } else {
-                        toast({
-                          title: "Помилка імпорту",
-                          description: data.message || "Не вдалося імпортувати клієнтів",
-                          variant: "destructive",
-                        });
-                      }
-                    })
-                    .catch(error => {
-                      toast({
-                        title: "Помилка",
-                        description: "Не вдалося завантажити файл",
-                        variant: "destructive",
-                      });
-                    });
-                  }
-                }}
-                className="hidden"
-                id="xml-upload"
-              />
-              <label htmlFor="xml-upload" className="cursor-pointer">
-                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-lg font-medium">Оберіть XML файл</p>
-                <p className="text-gray-500">або перетягніть файл сюди</p>
-              </label>
-            </div>
-            
-            <div className="text-sm text-gray-600">
-              <p className="font-medium mb-2">Формат XML файлу:</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>EDRPOU - код ЄДРПОУ/ІПН</li>
-                <li>PREDPR - коротка назва</li>
-                <li>NAME - повна назва</li>
-                <li>ADDRESS_PHYS - фізична адреса</li>
-                <li>COMMENT - коментар</li>
-              </ul>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-      */}
-      
-      {/* Contact Add Dialog */}
-      <Dialog open={isContactDialogOpen} onOpenChange={setIsContactDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Додати контакт</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Ім'я контакту *</label>
-              <Input 
-                placeholder="Введіть ім'я контакту" 
-                value={contactFormData.fullName}
-                onChange={(e) => setContactFormData(prev => ({ ...prev, fullName: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Посада</label>
-              <Input 
-                placeholder="Введіть посаду" 
-                value={contactFormData.position}
-                onChange={(e) => setContactFormData(prev => ({ ...prev, position: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Телефон</label>
-              <Input 
-                placeholder="Введіть номер телефону" 
-                value={contactFormData.primaryPhone}
-                onChange={(e) => setContactFormData(prev => ({ ...prev, primaryPhone: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
-              <Input 
-                placeholder="Введіть email" 
-                value={contactFormData.email}
-                onChange={(e) => setContactFormData(prev => ({ ...prev, email: e.target.value }))}
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => {
-                setIsContactDialogOpen(false);
-                setContactFormData({
-                  fullName: "",
-                  position: "",
-                  primaryPhone: "",
-                  email: ""
-                });
-              }}>
-                Скасувати
-              </Button>
-              <Button 
-                disabled={!contactFormData.fullName.trim()}
-                onClick={async () => {
-                  try {
-                    await apiRequest('/api/client-contacts', {
-                      method: 'POST',
-                      body: {
-                        clientId: parseInt(selectedClientForContact),
-                        fullName: contactFormData.fullName,
-                        position: contactFormData.position || '',
-                        email: contactFormData.email || '',
-                        primaryPhone: contactFormData.primaryPhone || '',
-                        primaryPhoneType: 'mobile',
-                        secondaryPhone: '',
-                        secondaryPhoneType: 'office',
-                        tertiaryPhone: '',
-                        tertiaryPhoneType: 'fax',
-                        notes: '',
-                        isPrimary: false,
-                        isActive: true,
-                        source: 'manual'
-                      }
-                    });
-                    
-                    toast({
-                      title: "Контакт додано",
-                      description: "Контакт успішно створено",
-                    });
-                    
-                    queryClient.invalidateQueries({ queryKey: ['/api/client-contacts'] });
-                    setIsContactDialogOpen(false);
-                    setContactFormData({
-                      fullName: "",
-                      position: "",
-                      primaryPhone: "",
-                      email: ""
-                    });
-                  } catch (error) {
-                    toast({
-                      title: "Помилка",
-                      description: "Не вдалося створити контакт",
-                      variant: "destructive",
-                    });
-                  }
-                }}
-              >
-                Додати
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Client Contacts Popup */}
-      {contactsPopup && (
-        <ClientContactsPopup
-          clientId={contactsPopup.clientId}
-          clientName={contactsPopup.clientName}
-          isOpen={!!contactsPopup}
-          onClose={() => setContactsPopup(null)}
-        />
-      )}
+      </div>
     </div>
   );
 }
