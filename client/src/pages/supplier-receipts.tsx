@@ -371,7 +371,23 @@ export default function SupplierReceipts() {
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700">
+                <Button 
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                  onClick={() => {
+                    setEditingReceipt(null);
+                    form.reset({
+                      receipt_date: new Date().toISOString().split('T')[0],
+                      supplier_id: "",
+                      document_type_id: "",
+                      supplier_document_date: "",
+                      supplier_document_number: "",
+                      total_amount: "",
+                      comment: "",
+                      purchase_order_id: "",
+                    });
+                    setIsDialogOpen(true);
+                  }}
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Новий прихід
                 </Button>
