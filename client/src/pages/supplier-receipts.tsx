@@ -327,12 +327,12 @@ export default function SupplierReceipts() {
                   );
                 })}
               </tbody>
-              <tfoot className="bg-gradient-to-r from-gray-100 to-gray-200">
+              <tfoot className="bg-gradient-to-r from-blu-50 to-blue-10">
                 <tr>
                   <td colSpan={4} className="px-5 py-2 text-right font-semibold text-gray-700 border-t-2 border-gray-300">
                     Загальна сума позицій:
                   </td>
-                  <td className="px-5 py-2 text-center border-t-2 border-gray-300">
+                  <td className="px-5 py-2 text-center border-t-2 ">
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-base font-bold bg-green-200 text-green-900">
                       {receiptItems.reduce((sum: number, item: any) => sum + parseFloat(item.total_price), 0).toFixed(2)} ₴
                     </span>
@@ -585,7 +585,7 @@ export default function SupplierReceipts() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-emerald-700 font-medium">Загальна сума приходів</p>
-                  <p className="text-3xl font-bold text-emerald-900">{statistics.totalAmount.toFixed(2)} ₴</p>
+                  <p className="text-3xl font-bold text-emerald-900">{statistics.totalAmount.toFixed(0)} ₴</p>
                   <p className="text-sm text-emerald-600 mt-1">Сума всіх приходів</p>
                 </div>
                 <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
