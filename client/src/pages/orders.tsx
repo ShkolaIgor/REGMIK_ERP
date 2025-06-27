@@ -150,12 +150,15 @@ export default function Orders() {
     queryKey: ["/api/order-statuses"],
   });
 
-  const { data: clients } = useQuery({
+  const { data: clientsData } = useQuery({
     queryKey: ["/api/clients"],
   });
 
+  // Safely extract data with proper typing
   const orders = ordersData?.orders || [];
   const totalOrders = ordersData?.total || 0;
+  const clients = clientsData?.clients || [];
+  const orderStatusesList = orderStatuses || [];
 
   // Calculate statistics
   const totalRevenue = orders.reduce((sum: number, order: Order) => {
@@ -301,7 +304,7 @@ export default function Orders() {
       label: "Статус",
       sortable: true,
       render: (value: string) => {
-        const status = orderStatuses?.find((s: OrderStatus) => s.name === value);
+        const status = orderStatusesList?.find((s: OrderStatus) => s.name === value);
         return (
           <Badge 
             style={{
@@ -349,8 +352,8 @@ export default function Orders() {
       <div className="flex justify-between items-center">
         <Badge 
           style={{
-            backgroundColor: orderStatuses?.find((s: OrderStatus) => s.name === order.status)?.backgroundColor || '#e5e7eb',
-            color: orderStatuses?.find((s: OrderStatus) => s.name === order.status)?.textColor || '#374151'
+            backgroundColor: orderStatusesList?.find((s: OrderStatus) => s.name === order.status)?.backgroundColor || '#e5e7eb',
+            color: orderStatusesList?.find((s: OrderStatus) => s.name === order.status)?.textColor || '#374151'
           }}
         >
           {order.status}
@@ -510,7 +513,7 @@ export default function Orders() {
                 </div>
               )}
               storageKey="orders-table"
-              isLoading={ordersLoading}
+              loading={ordersLoading}
             />
           </CardContent>
         </Card>
@@ -594,7 +597,7 @@ export default function Orders() {
                     <SelectValue placeholder="Оберіть статус" />
                   </SelectTrigger>
                   <SelectContent>
-                    {orderStatuses?.map((status: OrderStatus) => (
+                    {orderStatusesList?.map((status: OrderStatus) => (
                       <SelectItem key={status.id} value={status.name}>
                         {status.name}
                       </SelectItem>
@@ -670,8 +673,8 @@ export default function Orders() {
                       <span className="text-gray-600">Статус:</span>
                       <Badge 
                         style={{
-                          backgroundColor: orderStatuses?.find((s: OrderStatus) => s.name === selectedOrder.status)?.backgroundColor || '#e5e7eb',
-                          color: orderStatuses?.find((s: OrderStatus) => s.name === selectedOrder.status)?.textColor || '#374151'
+                          backgroundColor: orderStatusesList?.find((s: OrderStatus) => s.name === selectedOrder.status)?.backgroundColor || '#e5e7eb',
+                          color: orderStatusesList?.find((s: OrderStatus) => s.name === selectedOrder.status)?.textColor || '#374151'
                         }}
                       >
                         {selectedOrder.status}
