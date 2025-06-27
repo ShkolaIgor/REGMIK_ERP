@@ -47,7 +47,9 @@ export default function Recipes() {
 
   // Фільтровані дані для пошуку
   const filteredRecipes = Array.isArray(recipes) ? recipes.filter(recipe => {
-    const matchesSearch = recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    if (!recipe || typeof recipe !== 'object') return false;
+    
+    const matchesSearch = recipe.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (recipe.description && recipe.description.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesType = typeFilter === "all" || 
@@ -63,11 +65,12 @@ export default function Recipes() {
 
   // Статистичні дані
   const totalRecipes = Array.isArray(recipes) ? recipes.length : 0;
-  const recipesWithProduct = Array.isArray(recipes) ? recipes.filter(r => r.productId).length : 0;
-  const averageTime = Array.isArray(recipes) && recipes.length > 0 
-    ? Math.round(recipes.filter(r => r.estimatedTime).reduce((sum, r) => sum + (r.estimatedTime || 0), 0) / recipes.filter(r => r.estimatedTime).length) 
+  const recipesWithProduct = Array.isArray(recipes) ? recipes.filter(r => r && r.productId).length : 0;
+  const validRecipesWithTime = Array.isArray(recipes) ? recipes.filter(r => r && r.estimatedTime) : [];
+  const averageTime = validRecipesWithTime.length > 0 
+    ? Math.round(validRecipesWithTime.reduce((sum, r) => sum + (r.estimatedTime || 0), 0) / validRecipesWithTime.length) 
     : 0;
-  const totalLaborCost = Array.isArray(recipes) ? recipes.reduce((sum, r) => sum + Number(r.laborCost || 0), 0) : 0;
+  const totalLaborCost = Array.isArray(recipes) ? recipes.reduce((sum, r) => sum + Number(r?.laborCost || 0), 0) : 0;
 
   const createMutation = useMutation({
     mutationFn: async (data: { recipe: InsertRecipe; ingredients: RecipeIngredientForm[] }) => {
