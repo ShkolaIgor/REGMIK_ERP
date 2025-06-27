@@ -160,10 +160,10 @@ export default function Orders() {
   });
 
   // Safely extract data with proper typing
-  const orders = ordersData?.orders || [];
-  const totalOrders = ordersData?.total || 0;
-  const clients = clientsData?.clients || [];
-  const orderStatusesList = orderStatuses || [];
+  const orders = (ordersData as any)?.orders || [];
+  const totalOrders = (ordersData as any)?.total || 0;
+  const clients = (clientsData as any)?.clients || [];
+  const orderStatusesList = (orderStatuses as OrderStatus[]) || [];
 
   // Calculate statistics
   const totalRevenue = orders.reduce((sum: number, order: Order) => {
