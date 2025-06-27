@@ -27,6 +27,12 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   LayoutDashboard,
   Package,
   Warehouse,
@@ -289,14 +295,16 @@ function AppSidebar() {
 export function Layout({ children }: LayoutProps) {
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full">
-        <AppSidebar />
-        <SidebarInset>
-          <main className="flex-1 overflow-auto p-4 lg:p-6">
-            {children}
-          </main>
-        </SidebarInset>
-      </div>
+      <TooltipProvider>
+        <div className="flex h-screen w-full">
+          <AppSidebar />
+          <SidebarInset>
+            <main className="flex-1 overflow-auto p-4 lg:p-6">
+              {children}
+            </main>
+          </SidebarInset>
+        </div>
+      </TooltipProvider>
     </SidebarProvider>
   );
 }
