@@ -1,26 +1,26 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Search, Edit, Trash, Phone, Mail, User, Check, ChevronsUpDown, ChevronLeft, ChevronRight } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { Plus, User, CheckCircle, Grid3X3, Phone, Mail, Search, Upload, Download, Edit, Trash, AlertTriangle, Users, Building2 } from "lucide-react";
+import { DataTable } from "@/components/DataTable/DataTable";
+import { SearchFilters } from "@/components/SearchFilters";
+import { useAuth } from "@/hooks/useAuth";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { insertClientContactSchema, type ClientContact, type Client } from "@shared/schema";
-import { ClientContactsXmlImport } from "@/components/ClientContactsXmlImport";
 import { z } from "zod";
 
+// Form schema
 const formSchema = insertClientContactSchema.extend({
   clientId: z.string().min(1, "Клієнт обов'язковий").transform((val) => parseInt(val, 10)),
   fullName: z.string().min(1, "Повне ім'я обов'язкове"),
@@ -41,31 +41,227 @@ type FormData = z.infer<typeof formSchema>;
 
 const phoneTypeLabels = {
   mobile: "Мобільний",
-  office: "Офісний",
+  office: "Офісний", 
   home: "Домашній",
   fax: "Факс"
 };
 
 export default function ClientContacts() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<ClientContact | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
-  const [filterClientId, setFilterClientId] = useState<string>("all");
-  const [filterActive, setFilterActive] = useState<string>("all");
-  const [clientSearchOpen, setClientSearchOpen] = useState(false);
-  const [clientSearchValue, setClientSearchValue] = useState("");
-  const [clientComboboxOpen, setClientComboboxOpen] = useState(false);
-  
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [editingContact, setEditingContact] = useState<ClientContact | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [clientFilter, setClientFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [positionFilter, setPositionFilter] = useState("all");
 
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+
+  // Queries
+  const { data: contactsData, isLoading } = useQuery({
+    queryKey: ["/api/client-contacts"],
+  });
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["/api/clients"],
+  });
+
+  const contacts = contactsData?.contacts || [];
+
+  // Визначення колонок для DataTable
+  const columns = [
+    {
+      key: 'fullName',
+      label: 'Повне ім\'я',
+      sortable: true,
+    },
+    {
+      key: 'clientName',
+      label: 'Клієнт',
+      sortable: true,
+      render: (value: string, row: ClientContact) => {
+        const client = clients.find((c: Client) => c.id === row.clientId);
+        return client?.name || 'Невідомий клієнт';
+      }
+    },
+    {
+      key: 'position',
+      label: 'Посада',
+      sortable: true,
+    },
+    {
+      key: 'primaryPhone',
+      label: 'Телефон',
+      sortable: true,
+      render: (value: string, row: ClientContact) => {
+        if (!value) return '-';
+        const type = phoneTypeLabels[row.primaryPhoneType as keyof typeof phoneTypeLabels] || '';
+        return (
+          <div className="flex items-center gap-1">
+            <Phone className="w-3 h-3" />
+            <span>{value}</span>
+            {type && <Badge variant="outline" className="text-xs">{type}</Badge>}
+          </div>
+        );
+      }
+    },
+    {
+      key: 'email',
+      label: 'Email',
+      sortable: true,
+      render: (value: string) => {
+        if (!value) return '-';
+        return (
+          <div className="flex items-center gap-1">
+            <Mail className="w-3 h-3" />
+            <span>{value}</span>
+          </div>
+        );
+      }
+    },
+    {
+      key: 'isPrimary',
+      label: 'Основний',
+      sortable: true,
+      render: (value: boolean) => value ? (
+        <Badge className="bg-green-100 text-green-800 text-xs">Основний</Badge>
+      ) : (
+        <Badge variant="outline" className="text-xs">Додатковий</Badge>
+      )
+    },
+    {
+      key: 'isActive',
+      label: 'Статус',
+      sortable: true,
+      render: (value: boolean) => value ? 'Активний' : 'Неактивний'
+    }
+  ];
+
+  // Фільтрування контактів
+  const filteredContacts = useMemo(() => {
+    if (!Array.isArray(contacts)) return [];
+    
+    return contacts.filter((contact: ClientContact) => {
+      const client = clients.find((c: Client) => c.id === contact.clientId);
+      
+      // Пошук
+      const matchesSearch = !searchQuery || 
+        contact.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (contact.position && contact.position.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (contact.email && contact.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (contact.primaryPhone && contact.primaryPhone.includes(searchQuery)) ||
+        (client && client.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      // Фільтр за клієнтом
+      const matchesClient = clientFilter === "all" || contact.clientId.toString() === clientFilter;
+
+      // Фільтр за статусом
+      const matchesStatus = statusFilter === "all" || 
+        (statusFilter === "active" && contact.isActive) ||
+        (statusFilter === "inactive" && !contact.isActive) ||
+        (statusFilter === "primary" && contact.isPrimary);
+
+      // Фільтр за посадою (можна розширити)
+      const matchesPosition = positionFilter === "all";
+
+      return matchesSearch && matchesClient && matchesStatus && matchesPosition;
+    });
+  }, [contacts, clients, searchQuery, clientFilter, statusFilter, positionFilter]);
+
+  // Card template для DataTable
+  const cardTemplate = (contact: ClientContact) => {
+    const client = clients.find((c: Client) => c.id === contact.clientId);
+    
+    return (
+      <Card className="h-full hover:shadow-md transition-shadow duration-200">
+        <CardHeader className="pb-2">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <CardTitle className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                <User className="w-5 h-5 text-blue-600" />
+                {contact.fullName}
+              </CardTitle>
+              <div className="flex items-center gap-2 mb-2">
+                {contact.isPrimary && (
+                  <Badge className="bg-green-100 text-green-800 text-xs">Основний контакт</Badge>
+                )}
+                {contact.isActive ? (
+                  <Badge className="bg-blue-100 text-blue-800 text-xs">Активний</Badge>
+                ) : (
+                  <Badge variant="destructive" className="text-xs">Неактивний</Badge>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="space-y-2">
+            {client && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Building2 className="w-4 h-4" />
+                <span>{client.name}</span>
+              </div>
+            )}
+            {contact.position && (
+              <div className="text-sm text-gray-600">
+                <span className="font-medium">Посада:</span> {contact.position}
+              </div>
+            )}
+            {contact.email && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Mail className="w-4 h-4" />
+                <span>{contact.email}</span>
+              </div>
+            )}
+            {contact.primaryPhone && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Phone className="w-4 h-4" />
+                <span>{contact.primaryPhone}</span>
+                <Badge variant="outline" className="text-xs">
+                  {phoneTypeLabels[contact.primaryPhoneType as keyof typeof phoneTypeLabels]}
+                </Badge>
+              </div>
+            )}
+            {contact.secondaryPhone && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Phone className="w-4 h-4" />
+                <span>{contact.secondaryPhone}</span>
+                <Badge variant="outline" className="text-xs">
+                  {phoneTypeLabels[contact.secondaryPhoneType as keyof typeof phoneTypeLabels]}
+                </Badge>
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2 mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditingContact(contact)}
+              className="flex-1"
+            >
+              <Edit className="w-3 h-3 mr-1" />
+              Редагувати
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+            >
+              <Trash className="w-3 h-3 mr-1" />
+              Видалити
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Форма
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      clientId: "",
       fullName: "",
       position: "",
       email: "",
@@ -77,308 +273,304 @@ export default function ClientContacts() {
       tertiaryPhoneType: "fax",
       notes: "",
       isPrimary: false,
-      isActive: true,
-    },
+      isActive: true
+    }
   });
 
-  // Fetch client contacts
-  const { data: contactsResponse, isLoading } = useQuery({
-    queryKey: ["/api/client-contacts", currentPage, pageSize, searchTerm, selectedClientId],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: pageSize.toString(),
-      });
-      if (searchTerm) params.append('search', searchTerm);
-      if (selectedClientId) params.append('clientId', selectedClientId.toString());
-      
-      const response = await fetch(`/api/client-contacts?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch contacts');
-      return response.json();
-    },
-  });
-
-  // Handle both paginated and non-paginated responses
-  const contacts = Array.isArray(contactsResponse) ? contactsResponse : (contactsResponse?.contacts || []);
-  const totalPages = contactsResponse?.totalPages || Math.ceil(contacts.length / pageSize);
-  const totalContacts = contactsResponse?.total || contacts.length;
-
-  // Запит для пошуку клієнтів з debounce
-  const [debouncedClientSearch, setDebouncedClientSearch] = useState("");
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedClientSearch(clientSearchValue);
-    }, 300); // 300мс затримка
-
-    return () => clearTimeout(timer);
-  }, [clientSearchValue]);
-
-  const { data: clientsData } = useQuery({
-    queryKey: ["/api/clients/search", debouncedClientSearch],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (debouncedClientSearch) {
-        params.append('q', debouncedClientSearch);
-      }
-      params.append('limit', '50');
-      
-      const response = await fetch(`/api/clients/search?${params}`);
-      if (!response.ok) throw new Error('Failed to search clients');
-      return response.json();
-    },
-    enabled: true,
-  });
-  
-  const clients = clientsData?.clients || [];
-
-  // Fetch client types for tax code labeling
-  const { data: clientTypes = [] } = useQuery({
-    queryKey: ["/api/client-types"],
-  });
-
-  // Create mutation
   const createMutation = useMutation({
-    mutationFn: (data: FormData) => {
-      return apiRequest("/api/client-contacts", {
+    mutationFn: async (data: FormData) => {
+      return await apiRequest("/api/client-contacts", {
         method: "POST",
-        body: data,
+        body: JSON.stringify(data)
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/client-contacts"] });
-      setIsDialogOpen(false);
-      setEditingItem(null);
       form.reset();
-      toast({
-        title: "Успіх",
-        description: "Контакт створено",
-      });
+      setIsCreateDialogOpen(false);
+      toast({ title: "Контакт успішно створено" });
     },
     onError: (error) => {
-      toast({
-        title: "Помилка",
-        description: error.message,
-        variant: "destructive",
+      toast({ 
+        title: "Помилка", 
+        description: error.message || "Не вдалося створити контакт",
+        variant: "destructive" 
       });
-    },
-  });
-
-  // Update mutation
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<FormData> }) => {
-      return apiRequest(`/api/client-contacts/${id}`, {
-        method: "PATCH",
-        body: data,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/client-contacts"] });
-      setIsDialogOpen(false);
-      setEditingItem(null);
-      form.reset();
-      toast({
-        title: "Успіх",
-        description: "Контакт оновлено",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Помилка",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/client-contacts/${id}`, {
-      method: "DELETE",
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/client-contacts"] });
-      toast({
-        title: "Успіх",
-        description: "Контакт видалено",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Помилка",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const openEditDialog = (item: ClientContact) => {
-    setEditingItem(item);
-    
-    // Знаходимо клієнта для встановлення назви в поле пошуку
-    const clientName = (item as any).clientName || 
-                      (clients as Client[]).find(c => c.id === item.clientId)?.name || 
-                      '';
-    setClientSearchValue(clientName);
-    
-    form.reset({
-      clientId: item.clientId.toString(),
-      fullName: item.fullName,
-      position: item.position || "",
-      email: item.email || "",
-      primaryPhone: item.primaryPhone || "",
-      primaryPhoneType: (item.primaryPhoneType as "mobile" | "office" | "home") || "mobile",
-      secondaryPhone: item.secondaryPhone || "",
-      secondaryPhoneType: (item.secondaryPhoneType as "mobile" | "office" | "home" | "fax") || "office",
-      tertiaryPhone: item.tertiaryPhone || "",
-      tertiaryPhoneType: (item.tertiaryPhoneType as "mobile" | "office" | "home" | "fax") || "fax",
-      notes: item.notes || "",
-      isPrimary: item.isPrimary || false,
-      isActive: item.isActive ?? true,
-    });
-    setIsDialogOpen(true);
-  };
-
-  const openCreateDialog = () => {
-    setEditingItem(null);
-    setClientSearchValue("");
-    form.reset();
-    setIsDialogOpen(true);
-  };
-
-  // Filter contacts
-  const filteredContacts = (contacts as (ClientContact & { client?: Client })[]).filter((item) => {
-    // Отримуємо назву клієнта з різних джерел
-    const clientName = (item as any).clientName || 
-                      (clients as Client[]).find(c => c.id === item.clientId)?.name || 
-                      '';
-    
-    const matchesSearch = item.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.primaryPhone?.includes(searchTerm) ||
-                         item.secondaryPhone?.includes(searchTerm) ||
-                         item.tertiaryPhone?.includes(searchTerm) ||
-                         clientName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesClient = filterClientId === "all" || !filterClientId || item.clientId.toString() === filterClientId;
-    const matchesActive = filterActive === "all" || 
-                         (filterActive === "active" && item.isActive) ||
-                         (filterActive === "inactive" && !item.isActive);
-    
-    return matchesSearch && matchesClient && matchesActive;
+    }
   });
 
   const onSubmit = (data: FormData) => {
-    // Конвертуємо clientId в число
-    const submitData = {
-      ...data,
-      clientId: typeof data.clientId === 'string' ? parseInt(data.clientId, 10) : data.clientId
-    };
-    
-    if (editingItem) {
-      updateMutation.mutate({ id: editingItem.id, data: submitData });
-    } else {
-      createMutation.mutate(submitData);
-    }
+    createMutation.mutate(data);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex-1 overflow-auto">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+          <div className="container mx-auto p-6">
+            <div className="text-center py-12">
+              <p className="text-gray-600">Завантаження контактів...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full px-4 py-3">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Контактні особи клієнтів</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreateDialog}>
-              <Plus className="h-4 w-4 mr-2" />
-              Додати контакт
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div className="flex-1 overflow-auto">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        {/* Header Section */}
+        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
+          <div className="w-full px-8 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Users className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                      Контактні особи клієнтів
+                    </h1>
+                    <p className="text-gray-600 mt-1">Управління контактними особами та їх даними</p>
+                  </div>
+                </div>
+              </div>
+            
+              <div className="flex items-center space-x-4"> 
+                <Button 
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                  onClick={() => setIsCreateDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Додати контакт
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Statistics Cards */}
+        <main className="w-full px-8 py-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Users className="w-4 h-4 text-blue-600" />
+                      <p className="text-sm text-blue-700 font-medium">Показано контактів</p>
+                    </div>
+                    <p className="text-3xl font-bold text-blue-900 mb-1">{filteredContacts.length}</p>
+                    <p className="text-xs text-blue-600">З {contacts.length} загалом</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <Users className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <CheckCircle className="w-4 h-4 text-emerald-600" />
+                      <p className="text-sm text-emerald-700 font-medium">Активні контакти</p>
+                    </div>
+                    <p className="text-3xl font-bold text-emerald-900 mb-1">{filteredContacts.filter((c: ClientContact) => c.isActive).length}</p>
+                    <p className="text-xs text-emerald-600">Доступні для зв'язку</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <CheckCircle className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <User className="w-4 h-4 text-yellow-600" />
+                      <p className="text-sm text-yellow-700 font-medium">Основні контакти</p>
+                    </div>
+                    <p className="text-3xl font-bold text-yellow-900 mb-1">{filteredContacts.filter((c: ClientContact) => c.isPrimary).length}</p>
+                    <p className="text-xs text-yellow-600">Першочергові для зв'язку</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <User className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Mail className="w-4 h-4 text-purple-600" />
+                      <p className="text-sm text-purple-700 font-medium">З email</p>
+                    </div>
+                    <p className="text-3xl font-bold text-purple-900 mb-1">{filteredContacts.filter((c: ClientContact) => c.email).length}</p>
+                    <p className="text-xs text-purple-600">Мають електронну пошту</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <Mail className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Filters and Actions */}
+          <div className="w-full py-3">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <SearchFilters
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    searchPlaceholder="Пошук контактів за іменем, посадою, телефоном, email..."
+                    filters={[
+                      {
+                        key: "status",
+                        label: "Статус",
+                        value: statusFilter,
+                        onChange: setStatusFilter,
+                        options: [
+                          { value: "all", label: "Всі статуси" },
+                          { value: "active", label: "Активні" },
+                          { value: "inactive", label: "Неактивні" },
+                          { value: "primary", label: "Основні контакти" }
+                        ]
+                      },
+                      {
+                        key: "client",
+                        label: "Клієнт",
+                        value: clientFilter,
+                        onChange: setClientFilter,
+                        options: [
+                          { value: "all", label: "Всі клієнти" },
+                          ...clients.map((client: Client) => ({
+                            value: client.id.toString(),
+                            label: client.name
+                          }))
+                        ]
+                      }
+                    ]}
+                  />
+
+                  <div className="flex items-center space-x-3">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setIsImportDialogOpen(true)}
+                      className={`border-blue-200 text-blue-600 hover:bg-blue-50 ${!isAuthenticated ? 'opacity-50' : ''}`}
+                      disabled={!isAuthenticated}
+                      title={!isAuthenticated ? "Потрібна авторизація для імпорту" : ""}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Імпорт XML
+                      {!isAuthenticated && <AlertTriangle className="ml-2 h-4 w-4 text-orange-500" />}
+                    </Button>
+                    <Button variant="outline">
+                      <Download className="w-4 h-4 mr-2" />
+                      Експорт
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* DataTable */}
+          <div className="w-full">
+            <DataTable
+              data={filteredContacts}
+              columns={columns}
+              storageKey="client-contacts-table"
+              cardTemplate={cardTemplate}
+              onRowClick={(contact) => setEditingContact(contact)}
+              actions={(contact) => (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingContact(contact);
+                    }}
+                  >
+                    <Edit className="w-3 h-3" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // TODO: Implement delete functionality
+                    }}
+                  >
+                    <Trash className="w-3 h-3" />
+                  </Button>
+                </div>
+              )}
+            />
+          </div>
+        </main>
+
+        {/* Create Dialog */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>
-                {editingItem ? "Редагувати контакт" : "Додати контакт"}
-              </DialogTitle>
+              <DialogTitle>Додати новий контакт</DialogTitle>
+              <DialogDescription>
+                Створіть нову контактну особу для клієнта
+              </DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="clientId"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Клієнт</FormLabel>
-                        <div className="relative">
-                          <Input
-                            placeholder="Почніть вводити назву клієнта..."
-                            value={clientSearchValue}
-                            onChange={(e) => {
-                              setClientSearchValue(e.target.value);
-                              setClientComboboxOpen(true);
-                              // Очищаємо вибір якщо користувач редагує поле
-                              if (field.value) {
-                                field.onChange("");
-                              }
-                            }}
-                            onFocus={() => {
-                              setClientComboboxOpen(true);
-                            }}
-                            onBlur={() => setTimeout(() => setClientComboboxOpen(false), 200)}
-                            className={form.formState.errors.clientId ? "border-red-500" : ""}
-                          />
-                          {clientSearchValue && clientComboboxOpen && (
-                            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                              {clients.length > 0 ? (
-                                <div className="py-1">
-                                  {clients.map((client: any) => (
-                                    <div
-                                      key={client.id}
-                                      onClick={() => {
-                                        field.onChange(client.id.toString());
-                                        setClientSearchValue(client.name);
-                                        setClientComboboxOpen(false);
-                                      }}
-                                      className="px-3 py-2 cursor-pointer hover:bg-gray-100 flex items-center"
-                                    >
-                                      <Check
-                                        className={`mr-2 h-4 w-4 ${
-                                          field.value === client.id.toString()
-                                            ? "opacity-100 text-blue-600"
-                                            : "opacity-0"
-                                        }`}
-                                      />
-                                      <div className="flex-1">
-                                        <div className="font-medium">{client.name}</div>
-                                        <div className="text-sm text-gray-500">{client.taxCode}</div>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : clientSearchValue.length > 2 ? (
-                                <div className="p-3 text-sm text-gray-500">
-                                  Клієнт "{clientSearchValue}" не знайдений
-                                </div>
-                              ) : (
-                                <div className="p-3 text-sm text-gray-500">
-                                  Введіть мінімум 3 символи для пошуку
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Клієнт *</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Оберіть клієнта" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {clients.map((client: Client) => (
+                              <SelectItem key={client.id} value={client.id.toString()}>
+                                {client.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
+                  
                   <FormField
                     control={form.control}
                     name="fullName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Повне ім'я</FormLabel>
+                        <FormLabel>Повне ім'я *</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Введіть повне ім'я" />
+                          <Input placeholder="Введіть повне ім'я" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -392,7 +584,7 @@ export default function ClientContacts() {
                       <FormItem>
                         <FormLabel>Посада</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Введіть посаду" />
+                          <Input placeholder="Введіть посаду" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -406,167 +598,8 @@ export default function ClientContacts() {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input {...field} type="email" placeholder="Введіть email" />
+                          <Input type="email" placeholder="email@example.com" {...field} />
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* Телефони */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Телефони</h3>
-                  
-                  {/* Основний телефон */}
-                  <div className="grid grid-cols-3 gap-4 items-end">
-                    <FormField
-                      control={form.control}
-                      name="primaryPhone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Основний телефон</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="+380..." />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="primaryPhoneType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Тип</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="mobile">Мобільний</SelectItem>
-                              <SelectItem value="office">Офісний</SelectItem>
-                              <SelectItem value="home">Домашній</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  {/* Додатковий телефон */}
-                  <div className="grid grid-cols-3 gap-4 items-end">
-                    <FormField
-                      control={form.control}
-                      name="secondaryPhone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Додатковий телефон</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="+380..." />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="secondaryPhoneType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Тип</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="mobile">Мобільний</SelectItem>
-                              <SelectItem value="office">Офісний</SelectItem>
-                              <SelectItem value="home">Домашній</SelectItem>
-                              <SelectItem value="fax">Факс</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  {/* Третій телефон */}
-                  <div className="grid grid-cols-3 gap-4 items-end">
-                    <FormField
-                      control={form.control}
-                      name="tertiaryPhone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Третій телефон</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="+380..." />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="tertiaryPhoneType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Тип</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="mobile">Мобільний</SelectItem>
-                              <SelectItem value="office">Офісний</SelectItem>
-                              <SelectItem value="home">Домашній</SelectItem>
-                              <SelectItem value="fax">Факс</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Примітки</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} placeholder="Додаткові примітки" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="isPrimary"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>Основний контакт клієнта</FormLabel>
-                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -574,330 +607,143 @@ export default function ClientContacts() {
 
                   <FormField
                     control={form.control}
-                    name="isActive"
+                    name="primaryPhone"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormItem>
+                        <FormLabel>Основний телефон</FormLabel>
                         <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
+                          <Input placeholder="+380..." {...field} />
                         </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>Активний</FormLabel>
-                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
+                  <FormField
+                    control={form.control}
+                    name="primaryPhoneType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Тип основного телефону</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Object.entries(phoneTypeLabels).map(([value, label]) => (
+                              <SelectItem key={value} value={value}>
+                                {label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="md:col-span-2 flex items-center space-x-4">
+                    <FormField
+                      control={form.control}
+                      name="isPrimary"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Основний контакт</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="isActive"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Активний</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
 
-                <div className="flex gap-2 justify-end">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setIsCreateDialogOpen(false)}
+                  >
                     Скасувати
                   </Button>
-                  <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                    {editingItem ? "Оновити" : "Створити"}
+                  <Button 
+                    type="submit" 
+                    disabled={createMutation.isPending}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                  >
+                    {createMutation.isPending ? "Створення..." : "Створити контакт"}
                   </Button>
                 </div>
               </form>
             </Form>
           </DialogContent>
         </Dialog>
+
+        {/* Import XML Dialog */}
+        <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Імпорт XML файлу</DialogTitle>
+              <DialogDescription>
+                Завантажте XML файл з контактними особами
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="xml-file-contacts" className="text-sm font-medium">
+                  Оберіть XML файл
+                </label>
+                <input
+                  id="xml-file-contacts"
+                  type="file"
+                  accept=".xml"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsImportDialogOpen(false)}
+                >
+                  Скасувати
+                </Button>
+                <Button onClick={() => {
+                  // TODO: Implement XML import logic
+                  toast({ title: "Функція імпорту в розробці" });
+                  setIsImportDialogOpen(false);
+                }}>
+                  Імпортувати
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
-
-      {/* Фільтри */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Фільтри</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Пошук за ім'ям, посадою, email, телефоном, назвою клієнта..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={filterClientId} onValueChange={setFilterClientId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Фільтр за клієнтом" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Всі клієнти</SelectItem>
-                {(clients as Client[]).map((client) => (
-                  <SelectItem key={client.id} value={client.id.toString()}>
-                    {client.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={filterActive} onValueChange={setFilterActive}>
-              <SelectTrigger>
-                <SelectValue placeholder="Фільтр за статусом" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Всі</SelectItem>
-                <SelectItem value="active">Активні</SelectItem>
-                <SelectItem value="inactive">Неактивні</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Таблиця */}
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-6 text-center">Завантаження...</div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ім'я</TableHead>
-                  <TableHead>Клієнт</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Телефони</TableHead>
-                  <TableHead>Статус</TableHead>
-                  <TableHead>Дії</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredContacts.map((contact) => (
-                  <TableRow key={contact.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        <div>
-                          <div className={`${contact.isPrimary ? 'font-bold' : 'font-medium'}`}>
-                            {contact.fullName}
-                          </div>
-                          {contact.position && (
-                            <div className="text-xs text-muted-foreground">
-                              {contact.position}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {(contact as any).clientName || 
-                       (clients as Client[]).find(c => c.id === contact.clientId)?.name || 
-                       'Клієнт не знайдений'}
-                    </TableCell>
-                    <TableCell>
-                      {contact.email ? (
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4" />
-                          <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">
-                            {contact.email}
-                          </a>
-                        </div>
-                      ) : "-"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        {contact.primaryPhone && (
-                          <div className="flex items-center gap-2 text-sm">
-                            {contact.primaryPhoneType === 'mobile' ? (
-                              <svg className="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a1 1 0 001-1V4a1 1 0 00-1-1H8a1 1 0 00-1 1v16a1 1 0 001 1z" />
-                              </svg>
-                            ) : contact.primaryPhoneType === 'office' ? (
-                              <svg className="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                              </svg>
-                            ) : contact.primaryPhoneType === 'fax' ? (
-                              <svg className="h-4 w-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10M7 4l-2 14h14l-2-14M7 4h10m-5 3v8m-2-4h4" />
-                              </svg>
-                            ) : (
-                              <Phone className="h-4 w-4 text-gray-600" />
-                            )}
-                            <a href={`tel:${contact.primaryPhone}`} className="text-blue-600 hover:underline">
-                              {contact.primaryPhone}
-                            </a>
-                          </div>
-                        )}
-                        {contact.secondaryPhone && (
-                          <div className="flex items-center gap-2 text-sm">
-                            {contact.secondaryPhoneType === 'mobile' ? (
-                              <svg className="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a1 1 0 001-1V4a1 1 0 00-1-1H8a1 1 0 00-1 1v16a1 1 0 001 1z" />
-                              </svg>
-                            ) : contact.secondaryPhoneType === 'office' ? (
-                              <svg className="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                              </svg>
-                            ) : contact.secondaryPhoneType === 'fax' ? (
-                              <svg className="h-4 w-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10M7 4l-2 14h14l-2-14M7 4h10m-5 3v8m-2-4h4" />
-                              </svg>
-                            ) : (
-                              <Phone className="h-4 w-4 text-gray-600" />
-                            )}
-                            <a href={`tel:${contact.secondaryPhone}`} className="text-blue-600 hover:underline">
-                              {contact.secondaryPhone}
-                            </a>
-                          </div>
-                        )}
-                        {contact.tertiaryPhone && (
-                          <div className="flex items-center gap-2 text-sm">
-                            {contact.tertiaryPhoneType === 'mobile' ? (
-                              <svg className="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a1 1 0 001-1V4a1 1 0 00-1-1H8a1 1 0 00-1 1v16a1 1 0 001 1z" />
-                              </svg>
-                            ) : contact.tertiaryPhoneType === 'office' ? (
-                              <svg className="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                              </svg>
-                            ) : contact.tertiaryPhoneType === 'fax' ? (
-                              <svg className="h-4 w-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10M7 4l-2 14h14l-2-14M7 4h10m-5 3v8m-2-4h4" />
-                              </svg>
-                            ) : (
-                              <Phone className="h-4 w-4 text-gray-600" />
-                            )}
-                            <a href={`tel:${contact.tertiaryPhone}`} className="text-blue-600 hover:underline">
-                              {contact.tertiaryPhone}
-                            </a>
-                          </div>
-                        )}
-                        {!contact.primaryPhone && !contact.secondaryPhone && !contact.tertiaryPhone && "-"}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={contact.isActive ? "default" : "secondary"}>
-                        {contact.isActive ? "Активний" : "Неактивний"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEditDialog(contact)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteMutation.mutate(contact.id)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filteredContacts.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-6">
-                      Контакти не знайдено
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
-              <div className="flex items-center gap-4">
-                <p className="text-sm text-muted-foreground">
-                  Показано {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalContacts)} з {totalContacts} контактів
-                </p>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">На сторінці:</span>
-                  <Select value={pageSize.toString()} onValueChange={(value) => {
-                    setPageSize(Number(value));
-                    setCurrentPage(1);
-                  }}>
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="20">20</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                      <SelectItem value="100">100</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(1)}
-                  disabled={currentPage === 1}
-                >
-                  Перша
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Попередня
-                </Button>
-                
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    const page = currentPage <= 3 
-                      ? i + 1 
-                      : currentPage >= totalPages - 2 
-                        ? totalPages - 4 + i 
-                        : currentPage - 2 + i;
-                    
-                    if (page < 1 || page > totalPages) return null;
-                    
-                    return (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(page)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {page}
-                      </Button>
-                    );
-                  })}
-                </div>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Наступна
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(totalPages)}
-                  disabled={currentPage === totalPages}
-                >
-                  Остання
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }
