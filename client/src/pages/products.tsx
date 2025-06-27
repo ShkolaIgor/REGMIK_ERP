@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Upload, Edit2, Trash2, Package, CheckCircle, Grid3X3, DollarSign } from "lucide-react";
+import { Plus, Upload, Edit2, Trash2, Package, CheckCircle, Grid3X3, DollarSign, Layers, Search, Scan, Printer, Download } from "lucide-react";
 import { DataTable } from "@/components/DataTable/DataTable";
 
 interface Product {
@@ -58,6 +58,10 @@ export default function ProductsPage() {
   const [importJob, setImportJob] = useState<ImportJob | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  //const [categoryFilter, setCategoryFilter] = useState("all");
+  //const [statusFilter, setStatusFilter] = useState("all");
+  
   const { data: products = [], isLoading, isError } = useQuery({
     queryKey: ['/api/products'],
   });
@@ -120,38 +124,51 @@ export default function ProductsPage() {
   return (
     <div className="flex-1 overflow-auto">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h2 className="text-2xl font-semibold text-gray-900">Каталог товарів</h2>
-            <Badge className="bg-green-100 text-green-800">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-1" />
-              Онлайн
-            </Badge>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Імпорт XML
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Імпорт товарів з XML</DialogTitle>
-                </DialogHeader>
-                {/* Вміст діалогу імпорту тут */}
-              </DialogContent>
-            </Dialog>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        {/* Header Section */}
+        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
+          <div className="w-full px-8 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Layers className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                      Каталог товарів
+                    </h1>
+                    <p className="text-gray-600 mt-1">Управління каталогом товарів</p>
+                  </div>
+                </div>
+              </div>
             
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Додати товар
-            </Button>
+              <div className="flex items-center space-x-4">
+                <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Імпорт XML
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Імпорт товарів з XML</DialogTitle>
+                    </DialogHeader>
+                    // Вміст діалогу імпорту тут 
+                  </DialogContent>
+                </Dialog>            
+           
+              <Button 
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                onClick={() => setIsCreateDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Додати товар
+              </Button>
+            </div>
           </div>
         </div>
-      </header>
+      </div>
 
       <main className="p-6 space-y-6">
         {/* Stats Cards */}
@@ -223,9 +240,32 @@ export default function ProductsPage() {
           </Card>
         </div>
 
+        {/* Actions */}
+        <div className="w-full py-3">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-end space-x-3">
+                <Button variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  Експорт
+                </Button>
+                <Button variant="outline" disabled>
+                  <Scan className="w-4 h-4 mr-2" />
+                  Сканер штрих-кодів
+                </Button>
+                <Button variant="outline">
+                  <Printer className="w-4 h-4 mr-2" />
+                  Друкувати етикетки
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* DataTable компонент */}
         <DataTable
           data={products}
+          onRowClick={handleEdit}
           columns={[
             {
               key: 'name',
@@ -429,6 +469,7 @@ export default function ProductsPage() {
           </AlertDialogContent>
         </AlertDialog>
       </main>
+         </div>
     </div>
   );
 }
