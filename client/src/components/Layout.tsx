@@ -172,25 +172,29 @@ function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex items-center justify-between px-2">
-          <Link href="/" className="flex-1">
+          <Link href="/" className="flex-1 min-w-0">
             <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors p-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
                 <Box className="w-5 h-5 text-white" />
               </div>
-              <div className="group-data-[collapsible=icon]:hidden">
-                <h1 className="text-lg font-semibold text-gray-900">REGMIK ERP</h1>
-                <p className="text-sm text-gray-500">Система обліку</p>
+              <div className="group-data-[collapsible=icon]:hidden overflow-hidden">
+                <h1 className="text-lg font-semibold text-gray-900 truncate">REGMIK ERP</h1>
+                <p className="text-sm text-gray-500 truncate">Система обліку</p>
               </div>
             </div>
           </Link>
-          <SidebarTrigger className="h-8 w-8 group-data-[collapsible=icon]:hidden" />
+          <SidebarTrigger className="h-8 w-8 flex-shrink-0 group-data-[collapsible=icon]:hidden" />
+        </div>
+        {/* Кнопка розгортання для згорнутого режиму */}
+        <div className="group-data-[collapsible=icon]:flex hidden justify-center px-2 pb-2">
+          <SidebarTrigger className="h-8 w-8" />
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="overflow-y-auto">
         {navigationItems.map((section) => (
           <SidebarGroup key={section.title}>
-            <SidebarGroupLabel>{section.title}</SidebarGroupLabel>
+            <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">{section.title}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {section.items.map((item) => {
@@ -199,7 +203,7 @@ function AppSidebar() {
                   
                   return (
                     <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton asChild isActive={isActive}>
+                      <SidebarMenuButton asChild isActive={isActive} title={item.name}>
                         <Link href={item.href}>
                           <Icon className="w-4 h-4" />
                           <span>{item.name}</span>
