@@ -165,15 +165,17 @@ function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center space-x-3 px-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <Box className="w-5 h-5 text-white" />
+        <Link href="/">
+          <div className="flex items-center space-x-3 px-2 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors p-2">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <Box className="w-5 h-5 text-white" />
+            </div>
+            <div className="group-data-[collapsible=icon]:hidden">
+              <h1 className="text-lg font-semibold text-gray-900">REGMIK ERP</h1>
+              <p className="text-sm text-gray-500">Система обліку</p>
+            </div>
           </div>
-          <div className="group-data-[collapsible=icon]:hidden">
-            <h1 className="text-lg font-semibold text-gray-900">REGMIK ERP</h1>
-            <p className="text-sm text-gray-500">Система обліку</p>
-          </div>
-        </div>
+        </Link>
       </SidebarHeader>
 
       <SidebarContent>
