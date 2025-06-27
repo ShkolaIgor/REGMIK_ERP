@@ -183,19 +183,29 @@ export default function SupplierReceipts() {
 
   // Receipt items component for expanded view
   const ReceiptItemsView = ({ receiptId }: { receiptId: number }) => {
-    const { data: receiptItemsData = [], isLoading: itemsLoading } = useQuery({
+    console.log('ReceiptItemsView called with receiptId:', receiptId);
+    
+    const { data: receiptItemsData = [], isLoading: itemsLoading, error } = useQuery({
       queryKey: [`/api/supplier-receipt-items/${receiptId}`],
       enabled: !!receiptId,
     });
     
+    console.log('Receipt items data:', receiptItemsData);
+    console.log('Loading:', itemsLoading);
+    console.log('Error:', error);
+    
     const receiptItems = Array.isArray(receiptItemsData) ? receiptItemsData : [];
 
     if (itemsLoading) {
-      return <div className="p-4 text-center">Завантаження...</div>;
+      return <div className="p-4 text-center">Завантаження позицій...</div>;
+    }
+
+    if (error) {
+      return <div className="p-4 text-center text-red-500">Помилка завантаження: {error.message}</div>;
     }
 
     if (!receiptItems.length) {
-      return <div className="p-4 text-center text-gray-500">Немає позицій</div>;
+      return <div className="p-4 text-center text-gray-500">Немає позицій для цього приходу</div>;
     }
 
     return (
