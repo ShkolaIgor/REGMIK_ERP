@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Trash2, Package, Component, Calculator, Download, Upload, AlertTriangle, Search, Layers, FileText } from "lucide-react";
+import { Plus, Trash2, Package, Component, Calculator, Download, Upload, AlertTriangle, Search, Layers, FileText, Scan, Printer } from "lucide-react";
 import { insertProductComponentSchema } from "@shared/schema";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
@@ -53,11 +53,14 @@ export default function BOMPage() {
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const queryClient = useQueryClient();
+  //const [categoryFilter, setCategoryFilter] = useState("all");
+  //const [statusFilter, setStatusFilter] = useState("all");
+  
   const form = useForm<ComponentFormData>({
     resolver: zodResolver(componentFormSchema),
     defaultValues: {
@@ -254,7 +257,7 @@ export default function BOMPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header Section */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
-        <div className="w-full px-8 py-8">
+        <div className="w-full px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3">
@@ -299,7 +302,7 @@ export default function BOMPage() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="w-full px-8 py-6">
+      <div className="w-full px-8 py-3">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
             <CardContent className="p-6 relative overflow-hidden">
@@ -378,6 +381,74 @@ export default function BOMPage() {
           </Card>
         </div>
 
+      {/* Filters and Actions */}
+      <div className="w-full py-3">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Пошук товарів..."
+                    className="w-80 pl-10"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm font-medium text-gray-700">Категорія:</label>
+                  {/* <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Всі категорії" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Всі категорії</SelectItem>
+                      {categories.map((category: any) => (
+                        <SelectItem key={category.id} value={category.id.toString()}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>*/}
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm font-medium text-gray-700">Статус:</label>
+                  {/*<Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Всі статуси" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Всі статуси</SelectItem>
+                      <SelectItem value="in-stock">В наявності</SelectItem>
+                      <SelectItem value="low-stock">Мало на складі</SelectItem>
+                      <SelectItem value="out-of-stock">Немає в наявності</SelectItem>
+                    </SelectContent>
+                  </Select>*/}
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3">
+                <Button variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  Експорт
+                </Button>
+                <Button variant="outline" disabled>
+                  <Scan className="w-4 h-4 mr-2" />
+                  Сканер штрих-кодів
+                </Button>
+                <Button variant="outline">
+                  <Printer className="w-4 h-4 mr-2" />
+                  Друкувати етикетки
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+        
       {/* Content */}
       <div className="w-full space-y-6 flex-1 overflow-auto">
         {/* Product Selection */}

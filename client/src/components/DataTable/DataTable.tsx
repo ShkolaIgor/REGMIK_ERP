@@ -107,7 +107,6 @@ interface DataTableProps {
   data: any[];
   columns: DataTableColumn[];
   loading?: boolean;
-  searchable?: boolean;
   onSearch?: (query: string) => void;
   onSort?: (field: string, direction: 'asc' | 'desc') => void;
   onRowClick?: (row: any) => void;
@@ -963,25 +962,6 @@ export function DataTable({
           </Dialog>
         </div>
       </div>
-
-      {/* Search */}
-      {searchable && (
-        <div className="flex flex-wrap items-center gap-4">
-          {searchable && (
-            <div className="flex-1 min-w-64">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder={searchPlaceholder ?? "Пошук..."}
-                  value={searchQuery}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Data Display */}
       {settings.viewMode === 'table' ? renderTableView() : renderCardView()}
