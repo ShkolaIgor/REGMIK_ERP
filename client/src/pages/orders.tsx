@@ -190,7 +190,7 @@ export default function OrdersPage() {
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">Сума:</span>
-            <span className="font-medium">{order.totalAmount.toLocaleString()} ₴</span>
+            <span className="font-medium">{(order.totalAmount || 0).toLocaleString()} ₴</span>
           </div>
           
           <div className="flex justify-between items-center">
@@ -352,7 +352,7 @@ export default function OrdersPage() {
 
   // Calculate statistics
   const totalOrders = orders.length;
-  const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+  const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
   const completedOrders = orders.filter(order => order.status === "доставлений").length;
   const overdueOrders = orders.filter(isOverdue).length;
 
@@ -370,7 +370,7 @@ export default function OrdersPage() {
     {
       key: "totalAmount",
       label: "Сума",
-      render: (order: Order) => `${order.totalAmount.toLocaleString()} ₴`,
+      render: (order: Order) => `${(order.totalAmount || 0).toLocaleString()} ₴`,
       sortable: true,
     },
     {
@@ -464,7 +464,7 @@ export default function OrdersPage() {
             <DataTable
               data={orders}
               columns={columns}
-              isLoading={isLoading}
+              loading={isLoading}
               searchPlaceholder="Пошук замовлень..."
               storageKey="orders-table"
               cardTemplate={cardTemplate}
