@@ -813,7 +813,6 @@ export default function Clients() {
             columns={columns}
             title="Список клієнтів"
             description="Оберіть клієнта для перегляду та редагування"
-            searchPlaceholder="Пошук клієнтів за назвою, ЄДРПОУ або типом..."
             loading={isLoading}
             cardTemplate={clientCardTemplate}
             storageKey="clients-v2"

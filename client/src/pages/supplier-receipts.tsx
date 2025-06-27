@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Plus, Package, FileText, TrendingUp, Calendar, Download, Upload, HandPlatter, Edit } from "lucide-react";
 import { DataTable, DataTableColumn } from "@/components/DataTable";
+import { SearchFilters } from "@/components/SearchFilters";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
 
 // Interfaces
@@ -52,6 +53,9 @@ export default function SupplierReceipts() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingReceipt, setEditingReceipt] = useState<SupplierReceipt | null>(null);
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [supplierFilter, setSupplierFilter] = useState("all");
+  const [documentTypeFilter, setDocumentTypeFilter] = useState("all");
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -129,19 +133,40 @@ export default function SupplierReceipts() {
     },
   });
 
+  // Filter receipts based on search and filters
+  const filteredReceipts = useMemo(() => {
+    return receiptsArray.filter((receipt: any) => {
+      // Search filter
+      const matchesSearch = searchQuery === "" || 
+        receipt.supplier_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        receipt.document_type_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        receipt.supplier_document_number?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // Supplier filter
+      const matchesSupplier = supplierFilter === "all" || 
+        receipt.supplier_id.toString() === supplierFilter;
+
+      // Document type filter
+      const matchesDocumentType = documentTypeFilter === "all" || 
+        receipt.document_type_id.toString() === documentTypeFilter;
+
+      return matchesSearch && matchesSupplier && matchesDocumentType;
+    });
+  }, [receiptsArray, searchQuery, supplierFilter, documentTypeFilter]);
+
   // Statistics
   const statistics = useMemo(() => {
-    const totalReceipts = receiptsArray.length;
-    const totalAmount = receiptsArray.reduce((sum: number, receipt: any) => sum + parseFloat(receipt.total_amount || '0'), 0);
-    const uniqueSuppliers = new Set(receiptsArray.map((r: any) => r.supplier_id)).size;
-    const thisMonthReceipts = receiptsArray.filter((receipt: any) => {
+    const totalReceipts = filteredReceipts.length;
+    const totalAmount = filteredReceipts.reduce((sum: number, receipt: any) => sum + parseFloat(receipt.total_amount || '0'), 0);
+    const uniqueSuppliers = new Set(filteredReceipts.map((r: any) => r.supplier_id)).size;
+    const thisMonthReceipts = filteredReceipts.filter((receipt: any) => {
       const receiptDate = new Date(receipt.receipt_date);
       const now = new Date();
       return receiptDate.getMonth() === now.getMonth() && receiptDate.getFullYear() === now.getFullYear();
     }).length;
 
     return { totalReceipts, totalAmount, uniqueSuppliers, thisMonthReceipts };
-  }, [receiptsArray]);
+  }, [filteredReceipts]);
 
   // Handlers
   const onSubmit = (data: SupplierReceiptFormData) => {
@@ -410,14 +435,50 @@ export default function SupplierReceipts() {
       <div className="w-full space-y-6 flex-1 overflow-auto">
       {/* Product Selection */}
 
+        {/* Search and Filters */}
+        <div className="mb-6">
+          <SearchFilters
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Пошук приходів за постачальником, документом, номером..."
+            filters={[
+              {
+                key: "supplier",
+                label: "Постачальник",
+                value: supplierFilter,
+                onChange: setSupplierFilter,
+                options: [
+                  { value: "all", label: "Всі постачальники" },
+                  ...suppliers.map((supplier: any) => ({
+                    value: supplier.id.toString(),
+                    label: supplier.name
+                  }))
+                ]
+              },
+              {
+                key: "documentType",
+                label: "Тип документу",
+                value: documentTypeFilter,
+                onChange: setDocumentTypeFilter,
+                options: [
+                  { value: "all", label: "Всі типи" },
+                  ...documentTypes.map((type: any) => ({
+                    value: type.id.toString(),
+                    label: type.name
+                  }))
+                ]
+              }
+            ]}
+          />
+        </div>
+
         {/* DataTable */}
         <DataTable
-          data={receiptsArray}
+          data={filteredReceipts}
           columns={columns}
           loading={isLoading}
           title="Список приходів від постачальників"
           description="Оберіть прихід для перегляду та редагування"
-          searchPlaceholder="Пошук клієнтів за назвою, ЄДРПОУ або типом..."
           storageKey="supplier-receipts"
           actions={(receipt) => (
             <div className="flex items-center gap-1">
