@@ -174,8 +174,8 @@ function AppSidebar() {
         <div className="flex items-center justify-between px-2">
           <Link href="/" className="flex-1 min-w-0">
             <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors p-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
-                <Box className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 group-data-[collapsible=icon]:w-6 group-data-[collapsible=icon]:h-6 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
+                <Box className="w-5 h-5 group-data-[collapsible=icon]:w-4 group-data-[collapsible=icon]:h-4 text-white" />
               </div>
               <div className="group-data-[collapsible=icon]:hidden overflow-hidden">
                 <h1 className="text-lg font-semibold text-gray-900 truncate">REGMIK ERP</h1>
@@ -223,10 +223,10 @@ function AppSidebar() {
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <div className="flex items-center space-x-3 p-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
-                  <Avatar className="h-8 w-8">
+                <div className="flex items-center space-x-3 p-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer group-data-[collapsible=icon]:p-1 group-data-[collapsible=icon]:justify-center">
+                  <Avatar className="h-8 w-8 group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6">
                     <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName} />
-                    <AvatarFallback>
+                    <AvatarFallback className="text-xs group-data-[collapsible=icon]:text-[10px]">
                       {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
@@ -286,8 +286,8 @@ function AppSidebar() {
             </DropdownMenu>
           )}
           
-          <div className="flex items-center space-x-2 text-sm px-2 group-data-[collapsible=icon]:justify-center">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <div className="flex items-center space-x-2 text-sm px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-1">
+            <div className="w-2 h-2 bg-green-500 rounded-full group-data-[collapsible=icon]:w-1.5 group-data-[collapsible=icon]:h-1.5"></div>
             <span className="text-gray-600 group-data-[collapsible=icon]:hidden">ERP Ready</span>
           </div>
         </div>
