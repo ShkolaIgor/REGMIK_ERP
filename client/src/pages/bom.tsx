@@ -30,6 +30,7 @@ type Product = {
   unit: string;
   costPrice: string;
   retailPrice: string;
+  isActive: boolean | null;
 };
 
 type ProductComponent = {
@@ -229,11 +230,23 @@ export default function BOMPage() {
   }
 
   const parentProducts = (products as Product[] || []).filter((p: Product) => {
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         p.sku.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = searchQuery === "" || 
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.sku.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesType = productTypeFilter === "all" || 
+      (productTypeFilter === "product" && (p.productType === "товар" || p.productType === "product")) ||
+      (productTypeFilter === "kit" && (p.productType === "комплект" || p.productType === "kit")) ||
+      (productTypeFilter === "semi-finished" && (p.productType === "полуфабрикат" || p.productType === "semi-finished"));
+    
+    const matchesActive = activeFilter === "all" || 
+      (activeFilter === "active" && p.isActive) ||
+      (activeFilter === "inactive" && !p.isActive);
+
     const isParentType = p.productType === "товар" || p.productType === "комплект" || p.productType === "product" ||
                         p.productType === "полуфабрикат" || p.productType === "semi-finished";
-    return isParentType && matchesSearch;
+    
+    return isParentType && matchesSearch && matchesType && matchesActive;
   });
 
   // Фільтруємо доступні компоненти
@@ -387,49 +400,36 @@ export default function BOMPage() {
         <Card>
           <CardContent className="p-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Пошук товарів..."
-                    className="w-80 pl-10"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <label className="text-sm font-medium text-gray-700">Категорія:</label>
-                  {/* <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Всі категорії" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Всі категорії</SelectItem>
-                      {categories.map((category: any) => (
-                        <SelectItem key={category.id} value={category.id.toString()}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>*/}
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <label className="text-sm font-medium text-gray-700">Статус:</label>
-                  {/*<Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Всі статуси" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Всі статуси</SelectItem>
-                      <SelectItem value="in-stock">В наявності</SelectItem>
-                      <SelectItem value="low-stock">Мало на складі</SelectItem>
-                      <SelectItem value="out-of-stock">Немає в наявності</SelectItem>
-                    </SelectContent>
-                  </Select>*/}
-                </div>
-              </div>
+              <SearchFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Пошук товарів за назвою або SKU..."
+                filters={[
+                  {
+                    key: "productType",
+                    label: "Тип товару",
+                    value: productTypeFilter,
+                    onChange: setProductTypeFilter,
+                    options: [
+                      { value: "all", label: "Всі типи" },
+                      { value: "product", label: "Товари" },
+                      { value: "kit", label: "Комплекти" },
+                      { value: "semi-finished", label: "Полуфабрикати" }
+                    ]
+                  },
+                  {
+                    key: "active",
+                    label: "Статус",
+                    value: activeFilter,
+                    onChange: setActiveFilter,
+                    options: [
+                      { value: "all", label: "Всі статуси" },
+                      { value: "active", label: "Активні" },
+                      { value: "inactive", label: "Неактивні" }
+                    ]
+                  }
+                ]}
+              />
 
               <div className="flex items-center space-x-3">
                 <Button variant="outline">
