@@ -64,11 +64,12 @@ export default function ClientContacts() {
     queryKey: ["/api/client-contacts"],
   });
 
-  const { data: clients = [] } = useQuery({
+  const { data: clientsData } = useQuery({
     queryKey: ["/api/clients"],
   });
 
-  const contacts = contactsData?.contacts || [];
+  const clients = Array.isArray(clientsData?.clients) ? clientsData.clients : [];
+  const contacts = Array.isArray(contactsData) ? contactsData : [];
 
   // Визначення колонок для DataTable
   const columns = [
@@ -459,10 +460,10 @@ export default function ClientContacts() {
                         onChange: setClientFilter,
                         options: [
                           { value: "all", label: "Всі клієнти" },
-                          ...clients.map((client: Client) => ({
+                          ...(Array.isArray(clients) ? clients.map((client: Client) => ({
                             value: client.id.toString(),
                             label: client.name
-                          }))
+                          })) : [])
                         ]
                       }
                     ]}
