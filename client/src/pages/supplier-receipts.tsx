@@ -725,6 +725,46 @@ export default function SupplierReceipts() {
           </Form>
         </DialogContent>
       </Dialog>
+
+      {/* Import XML Dialog */}
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Імпорт XML файлу</DialogTitle>
+            <DialogDescription>
+              Завантажте XML файл з приходами постачальників
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="xml-file" className="text-sm font-medium">
+                Оберіть XML файл
+              </label>
+              <input
+                id="xml-file"
+                type="file"
+                accept=".xml"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsImportDialogOpen(false)}
+              >
+                Скасувати
+              </Button>
+              <Button onClick={() => {
+                // TODO: Implement XML import logic
+                toast({ title: "Функція імпорту в розробці" });
+                setIsImportDialogOpen(false);
+              }}>
+                Імпортувати
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
