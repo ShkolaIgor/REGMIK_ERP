@@ -454,7 +454,7 @@ export function DataTable({
                   {isExpanded && expandableContent && (
                     <tr>
                       <td 
-                        colSpan={visibleColumns.length + (actions ? 1 : 0) + (expandableContent ? 1 : 0)}
+                        colSpan={visibleColumns.length + (actions ? 1 : 0) + (typeof expandableContent === 'function' ? 1 : 0)}
                         className="px-0 py-0 border-b"
                       >
                         {expandableContent(row)}
