@@ -59,8 +59,8 @@ export default function ProductsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
-  //const [categoryFilter, setCategoryFilter] = useState("all");
-  //const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   
   const { data: products = [], isLoading, isError } = useQuery({
     queryKey: ['/api/products'],
@@ -68,6 +68,26 @@ export default function ProductsPage() {
 
   const { data: categories = [] } = useQuery({
     queryKey: ['/api/product-categories'],
+  });
+
+  // Фільтрування товарів
+  const filteredProducts = products.filter((product: Product) => {
+    // Пошук за назвою, SKU або описом
+    const matchesSearch = !searchQuery || 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    // Фільтр за категорією
+    const matchesCategory = categoryFilter === "all" || 
+      (product.categoryId && product.categoryId.toString() === categoryFilter);
+
+    // Фільтр за статусом
+    const matchesStatus = statusFilter === "all" || 
+      (statusFilter === "active" && product.isActive) ||
+      (statusFilter === "inactive" && !product.isActive);
+
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
   // Обробники подій
@@ -177,9 +197,9 @@ export default function ProductsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Загальна кількість товарів</p>
-                  <p className="text-3xl font-semibold text-gray-900">{products.length}</p>
-                  <p className="text-sm text-green-600 mt-1">Всього позицій</p>
+                  <p className="text-sm text-gray-600">Показано товарів</p>
+                  <p className="text-3xl font-semibold text-gray-900">{filteredProducts.length}</p>
+                  <p className="text-sm text-green-600 mt-1">З {products.length} загалом</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                   <Package className="w-6 h-6 text-blue-600" />
@@ -194,7 +214,7 @@ export default function ProductsPage() {
                 <div>
                   <p className="text-sm text-gray-600">Активні товари</p>
                   <p className="text-3xl font-semibold text-gray-900">
-                    {products.filter((p: Product) => p.isActive).length}
+                    {filteredProducts.filter((p: Product) => p.isActive).length}
                   </p>
                   <p className="text-sm text-green-600 mt-1">В продажу</p>
                 </div>
@@ -226,8 +246,8 @@ export default function ProductsPage() {
                 <div>
                   <p className="text-sm text-gray-600">Середня ціна</p>
                   <p className="text-3xl font-semibold text-gray-900">
-                    {products.length > 0 
-                      ? Math.round(products.reduce((sum: number, p: Product) => sum + parseFloat(p.retailPrice), 0) / products.length)
+                    {filteredProducts.length > 0 
+                      ? Math.round(filteredProducts.reduce((sum: number, p: Product) => sum + parseFloat(p.retailPrice), 0) / filteredProducts.length)
                       : 0} ₴
                   </p>
                   <p className="text-sm text-orange-600 mt-1">За товар</p>
@@ -240,23 +260,68 @@ export default function ProductsPage() {
           </Card>
         </div>
 
-        {/* Actions */}
+        {/* Filters and Actions */}
         <div className="w-full py-3">
           <Card>
             <CardContent className="p-6">
-              <div className="flex items-center justify-end space-x-3">
-                <Button variant="outline">
-                  <Download className="w-4 h-4 mr-2" />
-                  Експорт
-                </Button>
-                <Button variant="outline" disabled>
-                  <Scan className="w-4 h-4 mr-2" />
-                  Сканер штрих-кодів
-                </Button>
-                <Button variant="outline">
-                  <Printer className="w-4 h-4 mr-2" />
-                  Друкувати етикетки
-                </Button>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      placeholder="Пошук товарів..."
+                      className="w-80 pl-10"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <label className="text-sm font-medium text-gray-700">Категорія:</label>
+                    <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="Всі категорії" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Всі категорії</SelectItem>
+                        {categories.map((category: any) => (
+                          <SelectItem key={category.id} value={category.id.toString()}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <label className="text-sm font-medium text-gray-700">Статус:</label>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="Всі статуси" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Всі статуси</SelectItem>
+                        <SelectItem value="active">Активні</SelectItem>
+                        <SelectItem value="inactive">Неактивні</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <Button variant="outline">
+                    <Download className="w-4 h-4 mr-2" />
+                    Експорт
+                  </Button>
+                  <Button variant="outline" disabled>
+                    <Scan className="w-4 h-4 mr-2" />
+                    Сканер штрих-кодів
+                  </Button>
+                  <Button variant="outline">
+                    <Printer className="w-4 h-4 mr-2" />
+                    Друкувати етикетки
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -264,7 +329,7 @@ export default function ProductsPage() {
 
         {/* DataTable компонент */}
         <DataTable
-          data={products}
+          data={filteredProducts}
           onRowClick={handleEdit}
           columns={[
             {
