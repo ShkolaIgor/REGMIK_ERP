@@ -165,17 +165,20 @@ function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <Link href="/">
-          <div className="flex items-center space-x-3 px-2 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors p-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Box className="w-5 h-5 text-white" />
+        <div className="flex items-center justify-between px-2">
+          <Link href="/" className="flex-1">
+            <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors p-2">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <Box className="w-5 h-5 text-white" />
+              </div>
+              <div className="group-data-[collapsible=icon]:hidden">
+                <h1 className="text-lg font-semibold text-gray-900">REGMIK ERP</h1>
+                <p className="text-sm text-gray-500">Система обліку</p>
+              </div>
             </div>
-            <div className="group-data-[collapsible=icon]:hidden">
-              <h1 className="text-lg font-semibold text-gray-900">REGMIK ERP</h1>
-              <p className="text-sm text-gray-500">Система обліку</p>
-            </div>
-          </div>
-        </Link>
+          </Link>
+          <SidebarTrigger className="h-8 w-8 group-data-[collapsible=icon]:hidden" />
+        </div>
       </SidebarHeader>
 
       <SidebarContent>
@@ -289,10 +292,6 @@ export function Layout({ children }: LayoutProps) {
       <div className="flex h-screen w-full">
         <AppSidebar />
         <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <div className="flex-1" />
-          </header>
           <main className="flex-1 overflow-auto p-4 lg:p-6">
             {children}
           </main>
