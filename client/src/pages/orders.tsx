@@ -1465,7 +1465,7 @@ export default function Orders() {
                 variant="outline"
                 onClick={() => setIsStatusSettingsOpen(!isStatusSettingsOpen)}
               >
-                <Settings className="w-4 h-4 mr-2" />
+                <Settings className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-3002" />
                 Налаштування статусів
               </Button>
               <div className="flex gap-2">
@@ -1480,7 +1480,9 @@ export default function Orders() {
               </div>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button onClick={() => {
+                  <Button 
+                     className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                    onClick={() => {
                   setIsEditMode(false);
                   setEditingOrder(null);
                   setSelectedClientId("");
@@ -1527,16 +1529,16 @@ export default function Orders() {
                   setIsDialogOpen(true);
                 }}>
                     <Plus className="w-4 h-4 mr-2" />
-                    Новий рахунок/замовлення
+                    Нове замовлення
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" aria-describedby="order-dialog-description">
               <DialogHeader>
                 <DialogTitle>
-                  {isEditMode ? `Редагувати рахунок ${editingOrder?.orderNumber}` : "Створити новий рахунок/замовлення"}
+                  {isEditMode ? `Редагувати рахунок ${editingOrder?.orderNumber}` : "Створити нове замовлення"}
                 </DialogTitle>
                 <DialogDescription id="order-dialog-description">
-                  {isEditMode ? "Внесіть зміни до існуючого замовлення та його товарів" : "Створіть новий рахунок для клієнта з товарами та датами"}
+                  {isEditMode ? "Внесіть зміни до існуючого замовлення та його товарів" : "Створіть нове замовлення від клієнта з товарами та датами"}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">

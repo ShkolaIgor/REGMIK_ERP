@@ -1,9 +1,8 @@
-import { ReactNode, useState } from "react";
+import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +11,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import {
   LayoutDashboard,
   Package,
@@ -39,8 +53,6 @@ import {
   DollarSign,
   QrCode,
   Mail,
-  Menu,
-  X,
   LogOut,
   User,
   Wrench,
@@ -142,9 +154,8 @@ const navigationItems = [
   }
 ];
 
-export function Layout({ children }: LayoutProps) {
+function AppSidebar() {
   const [location] = useLocation();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user } = useAuth();
 
   const handleLogout = () => {
@@ -152,103 +163,67 @@ export function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Mobile menu button */}
-      <button
-        className="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-gray-200 lg:hidden"
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-      >
-        {isMobileMenuOpen ? (
-          <X className="w-6 h-6 text-gray-600" />
-        ) : (
-          <Menu className="w-6 h-6 text-gray-600" />
-        )}
-      </button>
-
-      {/* Mobile overlay */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside className={cn(
-        "w-72 bg-white shadow-lg border-r border-gray-200 flex flex-col transition-transform duration-300 ease-in-out",
-        "lg:translate-x-0 lg:static lg:z-auto",
-        isMobileMenuOpen 
-          ? "fixed inset-y-0 left-0 z-50 translate-x-0" 
-          : "fixed inset-y-0 left-0 z-50 -translate-x-full lg:translate-x-0"
-      )}>
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Box className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">REGMIK: ERP</h1>
-              <p className="text-sm text-gray-500">Система обліку</p>
-            </div>
+    <Sidebar collapsible="icon">
+      <SidebarHeader>
+        <div className="flex items-center space-x-3 px-2">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <Box className="w-5 h-5 text-white" />
+          </div>
+          <div className="group-data-[collapsible=icon]:hidden">
+            <h1 className="text-lg font-semibold text-gray-900">REGMIK ERP</h1>
+            <p className="text-sm text-gray-500">Система обліку</p>
           </div>
         </div>
+      </SidebarHeader>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
-          {navigationItems.map((section) => (
-            <div key={section.title}>
-              <div className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 mb-2">
-                <span>{section.title}</span>
-              </div>
-              <div className="space-y-1">
+      <SidebarContent>
+        {navigationItems.map((section) => (
+          <SidebarGroup key={section.title}>
+            <SidebarGroupLabel>{section.title}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
                 {section.items.map((item) => {
                   const Icon = item.icon;
                   const isActive = location === item.href;
                   
                   return (
-                    <Link key={item.href} href={item.href}>
-                      <div
-                        className={cn(
-                          "nav-item flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors",
-                          isActive
-                            ? "bg-primary text-white"
-                            : "text-gray-700 hover:bg-gray-100"
-                        )}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        <Icon className="w-5 h-5 flex-shrink-0" />
-                        <span className="truncate">{item.name}</span>
-                      </div>
-                    </Link>
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton asChild isActive={isActive}>
+                        <Link href={item.href}>
+                          <Icon className="w-4 h-4" />
+                          <span>{item.name}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
                   );
                 })}
-              </div>
-            </div>
-          ))}
-        </nav>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+      </SidebarContent>
 
-        {/* User Profile & Status */}
-        <div className="p-4 border-t border-gray-200 space-y-3">
+      <SidebarFooter>
+        <div className="space-y-3">
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="w-full flex items-center space-x-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
-                  <Avatar className="h-10 w-10">
+                <div className="flex items-center space-x-3 p-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
+                  <Avatar className="h-8 w-8">
                     <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName} />
                     <AvatarFallback>
                       {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-gray-900">
+                  <div className="flex-1 text-left group-data-[collapsible=icon]:hidden">
+                    <p className="text-sm font-medium text-gray-900 truncate">
                       {user.firstName} {user.lastName}
                     </p>
                     <p className="text-xs text-gray-500 truncate">
                       {user.email}
                     </p>
                   </div>
-                </button>
+                </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="start" side="top">
                 <DropdownMenuLabel className="font-normal">
@@ -296,19 +271,31 @@ export function Layout({ children }: LayoutProps) {
             </DropdownMenu>
           )}
           
-          <div className="flex items-center space-x-2 text-sm">
+          <div className="flex items-center space-x-2 text-sm px-2 group-data-[collapsible=icon]:justify-center">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-gray-600">ERP Ready</span>
+            <span className="text-gray-600 group-data-[collapsible=icon]:hidden">ERP Ready</span>
           </div>
         </div>
-      </aside>
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden lg:ml-0">
-        <div className="flex-1 overflow-auto p-4 lg:p-6 pt-16 lg:pt-6">
-          {children}
-        </div>
-      </main>
-    </div>
+export function Layout({ children }: LayoutProps) {
+  return (
+    <SidebarProvider>
+      <div className="flex h-screen w-full">
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+            <div className="flex-1" />
+          </header>
+          <main className="flex-1 overflow-auto p-4 lg:p-6">
+            {children}
+          </main>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   );
 }
