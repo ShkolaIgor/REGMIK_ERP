@@ -239,19 +239,14 @@ export default function ClientContacts() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setEditingContact(contact)}
-              className="flex-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditingContact(contact);
+              }}
+              className="w-full"
             >
               <Edit className="w-3 h-3 mr-1" />
               Редагувати
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1"
-            >
-              <Trash className="w-3 h-3 mr-1" />
-              Видалити
             </Button>
           </div>
         </CardContent>
@@ -702,6 +697,165 @@ export default function ClientContacts() {
                 </div>
               </form>
             </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Contact Dialog */}
+        <Dialog open={!!editingContact} onOpenChange={(open) => !open && setEditingContact(null)}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Редагування контакту</DialogTitle>
+              <DialogDescription>
+                Змініть інформацію про контактну особу
+              </DialogDescription>
+            </DialogHeader>
+            {editingContact && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium">Клієнт</label>
+                    <select 
+                      defaultValue={editingContact.clientId.toString()}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    >
+                      {Array.isArray(clients) && clients.map((client: Client) => (
+                        <option key={client.id} value={client.id.toString()}>
+                          {client.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Повне ім'я *</label>
+                    <input
+                      type="text"
+                      defaultValue={editingContact.fullName}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Посада</label>
+                    <input
+                      type="text"
+                      defaultValue={editingContact.position || ''}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Email</label>
+                    <input
+                      type="email"
+                      defaultValue={editingContact.email || ''}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Основний телефон</label>
+                    <input
+                      type="text"
+                      defaultValue={editingContact.primaryPhone || ''}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Тип основного телефону</label>
+                    <select 
+                      defaultValue={editingContact.primaryPhoneType}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    >
+                      {Object.entries(phoneTypeLabels).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Додатковий телефон</label>
+                    <input
+                      type="text"
+                      defaultValue={editingContact.secondaryPhone || ''}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Тип додаткового телефону</label>
+                    <select 
+                      defaultValue={editingContact.secondaryPhoneType}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    >
+                      {Object.entries(phoneTypeLabels).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center space-x-4 md:col-span-2">
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        defaultChecked={editingContact.isPrimary}
+                        className="h-4 w-4 rounded border border-input"
+                      />
+                      <label className="text-sm font-medium">Основний контакт</label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        defaultChecked={editingContact.isActive}
+                        className="h-4 w-4 rounded border border-input"
+                      />
+                      <label className="text-sm font-medium">Активний</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between pt-4">
+                  <Button 
+                    variant="destructive"
+                    onClick={() => {
+                      if (confirm('Ви впевнені, що хочете видалити цю контактну особу?')) {
+                        // TODO: Implement delete functionality
+                        toast({ title: "Функція видалення в розробці" });
+                        setEditingContact(null);
+                      }
+                    }}
+                  >
+                    <Trash className="w-4 h-4 mr-2" />
+                    Видалити контакт
+                  </Button>
+
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setEditingContact(null)}
+                    >
+                      Скасувати
+                    </Button>
+                    <Button 
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                      onClick={() => {
+                        // TODO: Implement save functionality
+                        toast({ title: "Функція збереження в розробці" });
+                        setEditingContact(null);
+                      }}
+                    >
+                      Зберегти зміни
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
 

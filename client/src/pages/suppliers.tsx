@@ -213,19 +213,14 @@ export default function Suppliers() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setEditingSupplier(supplier)}
-            className="flex-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditingSupplier(supplier);
+            }}
+            className="w-full"
           >
             <Edit className="w-3 h-3 mr-1" />
             Редагувати
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-          >
-            <Trash className="w-3 h-3 mr-1" />
-            Видалити
           </Button>
         </div>
       </CardContent>
@@ -454,6 +449,144 @@ export default function Suppliers() {
             />
           </div>
         </main>
+
+        {/* Edit Supplier Dialog */}
+        <Dialog open={!!editingSupplier} onOpenChange={(open) => !open && setEditingSupplier(null)}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Редагування постачальника</DialogTitle>
+              <DialogDescription>
+                Змініть інформацію про постачальника
+              </DialogDescription>
+            </DialogHeader>
+            {editingSupplier && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Назва *</label>
+                    <input
+                      type="text"
+                      defaultValue={editingSupplier.name}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Повна назва</label>
+                    <input
+                      type="text"
+                      defaultValue={editingSupplier.fullName || ''}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Код ЄДРПОУ</label>
+                    <input
+                      type="text"
+                      defaultValue={editingSupplier.taxCode || ''}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Контактна особа</label>
+                    <input
+                      type="text"
+                      defaultValue={editingSupplier.contactPerson || ''}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Email</label>
+                    <input
+                      type="email"
+                      defaultValue={editingSupplier.email || ''}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Телефон</label>
+                    <input
+                      type="text"
+                      defaultValue={editingSupplier.phone || ''}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium">Адреса</label>
+                    <input
+                      type="text"
+                      defaultValue={editingSupplier.address || ''}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Рейтинг</label>
+                    <select 
+                      defaultValue={editingSupplier.rating.toString()}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    >
+                      <option value="1">1 зірка</option>
+                      <option value="2">2 зірки</option>
+                      <option value="3">3 зірки</option>
+                      <option value="4">4 зірки</option>
+                      <option value="5">5 зірок</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input 
+                      type="checkbox" 
+                      defaultChecked={editingSupplier.isActive}
+                      className="h-4 w-4 rounded border border-input"
+                    />
+                    <label className="text-sm font-medium">Активний</label>
+                  </div>
+                </div>
+
+                <div className="flex justify-between pt-4">
+                  <Button 
+                    variant="destructive"
+                    onClick={() => {
+                      if (confirm('Ви впевнені, що хочете видалити цього постачальника?')) {
+                        // TODO: Implement delete functionality
+                        toast({ title: "Функція видалення в розробці" });
+                        setEditingSupplier(null);
+                      }
+                    }}
+                  >
+                    <Trash className="w-4 h-4 mr-2" />
+                    Видалити постачальника
+                  </Button>
+
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setEditingSupplier(null)}
+                    >
+                      Скасувати
+                    </Button>
+                    <Button 
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                      onClick={() => {
+                        // TODO: Implement save functionality
+                        toast({ title: "Функція збереження в розробці" });
+                        setEditingSupplier(null);
+                      }}
+                    >
+                      Зберегти зміни
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Import XML Dialog */}
         <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
