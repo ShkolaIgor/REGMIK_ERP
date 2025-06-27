@@ -158,19 +158,26 @@ export default function Recipes() {
       key: "product",
       label: "Продукт",
       render: (recipe: Recipe) => {
-        const product = products.find(p => p.id === recipe.productId);
+        if (!recipe || !recipe.productId) return "—";
+        const product = Array.isArray(products) ? products.find(p => p.id === recipe.productId) : null;
         return product?.name || "—";
       }
     },
     {
       key: "estimatedTime",
       label: "Час (хв)",
-      render: (recipe: Recipe) => recipe.estimatedTime || "—"
+      render: (recipe: Recipe) => {
+        if (!recipe) return "—";
+        return recipe.estimatedTime || "—";
+      }
     },
     {
       key: "laborCost",
       label: "Вартість роботи",
-      render: (recipe: Recipe) => recipe.laborCost ? formatCurrency(Number(recipe.laborCost)) : "—"
+      render: (recipe: Recipe) => {
+        if (!recipe || !recipe.laborCost) return "—";
+        return formatCurrency(Number(recipe.laborCost));
+      }
     },
     {
       key: "actions",
