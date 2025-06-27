@@ -90,9 +90,11 @@ export default function OrdersPage() {
   const { toast } = useToast();
 
   // Queries
-  const { data: orders = [], isLoading } = useQuery<Order[]>({
+  const { data: ordersResponse, isLoading } = useQuery<{orders: Order[]}>({
     queryKey: ["/api/orders"],
   });
+  
+  const orders = ordersResponse?.orders || [];
 
   const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ["/api/clients"],
@@ -356,36 +358,36 @@ export default function OrdersPage() {
 
   const columns = [
     {
-      accessorKey: "orderNumber",
-      header: "Номер",
+      key: "orderNumber",
+      label: "Номер",
       sortable: true,
     },
     {
-      accessorKey: "clientId",
-      header: "Клієнт",
-      cell: (order: Order) => getClientName(order.clientId),
+      key: "clientId",
+      label: "Клієнт",
+      render: (order: Order) => getClientName(order.clientId),
     },
     {
-      accessorKey: "totalAmount",
-      header: "Сума",
-      cell: (order: Order) => `${order.totalAmount.toLocaleString()} ₴`,
+      key: "totalAmount",
+      label: "Сума",
+      render: (order: Order) => `${order.totalAmount.toLocaleString()} ₴`,
       sortable: true,
     },
     {
-      accessorKey: "status",
-      header: "Статус",
-      cell: (order: Order) => getStatusBadge(order.status),
+      key: "status",
+      label: "Статус",
+      render: (order: Order) => getStatusBadge(order.status),
     },
     {
-      accessorKey: "orderDate",
-      header: "Дата замовлення",
-      cell: (order: Order) => format(new Date(order.orderDate), "dd.MM.yyyy"),
+      key: "orderDate",
+      label: "Дата замовлення",
+      render: (order: Order) => format(new Date(order.orderDate), "dd.MM.yyyy"),
       sortable: true,
     },
     {
-      accessorKey: "dueDate",
-      header: "Термін виконання",
-      cell: (order: Order) => order.dueDate ? format(new Date(order.dueDate), "dd.MM.yyyy") : "—",
+      key: "dueDate",
+      label: "Термін виконання",
+      render: (order: Order) => order.dueDate ? format(new Date(order.dueDate), "dd.MM.yyyy") : "—",
       sortable: true,
     },
   ];
