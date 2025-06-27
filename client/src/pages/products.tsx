@@ -52,7 +52,9 @@ interface ImportJob {
 export default function ProductsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
