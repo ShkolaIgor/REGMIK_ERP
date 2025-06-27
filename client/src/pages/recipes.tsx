@@ -2,17 +2,18 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, Eye, Edit, Clock, DollarSign, FileText, Trash2, X, Upload, Factory, Search } from "lucide-react";
+import { Plus, Edit, Clock, DollarSign, FileText, X, Upload, Factory, Package, Component, Calculator } from "lucide-react";
 import { Recipe, InsertRecipe, Product, InsertRecipeIngredient, RecipeIngredient } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { DataTable } from "@/components/DataTable/DataTable";
+import { SearchFilters } from "@/components/SearchFilters";
 
 interface RecipeIngredientForm extends Omit<InsertRecipeIngredient, 'recipeId'> {
   productName?: string;
@@ -31,6 +32,8 @@ export default function Recipes() {
   });
   const [ingredients, setIngredients] = useState<RecipeIngredientForm[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const { toast } = useToast();
 
@@ -43,10 +46,20 @@ export default function Recipes() {
   });
 
   // Фільтровані дані для пошуку
-  const filteredRecipes = Array.isArray(recipes) ? recipes.filter(recipe =>
-    recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (recipe.description && recipe.description.toLowerCase().includes(searchQuery.toLowerCase()))
-  ) : [];
+  const filteredRecipes = Array.isArray(recipes) ? recipes.filter(recipe => {
+    const matchesSearch = recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (recipe.description && recipe.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesType = typeFilter === "all" || 
+      (typeFilter === "with-product" && recipe.productId) ||
+      (typeFilter === "without-product" && !recipe.productId);
+    
+    const matchesStatus = statusFilter === "all" ||
+      (statusFilter === "active" && recipe.productId) ||
+      (statusFilter === "draft" && !recipe.productId);
+    
+    return matchesSearch && matchesType && matchesStatus;
+  }) : [];
 
   // Статистичні дані
   const totalRecipes = Array.isArray(recipes) ? recipes.length : 0;
@@ -131,6 +144,60 @@ export default function Recipes() {
     setIngredients(ingredients.filter((_, i) => i !== index));
   };
 
+  // Колонки для DataTable
+  const columns = [
+    {
+      key: "name",
+      label: "Назва рецепту",
+      sortable: true,
+    },
+    {
+      key: "product",
+      label: "Продукт",
+      render: (recipe: Recipe) => {
+        const product = products.find(p => p.id === recipe.productId);
+        return product?.name || "—";
+      }
+    },
+    {
+      key: "estimatedTime",
+      label: "Час (хв)",
+      render: (recipe: Recipe) => recipe.estimatedTime || "—"
+    },
+    {
+      key: "laborCost",
+      label: "Вартість роботи",
+      render: (recipe: Recipe) => recipe.laborCost ? formatCurrency(Number(recipe.laborCost)) : "—"
+    },
+    {
+      key: "actions",
+      label: "Дії",
+      render: (recipe: Recipe) => (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditingRecipe(recipe);
+              setFormData({
+                name: recipe.name,
+                description: recipe.description,
+                instructions: recipe.instructions,
+                productId: recipe.productId,
+                estimatedTime: recipe.estimatedTime,
+                laborCost: recipe.laborCost
+              });
+              setIsCreateOpen(true);
+            }}
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+        </div>
+      )
+    }
+  ];
+
   if (isLoading) {
     return (
       <div className="flex-1 overflow-auto">
@@ -158,7 +225,7 @@ export default function Recipes() {
                   <FileText className="w-8 h-8" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold mb-2">Рецепти виробництва</h1>
+                  <h1 className="text-3xl font-bold mb-2">Склад рецептів</h1>
                   <p className="text-blue-100 text-lg">Управління рецептами та технологічними процесами</p>
                 </div>
               </div>
@@ -332,7 +399,7 @@ export default function Recipes() {
               <CardContent className="p-6">
                 <div className="flex items-center space-x-4">
                   <div className="p-3 bg-blue-100 rounded-xl">
-                    <FileText className="w-6 h-6 text-blue-600" />
+                    <Package className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-900">{totalRecipes}</p>
@@ -346,7 +413,7 @@ export default function Recipes() {
               <CardContent className="p-6">
                 <div className="flex items-center space-x-4">
                   <div className="p-3 bg-green-100 rounded-xl">
-                    <Factory className="w-6 h-6 text-green-600" />
+                    <Component className="w-6 h-6 text-green-600" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-900">{recipesWithProduct}</p>
@@ -374,7 +441,7 @@ export default function Recipes() {
               <CardContent className="p-6">
                 <div className="flex items-center space-x-4">
                   <div className="p-3 bg-purple-100 rounded-xl">
-                    <DollarSign className="w-6 h-6 text-purple-600" />
+                    <Calculator className="w-6 h-6 text-purple-600" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalLaborCost)}</p>
@@ -385,93 +452,45 @@ export default function Recipes() {
             </Card>
           </div>
 
-          {/* Пошук */}
-          <div className="mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Пошук рецептів..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-white/80 backdrop-blur-sm border-0 shadow-lg"
-              />
-            </div>
-          </div>
+          {/* Пошук та фільтри */}
+          <SearchFilters
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Пошук рецептів за назвою або описом..."
+            filters={[
+              {
+                key: "status",
+                label: "Статус",
+                value: statusFilter,
+                options: [
+                  { value: "all", label: "Всі рецепти" },
+                  { value: "active", label: "З продуктом" },
+                  { value: "draft", label: "Чернетки" }
+                ],
+                onChange: setStatusFilter
+              },
+              {
+                key: "type",
+                label: "Тип",
+                value: typeFilter,
+                options: [
+                  { value: "all", label: "Всі типи" },
+                  { value: "with-product", label: "З продуктом" },
+                  { value: "without-product", label: "Без продукту" }
+                ],
+                onChange: setTypeFilter
+              }
+            ]}
+          />
 
           {/* Основна таблиця */}
           <main className="bg-white rounded-2xl shadow-xl border-0 overflow-hidden">
-            <div className="p-6">
-              <div className="grid gap-4">
-                {filteredRecipes.map((recipe) => {
-                  const product = products.find(p => p.id === recipe.productId);
-                  return (
-                    <Card key={recipe.id} className="border border-gray-200 hover:shadow-lg transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <FileText className="w-5 h-5 text-blue-600" />
-                              <h3 className="text-lg font-semibold text-gray-900">{recipe.name}</h3>
-                            </div>
-                            {recipe.description && (
-                              <p className="text-gray-600 mb-3">{recipe.description}</p>
-                            )}
-                            <div className="flex items-center space-x-4 text-sm text-gray-500">
-                              {product && (
-                                <div className="flex items-center space-x-1">
-                                  <Factory className="w-4 h-4" />
-                                  <span>Продукт: {product.name}</span>
-                                </div>
-                              )}
-                              {recipe.estimatedTime && (
-                                <div className="flex items-center space-x-1">
-                                  <Clock className="w-4 h-4" />
-                                  <span>{recipe.estimatedTime} хв</span>
-                                </div>
-                              )}
-                              {recipe.laborCost && (
-                                <div className="flex items-center space-x-1">
-                                  <DollarSign className="w-4 h-4" />
-                                  <span>{formatCurrency(Number(recipe.laborCost))}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingRecipe(recipe);
-                                setFormData({
-                                  name: recipe.name,
-                                  description: recipe.description,
-                                  instructions: recipe.instructions,
-                                  productId: recipe.productId,
-                                  estimatedTime: recipe.estimatedTime,
-                                  laborCost: recipe.laborCost
-                                });
-                                setIsCreateOpen(true);
-                              }}
-                            >
-                              <Edit className="w-4 h-4 mr-1" />
-                              Редагувати
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-                {filteredRecipes.length === 0 && (
-                  <div className="text-center py-12">
-                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">Рецепти не знайдено</p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <DataTable
+              data={filteredRecipes}
+              columns={columns}
+              itemsPerPage={10}
+              storageKey="recipes-table"
+            />
           </main>
 
           {/* Import XML Dialog */}
