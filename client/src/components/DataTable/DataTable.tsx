@@ -417,80 +417,92 @@ export function DataTable({
               const isExpanded = expandedItems.has(itemId);
               
               return (
-                <tr
-                  key={`row-${itemId}`}
-                  className={cn(
-                    "border-b transition-all duration-300 ease-in-out",
-                    (onRowClick || expandableContent) && "cursor-pointer",
-                    settings.enableRowHover && "hover:shadow-lg hover:bg-blue-50/50 hover:scale-[1.005] hover:border-blue-200"
-                  )}
-                  style={{
-                    backgroundColor: settings.rowBackgroundColor,
-                    color: settings.rowTextColor,
-                    fontSize: `${settings.fontSize}px`,
-                    fontWeight: settings.fontWeight,
-                    fontStyle: settings.fontStyle
-                  }}
-                  onClick={() => {
-                    if (expandableContent) {
-                      onToggleExpand?.(itemId);
-                    } else {
-                      onRowClick?.(row);
-                    }
-                  }}
-                >
-                  {expandableContent && (
-                    <td className="px-4 py-3 w-8">
-                      <ChevronRight 
-                        className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} 
-                      />
-                    </td>
-                  )}
-                  {visibleColumns.map((column) => {
-                const columnSettings = settings.columnSettings[column.key] || defaultColumnSettings;
-                const cellValue = row[column.key];
-                return (
-                  <td 
-                    key={column.key} 
+                <React.Fragment key={`row-${itemId}`}>
+                  <tr
                     className={cn(
-                      "px-4 py-3",
-                      settings.showVerticalLines ? "border-r last:border-r-0" : ""
+                      "border-b transition-all duration-300 ease-in-out",
+                      (onRowClick || expandableContent) && "cursor-pointer",
+                      settings.enableRowHover && "hover:shadow-lg hover:bg-blue-50/50 hover:scale-[1.005] hover:border-blue-200"
                     )}
                     style={{
-                      backgroundColor: columnSettings.backgroundColor,
-                      color: columnSettings.textColor,
-                      fontSize: `${columnSettings.fontSize}px`,
-                      fontWeight: columnSettings.fontWeight,
-                      fontStyle: columnSettings.fontStyle,
-                      width: settings.columnWidths[column.key] || column.width,
-                      minWidth: column.minWidth || 100
+                      backgroundColor: settings.rowBackgroundColor,
+                      color: settings.rowTextColor,
+                      fontSize: `${settings.fontSize}px`,
+                      fontWeight: settings.fontWeight,
+                      fontStyle: settings.fontStyle
+                    }}
+                    onClick={() => {
+                      if (expandableContent) {
+                        onToggleExpand?.(itemId);
+                      } else {
+                        onRowClick?.(row);
+                      }
                     }}
                   >
-                    {column.render ? 
-                      column.render(cellValue, row) : 
-                      column.type === 'badge' ? 
-                        <Badge variant="outline">{cellValue}</Badge> :
-                      column.type === 'rating' ?
-                        <StarRating rating={parseFloat(cellValue) || 0} /> :
-                        String(cellValue || '')
-                    }
-                  </td>
-                );
-                  })}
-                  {actions && (
+                    {expandableContent && (
+                      <td className="px-4 py-3 w-8">
+                        <ChevronRight 
+                          className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} 
+                        />
+                      </td>
+                    )}
+                    {visibleColumns.map((column) => {
+                  const columnSettings = settings.columnSettings[column.key] || defaultColumnSettings;
+                  const cellValue = row[column.key];
+                  return (
                     <td 
+                      key={column.key} 
                       className={cn(
                         "px-4 py-3",
-                        settings.showVerticalLines ? "border-r-0" : ""
+                        settings.showVerticalLines ? "border-r last:border-r-0" : ""
                       )}
-                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        backgroundColor: columnSettings.backgroundColor,
+                        color: columnSettings.textColor,
+                        fontSize: `${columnSettings.fontSize}px`,
+                        fontWeight: columnSettings.fontWeight,
+                        fontStyle: columnSettings.fontStyle,
+                        width: settings.columnWidths[column.key] || column.width,
+                        minWidth: column.minWidth || 100
+                      }}
                     >
-                      <div className="flex items-center gap-1">
-                        {actions(row)}
-                      </div>
+                      {column.render ? 
+                        column.render(cellValue, row) : 
+                        column.type === 'badge' ? 
+                          <Badge variant="outline">{cellValue}</Badge> :
+                        column.type === 'rating' ?
+                          <StarRating rating={parseFloat(cellValue) || 0} /> :
+                          String(cellValue || '')
+                      }
                     </td>
+                  );
+                    })}
+                    {actions && (
+                      <td 
+                        className={cn(
+                          "px-4 py-3",
+                          settings.showVerticalLines ? "border-r-0" : ""
+                        )}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex items-center gap-1">
+                          {actions(row)}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                  {/* Expanded row content */}
+                  {isExpanded && expandableContent && (
+                    <tr>
+                      <td 
+                        colSpan={visibleColumns.length + (actions ? 1 : 0) + (expandableContent ? 1 : 0)}
+                        className="px-0 py-0 border-b"
+                      >
+                        {expandableContent(row)}
+                      </td>
+                    </tr>
                   )}
-                </tr>
+                </React.Fragment>
               );
             })
           )}
