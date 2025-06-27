@@ -57,6 +57,48 @@ export default function Components() {
     queryKey: ["/api/suppliers"],
   });
 
+  // Визначення колонок для DataTable
+  const columns = [
+    {
+      key: 'name',
+      label: 'Назва',
+      sortable: true,
+    },
+    {
+      key: 'sku',
+      label: 'SKU',
+      sortable: true,
+    },
+    {
+      key: 'category',
+      label: 'Категорія',
+      sortable: true,
+    },
+    {
+      key: 'supplier',
+      label: 'Постачальник',
+      sortable: true,
+    },
+    {
+      key: 'unitPrice',
+      label: 'Ціна',
+      sortable: true,
+      render: (value: string) => `${parseFloat(value).toFixed(2)} ₴`
+    },
+    {
+      key: 'currentStock',
+      label: 'На складі',
+      sortable: true,
+      render: (value: number, row: Component) => `${value} ${row.unit}`
+    },
+    {
+      key: 'isActive',
+      label: 'Статус',
+      sortable: true,
+      render: (value: boolean) => value ? 'Активний' : 'Неактивний'
+    }
+  ];
+
   // Фільтрування компонентів
   const filteredComponents = useMemo(() => {
     if (!Array.isArray(components)) return [];
@@ -362,6 +404,7 @@ export default function Components() {
           <div className="w-full">
             <DataTable
               data={filteredComponents}
+              columns={columns}
               storageKey="components-table"
               cardTemplate={cardTemplate}
               onRowClick={(component) => setEditingComponent(component)}
