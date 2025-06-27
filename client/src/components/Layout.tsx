@@ -169,8 +169,8 @@ function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader>
+    <Sidebar collapsible="icon" className="flex flex-col h-full group-data-[collapsible=icon]:w-16">
+      <SidebarHeader className="flex-shrink-0">
         <div className="flex items-center justify-between px-2 group-data-[collapsible=icon]:justify-center">
           <Link href="/" className="flex-1 min-w-0 group-data-[collapsible=icon]:flex-none">
             <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:space-x-0">
@@ -191,22 +191,27 @@ function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="overflow-y-auto">
+      <SidebarContent className="flex-1 overflow-y-auto min-h-0 group-data-[collapsible=icon]:px-1">
         {navigationItems.map((section) => (
-          <SidebarGroup key={section.title}>
+          <SidebarGroup key={section.title} className="group-data-[collapsible=icon]:space-y-1">
             <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">{section.title}</SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="group-data-[collapsible=icon]:space-y-1">
                 {section.items.map((item) => {
                   const Icon = item.icon;
                   const isActive = location === item.href;
                   
                   return (
                     <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton asChild isActive={isActive} title={item.name}>
+                      <SidebarMenuButton 
+                        asChild 
+                        isActive={isActive} 
+                        title={item.name}
+                        className="group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
+                      >
                         <Link href={item.href}>
-                          <Icon className="w-4 h-4" />
-                          <span>{item.name}</span>
+                          <Icon className="w-4 h-4 group-data-[collapsible=icon]:w-5 group-data-[collapsible=icon]:h-5" />
+                          <span className="group-data-[collapsible=icon]:hidden">{item.name}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -218,7 +223,7 @@ function AppSidebar() {
         ))}
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="flex-shrink-0">
         <div className="space-y-3">
           {user && (
             <DropdownMenu>
@@ -286,10 +291,10 @@ function AppSidebar() {
             </DropdownMenu>
           )}
           
-          <div className="flex items-center space-x-2 text-sm px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-1">
+          {/* <div className="flex items-center space-x-2 text-sm px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-1">
             <div className="w-2 h-2 bg-green-500 rounded-full group-data-[collapsible=icon]:w-1.5 group-data-[collapsible=icon]:h-1.5"></div>
             <span className="text-gray-600 group-data-[collapsible=icon]:hidden">ERP Ready</span>
-          </div>
+          </div> */}
         </div>
       </SidebarFooter>
     </Sidebar>
