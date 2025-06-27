@@ -19,6 +19,7 @@ import { insertProductComponentSchema } from "@shared/schema";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { DataTable } from "@/components/DataTable/DataTable";
+import { SearchFilters } from "@/components/SearchFilters";
 import { useAuth } from "@/hooks/useAuth";
 
 type Product = {
@@ -57,9 +58,9 @@ export default function BOMPage() {
   const { isAuthenticated, isLoading } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [productTypeFilter, setProductTypeFilter] = useState("all");
+  const [activeFilter, setActiveFilter] = useState("all");
   const queryClient = useQueryClient();
-  //const [categoryFilter, setCategoryFilter] = useState("all");
-  //const [statusFilter, setStatusFilter] = useState("all");
   
   const form = useForm<ComponentFormData>({
     resolver: zodResolver(componentFormSchema),

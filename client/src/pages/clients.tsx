@@ -279,6 +279,8 @@ export default function Clients() {
   const [selectedClientForContact, setSelectedClientForContact] = useState<string>("");
   const [isGlobalContactAdd, setIsGlobalContactAdd] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [contactFormData, setContactFormData] = useState({
     fullName: "",
     position: "",
@@ -486,8 +488,30 @@ export default function Clients() {
     }
   ];
 
+  // Фільтрація клієнтів на основі пошуку та фільтрів
+  const filteredClients = clients.filter(client => {
+    // Пошук
+    const matchesSearch = searchQuery === "" || 
+      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      client.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      client.taxCode?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    // Фільтр типу
+    const matchesType = typeFilter === "all" || 
+      (typeFilter === "customer" && client.isCustomer) ||
+      (typeFilter === "supplier" && client.isSupplier) ||
+      (typeFilter === "both" && client.isCustomer && client.isSupplier);
+
+    // Фільтр статусу
+    const matchesStatus = statusFilter === "all" || 
+      (statusFilter === "active" && client.isActive) ||
+      (statusFilter === "inactive" && !client.isActive);
+
+    return matchesSearch && matchesType && matchesStatus;
+  });
+
   // Обробка даних для відображення в таблиці
-  const processedClients = clients.map(client => {
+  const processedClients = filteredClients.map(client => {
     const clientType = clientTypes?.find((type: any) => type.id === client.clientTypeId);
     return {
       ...client,
@@ -765,19 +789,20 @@ export default function Clients() {
                     {
                       key: "type",
                       label: "Тип",
-                      value: "all",
-                      onChange: () => {},
+                      value: typeFilter,
+                      onChange: setTypeFilter,
                       options: [
                         { value: "all", label: "Всі типи" },
-                        { value: "legal", label: "Юридичні особи" },
-                        { value: "individual", label: "Фізичні особи" }
+                        { value: "customer", label: "Покупці" },
+                        { value: "supplier", label: "Постачальники" },
+                        { value: "both", label: "Покупці + Постачальники" }
                       ]
                     },
                     {
                       key: "status",
                       label: "Статус",
-                      value: "all",
-                      onChange: () => {},
+                      value: statusFilter,
+                      onChange: setStatusFilter,
                       options: [
                         { value: "all", label: "Всі статуси" },
                         { value: "active", label: "Активні" },
