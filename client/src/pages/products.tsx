@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Upload, Edit2, Trash2, Package, CheckCircle, Grid3X3, DollarSign, Layers, Search, Scan, Printer, Download } from "lucide-react";
 import { DataTable } from "@/components/DataTable/DataTable";
+import { SearchFilters } from "@/components/SearchFilters";
 
 interface Product {
   id: number;
@@ -265,48 +266,37 @@ export default function ProductsPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      placeholder="Пошук товарів..."
-                      className="w-80 pl-10"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm font-medium text-gray-700">Категорія:</label>
-                    <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Всі категорії" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Всі категорії</SelectItem>
-                        {categories.map((category: any) => (
-                          <SelectItem key={category.id} value={category.id.toString()}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm font-medium text-gray-700">Статус:</label>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Всі статуси" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Всі статуси</SelectItem>
-                        <SelectItem value="active">Активні</SelectItem>
-                        <SelectItem value="inactive">Неактивні</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                <SearchFilters
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  searchPlaceholder="Пошук товарів за назвою, SKU, описом..."
+                  filters={[
+                    {
+                      key: "category",
+                      label: "Категорія",
+                      value: categoryFilter,
+                      onChange: setCategoryFilter,
+                      options: [
+                        { value: "all", label: "Всі категорії" },
+                        ...categories.map((category: any) => ({
+                          value: category.id.toString(),
+                          label: category.name
+                        }))
+                      ]
+                    },
+                    {
+                      key: "status",
+                      label: "Статус",
+                      value: statusFilter,
+                      onChange: setStatusFilter,
+                      options: [
+                        { value: "all", label: "Всі статуси" },
+                        { value: "active", label: "Активні" },
+                        { value: "inactive", label: "Неактивні" }
+                      ]
+                    }
+                  ]}
+                />
 
                 <div className="flex items-center space-x-3">
                   <Button variant="outline">

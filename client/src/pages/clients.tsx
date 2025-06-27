@@ -14,6 +14,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { ClientContactsXmlImport } from "@/components/ClientContactsXmlImport";
 import { ClientsXmlImport } from "@/components/ClientsXmlImport";
 import { DataTable } from "@/components/DataTable/DataTable";
+import { SearchFilters } from "@/components/SearchFilters";
 import { 
   Search, Plus, Edit, User, Building2, Truck, Package, Percent,
   Users, Phone, Mail, MapPin, UserPlus, Trash2, MoreVertical, Upload, FileText, Download, Scan, Printer 
@@ -756,68 +757,54 @@ export default function Clients() {
           <Card>
             <CardContent className="p-6">
               <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      placeholder="Пошук товарів..."
-                      className="w-80 pl-10"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
+                <SearchFilters
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  searchPlaceholder="Пошук клієнтів за назвою, ЄДРПОУ або повним ім'ям..."
+                  filters={[
+                    {
+                      key: "type",
+                      label: "Тип",
+                      value: "all",
+                      onChange: () => {},
+                      options: [
+                        { value: "all", label: "Всі типи" },
+                        { value: "legal", label: "Юридичні особи" },
+                        { value: "individual", label: "Фізичні особи" }
+                      ]
+                    },
+                    {
+                      key: "status",
+                      label: "Статус",
+                      value: "all",
+                      onChange: () => {},
+                      options: [
+                        { value: "all", label: "Всі статуси" },
+                        { value: "active", label: "Активні" },
+                        { value: "inactive", label: "Неактивні" }
+                      ]
+                    }
+                  ]}
+                />
 
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm font-medium text-gray-700">Категорія:</label>
-                    {/* <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Всі категорії" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Всі категорії</SelectItem>
-                        {categories.map((category: any) => (
-                          <SelectItem key={category.id} value={category.id.toString()}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>*/}
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm font-medium text-gray-700">Статус:</label>
-                    {/*<Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Всі статуси" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Всі статуси</SelectItem>
-                        <SelectItem value="in-stock">В наявності</SelectItem>
-                        <SelectItem value="low-stock">Мало на складі</SelectItem>
-                        <SelectItem value="out-of-stock">Немає в наявності</SelectItem>
-                      </SelectContent>
-                    </Select>*/}
-                  </div>
+                <div className="flex items-center space-x-3">
+                  <Button variant="outline">
+                    <Download className="w-4 h-4 mr-2" />
+                    Експорт
+                  </Button>
+                  <Button variant="outline" disabled>
+                    <Scan className="w-4 h-4 mr-2" />
+                    Сканер штрих-кодів
+                  </Button>
+                  <Button variant="outline">
+                    <Printer className="w-4 h-4 mr-2" />
+                    Друкувати етикетки
+                  </Button>
                 </div>
-
-                 <div className="flex items-center space-x-3">
-                          <Button variant="outline">
-                            <Download className="w-4 h-4 mr-2" />
-                            Експорт
-                          </Button>
-                          <Button variant="outline" disabled>
-                            <Scan className="w-4 h-4 mr-2" />
-                            Сканер штрих-кодів
-                          </Button>
-                          <Button variant="outline">
-                            <Printer className="w-4 h-4 mr-2" />
-                            Друкувати етикетки
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
         
         {/* DataTable Section */}            
         <div className="w-full space-y-6 flex-1 overflow-auto">
