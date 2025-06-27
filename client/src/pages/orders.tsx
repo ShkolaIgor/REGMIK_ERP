@@ -407,7 +407,9 @@ export default function Orders() {
   };
 
   // Expandable content for order items with payment/delivery buttons
-  const expandableContent = (order: Order) => (
+  const expandableContent = (order: Order) => {
+    console.log('Expandable content rendering for order:', order.id);
+    return (
     <div className="p-4 bg-gray-50 border-t">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Order Items */}
@@ -523,7 +525,8 @@ export default function Orders() {
         </div>
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
