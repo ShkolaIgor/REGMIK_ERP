@@ -488,7 +488,6 @@ export default function Recipes() {
             <DataTable
               data={filteredRecipes}
               columns={columns}
-              itemsPerPage={10}
               storageKey="recipes-table"
             />
           </main>

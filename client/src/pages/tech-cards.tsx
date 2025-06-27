@@ -489,7 +489,6 @@ export default function TechCards() {
             <DataTable
               data={filteredTechCards}
               columns={columns}
-              itemsPerPage={10}
               storageKey="tech-cards-table"
             />
           </main>
