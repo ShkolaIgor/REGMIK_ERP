@@ -15,7 +15,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { formatCurrency, getStatusColor, cn } from "@/lib/utils";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
 import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
-import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X, Settings, Palette, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X, Settings, Palette, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Upload } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
 import { useForm } from "react-hook-form";
@@ -2252,54 +2252,143 @@ export default function Orders() {
         </div>
       )}
 
-      <main className="p-3 space-y-3">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <p className="text-2xl font-semibold text-gray-900">{totalServerRecords}</p>
-                <p className="text-sm text-gray-600">Всього замовлень</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header Section */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
+        <div className="w-full px-8 py-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <ShoppingCart className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                    Замовлення
+                  </h1>
+                  <p className="text-gray-600 mt-1">Управління замовленнями клієнтів та контроль виконання</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsImportOrdersDialogOpen(true)}
+                className="border-purple-200 text-purple-600 hover:bg-purple-50"
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Імпорт замовлень
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsImportOrderItemsDialogOpen(true)}
+                className="border-blue-200 text-blue-600 hover:bg-blue-50"
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Імпорт позицій
+              </Button>
+              <Button 
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                onClick={() => setIsCreateDialogOpen(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Створити замовлення
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="w-full px-8 py-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <ShoppingCart className="w-4 h-4 text-blue-600" />
+                    <p className="text-sm text-blue-700 font-medium">Всього замовлень</p>
+                  </div>
+                  <p className="text-3xl font-bold text-blue-900 mb-1">{totalServerRecords}</p>
+                  <p className="text-xs text-blue-600">За весь період</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <ShoppingCart className="w-8 h-8 text-white" />
+                </div>
               </div>
             </CardContent>
           </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <p className="text-2xl font-semibold text-blue-600">
-                  {orders.filter((o: any) => o.status === 'processing').length}
-                </p>
-                <p className="text-sm text-gray-600">В обробці</p>
+
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Package className="w-4 h-4 text-orange-600" />
+                    <p className="text-sm text-orange-700 font-medium">В обробці</p>
+                  </div>
+                  <p className="text-3xl font-bold text-orange-900 mb-1">
+                    {orders.filter((o: any) => o.status === 'processing').length}
+                  </p>
+                  <p className="text-xs text-orange-600">Потребують уваги</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Package className="w-8 h-8 text-white" />
+                </div>
               </div>
             </CardContent>
           </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <p className="text-2xl font-semibold text-green-600">
-                  {orders.filter((o: any) => o.status === 'completed').length}
-                </p>
-                <p className="text-sm text-gray-600">Завершено</p>
+
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Check className="w-4 h-4 text-emerald-600" />
+                    <p className="text-sm text-emerald-700 font-medium">Завершено</p>
+                  </div>
+                  <p className="text-3xl font-bold text-emerald-900 mb-1">
+                    {orders.filter((o: any) => o.status === 'completed').length}
+                  </p>
+                  <p className="text-xs text-emerald-600">Успішно виконано</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Check className="w-8 h-8 text-white" />
+                </div>
               </div>
             </CardContent>
           </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <p className="text-2xl font-semibold text-gray-900">
-                  {formatCurrency(orders.reduce((sum: number, o: any) => sum + parseFloat(o.totalAmount), 0))}
-                </p>
-                <p className="text-sm text-gray-600">Загальна сума</p>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <FileText className="w-4 h-4 text-purple-600" />
+                    <p className="text-sm text-purple-700 font-medium">Загальна сума</p>
+                  </div>
+                  <p className="text-3xl font-bold text-purple-900 mb-1">
+                    {formatCurrency(orders.reduce((sum: number, o: any) => sum + parseFloat(o.totalAmount), 0))}
+                  </p>
+                  <p className="text-xs text-purple-600">Всіх замовлень</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <FileText className="w-8 h-8 text-white" />
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
+      {/* Content */}
+      <div className="w-full space-y-6 flex-1 overflow-auto">
         {/* Filters and Search */}
-        <Card>
+        <Card className="bg-white/60 backdrop-blur-sm border-gray-200/50">
           <CardContent className="p-4">
             <div className="flex flex-col lg:flex-row gap-4 items-center">
               {/* Search */}
@@ -2309,13 +2398,13 @@ export default function Orders() {
                   placeholder="Пошук за номером замовлення, клієнтом, email або телефоном..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-white/80"
                 />
               </div>
 
               {/* Status Filter */}
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-[150px] bg-white/80">
                   <SelectValue placeholder="Статус" />
                 </SelectTrigger>
                 <SelectContent>
@@ -2330,7 +2419,7 @@ export default function Orders() {
 
               {/* Payment Filter */}
               <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-[150px] bg-white/80">
                   <SelectValue placeholder="Оплата" />
                 </SelectTrigger>
                 <SelectContent>
@@ -2343,11 +2432,137 @@ export default function Orders() {
 
               {/* Date Range Filter */}
               <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-[150px] bg-white/80">
                   <SelectValue placeholder="Період" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Весь час</SelectItem>
+                  <SelectItem value="today">Сьогодні</SelectItem>
+                  <SelectItem value="week">Цей тиждень</SelectItem>
+                  <SelectItem value="month">Цей місяць</SelectItem>
+                  <SelectItem value="quarter">Цей квартал</SelectItem>
+                  <SelectItem value="year">Цей рік</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Clear filters button */}
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                <X className="h-4 w-4 mr-2" />
+                Очистити
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Orders DataTable */}
+        <DataTable 
+          data={filteredOrders || []} 
+          title="Список замовлень"
+          description="Перегляд та управління замовленнями клієнтів"
+          storageKey="orders-list"
+          searchPlaceholder="Пошук за номером замовлення, клієнтом, email або телефоном..."
+          columns={[
+            { 
+              key: 'orderSequenceNumber', 
+              label: '№', 
+              sortable: true,
+              width: '80px'
+            },
+            { 
+              key: 'orderNumber', 
+              label: 'Номер замовлення', 
+              sortable: true,
+              width: '150px'
+            },
+            { 
+              key: 'clientName', 
+              label: 'Клієнт', 
+              sortable: true,
+              width: '200px'
+            },
+            { 
+              key: 'status', 
+              label: 'Статус', 
+              sortable: true,
+              width: '120px',
+              render: (value: string, row: any) => {
+                const statusObj = orderStatuses.find(s => s.name === value);
+                return statusObj ? (
+                  <Badge 
+                    style={{
+                      backgroundColor: statusObj.backgroundColor,
+                      color: statusObj.textColor
+                    }}
+                  >
+                    {value}
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary">{value}</Badge>
+                );
+              }
+            },
+            { 
+              key: 'totalAmount', 
+              label: 'Сума', 
+              sortable: true,
+              width: '120px',
+              render: (value: string) => formatCurrency(parseFloat(value || '0'))
+            },
+            { 
+              key: 'createdAt', 
+              label: 'Дата створення', 
+              sortable: true,
+              width: '120px',
+              render: (value: Date) => new UkrainianDate(value).toLocaleDateString()
+            },
+            { 
+              key: 'dueDate', 
+              label: 'Термін виконання', 
+              sortable: true,
+              width: '120px',
+              render: (value: Date) => value ? new UkrainianDate(value).toLocaleDateString() : '-'
+            }
+          ]}
+          actions={(row: any) => (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSelectedOrder(row);
+                  setIsViewDialogOpen(true);
+                }}
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSelectedOrder(row);
+                  setIsEditDialogOpen(true);
+                }}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDeleteOrder(row.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          onRowClick={(row: any) => {
+            setSelectedOrder(row);
+            setIsViewDialogOpen(true);
+          }}
+        />
+      </div>
+    </div>
+
+      {/* All existing dialogs go here */}
                   <SelectItem value="today">Сьогодні</SelectItem>
                   <SelectItem value="week">Тиждень</SelectItem>
                   <SelectItem value="month">Місяць</SelectItem>
