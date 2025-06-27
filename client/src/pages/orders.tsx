@@ -29,7 +29,12 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
-  Star
+  Star,
+  AlertTriangle,
+  CreditCard,
+  Printer,
+  Mail,
+  Edit2
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -331,67 +336,183 @@ export default function Orders() {
     },
   ];
 
-  // Card template for mobile view
-  const cardTemplate = (order: Order) => (
-    <div className="p-4 space-y-3">
-      <div className="flex justify-between items-start">
-        <div className="space-y-1">
-          <h3 className="font-semibold text-lg">{order.orderNumber}</h3>
-          <p className="text-sm text-gray-600">{order.clientName}</p>
-        </div>
-        <div className="flex items-center space-x-1">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <Star
-              key={star}
-              className="w-4 h-4 fill-yellow-400 text-yellow-400"
-            />
-          ))}
-        </div>
-      </div>
-      
-      <div className="flex justify-between items-center">
-        <Badge 
-          style={{
-            backgroundColor: orderStatusesList?.find((s: OrderStatus) => s.name === order.status)?.backgroundColor || '#e5e7eb',
-            color: orderStatusesList?.find((s: OrderStatus) => s.name === order.status)?.textColor || '#374151'
-          }}
-        >
-          {order.status}
-        </Badge>
-        <span className="font-bold text-lg">{formatCurrency(order.totalAmount)}</span>
-      </div>
-      
-      <div className="text-xs text-gray-500">
-        {order.createdAt ? new UkrainianDate(order.createdAt).toLocaleDateString() : 'Дата невідома'}
-      </div>
-    </div>
-  );
+  // Check if order is overdue
+  const isOrderOverdue = (order: Order) => {
+    if (!order.deliveryDate) return false;
+    const deliveryDate = new Date(order.deliveryDate);
+    const today = new Date();
+    return deliveryDate < today && order.status !== 'delivered' && order.status !== 'completed';
+  };
 
-  // Expandable content for order items
-  const expandableContent = (order: Order) => (
-    <div className="p-4 bg-gray-50">
-      <h4 className="font-medium mb-3">Склад замовлення:</h4>
-      {order.items && order.items.length > 0 ? (
-        <div className="space-y-2">
-          {order.items.map((item: OrderItem, index: number) => (
-            <div key={index} className="bg-white rounded border p-3">
-              <div className="flex justify-between items-center">
-                <div className="flex-1">
-                  <span className="font-medium">{item.product?.name || 'Товар не знайдено'}</span>
-                  <span className="text-sm text-gray-500 ml-2">({item.product?.sku})</span>
-                </div>
-                <div className="flex items-center space-x-4 text-sm">
-                  <span>Кіл.: {item.quantity}</span>
-                  <span>Ціна: {formatCurrency(item.unitPrice)}</span>
-                  <span className="font-medium">Σ: {formatCurrency(item.totalPrice)}</span>
-                </div>
-              </div>
+  // Card template for mobile view with overdue highlighting
+  const cardTemplate = (order: Order) => {
+    const isOverdue = isOrderOverdue(order);
+    
+    return (
+      <div className={`p-4 space-y-3 ${isOverdue ? 'bg-red-50 border-red-200' : ''}`}>
+        <div className="flex justify-between items-start">
+          <div className="space-y-1">
+            <div className="flex items-center space-x-2">
+              <h3 className="font-semibold text-lg">{order.orderNumber}</h3>
+              {isOverdue && (
+                <Badge variant="destructive" className="text-xs">
+                  <AlertTriangle className="h-3 w-3 mr-1" />
+                  Прострочено
+                </Badge>
+              )}
             </div>
-          ))}
+            <p className="text-sm text-gray-600">{order.clientName}</p>
+          </div>
+          <div className="flex items-center space-x-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                className="w-4 h-4 fill-yellow-400 text-yellow-400"
+              />
+            ))}
+          </div>
         </div>
-      ) : (
-        <p className="text-gray-500 text-sm">Замовлення не містить товарів</p>
-      )}
+        
+        <div className="flex justify-between items-center">
+          <Badge 
+            style={{
+              backgroundColor: orderStatusesList?.find((s: OrderStatus) => s.name === order.status)?.backgroundColor || '#e5e7eb',
+              color: orderStatusesList?.find((s: OrderStatus) => s.name === order.status)?.textColor || '#374151'
+            }}
+          >
+            {order.status}
+          </Badge>
+          <span className="font-bold text-lg">{formatCurrency(order.totalAmount)}</span>
+        </div>
+        
+        <div className="text-xs text-gray-500 flex justify-between">
+          <span>{order.createdAt ? new UkrainianDate(order.createdAt).toLocaleDateString() : 'Дата невідома'}</span>
+          {order.deliveryDate && (
+            <span className={isOverdue ? 'text-red-600 font-medium' : ''}>
+              До: {new UkrainianDate(order.deliveryDate).toLocaleDateString()}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Expandable content for order items with payment/delivery buttons
+  const expandableContent = (order: Order) => (
+    <div className="p-4 bg-gray-50 border-t">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Order Items */}
+        <div>
+          <h4 className="font-medium mb-3">Склад замовлення:</h4>
+          {order.items && order.items.length > 0 ? (
+            <div className="space-y-2">
+              {order.items.map((item: OrderItem, index: number) => (
+                <div key={index} className="bg-white rounded border p-3">
+                  <div className="flex justify-between items-center">
+                    <div className="flex-1">
+                      <span className="font-medium">{item.product?.name || 'Товар не знайдено'}</span>
+                      <span className="text-sm text-gray-500 ml-2">({item.product?.sku})</span>
+                    </div>
+                    <div className="flex items-center space-x-4 text-sm">
+                      <span>Кіл.: {item.quantity}</span>
+                      <span>Ціна: {formatCurrency(item.unitPrice)}</span>
+                      <span className="font-medium">Σ: {formatCurrency(item.totalPrice)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">Замовлення не містить товарів</p>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="space-y-3">
+          <h4 className="font-medium mb-3">Дії з замовленням:</h4>
+          
+          {/* Payment Buttons */}
+          <div className="bg-white rounded border p-3">
+            <h5 className="text-sm font-medium text-gray-700 mb-2">Оплата</h5>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" className="text-green-600 border-green-200 hover:bg-green-50">
+                <CreditCard className="h-4 w-4 mr-1" />
+                Готівка
+              </Button>
+              <Button size="sm" variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50">
+                <CreditCard className="h-4 w-4 mr-1" />
+                Картка
+              </Button>
+              <Button size="sm" variant="outline" className="text-purple-600 border-purple-200 hover:bg-purple-50">
+                <CreditCard className="h-4 w-4 mr-1" />
+                Переказ
+              </Button>
+            </div>
+          </div>
+
+          {/* Delivery Buttons */}
+          <div className="bg-white rounded border p-3">
+            <h5 className="text-sm font-medium text-gray-700 mb-2">Доставка</h5>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" className="text-orange-600 border-orange-200 hover:bg-orange-50">
+                <Truck className="h-4 w-4 mr-1" />
+                Нова Пошта
+              </Button>
+              <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
+                <Truck className="h-4 w-4 mr-1" />
+                Укр Пошта
+              </Button>
+              <Button size="sm" variant="outline" className="text-indigo-600 border-indigo-200 hover:bg-indigo-50">
+                <MapPin className="h-4 w-4 mr-1" />
+                Самовивіз
+              </Button>
+            </div>
+          </div>
+
+          {/* Status Change */}
+          <div className="bg-white rounded border p-3">
+            <h5 className="text-sm font-medium text-gray-700 mb-2">Змінити статус</h5>
+            <div className="flex flex-wrap gap-2">
+              {orderStatusesList?.map((status: OrderStatus) => (
+                <Button 
+                  key={status.id} 
+                  size="sm" 
+                  variant="outline"
+                  style={{
+                    borderColor: status.backgroundColor,
+                    color: status.backgroundColor
+                  }}
+                  className="hover:opacity-80"
+                  onClick={() => {
+                    console.log(`Changing status to ${status.name} for order ${order.id}`);
+                  }}
+                >
+                  {status.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Additional Actions */}
+          <div className="bg-white rounded border p-3">
+            <h5 className="text-sm font-medium text-gray-700 mb-2">Додаткові дії</h5>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" className="text-gray-600 border-gray-200 hover:bg-gray-50">
+                <FileText className="h-4 w-4 mr-1" />
+                Рахунок
+              </Button>
+              <Button size="sm" variant="outline" className="text-gray-600 border-gray-200 hover:bg-gray-50">
+                <Printer className="h-4 w-4 mr-1" />
+                Друк
+              </Button>
+              <Button size="sm" variant="outline" className="text-gray-600 border-gray-200 hover:bg-gray-50">
+                <Mail className="h-4 w-4 mr-1" />
+                Email
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 
