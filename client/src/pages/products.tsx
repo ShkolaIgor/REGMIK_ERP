@@ -84,6 +84,7 @@ export default function ProductsPage() {
 
     // Фільтр за категорією
     const matchesCategory = categoryFilter === "all" || 
+      (categoryFilter === "null" && !product.categoryId) ||
       (product.categoryId && product.categoryId.toString() === categoryFilter);
 
     // Фільтр за статусом
@@ -278,6 +279,7 @@ export default function ProductsPage() {
                       onChange: setCategoryFilter,
                       options: [
                         { value: "all", label: "Всі категорії" },
+                        { value: "null", label: "Без категорії" },
                         ...categories.map((category: any) => ({
                           value: category.id.toString(),
                           label: category.name
