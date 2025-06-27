@@ -167,22 +167,7 @@ export default function ProductsPage() {
                 </div>
               </div>
             
-              <div className="flex items-center space-x-4">
-                <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline">
-                      <Upload className="h-4 w-4 mr-2" />
-                      Імпорт XML
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Імпорт товарів з XML</DialogTitle>
-                    </DialogHeader>
-                    // Вміст діалогу імпорту тут 
-                  </DialogContent>
-                </Dialog>            
-           
+              <div className="flex items-center space-x-4"> 
               <Button 
                 className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
                 onClick={() => setIsCreateDialogOpen(true)}>
@@ -194,75 +179,87 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      <main className="p-6 space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Показано товарів</p>
-                  <p className="text-3xl font-semibold text-gray-900">{filteredProducts.length}</p>
-                  <p className="text-sm text-green-600 mt-1">З {products.length} загалом</p>
+        {/* Statistics Cards */}
+        <main className="w-full px-8 py-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Package className="w-4 h-4 text-blue-600" />
+                      <p className="text-sm text-blue-700 font-medium">Показано товарів</p>
+                    </div>
+                    <p className="text-3xl font-bold text-blue-900 mb-1">{filteredProducts.length}</p>
+                    <p className="text-xs text-blue-600">З {products.length} загалом</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <Package className="w-8 h-8 text-white" />
+                  </div>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Package className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Активні товари</p>
-                  <p className="text-3xl font-semibold text-gray-900">
-                    {filteredProducts.filter((p: Product) => p.isActive).length}
-                  </p>
-                  <p className="text-sm text-green-600 mt-1">В продажу</p>
+            <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <CheckCircle className="w-4 h-4 text-emerald-600" />
+                      <p className="text-sm text-emerald-700 font-medium">Активні товари</p>
+                    </div>
+                    <p className="text-3xl font-bold text-emerald-900 mb-1">{filteredProducts.filter((p: Product) => p.isActive).length}</p>
+                    <p className="text-xs text-emerald-600">В продажу</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <CheckCircle className="w-8 h-8 text-white" />
+                  </div>
                 </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Категорії</p>
-                  <p className="text-3xl font-semibold text-gray-900">{categories.length}</p>
-                  <p className="text-sm text-blue-600 mt-1">Різних типів</p>
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Grid3X3 className="w-4 h-4 text-purple-600" />
+                      <p className="text-sm text-purple-700 font-medium">Категорії</p>
+                    </div>
+                    <p className="text-3xl font-bold text-purple-900 mb-1">{categories.length}</p>
+                    <p className="text-xs text-purple-600">Різних типів</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <Grid3X3 className="w-8 h-8 text-white" />
+                  </div>
                 </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Grid3X3 className="w-6 h-6 text-purple-600" />
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <DollarSign className="w-4 h-4 text-orange-600" />
+                      <p className="text-sm text-orange-700 font-medium">Середня ціна</p>
+                    </div>
+                    <p className="text-3xl font-bold text-orange-900 mb-1">{filteredProducts.length > 0 
+                        ? Math.round(filteredProducts.reduce((sum: number, p: Product) => sum + parseFloat(p.retailPrice), 0) / filteredProducts.length)
+                        : 0} ₴</p>
+                    <p className="text-xs text-orange-600">За товар</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <DollarSign className="w-8 h-8 text-white" />
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Середня ціна</p>
-                  <p className="text-3xl font-semibold text-gray-900">
-                    {filteredProducts.length > 0 
-                      ? Math.round(filteredProducts.reduce((sum: number, p: Product) => sum + parseFloat(p.retailPrice), 0) / filteredProducts.length)
-                      : 0} ₴
-                  </p>
-                  <p className="text-sm text-orange-600 mt-1">За товар</p>
-                </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-orange-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
 
         {/* Filters and Actions */}
         <div className="w-full py-3">
