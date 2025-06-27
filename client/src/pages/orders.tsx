@@ -15,7 +15,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { formatCurrency, getStatusColor, cn } from "@/lib/utils";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
 import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
-import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X, Settings, Palette, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X, Settings, Palette, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, HandPlatter, DollarSign, Clock, TrendingUp } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
 import { useForm } from "react-hook-form";
@@ -1283,6 +1283,7 @@ export default function Orders() {
   const getStatusText = (status: string) => {
     const statusMap: { [key: string]: string } = {
       pending: "Нове",
+
       processing: "В обробці", 
       completed: "Завершено",
       cancelled: "Скасовано"
@@ -1440,16 +1441,26 @@ export default function Orders() {
   }
 
   return (
-    <div className="w-full overflow-auto">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-900">Замовлення</h2>
-            <p className="text-gray-600">Управління замовленнями</p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <div className="flex gap-2">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        {/* Header Section */}
+        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
+          <div className="w-full px-8 py-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <HandPlatter className="w-6 h-6 text-white" />
+              </div>
+              <div >
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                  Замовлення клієнтів
+                </h1>
+                <p className="text-gray-600 mt-1">Управління замовленнями та їх статусами</p>
+              </div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+
               <Button
                 variant="outline"
                 onClick={() => setIsStatusSettingsOpen(!isStatusSettingsOpen)}
@@ -2084,7 +2095,7 @@ export default function Orders() {
             </div>
           </div>
         </div>
-      </header>
+        {/*</header>*/}
 
       {/* Status Settings Panel */}
       {isStatusSettingsOpen && (
@@ -2252,47 +2263,82 @@ export default function Orders() {
         </div>
       )}
 
-      <main className="p-3 space-y-3">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <p className="text-2xl font-semibold text-gray-900">{totalServerRecords}</p>
-                <p className="text-sm text-gray-600">Всього замовлень</p>
+          {/* <main className="p-3 space-y-3"> */}
+      {/* Statistics Cards */}
+      <div className="w-full px-8 py-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <ShoppingCart className="w-4 h-4 text-blue-600" />
+                    <p className="text-sm text-blue-700 font-medium">Всього замовлень</p>
+                  </div>
+                  <p className="text-3xl font-bold text-blue-900 mb-1">{totalServerRecords}</p>
+                  <p className="text-xs text-blue-600">Загальна кількість</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <ShoppingCart className="w-8 h-8 text-white" />
+                </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <p className="text-2xl font-semibold text-blue-600">
-                  {orders.filter((o: any) => o.status === 'processing').length}
-                </p>
-                <p className="text-sm text-gray-600">В обробці</p>
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <DollarSign className="w-4 h-4 text-emerald-600" />
+                    <p className="text-sm text-emerald-700 font-medium">Загальний дохід</p>
+                  </div>
+                  <p className="text-3xl font-bold text-emerald-900 mb-1">{formatCurrency(orders.reduce((sum: number, o: any) => sum + parseFloat(o.totalAmount), 0))}</p>
+                  <p className="text-xs text-emerald-600">Загальна сума</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <DollarSign className="w-8 h-8 text-white" />
+                </div>
               </div>
             </CardContent>
           </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <p className="text-2xl font-semibold text-green-600">
-                  {orders.filter((o: any) => o.status === 'completed').length}
-                </p>
-                <p className="text-sm text-gray-600">Завершено</p>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock className="w-4 h-4 text-purple-600" />
+                    <p className="text-sm text-purple-700 font-medium">В обробці</p>
+                  </div>
+                  <p className="text-3xl font-bold text-purple-900 mb-1">{orders.filter((o: any) => o.status === 'processing').length}</p>
+                  <p className="text-xs text-purple-600">Очікують обробки</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Clock className="w-8 h-8 text-white" />
+                </div>
               </div>
             </CardContent>
           </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <p className="text-2xl font-semibold text-gray-900">
-                  {formatCurrency(orders.reduce((sum: number, o: any) => sum + parseFloat(o.totalAmount), 0))}
-                </p>
-                <p className="text-sm text-gray-600">Загальна сума</p>
+
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <TrendingUp className="w-4 h-4 text-orange-600" />
+                    <p className="text-sm text-orange-700 font-medium">Завершено</p>
+                  </div>
+                  <p className="text-3xl font-bold text-orange-900 mb-1">{orders.filter((o: any) => o.status === 'completed').length}</p>
+                  <p className="text-xs text-orange-600">Завершено</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <TrendingUp className="w-8 h-8 text-white" />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -2623,7 +2669,8 @@ export default function Orders() {
             )}
           </CardContent>
         </Card>
-      </main>
+       {/* </main> */}
+      </div>
 
       {/* Діалог часткового відвантаження */}
       {selectedOrderForShipment && (
@@ -2655,6 +2702,7 @@ export default function Orders() {
           />
         </DialogContent>
       </Dialog>
+    </div>
     </div>
   );
 }
