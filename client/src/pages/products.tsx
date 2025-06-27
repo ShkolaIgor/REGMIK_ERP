@@ -10,9 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Upload, Edit2, Trash2, Package, CheckCircle, Grid3X3, DollarSign, Layers, Search, Scan, Printer, Download } from "lucide-react";
+import { Plus, Upload, Edit2, Trash2, Package, CheckCircle, Grid3X3, DollarSign, Layers, Search, Scan, Printer, Download, AlertTriangle } from "lucide-react";
 import { DataTable } from "@/components/DataTable/DataTable";
 import { SearchFilters } from "@/components/SearchFilters";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Product {
   id: number;
@@ -299,6 +300,17 @@ export default function ProductsPage() {
                 />
 
                 <div className="flex items-center space-x-3">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsImportDialogOpen(true)}
+                    className={`border-blue-200 text-blue-600 hover:bg-blue-50 ${!isAuthenticated ? 'opacity-50' : ''}`}
+                    disabled={!isAuthenticated}
+                    title={!isAuthenticated ? "Потрібна авторизація для імпорту" : ""}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Імпорт XML
+                    {!isAuthenticated && <AlertTriangle className="ml-2 h-4 w-4 text-orange-500" />}
+                  </Button>
                   <Button variant="outline">
                     <Download className="w-4 h-4 mr-2" />
                     Експорт

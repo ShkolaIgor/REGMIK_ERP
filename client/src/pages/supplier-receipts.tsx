@@ -14,10 +14,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Plus, Package, FileText, TrendingUp, Calendar, Download, Upload, HandPlatter, Edit } from "lucide-react";
+import { Plus, Package, FileText, TrendingUp, Calendar, Download, Upload, HandPlatter, Edit, Scan, Printer, AlertTriangle} from "lucide-react";
 import { DataTable, DataTableColumn } from "@/components/DataTable";
 import { SearchFilters } from "@/components/SearchFilters";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
+import { useAuth } from "@/hooks/useAuth";
 
 // Interfaces
 interface SupplierReceipt {
@@ -51,6 +52,7 @@ type SupplierReceiptFormData = z.infer<typeof supplierReceiptSchema>;
 
 export default function SupplierReceipts() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [editingReceipt, setEditingReceipt] = useState<SupplierReceipt | null>(null);
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
@@ -59,6 +61,7 @@ export default function SupplierReceipts() {
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   // Queries
   const { data: receiptsData = [], isLoading } = useQuery({
@@ -302,7 +305,7 @@ export default function SupplierReceipts() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header Section */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
-        <div className="w-full px-8 py-8">
+        <div className="w-full px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3">
@@ -352,7 +355,7 @@ export default function SupplierReceipts() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="w-full px-8 py-6">
+      <div className="w-full px-8 py-3">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
             <CardContent className="p-6 relative overflow-hidden">
@@ -431,12 +434,11 @@ export default function SupplierReceipts() {
           </Card>
         </div>
 
-      {/* Content */}
-      <div className="w-full space-y-6 flex-1 overflow-auto">
-      {/* Product Selection */}
-
-        {/* Search and Filters */}
-        <div className="mb-6">
+        {/* Filters and Actions */}
+        <div className="w-full py-3">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex flex-wrap items-center justify-between gap-4">
           <SearchFilters
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
@@ -470,7 +472,35 @@ export default function SupplierReceipts() {
               }
             ]}
           />
-        </div>
+              <div className="flex items-center space-x-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsImportDialogOpen(true)}
+                  className={`border-blue-200 text-blue-600 hover:bg-blue-50 ${!isAuthenticated ? 'opacity-50' : ''}`}
+                  disabled={!isAuthenticated}
+                  title={!isAuthenticated ? "Потрібна авторизація для імпорту" : ""}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Імпорт XML
+                  {!isAuthenticated && <AlertTriangle className="ml-2 h-4 w-4 text-orange-500" />}
+                </Button>
+                <Button variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  Експорт
+                </Button>
+                <Button variant="outline" disabled>
+                  <Scan className="w-4 h-4 mr-2" />
+                  Сканер штрих-кодів
+                </Button>
+                <Button variant="outline">
+                  <Printer className="w-4 h-4 mr-2" />
+                  Друкувати етикетки
+                </Button>
+              </div>
+              </div>
+              </CardContent>
+              </Card>
+              </div>
 
         {/* DataTable */}
         <DataTable
@@ -695,7 +725,6 @@ export default function SupplierReceipts() {
           </Form>
         </DialogContent>
       </Dialog>
-    </div>
     </div>
   );
 }
