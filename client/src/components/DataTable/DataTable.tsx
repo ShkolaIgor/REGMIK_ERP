@@ -107,13 +107,11 @@ interface DataTableProps {
   data: any[];
   columns: DataTableColumn[];
   loading?: boolean;
-  onSearch?: (query: string) => void;
   onSort?: (field: string, direction: 'asc' | 'desc') => void;
   onRowClick?: (row: any) => void;
   actions?: (row: any) => React.ReactNode;
   title?: string;
   description?: string;
-  searchPlaceholder?: string;
   storageKey: string; // Unique key for saving settings
   cardTemplate?: (item: any) => React.ReactNode;
   expandableContent?: (item: any) => React.ReactNode;
@@ -156,14 +154,11 @@ export function DataTable({
   data,
   columns,
   loading = false,
-  searchable = true,
-  onSearch,
   onSort,
   onRowClick,
   actions,
   title,
   description,
-  searchPlaceholder,
   storageKey,
   cardTemplate,
   expandableContent,
@@ -182,7 +177,6 @@ export function DataTable({
     }
   });
 
-  const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -206,41 +200,11 @@ export function DataTable({
     }
   }, [columns, settings.columnOrder.length]);
 
-  // Optimized search for large datasets
-  const filteredData = useMemo(() => {
-    let result = data;
-
-    // For large datasets, optimize search to specific fields only
-    if (searchQuery && searchable) {
-      const searchLower = searchQuery.toLowerCase();
-      
-      if (data.length > 5000) {
-        // Fast search on key fields only for performance
-        result = result.filter(item => {
-          const searchableFields = ['name', 'sku', 'title', 'description', 'id'];
-          return searchableFields.some(field => {
-            const value = item[field];
-            return value && String(value).toLowerCase().includes(searchLower);
-          });
-        });
-      } else {
-        // Full search for smaller datasets
-        result = result.filter(item =>
-          Object.values(item).some(value =>
-            String(value).toLowerCase().includes(searchLower)
-          )
-        );
-      }
-    }
-
-    return result;
-  }, [data, searchQuery, searchable]);
-
   // Optimized sort for large datasets
   const sortedData = useMemo(() => {
-    if (!settings.sortField) return filteredData;
+    if (!settings.sortField) return data;
 
-    return [...filteredData].sort((a, b) => {
+    return [...data].sort((a, b) => {
       const aVal = a[settings.sortField];
       const bVal = b[settings.sortField];
       
@@ -256,7 +220,7 @@ export function DataTable({
       const result = String(aVal).localeCompare(String(bVal));
       return settings.sortDirection === 'asc' ? result : -result;
     });
-  }, [filteredData, settings.sortField, settings.sortDirection]);
+  }, [data, settings.sortField, settings.sortDirection]);
 
   // Efficient pagination with lazy loading
   const paginatedData = useMemo(() => {
@@ -284,11 +248,7 @@ export function DataTable({
     onSort?.(columnKey, newDirection);
   };
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    setCurrentPage(1);
-    onSearch?.(query);
-  };
+
 
   // Get visible columns based on settings
   const visibleColumns = useMemo(() => {
