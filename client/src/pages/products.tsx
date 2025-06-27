@@ -71,7 +71,7 @@ export default function ProductsPage() {
   });
 
   const { data: categories = [] } = useQuery({
-    queryKey: ['/api/product-categories'],
+    queryKey: ['/api/categories'],
   });
 
   // Фільтрування товарів
