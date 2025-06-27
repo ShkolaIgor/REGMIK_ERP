@@ -298,6 +298,15 @@ export default function Orders() {
       key: "orderNumber",
       label: "Номер замовлення",
       sortable: true,
+      render: (value: string, row: Order) => {
+        const isOverdue = isOrderOverdue(row);
+        return (
+          <div className={`flex items-center space-x-2 ${isOverdue ? 'text-red-600 font-medium' : ''}`}>
+            <span>{value}</span>
+            {isOverdue && <AlertTriangle className="h-4 w-4 text-red-500" />}
+          </div>
+        );
+      },
     },
     {
       key: "clientName",
@@ -338,10 +347,10 @@ export default function Orders() {
 
   // Check if order is overdue
   const isOrderOverdue = (order: Order) => {
-    if (!order.deliveryDate) return false;
-    const deliveryDate = new Date(order.deliveryDate);
+    if (!order.dueDate) return false;
+    const dueDate = new Date(order.dueDate);
     const today = new Date();
-    return deliveryDate < today && order.status !== 'delivered' && order.status !== 'completed';
+    return dueDate < today && order.status !== 'delivered' && order.status !== 'completed';
   };
 
   // Card template for mobile view with overdue highlighting
@@ -387,9 +396,9 @@ export default function Orders() {
         
         <div className="text-xs text-gray-500 flex justify-between">
           <span>{order.createdAt ? new UkrainianDate(order.createdAt).toLocaleDateString() : 'Дата невідома'}</span>
-          {order.deliveryDate && (
+          {order.dueDate && (
             <span className={isOverdue ? 'text-red-600 font-medium' : ''}>
-              До: {new UkrainianDate(order.deliveryDate).toLocaleDateString()}
+              До: {new UkrainianDate(order.dueDate).toLocaleDateString()}
             </span>
           )}
         </div>
