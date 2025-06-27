@@ -171,9 +171,9 @@ function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center justify-between px-2">
-          <Link href="/" className="flex-1 min-w-0">
-            <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors p-2">
+        <div className="flex items-center justify-between px-2 group-data-[collapsible=icon]:justify-center">
+          <Link href="/" className="flex-1 min-w-0 group-data-[collapsible=icon]:flex-none">
+            <div className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:space-x-0">
               <div className="w-8 h-8 group-data-[collapsible=icon]:w-6 group-data-[collapsible=icon]:h-6 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
                 <Box className="w-5 h-5 group-data-[collapsible=icon]:w-4 group-data-[collapsible=icon]:h-4 text-white" />
               </div>
