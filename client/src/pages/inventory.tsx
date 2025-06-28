@@ -167,116 +167,142 @@ export default function Inventory() {
   }
 
   return (
-    <div className="flex-1 overflow-auto">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h2 className="text-2xl font-semibold text-gray-900">Управління товарами</h2>
-            <Badge className="bg-green-100 text-green-800">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-1" />
-              Онлайн
-            </Badge>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex gap-2">
-              {/*<div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Пошук товарів..."
-                  className="w-80 pl-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+       {/* Header Section */}
+        <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
+          <div className="w-full px-8 py-3">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Badge className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                      Товарний каталог
+                    </h1>
+                    <p className="text-gray-500 mt-1">Управління товарами</p>
+                  </div>
+              </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex gap-2">
+                {/*<div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Пошук товарів..."
+                    className="w-80 pl-10"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div> */}
+                <ScannerButton
+                  onScanResult={(barcode) => {
+                    setSearchQuery(barcode);
+                    toast({
+                      title: "Штрих-код відсканований",
+                      description: `Пошук за кодом: ${barcode}`,
+                    });
+                  }}
                 />
-              </div> */}
-              <ScannerButton
-                onScanResult={(barcode) => {
-                  setSearchQuery(barcode);
-                  toast({
-                    title: "Штрих-код відсканований",
-                    description: `Пошук за кодом: ${barcode}`,
-                  });
-                }}
-              />
+              </div>
+              <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
+                <Download className="h-4 w-4 mr-2" />
+                Експорт
+              </Button>
+                <Button 
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                  onClick={() => setShowProductForm(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Додати товар
+                </Button>
             </div>
-            <Button onClick={() => setShowProductForm(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Додати товар
-            </Button>
-          </div>
-        </div>
-      </header>
+              </div>
+          </div>       
+      </header>      
 
       <main className="p-6 space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Загальна кількість товарів</p>
-                  <p className="text-3xl font-semibold text-gray-900">{products.length}</p>
-                  <p className="text-sm text-green-600 mt-1">+12% цього місяця</p>
+        {/* Statistics Cards */}
+        <div className="w-full px-8 py-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Package className="w-4 h-4 text-blue-600" />
+                      <p className="text-sm text-blue-700 font-medium">Загальна кількість товарів</p>
+                    </div>
+                    <p className="text-3xl font-bold text-blue-900 mb-1">{products.length}</p>
+                    <p className="text-xs text-blue-600">+?% цього місяця</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <Package className="w-8 h-8 text-white" />
+                  </div>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Package className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Загальна вартість запасів</p>
-                  <p className="text-3xl font-semibold text-gray-900">
-                    {formatCurrency(inventory.reduce((total: number, inv: any) => {
-                      const product = products.find((p: any) => p.id === inv.productId);
-                      return total + (product ? inv.quantity * parseFloat(product.costPrice) : 0);
-                    }, 0))}
-                  </p>
-                  <p className="text-sm text-green-600 mt-1">+8% цього місяця</p>
+            <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <DollarSign className="w-4 h-4 text-emerald-600" />
+                      <p className="text-sm text-emerald-700 font-medium">агальна вартість запасів</p>
+                    </div>
+                    <p className="text-3xl font-bold text-emerald-900 mb-1">
+                      {formatCurrency(inventory.reduce((total: number, inv: any) => {
+                        const product = products.find((p: any) => p.id === inv.productId);
+                        return total + (product ? inv.quantity * parseFloat(product.costPrice) : 0);
+                      }, 0))}</p>
+                    <p className="text-xs text-emerald-600">+?% цього місяця</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <DollarSign className="w-8 h-8 text-white" />
+                  </div>
                 </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Товари на межі закінчення</p>
-                  <p className="text-3xl font-semibold text-gray-900">
-                    {inventory.filter((inv: any) => inv.quantity <= inv.minStock).length}
-                  </p>
-                  <p className="text-sm text-yellow-600 mt-1">Потрібна увага</p>
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <AlertTriangle className="w-4 h-4 text-purple-600" />
+                      <p className="text-sm text-purple-700 font-medium">Товари на межі закінчення</p>
+                    </div>
+                    <p className="text-3xl font-bold text-purple-900 mb-1">{inventory.filter((inv: any) => inv.quantity <= inv.minStock).length}</p>
+                    <p className="text-xs text-purple-600">Потрібна увага</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <AlertTriangle className="w-8 h-8 text-white" />
+                  </div>
                 </div>
-                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-yellow-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Загальна кількість SKU</p>
-                  <p className="text-3xl font-semibold text-gray-900">{products.length}</p>
-                  <p className="text-sm text-blue-600 mt-1">Унікальних позицій</p>
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Barcode className="w-4 h-4 text-orange-600" />
+                      <p className="text-sm text-orange-700 font-medium">Загальна кількість SKU</p>
+                    </div>
+                    <p className="text-3xl font-bold text-orange-900 mb-1">{products.length}</p>
+                    <p className="text-xs text-orange-600">Унікальних позицій</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <Barcode className="w-8 h-8 text-white" />
+                  </div>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Barcode className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>        
 
         {/* Filters and Actions */}
         <Card>
@@ -546,6 +572,7 @@ export default function Inventory() {
             </p>
           </div>
         )}
+          </div>
       </main>
 
       <ProductForm
@@ -559,7 +586,6 @@ export default function Inventory() {
         isViewMode={isViewMode}
       />
 
-
-    </div>
+        </div>
   );
 }
