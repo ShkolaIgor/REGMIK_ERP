@@ -212,7 +212,7 @@ export default function Recipes() {
     return (
       <div className="flex-1 overflow-auto">
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-          <div className="container mx-auto p-6">
+          <div className="w-full p-6">
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
               <p className="mt-4 text-gray-600">Завантаження рецептів...</p>
@@ -226,7 +226,7 @@ export default function Recipes() {
   return (
     <div className="flex-1 overflow-auto">
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <div className="container mx-auto p-6">
+        <div className="w-full p-6">
           {/* Header з градієнтом */}
           <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 rounded-2xl p-8 mb-8 text-white shadow-xl">
             <div className="flex items-center justify-between">
