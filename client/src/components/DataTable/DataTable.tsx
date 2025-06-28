@@ -286,10 +286,11 @@ export function DataTable({
 
   const renderTableView = () => (
     <div className={cn(
-      "overflow-x-auto rounded-lg",
+      "h-full flex flex-col overflow-hidden rounded-lg",
       settings.showVerticalLines ? "border" : ""
     )}>
-      <table className="w-full">
+      <div className="flex-1 overflow-auto">
+        <table className="w-full">
         <thead
           className="border-b"
           style={{
@@ -467,6 +468,7 @@ export function DataTable({
           )}
         </tbody>
       </table>
+      </div>
     </div>
   );
 
@@ -561,9 +563,9 @@ export function DataTable({
   );
 
   return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-xl">
-       <div className="p-4">     
-    <div className="space-y-4">
+    <div className="h-full flex flex-col bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-xl">
+      <div className="p-4 flex-shrink-0">     
+        <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">     
         
@@ -923,8 +925,10 @@ export function DataTable({
         </div>
       </div>
 
-      {/* Data Display */}
-      {settings.viewMode === 'table' ? renderTableView() : renderCardView()}
+      {/* Data Display - займає весь доступний простір */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {settings.viewMode === 'table' ? renderTableView() : renderCardView()}
+      </div>
 
       {/* Pagination */}
       {(totalPages > 1 || sortedData.length > settings.pageSize) && (
@@ -1022,7 +1026,5 @@ export function DataTable({
         </div>
       )}
     </div>
-    </div>
-      </div>
   );
 }
