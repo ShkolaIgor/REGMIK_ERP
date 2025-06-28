@@ -149,17 +149,17 @@ export default function ProductsPage() {
   return (
     <div className="flex-1 overflow-auto">
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <div className="container mx-auto p-6">
+        <div className="w-full px-8 py-3">
           {/* Header з градієнтом */}
-          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 rounded-2xl p-8 mb-8 text-white shadow-xl">
+          <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                  <Package className="w-8 h-8" />
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Package className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold mb-2">Склад товарів</h1>
-                  <p className="text-blue-100 text-lg">Управління продуктами та категоріями</p>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Склад товарів</h1>
+                  <p className="text-gray-500 mt-1">Управління продуктами та категоріями</p>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -173,7 +173,7 @@ export default function ProductsPage() {
                 </Button>
                 <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="bg-white text-blue-600 hover:bg-blue-50 shadow-lg">
+                    <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300">
                       <Plus className="w-4 h-4 mr-2" />
                       Новий товар
                     </Button>
@@ -182,7 +182,7 @@ export default function ProductsPage() {
               </div>
             </div>
           </div>
-      </div>
+        </div>
 
         {/* Statistics Cards */}
         <main className="w-full px-8 py-3">

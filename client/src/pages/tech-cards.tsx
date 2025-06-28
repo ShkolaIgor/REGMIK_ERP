@@ -235,17 +235,17 @@ export default function TechCards() {
   return (
     <div className="flex-1 overflow-auto">
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <div className="w-full p-6">
+        <div className="w-full px-8 py-3">
           {/* Header з градієнтом */}
-          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 rounded-2xl p-8 mb-8 text-white shadow-xl">
+          <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                  <ClipboardList className="w-8 h-8" />
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <ClipboardList className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold mb-2">Склад технологічних карт</h1>
-                  <p className="text-blue-100 text-lg">Управління технологічними процесами та інструкціями</p>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Склад технологічних карт</h1>
+                  <p className="text-gray-500 mt-1">Управління технологічними процесами та інструкціями</p>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -259,7 +259,7 @@ export default function TechCards() {
                 </Button>
                 <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                   <DialogTrigger asChild>
-                    <Button className="bg-white text-blue-600 hover:bg-blue-50 shadow-lg">
+                    <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300">
                       <Plus className="w-4 h-4 mr-2" />
                       Нова технологічна карта
                     </Button>
@@ -393,67 +393,94 @@ export default function TechCards() {
               </div>
             </div>
           </div>
-
-          {/* Статистичні картки */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-blue-100 rounded-xl">
-                    <Package className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{totalTechCards}</p>
-                    <p className="text-sm text-gray-500">Всього тех. карт</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-green-100 rounded-xl">
-                    <Component className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{techCardsWithProduct}</p>
-                    <p className="text-sm text-gray-500">З продуктами</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-orange-100 rounded-xl">
-                    <Clock className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{averageTime}</p>
-                    <p className="text-sm text-gray-500">Середній час (хв)</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-purple-100 rounded-xl">
-                    <FileText className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{totalWithInstructions}</p>
-                    <p className="text-sm text-gray-500">З інструкціями</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
+          {/* Статистичні картки - Statistics Cards */}
+          <main className="w-full px-8 py-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+                <CardContent className="p-6 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="flex items-center justify-between relative z-10">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Package className="w-4 h-4 text-blue-600" />
+                        <p className="text-sm text-blue-700 font-medium">Всього тех. карт</p>
+                      </div>
+                      <p className="text-3xl font-bold text-blue-900 mb-1">{totalTechCards}</p>
+                      <p className="text-xs text-blue-600">заповнено</p>
+                    </div>
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                      <Package className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+                <CardContent className="p-6 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="flex items-center justify-between relative z-10">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Component className="w-4 h-4 text-emerald-600" />
+                        <p className="text-sm text-emerald-700 font-medium">З продуктами</p>
+                      </div>
+                      <p className="text-3xl font-bold text-emerald-900 mb-1">{techCardsWithProduct}</p>
+                      <p className="text-xs text-emerald-600">карток</p>
+                    </div>
+                    <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                      <Component className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+                <CardContent className="p-6 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="flex items-center justify-between relative z-10">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Clock className="w-4 h-4 text-purple-600" />
+                        <p className="text-sm text-purple-700 font-medium">Середній час</p>
+                      </div>
+                      <p className="text-3xl font-bold text-purple-900 mb-1">{averageTime}</p>
+                      <p className="text-xs text-purple-600">хв.</p>
+                    </div>
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                      <Clock className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+                <CardContent className="p-6 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="flex items-center justify-between relative z-10">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <FileText className="w-4 h-4 text-orange-600" />
+                        <p className="text-sm text-orange-700 font-medium">З інструкціями</p>
+                      </div>
+                      <p className="text-3xl font-bold text-orange-900 mb-1">{totalWithInstructions}</p>
+                      <p className="text-xs text-orange-600">З інструкціями</p>
+                    </div>
+                    <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                      <FileText className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+
           {/* Пошук та фільтри */}
+          <div className="w-full py-3">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
           <SearchFilters
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
@@ -483,12 +510,18 @@ export default function TechCards() {
               }
             ]}
           />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
 
           {/* Основна таблиця */}
           <main className="bg-white rounded-2xl shadow-xl border-0 overflow-hidden">
             <DataTable
               data={filteredTechCards}
               columns={columns}
+              loading={isLoading}
+              title="Список технологічних карт"
               storageKey="tech-cards-table"
             />
           </main>
@@ -528,8 +561,8 @@ export default function TechCards() {
               </div>
             </DialogContent>
           </Dialog>
-        </div>
+        </main>
       </div>
-    </div>
+      </div>    
   );
 }
