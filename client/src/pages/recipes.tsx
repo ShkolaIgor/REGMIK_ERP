@@ -224,27 +224,22 @@ export default function Recipes() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="container mx-auto p-4 flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 overflow-auto">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="container mx-auto p-6">
           {/* Header з градієнтом */}
-          <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
-            <div className="w-full px-8 py-3">
+          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 rounded-2xl p-8 mb-8 text-white shadow-xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <FileText className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
-                      Склад рецептів
-                    </h1>
-                    <p className="text-gray-600 mt-1">Управління рецептами та технологічними процесами</p>
-                  </div>
+                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                  <FileText className="w-8 h-8" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold mb-2">Склад рецептів</h1>
+                  <p className="text-blue-100 text-lg">Управління рецептами та технологічними процесами</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
+              <div className="flex gap-3">
                 <Button
                   onClick={() => setIsImportDialogOpen(true)}
                   variant="outline"
@@ -407,93 +402,67 @@ export default function Recipes() {
               </div>
             </div>
           </div>
+
+          {/* Статистичні картки */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-blue-100 rounded-xl">
+                    <Package className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{totalRecipes}</p>
+                    <p className="text-sm text-gray-500">Всього рецептів</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-green-100 rounded-xl">
+                    <Component className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{recipesWithProduct}</p>
+                    <p className="text-sm text-gray-500">З продуктами</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-orange-100 rounded-xl">
+                    <Clock className="w-6 h-6 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{averageTime}</p>
+                    <p className="text-sm text-gray-500">Середній час (хв)</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-purple-100 rounded-xl">
+                    <Calculator className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalLaborCost)}</p>
+                    <p className="text-sm text-gray-500">Загальна вартість</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Статистичні картки - Statistics Cards */}
-              <div className="w-full px-8 py-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                  <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
-                    <CardContent className="p-6 relative overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      <div className="flex items-center justify-between relative z-10">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Package className="w-4 h-4 text-blue-600" />
-                            <p className="text-sm text-blue-700 font-medium">Всього рецептів</p>
-                          </div>
-                          <p className="text-3xl font-bold text-blue-900 mb-1">{totalRecipes}</p>
-                          <p className="text-xs text-blue-600">Всього рецептів</p>
-                        </div>
-                        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
-                          <Package className="w-8 h-8 text-white" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
-                    <CardContent className="p-6 relative overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      <div className="flex items-center justify-between relative z-10">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Component className="w-4 h-4 text-emerald-600" />
-                            <p className="text-sm text-emerald-700 font-medium">З продуктами</p>
-                          </div>
-                          <p className="text-3xl font-bold text-emerald-900 mb-1">{recipesWithProduct}</p>
-                          <p className="text-xs text-emerald-600">Всього з продуктами</p>
-                        </div>
-                        <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
-                          <Component className="w-8 h-8 text-white" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
-                    <CardContent className="p-6 relative overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      <div className="flex items-center justify-between relative z-10">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Clock className="w-4 h-4 text-purple-600" />
-                            <p className="text-sm text-purple-700 font-medium">Середній час</p>
-                          </div>
-                          <p className="text-3xl font-bold text-purple-900 mb-1">{averageTime}</p>
-                          <p className="text-xs text-purple-600">(хв)</p>
-                        </div>
-                        <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
-                          <Clock className="w-8 h-8 text-white" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
-                    <CardContent className="p-6 relative overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      <div className="flex items-center justify-between relative z-10">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Calculator className="w-4 h-4 text-orange-600" />
-                            <p className="text-sm text-orange-700 font-medium">Загальна вартість</p>
-                          </div>
-                          <p className="text-3xl font-bold text-orange-900 mb-1">{formatCurrency(totalLaborCost)}</p>
-                          <p className="text-xs text-orange-600">Загальна вартість</p>
-                        </div>
-                        <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
-                          <Calculator className="w-8 h-8 text-white" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
           {/* Пошук та фільтри */}
-            <div className="w-full py-3">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex flex-wrap items-center justify-between gap-4">
           <SearchFilters
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
@@ -523,23 +492,15 @@ export default function Recipes() {
               }
             ]}
           />
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
 
-          {/* Основна таблиця - займає весь доступний простір */}
-          <div className="flex-1 min-h-0 mt-4">
-            <main className="bg-white rounded-2xl shadow-xl border-0 overflow-hidden h-full flex flex-col">
-              <div className="flex-1 min-h-0">
-                <DataTable
-                  data={filteredRecipes}
-                  columns={columns}
-                  storageKey="recipes-table"
-                />
-              </div>
-            </main>
-          </div>
+          {/* Основна таблиця */}
+          <main className="bg-white rounded-2xl shadow-xl border-0 overflow-hidden">
+            <DataTable
+              data={filteredRecipes}
+              columns={columns}
+              storageKey="recipes-table"
+            />
+          </main>
 
           {/* Import XML Dialog */}
           <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
@@ -577,8 +538,7 @@ export default function Recipes() {
             </DialogContent>
           </Dialog>
         </div>
-        </div>      
-      </div>      
+      </div>
     </div>
   );
 }
