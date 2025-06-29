@@ -9738,14 +9738,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: companyData.title || companyData.full_name,
         fullName: companyData.full_name,
         taxCode: companyData.tax_code || null,
-        address: companyData.legal_address || null,
-        phone: companyData.phone || null,
-        email: companyData.email || null,
+        legalAddress: companyData.legal_address || null,
+        physicalAddress: companyData.legal_address || null,
+        addressesMatch: false,
+        discount: "0.00",
+        notes: null,
         externalId: `BITRIX_${companyData.bitrix_id}`,
         source: 'bitrix24',
+        carrierId: null,
+        cityRef: null,
+        warehouseRef: null,
+        isActive: true,
         isCustomer: true,
         isSupplier: false,
-        isActive: true,
         clientTypeId: clientTypeId
       };
 
@@ -9824,7 +9829,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         source: 'bitrix24'
       };
 
-      const order = await storage.createOrder(orderData);
+      const order = await storage.createOrder(orderData, []);
       console.log(`[PHP WEBHOOK] Створено замовлення: ${order.orderNumber} (ID: ${order.id})`);
 
       // Обробляємо позиції рахунку
