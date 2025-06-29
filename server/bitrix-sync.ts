@@ -1,5 +1,5 @@
 import { storage } from "./storage";
-import type { InsertClient, InsertOrder, InsertOrderItem } from "@shared/schema";
+import type { InsertClient, InsertOrder, InsertOrderItem, InsertProduct } from "@shared/schema";
 
 // Типи для Бітрікс24 API
 interface BitrixCompanyData {
@@ -229,6 +229,86 @@ function mapBitrixStatusToERP(bitrixStatus?: string): "pending" | "confirmed" | 
 }
 
 /**
+ * Генерує наступний номер замовлення на основі останнього
+ */
+function generateNextOrderNumber(lastOrderNumber?: string): string {
+  if (!lastOrderNumber) {
+    return "ORD-000001";
+  }
+  
+  // Якщо номер має формат ORD-XXXXXX, інкрементуємо
+  const match = lastOrderNumber.match(/ORD-(\d+)/);
+  if (match) {
+    const nextNumber = parseInt(match[1], 10) + 1;
+    return `ORD-${nextNumber.toString().padStart(6, '0')}`;
+  }
+  
+  // Якщо номер цифровий, інкрементуємо
+  const numericMatch = lastOrderNumber.match(/^\d+$/);
+  if (numericMatch) {
+    const nextNumber = parseInt(lastOrderNumber, 10) + 1;
+    return `ORD-${nextNumber.toString().padStart(6, '0')}`;
+  }
+  
+  // За замовчуванням
+  return `ORD-${Date.now().toString().slice(-6)}`;
+}
+
+/**
+ * Шукає товар в ERP за назвою (точний збіг або часткове співпадіння)
+ */
+async function findProductByName(productName: string): Promise<any> {
+  try {
+    const products = await storage.getProducts();
+    
+    // Спочатку шукаємо точний збіг за назвою
+    let product = products.find(p => p.name.toLowerCase() === productName.toLowerCase());
+    
+    if (!product) {
+      // Потім шукаємо часткове співпадіння
+      product = products.find(p => 
+        p.name.toLowerCase().includes(productName.toLowerCase()) ||
+        productName.toLowerCase().includes(p.name.toLowerCase())
+      );
+    }
+    
+    return product || null;
+  } catch (error) {
+    console.error("[WEBHOOK ERP] Помилка пошуку товару:", error);
+    return null;
+  }
+}
+
+/**
+ * Створює новий товар в ERP на основі позиції з Бітрікс24
+ */
+async function createProductFromBitrixItem(item: BitrixInvoiceItem): Promise<any> {
+  try {
+    // Генеруємо унікальний SKU
+    const sku = item.productCode || `BTX-${Date.now()}`;
+    
+    const productData: InsertProduct = {
+      name: item.productName,
+      sku: sku,
+      description: `Товар синхронізований з Бітрікс24. Код: ${item.productCode || 'не вказано'}`,
+      isActive: true,
+      categoryId: 1, // Використовуємо базову категорію
+      costPrice: item.price.toString(),
+      retailPrice: item.price.toString(),
+
+    };
+
+    const product = await storage.createProduct(productData);
+    console.log(`[WEBHOOK ERP] Автоматично створено товар: ${product.name} (SKU: ${product.sku})`);
+    
+    return product;
+  } catch (error) {
+    console.error("[WEBHOOK ERP] Помилка створення товару:", error);
+    throw error;
+  }
+}
+
+/**
  * Масова синхронізація компаній з Бітрікс24
  */
 export async function syncAllCompaniesFromBitrix(): Promise<{ success: boolean; message: string; syncedCount: number }> {
@@ -430,18 +510,53 @@ export async function sendInvoiceToERPWebhook(invoiceData: BitrixInvoiceData): P
       };
     }
 
+    // Генеруємо автоматичний номер замовлення як інкремент останнього
+    const orders = await storage.getOrders();
+    const lastOrder = orders.length > 0 ? orders[orders.length - 1] : null;
+    const nextOrderNumber = generateNextOrderNumber(lastOrder?.orderNumber);
+
     // Формуємо дані для створення замовлення в ERP
     const orderData: InsertOrder = {
-      orderNumber: invoiceData.ACCOUNT_NUMBER,
+      orderNumber: nextOrderNumber,
       clientId: clientSync.clientId,
       status: mapBitrixStatusToERP(invoiceData.STATUS),
       totalAmount: invoiceData.PRICE.toString(),
-      notes: `Синхронізовано з Бітрікс24 через webhook (ID: ${invoiceData.ID})`
+      notes: `Синхронізовано з Бітрікс24 через webhook (ID: ${invoiceData.ID}, рахунок: ${invoiceData.ACCOUNT_NUMBER})`
     };
 
-    // Створюємо нове замовлення
-    const order = await storage.createOrder(orderData);
+    // Створюємо нове замовлення з правильними аргументами
+    const order = await storage.createOrder(orderData, clientSync.clientId);
     console.log(`[WEBHOOK ERP] Створено нове замовлення в ERP: ${order.orderNumber} (ID: ${order.id})`);
+
+    // Отримуємо позиції рахунку з Бітрікс24
+    const invoiceItems = await getOrderItemsFromBitrix(invoiceData.ID);
+    if (invoiceItems && invoiceItems.productRows.length > 0) {
+      console.log(`[WEBHOOK ERP] Обробка ${invoiceItems.productRows.length} позицій рахунку`);
+      
+      for (const item of invoiceItems.productRows) {
+        // Шукаємо товар в ERP за назвою
+        let product = await findProductByName(item.productName);
+        
+        if (!product) {
+          // Створюємо новий товар, якщо не знайдено
+          product = await createProductFromBitrixItem(item);
+          console.log(`[WEBHOOK ERP] Створено новий товар: ${product.name} (SKU: ${product.sku})`);
+        }
+
+        // Створюємо позицію замовлення
+        const orderItemData: InsertOrderItem = {
+          orderId: order.id,
+          productId: product.id,
+          quantity: item.quantity,
+          unitPrice: item.price.toString(),
+          totalPrice: item.priceBrutto.toString(),
+          notes: `Товар з Бітрікс24: ${item.productCode || 'без коду'}`
+        };
+
+        await storage.createOrderItem(orderItemData);
+        console.log(`[WEBHOOK ERP] Додано позицію: ${product.name} x${item.quantity}`);
+      }
+    }
 
     // Відправляємо дані рахунку в зовнішню ERP систему (аналогічно до sendInvoiceTo1C)
     const erpInvoiceData = {
