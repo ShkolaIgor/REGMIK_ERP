@@ -400,30 +400,6 @@ export default function SupplierOrdersPage() {
                     </div>
                   </div>
                   
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Товари в замовленні:</label>
-                    {selectedOrder.items && selectedOrder.items.length > 0 && (
-                      <div className="border rounded-lg overflow-hidden">
-                        <div className="bg-gray-50 grid grid-cols-5 gap-4 p-3 text-sm font-medium">
-                          <div>Товар</div>
-                          <div>Кількість</div>
-                          <div>Ціна за одиницю</div>
-                          <div>Загальна вартість</div>
-                          <div>Одиниця виміру</div>
-                        </div>
-                        {selectedOrder.items.map((item) => (
-                          <div key={item.id} className="grid grid-cols-5 gap-4 p-3 border-t text-sm">
-                            <div>{item.product.name}</div>
-                            <div>{item.quantity}</div>
-                            <div>{formatCurrency(Number(item.unitPrice))}</div>
-                            <div>{formatCurrency(Number(item.totalPrice))}</div>
-                            <div>{item.unit}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  
                   {selectedOrder.notes && (
                     <div>
                       <label className="text-sm font-medium">Примітки:</label>
