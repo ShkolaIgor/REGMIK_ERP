@@ -9721,7 +9721,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Endpoint для отримання даних компаній від PHP скрипту
   app.post("/bitrix/hs/sync/receive_company/", async (req, res) => {
     try {
-      console.log("[PHP WEBHOOK] Отримано дані компанії від PHP скрипту:", req.body);
+      console.log("[PHP WEBHOOK] Отримано дані компанії від PHP скрипту:", JSON.stringify(req.body, null, 2));
       
       const companyData = req.body.company;
       if (!companyData) {
@@ -9732,19 +9732,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Перетворюємо дані з PHP формату у формат нашої ERP
+      const clientTypeId = companyData.preset_id === 2 ? 2 : 1; // 1 = Юридична особа, 2 = Фізична особа
+      
       const clientData = {
         name: companyData.title || companyData.full_name,
         fullName: companyData.full_name,
-        taxCode: companyData.tax_code,
-        address: companyData.legal_address,
-        phone: companyData.phone,
-        email: companyData.email,
+        taxCode: companyData.tax_code || null,
+        address: companyData.legal_address || null,
+        phone: companyData.phone || null,
+        email: companyData.email || null,
         externalId: `BITRIX_${companyData.bitrix_id}`,
         source: 'bitrix24',
         isCustomer: true,
         isSupplier: false,
-        isActive: true
+        isActive: true,
+        clientTypeId: clientTypeId
       };
+
+      console.log("[PHP WEBHOOK] Сформовані дані клієнта:", JSON.stringify(clientData, null, 2));
 
       // Шукаємо існуючого клієнта за зовнішнім ID або податковим кодом
       let existingClient = null;
