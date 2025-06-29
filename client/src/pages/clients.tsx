@@ -287,8 +287,6 @@ export default function Clients() {
     primaryPhone: "",
     email: ""
   });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [contactsPopup, setContactsPopup] = useState<{ clientId: number; clientName: string } | null>(null);
@@ -304,7 +302,6 @@ export default function Clients() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
-      setCurrentPage(1);
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -700,7 +697,7 @@ export default function Clients() {
                     <Users className="w-4 h-4 text-blue-600" />
                     <p className="text-sm text-blue-700 font-medium">Всього клієнтів</p>
                   </div>
-                  <p className="text-3xl font-bold text-blue-900 mb-1">{total}</p>
+                  <p className="text-3xl font-bold text-blue-900 mb-1">{clients.length}</p>
                   <p className="text-xs text-blue-600">Активних та неактивних</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
