@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./db-storage";
 import { registerSimpleIntegrationRoutes } from "./integrations-simple";
 import { registerSyncApiRoutes } from "./sync-api";
-import { sendCompanyDataToERP, sendInvoiceToERP, syncAllCompaniesFromBitrix, syncAllInvoicesFromBitrix } from "./bitrix-sync";
+import { sendCompanyDataToERP, sendInvoiceToERP, syncAllCompaniesFromBitrix, syncAllInvoicesFromBitrix, sendCompanyDataToERPWebhook, sendInvoiceToERPWebhook } from "./bitrix-sync";
 import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./simple-auth";
 import { novaPoshtaApi } from "./nova-poshta-api";
 import { novaPoshtaCache } from "./nova-poshta-cache";
@@ -9657,6 +9657,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false, 
         message: "Помилка сервера при масовій синхронізації рахунків",
         syncedCount: 0
+      });
+    }
+  });
+
+  // ================================
+  // BITRIX24 WEBHOOK ENDPOINTS FOR ERP
+  // (Викликаються Бітрікс24 автоматично)
+  // ================================
+
+  // Webhook для синхронізації компанії в ERP
+  app.post("/webhook/bitrix/company-to-erp/:companyId", async (req, res) => {
+    try {
+      const { companyId } = req.params;
+      const { requisiteId } = req.body;
+      
+      console.log(`[WEBHOOK ERP] Отримано запит на синхронізацію компанії: ${companyId}`);
+      
+      const result = await sendCompanyDataToERPWebhook(companyId, requisiteId);
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error) {
+      console.error("[WEBHOOK ERP] Помилка синхронізації компанії:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "[ERP] Помилка сервера при синхронізації компанії" 
+      });
+    }
+  });
+
+  // Webhook для синхронізації рахунку в ERP
+  app.post("/webhook/bitrix/invoice-to-erp", async (req, res) => {
+    try {
+      const invoiceData = req.body;
+      
+      console.log(`[WEBHOOK ERP] Отримано запит на синхронізацію рахунку: ${invoiceData.ID}`);
+      
+      const result = await sendInvoiceToERPWebhook(invoiceData);
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error) {
+      console.error("[WEBHOOK ERP] Помилка синхронізації рахунку:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "[ERP] Помилка сервера при синхронізації рахунку" 
       });
     }
   });

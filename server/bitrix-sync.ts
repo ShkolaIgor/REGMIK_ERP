@@ -297,3 +297,132 @@ export async function syncAllInvoicesFromBitrix(): Promise<{ success: boolean; m
     };
   }
 }
+
+// ================================
+// WEBHOOK ФУНКЦІЇ ДЛЯ ERP
+// (Викликаються Бітрікс24 автоматично)
+// ================================
+
+/**
+ * Функція для відправки даних компанії з Бітрікс24 в ERP
+ * Викликається автоматично Бітрікс24 при створенні/оновленні компанії
+ * Аналогічна до sendCompanyDataTo1C
+ */
+export async function sendCompanyDataToERPWebhook(companyId: string, requisiteId?: string): Promise<{ success: boolean; message: string; clientId?: number }> {
+  try {
+    console.log(`[WEBHOOK ERP] Початок синхронізації компанії з Бітрікс24: ${companyId}`);
+
+    // Отримуємо дані компанії з Бітрікс24
+    const companyData = await getCompanyData(companyId);
+    if (!companyData) {
+      return {
+        success: false,
+        message: `Не вдалося отримати дані компанії з Бітрікс24: ${companyId}`
+      };
+    }
+
+    // Отримуємо реквізити компанії
+    const requisite = await getCompanyRequisite(companyId);
+    if (!requisite) {
+      return {
+        success: false,
+        message: `Не вдалося отримати реквізити компанії з Бітрікс24: ${companyId}`
+      };
+    }
+
+    // Отримуємо адресу компанії
+    const address = await getCompanyAddress(requisite.ID);
+
+    // Формуємо дані для створення клієнта в ERP
+    const clientData: InsertClient = {
+      name: companyData.TITLE || requisite.RQ_COMPANY_FULL_NAME,
+      fullName: requisite.RQ_COMPANY_FULL_NAME,
+      taxCode: requisite.RQ_EDRPOU || requisite.RQ_INN,
+      legalAddress: address,
+      phone: companyData.PHONE?.[0]?.VALUE || "",
+      email: companyData.EMAIL?.[0]?.VALUE || "",
+      notes: `Синхронізовано з Бітрікс24 через webhook (ID: ${companyId})`,
+      clientTypeId: requisite.PRESET_ID === 2 ? 2 : 1, // 2 - фіз.особа, 1 - юр.особа
+      externalId: companyId,
+      isCustomer: true,
+      isSupplier: false
+    };
+
+    // Спочатку спробуємо знайти клієнта за ЄДРПОУ або ІПН
+    let existingClient = null;
+    if (requisite.RQ_EDRPOU) {
+      const clients = await storage.getClients();
+      existingClient = clients.find(c => c.taxCode === requisite.RQ_EDRPOU);
+    }
+    
+    let client;
+    if (existingClient) {
+      // Оновлюємо існуючого клієнта
+      client = await storage.updateClient(existingClient.id, clientData);
+      console.log(`[WEBHOOK ERP] Оновлено клієнта в ERP: ${client.name} (ID: ${client.id})`);
+    } else {
+      // Створюємо нового клієнта
+      client = await storage.createClient(clientData);
+      console.log(`[WEBHOOK ERP] Створено нового клієнта в ERP: ${client.name} (ID: ${client.id})`);
+    }
+
+    return {
+      success: true,
+      message: `[ERP] Клієнт успішно синхронізований: ${client.name}`,
+      clientId: client.id
+    };
+
+  } catch (error) {
+    console.error("[WEBHOOK ERP] Помилка синхронізації компанії з Бітрікс24:", error);
+    return {
+      success: false,
+      message: `[ERP] Помилка синхронізації: ${error instanceof Error ? error.message : "Невідома помилка"}`
+    };
+  }
+}
+
+/**
+ * Функція для відправки даних рахунку з Бітрікс24 в ERP
+ * Викликається автоматично Бітрікс24 при створенні/оновленні рахунку
+ * Аналогічна до sendInvoiceTo1C
+ */
+export async function sendInvoiceToERPWebhook(invoiceData: BitrixInvoiceData): Promise<{ success: boolean; message: string; orderId?: number }> {
+  try {
+    console.log(`[WEBHOOK ERP] Початок синхронізації рахунку з Бітрікс24: ${invoiceData.ID}`);
+
+    // Спочатку синхронізуємо компанію-клієнта через webhook функцію
+    const clientSync = await sendCompanyDataToERPWebhook(invoiceData.CLIENT);
+    if (!clientSync.success || !clientSync.clientId) {
+      return {
+        success: false,
+        message: `[ERP] Не вдалося синхронізувати клієнта: ${clientSync.message}`
+      };
+    }
+
+    // Формуємо дані для створення замовлення в ERP
+    const orderData: InsertOrder = {
+      orderNumber: invoiceData.ACCOUNT_NUMBER,
+      clientId: clientSync.clientId,
+      status: mapBitrixStatusToERP(invoiceData.STATUS),
+      totalAmount: invoiceData.PRICE.toString(),
+      notes: `Синхронізовано з Бітрікс24 через webhook (ID: ${invoiceData.ID})`
+    };
+
+    // Створюємо нове замовлення
+    const order = await storage.createOrder(orderData);
+    console.log(`[WEBHOOK ERP] Створено нове замовлення в ERP: ${order.orderNumber} (ID: ${order.id})`);
+
+    return {
+      success: true,
+      message: `[ERP] Рахунок успішно синхронізований: ${order.orderNumber}`,
+      orderId: order.id
+    };
+
+  } catch (error) {
+    console.error("[WEBHOOK ERP] Помилка синхронізації рахунку з Бітрікс24:", error);
+    return {
+      success: false,
+      message: `[ERP] Помилка синхронізації: ${error instanceof Error ? error.message : "Невідома помилка"}`
+    };
+  }
+}

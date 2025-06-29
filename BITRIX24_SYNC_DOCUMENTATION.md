@@ -85,6 +85,76 @@ curl -X POST http://localhost:5000/api/bitrix/sync-all-companies \
 
 **Опис:** Масово синхронізує всі рахунки з Бітрікс24
 
+## Webhook функції для ERP (аналогічні до 1C)
+
+### 5. Webhook синхронізація компанії в ERP
+
+**Endpoint:** `POST /webhook/bitrix/company-to-erp/:companyId`
+
+**Опис:** Webhook функція, яку Бітрікс24 викликає автоматично при створенні/оновленні компанії. Аналогічна до `sendCompanyDataTo1C`.
+
+**Параметри:**
+- `companyId` (string) - ID компанії в Бітрікс24
+- `requisiteId` (опціонально) - ID реквізитів в тілі запиту
+
+**Приклад виклику з Бітрікс24:**
+```javascript
+// Код для Бітрікс24 (створюється в налаштуваннях події)
+BX24.callMethod('app.call', {
+  url: 'https://your-erp-domain.replit.app/webhook/bitrix/company-to-erp/' + companyId,
+  method: 'POST',
+  data: {
+    requisiteId: requisiteId
+  }
+});
+```
+
+**Відповідь:**
+```json
+{
+  "success": true,
+  "message": "[ERP] Клієнт успішно синхронізований: ТОВ «Приклад»",
+  "clientId": 45
+}
+```
+
+### 6. Webhook синхронізація рахунку в ERP
+
+**Endpoint:** `POST /webhook/bitrix/invoice-to-erp`
+
+**Опис:** Webhook функція, яку Бітрікс24 викликає автоматично при створенні/оновленні рахунку. Аналогічна до `sendInvoiceTo1C`.
+
+**Тіло запиту:**
+```json
+{
+  "ID": "456",
+  "ACCOUNT_NUMBER": "INV-2025-001",
+  "DATE": "2025-06-29",
+  "PRICE": 15000.00,
+  "CURRENCY": "UAH",
+  "CLIENT": "123",
+  "STATUS": "NEW"
+}
+```
+
+**Приклад виклику з Бітрікс24:**
+```javascript
+// Код для Бітрікс24 (створюється в налаштуваннях події)
+BX24.callMethod('app.call', {
+  url: 'https://your-erp-domain.replit.app/webhook/bitrix/invoice-to-erp',
+  method: 'POST',
+  data: {
+    ID: invoiceId,
+    ACCOUNT_NUMBER: accountNumber,
+    DATE: invoiceDate,
+    PRICE: totalPrice,
+    CURRENCY: currency,
+    CLIENT: clientId,
+    STATUS: status
+  }
+});
+```
+
 ## Налаштування
 
 ### Необхідні кроки для користувача:
@@ -94,6 +164,36 @@ curl -X POST http://localhost:5000/api/bitrix/sync-all-companies \
    - Перейдіть до "Налаштування" → "Інтеграції" → "Вебхуки"
    - Створіть новий вебхук з правами на читання CRM
    - Скопіюйте URL та токен доступу
+
+2. **Налаштувати автоматичні події в Бітрікс24:**
+
+   **Для компаній (аналогічно до sendCompanyDataTo1C):**
+   - Перейдіть до "Налаштування" → "Налаштування продукту" → "Бізнес-процеси"
+   - Створіть новий бізнес-процес для сутності "Компанія" 
+   - Тригер: "При створенні" та "При зміні"
+   - Дія: "Виконати REST запит" з URL: `https://your-erp-domain.replit.app/webhook/bitrix/company-to-erp/{=Document:ID}`
+
+   **Для рахунків (аналогічно до sendInvoiceTo1C):**
+   - Створіть бізнес-процес для сутності "Рахунки"
+   - Тригер: "При створенні" та "При зміні" 
+   - Дія: "Виконати REST запит" з тілом:
+   ```json
+   {
+     "ID": "{=Document:ID}",
+     "ACCOUNT_NUMBER": "{=Document:ACCOUNT_NUMBER}",
+     "DATE": "{=Document:DATE_INSERT}",
+     "PRICE": "{=Document:PRICE}",
+     "CURRENCY": "{=Document:CURRENCY}",
+     "CLIENT": "{=Document:UF_COMPANY_ID}",
+     "STATUS": "{=Document:STATUS_ID}"
+   }
+   ```
+
+3. **Альтернативний метод через додаток Бітрікс24:**
+   - Створіть локальний додаток в Бітрікс24
+   - Використайте події `OnCrmCompanyAdd`, `OnCrmCompanyUpdate` для компаній
+   - Використайте події `OnCrmInvoiceAdd`, `OnCrmInvoiceUpdate` для рахунків
+   - В обробнику події викликайте відповідні webhook URL
 
 2. **Налаштувати функції отримання даних:**
    У файлі `server/bitrix-sync.ts` замініть заглушки на реальні виклики до Бітрікс24 REST API:
