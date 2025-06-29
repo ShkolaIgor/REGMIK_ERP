@@ -9805,12 +9805,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Додаємо taxCode тільки якщо клієнт НЕ був знайдений за tax_code (уникаємо unique constraint)
         if (!foundByTaxCode) {
           updateData.taxCode = clientData.taxCode;
-          console.log(`[PHP WEBHOOK] Додано taxCode до оновлення: ${clientData.taxCode}`);
-        } else {
-          console.log(`[PHP WEBHOOK] taxCode пропущено - клієнт знайдений за tax_code`);
         }
-        
-        console.log(`[PHP WEBHOOK] Фінальні дані для оновлення:`, JSON.stringify(updateData, null, 2));
 
         client = await storage.updateClient(existingClient.id, updateData);
         console.log(`[PHP WEBHOOK] Оновлено існуючого клієнта: ${client.name} (ID: ${client.id})`);
