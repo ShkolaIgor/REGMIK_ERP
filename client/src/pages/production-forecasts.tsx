@@ -1,25 +1,24 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertProductionForecastSchema, type ProductionForecast, type InsertProductionForecast } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus, TrendingUp, Calendar, BarChart3, AlertTriangle, CheckCircle, Clock, Archive } from "lucide-react";
+import { Plus, TrendingUp, Calendar, BarChart3, AlertTriangle, CheckCircle, Clock, Target } from "lucide-react";
+import { SearchFilters } from "@/components/SearchFilters";
 
 export default function ProductionForecasts() {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   const { data: forecasts = [], isLoading } = useQuery<ProductionForecast[]>({
@@ -50,117 +49,61 @@ export default function ProductionForecasts() {
       queryClient.invalidateQueries({ queryKey: ["/api/production-forecasts"] });
       setIsDialogOpen(false);
       form.reset();
-      toast({
-        title: "Успіх",
-        description: "Прогноз виробництва створено успішно",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Помилка",
-        description: "Не вдалося створити прогноз виробництва",
-        variant: "destructive",
-      });
+      toast({ title: "Успіх", description: "Прогноз створено успішно" });
     },
   });
 
-  const onSubmit = (data: InsertProductionForecast) => {
-    const submitData = {
-      ...data,
-      startDate: new Date(),
-      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // +30 днів
-    };
-    createMutation.mutate(submitData);
-  };
+  if (isLoading) {
+    return <div className="p-6">Завантаження...</div>;
+  }
 
-  const handleDialogChange = (open: boolean) => {
-    setIsDialogOpen(open);
-    if (!open) {
-      form.reset();
-    }
-  };
+  // Статистичні дані
+  const totalForecasts = (forecasts as any[])?.length || 0;
+  const activeForecasts = (forecasts as any[]).filter((f: any) => f.status === "active").length;
+  const draftForecasts = (forecasts as any[]).filter((f: any) => f.status === "draft").length;
+  const completedForecasts = (forecasts as any[]).filter((f: any) => f.status === "completed").length;
 
-  const filteredForecasts = forecasts.filter((forecast) =>
-    forecast.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (forecast.description && forecast.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    forecast.forecastType.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "draft":
-        return <Clock className="h-4 w-4" />;
-      case "active":
-        return <CheckCircle className="h-4 w-4" />;
-      case "completed":
-        return <CheckCircle className="h-4 w-4" />;
-      case "archived":
-        return <Archive className="h-4 w-4" />;
-      default:
-        return <Clock className="h-4 w-4" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "draft":
-        return "bg-yellow-100 text-yellow-800";
-      case "active":
-        return "bg-green-100 text-green-800";
-      case "completed":
-        return "bg-blue-100 text-blue-800";
-      case "archived":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "demand":
-        return <TrendingUp className="h-4 w-4" />;
-      case "capacity":
-        return <BarChart3 className="h-4 w-4" />;
-      case "material":
-        return <AlertTriangle className="h-4 w-4" />;
-      default:
-        return <TrendingUp className="h-4 w-4" />;
-    }
-  };
+  // Фільтровані дані
+  const filteredForecasts = (forecasts as any[]).filter((forecast: any) => {
+    const matchesSearch = !searchQuery || 
+      forecast.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      forecast.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm">
-        <div className="w-full px-4">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-blue-600" />
+    <>
+      {/* Header Section with Gradient */}
+      <div className="bg-gradient-to-br from-green-600 via-teal-600 to-blue-600 text-white">
+        <div className="w-full px-8 py-12">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm shadow-lg">
+                <TrendingUp className="w-10 h-10" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Прогнозування виробництва</h1>
-                <div className="flex items-center mt-1 text-sm text-gray-500">
-                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                  Онлайн
-                </div>
+                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-green-100 bg-clip-text text-transparent">
+                  Прогнозування виробництва
+                </h1>
+                <p className="text-green-100 text-xl font-medium">Планування та прогнозування виробничих потужностей</p>
               </div>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
-              <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Створити прогноз
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Створення нового прогнозу</DialogTitle>
-                </DialogHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center gap-4">
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Новий прогноз
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Створити новий прогноз</DialogTitle>
+                  </DialogHeader>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit((data) => createMutation.mutate(data))} className="space-y-4">
                       <FormField
                         control={form.control}
                         name="name"
@@ -168,275 +111,172 @@ export default function ProductionForecasts() {
                           <FormItem>
                             <FormLabel>Назва прогнозу</FormLabel>
                             <FormControl>
-                              <Input placeholder="Введіть назву" {...field} />
+                              <Input {...field} placeholder="Введіть назву прогнозу" />
                             </FormControl>
                           </FormItem>
                         )}
                       />
                       <FormField
                         control={form.control}
-                        name="forecastType"
+                        name="description"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Тип прогнозу</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Оберіть тип" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="demand">Попит</SelectItem>
-                                <SelectItem value="capacity">Потужність</SelectItem>
-                                <SelectItem value="material">Матеріали</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <FormLabel>Опис</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} placeholder="Опис прогнозу" />
+                            </FormControl>
                           </FormItem>
                         )}
                       />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="periodType"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Період</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Оберіть період" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="daily">Щоденно</SelectItem>
-                                <SelectItem value="weekly">Щотижня</SelectItem>
-                                <SelectItem value="monthly">Щомісяця</SelectItem>
-                                <SelectItem value="quarterly">Щокварталу</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="methodology"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Методологія</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Оберіть методологію" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="linear_regression">Лінійна регресія</SelectItem>
-                                <SelectItem value="moving_average">Ковзне середнє</SelectItem>
-                                <SelectItem value="exponential_smoothing">Експоненційне згладжування</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Опис</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Введіть опис прогнозу"
-                              rows={3}
-                              {...field}
-                              value={field.value || ""}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="flex justify-end space-x-2 pt-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => handleDialogChange(false)}
-                      >
-                        Скасувати
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        disabled={createMutation.isPending}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        {createMutation.isPending ? "Створення..." : "Створити"}
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                          Скасувати
+                        </Button>
+                        <Button type="submit">
+                          Створити прогноз
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Search */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-          <Input
-            placeholder="Пошук за назвою, описом або типом..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader>
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="h-3 bg-gray-200 rounded"></div>
-                    <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+      {/* Statistics Cards */}
+      <div className="w-full px-8 py-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <TrendingUp className="w-4 h-4 text-green-600" />
+                    <p className="text-sm text-green-700 font-medium">Всього прогнозів</p>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : filteredForecasts.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <TrendingUp className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {searchTerm ? "Прогнози не знайдено" : "Немає прогнозів"}
-              </h3>
-              <p className="text-gray-500 mb-4">
-                {searchTerm 
-                  ? "Спробуйте змінити критерії пошуку" 
-                  : "Створіть перший прогноз виробництва для початку планування"
-                }
-              </p>
-              {!searchTerm && (
-                <Button 
-                  onClick={() => setIsDialogOpen(true)}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Створити прогноз
-                </Button>
-              )}
+                  <p className="text-3xl font-bold text-green-900 mb-1">{totalForecasts}</p>
+                  <p className="text-xs text-green-600">Створено прогнозів</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <TrendingUp className="w-8 h-8 text-white" />
+                </div>
+              </div>
             </CardContent>
           </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredForecasts.map((forecast) => (
-              <Card 
-                key={forecast.id} 
-                className="hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => setLocation(`/production-forecasts/${forecast.id}`)}
-              >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-medium truncate">
-                      {forecast.name}
-                    </CardTitle>
-                    <div className="flex items-center space-x-2">
-                      {getTypeIcon(forecast.forecastType)}
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge className={getStatusColor(forecast.status)}>
-                      <div className="flex items-center space-x-1">
-                        {getStatusIcon(forecast.status)}
-                        <span className="capitalize">
-                          {forecast.status === "draft" && "Чернетка"}
-                          {forecast.status === "active" && "Активний"}
-                          {forecast.status === "completed" && "Завершений"}
-                          {forecast.status === "archived" && "Архівований"}
-                        </span>
-                      </div>
-                    </Badge>
-                    <Badge variant="outline">
-                      {forecast.forecastType === "demand" && "Попит"}
-                      {forecast.forecastType === "capacity" && "Потужність"}
-                      {forecast.forecastType === "material" && "Матеріали"}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {forecast.description && (
-                      <p className="text-sm text-gray-600 line-clamp-2">
-                        {forecast.description}
-                      </p>
-                    )}
-                    
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-500">Період:</span>
-                        <p className="font-medium">
-                          {forecast.periodType === "daily" && "Щоденно"}
-                          {forecast.periodType === "weekly" && "Щотижня"}
-                          {forecast.periodType === "monthly" && "Щомісяця"}
-                          {forecast.periodType === "quarterly" && "Щокварталу"}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Методологія:</span>
-                        <p className="font-medium text-xs">
-                          {forecast.methodology === "linear_regression" && "Лінійна регресія"}
-                          {forecast.methodology === "moving_average" && "Ковзне середнє"}
-                          {forecast.methodology === "exponential_smoothing" && "Експ. згладжування"}
-                        </p>
-                      </div>
-                    </div>
 
-                    {(forecast.accuracy || forecast.confidence) && (
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        {forecast.accuracy && (
-                          <div>
-                            <span className="text-gray-500">Точність:</span>
-                            <p className="font-medium">{forecast.accuracy}%</p>
-                          </div>
-                        )}
-                        {forecast.confidence && (
-                          <div>
-                            <span className="text-gray-500">Довіра:</span>
-                            <p className="font-medium">{forecast.confidence}%</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t">
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="h-3 w-3" />
-                        <span>{new Date(forecast.createdAt).toLocaleDateString('uk-UA')}</span>
-                      </div>
-                      {forecast.createdBy && (
-                        <span>Автор: {forecast.createdBy}</span>
-                      )}
-                    </div>
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle className="w-4 h-4 text-blue-600" />
+                    <p className="text-sm text-blue-700 font-medium">Активні</p>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                  <p className="text-3xl font-bold text-blue-900 mb-1">{activeForecasts}</p>
+                  <p className="text-xs text-blue-600">В роботі</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <CheckCircle className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock className="w-4 h-4 text-yellow-600" />
+                    <p className="text-sm text-yellow-700 font-medium">Чернетки</p>
+                  </div>
+                  <p className="text-3xl font-bold text-yellow-900 mb-1">{draftForecasts}</p>
+                  <p className="text-xs text-yellow-600">На розробці</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Clock className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Target className="w-4 h-4 text-purple-600" />
+                    <p className="text-sm text-purple-700 font-medium">Завершені</p>
+                  </div>
+                  <p className="text-3xl font-bold text-purple-900 mb-1">{completedForecasts}</p>
+                  <p className="text-xs text-purple-600">Готові прогнози</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Target className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Search Filters */}
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <SearchFilters
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Results */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Прогнози виробництва ({filteredForecasts.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {filteredForecasts.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Немає прогнозів для відображення
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredForecasts.map((forecast: any) => (
+                  <Card key={forecast.id} className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <TrendingUp className="h-5 w-5 text-green-600" />
+                        <div>
+                          <h3 className="font-semibold">{forecast.name}</h3>
+                          <p className="text-sm text-muted-foreground">{forecast.description}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge className={
+                          forecast.status === "active" ? "bg-green-100 text-green-800" :
+                          forecast.status === "draft" ? "bg-yellow-100 text-yellow-800" :
+                          forecast.status === "completed" ? "bg-blue-100 text-blue-800" :
+                          "bg-gray-100 text-gray-800"
+                        }>
+                          {forecast.status === "active" ? "Активний" :
+                           forecast.status === "draft" ? "Чернетка" :
+                           forecast.status === "completed" ? "Завершений" : forecast.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
-    </div>
+    </>
   );
 }

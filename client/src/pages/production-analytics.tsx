@@ -1,340 +1,201 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, Users, TrendingUp, Clock, AlertTriangle, CheckCircle } from "lucide-react";
+import { Calendar, Users, TrendingUp, Clock, AlertTriangle, CheckCircle, BarChart3, Target } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { DatePickerWithRange } from "@/components/ui/date-range-picker";
-import { addDays, format, startOfMonth, endOfMonth } from "date-fns";
-import type { DateRange } from "react-day-picker";
+import { SearchFilters } from "@/components/SearchFilters";
 
 export default function ProductionAnalyticsPage() {
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: startOfMonth(new Date()),
-    to: endOfMonth(new Date()),
-  });
-  const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
-  const [selectedWorker, setSelectedWorker] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Отримуємо дані для аналізу
-  const { data: analyticsData, isLoading } = useQuery({
-    queryKey: ["/api/production/analytics", dateRange, selectedDepartment, selectedWorker],
-    enabled: !!dateRange?.from && !!dateRange?.to,
+  const { data: analyticsData = [], isLoading } = useQuery({
+    queryKey: ["/api/production/analytics"],
   });
 
-  const { data: departments } = useQuery({
+  const { data: departments = [] } = useQuery({
     queryKey: ["/api/departments"],
   });
 
-  const { data: workers, isLoading: workersLoading } = useQuery({
+  const { data: workers = [] } = useQuery({
     queryKey: ["/api/workers"],
   });
 
-  const { data: productionTasks, isLoading: tasksLoading } = useQuery({
-    queryKey: ["/api/production-tasks"],
-  });
-
-  const isLoadingAll = isLoading || workersLoading || tasksLoading;
-
-  if (isLoadingAll) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Аналіз завантаженості виробництва</h1>
-          <p className="text-muted-foreground">Завантаження...</p>
-        </div>
-      </div>
-    );
+  if (isLoading) {
+    return <div className="p-6">Завантаження...</div>;
   }
 
-  // Розрахуємо статистику завантаженості
-  const tasks = productionTasks || [];
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter((task: any) => task.status === 'completed').length;
-  const inProgressTasks = tasks.filter((task: any) => task.status === 'in_progress').length;
-  const pendingTasks = tasks.filter((task: any) => task.status === 'pending').length;
-  const overdueTask = tasks.filter((task: any) => 
-    task.status !== 'completed' && task.endDate && new Date(task.endDate) < new Date()
-  ).length;
+  // Статистичні дані
+  const totalDepartments = (departments as any[])?.length || 0;
+  const activeWorkers = (workers as any[]).filter((w: any) => w.status === "active").length;
+  const totalTasks = (analyticsData as any[])?.length || 0;
+  const completedTasks = (analyticsData as any[]).filter((t: any) => t.status === "completed").length;
 
-  const completionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-  const workloadRate = totalTasks > 0 ? ((inProgressTasks + pendingTasks) / totalTasks) * 100 : 0;
-
-  // Групуємо завдання за працівниками
-  const workerStats = workers?.map((worker: any) => {
-    const workerTasks = tasks.filter((task: any) => 
-      task.assignedTo && task.assignedTo.includes(worker.firstName)
-    );
-    const completed = workerTasks.filter((task: any) => task.status === 'completed').length;
-    const inProgress = workerTasks.filter((task: any) => task.status === 'in_progress').length;
-    const pending = workerTasks.filter((task: any) => task.status === 'pending').length;
-    
-    return {
-      id: worker.id,
-      name: `${worker.firstName} ${worker.lastName}`,
-      department: worker.department,
-      position: worker.position,
-      totalTasks: workerTasks.length,
-      completed,
-      inProgress,
-      pending,
-      workload: workerTasks.length > 0 ? ((inProgress + pending) / workerTasks.length) * 100 : 0,
-      efficiency: workerTasks.length > 0 ? (completed / workerTasks.length) * 100 : 0,
-    };
-  }) || [];
+  // Фільтровані дані
+  const filteredAnalytics = (analyticsData as any[]).filter((item: any) => {
+    const matchesSearch = !searchQuery || 
+      item.department?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.worker?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Аналіз завантаженості виробництва</h1>
-          <p className="text-muted-foreground">
-            Моніторинг ефективності та завантаженості виробничих процесів
-          </p>
+    <>
+      {/* Header Section with Gradient */}
+      <div className="bg-gradient-to-br from-purple-600 via-pink-600 to-red-600 text-white">
+        <div className="w-full px-8 py-12">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm shadow-lg">
+                <BarChart3 className="w-10 h-10" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-pink-100 bg-clip-text text-transparent">
+                  Аналіз завантаженості виробництва
+                </h1>
+                <p className="text-pink-100 text-xl font-medium">Моніторинг продуктивності та завантаженості персоналу</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
+              >
+                <TrendingUp className="w-5 h-5 mr-2" />
+                Експорт звіту
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Фільтри */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Фільтри аналізу</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Період</label>
-              <DatePickerWithRange
-                date={dateRange}
-                onDateChange={setDateRange}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Відділ</label>
-              <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Оберіть відділ" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Усі відділи</SelectItem>
-                  {departments?.map((dept: any) => (
-                    <SelectItem key={dept.id} value={dept.id.toString()}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Працівник</label>
-              <Select value={selectedWorker} onValueChange={setSelectedWorker}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Оберіть працівника" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Усі працівники</SelectItem>
-                  {workers?.map((worker: any) => (
-                    <SelectItem key={worker.id} value={worker.id.toString()}>
-                      {worker.firstName} {worker.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Statistics Cards */}
+      <div className="w-full px-8 py-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Users className="w-4 h-4 text-purple-600" />
+                    <p className="text-sm text-purple-700 font-medium">Відділів</p>
+                  </div>
+                  <p className="text-3xl font-bold text-purple-900 mb-1">{totalDepartments}</p>
+                  <p className="text-xs text-purple-600">Всього відділів</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Загальна статистика */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Загальна завантаженість</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{workloadRate.toFixed(1)}%</div>
-            <Progress value={workloadRate} className="mt-2" />
-            <p className="text-xs text-muted-foreground mt-2">
-              {inProgressTasks + pendingTasks} з {totalTasks} завдань
-            </p>
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <p className="text-sm text-green-700 font-medium">Активні працівники</p>
+                  </div>
+                  <p className="text-3xl font-bold text-green-900 mb-1">{activeWorkers}</p>
+                  <p className="text-xs text-green-600">У роботі</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <CheckCircle className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock className="w-4 h-4 text-blue-600" />
+                    <p className="text-sm text-blue-700 font-medium">Всього завдань</p>
+                  </div>
+                  <p className="text-3xl font-bold text-blue-900 mb-1">{totalTasks}</p>
+                  <p className="text-xs text-blue-600">Створено завдань</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Clock className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Target className="w-4 h-4 text-orange-600" />
+                    <p className="text-sm text-orange-700 font-medium">Завершено</p>
+                  </div>
+                  <p className="text-3xl font-bold text-orange-900 mb-1">{completedTasks}</p>
+                  <p className="text-xs text-orange-600">Виконано завдань</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Target className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Search Filters */}
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <SearchFilters
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+            />
           </CardContent>
         </Card>
 
+        {/* Results */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ефективність</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          <CardHeader>
+            <CardTitle>Аналітика завантаженості ({filteredAnalytics.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{completionRate.toFixed(1)}%</div>
-            <Progress value={completionRate} className="mt-2" />
-            <p className="text-xs text-muted-foreground mt-2">
-              {completedTasks} виконано з {totalTasks}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Активні завдання</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{inProgressTasks}</div>
-            <p className="text-xs text-muted-foreground">
-              В процесі виконання
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Прострочені</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{overdueTask}</div>
-            <p className="text-xs text-muted-foreground">
-              Потребують уваги
-            </p>
+            {filteredAnalytics.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Немає даних для відображення
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredAnalytics.map((item: any, index: number) => (
+                  <Card key={index} className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <BarChart3 className="h-5 w-5 text-purple-600" />
+                        <div>
+                          <h3 className="font-semibold">{item.department?.name || "Відділ"}</h3>
+                          <p className="text-sm text-muted-foreground">Працівник: {item.worker?.name || "Невідомо"}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Progress value={item.efficiency || 75} className="w-24" />
+                        <Badge className="bg-blue-100 text-blue-800">
+                          {item.efficiency || 75}%
+                        </Badge>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
-
-      {/* Аналіз по працівниках */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Завантаженість працівників
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Працівник</TableHead>
-                <TableHead>Відділ</TableHead>
-                <TableHead>Посада</TableHead>
-                <TableHead>Всього завдань</TableHead>
-                <TableHead>Виконано</TableHead>
-                <TableHead>В процесі</TableHead>
-                <TableHead>Очікують</TableHead>
-                <TableHead>Завантаженість</TableHead>
-                <TableHead>Ефективність</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {workerStats.map((worker) => (
-                <TableRow key={worker.id}>
-                  <TableCell className="font-medium">{worker.name}</TableCell>
-                  <TableCell>{worker.department || "—"}</TableCell>
-                  <TableCell>{worker.position || "—"}</TableCell>
-                  <TableCell>{worker.totalTasks}</TableCell>
-                  <TableCell>
-                    <Badge variant="default">{worker.completed}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{worker.inProgress}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{worker.pending}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Progress value={worker.workload} className="flex-1" />
-                      <span className="text-sm">{worker.workload.toFixed(0)}%</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Progress value={worker.efficiency} className="flex-1" />
-                      <span className="text-sm">{worker.efficiency.toFixed(0)}%</span>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Деталізація завдань */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Поточні виробничі завдання</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Рецепт</TableHead>
-                <TableHead>Кількість</TableHead>
-                <TableHead>Статус</TableHead>
-                <TableHead>Пріоритет</TableHead>
-                <TableHead>Призначено</TableHead>
-                <TableHead>Прогрес</TableHead>
-                <TableHead>Початок</TableHead>
-                <TableHead>Кінець</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tasks.map((task: any) => (
-                <TableRow key={task.id}>
-                  <TableCell className="font-medium">
-                    {task.recipe?.name || "—"}
-                  </TableCell>
-                  <TableCell>{task.quantity}</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={
-                        task.status === 'completed' ? 'default' :
-                        task.status === 'in_progress' ? 'secondary' :
-                        'outline'
-                      }
-                    >
-                      {task.status === 'completed' && 'Виконано'}
-                      {task.status === 'in_progress' && 'В процесі'}
-                      {task.status === 'pending' && 'Очікує'}
-                      {task.status === 'cancelled' && 'Скасовано'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={
-                        task.priority === 'high' ? 'destructive' :
-                        task.priority === 'medium' ? 'default' :
-                        'secondary'
-                      }
-                    >
-                      {task.priority === 'high' && 'Високий'}
-                      {task.priority === 'medium' && 'Середній'}
-                      {task.priority === 'low' && 'Низький'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{task.assignedTo || "Не призначено"}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Progress value={task.progress || 0} className="flex-1" />
-                      <span className="text-sm">{task.progress || 0}%</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {task.startDate ? format(new Date(task.startDate), "dd.MM.yyyy") : "—"}
-                  </TableCell>
-                  <TableCell>
-                    {task.endDate ? format(new Date(task.endDate), "dd.MM.yyyy") : "—"}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+    </>
   );
 }
