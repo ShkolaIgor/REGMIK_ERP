@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./db-storage";
 import { registerSimpleIntegrationRoutes } from "./integrations-simple";
 import { registerSyncApiRoutes } from "./sync-api";
+import { sendCompanyDataToERP, sendInvoiceToERP, syncAllCompaniesFromBitrix, syncAllInvoicesFromBitrix } from "./bitrix-sync";
 import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./simple-auth";
 import { novaPoshtaApi } from "./nova-poshta-api";
 import { novaPoshtaCache } from "./nova-poshta-cache";
