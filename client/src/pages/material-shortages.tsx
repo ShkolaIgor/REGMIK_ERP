@@ -53,8 +53,8 @@ export default function MaterialShortagesPage() {
   const availableQuantity = form.watch("availableQuantity");
 
   useEffect(() => {
-    const required = parseFloat(requiredQuantity) || 0;
-    const available = parseFloat(availableQuantity) || 0;
+    const required = parseFloat(requiredQuantity || "0") || 0;
+    const available = parseFloat(availableQuantity || "0") || 0;
     const shortage = Math.max(0, required - available);
     form.setValue("shortageQuantity", shortage.toString());
   }, [requiredQuantity, availableQuantity, form]);
@@ -301,7 +301,6 @@ export default function MaterialShortagesPage() {
             <SearchFilters
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
-              placeholder="Пошук за назвою товару або SKU..."
             />
           </CardContent>
         </Card>

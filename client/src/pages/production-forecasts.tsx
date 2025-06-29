@@ -123,7 +123,12 @@ export default function ProductionForecasts() {
                           <FormItem>
                             <FormLabel>Опис</FormLabel>
                             <FormControl>
-                              <Textarea {...field} placeholder="Опис прогнозу" />
+                              <Textarea 
+                                {...field} 
+                                value={field.value ?? ""} 
+                                placeholder="Опис прогнозу" 
+                                onChange={(e) => field.onChange(e.target.value)}
+                              />
                             </FormControl>
                           </FormItem>
                         )}

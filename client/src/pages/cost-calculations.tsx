@@ -383,9 +383,6 @@ export default function CostCalculationsPage() {
             <SearchFilters
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
-              filters={[]}
-              onFilterChange={() => {}}
-              placeholder="Пошук за назвою товару або SKU..."
             />
           </CardContent>
         </Card>
