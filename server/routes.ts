@@ -9787,8 +9787,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let client;
       if (existingClient) {
-        // Оновлюємо існуючого клієнта (виключаємо externalId щоб уникнути constraint violation)
-        const { externalId, ...updateData } = clientData;
+        console.log(`[PHP WEBHOOK] Знайдено існуючого клієнта з ID: ${existingClient.id}`);
+        // Оновлюємо існуючого клієнта (виключаємо поля з unique constraints щоб уникнути помилок)
+        const updateData = {
+          name: clientData.name,
+          fullName: clientData.fullName,
+          legalAddress: clientData.legalAddress,
+          physicalAddress: clientData.physicalAddress,
+          addressesMatch: clientData.addressesMatch,
+          discount: clientData.discount,
+          notes: clientData.notes,
+          source: clientData.source,
+          carrierId: clientData.carrierId,
+          cityRef: clientData.cityRef,
+          warehouseRef: clientData.warehouseRef,
+          isActive: clientData.isActive,
+          isCustomer: clientData.isCustomer,
+          isSupplier: clientData.isSupplier,
+          clientTypeId: clientData.clientTypeId
+        };
+        console.log(`[PHP WEBHOOK] Дані для оновлення (без unique полів):`, JSON.stringify(updateData, null, 2));
         client = await storage.updateClient(existingClient.id, updateData);
         console.log(`[PHP WEBHOOK] Оновлено існуючого клієнта: ${client.name} (ID: ${client.id})`);
       } else {
