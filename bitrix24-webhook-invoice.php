@@ -2,16 +2,51 @@
 /**
  * Webhook для відправки рахунків з Бітрікс24 в ERP REGMIK
  * Аналогічно до sendCompanyInfoTo1C структури
+ * Використовує прямі cURL запити без залежності від CRest
  * 
  * Використання:
- * POST https://ваш-домен.replit.app/webhook/bitrix/invoice-to-erp
+ * POST https://bitrix.regmik.ua/webhook/bitrix/invoice-to-erp
  * Content-Type: application/json
  */
 
-// URL ERP системи REGMIK
+// Конфігурація
+$bitrixWebhookUrl = 'https://ваш-портал.bitrix24.com/rest/1/webhook_код/'; // Замініть на ваш webhook URL
 $erpUrl = 'https://erp.regmik.ua/bitrix/hs/sync/receive_invoice/';
 $erpLogin = 'ШкоМ.';
 $erpPassword = '100';
+
+/**
+ * Виконання API запиту до Бітрікс24 через cURL
+ * @param string $method Метод API (наприклад 'crm.invoice.get')
+ * @param array $params Параметри запиту
+ * @return array|false Результат запиту або false при помилці
+ */
+function bitrixApiCall($method, $params = []) {
+    global $bitrixWebhookUrl;
+    
+    $url = $bitrixWebhookUrl . $method;
+    
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => http_build_query($params),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_SSL_VERIFYPEER => false
+    ]);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode !== 200 || !$response) {
+        return false;
+    }
+    
+    $result = json_decode($response, true);
+    return $result ?? false;
+}
 
 /**
  * Функція для відправки рахунку в ERP REGMIK
@@ -91,13 +126,11 @@ function sendInvoiceToERP($invoiceId) {
  * Отримання даних рахунку з Бітрікс24
  */
 function getBitrixInvoiceData($invoiceId) {
-    // Тут ваш код для отримання даних з Бітрікс24 API
-    // Приклад запиту до crm.invoice.get
-    $invoiceData = CRest::call('crm.invoice.get', [
+    $invoiceData = bitrixApiCall('crm.invoice.get', [
         'id' => $invoiceId
     ]);
     
-    if (!$invoiceData['result']) {
+    if (!$invoiceData || !isset($invoiceData['result'])) {
         return false;
     }
     
@@ -108,13 +141,11 @@ function getBitrixInvoiceData($invoiceId) {
  * Отримання позицій рахунку з Бітрікс24
  */
 function getBitrixInvoiceItems($invoiceId) {
-    // Тут ваш код для отримання позицій рахунку з Бітрікс24 API
-    // Приклад запиту до crm.invoice.productrows.get
-    $itemsData = CRest::call('crm.invoice.productrows.get', [
+    $itemsData = bitrixApiCall('crm.invoice.productrows.get', [
         'id' => $invoiceId
     ]);
     
-    if (!$itemsData['result']) {
+    if (!$itemsData || !isset($itemsData['result'])) {
         return ['productRows' => []];
     }
     

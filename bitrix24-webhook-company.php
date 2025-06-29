@@ -2,16 +2,51 @@
 /**
  * Webhook для відправки компаній з Бітрікс24 в ERP REGMIK
  * Аналогічно до sendCompanyInfoTo1C структури
+ * Використовує прямі cURL запити без залежності від CRest
  * 
  * Використання:
- * POST https://ваш-домен.replit.app/webhook/bitrix/company-to-erp/{companyId}
+ * POST https://bitrix.regmik.ua/webhook/bitrix/company-to-erp/{companyId}
  * Content-Type: application/json
  */
 
-// URL ERP системи REGMIK
+// Конфігурація
+$bitrixWebhookUrl = 'https://ваш-портал.bitrix24.com/rest/1/webhook_код/'; // Замініть на ваш webhook URL
 $erpUrl = 'https://erp.regmik.ua/bitrix/hs/sync/receive_company/';
-$erpLogin = 'ShkolaIhor';
-$erpPassword = '';
+$erpLogin = 'ShkolaIhor'; 
+$erpPassword = '100'; // Замініть на правильний пароль
+
+/**
+ * Виконання API запиту до Бітрікс24 через cURL
+ * @param string $method Метод API (наприклад 'crm.company.get')
+ * @param array $params Параметри запиту
+ * @return array|false Результат запиту або false при помилці
+ */
+function bitrixApiCall($method, $params = []) {
+    global $bitrixWebhookUrl;
+    
+    $url = $bitrixWebhookUrl . $method;
+    
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => http_build_query($params),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_SSL_VERIFYPEER => false
+    ]);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode !== 200 || !$response) {
+        return false;
+    }
+    
+    $result = json_decode($response, true);
+    return $result ?? false;
+}
 
 /**
  * Функція для відправки компанії в ERP REGMIK
@@ -105,13 +140,11 @@ function sendCompanyToERP($companyId, $requisiteId = null) {
  * Отримання даних компанії з Бітрікс24
  */
 function getBitrixCompanyData($companyId) {
-    // Тут ваш код для отримання даних з Бітрікс24 API
-    // Приклад запиту до crm.company.get
-    $companyData = CRest::call('crm.company.get', [
+    $companyData = bitrixApiCall('crm.company.get', [
         'id' => $companyId
     ]);
     
-    if (!$companyData['result']) {
+    if (!$companyData || !isset($companyData['result'])) {
         return false;
     }
     
@@ -122,8 +155,7 @@ function getBitrixCompanyData($companyId) {
  * Отримання реквізитів компанії з Бітрікс24
  */
 function getBitrixCompanyRequisites($companyId) {
-    // Запит до crm.requisite.list для отримання всіх реквізитів компанії
-    $requisitesData = CRest::call('crm.requisite.list', [
+    $requisitesData = bitrixApiCall('crm.requisite.list', [
         'filter' => [
             'ENTITY_TYPE_ID' => 4, // 4 = компанія
             'ENTITY_ID' => $companyId
@@ -137,12 +169,11 @@ function getBitrixCompanyRequisites($companyId) {
  * Отримання конкретних реквізитів компанії з Бітрікс24
  */
 function getBitrixCompanyRequisite($requisiteId) {
-    // Запит до crm.requisite.get
-    $requisiteData = CRest::call('crm.requisite.get', [
+    $requisiteData = bitrixApiCall('crm.requisite.get', [
         'id' => $requisiteId
     ]);
     
-    if (!$requisiteData['result']) {
+    if (!$requisiteData || !isset($requisiteData['result'])) {
         return false;
     }
     
@@ -153,8 +184,7 @@ function getBitrixCompanyRequisite($requisiteId) {
  * Отримання адреси компанії з Бітрікс24
  */
 function getBitrixCompanyAddress($requisiteId) {
-    // Запит до crm.address.list для отримання адреси
-    $addressData = CRest::call('crm.address.list', [
+    $addressData = bitrixApiCall('crm.address.list', [
         'filter' => [
             'ENTITY_TYPE_ID' => 8, // 8 = реквізити
             'ENTITY_ID' => $requisiteId,
@@ -162,7 +192,7 @@ function getBitrixCompanyAddress($requisiteId) {
         ]
     ]);
     
-    if (empty($addressData['result'])) {
+    if (!$addressData || empty($addressData['result'])) {
         return '';
     }
     
