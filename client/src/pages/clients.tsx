@@ -482,8 +482,10 @@ export default function Clients() {
       label: "Створено",
       sortable: true,
       width: 120,
-      render: (value: string) => (
-        <span className="text-sm text-muted-foreground">{value}</span>
+      render: (value: string | Date, client: any) => (
+        <span className="text-sm text-muted-foreground">
+          {client.createdAtFormatted || new Date(value).toLocaleDateString('uk-UA')}
+        </span>
       )
     }
   ];
@@ -516,7 +518,8 @@ export default function Clients() {
     return {
       ...client,
       clientType: clientType?.name || "Невизначено",
-      createdAt: new Date(client.createdAt).toLocaleDateString('uk-UA')
+      createdAt: client.createdAt, // Зберігаємо оригінальну дату для правильного сортування
+      createdAtFormatted: new Date(client.createdAt).toLocaleDateString('uk-UA') // Для відображення
     };
   });
 
