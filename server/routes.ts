@@ -9832,43 +9832,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const order = await storage.createOrder(orderData, []);
       console.log(`[PHP WEBHOOK] Створено замовлення: ${order.orderNumber} (ID: ${order.id})`);
 
-      // Обробляємо позиції рахунку
-      for (const item of invoiceItems) {
-        // Шукаємо товар за назвою
-        const products = await storage.getProducts();
-        let product = products.find(p => 
-          p.name.toLowerCase().includes(item.productName.toLowerCase()) ||
-          item.productName.toLowerCase().includes(p.name.toLowerCase())
-        );
-
-        // Якщо товар не знайдено, створюємо новий
-        if (!product) {
-          const sku = item.productCode || `BTX-${Date.now()}`;
-          const productData = {
-            name: item.productName,
-            sku: sku,
-            description: `Товар синхронізований з Бітрікс24`,
-            isActive: true,
-            categoryId: 1, // Базова категорія
-            costPrice: item.price.toString(),
-            retailPrice: item.price.toString()
-          };
-
-          product = await storage.createProduct(productData);
-          console.log(`[PHP WEBHOOK] Створено товар: ${product.name} (SKU: ${product.sku})`);
-        }
-
-        // Створюємо позицію замовлення
-        const orderItemData = {
-          orderId: order.id,
-          productId: product.id,
-          quantity: item.quantity,
-          unitPrice: item.price.toString(),
-          totalPrice: (item.quantity * item.price).toString()
-        };
-
-        await storage.createOrderItem(orderItemData);
-      }
+      console.log(`[PHP WEBHOOK] Замовлення створено з загальною сумою: ${invoiceData.price} ${invoiceData.currency}`);
+      
+      // Примітка: Товари в рахунку будуть додані пізніше через окремий webhook 
+      // або при отриманні детальної інформації про позиції рахунку
 
       res.json({
         success: true,
