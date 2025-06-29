@@ -524,8 +524,8 @@ export async function sendInvoiceToERPWebhook(invoiceData: BitrixInvoiceData): P
       notes: `Синхронізовано з Бітрікс24 через webhook (ID: ${invoiceData.ID}, рахунок: ${invoiceData.ACCOUNT_NUMBER})`
     };
 
-    // Створюємо нове замовлення з правильними аргументами
-    const order = await storage.createOrder(orderData, clientSync.clientId);
+    // Створюємо нове замовлення
+    const order = await storage.createOrder(orderData);
     console.log(`[WEBHOOK ERP] Створено нове замовлення в ERP: ${order.orderNumber} (ID: ${order.id})`);
 
     // Отримуємо позиції рахунку з Бітрікс24
