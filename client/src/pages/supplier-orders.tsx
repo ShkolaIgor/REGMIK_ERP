@@ -230,188 +230,225 @@ export default function SupplierOrdersPage() {
   }
 
   return (
-    <div className="flex-1 overflow-auto">
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <div className="w-full p-6">
-          {/* Header з градієнтом */}
-          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 rounded-2xl p-8 mb-8 text-white shadow-xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                  <ShoppingCart className="w-8 h-8" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold mb-2">Склад замовлень постачальників</h1>
-                  <p className="text-blue-100 text-lg">Управління закупками та постачанням матеріалів</p>
-                </div>
+    <>
+      {/* Header Section with Gradient */}
+      <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white">
+        <div className="w-full px-8 py-12">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm shadow-lg">
+                <ShoppingCart className="w-10 h-10" />
               </div>
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Імпорт XML
-                </Button>
-                <Button
-                  className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Нове замовлення
-                </Button>
+              <div>
+                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                  Замовлення постачальників
+                </h1>
+                <p className="text-blue-100 text-xl font-medium">Управління закупками та постачанням матеріалів</p>
               </div>
             </div>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3"
+              >
+                <Upload className="w-5 h-5 mr-2" />
+                Імпорт XML
+              </Button>
+              <Button
+                className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Нове замовлення
+              </Button>
+            </div>
           </div>
-
-          {/* Статистичні картки */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-blue-100 rounded-xl">
-                    <Package className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{totalOrders}</p>
-                    <p className="text-sm text-gray-500">Всього замовлень</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-green-100 rounded-xl">
-                    <TrendingUp className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{activeOrders}</p>
-                    <p className="text-sm text-gray-500">Активні замовлення</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-orange-100 rounded-xl">
-                    <DollarSign className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalAmount)}</p>
-                    <p className="text-sm text-gray-500">Загальна сума</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-purple-100 rounded-xl">
-                    <Clock className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{pendingOrders}</p>
-                    <p className="text-sm text-gray-500">Очікують підтвердження</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* SearchFilters */}
-          <SearchFilters
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            filters={[
-              {
-                key: "status",
-                label: "Статус",
-                value: statusFilter,
-                options: [
-                  { value: "all", label: "Всі статуси" },
-                  { value: "draft", label: "Чернетка" },
-                  { value: "sent", label: "Відправлено" },
-                  { value: "confirmed", label: "Підтверджено" },
-                  { value: "in_delivery", label: "У доставці" },
-                  { value: "delivered", label: "Доставлено" },
-                  { value: "cancelled", label: "Скасовано" }
-                ],
-                onChange: setStatusFilter
-              },
-              {
-                key: "supplier",
-                label: "Постачальник",
-                value: supplierFilter,
-                options: [
-                  { value: "all", label: "Всі постачальники" },
-                  ...Array.isArray(suppliers) ? suppliers.map((supplier: any) => ({
-                    value: supplier.id.toString(),
-                    label: supplier.name
-                  })) : []
-                ],
-                onChange: setSupplierFilter
-              }
-            ]}
-          />
-
-          {/* DataTable */}
-          <DataTable
-            data={filteredOrders}
-            columns={columns}
-            loading={isLoading}
-            storageKey="supplier-orders-table"
-          />
-
-          {/* Dialog для деталей замовлення */}
-          {selectedOrder && (
-            <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Деталі замовлення {selectedOrder.orderNumber}</DialogTitle>
-                </DialogHeader>
-                
-                <div className="grid gap-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium">Постачальник:</label>
-                      <p className="text-sm text-muted-foreground">{selectedOrder.supplier.name}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Статус:</label>
-                      <p className="text-sm text-muted-foreground">
-                        {statusLabels[selectedOrder.status as keyof typeof statusLabels]}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Загальна сума:</label>
-                      <p className="text-sm text-muted-foreground">
-                        {formatCurrency(Number(selectedOrder.totalAmount))}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Очікувана доставка:</label>
-                      <p className="text-sm text-muted-foreground">
-                        {selectedOrder.expectedDelivery ? new Date(selectedOrder.expectedDelivery).toLocaleDateString('uk-UA') : "Не вказано"}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {selectedOrder.notes && (
-                    <div>
-                      <label className="text-sm font-medium">Примітки:</label>
-                      <p className="text-sm text-muted-foreground mt-1">{selectedOrder.notes}</p>
-                    </div>
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
         </div>
       </div>
-    </div>
+
+      {/* Statistics Cards */}
+      <div className="w-full px-8 py-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Package className="w-4 h-4 text-blue-600" />
+                    <p className="text-sm text-blue-700 font-medium">Всього замовлень</p>
+                  </div>
+                  <p className="text-3xl font-bold text-blue-900 mb-1">{totalOrders}</p>
+                  <p className="text-xs text-blue-600">Загальна кількість замовлень</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Package className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <TrendingUp className="w-4 h-4 text-emerald-600" />
+                    <p className="text-sm text-emerald-700 font-medium">Активні замовлення</p>
+                  </div>
+                  <p className="text-3xl font-bold text-emerald-900 mb-1">{activeOrders}</p>
+                  <p className="text-xs text-emerald-600">Замовлення в процесі</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <TrendingUp className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <DollarSign className="w-4 h-4 text-purple-600" />
+                    <p className="text-sm text-purple-700 font-medium">Загальна сума</p>
+                  </div>
+                  <p className="text-3xl font-bold text-purple-900 mb-1">{formatCurrency(totalAmount)}</p>
+                  <p className="text-xs text-purple-600">Сума всіх замовлень</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <DollarSign className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock className="w-4 h-4 text-orange-600" />
+                    <p className="text-sm text-orange-700 font-medium">Очікують підтвердження</p>
+                  </div>
+                  <p className="text-3xl font-bold text-orange-900 mb-1">{pendingOrders}</p>
+                  <p className="text-xs text-orange-600">Нові замовлення</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Clock className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters and Actions */}
+        <div className="w-full py-3">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <SearchFilters
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  filters={[
+                    {
+                      key: "status",
+                      label: "Статус",
+                      value: statusFilter,
+                      options: [
+                        { value: "all", label: "Всі статуси" },
+                        { value: "draft", label: "Чернетка" },
+                        { value: "sent", label: "Відправлено" },
+                        { value: "confirmed", label: "Підтверджено" },
+                        { value: "in_delivery", label: "У доставці" },
+                        { value: "delivered", label: "Доставлено" },
+                        { value: "cancelled", label: "Скасовано" }
+                      ],
+                      onChange: setStatusFilter
+                    },
+                    {
+                      key: "supplier",
+                      label: "Постачальник",
+                      value: supplierFilter,
+                      options: [
+                        { value: "all", label: "Всі постачальники" },
+                        ...Array.isArray(suppliers) ? suppliers.map((supplier: any) => ({
+                          value: supplier.id.toString(),
+                          label: supplier.name
+                        })) : []
+                      ],
+                      onChange: setSupplierFilter
+                    }
+                  ]}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main DataTable */}
+        <div className="w-full">
+          <Card>
+            <CardContent className="p-0">
+              <DataTable
+                data={filteredOrders}
+                columns={columns}
+                loading={isLoading}
+                storageKey="supplier-orders-table"
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      
+      {/* Dialog для деталей замовлення */}
+      {selectedOrder && (
+        <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Деталі замовлення {selectedOrder.orderNumber}</DialogTitle>
+            </DialogHeader>
+            
+            <div className="grid gap-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Постачальник:</label>
+                  <p className="text-sm text-muted-foreground">{selectedOrder.supplier.name}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Статус:</label>
+                  <p className="text-sm text-muted-foreground">
+                    {statusLabels[selectedOrder.status as keyof typeof statusLabels]}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Загальна сума:</label>
+                  <p className="text-sm text-muted-foreground">
+                    {formatCurrency(Number(selectedOrder.totalAmount))}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Очікувана доставка:</label>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedOrder.expectedDelivery ? new Date(selectedOrder.expectedDelivery).toLocaleDateString('uk-UA') : "Не вказано"}
+                  </p>
+                </div>
+              </div>
+              
+              {selectedOrder.notes && (
+                <div>
+                  <label className="text-sm font-medium">Примітки:</label>
+                  <p className="text-sm text-muted-foreground mt-1">{selectedOrder.notes}</p>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 }
