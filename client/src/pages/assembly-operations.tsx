@@ -213,14 +213,17 @@ export default function AssemblyOperationsPage() {
     return <div className="p-6">Завантаження...</div>;
   }
 
-  const assemblyOperations = (operations as any[]).filter(op => op.operationType === "assembly");
-  const disassemblyOperations = (operations as any[]).filter(op => op.operationType === "disassembly");
+  // Перевіряємо чи operations є масивом
+  const operationsArray = Array.isArray(operations) ? operations : [];
+  
+  const assemblyOperations = operationsArray.filter(op => op.operationType === "assembly");
+  const disassemblyOperations = operationsArray.filter(op => op.operationType === "disassembly");
 
   // Статистичні дані
-  const totalOperations = operations?.length || 0;
-  const completedOperations = operations?.filter((op: any) => op.status === "completed").length || 0;
-  const plannedOperations = operations?.filter((op: any) => op.status === "planned").length || 0;
-  const inProgressOperations = operations?.filter((op: any) => op.status === "in_progress").length || 0;
+  const totalOperations = operationsArray.length;
+  const completedOperations = operationsArray.filter((op: any) => op.status === "completed").length;
+  const plannedOperations = operationsArray.filter((op: any) => op.status === "planned").length;
+  const inProgressOperations = operationsArray.filter((op: any) => op.status === "in_progress").length;
 
   return (
     <div className="flex-1 overflow-auto">

@@ -26,17 +26,22 @@ export default function ProductionAnalyticsPage() {
     return <div className="p-6">Завантаження...</div>;
   }
 
-  // Статистичні дані
+  // Статистичні дані - виправляємо обробку analytics об'єкта
   const totalDepartments = (departments as any[])?.length || 0;
   const activeWorkers = (workers as any[]).filter((w: any) => w.status === "active").length;
-  const totalTasks = (analyticsData as any[])?.length || 0;
-  const completedTasks = (analyticsData as any[]).filter((t: any) => t.status === "completed").length;
+  
+  // analyticsData може бути об'єктом, а не масивом
+  const analytics = analyticsData as any;
+  const totalTasks = analytics?.totalTasks || 0;
+  const completedTasks = analytics?.completedTasks || 0;
+  const activeTasks = analytics?.activeTasks || 0;
+  const efficiency = analytics?.efficiency || 0;
 
   // Фільтровані дані
-  const filteredAnalytics = (analyticsData as any[]).filter((item: any) => {
+  const filteredAnalytics = (departments as any[]).filter((department: any) => {
     const matchesSearch = !searchQuery || 
-      item.department?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.worker?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+      department.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      department.description?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
 
@@ -168,24 +173,25 @@ export default function ProductionAnalyticsPage() {
           <CardContent>
             {filteredAnalytics.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                Немає даних для відображення
+                Немає відділів для відображення
               </div>
             ) : (
               <div className="space-y-4">
-                {filteredAnalytics.map((item: any, index: number) => (
-                  <Card key={index} className="p-4">
+                {filteredAnalytics.map((department: any) => (
+                  <Card key={department.id} className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
                         <BarChart3 className="h-5 w-5 text-purple-600" />
                         <div>
-                          <h3 className="font-semibold">{item.department?.name || "Відділ"}</h3>
-                          <p className="text-sm text-muted-foreground">Працівник: {item.worker?.name || "Невідомо"}</p>
+                          <h3 className="font-semibold">{department.name || "Відділ"}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {department.description || "Опис відсутній"}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Progress value={item.efficiency || 75} className="w-24" />
-                        <Badge className="bg-blue-100 text-blue-800">
-                          {item.efficiency || 75}%
+                        <Badge className="bg-purple-100 text-purple-800">
+                          Активний
                         </Badge>
                       </div>
                     </div>

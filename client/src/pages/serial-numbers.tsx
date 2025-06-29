@@ -67,7 +67,7 @@ export default function SerialNumbers() {
     <>
       {/* Header Section with Gradient */}
       <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white">
-        <div className="w-full px-8 py-12">
+        <div className="w-full px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
               <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm shadow-lg">
