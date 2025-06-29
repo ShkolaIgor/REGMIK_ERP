@@ -123,6 +123,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### June 29, 2025
+- ✅ **ЗАВЕРШЕНО МАСОВЕ ОНОВЛЕННЯ СТИЛЮ: Застосовано BOM дизайн до всіх 11 сторінок системи**
+- ✅ **Виробництво та планування** - production-planning, production-analytics, production-forecasts
+- ✅ **Операційні процеси** - assembly-operations, repairs, cost-calculations, material-shortages
+- ✅ **Складське управління** - scanner, serial-numbers, inventory-audits, warehouse-transfers, ordered-products
+- ✅ **Уніфіковано візуальний стиль** - всі сторінки мають однакову структуру з градієнтними заголовками
+- ✅ **Статистичні картки з анімаціями** - hover ефекти, градієнти та ротація іконок для всіх сторінок
+- ✅ **SearchFilters інтеграція** - універсальний пошук застосовано до всіх сторінок
+- ✅ **Кольорові схеми за функціоналом** - production (синій), inventory (зелений), analytics (фіолетовий)
+- ✅ **Покращено UX** - великі іконки, читабельні заголовки, професійні кнопки дій
+
 ### June 27, 2025
 - ✅ **Впроваджено згортальне меню** - замінено старий Layout на сучасний Sidebar компонент
 - ✅ **Додано режим "тільки іконки"** - меню згортається показуючи лише іконки без тексту
