@@ -9756,18 +9756,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("[PHP WEBHOOK] Сформовані дані клієнта:", JSON.stringify(clientData, null, 2));
 
-      // Шукаємо існуючого клієнта за зовнішнім ID або податковим кодом
+      // Шукаємо існуючого клієнта за зовнішнім ID, податковим кодом або назвою
       let existingClient = null;
-      if (companyData.tax_code) {
-        const clients = await storage.getClients();
+      const clientsResponse = await storage.getClients();
+      const clients = clientsResponse.clients || clientsResponse; // Підтримка різних форматів відповіді
+      
+      console.log(`[PHP WEBHOOK] Пошук серед ${clients.length} клієнтів`);
+      console.log(`[PHP WEBHOOK] Шукаємо external_id: ${clientData.externalId}`);
+      console.log(`[PHP WEBHOOK] Шукаємо tax_code: ${companyData.tax_code}`);
+      console.log(`[PHP WEBHOOK] Шукаємо назву: ${clientData.name}`);
+      
+      // Шукаємо за external_id
+      existingClient = clients.find(c => c.externalId === clientData.externalId);
+      console.log(`[PHP WEBHOOK] Знайдено за external_id: ${existingClient ? 'так' : 'ні'}`);
+      
+      // Якщо не знайшли за external_id, шукаємо за податковим кодом
+      if (!existingClient && companyData.tax_code) {
         existingClient = clients.find(c => c.taxCode === companyData.tax_code);
+        console.log(`[PHP WEBHOOK] Знайдено за tax_code: ${existingClient ? 'так' : 'ні'}`);
+      }
+      
+      // Якщо не знайшли за податковим кодом, шукаємо за назвою
+      if (!existingClient) {
+        existingClient = clients.find(c => 
+          c.name.toLowerCase() === clientData.name.toLowerCase() ||
+          (c.fullName && clientData.fullName && c.fullName.toLowerCase() === clientData.fullName.toLowerCase())
+        );
+        console.log(`[PHP WEBHOOK] Знайдено за назвою: ${existingClient ? 'так' : 'ні'}`);
       }
 
       let client;
       if (existingClient) {
-        // Оновлюємо існуючого клієнта
-        client = await storage.updateClient(existingClient.id, clientData);
-        console.log(`[PHP WEBHOOK] Оновлено клієнта: ${client.name} (ID: ${client.id})`);
+        // Оновлюємо існуючого клієнта (виключаємо externalId щоб уникнути constraint violation)
+        const { externalId, ...updateData } = clientData;
+        client = await storage.updateClient(existingClient.id, updateData);
+        console.log(`[PHP WEBHOOK] Оновлено існуючого клієнта: ${client.name} (ID: ${client.id})`);
       } else {
         // Створюємо нового клієнта
         client = await storage.createClient(clientData);
