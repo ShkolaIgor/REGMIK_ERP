@@ -138,6 +138,12 @@ Preferred communication style: Simple, everyday language.
 - ✅ **API маршрути** - /api/bitrix/sync-company, /api/bitrix/sync-invoice, масова синхронізація
 - ✅ **Типізація даних** - повна підтримка TypeScript з інтерфейсами для Бітрікс24 API
 - ✅ **Документація** - детальна інструкція з прикладами використання та налаштування
+- ✅ **ДОДАНО WEBHOOK ФУНКЦІЇ ДЛЯ ERP** - реалізовано автоматичні виклики в зовнішню ERP систему
+- ✅ **sendCompanyDataToERPWebhook** - webhook для компаній з відправкою на https://erp.regmik.ua
+- ✅ **sendInvoiceToERPWebhook** - webhook для рахунків з автентифікацією ШкоМ.:100
+- ✅ **Webhook endpoints** - /webhook/bitrix/company-to-erp/:id та /webhook/bitrix/invoice-to-erp
+- ✅ **Подвійна синхронізація** - локальна ERP база + зовнішня ERP система паралельно
+- ✅ **Аналогія з PHP кодом** - точна відповідність sendCompanyInfoTo1C структурі та логіці
 
 ### June 27, 2025
 - ✅ **Впроваджено згортальне меню** - замінено старий Layout на сучасний Sidebar компонент

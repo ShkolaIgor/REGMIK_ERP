@@ -306,7 +306,7 @@ export async function syncAllInvoicesFromBitrix(): Promise<{ success: boolean; m
 /**
  * Функція для відправки даних компанії з Бітрікс24 в ERP
  * Викликається автоматично Бітрікс24 при створенні/оновленні компанії
- * Аналогічна до sendCompanyDataTo1C
+ * Аналогічна до sendCompanyInfoTo1C з PHP коду
  */
 export async function sendCompanyDataToERPWebhook(companyId: string, requisiteId?: string): Promise<{ success: boolean; message: string; clientId?: number }> {
   try {
@@ -339,7 +339,7 @@ export async function sendCompanyDataToERPWebhook(companyId: string, requisiteId
       fullName: requisite.RQ_COMPANY_FULL_NAME,
       taxCode: requisite.RQ_EDRPOU || requisite.RQ_INN,
       legalAddress: address,
-      phone: companyData.PHONE?.[0]?.VALUE || "",
+      contactPerson: companyData.PHONE?.[0]?.VALUE || "",
       email: companyData.EMAIL?.[0]?.VALUE || "",
       notes: `Синхронізовано з Бітрікс24 через webhook (ID: ${companyId})`,
       clientTypeId: requisite.PRESET_ID === 2 ? 2 : 1, // 2 - фіз.особа, 1 - юр.особа
@@ -364,6 +364,37 @@ export async function sendCompanyDataToERPWebhook(companyId: string, requisiteId
       // Створюємо нового клієнта
       client = await storage.createClient(clientData);
       console.log(`[WEBHOOK ERP] Створено нового клієнта в ERP: ${client.name} (ID: ${client.id})`);
+    }
+
+    // Тепер відправляємо дані в зовнішню ERP систему (аналогічно до sendCompanyInfoTo1C)
+    const erpData = {
+      NameShort: companyData.TITLE || requisite.RQ_COMPANY_FULL_NAME,
+      NameFull: requisite.RQ_COMPANY_FULL_NAME,
+      TaxCode: requisite.RQ_EDRPOU || requisite.RQ_INN,
+      Address: address,
+      Phone: companyData.PHONE?.[0]?.VALUE || "",
+      Email: companyData.EMAIL?.[0]?.VALUE || "",
+      BitrixId: companyId,
+      Type: requisite.PRESET_ID === 2 ? "Individual" : "Legal"
+    };
+
+    try {
+      const erpResponse = await fetch("https://erp.regmik.ua/bitrix/hs/sync/receive_company/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Basic " + Buffer.from("ШкоМ.:100").toString("base64")
+        },
+        body: JSON.stringify(erpData)
+      });
+
+      if (!erpResponse.ok) {
+        console.log(`[WEBHOOK ERP] Помилка відправки в зовнішню ERP: ${erpResponse.status}`);
+      } else {
+        console.log(`[WEBHOOK ERP] Дані успішно відправлені в зовнішню ERP систему`);
+      }
+    } catch (erpError) {
+      console.log(`[WEBHOOK ERP] Помилка з'єднання з зовнішньою ERP: ${erpError}`);
     }
 
     return {
@@ -411,6 +442,37 @@ export async function sendInvoiceToERPWebhook(invoiceData: BitrixInvoiceData): P
     // Створюємо нове замовлення
     const order = await storage.createOrder(orderData);
     console.log(`[WEBHOOK ERP] Створено нове замовлення в ERP: ${order.orderNumber} (ID: ${order.id})`);
+
+    // Відправляємо дані рахунку в зовнішню ERP систему (аналогічно до sendInvoiceTo1C)
+    const erpInvoiceData = {
+      InvoiceNumber: invoiceData.ACCOUNT_NUMBER,
+      InvoiceDate: invoiceData.DATE,
+      TotalAmount: invoiceData.PRICE,
+      Currency: invoiceData.CURRENCY || "UAH",
+      ClientId: invoiceData.CLIENT,
+      Status: invoiceData.STATUS,
+      BitrixId: invoiceData.ID,
+      Manager: invoiceData.MANAGER || ""
+    };
+
+    try {
+      const erpResponse = await fetch("https://erp.regmik.ua/bitrix/hs/sync/receive_invoice/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Basic " + Buffer.from("ШкоМ.:100").toString("base64")
+        },
+        body: JSON.stringify(erpInvoiceData)
+      });
+
+      if (!erpResponse.ok) {
+        console.log(`[WEBHOOK ERP] Помилка відправки рахунку в зовнішню ERP: ${erpResponse.status}`);
+      } else {
+        console.log(`[WEBHOOK ERP] Рахунок успішно відправлений в зовнішню ERP систему`);
+      }
+    } catch (erpError) {
+      console.log(`[WEBHOOK ERP] Помилка з'єднання з зовнішньою ERP при відправці рахунку: ${erpError}`);
+    }
 
     return {
       success: true,
