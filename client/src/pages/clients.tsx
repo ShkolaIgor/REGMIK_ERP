@@ -873,8 +873,12 @@ export default function Clients() {
             </DialogTitle>
           </DialogHeader>
           <ClientForm
-            client={editingClient}
+            editingClient={editingClient}
             onSubmit={handleSubmit}
+            onCancel={() => {
+              setIsDialogOpen(false);
+              setEditingClient(null);
+            }}
             onDelete={editingClient ? handleDelete : undefined}
           />
         </DialogContent>
