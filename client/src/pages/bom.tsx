@@ -283,7 +283,7 @@ export default function BOMPage() {
                   </h1>
                   <p className="text-gray-500 mt-1">Управління складом компонентів та рецептур виробництва</p>
                 </div>
-            </div>
+              </div>
           <div className="flex items-center space-x-4">
             <Button 
               variant="outline" 

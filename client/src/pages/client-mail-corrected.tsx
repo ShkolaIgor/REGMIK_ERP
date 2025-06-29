@@ -13,8 +13,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Client, InsertClientMail, ClientMail } from "@shared/schema";
-import { Plus, Printer, Users, Trash2, Download, Upload, FileText, Settings2, Move, Image as ImageIcon, ArrowUpDown, ArrowLeftRight } from "lucide-react";
+import { Plus, Printer, Users, Mail, Calculator, Clock, Package, Component, Trash2, Download, Upload, FileText, Settings2, Move, Image as ImageIcon, ArrowUpDown, ArrowLeftRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { SearchFilters } from "@/components/SearchFilters";
 
 type EnvelopeSize = 'c5' | 'c4' | 'dl' | 'c6';
 
@@ -121,6 +122,13 @@ export default function ClientMailPage() {
         return 200;
     }
   };
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+
+  // Фільтровані дані для пошуку
 
   const [isEnvelopePrintDialogOpen, setIsEnvelopePrintDialogOpen] = useState(false);
   const [selectedClients, setSelectedClients] = useState<Set<number>>(new Set());
@@ -366,20 +374,158 @@ export default function ClientMailPage() {
   const elementScale = baseScale * 0.35; // Ще менший масштаб для елементів
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Кореспонденція клієнтів</h1>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => setIsEnvelopePrintDialogOpen(true)}
-            disabled={selectedClients.size === 0}
-            variant="outline"
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            Друкувати конверти ({selectedClients.size})
-          </Button>
+    <div className="flex-1 overflow-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header Section  sticky top-0 z-40*/}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="w-full px-8 py-3">
+          <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Mail className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                    Кореспонденція клієнтів
+                  </h1>
+                  <p className="text-gray-500 mt-1">Реєстр відправлених листів Укрпоштою</p>
+                </div>
+              </div>
+          
+            <div className="flex items-center space-x-4">
+            <Button
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+              onClick={() => setIsEnvelopePrintDialogOpen(true)}
+              disabled={selectedClients.size === 0}
+              variant="outline"
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              Друкувати конверти ({selectedClients.size})
+              </Button>
+          </div>
         </div>
-      </div>
+        </div>
+      </header>
+
+      {/* Статистичні картки - Statistics Cards */}
+      <main className="w-full px-8 py-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Package className="w-4 h-4 text-blue-600" />
+                    <p className="text-sm text-blue-700 font-medium">Всього листів</p>
+                  </div>
+                  <p className="text-3xl font-bold text-blue-900 mb-1"></p>
+                  <p className="text-xs text-blue-600">Всього листів</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Package className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Component className="w-4 h-4 text-emerald-600" />
+                    <p className="text-sm text-emerald-700 font-medium">Відправлено</p>
+                  </div>
+                  <p className="text-3xl font-bold text-emerald-900 mb-1"></p>
+                  <p className="text-xs text-emerald-600">постачальникам</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Component className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock className="w-4 h-4 text-purple-600" />
+                    <p className="text-sm text-purple-700 font-medium">Відправлено</p>
+                  </div>
+                  <p className="text-3xl font-bold text-purple-900 mb-1"></p>
+                  <p className="text-xs text-purple-600">клієнтам</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Clock className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Calculator className="w-4 h-4 text-orange-600" />
+                    <p className="text-sm text-orange-700 font-medium">Очікують відправлення</p>
+                  </div>
+                  <p className="text-3xl font-bold text-orange-900 mb-1"></p>
+                  <p className="text-xs text-orange-600">Ще не відправлені</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Calculator className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+      {/* Пошук та фільтри */}
+        <div className="w-full py-3">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+      <SearchFilters
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Пошук листів за назвою або описом..."
+        filters={[
+          {
+            key: "status",
+            label: "Статус",
+            value: statusFilter,
+            options: [
+              { value: "all", label: "Всі листи" },
+              { value: "active", label: "З вкладенням" },
+              { value: "draft", label: "Чернетки" }
+            ],
+            onChange: setStatusFilter
+          },
+          {
+            key: "type",
+            label: "Тип",
+            value: typeFilter,
+            options: [
+              { value: "all", label: "Всі типи" },
+              { value: "with-include", label: "З вкладенням" },
+              { value: "without-include", label: "Без вкладення" }
+            ],
+            onChange: setTypeFilter
+          }
+        ]}
+      />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
@@ -888,6 +1034,8 @@ export default function ClientMailPage() {
           </div>
         </DialogContent>
       </Dialog>
+      </main>
+      </div>
     </div>
   );
 }

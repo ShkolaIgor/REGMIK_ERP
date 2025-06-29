@@ -233,20 +233,34 @@ export default function ClientMailPage() {
   const elementScale = baseScale * 0.8; // Масштаб для елементів (шрифти, відступи)
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Кореспонденція клієнтів</h1>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => setIsEnvelopePrintDialogOpen(true)}
-            disabled={selectedClients.size === 0}
-            variant="outline"
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            Друкувати конверти ({selectedClients.size})
-          </Button>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header Section  sticky top-0 z-40*/}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="w-full px-8 py-3">
+          <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Mail className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                    Кореспонденція клієнтів
+                  </h1>
+                  <p className="text-gray-500 mt-1">Реєстр відправлених листів Укрпоштою</p>
+                </div>
+            </div>
+          <div className="flex items-center space-x-4">
+              <Button 
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                onClick={() => setIsEnvelopePrintDialogOpen(true)}
+                disabled={selectedClients.size === 0}
+                variant="outline"
+                <Printer className="h-4 w-4 mr-2" />
+                Друкувати конверти ({selectedClients.size})
+              </Button>
+          </div>
         </div>
-      </div>
+      </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
