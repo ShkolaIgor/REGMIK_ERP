@@ -9758,6 +9758,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Шукаємо існуючого клієнта за зовнішнім ID, податковим кодом або назвою
       let existingClient = null;
+      let foundByTaxCode = false;
       const clientsResponse = await storage.getClients();
       const clients = clientsResponse.clients || clientsResponse; // Підтримка різних форматів відповіді
       
@@ -9767,6 +9768,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Якщо не знайшли за external_id, шукаємо за податковим кодом
       if (!existingClient && companyData.tax_code) {
         existingClient = clients.find(c => c.taxCode === companyData.tax_code);
+        if (existingClient) {
+          foundByTaxCode = true;
+        }
       }
       
       // Якщо не знайшли за податковим кодом, шукаємо за назвою
@@ -9779,8 +9783,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let client;
       if (existingClient) {
-        // Оновлюємо існуючого клієнта (виключаємо поля з unique constraints щоб уникнути помилок)
-        const updateData = {
+        // Оновлюємо існуючого клієнта
+        const updateData: any = {
           name: clientData.name,
           fullName: clientData.fullName,
           legalAddress: clientData.legalAddress,
@@ -9797,6 +9801,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isSupplier: clientData.isSupplier,
           clientTypeId: clientData.clientTypeId
         };
+
+        // Додаємо taxCode тільки якщо клієнт НЕ був знайдений за tax_code (уникаємо unique constraint)
+        if (!foundByTaxCode) {
+          updateData.taxCode = clientData.taxCode;
+          console.log(`[PHP WEBHOOK] Додано taxCode до оновлення: ${clientData.taxCode}`);
+        } else {
+          console.log(`[PHP WEBHOOK] taxCode пропущено - клієнт знайдений за tax_code`);
+        }
+        
+        console.log(`[PHP WEBHOOK] Фінальні дані для оновлення:`, JSON.stringify(updateData, null, 2));
+
         client = await storage.updateClient(existingClient.id, updateData);
         console.log(`[PHP WEBHOOK] Оновлено існуючого клієнта: ${client.name} (ID: ${client.id})`);
       } else {
