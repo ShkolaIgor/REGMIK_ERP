@@ -310,24 +310,16 @@ export default function Clients() {
   }, [searchQuery]);
 
   const { data: clientsData, isLoading, isError, error: clientsError } = useQuery({
-    queryKey: ["/api/clients", currentPage, pageSize, debouncedSearch],
+    queryKey: ["/api/clients"],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: pageSize.toString(),
-      });
-      if (debouncedSearch) {
-        params.append('search', debouncedSearch);
-      }
-      const response = await fetch(`/api/clients?${params}`);
+      // Отримуємо всіх клієнтів без пагінації для DataTable
+      const response = await fetch(`/api/clients?limit=1000`);
       if (!response.ok) throw new Error('Failed to fetch clients');
       return response.json();
     },
   });
 
   const clients = clientsData?.clients || [];
-  const totalPages = clientsData?.totalPages || 1;
-  const total = clientsData?.total || 0;
 
   // Завантаження типів клієнтів
   const { data: clientTypes = [] } = useQuery({
