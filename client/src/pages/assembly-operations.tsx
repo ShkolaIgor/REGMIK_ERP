@@ -223,28 +223,28 @@ export default function AssemblyOperationsPage() {
   const inProgressOperations = operations?.filter((op: any) => op.status === "in_progress").length || 0;
 
   return (
-    <>
+    <div className="flex-1 overflow-auto">
       {/* Header Section with Gradient */}
-      <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white">
-        <div className="w-full px-8 py-12">
+         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="w-full px-8 py-3">
+          <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm shadow-lg">
-                <Settings className="w-10 h-10" />
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Settings className="w-8 h-8 text-white"/>
               </div>
               <div>
-                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
                   Збірка та розбірка товарів
                 </h1>
-                <p className="text-blue-100 text-xl font-medium">Управління операціями збірки та розбірки виробів</p>
+                <p className="text-gray-500 mt-1">Управління операціями збірки та розбірки виробів</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
                 <DialogTrigger asChild>
                   <Button
-                    className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
-                  >
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300">
                     <Plus className="w-5 h-5 mr-2" />
                     Нова операція
                   </Button>
@@ -684,6 +684,7 @@ export default function AssemblyOperationsPage() {
           </Card>
         </div>
       </div>
-    </>
+    </div>
+      </div>
   );
 }

@@ -8,7 +8,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Calculator, AlertTriangle, CheckCircle, Clock, TrendingUp, Package, ShoppingCart } from "lucide-react";
+import { Plus, Calculator, AlertTriangle, CheckCircle, Clock, TrendingUp, Package, ShoppingCart, DollarSign } from "lucide-react";
+import { SearchFilters } from "@/components/SearchFilters";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
@@ -16,7 +17,6 @@ import { useToast } from "@/hooks/use-toast";
 import { type MaterialShortage, type Product, type Warehouse, insertMaterialShortageSchema } from "@shared/schema";
 import { z } from "zod";
 
-// Розширена схема для форми
 const formSchema = insertMaterialShortageSchema.extend({
   productId: z.number().min(1, "Виберіть продукт"),
   unit: z.string().min(1, "Одиниця вимірювання обов'язкова"),
@@ -24,38 +24,11 @@ const formSchema = insertMaterialShortageSchema.extend({
 
 type FormData = z.infer<typeof formSchema>;
 
-const priorityColors = {
-  low: "bg-green-100 text-green-800",
-  medium: "bg-yellow-100 text-yellow-800", 
-  high: "bg-orange-100 text-orange-800",
-  critical: "bg-red-100 text-red-800"
-};
-
-const priorityLabels = {
-  low: "Низький",
-  medium: "Середній",
-  high: "Високий", 
-  critical: "Критичний"
-};
-
-const statusColors = {
-  pending: "bg-gray-100 text-gray-800",
-  ordered: "bg-blue-100 text-blue-800",
-  delivered: "bg-green-100 text-green-800",
-  cancelled: "bg-red-100 text-red-800"
-};
-
-const statusLabels = {
-  pending: "Очікує",
-  ordered: "Замовлено",
-  delivered: "Доставлено",
-  cancelled: "Скасовано"
-};
-
 export default function MaterialShortagesPage() {
   const [selectedShortage, setSelectedShortage] = useState<MaterialShortage | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingShortage, setEditingShortage] = useState<MaterialShortage | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -76,7 +49,6 @@ export default function MaterialShortagesPage() {
     },
   });
 
-  // Автоматичний розрахунок дефіциту
   const requiredQuantity = form.watch("requiredQuantity");
   const availableQuantity = form.watch("availableQuantity");
 
@@ -87,8 +59,7 @@ export default function MaterialShortagesPage() {
     form.setValue("shortageQuantity", shortage.toString());
   }, [requiredQuantity, availableQuantity, form]);
 
-  // Запити даних
-  const { data: shortages = [], isLoading, refetch } = useQuery({
+  const { data: shortages = [], isLoading } = useQuery({
     queryKey: ["/api/material-shortages"],
   });
 
@@ -100,612 +71,280 @@ export default function MaterialShortagesPage() {
     queryKey: ["/api/warehouses"],
   });
 
-  const { data: suppliers = [] } = useQuery({
-    queryKey: ["/api/suppliers"],
-  });
-
-  // Мутації
   const createMutation = useMutation({
     mutationFn: (data: FormData) =>
-      apiRequest({
-        url: "/api/material-shortages",
-        method: "POST",
-        body: data,
-      }),
+      apiRequest("/api/material-shortages", { method: "POST", body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/material-shortages"] });
       setIsFormOpen(false);
       form.reset();
-      toast({
-        title: "Успіх",
-        description: "Запис про дефіцит створено успішно",
-      });
+      toast({ title: "Успіх", description: "Запис про дефіцит створено успішно" });
     },
   });
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<FormData> }) =>
-      apiRequest({
-        url: `/api/material-shortages/${id}`,
-        method: "PATCH", 
-        body: data,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/material-shortages"] });
-      setEditingShortage(null);
-      setIsFormOpen(false);
-      form.reset();
-      toast({
-        title: "Успіх",
-        description: "Запис оновлено успішно",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Помилка",
-        description: error?.message || "Не вдалося оновити запис",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) =>
-      apiRequest({
-        url: `/api/material-shortages/${id}`,
-        method: "DELETE",
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/material-shortages"] });
-      toast({
-        title: "Успіх",
-        description: "Запис видалено успішно",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Помилка",
-        description: error?.message || "Не вдалося видалити запис про дефіцит",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const calculateShortages = useMutation({
-    mutationFn: () =>
-      apiRequest({
-        url: "/api/material-shortages/calculate",
-        method: "POST",
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/material-shortages"] });
-      toast({
-        title: "Успіх",
-        description: "Дефіцити розраховано автоматично",
-      });
-    },
-  });
-
-  const updateShortageStatus = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: string }) =>
-      apiRequest({
-        url: `/api/material-shortages/${id}`,
-        method: "PATCH",
-        body: { status },
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/material-shortages"] });
-      toast({
-        title: "Успіх",
-        description: "Статус оновлено успішно",
-      });
-    },
-  });
-
-  const createSupplierOrder = useMutation({
-    mutationFn: (shortageId: number) =>
-      apiRequest({
-        url: `/api/material-shortages/${shortageId}/create-order`,
-        method: "POST",
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/material-shortages"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/supplier-orders"] });
-      toast({
-        title: "Успіх",
-        description: "Замовлення постачальнику створено",
-      });
-    },
-  });
-
-  // Обробники подій
   const handleSubmit = (data: FormData) => {
-    console.log('Form submitted with data:', data);
-    console.log('Editing shortage:', editingShortage);
-    
     if (editingShortage) {
-      console.log('Calling updateMutation with:', { id: editingShortage.id, data });
-      updateMutation.mutate({ id: editingShortage.id, data });
+      // updateMutation.mutate({ id: editingShortage.id, data });
     } else {
-      console.log('Calling createMutation with:', data);
       createMutation.mutate(data);
     }
   };
 
-  const handleEdit = (shortage: any) => {
-    setEditingShortage(shortage);
-    form.reset({
-      productId: shortage.productId,
-      warehouseId: shortage.warehouseId || undefined,
-      requiredQuantity: shortage.requiredQuantity,
-      availableQuantity: shortage.availableQuantity,
-      shortageQuantity: shortage.shortageQuantity,
-      unit: shortage.unit || "шт",
-      priority: shortage.priority,
-      status: shortage.status,
-      estimatedCost: shortage.estimatedCost || "0",
-      supplierRecommendationId: shortage.supplierRecommendationId || undefined,
-      notes: shortage.notes || "",
-    });
-    setIsFormOpen(true);
-  };
-
-  const handleDelete = (id: number) => {
-    if (confirm("Ви впевнені, що хочете видалити цей запис?")) {
-      deleteMutation.mutate(id);
-    }
-  };
-
-  // Статистика
-  const stats = {
-    total: shortages.length,
-    critical: shortages.filter((s: any) => s.priority === "critical").length,
-    pending: shortages.filter((s: any) => s.status === "pending").length,
-    totalCost: shortages.reduce((sum: number, s: any) => sum + (parseFloat(s.estimatedCost) || 0), 0),
-  };
-
   if (isLoading) {
-    return (
-      <div className="flex-1 p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Завантаження даних про дефіцити...</p>
+    return <div className="p-6">Завантаження...</div>;
+  }
+
+  // Статистичні дані
+  const totalShortages = (shortages as any[])?.length || 0;
+  const criticalShortages = (shortages as any[]).filter((s: any) => s.priority === "critical").length;
+  const pendingShortages = (shortages as any[]).filter((s: any) => s.status === "pending").length;
+  const totalCost = (shortages as any[]).reduce((sum: number, s: any) => sum + (parseFloat(s.estimatedCost) || 0), 0);
+
+  // Фільтровані дані
+  const filteredShortages = (shortages as any[]).filter((shortage: any) => {
+    const matchesSearch = !searchQuery || 
+      shortage.product?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      shortage.product?.sku?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  });
+
+  return (
+    <>
+      {/* Header Section with Gradient */}
+      <div className="bg-gradient-to-br from-red-600 via-orange-600 to-yellow-600 text-white">
+        <div className="w-full px-8 py-12">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm shadow-lg">
+                <AlertTriangle className="w-10 h-10" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-yellow-100 bg-clip-text text-transparent">
+                  Дефіцит матеріалів
+                </h1>
+                <p className="text-yellow-100 text-xl font-medium">Моніторинг та управління нестачею матеріалів</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
+              >
+                <Calculator className="w-5 h-5 mr-2" />
+                Розрахувати
+              </Button>
+              <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Додати запис
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Додати новий запис про дефіцит</DialogTitle>
+                  </DialogHeader>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="productId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Продукт</FormLabel>
+                              <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Виберіть продукт" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {(products as any[]).map((product: any) => (
+                                    <SelectItem key={product.id} value={product.id.toString()}>
+                                      {product.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="warehouseId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Склад</FormLabel>
+                              <Select onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)} value={field.value?.toString()}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Виберіть склад" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {(warehouses as any[]).map((warehouse: any) => (
+                                    <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
+                                      {warehouse.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setIsFormOpen(false)}>
+                          Скасувати
+                        </Button>
+                        <Button type="submit">
+                          Створити запис
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="flex-1 p-6 space-y-6 overflow-y-auto">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Дефіцит матеріалів</h1>
-          <p className="text-gray-600">Моніторинг та управління нестачею матеріалів</p>
+      {/* Statistics Cards */}
+      <div className="w-full px-8 py-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-red-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <AlertTriangle className="w-4 h-4 text-red-600" />
+                    <p className="text-sm text-red-700 font-medium">Всього дефіцитів</p>
+                  </div>
+                  <p className="text-3xl font-bold text-red-900 mb-1">{totalShortages}</p>
+                  <p className="text-xs text-red-600">Загальна кількість записів</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <AlertTriangle className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <TrendingUp className="w-4 h-4 text-orange-600" />
+                    <p className="text-sm text-orange-700 font-medium">Критичні</p>
+                  </div>
+                  <p className="text-3xl font-bold text-orange-900 mb-1">{criticalShortages}</p>
+                  <p className="text-xs text-orange-600">Потребують уваги</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <TrendingUp className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock className="w-4 h-4 text-yellow-600" />
+                    <p className="text-sm text-yellow-700 font-medium">Очікують</p>
+                  </div>
+                  <p className="text-3xl font-bold text-yellow-900 mb-1">{pendingShortages}</p>
+                  <p className="text-xs text-yellow-600">На розгляді</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Clock className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <DollarSign className="w-4 h-4 text-green-600" />
+                    <p className="text-sm text-green-700 font-medium">Загальна вартість</p>
+                  </div>
+                  <p className="text-3xl font-bold text-green-900 mb-1">₴{totalCost.toLocaleString('uk-UA')}</p>
+                  <p className="text-xs text-green-600">Очікувані витрати</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <DollarSign className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => calculateShortages.mutate()}
-            disabled={calculateShortages.isPending}
-            variant="outline"
-          >
-            <Calculator className="h-4 w-4 mr-2" />
-            {calculateShortages.isPending ? "Розрахунок..." : "Розрахувати"}
-          </Button>
-          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => { setEditingShortage(null); form.reset(); }}>
-                <Plus className="mr-2 h-4 w-4" />
-                Додати запис
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingShortage ? "Редагувати дефіцит" : "Додати новий запис про дефіцит"}
-                </DialogTitle>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="productId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Продукт *</FormLabel>
-                          <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Виберіть продукт" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {products.map((product: any) => (
-                                <SelectItem key={product.id} value={product.id.toString()}>
-                                  {product.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="warehouseId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Склад</FormLabel>
-                          <Select onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)} value={field.value?.toString()}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Виберіть склад" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {warehouses.map((warehouse: any) => (
-                                <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
-                                  {warehouse.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
 
-                  <div className="grid grid-cols-4 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="requiredQuantity"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Потрібна кількість</FormLabel>
-                          <FormControl>
-                            <Input type="number" step="0.01" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="availableQuantity"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Доступна кількість</FormLabel>
-                          <FormControl>
-                            <Input type="number" step="0.01" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="shortageQuantity"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Дефіцит</FormLabel>
-                          <FormControl>
-                            <Input type="number" step="0.01" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="unit"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Одиниця</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="шт, кг, м" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="priority"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Пріоритет</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="low">Низький</SelectItem>
-                              <SelectItem value="medium">Середній</SelectItem>
-                              <SelectItem value="high">Високий</SelectItem>
-                              <SelectItem value="critical">Критичний</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="status"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Статус</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="pending">Очікує</SelectItem>
-                              <SelectItem value="ordered">Замовлено</SelectItem>
-                              <SelectItem value="delivered">Доставлено</SelectItem>
-                              <SelectItem value="cancelled">Скасовано</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="estimatedCost"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Орієнтовна вартість</FormLabel>
-                          <FormControl>
-                            <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="supplierRecommendationId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Рекомендований постачальник</FormLabel>
-                          <Select onValueChange={(value) => field.onChange(value === "0" ? undefined : parseInt(value))} value={field.value ? field.value.toString() : "0"}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Виберіть постачальника" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="0">Без постачальника</SelectItem>
-                              {(suppliers as any[])?.map((supplier: any) => (
-                                <SelectItem key={supplier.id} value={supplier.id.toString()}>
-                                  {supplier.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Примітки</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Додаткова інформація..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex justify-end space-x-2 pt-4">
-                    <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
-                      Скасувати
-                    </Button>
-                    <Button 
-                      type="submit" 
-                      disabled={createMutation.isPending || updateMutation.isPending}
-                    >
-                      {editingShortage ? "Оновити" : "Створити"}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      {/* Статистика */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Всього записів</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+        {/* Search Filters */}
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <SearchFilters
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              placeholder="Пошук за назвою товару або SKU..."
+            />
           </CardContent>
         </Card>
 
+        {/* Results */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Критичний дефіцит</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
+          <CardHeader>
+            <CardTitle>Дефіцити матеріалів ({filteredShortages.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.critical}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Очікує замовлення</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Загальна вартість</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₴{stats.totalCost.toFixed(2)}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Список дефіцитів */}
-      <Card className="flex-1 flex flex-col">
-        <CardHeader>
-          <CardTitle>Список дефіцитів матеріалів</CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col">
-          {shortages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Дефіцитів не знайдено</h3>
-              <p className="text-gray-600 mb-4">Поки що немає записів про дефіцит матеріалів</p>
-              <Button onClick={() => calculateShortages.mutate()} variant="outline">
-                <Calculator className="h-4 w-4 mr-2" />
-                Розрахувати автоматично
-              </Button>
-            </div>
-          ) : (
-            <div className="flex-1 overflow-y-auto space-y-4">
-              {shortages.map((shortage: any) => (
-                <Card key={shortage.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-lg font-semibold">{shortage.product?.name}</h3>
-                        <p className="text-gray-600">SKU: {shortage.product?.sku}</p>
-                        {shortage.warehouse && (
-                          <p className="text-sm text-gray-500">Склад: {shortage.warehouse.name}</p>
-                        )}
+            {filteredShortages.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Немає дефіцитів для відображення
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredShortages.map((shortage: any) => (
+                  <Card key={shortage.id} className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <AlertTriangle className="h-5 w-5 text-red-600" />
+                        <div>
+                          <h3 className="font-semibold">{shortage.product?.name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Дефіцит: {shortage.shortageQuantity} {shortage.unit}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Badge className={priorityColors[shortage.priority as keyof typeof priorityColors]}>
-                          {priorityLabels[shortage.priority as keyof typeof priorityLabels]}
-                        </Badge>
-                        <Badge className={statusColors[shortage.status as keyof typeof statusColors]}>
-                          {statusLabels[shortage.status as keyof typeof statusLabels]}
+                      <div className="flex items-center space-x-2">
+                        <Badge className="bg-red-100 text-red-800">
+                          {shortage.priority === "critical" ? "Критичний" : 
+                           shortage.priority === "high" ? "Високий" : 
+                           shortage.priority === "medium" ? "Середній" : "Низький"}
                         </Badge>
                       </div>
                     </div>
-
-                    <div className="grid grid-cols-3 gap-4 mb-4">
-                      <div>
-                        <p className="text-sm text-gray-600">Потрібно</p>
-                        <p className="font-semibold">{shortage.requiredQuantity}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Доступно</p>
-                        <p className="font-semibold">{shortage.availableQuantity}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-red-600">Дефіцит</p>
-                        <p className="font-semibold text-red-600">{shortage.shortageQuantity}</p>
-                      </div>
-                    </div>
-
-                    {shortage.estimatedCost && (
-                      <div className="mb-4">
-                        <p className="text-sm text-gray-600">Орієнтовна вартість</p>
-                        <p className="font-semibold">₴{parseFloat(shortage.estimatedCost).toFixed(2)}</p>
-                      </div>
-                    )}
-
-                    {shortage.supplier && (
-                      <div className="mb-4">
-                        <p className="text-sm text-gray-600">Рекомендований постачальник</p>
-                        <p className="font-semibold">{shortage.supplier.name}</p>
-                        {shortage.supplier.contactPerson && (
-                          <p className="text-xs text-gray-500">Контактна особа: {shortage.supplier.contactPerson}</p>
-                        )}
-                      </div>
-                    )}
-
-                    {shortage.notes && (
-                      <div className="mb-4">
-                        <p className="text-sm text-gray-600">Примітки</p>
-                        <p className="text-sm">{shortage.notes}</p>
-                      </div>
-                    )}
-
-                    <div className="flex justify-between items-center">
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(shortage)}
-                        >
-                          Редагувати
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(shortage.id)}
-                        >
-                          Видалити
-                        </Button>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        {shortage.status === "pending" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => createSupplierOrder.mutate(shortage.id)}
-                            disabled={createSupplierOrder.isPending}
-                          >
-                            <ShoppingCart className="h-4 w-4 mr-2" />
-                            Створити замовлення
-                          </Button>
-                        )}
-                        {shortage.status === "ordered" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => updateShortageStatus.mutate({ id: shortage.id, status: 'delivered' })}
-                            disabled={updateShortageStatus.isPending}
-                          >
-                            Відмітити як доставлено
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }
