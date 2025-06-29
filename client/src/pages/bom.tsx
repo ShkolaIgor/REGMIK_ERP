@@ -269,8 +269,8 @@ export default function BOMPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Header Section */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
+      {/* Header Section  sticky top-0 z-40*/}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
         <div className="w-full px-8 py-3">
           <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -314,7 +314,7 @@ export default function BOMPage() {
       </header>
 
       {/* Statistics Cards */}
-      <div className="w-full px-8 py-3">
+      <div className="w-full px-8 pt-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
             <CardContent className="p-6 relative overflow-hidden">
@@ -394,7 +394,7 @@ export default function BOMPage() {
         </div>
 
       {/* Filters and Actions */}
-      <div className="w-full py-3">
+      <div className="w-full pb-3">
         <Card>
           <CardContent className="p-6">
             <div className="flex flex-wrap items-center justify-between gap-4">

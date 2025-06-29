@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Package, Calendar, DollarSign, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ShoppingCart, Calendar, DollarSign, CheckCircle, Clock, AlertCircle, Plus, Upload, Package, TrendingUp } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { DataTable } from "@/components/DataTable/DataTable";
+import { SearchFilters } from "@/components/SearchFilters";
+import { useToast } from "@/hooks/use-toast";
 
 interface Product {
   id: number;
@@ -69,28 +70,51 @@ const statusLabels = {
 
 export default function SupplierOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<SupplierOrder | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [supplierFilter, setSupplierFilter] = useState("all");
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["/api/supplier-orders"],
     queryFn: () => apiRequest("/api/supplier-orders"),
   });
 
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ orderId, status }: { orderId: number; status: string }) =>
-      apiRequest({
-        url: `/api/supplier-orders/${orderId}/status`,
-        method: "PATCH",
-        body: { status },
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/supplier-orders"] });
-      setSelectedOrder(null);
-    },
+  const { data: suppliers = [] } = useQuery({
+    queryKey: ["/api/suppliers"],
+    queryFn: () => apiRequest("/api/suppliers"),
   });
 
-  const handleStatusChange = (orderId: number, newStatus: string) => {
-    updateStatusMutation.mutate({ orderId, status: newStatus });
+  // Фільтровані дані для пошуку
+  const filteredOrders = Array.isArray(orders) ? orders.filter((order: SupplierOrder) => {
+    if (!order || typeof order !== 'object') return false;
+    
+    const matchesSearch = order.orderNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.supplier?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.notes?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || order.status === statusFilter;
+    
+    const matchesSupplier = supplierFilter === "all" || 
+      order.supplierId?.toString() === supplierFilter;
+    
+    return matchesSearch && matchesStatus && matchesSupplier;
+  }) : [];
+
+  // Статистичні дані
+  const totalOrders = Array.isArray(orders) ? orders.length : 0;
+  const activeOrders = Array.isArray(orders) ? orders.filter(o => o && o.status !== 'cancelled' && o.status !== 'delivered').length : 0;
+  const totalAmount = Array.isArray(orders) ? orders.reduce((sum, o) => sum + Number(o?.totalAmount || 0), 0) : 0;
+  const pendingOrders = Array.isArray(orders) ? orders.filter(o => o && (o.status === 'draft' || o.status === 'sent')).length : 0;
+
+  // Форматування валюти
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('uk-UA', {
+      style: 'currency',
+      currency: 'UAH',
+      minimumFractionDigits: 2
+    }).format(amount);
   };
 
   const getStatusIcon = (status: string) => {
@@ -112,13 +136,93 @@ export default function SupplierOrdersPage() {
     }
   };
 
+  // Колонки для DataTable
+  const columns = [
+    {
+      key: "orderNumber",
+      label: "Номер замовлення",
+      sortable: true,
+    },
+    {
+      key: "supplier",
+      label: "Постачальник",
+      render: (order: SupplierOrder) => {
+        if (!order || !order.supplier) return "—";
+        return order.supplier.name;
+      }
+    },
+    {
+      key: "status",
+      label: "Статус",
+      render: (order: SupplierOrder) => {
+        if (!order || !order.status) return "—";
+        return (
+          <Badge className={statusColors[order.status as keyof typeof statusColors]}>
+            {getStatusIcon(order.status)}
+            <span className="ml-1">{statusLabels[order.status as keyof typeof statusLabels]}</span>
+          </Badge>
+        );
+      }
+    },
+    {
+      key: "totalAmount",
+      label: "Сума",
+      render: (order: SupplierOrder) => {
+        if (!order || !order.totalAmount) return "—";
+        return formatCurrency(Number(order.totalAmount));
+      }
+    },
+    {
+      key: "expectedDelivery",
+      label: "Очікувана доставка",
+      render: (order: SupplierOrder) => {
+        if (!order || !order.expectedDelivery) return "—";
+        return new Date(order.expectedDelivery).toLocaleDateString('uk-UA');
+      }
+    },
+    {
+      key: "actions",
+      label: "Дії",
+      render: (order: SupplierOrder) => (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSelectedOrder(order)}
+          >
+            Деталі
+          </Button>
+        </div>
+      )
+    }
+  ];
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ orderId, status }: { orderId: number; status: string }) =>
+      apiRequest({
+        url: `/api/supplier-orders/${orderId}/status`,
+        method: "PATCH",
+        body: { status },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/supplier-orders"] });
+      setSelectedOrder(null);
+    },
+  });
+
+  const handleStatusChange = (orderId: number, newStatus: string) => {
+    updateStatusMutation.mutate({ orderId, status: newStatus });
+  };
+
   if (isLoading) {
     return (
-      <div className="flex-1 p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Завантаження замовлень...</p>
+      <div className="flex-1 overflow-auto">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+          <div className="w-full p-6">
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Завантаження замовлень постачальників...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -126,210 +230,212 @@ export default function SupplierOrdersPage() {
   }
 
   return (
-    <div className="flex-1 p-6 overflow-y-auto">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Замовлення постачальникам</h1>
-          <p className="text-muted-foreground">
-            Управління замовленнями матеріалів та компонентів
-          </p>
+    <div className="flex-1 overflow-auto">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="w-full p-6">
+          {/* Header з градієнтом */}
+          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 rounded-2xl p-8 mb-8 text-white shadow-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                  <ShoppingCart className="w-8 h-8" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold mb-2">Склад замовлень постачальників</h1>
+                  <p className="text-blue-100 text-lg">Управління закупками та постачанням матеріалів</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Імпорт XML
+                </Button>
+                <Button
+                  className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Нове замовлення
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Статистичні картки */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-blue-100 rounded-xl">
+                    <Package className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{totalOrders}</p>
+                    <p className="text-sm text-gray-500">Всього замовлень</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-green-100 rounded-xl">
+                    <TrendingUp className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{activeOrders}</p>
+                    <p className="text-sm text-gray-500">Активні замовлення</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-orange-100 rounded-xl">
+                    <DollarSign className="w-6 h-6 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalAmount)}</p>
+                    <p className="text-sm text-gray-500">Загальна сума</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-purple-100 rounded-xl">
+                    <Clock className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{pendingOrders}</p>
+                    <p className="text-sm text-gray-500">Очікують підтвердження</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* SearchFilters */}
+          <SearchFilters
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            filters={[
+              {
+                key: "status",
+                label: "Статус",
+                value: statusFilter,
+                options: [
+                  { value: "all", label: "Всі статуси" },
+                  { value: "draft", label: "Чернетка" },
+                  { value: "sent", label: "Відправлено" },
+                  { value: "confirmed", label: "Підтверджено" },
+                  { value: "in_delivery", label: "У доставці" },
+                  { value: "delivered", label: "Доставлено" },
+                  { value: "cancelled", label: "Скасовано" }
+                ],
+                onChange: setStatusFilter
+              },
+              {
+                key: "supplier",
+                label: "Постачальник",
+                value: supplierFilter,
+                options: [
+                  { value: "all", label: "Всі постачальники" },
+                  ...Array.isArray(suppliers) ? suppliers.map((supplier: any) => ({
+                    value: supplier.id.toString(),
+                    label: supplier.name
+                  })) : []
+                ],
+                onChange: setSupplierFilter
+              }
+            ]}
+          />
+
+          {/* DataTable */}
+          <DataTable
+            data={filteredOrders}
+            columns={columns}
+            loading={isLoading}
+            storageKey="supplier-orders-table"
+          />
+
+          {/* Dialog для деталей замовлення */}
+          {selectedOrder && (
+            <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Деталі замовлення {selectedOrder.orderNumber}</DialogTitle>
+                </DialogHeader>
+                
+                <div className="grid gap-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium">Постачальник:</label>
+                      <p className="text-sm text-muted-foreground">{selectedOrder.supplier.name}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Статус:</label>
+                      <p className="text-sm text-muted-foreground">
+                        {statusLabels[selectedOrder.status as keyof typeof statusLabels]}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Загальна сума:</label>
+                      <p className="text-sm text-muted-foreground">
+                        {formatCurrency(Number(selectedOrder.totalAmount))}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Очікувана доставка:</label>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedOrder.expectedDelivery ? new Date(selectedOrder.expectedDelivery).toLocaleDateString('uk-UA') : "Не вказано"}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Товари в замовленні:</label>
+                    {selectedOrder.items && selectedOrder.items.length > 0 && (
+                      <div className="border rounded-lg overflow-hidden">
+                        <div className="bg-gray-50 grid grid-cols-5 gap-4 p-3 text-sm font-medium">
+                          <div>Товар</div>
+                          <div>Кількість</div>
+                          <div>Ціна за одиницю</div>
+                          <div>Загальна вартість</div>
+                          <div>Одиниця виміру</div>
+                        </div>
+                        {selectedOrder.items.map((item) => (
+                          <div key={item.id} className="grid grid-cols-5 gap-4 p-3 border-t text-sm">
+                            <div>{item.product.name}</div>
+                            <div>{item.quantity}</div>
+                            <div>{formatCurrency(Number(item.unitPrice))}</div>
+                            <div>{formatCurrency(Number(item.totalPrice))}</div>
+                            <div>{item.unit}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {selectedOrder.notes && (
+                    <div>
+                      <label className="text-sm font-medium">Примітки:</label>
+                      <p className="text-sm text-muted-foreground mt-1">{selectedOrder.notes}</p>
+                    </div>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
-
-      {/* Статистика */}
-      <div className="grid gap-4 md:grid-cols-4 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Всього замовлень</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{orders.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">У процесі</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {orders.filter((o: SupplierOrder) => ["sent", "confirmed", "in_delivery"].includes(o.status)).length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Доставлено</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {orders.filter((o: SupplierOrder) => o.status === "delivered").length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Загальна сума</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {orders.reduce((sum: number, order: SupplierOrder) => sum + parseFloat(order.totalAmount || "0"), 0).toFixed(2)} ₴
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Таблиця замовлень */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Список замовлень</CardTitle>
-          <CardDescription>
-            Перегляд та управління замовленнями постачальникам
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {orders.length === 0 ? (
-            <div className="text-center py-8">
-              <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Немає замовлень</h3>
-              <p className="text-gray-500">
-                Замовлення будуть створені автоматично при дефіциті матеріалів
-              </p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Номер замовлення</TableHead>
-                  <TableHead>Постачальник</TableHead>
-                  <TableHead>Статус</TableHead>
-                  <TableHead>Сума</TableHead>
-                  <TableHead>Дата створення</TableHead>
-                  <TableHead>Дії</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orders.map((order: SupplierOrder) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium">{order.orderNumber}</TableCell>
-                    <TableCell>{order.supplier.name}</TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[order.status as keyof typeof statusColors]}>
-                        <span className="flex items-center gap-1">
-                          {getStatusIcon(order.status)}
-                          {statusLabels[order.status as keyof typeof statusLabels]}
-                        </span>
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{parseFloat(order.totalAmount).toFixed(2)} ₴</TableCell>
-                    <TableCell>
-                      {new Date(order.createdAt).toLocaleDateString('uk-UA')}
-                    </TableCell>
-                    <TableCell>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSelectedOrder(order)}
-                          >
-                            Деталі
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-4xl">
-                          <DialogHeader>
-                            <DialogTitle>Замовлення {order.orderNumber}</DialogTitle>
-                          </DialogHeader>
-                          {selectedOrder && (
-                            <div className="space-y-6">
-                              {/* Інформація про замовлення */}
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <label className="text-sm font-medium">Постачальник</label>
-                                  <p className="text-sm text-gray-600">{selectedOrder.supplier.name}</p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium">Статус</label>
-                                  <div className="mt-1">
-                                    <Select
-                                      value={selectedOrder.status}
-                                      onValueChange={(value) => handleStatusChange(selectedOrder.id, value)}
-                                    >
-                                      <SelectTrigger className="w-48">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="draft">Чернетка</SelectItem>
-                                        <SelectItem value="sent">Відправлено</SelectItem>
-                                        <SelectItem value="confirmed">Підтверджено</SelectItem>
-                                        <SelectItem value="in_delivery">У доставці</SelectItem>
-                                        <SelectItem value="delivered">Доставлено</SelectItem>
-                                        <SelectItem value="cancelled">Скасовано</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium">Загальна сума</label>
-                                  <p className="text-sm text-gray-600">{parseFloat(selectedOrder.totalAmount).toFixed(2)} ₴</p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium">Дата створення</label>
-                                  <p className="text-sm text-gray-600">
-                                    {new Date(selectedOrder.createdAt).toLocaleDateString('uk-UA')}
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Позиції замовлення */}
-                              <div>
-                                <h3 className="text-lg font-medium mb-3">Позиції замовлення</h3>
-                                <Table>
-                                  <TableHeader>
-                                    <TableRow>
-                                      <TableHead>Товар</TableHead>
-                                      <TableHead>SKU</TableHead>
-                                      <TableHead>Кількість</TableHead>
-                                      <TableHead>Ціна за одиницю</TableHead>
-                                      <TableHead>Загальна вартість</TableHead>
-                                    </TableRow>
-                                  </TableHeader>
-                                  <TableBody>
-                                    {selectedOrder.items.map((item) => (
-                                      <TableRow key={item.id}>
-                                        <TableCell>{item.product.name}</TableCell>
-                                        <TableCell>{item.product.sku}</TableCell>
-                                        <TableCell>{item.quantity} {item.unit}</TableCell>
-                                        <TableCell>{parseFloat(item.unitPrice).toFixed(2)} ₴</TableCell>
-                                        <TableCell>{parseFloat(item.totalPrice).toFixed(2)} ₴</TableCell>
-                                      </TableRow>
-                                    ))}
-                                  </TableBody>
-                                </Table>
-                              </div>
-
-                              {/* Примітки */}
-                              {selectedOrder.notes && (
-                                <div>
-                                  <label className="text-sm font-medium">Примітки</label>
-                                  <p className="text-sm text-gray-600 mt-1">{selectedOrder.notes}</p>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </DialogContent>
-                      </Dialog>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }

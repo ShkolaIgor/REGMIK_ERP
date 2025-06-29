@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ProductForm } from "@/components/ProductForm";
 import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, getStockStatus } from "@/lib/utils";
-import { Search, Plus, Edit, Eye, Copy, Trash2, Scan, Download, Printer, DollarSign, AlertTriangle, Package, Barcode } from "lucide-react";
+import { Search, Plus, Edit, Eye, Copy, Trash2, Scan, Download, Printer, DollarSign, AlertTriangle, Package, Barcode, SquareChartGantt } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScannerButton } from "@/components/BarcodeScanner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -168,13 +168,13 @@ export default function Inventory() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-       {/* Header Section */}
-        <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
+       {/* Header Section  sticky top-0 z-40 */}
+        <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
           <div className="w-full px-8 py-3">
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <Badge className="w-6 h-6 text-white" />
+                    <SquareChartGantt className="w-6 h-6 text-white" />
                   </div>
                   <div>
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
@@ -219,9 +219,8 @@ export default function Inventory() {
           </div>       
       </header>      
 
-      <main className="p-6 space-y-6">
         {/* Statistics Cards */}
-        <div className="w-full px-8 py-3">
+        <div className="w-full px-8 pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
               <CardContent className="p-6 relative overflow-hidden">
@@ -305,8 +304,9 @@ export default function Inventory() {
           </div>        
 
         {/* Filters and Actions */}
+        <div className="w-full pb-3"> {/* відступ знизу та зверху */}
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-6"> {/* висота */}
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex flex-wrap items-center gap-4">
                 <div className="relative">
@@ -368,8 +368,12 @@ export default function Inventory() {
             </div>
           </CardContent>
         </Card>
+        </div>
 
-        {/* Products Table */}
+        {/* Content */}
+        <div className="w-full space-y-6 flex-1 overflow-auto">
+
+       {/* Products Table */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -572,8 +576,7 @@ export default function Inventory() {
             </p>
           </div>
         )}
-          </div>
-      </main>
+      </div>
 
       <ProductForm
         isOpen={showProductForm}
@@ -586,6 +589,7 @@ export default function Inventory() {
         isViewMode={isViewMode}
       />
 
-        </div>
+      </div>
+    </div>
   );
 }
