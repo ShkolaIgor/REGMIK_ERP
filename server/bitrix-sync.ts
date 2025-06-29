@@ -127,8 +127,12 @@ export async function sendCompanyDataToERP(companyId: string): Promise<{ success
       isSupplier: false
     };
 
-    // Перевіряємо чи існує клієнт з таким external_id
-    const existingClient = await storage.getClientByExternalId(companyId);
+    // Спочатку спробуємо знайти клієнта за ЄДРПОУ або ІПН
+    let existingClient = null;
+    if (requisite.RQ_EDRPOU) {
+      const clients = await storage.getClients();
+      existingClient = clients.find(c => c.taxCode === requisite.RQ_EDRPOU);
+    }
     
     let client;
     if (existingClient) {
@@ -170,62 +174,18 @@ export async function sendInvoiceToERP(invoiceData: BitrixInvoiceData): Promise<
       };
     }
 
-    // Отримуємо товари рахунку
-    const items = await getOrderItemsFromBitrix(invoiceData.ID);
-
     // Формуємо дані для створення замовлення в ERP
     const orderData: InsertOrder = {
       orderNumber: invoiceData.ACCOUNT_NUMBER,
       clientId: clientSync.clientId,
       status: mapBitrixStatusToERP(invoiceData.STATUS),
-      totalAmount: invoiceData.PRICE,
-      currency: invoiceData.CURRENCY || "UAH",
-      orderDate: new Date(invoiceData.DATE),
-      notes: `Синхронізовано з Бітрікс24 (ID: ${invoiceData.ID})`,
-      externalId: invoiceData.ID
+      totalAmount: invoiceData.PRICE.toString(),
+      notes: `Синхронізовано з Бітрікс24 (ID: ${invoiceData.ID})`
     };
 
-    // Перевіряємо чи існує замовлення з таким external_id
-    const existingOrder = await storage.getOrderByExternalId(invoiceData.ID);
-    
-    let order;
-    if (existingOrder) {
-      // Оновлюємо існуюче замовлення
-      order = await storage.updateOrder(existingOrder.id, orderData);
-      console.log(`Оновлено замовлення в ERP: ${order.orderNumber} (ID: ${order.id})`);
-    } else {
-      // Створюємо нове замовлення
-      order = await storage.createOrder(orderData);
-      console.log(`Створено нове замовлення в ERP: ${order.orderNumber} (ID: ${order.id})`);
-    }
-
-    // Синхронізуємо товари замовлення
-    if (items && items.productRows.length > 0) {
-      // Спочатку видаляємо існуючі товари замовлення
-      await storage.deleteOrderItems(order.id);
-
-      // Додаємо нові товари
-      for (const item of items.productRows) {
-        // Знаходимо товар в нашій системі за кодом
-        const product = await storage.getProductBySku(item.productCode);
-        
-        if (product) {
-          const orderItemData: InsertOrderItem = {
-            orderId: order.id,
-            productId: product.id,
-            quantity: item.quantity,
-            unitPrice: item.price,
-            totalPrice: item.price * item.quantity,
-            notes: `Тип товару: ${item.type}, Одиниця: ${item.measureName}`
-          };
-
-          await storage.createOrderItem(orderItemData);
-          console.log(`Додано товар до замовлення: ${product.name} x${item.quantity}`);
-        } else {
-          console.warn(`Товар не знайдено в ERP за кодом: ${item.productCode}`);
-        }
-      }
-    }
+    // Створюємо нове замовлення (спрощена версія)
+    const order = await storage.createOrder(orderData);
+    console.log(`Створено нове замовлення в ERP: ${order.orderNumber} (ID: ${order.id})`);
 
     return {
       success: true,

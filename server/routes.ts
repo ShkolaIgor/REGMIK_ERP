@@ -9587,6 +9587,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ================================
+  // BITRIX24 SYNC API ROUTES
+  // ================================
+
+  // Синхронізація компанії з Бітрікс24
+  app.post("/api/bitrix/sync-company/:companyId", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { companyId } = req.params;
+      const result = await sendCompanyDataToERP(companyId);
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error) {
+      console.error("Помилка синхронізації компанії з Бітрікс24:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Помилка сервера при синхронізації компанії" 
+      });
+    }
+  });
+
+  // Синхронізація рахунку з Бітрікс24
+  app.post("/api/bitrix/sync-invoice", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const invoiceData = req.body;
+      const result = await sendInvoiceToERP(invoiceData);
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error) {
+      console.error("Помилка синхронізації рахунку з Бітрікс24:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Помилка сервера при синхронізації рахунку" 
+      });
+    }
+  });
+
+  // Масова синхронізація компаній з Бітрікс24
+  app.post("/api/bitrix/sync-all-companies", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const result = await syncAllCompaniesFromBitrix();
+      res.json(result);
+    } catch (error) {
+      console.error("Помилка масової синхронізації компаній:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Помилка сервера при масовій синхронізації компаній",
+        syncedCount: 0
+      });
+    }
+  });
+
+  // Масова синхронізація рахунків з Бітрікс24
+  app.post("/api/bitrix/sync-all-invoices", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const result = await syncAllInvoicesFromBitrix();
+      res.json(result);
+    } catch (error) {
+      console.error("Помилка масової синхронізації рахунків:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Помилка сервера при масовій синхронізації рахунків",
+        syncedCount: 0
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   // Process Component Categories XML Import Async Function
   async function processComponentCategoriesXmlImportAsync(
