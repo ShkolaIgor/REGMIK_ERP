@@ -9713,6 +9713,170 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ================================
+  // ENDPOINTS ДЛЯ ПРИЙОМУ ДАНИХ ВІД PHP СКРИПТІВ
+  // (Викликаються з bitrix24-webhook-company.php та bitrix24-webhook-invoice.php)
+  // ================================
+
+  // Endpoint для отримання даних компаній від PHP скрипту
+  app.post("/bitrix/hs/sync/receive_company/", async (req, res) => {
+    try {
+      console.log("[PHP WEBHOOK] Отримано дані компанії від PHP скрипту:", req.body);
+      
+      const companyData = req.body.company;
+      if (!companyData) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Дані компанії не знайдено в запиті" 
+        });
+      }
+
+      // Перетворюємо дані з PHP формату у формат нашої ERP
+      const clientData = {
+        name: companyData.title || companyData.full_name,
+        fullName: companyData.full_name,
+        taxCode: companyData.tax_code,
+        address: companyData.legal_address,
+        phone: companyData.phone,
+        email: companyData.email,
+        externalId: `BITRIX_${companyData.bitrix_id}`,
+        source: 'bitrix24',
+        isCustomer: true,
+        isSupplier: false,
+        isActive: true
+      };
+
+      // Шукаємо існуючого клієнта за зовнішнім ID або податковим кодом
+      let existingClient = null;
+      if (companyData.tax_code) {
+        const clients = await storage.getClients();
+        existingClient = clients.find(c => c.taxCode === companyData.tax_code);
+      }
+
+      let client;
+      if (existingClient) {
+        // Оновлюємо існуючого клієнта
+        client = await storage.updateClient(existingClient.id, clientData);
+        console.log(`[PHP WEBHOOK] Оновлено клієнта: ${client.name} (ID: ${client.id})`);
+      } else {
+        // Створюємо нового клієнта
+        client = await storage.createClient(clientData);
+        console.log(`[PHP WEBHOOK] Створено нового клієнта: ${client.name} (ID: ${client.id})`);
+      }
+
+      res.json({
+        success: true,
+        message: `Компанію успішно синхронізовано з ERP: ${client.name}`,
+        client_id: client.id,
+        action: existingClient ? 'updated' : 'created'
+      });
+
+    } catch (error) {
+      console.error("[PHP WEBHOOK] Помилка обробки даних компанії:", error);
+      res.status(500).json({
+        success: false,
+        message: "Помилка синхронізації компанії з ERP",
+        error: error instanceof Error ? error.message : "Невідома помилка"
+      });
+    }
+  });
+
+  // Endpoint для отримання даних рахунків від PHP скрипту
+  app.post("/bitrix/hs/sync/receive_invoice/", async (req, res) => {
+    try {
+      console.log("[PHP WEBHOOK] Отримано дані рахунку від PHP скрипту:", req.body);
+      
+      const invoiceData = req.body.invoice;
+      const invoiceItems = req.body.items || [];
+      
+      if (!invoiceData) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Дані рахунку не знайдено в запиті" 
+        });
+      }
+
+      // Генеруємо номер замовлення
+      const orders = await storage.getOrders();
+      const lastOrderNumber = orders.length > 0 
+        ? orders.reduce((max, order) => {
+            const match = order.orderNumber?.match(/ORD-(\d+)/);
+            return match ? Math.max(max, parseInt(match[1])) : max;
+          }, 0)
+        : 0;
+      const nextOrderNumber = `ORD-${(lastOrderNumber + 1).toString().padStart(6, '0')}`;
+
+      // Створюємо замовлення
+      const orderData = {
+        orderNumber: nextOrderNumber,
+        externalId: `BITRIX_INVOICE_${invoiceData.bitrix_id}`,
+        clientId: null, // Буде встановлено пізніше якщо знайдемо клієнта
+        status: 'pending',
+        totalAmount: invoiceData.price.toString(),
+        currency: invoiceData.currency || 'UAH',
+        orderDate: new Date(invoiceData.date),
+        notes: `Імпортовано з Бітрікс24. Рахунок: ${invoiceData.account_number}`,
+        source: 'bitrix24'
+      };
+
+      const order = await storage.createOrder(orderData);
+      console.log(`[PHP WEBHOOK] Створено замовлення: ${order.orderNumber} (ID: ${order.id})`);
+
+      // Обробляємо позиції рахунку
+      for (const item of invoiceItems) {
+        // Шукаємо товар за назвою
+        const products = await storage.getProducts();
+        let product = products.find(p => 
+          p.name.toLowerCase().includes(item.productName.toLowerCase()) ||
+          item.productName.toLowerCase().includes(p.name.toLowerCase())
+        );
+
+        // Якщо товар не знайдено, створюємо новий
+        if (!product) {
+          const sku = item.productCode || `BTX-${Date.now()}`;
+          const productData = {
+            name: item.productName,
+            sku: sku,
+            description: `Товар синхронізований з Бітрікс24`,
+            isActive: true,
+            categoryId: 1, // Базова категорія
+            costPrice: item.price.toString(),
+            retailPrice: item.price.toString()
+          };
+
+          product = await storage.createProduct(productData);
+          console.log(`[PHP WEBHOOK] Створено товар: ${product.name} (SKU: ${product.sku})`);
+        }
+
+        // Створюємо позицію замовлення
+        const orderItemData = {
+          orderId: order.id,
+          productId: product.id,
+          quantity: item.quantity,
+          unitPrice: item.price.toString(),
+          totalPrice: (item.quantity * item.price).toString()
+        };
+
+        await storage.createOrderItem(orderItemData);
+      }
+
+      res.json({
+        success: true,
+        message: `Рахунок успішно синхронізовано з ERP: ${order.orderNumber}`,
+        order_id: order.id,
+        order_number: order.orderNumber
+      });
+
+    } catch (error) {
+      console.error("[PHP WEBHOOK] Помилка обробки даних рахунку:", error);
+      res.status(500).json({
+        success: false,
+        message: "Помилка синхронізації рахунку з ERP",
+        error: error instanceof Error ? error.message : "Невідома помилка"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   // Process Component Categories XML Import Async Function
   async function processComponentCategoriesXmlImportAsync(

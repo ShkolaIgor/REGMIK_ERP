@@ -11,9 +11,9 @@
 
 // Конфігурація
 $bitrixWebhookUrl = 'https://ваш-портал.bitrix24.com/rest/1/webhook_код/'; // Замініть на ваш webhook URL
-$erpUrl = 'https://erp.regmik.ua/bitrix/hs/sync/receive_company/';
-$erpLogin = 'ShkolaIhor'; 
-$erpPassword = '100'; // Замініть на правильний пароль
+$erpUrl = 'http://localhost:5000/bitrix/hs/sync/receive_company/'; // Локальний ERP endpoint
+$erpLogin = 'ШкоМ.'; 
+$erpPassword = '100';
 
 /**
  * Виконання API запиту до Бітрікс24 через cURL
