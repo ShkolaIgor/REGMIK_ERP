@@ -283,6 +283,30 @@ export default function Manufacturing() {
     },
   });
 
+  const pauseMutation = useMutation({
+    mutationFn: async (orderId: number) => 
+      apiRequest(`/api/manufacturing-orders/${orderId}/pause`, "POST"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/manufacturing-orders"] });
+      toast({
+        title: "Успіх",
+        description: "Виробництво призупинено",
+      });
+    },
+  });
+
+  const resumeMutation = useMutation({
+    mutationFn: async (orderId: number) => 
+      apiRequest(`/api/manufacturing-orders/${orderId}/resume`, "POST"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/manufacturing-orders"] });
+      toast({
+        title: "Успіх",
+        description: "Виробництво відновлено",
+      });
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       productId: "",
@@ -984,7 +1008,7 @@ export default function Manufacturing() {
                     {order.sourceOrderId ? (
                       <div className="text-sm">
                         <div className="font-medium text-blue-600">
-                          Замовлення #{order.sourceOrder?.orderNumber || order.sourceOrderId}
+                          Замовлення #{order.sourceOrderId}
                         </div>
                         <div className="text-gray-500 text-xs">
                           Автоматично створено
