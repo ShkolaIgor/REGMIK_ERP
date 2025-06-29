@@ -99,6 +99,12 @@ export default function Manufacturing() {
     gcTime: 0, // Не кешуємо дані між оновленнями
   });
 
+  // Статистичні дані
+  const totalOrders = (orders as ManufacturingOrder[]).length;
+  const activeOrders = (orders as ManufacturingOrder[]).filter((order: ManufacturingOrder) => order.status === "in_progress").length;
+  const completedOrders = (orders as ManufacturingOrder[]).filter((order: ManufacturingOrder) => order.status === "completed").length;
+  const pendingOrders = (orders as ManufacturingOrder[]).filter((order: ManufacturingOrder) => order.status === "pending").length;
+
   const { data: products = [] } = useQuery({
     queryKey: ["/api/products"],
   });
@@ -399,7 +405,7 @@ export default function Manufacturing() {
     return plannedNum > 0 ? Math.min((producedNum / plannedNum) * 100, 100) : 0;
   };
 
-  const filteredOrders = orders.filter((order: ManufacturingOrder) => {
+  const filteredOrders = (orders as ManufacturingOrder[]).filter((order: ManufacturingOrder) => {
     const matchesSearch = order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          order.product?.name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || order.status === statusFilter;
@@ -411,20 +417,274 @@ export default function Manufacturing() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Виготовлення товарів</h1>
-          <p className="text-gray-600">Управління завданнями на виробництво</p>
+    <div className="w-full space-y-8">
+      {/* Header Section with Gradient */}
+      <div className="bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-600 text-white">
+        <div className="w-full px-8 py-12">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm shadow-lg">
+                <Factory className="w-10 h-10" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                  Виготовлення товарів
+                </h1>
+                <p className="text-blue-100 text-xl font-medium">Управління виробничими завданнями та контроль якості</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
+                    onClick={() => setIsDialogOpen(true)}
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Створити завдання
+                  </Button>
+                </DialogTrigger>
+              </Dialog>
+            </div>
+          </div>
         </div>
-        
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="w-full px-8 py-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Factory className="w-4 h-4 text-blue-600" />
+                    <p className="text-sm text-blue-700 font-medium">Всього завдань</p>
+                  </div>
+                  <p className="text-3xl font-bold text-blue-900 mb-1">{totalOrders}</p>
+                  <p className="text-xs text-blue-600">Створено завдань</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Factory className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Play className="w-4 h-4 text-green-600" />
+                    <p className="text-sm text-green-700 font-medium">В роботі</p>
+                  </div>
+                  <p className="text-3xl font-bold text-green-900 mb-1">{activeOrders}</p>
+                  <p className="text-xs text-green-600">Активні завдання</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Play className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock className="w-4 h-4 text-yellow-600" />
+                    <p className="text-sm text-yellow-700 font-medium">Очікують</p>
+                  </div>
+                  <p className="text-3xl font-bold text-yellow-900 mb-1">{pendingOrders}</p>
+                  <p className="text-xs text-yellow-600">На початок</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Clock className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle className="w-4 h-4 text-purple-600" />
+                    <p className="text-sm text-purple-700 font-medium">Завершені</p>
+                  </div>
+                  <p className="text-3xl font-bold text-purple-900 mb-1">{completedOrders}</p>
+                  <p className="text-xs text-purple-600">Готово</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <CheckCircle className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Search and Filter Section */}
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="flex gap-4 items-center">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    type="text"
+                    placeholder="Пошук за номером замовлення або назвою товару..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Статус" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Всі статуси</SelectItem>
+                  <SelectItem value="pending">Очікує</SelectItem>
+                  <SelectItem value="in_progress">В роботі</SelectItem>
+                  <SelectItem value="paused">Призупинено</SelectItem>
+                  <SelectItem value="completed">Завершено</SelectItem>
+                  <SelectItem value="cancelled">Скасовано</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Manufacturing Orders Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Завдання на виготовлення ({filteredOrders.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Номер</TableHead>
+                    <TableHead>Товар</TableHead>
+                    <TableHead>Кількість</TableHead>
+                    <TableHead>Прогрес</TableHead>
+                    <TableHead>Статус</TableHead>
+                    <TableHead>Пріоритет</TableHead>
+                    <TableHead>Виконавець</TableHead>
+                    <TableHead>Дії</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredOrders.map((order: ManufacturingOrder) => (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-mono">{order.orderNumber}</TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{order.product?.name || "Товар не вказано"}</div>
+                          <div className="text-sm text-gray-500">{order.product?.sku}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {order.producedQuantity}/{order.plannedQuantity} {order.unit}
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <Progress value={getProgress(order.plannedQuantity, order.producedQuantity)} className="w-20" />
+                          <span className="text-xs text-gray-500">
+                            {Math.round(getProgress(order.plannedQuantity, order.producedQuantity))}%
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusBadgeColor(order.status)}>
+                          {getStatusLabel(order.status)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={order.priority === "high" ? "destructive" : order.priority === "medium" ? "default" : "secondary"}>
+                          {order.priority === "high" ? "Високий" : order.priority === "medium" ? "Середній" : "Низький"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {order.worker?.firstName} {order.worker?.lastName}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          {order.status === "pending" && (
+                            <Button
+                              size="sm"
+                              onClick={() => startMutation.mutate(order.id)}
+                              disabled={startMutation.isPending}
+                            >
+                              <Play className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {order.status === "in_progress" && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => pauseMutation.mutate(order.id)}
+                                disabled={pauseMutation.isPending}
+                              >
+                                <Pause className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedOrder(order);
+                                  setCompleteData({
+                                    producedQuantity: order.plannedQuantity,
+                                    qualityRating: "good",
+                                    notes: ""
+                                  });
+                                  setIsCompleteDialogOpen(true);
+                                }}
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                          {order.status === "paused" && (
+                            <Button
+                              size="sm"
+                              onClick={() => resumeMutation.mutate(order.id)}
+                              disabled={resumeMutation.isPending}
+                            >
+                              <Play className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setIsDetailsDialogOpen(true);
+                            }}
+                          >
+                            <Search className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Create/Edit Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setIsDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Створити завдання
-            </Button>
-          </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle>

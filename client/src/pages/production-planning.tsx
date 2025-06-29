@@ -39,7 +39,7 @@ export default function ProductionPlanning() {
   });
 
   return (
-    <>
+    <div className="w-full space-y-8">
       {/* Header Section with Gradient */}
       <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white">
         <div className="w-full px-8 py-12">
@@ -211,6 +211,6 @@ export default function ProductionPlanning() {
           </CardContent>
         </Card>
       </div>
-    </>
+    </div>
   );
 }
