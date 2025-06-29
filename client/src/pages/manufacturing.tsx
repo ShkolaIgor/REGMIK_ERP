@@ -121,10 +121,9 @@ export default function Manufacturing() {
     queryKey: ["/api/warehouses"],
   });
 
-  // Запит для отримання кроків виробництва для вибраного завдання
   const { data: manufacturingSteps = [], refetch: refetchSteps } = useQuery({
-    queryKey: ["/api/manufacturing-orders", selectedOrder?.id, "steps"],
-    enabled: !!selectedOrder?.id,
+    queryKey: ["/api/manufacturing-steps", selectedOrder?.id],
+    enabled: !!selectedOrder?.id && isDetailsDialogOpen,
   });
 
   const createMutation = useMutation({
@@ -353,6 +352,28 @@ export default function Manufacturing() {
   const handleDelete = (id: number, orderNumber: string) => {
     if (window.confirm(`Ви впевнені, що хочете видалити завдання ${orderNumber}?`)) {
       deleteMutation.mutate(id);
+    }
+  };
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case "pending": return "bg-yellow-100 text-yellow-800";
+      case "in_progress": return "bg-blue-100 text-blue-800";
+      case "paused": return "bg-orange-100 text-orange-800";
+      case "completed": return "bg-green-100 text-green-800";
+      case "cancelled": return "bg-red-100 text-red-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "pending": return "Очікує";
+      case "in_progress": return "В роботі";
+      case "paused": return "Призупинено";
+      case "completed": return "Завершено";
+      case "cancelled": return "Скасовано";
+      default: return status;
     }
   };
 
@@ -704,7 +725,7 @@ export default function Manufacturing() {
                         <SelectValue placeholder="Оберіть товар" />
                       </SelectTrigger>
                       <SelectContent>
-                        {products.map((product: any) => (
+                        {(products as any[]).map((product: any) => (
                           <SelectItem key={product.id} value={product.id.toString()}>
                             {product.name} ({product.sku})
                           </SelectItem>
@@ -724,7 +745,7 @@ export default function Manufacturing() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">Без рецепту</SelectItem>
-                        {recipes.map((recipe: any) => (
+                        {(recipes as any[]).map((recipe: any) => (
                           <SelectItem key={recipe.id} value={recipe.id.toString()}>
                             {recipe.name}
                           </SelectItem>
@@ -787,7 +808,7 @@ export default function Manufacturing() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="unassigned">Не призначено</SelectItem>
-                        {workers.map((worker: any) => (
+                        {(workers as any[]).map((worker: any) => (
                           <SelectItem key={worker.id} value={worker.id.toString()}>
                             {worker.firstName} {worker.lastName}
                           </SelectItem>
@@ -809,7 +830,7 @@ export default function Manufacturing() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="unspecified">Не вказано</SelectItem>
-                        {warehouses.map((warehouse: any) => (
+                        {(warehouses as any[]).map((warehouse: any) => (
                           <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
                             {warehouse.name}
                           </SelectItem>
@@ -1288,7 +1309,7 @@ export default function Manufacturing() {
               )}
 
               {/* Стадії виробництва */}
-              {manufacturingSteps.length > 0 && (
+              {(manufacturingSteps as any[]).length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -1298,7 +1319,7 @@ export default function Manufacturing() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {manufacturingSteps.map((step: any, index: number) => (
+                      {(manufacturingSteps as any[]).map((step: any, index: number) => (
                         <div key={step.id} className="border rounded-lg p-4">
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-3">
