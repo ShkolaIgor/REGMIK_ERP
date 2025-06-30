@@ -686,7 +686,7 @@ export default function Clients() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="w-full px-8 py-3">
+      <div className="w-full px-8 pt-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
             <CardContent className="p-6 relative overflow-hidden">
@@ -769,7 +769,7 @@ export default function Clients() {
         </div>
 
         {/* Filters and Actions */}
-        <div className="w-full py-3">
+        <div className="w-full pb-3">
           <Card>
             <CardContent className="p-6">
               <div className="flex flex-wrap items-center justify-between gap-4">

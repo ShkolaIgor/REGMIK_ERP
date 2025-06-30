@@ -42,27 +42,27 @@ export default function WarehouseTransfers() {
   });
 
   return (
-    <>
-      {/* Header Section with Gradient */}
-      <div className="bg-gradient-to-br from-emerald-600 via-green-600 to-teal-600 text-white">
-        <div className="w-full px-8 py-12">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm shadow-lg">
-                <ArrowLeftRight className="w-10 h-10" />
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-emerald-100 bg-clip-text text-transparent">
-                  Переміщення між складами
-                </h1>
-                <p className="text-emerald-100 text-xl font-medium">Управління переміщенням товарів між складськими приміщеннями</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        {/* Header Section  sticky top-0 z-40*/}
+        <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+          <div className="w-full px-8 py-3">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <ArrowLeftRight className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                      Переміщення між складами
+                    </h1>
+                    <p className="text-gray-500 mt-1">Управління переміщенням товарів між складськими приміщеннями</p>
+                  </div>
+                </div>
+            <div className="flex items-center space-x-4">
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button
-                    className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
                   >
                     <Plus className="w-5 h-5 mr-2" />
                     Нове переміщення
@@ -78,12 +78,12 @@ export default function WarehouseTransfers() {
                 </DialogContent>
               </Dialog>
             </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </header>
 
       {/* Statistics Cards */}
-      <div className="w-full px-8 py-3">
+      <div className="w-full px-8 pt-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
             <CardContent className="p-6 relative overflow-hidden">
@@ -220,6 +220,6 @@ export default function WarehouseTransfers() {
           </CardContent>
         </Card>
       </div>
-    </>
+      </div>
   );
 }
