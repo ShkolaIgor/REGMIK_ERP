@@ -60,7 +60,7 @@ const getDefaultSettings = (size: EnvelopeSize): EnvelopeSettings => ({
 
 export default function ClientMailPage() {
   const [newClientMail, setNewClientMail] = useState<InsertClientMail>({
-    clientId: "0",
+    clientId: 0,
     subject: '',
     content: '',
     status: 'draft'
@@ -83,9 +83,11 @@ export default function ClientMailPage() {
     localStorage.setItem('envelopeSettings', JSON.stringify(envelopeSettings));
   }, [envelopeSettings]);
 
-  const { data: clients = [] } = useQuery<Client[]>({
+  const { data: clientsData } = useQuery({
     queryKey: ["/api/clients/search"]
   });
+  
+  const clients = Array.isArray(clientsData?.clients) ? clientsData.clients : [];
 
   const { data: clientMails = [] } = useQuery<ClientMail[]>({
     queryKey: ["/api/client-mail"]
@@ -95,7 +97,7 @@ export default function ClientMailPage() {
     mutationFn: (data: InsertClientMail) => apiRequest("/api/client-mail", { method: "POST", body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/client-mail"] });
-      setNewClientMail({ clientId: "0", subject: '', content: '', status: 'draft' });
+      setNewClientMail({ clientId: 0, subject: '', content: '', status: 'draft' });
       toast({ title: "Листування створено!" });
     }
   });
@@ -272,7 +274,7 @@ export default function ClientMailPage() {
 
             <Button
               onClick={() => createMutation.mutate(newClientMail)}
-              disabled={createMutation.isPending || newClientMail.clientId === "0"}
+              disabled={createMutation.isPending || newClientMail.clientId === 0}
               className="w-full"
             >
               {createMutation.isPending ? 'Створення...' : 'Створити листування'}
