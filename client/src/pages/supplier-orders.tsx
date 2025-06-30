@@ -68,7 +68,7 @@ const statusLabels = {
   cancelled: "Скасовано",
 };
 
-export default function SupplierOrdersPage() {
+function SupplierOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<SupplierOrder | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -391,7 +391,7 @@ export default function SupplierOrdersPage() {
             <DataTable
               data={filteredOrders}
               columns={columns}
-              isLoading={isLoading}
+              loading={isLoading}
               storageKey="supplier-orders-table"
             />
           </CardContent>
@@ -470,57 +470,3 @@ export default function SupplierOrdersPage() {
 }
 
 export default SupplierOrdersPage;
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      
-      {/* Dialog для деталей замовлення */}
-      {selectedOrder && (
-        <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Деталі замовлення {selectedOrder.orderNumber}</DialogTitle>
-            </DialogHeader>
-            
-            <div className="grid gap-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Постачальник:</label>
-                  <p className="text-sm text-muted-foreground">{selectedOrder.supplier.name}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Статус:</label>
-                  <p className="text-sm text-muted-foreground">
-                    {statusLabels[selectedOrder.status as keyof typeof statusLabels]}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Загальна сума:</label>
-                  <p className="text-sm text-muted-foreground">
-                    {formatCurrency(Number(selectedOrder.totalAmount))}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Очікувана доставка:</label>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedOrder.expectedDelivery ? new Date(selectedOrder.expectedDelivery).toLocaleDateString('uk-UA') : "Не вказано"}
-                  </p>
-                </div>
-              </div>
-              
-              {selectedOrder.notes && (
-                <div>
-                  <label className="text-sm font-medium">Примітки:</label>
-                  <p className="text-sm text-muted-foreground mt-1">{selectedOrder.notes}</p>
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-  
-      </div>
-  );
-}
