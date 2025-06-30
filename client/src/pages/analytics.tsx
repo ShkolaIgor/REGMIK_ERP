@@ -1,66 +1,41 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, TrendingDown, DollarSign, Target, AlertTriangle, Clock } from "lucide-react";
-import { LoadingState, DashboardLoadingState } from "@/components/ui/loading-state";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { ChartSkeleton, CardSkeleton } from "@/components/ui/skeleton";
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
+import { TrendingUp, TrendingDown, DollarSign, Clock } from "lucide-react";
 
 export default function Analytics() {
   const [period, setPeriod] = useState("month");
-
-  const { data: salesData = { totalSales: 0, orderCount: 0 }, isLoading: salesLoading } = useQuery({
+  
+  const { data: salesData, isLoading: salesLoading } = useQuery({
     queryKey: ["/api/analytics/sales", period],
   });
 
-  const { data: expensesData = { totalExpenses: 0, calculationCount: 0 }, isLoading: expensesLoading } = useQuery({
+  const { data: expensesData, isLoading: expensesLoading } = useQuery({
     queryKey: ["/api/analytics/expenses", period],
   });
 
-  const { data: profitData = { totalProfit: 0, profitMargin: 0 }, isLoading: profitLoading } = useQuery({
+  const { data: profitData, isLoading: profitLoading } = useQuery({
     queryKey: ["/api/analytics/profit", period],
   });
 
-  const { data: timeEntries = [], isLoading: timeLoading } = useQuery({
-    queryKey: ["/api/time-entries"],
+  const { data: timeEntries, isLoading: timeLoading } = useQuery({
+    queryKey: ["/api/analytics/time-entries", period],
   });
 
-  const { data: inventoryAlerts = [], isLoading: alertsLoading } = useQuery({
-    queryKey: ["/api/inventory/alerts"],
-  });
+  const isLoading = salesLoading || expensesLoading || profitLoading;
 
-  // Обчислюємо загальні показники
-  const totalSales = salesData.totalSales || 0;
-  const totalExpenses = expensesData.totalExpenses || 0;
-  const totalProfit = profitData.totalProfit || 0;
-
-  // Дані для кругової діаграми витрат (використовуємо заглушки для демонстрації)
-  const expensesPieData = totalExpenses > 0 ? [
-    { name: 'Виробництво', value: totalExpenses * 0.6 },
-    { name: 'Логістика', value: totalExpenses * 0.25 },
-    { name: 'Адміністрування', value: totalExpenses * 0.15 }
-  ] : [];
-
-  // Обчислюємо загальний час роботи
-  const totalTimeMinutes = timeEntries.reduce((sum: number, entry: any) => 
-    sum + (entry.durationMinutes || 0), 0
-  );
-  const totalTimeHours = Math.round(totalTimeMinutes / 60 * 10) / 10;
-
-  const isLoading = salesLoading || expensesLoading || profitLoading || timeLoading || alertsLoading;
+  // Calculate totals
+  const totalSales = salesData?.reduce((sum: number, item: any) => sum + item.sales, 0) || 0;
+  const totalExpenses = expensesData?.reduce((sum: number, item: any) => sum + item.expenses, 0) || 0;
+  const totalProfit = totalSales - totalExpenses;
+  const totalTimeHours = Math.round((timeEntries?.reduce((sum: number, entry: any) => sum + entry.durationMinutes, 0) || 0) / 60);
 
   if (isLoading) {
     return (
       <div className="flex-1 overflow-auto">
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-          <div className="container mx-auto p-6">
+          <div className="w-full px-8 py-6">
             <div className="text-center py-12">
               <p className="text-gray-600">Завантаження аналітики...</p>
             </div>
@@ -186,182 +161,8 @@ export default function Analytics() {
               </CardContent>
             </Card>
           </div>
-
         </main>
       </div>
-    );
-  };
-
-  return (
-    <div className="flex-1 overflow-auto">
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <Content />
-      </div>
-    </div>
-  );
-}
-
-      <Tabs defaultValue="profit" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="profit">Прибутковість</TabsTrigger>
-          <TabsTrigger value="expenses">Витрати</TabsTrigger>
-          <TabsTrigger value="time">Час роботи</TabsTrigger>
-          <TabsTrigger value="alerts">Сповіщення</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="profit" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Динаміка прибутковості</CardTitle>
-              <CardDescription>
-                Порівняння продажів, витрат та прибутку за обраний період
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {profitLoading ? (
-                <ChartSkeleton />
-              ) : (
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={profitData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => [`₴${Number(value).toLocaleString()}`, '']} />
-                    <Legend />
-                    <Line type="monotone" dataKey="sales" stroke="#10B981" name="Продажі" strokeWidth={2} />
-                    <Line type="monotone" dataKey="expenses" stroke="#EF4444" name="Витрати" strokeWidth={2} />
-                    <Line type="monotone" dataKey="profit" stroke="#3B82F6" name="Прибуток" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="expenses" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Витрати за категоріями</CardTitle>
-                <CardDescription>Розподіл витрат по категоріях</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={expensesPieData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {expensesPieData.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => `₴${Number(value).toLocaleString()}`} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Динаміка витрат</CardTitle>
-                <CardDescription>Витрати за період</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={[
-                    { category: 'Виробництво', amount: totalExpenses * 0.6 },
-                    { category: 'Логістика', amount: totalExpenses * 0.25 },
-                    { category: 'Адміністрування', amount: totalExpenses * 0.15 }
-                  ]}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="category" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => `₴${Number(value).toLocaleString()}`} />
-                    <Bar dataKey="amount" fill="#EF4444" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="time" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Відстеження часу роботи</CardTitle>
-              <CardDescription>Записи про витрачений час працівників</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {timeEntries.slice(0, 10).map((entry: any) => (
-                  <div key={entry.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="font-medium">{entry.employeeName}</p>
-                      <p className="text-sm text-muted-foreground">{entry.description}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(entry.startTime).toLocaleString('uk-UA')} - 
-                        {entry.endTime ? new Date(entry.endTime).toLocaleString('uk-UA') : 'В процесі'}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">{Math.round(entry.durationMinutes / 6) / 10} год</p>
-                      {entry.notes && (
-                        <p className="text-xs text-muted-foreground">{entry.notes}</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {timeEntries.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">
-                    Немає записів про час роботи
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="alerts" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Сповіщення про запаси</CardTitle>
-              <CardDescription>Товари з низьким рівнем запасів</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {inventoryAlerts.map((alert: any) => (
-                  <div key={alert.id} className="flex items-center justify-between p-4 border rounded-lg border-orange-200 bg-orange-50">
-                    <div className="flex items-center gap-3">
-                      <AlertTriangle className="h-5 w-5 text-orange-600" />
-                      <div>
-                        <p className="font-medium">{alert.message}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(alert.createdAt).toLocaleDateString('uk-UA')}
-                        </p>
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="border-orange-300 text-orange-700">
-                      {alert.alertType === 'low_stock' ? 'Низький запас' : alert.alertType}
-                    </Badge>
-                  </div>
-                ))}
-                {inventoryAlerts.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">
-                    Немає активних сповіщень
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }
