@@ -236,14 +236,14 @@ export default function SupplierOrdersPage() {
         <div className="w-full px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <ShoppingCart className="w-10 h-10 text-white" />
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 via-purple-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
+                <ShoppingCart className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
-                  Замовлення постачальників
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                  Склад замовлень постачальників
                 </h1>
-                <p className="text-gray-500 mt-1">Управління закупками та постачанням матеріалів</p>
+                <p className="text-gray-600 mt-2 text-lg">Управління закупками та постачанням матеріалів для виробництва</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -278,9 +278,72 @@ export default function SupplierOrdersPage() {
                     <p className="text-sm text-blue-700 font-medium">Всього замовлень</p>
                   </div>
                   <p className="text-3xl font-bold text-blue-900 mb-1">{totalOrders}</p>
-                  <p className="text-xs text-blue-600">Загальна кількість замовлень</p>
+                  <p className="text-xs text-blue-600">Всіх замовлень у системі</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Package className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <p className="text-sm text-green-700 font-medium">Активні замовлення</p>
+                  </div>
+                  <p className="text-3xl font-bold text-green-900 mb-1">{activeOrders}</p>
+                  <p className="text-xs text-green-600">У процесі виконання</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <CheckCircle className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <DollarSign className="w-4 h-4 text-purple-600" />
+                    <p className="text-sm text-purple-700 font-medium">Загальна сума</p>
+                  </div>
+                  <p className="text-3xl font-bold text-purple-900 mb-1">{Math.round(totalAmount).toLocaleString('uk-UA')} ₴</p>
+                  <p className="text-xs text-purple-600">Вартість всіх замовлень</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <DollarSign className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock className="w-4 h-4 text-orange-600" />
+                    <p className="text-sm text-orange-700 font-medium">Очікують підтвердження</p>
+                  </div>
+                  <p className="text-3xl font-bold text-orange-900 mb-1">{pendingOrders}</p>
+                  <p className="text-xs text-orange-600">Потребують уваги</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <Clock className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
                   <Package className="w-8 h-8 text-white" />
                 </div>
               </div>
