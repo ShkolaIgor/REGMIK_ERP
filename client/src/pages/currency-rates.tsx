@@ -499,6 +499,6 @@ export default function CurrencyRates() {
       </Card>
         </div>
       </div>
-    </div>
+    </>
   );
 }
