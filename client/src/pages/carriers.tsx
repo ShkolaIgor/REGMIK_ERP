@@ -599,6 +599,8 @@ export default function Carriers() {
           </Table>
         </CardContent>
       </Card>
-    </div>
+        </div>
+      </div>
+    </>
   );
 }

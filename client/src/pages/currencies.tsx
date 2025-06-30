@@ -589,14 +589,183 @@ export default function Currencies() {
                   >
                     <Plus className="w-5 h-5 mr-2" />
                     Додати валюту
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingCurrency ? "Редагування валюти" : "Нова валюта"}
-              </DialogTitle>
-            </DialogHeader>
+                  </Button>
+                </DialogTrigger>
+              </Dialog>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="w-full px-8 py-8 bg-gray-50">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-green-500 bg-gradient-to-br from-green-50 to-emerald-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">Всього валют</CardTitle>
+              <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors duration-300">
+                <DollarSign className="h-6 w-6 text-green-600 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-700">{currencies.length}</div>
+              <p className="text-xs text-green-600 mt-1">активних валют системи</p>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-blue-500 bg-gradient-to-br from-blue-50 to-sky-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">Активні валюти</CardTitle>
+              <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors duration-300">
+                <CreditCard className="h-6 w-6 text-blue-600 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-700">{currencies.filter(c => c.isActive).length}</div>
+              <p className="text-xs text-blue-600 mt-1">доступних для операцій</p>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-yellow-500 bg-gradient-to-br from-yellow-50 to-amber-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">Базова валюта</CardTitle>
+              <div className="p-2 bg-yellow-100 rounded-lg group-hover:bg-yellow-200 transition-colors duration-300">
+                <Star className="h-6 w-6 text-yellow-600 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-yellow-700">{baseCurrency?.code || "UAH"}</div>
+              <p className="text-xs text-yellow-600 mt-1">основна валюта системи</p>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-purple-500 bg-gradient-to-br from-purple-50 to-violet-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">Оновлення курсів</CardTitle>
+              <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors duration-300">
+                <TrendingUp className="h-6 w-6 text-purple-600 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-700">НБУ</div>
+              <p className="text-xs text-purple-600 mt-1">автоматичне оновлення</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="w-full px-8 py-6 space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="currencies">Валюти</TabsTrigger>
+            <TabsTrigger value="rates">Курси НБУ</TabsTrigger>
+            <TabsTrigger value="settings">Налаштування</TabsTrigger>
+            <TabsTrigger value="dashboard">Панелі</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="currencies" className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Пошук валют..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+            </div>
+
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Код</TableHead>
+                    <TableHead>Назва</TableHead>
+                    <TableHead>Символ</TableHead>
+                    <TableHead>Поточний курс</TableHead>
+                    <TableHead>Статус</TableHead>
+                    <TableHead>НБУ оновлення</TableHead>
+                    <TableHead>Дії</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center">Завантаження...</TableCell>
+                    </TableRow>
+                  ) : filteredCurrencies.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center">Валюти не знайдено</TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredCurrencies.map((currency) => (
+                      <TableRow key={currency.id}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {currency.code}
+                            {currency.isBase && <Star className="h-4 w-4 text-yellow-500" />}
+                          </div>
+                        </TableCell>
+                        <TableCell>{currency.name}</TableCell>
+                        <TableCell>{currency.symbol || "-"}</TableCell>
+                        <TableCell>
+                          {currency.isBase ? (
+                            <Badge variant="outline">Базова</Badge>
+                          ) : (
+                            <div>
+                              <div className="font-medium">1.0000</div>
+                              <div className="text-xs text-muted-foreground">сьогодні</div>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={currency.isActive ? "default" : "secondary"}>
+                            {currency.isActive ? "Активна" : "Неактивна"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            НБУ
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditCurrency(currency)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            {!currency.isBase && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm("Ви впевнені, що хочете видалити цю валюту?")) {
+                                    // handleDelete(currency.id);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </>
+  );
+}
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
