@@ -373,19 +373,103 @@ export default function Reports() {
                 <SelectItem value="last-year">Останній рік</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={() => exportCurrentReport()}>
-              <Download className="w-4 h-4 mr-2" />
-              Експорт звіту
-            </Button>
+                <Button className="bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-300" onClick={() => exportCurrentReport()}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Експорт звіту
+                </Button>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Statistics Cards */}
+        <main className="w-full px-8 py-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <DollarSign className="w-4 h-4 text-purple-600" />
+                      <p className="text-sm text-purple-700 font-medium">Загальний оборот</p>
+                    </div>
+                    <p className="text-3xl font-bold text-purple-900 mb-1">{profitMetrics.totalRevenue?.toLocaleString('uk-UA') || '0'} ₴</p>
+                    <p className="text-xs text-purple-600">За обраний період</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <DollarSign className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <TrendingUp className="w-4 h-4 text-emerald-600" />
+                      <p className="text-sm text-emerald-700 font-medium">Чистий прибуток</p>
+                    </div>
+                    <p className="text-3xl font-bold text-emerald-900 mb-1">{profitMetrics.totalProfit?.toLocaleString('uk-UA') || '0'} ₴</p>
+                    <p className="text-xs text-emerald-600">Маржа {profitMetrics.profitMargin?.toFixed(1) || '0'}%</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <TrendingUp className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-red-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <TrendingDown className="w-4 h-4 text-red-600" />
+                      <p className="text-sm text-red-700 font-medium">Загальні витрати</p>
+                    </div>
+                    <p className="text-3xl font-bold text-red-900 mb-1">{productionCosts.totalProductionCost?.toLocaleString('uk-UA') || '0'} ₴</p>
+                    <p className="text-xs text-red-600">Виробництво та накладні</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <TrendingDown className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <AlertTriangle className="w-4 h-4 text-orange-600" />
+                      <p className="text-sm text-orange-700 font-medium">Товари в дефіциті</p>
+                    </div>
+                    <p className="text-3xl font-bold text-orange-900 mb-1">{lowStockItems.length}</p>
+                    <p className="text-xs text-orange-600">Потребують поповнення</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <AlertTriangle className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Main Content */}
-          <div className="w-full px-8 py-6">
+          <div className="w-full">
             <div className="space-y-6">
-        {/* Key Metrics */}
+
+        {/* Main Content */}
+        <main className="w-full px-8 py-6">
+          <div className="space-y-6">
+            {/* Reports Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
             <CardContent className="p-6">
@@ -685,8 +769,10 @@ export default function Reports() {
               </div>
             </div>
           </CardContent>
-        </Card>
-      </main>
+          </Card>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
