@@ -1,85 +1,106 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Building2, MapPin, Edit, Trash2, Search } from "lucide-react";
+import { Plus, Building2, MapPin, Edit, Trash2, Search, Warehouse, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertWarehouseSchema, type Warehouse, type InsertWarehouse } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+
+interface WarehouseData {
+  id: number;
+  name: string;
+  location: string | null;
+  description: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const warehouseFormSchema = z.object({
+  name: z.string().min(1, "Назва обов'язкова"),
+  location: z.string().optional(),
+  description: z.string().optional(),
+  isActive: z.boolean().default(true),
+});
+
+type WarehouseFormData = z.infer<typeof warehouseFormSchema>;
 
 export default function WarehousesPage() {
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingWarehouse, setEditingWarehouse] = useState<Warehouse | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingWarehouse, setEditingWarehouse] = useState<WarehouseData | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: warehouses, isLoading } = useQuery<Warehouse[]>({
+  const { data: warehouses = [], isLoading } = useQuery<WarehouseData[]>({
     queryKey: ['/api/warehouses'],
   });
 
-  // Фільтрація складів за пошуковим запитом
-  const filteredWarehouses = warehouses?.filter(warehouse =>
+  // Filter warehouses based on search
+  const filteredWarehouses = warehouses.filter(warehouse =>
     warehouse.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     warehouse.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     warehouse.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  );
 
+  // Mutations
   const createMutation = useMutation({
-    mutationFn: async (data: InsertWarehouse) => {
+    mutationFn: async (data: WarehouseFormData) => {
       return apiRequest("/api/warehouses", {
         method: "POST",
-        body: data,
+        body: JSON.stringify(data),
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/warehouses'] });
-      setIsCreateOpen(false);
-      toast({
-        title: "Успіх",
-        description: "Склад успішно створено"
-      });
-    },
-    onError: (error) => {
-      console.error("Mutation error:", error);
-      toast({
-        title: "Помилка",
-        description: "Не вдалося створити склад",
-        variant: "destructive"
-      });
-    }
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<InsertWarehouse> }) => {
-      return apiRequest(`/api/warehouses/${id}`, {
-        method: "PATCH",
-        body: data,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/warehouses'] });
+      setIsDialogOpen(false);
       setEditingWarehouse(null);
       toast({
         title: "Успіх",
-        description: "Склад успішно оновлено"
+        description: "Склад успішно створено",
       });
     },
-    onError: (error) => {
-      console.error("Update mutation error:", error);
+    onError: (error: any) => {
       toast({
         title: "Помилка",
-        description: "Не вдалося оновити склад",
-        variant: "destructive"
+        description: error.message || "Помилка створення складу",
+        variant: "destructive",
       });
-    }
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: WarehouseFormData & { id: number }) => {
+      return apiRequest(`/api/warehouses/${data.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/warehouses'] });
+      setIsDialogOpen(false);
+      setEditingWarehouse(null);
+      toast({
+        title: "Успіх",
+        description: "Склад успішно оновлено",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Помилка оновлення складу",
+        variant: "destructive",
+      });
+    },
   });
 
   const deleteMutation = useMutation({
@@ -92,247 +113,311 @@ export default function WarehousesPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/warehouses'] });
       toast({
         title: "Успіх",
-        description: "Склад успішно видалено"
+        description: "Склад успішно видалено",
       });
     },
-    onError: (error) => {
-      console.error("Delete mutation error:", error);
+    onError: (error: any) => {
       toast({
         title: "Помилка",
-        description: "Не вдалося видалити склад",
-        variant: "destructive"
+        description: error.message || "Помилка видалення складу",
+        variant: "destructive",
       });
-    }
+    },
   });
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Завантаження...</div>
-        </div>
-      </div>
-    );
-  }
+  // Form
+  const form = useForm<WarehouseFormData>({
+    resolver: zodResolver(warehouseFormSchema),
+    defaultValues: {
+      name: "",
+      location: "",
+      description: "",
+      isActive: true,
+    },
+  });
+
+  // Handlers
+  const handleEdit = (warehouse: WarehouseData) => {
+    setEditingWarehouse(warehouse);
+    form.reset({
+      name: warehouse.name,
+      location: warehouse.location || "",
+      description: warehouse.description || "",
+      isActive: warehouse.isActive,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = (warehouse: WarehouseData) => {
+    if (confirm(`Ви впевнені, що хочете видалити склад "${warehouse.name}"?`)) {
+      deleteMutation.mutate(warehouse.id);
+    }
+  };
+
+  const onSubmit = (data: WarehouseFormData) => {
+    if (editingWarehouse) {
+      updateMutation.mutate({ ...data, id: editingWarehouse.id });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Building2 className="h-6 w-6 text-blue-600" />
-              <h1 className="text-xl font-semibold">Склади</h1>
+    <>
+      {/* Header Section with Gradient */}
+      <div className="bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 text-white">
+        <div className="w-full px-8 py-12">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm shadow-lg">
+                <Warehouse className="w-10 h-10" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-emerald-100 bg-clip-text text-transparent">
+                  Склади
+                </h1>
+                <p className="text-emerald-100 text-xl font-medium">Управління складами та місцями зберігання товарів</p>
+              </div>
             </div>
-            <Badge variant="secondary" className="flex items-center">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-1" />
-              Онлайн
-            </Badge>
+            <div className="flex items-center gap-4">
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    onClick={() => {
+                      setEditingWarehouse(null);
+                      form.reset();
+                    }}
+                    className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Додати склад
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingWarehouse ? "Редагування складу" : "Новий склад"}
+                    </DialogTitle>
+                    <DialogDescription>
+                      Заповніть форму для {editingWarehouse ? "оновлення" : "створення"} складу
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Назва складу</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Назва складу" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="location"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Розташування</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Адреса або місце розташування" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Опис</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} placeholder="Опис складу та його призначення" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <div className="flex justify-end space-x-2">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setIsDialogOpen(false)}
+                        >
+                          Скасувати
+                        </Button>
+                        <Button 
+                          type="submit" 
+                          disabled={createMutation.isPending || updateMutation.isPending}
+                        >
+                          {editingWarehouse ? "Оновити" : "Створити"}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
-          <div className="flex items-center space-x-4">
+        </div>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="w-full px-8 py-8 bg-gray-50">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-emerald-500 bg-gradient-to-br from-emerald-50 to-teal-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">Всього складів</CardTitle>
+              <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors duration-300">
+                <Warehouse className="h-6 w-6 text-emerald-600 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-emerald-700">{warehouses.length}</div>
+              <p className="text-xs text-emerald-600 mt-1">зареєстрованих складів</p>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-green-500 bg-gradient-to-br from-green-50 to-emerald-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">Активні</CardTitle>
+              <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors duration-300">
+                <Activity className="h-6 w-6 text-green-600 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-700">{warehouses.filter(w => w.isActive).length}</div>
+              <p className="text-xs text-green-600 mt-1">діючих складів</p>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-blue-500 bg-gradient-to-br from-blue-50 to-sky-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">З розташуванням</CardTitle>
+              <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors duration-300">
+                <MapPin className="h-6 w-6 text-blue-600 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-700">{warehouses.filter(w => w.location).length}</div>
+              <p className="text-xs text-blue-600 mt-1">мають адресу</p>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-purple-500 bg-gradient-to-br from-purple-50 to-violet-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">З описом</CardTitle>
+              <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors duration-300">
+                <Building2 className="h-6 w-6 text-purple-600 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-700">{warehouses.filter(w => w.description).length}</div>
+              <p className="text-xs text-purple-600 mt-1">мають опис</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="w-full px-8 py-6">
+        <Card className="mb-6">
+          <CardContent className="p-6">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Пошук складів..."
-                className="w-80 pl-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8"
               />
             </div>
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Додати склад
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Створити новий склад</DialogTitle>
-                  <DialogDescription>
-                    Заповніть форму для створення нового складу
-                  </DialogDescription>
-                </DialogHeader>
-                <WarehouseForm
-                  onSubmit={(data) => createMutation.mutate(data)}
-                  isLoading={createMutation.isPending}
-                />
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-      </header>
+          </CardContent>
+        </Card>
 
-      {/* Content */}
-      <div className="p-6">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredWarehouses.map((warehouse) => (
-            <Card key={warehouse.id} className="relative">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Building2 className="h-5 w-5 text-blue-600" />
-                    <CardTitle className="text-lg">{warehouse.name}</CardTitle>
-                  </div>
-                  <div className="flex space-x-1">
-                    <Dialog 
-                      open={editingWarehouse?.id === warehouse.id} 
-                      onOpenChange={(open) => setEditingWarehouse(open ? warehouse : null)}
-                    >
-                      <DialogTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Редагувати склад</DialogTitle>
-                          <DialogDescription>
-                            Внесіть зміни до інформації про склад
-                          </DialogDescription>
-                        </DialogHeader>
-                        <WarehouseForm
-                          defaultValues={warehouse}
-                          onSubmit={(data) => updateMutation.mutate({ id: warehouse.id, data })}
-                          isLoading={updateMutation.isPending}
-                        />
-                      </DialogContent>
-                    </Dialog>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        if (confirm('Ви впевнені, що хочете видалити цей склад?')) {
-                          deleteMutation.mutate(warehouse.id);
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-600" />
-                    </Button>
-                  </div>
-                </div>
-                {warehouse.location && (
-                  <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    <span>{warehouse.location}</span>
-                  </div>
+        {/* Warehouses Table */}
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Назва</TableHead>
+                  <TableHead>Розташування</TableHead>
+                  <TableHead>Опис</TableHead>
+                  <TableHead>Статус</TableHead>
+                  <TableHead>Дії</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8">
+                      Завантаження...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredWarehouses.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      {searchQuery ? "Складів не знайдено за пошуковим запитом" : "Складів не знайдено"}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredWarehouses.map((warehouse) => (
+                    <TableRow key={warehouse.id}>
+                      <TableCell className="font-medium">{warehouse.name}</TableCell>
+                      <TableCell>
+                        {warehouse.location ? (
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            {warehouse.location}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">Не вказано</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {warehouse.description ? (
+                          <span className="text-sm">{warehouse.description}</span>
+                        ) : (
+                          <span className="text-muted-foreground">Без опису</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={warehouse.isActive ? "default" : "secondary"}>
+                          {warehouse.isActive ? "Активний" : "Неактивний"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(warehouse)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(warehouse)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
-              </CardHeader>
-              
-              <CardContent>
-                {warehouse.description && (
-                  <CardDescription className="mb-4">
-                    {warehouse.description}
-                  </CardDescription>
-                )}
-                
-                <div className="flex justify-between items-center">
-                  <Badge variant="outline">
-                    ID: {warehouse.id}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {filteredWarehouses.length === 0 && (
-          <div className="text-center py-12">
-            <Building2 className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-semibold text-gray-900">
-              {searchQuery ? "Склади не знайдено" : "Немає складів"}
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {searchQuery 
-                ? "Спробуйте змінити критерії пошуку"
-                : "Почніть з створення свого першого складу"
-              }
-            </p>
-          </div>
-        )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
-    </div>
-  );
-}
-
-interface WarehouseFormProps {
-  defaultValues?: Partial<Warehouse>;
-  onSubmit: (data: InsertWarehouse) => void;
-  isLoading: boolean;
-}
-
-function WarehouseForm({ defaultValues, onSubmit, isLoading }: WarehouseFormProps) {
-  const form = useForm<InsertWarehouse>({
-    resolver: zodResolver(insertWarehouseSchema),
-    defaultValues: {
-      name: defaultValues?.name || "",
-      location: defaultValues?.location || "",
-      description: defaultValues?.description || ""
-    }
-  });
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Назва складу</FormLabel>
-              <FormControl>
-                <Input placeholder="Введіть назву складу" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Місцезнаходження</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="Введіть адресу або місцезнаходження" 
-                  {...field}
-                  value={field.value || ""}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Опис</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Введіть опис складу"
-                  className="resize-none"
-                  {...field}
-                  value={field.value || ""}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="flex justify-end space-x-2">
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Збереження..." : "Зберегти"}
-          </Button>
-        </div>
-      </form>
-    </Form>
+    </>
   );
 }

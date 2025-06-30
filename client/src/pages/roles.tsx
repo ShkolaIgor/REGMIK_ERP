@@ -61,29 +61,29 @@ interface RolePermission {
   createdAt: Date;
 }
 
-// Form schemas
+// Form Schema
 const roleFormSchema = z.object({
-  name: z.string().min(1, "Назва ролі обов'язкова").max(100, "Назва ролі занадто довга"),
-  displayName: z.string().min(1, "Відображувана назва обов'язкова").max(255, "Відображувана назва занадто довга"),
+  name: z.string().min(1, "Назва обов'язкова"),
+  displayName: z.string().min(1, "Відображувана назва обов'язкова"),
   description: z.string().optional(),
-  permissions: z.record(z.boolean()).default({}),
+  permissions: z.record(z.boolean()).optional(),
 });
 
 type RoleFormData = z.infer<typeof roleFormSchema>;
 
 export default function RolesPage() {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-  const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
-  const [editingRole, setEditingRole] = useState<Role | null>(null);
 
-  // Queries
+  // Data fetching
   const { data: roles = [], isLoading: rolesLoading } = useQuery<Role[]>({
     queryKey: ["/api/roles"],
   });
 
-  const { data: systemModules = [], isLoading: modulesLoading } = useQuery<SystemModule[]>({
+  const { data: modules = [], isLoading: modulesLoading } = useQuery<SystemModule[]>({
     queryKey: ["/api/system-modules"],
   });
 
@@ -91,22 +91,18 @@ export default function RolesPage() {
     queryKey: ["/api/permissions"],
   });
 
-  const { data: rolePermissions = [], isLoading: rolePermissionsLoading } = useQuery<RolePermission[]>({
-    queryKey: [`/api/roles/${selectedRole?.id}/permissions`],
-    enabled: !!selectedRole,
-  });
-
   // Mutations
   const createRoleMutation = useMutation({
     mutationFn: async (data: RoleFormData) => {
-      return await apiRequest(`/api/roles`, {
+      return await apiRequest("/api/roles", {
         method: "POST",
-        body: data,
+        body: JSON.stringify(data),
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
-      setIsRoleDialogOpen(false);
+      setIsDialogOpen(false);
+      setEditingRole(null);
       toast({
         title: "Успіх",
         description: "Роль успішно створена",
@@ -122,15 +118,15 @@ export default function RolesPage() {
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<RoleFormData> }) => {
-      return await apiRequest(`/api/roles/${id}`, {
-        method: "PUT",
-        body: data,
+    mutationFn: async (data: RoleFormData & { id: number }) => {
+      return await apiRequest(`/api/roles/${data.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
-      setIsRoleDialogOpen(false);
+      setIsDialogOpen(false);
       setEditingRole(null);
       toast({
         title: "Успіх",
@@ -169,43 +165,6 @@ export default function RolesPage() {
     },
   });
 
-  const assignPermissionMutation = useMutation({
-    mutationFn: async ({ roleId, permissionId, granted }: { roleId: number; permissionId: number; granted: boolean }) => {
-      return await apiRequest(`/api/roles/${roleId}/permissions/${permissionId}`, {
-        method: "POST",
-        body: { granted },
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/roles/${selectedRole?.id}/permissions`] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Помилка",
-        description: error.message || "Помилка призначення дозволу",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const removePermissionMutation = useMutation({
-    mutationFn: async ({ roleId, permissionId }: { roleId: number; permissionId: number }) => {
-      return await apiRequest(`/api/roles/${roleId}/permissions/${permissionId}`, {
-        method: "DELETE",
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/roles/${selectedRole?.id}/permissions`] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Помилка",
-        description: error.message || "Помилка видалення дозволу",
-        variant: "destructive",
-      });
-    },
-  });
-
   // Form
   const form = useForm<RoleFormData>({
     resolver: zodResolver(roleFormSchema),
@@ -237,74 +196,24 @@ export default function RolesPage() {
   }, [editingRole, form]);
 
   // Handlers
-  const handleCreateRole = () => {
-    setEditingRole(null);
-    setIsRoleDialogOpen(true);
-  };
-
   const handleEditRole = (role: Role) => {
     setEditingRole(role);
-    setIsRoleDialogOpen(true);
+    setIsDialogOpen(true);
   };
 
   const handleDeleteRole = (role: Role) => {
-    if (role.isSystemRole) {
-      toast({
-        title: "Помилка",
-        description: "Неможливо видалити системну роль",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (window.confirm(`Ви впевнені, що хочете видалити роль "${role.displayName}"?`)) {
+    if (confirm(`Ви впевнені, що хочете видалити роль "${role.displayName}"?`)) {
       deleteRoleMutation.mutate(role.id);
     }
   };
 
   const onSubmit = (data: RoleFormData) => {
     if (editingRole) {
-      updateRoleMutation.mutate({ id: editingRole.id, data });
+      updateRoleMutation.mutate({ ...data, id: editingRole.id });
     } else {
       createRoleMutation.mutate(data);
     }
   };
-
-  const handlePermissionToggle = (permissionId: number, granted: boolean) => {
-    if (!selectedRole) return;
-
-    if (granted) {
-      assignPermissionMutation.mutate({
-        roleId: selectedRole.id,
-        permissionId,
-        granted: true,
-      });
-    } else {
-      removePermissionMutation.mutate({
-        roleId: selectedRole.id,
-        permissionId,
-      });
-    }
-  };
-
-  // Helper functions
-  const getPermissionsByModule = (moduleId: number | null) => {
-    return permissions.filter(p => p.moduleId === moduleId);
-  };
-
-  const isPermissionGranted = (permissionId: number) => {
-    return rolePermissions.some(rp => rp.permissionId === permissionId && rp.granted);
-  };
-
-  const getModulePermissionsCount = (moduleId: number | null) => {
-    const modulePermissions = getPermissionsByModule(moduleId);
-    const grantedCount = modulePermissions.filter(p => isPermissionGranted(p.id)).length;
-    return { total: modulePermissions.length, granted: grantedCount };
-  };
-
-  if (rolesLoading || modulesLoading || permissionsLoading) {
-    return <div className="p-6">Завантаження...</div>;
-  }
 
   return (
     <>
@@ -317,363 +226,293 @@ export default function RolesPage() {
                 <Shield className="w-10 h-10" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-indigo-100 bg-clip-text text-transparent">
+                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent">
                   Ролі та дозволи
                 </h1>
-                <p className="text-indigo-100 text-xl font-medium">Управління ролями користувачів та їх дозволами в системі</p>
+                <p className="text-purple-100 text-xl font-medium">Управління користувацькими ролями та дозволами системи</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <Button 
-                onClick={handleCreateRole}
-                className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Створити роль
-              </Button>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    onClick={() => setEditingRole(null)}
+                    className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Створити роль
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingRole ? "Редагування ролі" : "Створення нової ролі"}
+                    </DialogTitle>
+                    <DialogDescription>
+                      Налаштуйте роль та призначте відповідні дозволи
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Системна назва</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="admin, manager, user" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="displayName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Відображувана назва</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Адміністратор, Менеджер, Користувач" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Опис</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} placeholder="Опис ролі та її призначення" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <div className="flex justify-end space-x-2">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setIsDialogOpen(false)}
+                        >
+                          Скасувати
+                        </Button>
+                        <Button 
+                          type="submit" 
+                          disabled={createRoleMutation.isPending || updateRoleMutation.isPending}
+                        >
+                          {editingRole ? "Оновити" : "Створити"}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>
       </div>
 
       {/* Statistics Cards */}
-      <div className="w-full px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200 hover:border-indigo-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-indigo-700">Всього ролей</p>
-                  <p className="text-3xl font-bold text-indigo-900 mb-1">{roles?.length || 0}</p>
-                  <p className="text-xs text-indigo-600">У системі</p>
-                </div>
-                <div className="p-3 bg-indigo-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
-                  <Shield className="w-8 h-8 text-indigo-600" />
-                </div>
+      <div className="w-full px-8 py-8 bg-gray-50">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-indigo-500 bg-gradient-to-br from-indigo-50 to-purple-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">Всього ролей</CardTitle>
+              <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors duration-300">
+                <Shield className="h-6 w-6 text-indigo-600 group-hover:rotate-12 transition-transform duration-300" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-indigo-700">{roles.length}</div>
+              <p className="text-xs text-indigo-600 mt-1">налаштованих ролей</p>
             </CardContent>
           </Card>
 
-          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200 hover:border-purple-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-purple-700">Всього дозволів</p>
-                  <p className="text-3xl font-bold text-purple-900 mb-1">{permissions?.length || 0}</p>
-                  <p className="text-xs text-purple-600">Налаштовано</p>
-                </div>
-                <div className="p-3 bg-purple-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
-                  <Settings className="w-8 h-8 text-purple-600" />
-                </div>
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-green-500 bg-gradient-to-br from-green-50 to-emerald-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">Системні ролі</CardTitle>
+              <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors duration-300">
+                <Settings className="h-6 w-6 text-green-600 group-hover:rotate-12 transition-transform duration-300" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-700">{roles.filter(r => r.isSystemRole).length}</div>
+              <p className="text-xs text-green-600 mt-1">вбудованих ролей</p>
             </CardContent>
           </Card>
 
-          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-pink-50 to-red-50 border-pink-200 hover:border-pink-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-pink-700">Модулів</p>
-                  <p className="text-3xl font-bold text-pink-900 mb-1">{modules?.length || 0}</p>
-                  <p className="text-xs text-pink-600">Активних</p>
-                </div>
-                <div className="p-3 bg-pink-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
-                  <Users className="w-8 h-8 text-pink-600" />
-                </div>
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-blue-500 bg-gradient-to-br from-blue-50 to-sky-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">Користувацькі ролі</CardTitle>
+              <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors duration-300">
+                <Users className="h-6 w-6 text-blue-600 group-hover:rotate-12 transition-transform duration-300" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-700">{roles.filter(r => !r.isSystemRole).length}</div>
+              <p className="text-xs text-blue-600 mt-1">створених ролей</p>
             </CardContent>
           </Card>
 
-          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200 hover:border-blue-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-blue-700">Системні ролі</p>
-                  <p className="text-3xl font-bold text-blue-900 mb-1">{roles?.filter(r => r.isSystemRole).length || 0}</p>
-                  <p className="text-xs text-blue-600">Захищених</p>
-                </div>
-                <div className="p-3 bg-blue-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
-                  <Check className="w-8 h-8 text-blue-600" />
-                </div>
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-purple-500 bg-gradient-to-br from-purple-50 to-violet-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">Всього дозволів</CardTitle>
+              <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors duration-300">
+                <Check className="h-6 w-6 text-purple-600 group-hover:rotate-12 transition-transform duration-300" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-700">{permissions.length}</div>
+              <p className="text-xs text-purple-600 mt-1">доступних дозволів</p>
             </CardContent>
           </Card>
         </div>
+      </div>
 
-        <div className="space-y-6">
+      {/* Main Content */}
+      <div className="w-full px-8 py-6 space-y-6">
+        <Tabs defaultValue="roles" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="roles">Ролі</TabsTrigger>
+            <TabsTrigger value="permissions">Дозволи</TabsTrigger>
+            <TabsTrigger value="modules">Модулі</TabsTrigger>
+          </TabsList>
 
-      <Tabs defaultValue="roles" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="roles">Ролі</TabsTrigger>
-          <TabsTrigger value="permissions">Дозволи</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="roles" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Roles List */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Список ролей</CardTitle>
-                <CardDescription>
-                  Виберіть роль для налаштування дозволів
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {roles.map((role) => (
-                  <div
-                    key={role.id}
-                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                      selectedRole?.id === role.id
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                    onClick={() => setSelectedRole(role)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold">{role.displayName}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {role.description || "Без опису"}
-                        </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge variant={role.isSystemRole ? "secondary" : "default"}>
-                            {role.isSystemRole ? "Системна" : "Користувацька"}
-                          </Badge>
+          <TabsContent value="roles" className="space-y-4">
+            <div className="grid gap-4">
+              {rolesLoading ? (
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="text-center">Завантаження ролей...</div>
+                  </CardContent>
+                </Card>
+              ) : roles.length === 0 ? (
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="text-center text-muted-foreground">
+                      Ролей не знайдено
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                roles.map((role) => (
+                  <Card key={role.id} className="hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="flex items-center gap-2">
+                            {role.displayName}
+                            {role.isSystemRole && (
+                              <Badge variant="secondary">Системна</Badge>
+                            )}
+                          </CardTitle>
+                          <CardDescription>
+                            {role.description || "Без опису"}
+                          </CardDescription>
                         </div>
-                      </div>
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditRole(role);
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        {!role.isSystemRole && (
+                        <div className="flex items-center gap-2">
                           <Button
-                            size="sm"
                             variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteRole(role);
-                            }}
+                            size="sm"
+                            onClick={() => handleEditRole(role)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Edit className="h-4 w-4" />
                           </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Role Permissions */}
-            {selectedRole && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Дозволи ролі: {selectedRole.displayName}</CardTitle>
-                  <CardDescription>
-                    Налаштуйте дозволи для вибраної ролі
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {rolePermissionsLoading ? (
-                    <div>Завантаження дозволів...</div>
-                  ) : (
-                    <div className="space-y-4">
-                      {systemModules.map((module) => {
-                        const modulePermissions = getPermissionsByModule(module.id);
-                        const { total, granted } = getModulePermissionsCount(module.id);
-                        
-                        if (modulePermissions.length === 0) return null;
-
-                        return (
-                          <div key={module.id} className="border rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <h4 className="font-medium">{module.displayName}</h4>
-                              <Badge variant="outline">
-                                {granted}/{total}
-                              </Badge>
-                            </div>
-                            <div className="space-y-2">
-                              {modulePermissions.map((permission) => {
-                                const isGranted = isPermissionGranted(permission.id);
-                                return (
-                                  <div
-                                    key={permission.id}
-                                    className="flex items-center justify-between p-2 border rounded"
-                                  >
-                                    <div>
-                                      <span className="text-sm font-medium">
-                                        {permission.displayName}
-                                      </span>
-                                      {permission.description && (
-                                        <p className="text-xs text-muted-foreground">
-                                          {permission.description}
-                                        </p>
-                                      )}
-                                    </div>
-                                    <Checkbox
-                                      checked={isGranted}
-                                      onCheckedChange={(checked) =>
-                                        handlePermissionToggle(permission.id, !!checked)
-                                      }
-                                      disabled={selectedRole.isSystemRole && selectedRole.name === 'super_admin'}
-                                    />
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="permissions" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Всі дозволи системи</CardTitle>
-              <CardDescription>
-                Перегляд усіх доступних дозволів згруповані за модулями
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {systemModules.map((module) => {
-                const modulePermissions = getPermissionsByModule(module.id);
-                
-                if (modulePermissions.length === 0) return null;
-
-                return (
-                  <div key={module.id} className="border rounded-lg p-4">
-                    <h4 className="font-medium mb-3">{module.displayName}</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {modulePermissions.map((permission) => (
-                        <div
-                          key={permission.id}
-                          className="p-3 border rounded bg-card"
-                        >
-                          <div className="font-medium text-sm">
-                            {permission.displayName}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {permission.action} • {permission.resourceType}
-                          </div>
-                          {permission.description && (
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {permission.description}
-                            </div>
+                          {!role.isSystemRole && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteRole(role)}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
                           )}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                ))
+              )}
+            </div>
+          </TabsContent>
 
-      {/* Role Dialog */}
-      <Dialog open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>
-              {editingRole ? "Редагувати роль" : "Створити нову роль"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingRole
-                ? "Змініть параметри існуючої ролі"
-                : "Заповніть форму для створення нової ролі"}
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Назва ролі</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="admin, manager, operator..."
-                        {...field}
-                        disabled={editingRole?.isSystemRole}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Унікальна назва ролі (використовується в коді)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
+          <TabsContent value="permissions" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Дозволи системи</CardTitle>
+                <CardDescription>
+                  Список всіх доступних дозволів у системі
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {permissionsLoading ? (
+                  <div className="text-center">Завантаження дозволів...</div>
+                ) : permissions.length === 0 ? (
+                  <div className="text-center text-muted-foreground">
+                    Дозволів не знайдено
+                  </div>
+                ) : (
+                  <div className="grid gap-2">
+                    {permissions.map((permission) => (
+                      <div key={permission.id} className="flex items-center justify-between p-2 border rounded">
+                        <div>
+                          <div className="font-medium">{permission.displayName}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {permission.description || permission.name}
+                          </div>
+                        </div>
+                        <Badge variant={permission.isSystemPermission ? "secondary" : "outline"}>
+                          {permission.action}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
                 )}
-              />
-              <FormField
-                control={form.control}
-                name="displayName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Відображувана назва</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Адміністратор, Менеджер, Оператор..."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Назва, яка буде відображатися користувачам
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="modules" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Модулі системи</CardTitle>
+                <CardDescription>
+                  Список всіх модулів системи та їх статус
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {modulesLoading ? (
+                  <div className="text-center">Завантаження модулів...</div>
+                ) : modules.length === 0 ? (
+                  <div className="text-center text-muted-foreground">
+                    Модулів не знайдено
+                  </div>
+                ) : (
+                  <div className="grid gap-2">
+                    {modules.map((module) => (
+                      <div key={module.id} className="flex items-center justify-between p-2 border rounded">
+                        <div>
+                          <div className="font-medium">{module.displayName}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {module.description || module.name}
+                          </div>
+                        </div>
+                        <Badge variant={module.isActive ? "default" : "secondary"}>
+                          {module.isActive ? "Активний" : "Неактивний"}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
                 )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Опис</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Опис ролі та її призначення..."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsRoleDialogOpen(false)}
-                >
-                  Скасувати
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={createRoleMutation.isPending || updateRoleMutation.isPending}
-                >
-                  {editingRole ? "Оновити" : "Створити"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-        </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </>
   );

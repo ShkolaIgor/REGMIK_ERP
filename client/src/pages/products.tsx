@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Upload, Edit2, Trash2, Package, CheckCircle, Grid3X3, DollarSign, Layers, Search, Scan, Printer, Download, AlertTriangle } from "lucide-react";
+import { Plus, Upload, Edit2, Trash2, Package2, CheckCircle, Grid3X3, DollarSign, Layers, Search, Scan, Printer, Download, AlertTriangle, ShoppingCart } from "lucide-react";
 import { DataTable } from "@/components/DataTable/DataTable";
 import { SearchFilters } from "@/components/SearchFilters";
 import { useAuth } from "@/hooks/useAuth";

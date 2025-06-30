@@ -7,11 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, Download, Settings, TrendingUp, Calendar, Banknote } from "lucide-react";
+import { RefreshCw, Download, Settings, TrendingUp, Calendar, Banknote, Activity } from "lucide-react";
 import { format } from "date-fns";
 import { uk } from "date-fns/locale";
-import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
 
 interface CurrencyRate {
   id: number;
@@ -50,34 +50,29 @@ export default function CurrencyRates() {
     queryKey: ["/api/currency-rates"],
   });
 
-  const { data: settings } = useQuery<CurrencySettings>({
+  const { data: settings, isLoading: settingsLoading } = useQuery<CurrencySettings>({
     queryKey: ["/api/currency-settings"],
   });
 
-  // Мутації для оновлення
+  // Мутації
   const updateCurrentRatesMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch("/api/currency-rates/update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await fetch("/api/currency-rates/update-current", { method: "POST" });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Помилка оновлення курсів");
+        throw new Error("Помилка оновлення курсів");
       }
       return response.json();
     },
-    onSuccess: (data) => {
-      toast({
-        title: "Курси оновлено",
-        description: data.message,
-      });
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/currency-rates"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/currency-settings"] });
+      toast({
+        title: "Успіх",
+        description: "Курси валют успішно оновлено",
+      });
     },
     onError: (error: Error) => {
       toast({
-        title: "Помилка оновлення",
+        title: "Помилка",
         description: error.message,
         variant: "destructive",
       });
@@ -92,21 +87,20 @@ export default function CurrencyRates() {
         body: JSON.stringify({ startDate, endDate }),
       });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Помилка оновлення курсів за період");
+        throw new Error("Помилка оновлення курсів за період");
       }
       return response.json();
     },
-    onSuccess: (data) => {
-      toast({
-        title: "Курси за період оновлено",
-        description: `${data.message}. Оновлено дат: ${data.updatedDates.length}`,
-      });
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/currency-rates"] });
+      toast({
+        title: "Успіх",
+        description: "Курси валют за період успішно оновлено",
+      });
     },
     onError: (error: Error) => {
       toast({
-        title: "Помилка оновлення за період",
+        title: "Помилка",
         description: error.message,
         variant: "destructive",
       });
@@ -114,28 +108,27 @@ export default function CurrencyRates() {
   });
 
   const saveSettingsMutation = useMutation({
-    mutationFn: async (settingsData: Partial<CurrencySettings>) => {
+    mutationFn: async (newSettings: Partial<CurrencySettings>) => {
       const response = await fetch("/api/currency-settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settingsData),
+        body: JSON.stringify(newSettings),
       });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Помилка збереження налаштувань");
+        throw new Error("Помилка збереження налаштувань");
       }
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Налаштування збережено",
-        description: "Налаштування автоматичного оновлення курсів збережено",
-      });
       queryClient.invalidateQueries({ queryKey: ["/api/currency-settings"] });
+      toast({
+        title: "Успіх",
+        description: "Налаштування успішно збережено",
+      });
     },
     onError: (error: Error) => {
       toast({
-        title: "Помилка збереження",
+        title: "Помилка",
         description: error.message,
         variant: "destructive",
       });
@@ -150,21 +143,11 @@ export default function CurrencyRates() {
     if (!startDate || !endDate) {
       toast({
         title: "Помилка",
-        description: "Вкажіть початкову та кінцеву дати",
+        description: "Оберіть період для оновлення",
         variant: "destructive",
       });
       return;
     }
-
-    if (new Date(startDate) > new Date(endDate)) {
-      toast({
-        title: "Помилка",
-        description: "Початкова дата не може бути пізніше кінцевої",
-        variant: "destructive",
-      });
-      return;
-    }
-
     updatePeriodRatesMutation.mutate({ startDate, endDate });
   };
 
@@ -176,59 +159,30 @@ export default function CurrencyRates() {
     });
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "success":
-        return <Badge className="bg-green-100 text-green-800">Успішно</Badge>;
-      case "error":
-        return <Badge variant="destructive">Помилка</Badge>;
-      case "pending":
-        return <Badge variant="secondary">Очікування</Badge>;
-      default:
-        return <Badge variant="outline">Невідомо</Badge>;
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "dd.MM.yyyy HH:mm", { locale: uk });
-    } catch {
-      return dateString;
-    }
-  };
-
-  const formatExchangeDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "dd.MM.yyyy", { locale: uk });
-    } catch {
-      return dateString;
-    }
-  };
-
   return (
-    <div>
+    <>
       {/* Header Section with Gradient */}
-      <div className="bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 text-white">
+      <div className="bg-gradient-to-br from-amber-600 via-orange-600 to-red-600 text-white">
         <div className="w-full px-8 py-12">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
               <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm shadow-lg">
-                <Banknote className="w-10 h-10" />
+                <TrendingUp className="w-10 h-10" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-emerald-100 bg-clip-text text-transparent">
+                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-amber-100 bg-clip-text text-transparent">
                   Курси валют НБУ
                 </h1>
-                <p className="text-emerald-100 text-xl font-medium">Автоматичне та ручне оновлення курсів валют з НБУ</p>
+                <p className="text-amber-100 text-xl font-medium">Автоматичне оновлення та управління курсами валют</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <Button 
-                onClick={handleUpdateCurrent} 
+                onClick={handleUpdateCurrent}
                 disabled={updateCurrentRatesMutation.isPending}
                 className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
               >
-                <RefreshCw className={`mr-2 h-5 w-5 ${updateCurrentRatesMutation.isPending ? "animate-spin" : ""}`} />
+                <RefreshCw className="w-5 h-5 mr-2" />
                 Оновити зараз
               </Button>
             </div>
@@ -237,266 +191,206 @@ export default function CurrencyRates() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="w-full px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200 hover:border-emerald-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-emerald-700">Всього валют</p>
-                  <p className="text-3xl font-bold text-emerald-900 mb-1">{rates.length}</p>
-                  <p className="text-xs text-emerald-600">У системі</p>
-                </div>
-                <div className="p-3 bg-emerald-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
-                  <Banknote className="w-8 h-8 text-emerald-600" />
-                </div>
+      <div className="w-full px-8 py-8 bg-gray-50">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-amber-500 bg-gradient-to-br from-amber-50 to-orange-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">Всього курсів</CardTitle>
+              <div className="p-2 bg-amber-100 rounded-lg group-hover:bg-amber-200 transition-colors duration-300">
+                <Banknote className="h-6 w-6 text-amber-600 group-hover:rotate-12 transition-transform duration-300" />
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200 hover:border-blue-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-blue-700">Авто-оновлення</p>
-                  <p className="text-3xl font-bold text-blue-900 mb-1">{settings?.autoUpdateEnabled ? "ВКЛ" : "ВИМК"}</p>
-                  <p className="text-xs text-blue-600">Статус</p>
-                </div>
-                <div className="p-3 bg-blue-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
-                  <Settings className="w-8 h-8 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200 hover:border-purple-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-purple-700">Останнє оновлення</p>
-                  <p className="text-3xl font-bold text-purple-900 mb-1">{settings?.lastUpdateStatus || "Немає"}</p>
-                  <p className="text-xs text-purple-600">Статус</p>
-                </div>
-                <div className="p-3 bg-purple-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
-                  <TrendingUp className="w-8 h-8 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-orange-50 to-red-50 border-orange-200 hover:border-orange-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-orange-700">Час оновлення</p>
-                  <p className="text-3xl font-bold text-orange-900 mb-1">{settings?.updateTime || "09:00"}</p>
-                  <p className="text-xs text-orange-600">Щодня</p>
-                </div>
-                <div className="p-3 bg-orange-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
-                  <Calendar className="w-8 h-8 text-orange-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Поточні курси */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Поточні курси валют
-              </CardTitle>
-              <CardDescription>
-                Останні курси валют з Національного банку України
-              </CardDescription>
             </CardHeader>
             <CardContent>
-              {ratesLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <RefreshCw className="h-6 w-6 animate-spin" />
-                </div>
-              ) : rates.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Banknote className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Курси валют не завантажено</p>
-                  <p className="text-sm">Натисніть "Оновити зараз" для завантаження</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {rates.map((rate) => (
-                    <div key={rate.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="font-bold text-blue-800">{rate.cc}</span>
-                        </div>
-                        <div>
-                          <p className="font-medium">{rate.txt}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Дата: {formatExchangeDate(rate.exchangeDate)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold">{parseFloat(rate.rate).toFixed(4)} ₴</p>
-                        <p className="text-sm text-muted-foreground">
-                          Оновлено: {formatDate(rate.updatedAt)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Налаштування */}
-        <div className="space-y-6">
-          {/* Статус останнього оновлення */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Статус оновлення
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {settings && (
-                <>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Останнє оновлення:</span>
-                    {getStatusBadge(settings.lastUpdateStatus)}
-                  </div>
-                  {settings.lastUpdateDate && (
-                    <div className="text-sm text-muted-foreground">
-                      {formatDate(settings.lastUpdateDate)}
-                    </div>
-                  )}
-                  {settings.lastUpdateError && (
-                    <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
-                      {settings.lastUpdateError}
-                    </div>
-                  )}
-                </>
-              )}
+              <div className="text-3xl font-bold text-amber-700">{rates.length}</div>
+              <p className="text-xs text-amber-600 mt-1">записів у базі</p>
             </CardContent>
           </Card>
 
-          {/* Автоматичне оновлення */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Автоматичне оновлення</CardTitle>
-              <CardDescription>
-                Налаштування щоденного оновлення курсів
-              </CardDescription>
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-green-500 bg-gradient-to-br from-green-50 to-emerald-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">Активні валюти</CardTitle>
+              <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors duration-300">
+                <Activity className="h-6 w-6 text-green-600 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="auto-update">Увімкнути автооновлення</Label>
-                <Switch
-                  id="auto-update"
-                  checked={autoUpdateEnabled}
-                  onCheckedChange={setAutoUpdateEnabled}
-                />
-              </div>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-700">{enabledCurrencies.length}</div>
+              <p className="text-xs text-green-600 mt-1">валют відстежується</p>
+            </CardContent>
+          </Card>
 
-              <div className="space-y-2">
-                <Label htmlFor="update-time">Час оновлення</Label>
-                <Input
-                  id="update-time"
-                  type="time"
-                  value={updateTime}
-                  onChange={(e) => setUpdateTime(e.target.value)}
-                  disabled={!autoUpdateEnabled}
-                />
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-blue-500 bg-gradient-to-br from-blue-50 to-sky-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">Останнє оновлення</CardTitle>
+              <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors duration-300">
+                <Calendar className="h-6 w-6 text-blue-600 group-hover:rotate-12 transition-transform duration-300" />
               </div>
-
-              <div className="space-y-2">
-                <Label>Валюти для оновлення</Label>
-                <div className="flex gap-2 flex-wrap">
-                  {["USD", "EUR", "PLN", "GBP"].map((currency) => (
-                    <Button
-                      key={currency}
-                      variant={enabledCurrencies.includes(currency) ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => {
-                        if (enabledCurrencies.includes(currency)) {
-                          setEnabledCurrencies(enabledCurrencies.filter(c => c !== currency));
-                        } else {
-                          setEnabledCurrencies([...enabledCurrencies, currency]);
-                        }
-                      }}
-                    >
-                      {currency}
-                    </Button>
-                  ))}
-                </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-700">
+                {settings?.lastUpdateDate ? 
+                  format(new Date(settings.lastUpdateDate), "dd.MM", { locale: uk }) : 
+                  "Немає"
+                }
               </div>
+              <p className="text-xs text-blue-600 mt-1">
+                {settings?.lastUpdateStatus || "статус невідомий"}
+              </p>
+            </CardContent>
+          </Card>
 
-              <Button 
-                onClick={handleSaveSettings}
-                disabled={saveSettingsMutation.isPending}
-                className="w-full"
-              >
-                Зберегти налаштування
-              </Button>
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-purple-500 bg-gradient-to-br from-purple-50 to-violet-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">Автооновлення</CardTitle>
+              <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors duration-300">
+                <Settings className="h-6 w-6 text-purple-600 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-700">
+                {settings?.autoUpdateEnabled ? "ВКЛ" : "ВИКЛ"}
+              </div>
+              <p className="text-xs text-purple-600 mt-1">
+                {settings?.updateTime || updateTime}
+              </p>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* Оновлення за період */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Оновлення курсів за період
-          </CardTitle>
-          <CardDescription>
-            Завантажте історичні курси валют за вказаний період (максимум 365 днів)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-            <div className="space-y-2">
-              <Label htmlFor="start-date">Початкова дата</Label>
-              <UkrainianDatePicker
-                date={startDate ? new Date(startDate) : undefined}
-                onDateChange={(date) => setStartDate(date ? date.toISOString().split('T')[0] : '')}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="end-date">Кінцева дата</Label>
-              <UkrainianDatePicker
-                date={endDate ? new Date(endDate) : undefined}
-                onDateChange={(date) => setEndDate(date ? date.toISOString().split('T')[0] : '')}
-              />
-            </div>
-            <div className="md:col-span-2">
-              <Button
-                onClick={handleUpdatePeriod}
-                disabled={updatePeriodRatesMutation.isPending}
-                className="w-full"
-              >
-                <Download className={`mr-2 h-4 w-4 ${updatePeriodRatesMutation.isPending ? "animate-spin" : ""}`} />
-                {updatePeriodRatesMutation.isPending ? "Завантаження..." : "Завантажити за період"}
-              </Button>
-            </div>
+      {/* Main Content */}
+      <div className="w-full px-8 py-6 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Current Rates */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Поточні курси НБУ</CardTitle>
+                <CardDescription>
+                  Останні офіційні курси валют від Національного банку України
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {ratesLoading ? (
+                  <div className="text-center py-8">Завантаження курсів...</div>
+                ) : rates.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Курсів не знайдено. Спробуйте оновити дані.
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Валюта</TableHead>
+                        <TableHead>Код</TableHead>
+                        <TableHead>Курс</TableHead>
+                        <TableHead>Дата</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rates.slice(0, 10).map((rate) => (
+                        <TableRow key={rate.id}>
+                          <TableCell className="font-medium">{rate.txt}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{rate.cc}</Badge>
+                          </TableCell>
+                          <TableCell className="font-mono">
+                            {parseFloat(rate.rate).toFixed(4)} ₴
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {format(new Date(rate.exchangeDate), "dd.MM.yyyy", { locale: uk })}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
           </div>
-          
-          {updatePeriodRatesMutation.isPending && (
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <RefreshCw className="h-4 w-4 animate-spin" />
-                <span className="text-sm">Завантаження курсів за період. Це може зайняти деякий час...</span>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+
+          {/* Settings Panel */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Налаштування</CardTitle>
+                <CardDescription>
+                  Конфігурація автоматичного оновлення курсів
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Auto Update Toggle */}
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="auto-update">Автооновлення</Label>
+                  <Switch
+                    id="auto-update"
+                    checked={autoUpdateEnabled}
+                    onCheckedChange={setAutoUpdateEnabled}
+                  />
+                </div>
+
+                {/* Update Time */}
+                <div className="space-y-2">
+                  <Label htmlFor="update-time">Час оновлення</Label>
+                  <Input
+                    id="update-time"
+                    type="time"
+                    value={updateTime}
+                    onChange={(e) => setUpdateTime(e.target.value)}
+                  />
+                </div>
+
+                <Separator />
+
+                {/* Manual Update for Period */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Оновлення за період</h4>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="start-date">Початкова дата</Label>
+                    <Input
+                      id="start-date"
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="end-date">Кінцева дата</Label>
+                    <Input
+                      id="end-date"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                  </div>
+
+                  <Button 
+                    onClick={handleUpdatePeriod}
+                    disabled={updatePeriodRatesMutation.isPending || !startDate || !endDate}
+                    className="w-full"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Завантажити за період
+                  </Button>
+                </div>
+
+                <Separator />
+
+                {/* Save Settings */}
+                <Button 
+                  onClick={handleSaveSettings}
+                  disabled={saveSettingsMutation.isPending}
+                  className="w-full"
+                  variant="outline"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Зберегти налаштування
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </>

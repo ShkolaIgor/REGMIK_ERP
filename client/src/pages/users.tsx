@@ -1,174 +1,121 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit, Trash2, Eye, UserCheck, UserX, Shield, Key, Settings, Check, ChevronsUpDown, Mail, MoreHorizontal } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, UserCheck, UserX, Shield, Key, Settings, Users as UsersIcon, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { insertLocalUserSchema, adminResetPasswordSchema, type LocalUser, type InsertLocalUser, type AdminResetPassword } from "@shared/schema";
 import { z } from "zod";
 
+interface User {
+  id: number;
+  username: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  isActive: boolean;
+  roleId: number | null;
+  roleName: string | null;
+  lastLoginAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const userFormSchema = z.object({
+  username: z.string().min(1, "Логін обов'язковий"),
+  email: z.string().email("Невірний формат email").optional().or(z.literal("")),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  password: z.string().min(6, "Пароль має містити мінімум 6 символів"),
+  roleId: z.string().optional(),
+  isActive: z.boolean().default(true),
+});
+
+type UserFormData = z.infer<typeof userFormSchema>;
+
 export default function Users() {
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-  const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
-  const [showEmailResetDialog, setShowEmailResetDialog] = useState(false);
-  const [editingUser, setEditingUser] = useState<LocalUser | null>(null);
+  const [showDialog, setShowDialog] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
-  const [openWorkerCombobox, setOpenWorkerCombobox] = useState(false);
-  const [userPermissions, setUserPermissions] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: users, isLoading } = useQuery({
+  const { data: users = [], isLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
   });
 
-  const { data: roles } = useQuery({
+  const { data: roles = [] } = useQuery({
     queryKey: ["/api/roles"],
   });
 
-  const { data: systemModules } = useQuery({
-    queryKey: ["/api/system-modules"],
+  // Filter users based on search and role
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch = 
+      user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesRole = roleFilter === "all" || user.roleId?.toString() === roleFilter;
+    
+    return matchesSearch && matchesRole;
   });
 
-  const { data: availableWorkers } = useQuery({
-    queryKey: ["/api/users/available-workers"],
-  });
-
-  // Function to generate username from worker name
-  // Функція транслітерації українського тексту
-  const transliterateText = (text: string): string => {
-    const translitMap: { [key: string]: string } = {
-      'а': 'a', 'б': 'b', 'в': 'v', 'г': 'h', 'ґ': 'g', 'д': 'd', 'е': 'e', 'є': 'ie', 
-      'ж': 'zh', 'з': 'z', 'и': 'y', 'і': 'i', 'ї': 'i', 'й': 'i', 'к': 'k', 'л': 'l', 
-      'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 
-      'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ь': '', 
-      'ю': 'iu', 'я': 'ia', "ʼ": "",
-      'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'H', 'Ґ': 'G', 'Д': 'D', 'Е': 'E', 'Є': 'Ie',
-      'Ж': 'Zh', 'З': 'Z', 'И': 'Y', 'І': 'I', 'Ї': 'I', 'Й': 'I', 'К': 'K', 'Л': 'L',
-      'М': 'M', 'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
-      'Ф': 'F', 'Х': 'Kh', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Shch', 'Ю': 'Iu', 'Я': 'Ia'
-    };
-    
-    return text.split('').map(char => translitMap[char] || char).join('');
-  };
-
-  const generateUsername = (firstName: string, lastName: string) => {
-    if (!firstName || !lastName) return "";
-    
-    // Транслітеруємо імена
-    const transliteratedFirstName = transliterateText(firstName);
-    const transliteratedLastName = transliterateText(lastName);
-    
-    // Take first letter of first name + full last name, all lowercase
-    const username = `${transliteratedFirstName.charAt(0).toLowerCase()}${transliteratedLastName.toLowerCase()}`;
-    return username;
-  };
-
+  // Mutations
   const createUserMutation = useMutation({
-    mutationFn: async (userData: InsertLocalUser) => {
-      await apiRequest("/api/users", {
+    mutationFn: async (data: UserFormData) => {
+      return await apiRequest("/api/users", {
         method: "POST",
-        body: userData,
+        body: JSON.stringify(data),
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users/available-workers"] });
-      // Очищуємо форму після успішного створення
-      createForm.reset({
-        username: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-        workerId: undefined,
-        roleId: undefined,
-        isActive: true,
-      });
-      setShowCreateDialog(false);
+      setShowDialog(false);
+      setEditingUser(null);
       toast({
         title: "Успіх",
-        description: "Користувача створено успішно",
+        description: "Користувача успішно створено",
       });
     },
-    onError: (error) => {
-      console.log("Create user error:", error);
-      const errorMessage = error.message.includes('duplicate key') && error.message.includes('email')
-        ? "Користувач з таким email вже існує"
-        : "Не вдалося створити користувача";
-      
+    onError: (error: any) => {
       toast({
         title: "Помилка",
-        description: errorMessage,
+        description: error.message || "Помилка створення користувача",
         variant: "destructive",
       });
-      
-      // Не закриваємо діалог при помилці, щоб користувач міг виправити дані
     },
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: async ({ id, userData }: { id: number; userData: Partial<InsertLocalUser> }) => {
-      await apiRequest(`/api/users/${id}`, {
+    mutationFn: async (data: UserFormData & { id: number }) => {
+      const { password, ...updateData } = data;
+      return await apiRequest(`/api/users/${data.id}`, {
         method: "PATCH",
-        body: userData,
+        body: JSON.stringify(updateData),
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      setShowEditDialog(false);
+      setShowDialog(false);
       setEditingUser(null);
       toast({
         title: "Успіх",
-        description: "Користувача оновлено успішно",
+        description: "Користувача успішно оновлено",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Помилка",
-        description: "Не вдалося оновити користувача",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const resetPasswordMutation = useMutation({
-    mutationFn: async ({ id, newPassword }: { id: number; newPassword: string }) => {
-      await apiRequest(`/api/users/${id}/reset-password`, {
-        method: "POST",
-        body: { newPassword },
-      });
-    },
-    onSuccess: () => {
-      setShowPasswordDialog(false);
-      setEditingUser(null);
-      passwordForm.reset();
-      toast({
-        title: "Успіх",
-        description: "Пароль скинуто успішно",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Помилка",
-        description: "Не вдалося скинути пароль",
+        description: error.message || "Помилка оновлення користувача",
         variant: "destructive",
       });
     },
@@ -176,902 +123,391 @@ export default function Users() {
 
   const deleteUserMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest(`/api/users/${id}`, {
+      return await apiRequest(`/api/users/${id}`, {
         method: "DELETE",
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users/available-workers"] });
       toast({
         title: "Успіх",
-        description: "Користувача видалено успішно",
+        description: "Користувача успішно видалено",
       });
     },
-    onError: (error) => {
-      const errorMessage = error.message.includes('останнього адміністратора') 
-        ? "Не можна видалити останнього адміністратора в системі"
-        : "Не вдалося видалити користувача";
-      
+    onError: (error: any) => {
       toast({
         title: "Помилка",
-        description: errorMessage,
+        description: error.message || "Помилка видалення користувача",
         variant: "destructive",
       });
     },
   });
 
-  const toggleUserStatusMutation = useMutation({
-    mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
-      await apiRequest(`/api/users/${id}/toggle-status`, {
-        method: "PATCH",
-        body: { isActive },
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      toast({
-        title: "Успіх",
-        description: "Статус користувача змінено успішно",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Помилка",
-        description: "Не вдалося змінити статус користувача",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updatePermissionsMutation = useMutation({
-    mutationFn: async ({ id, permissions }: { id: number; permissions: Record<string, boolean> }) => {
-      return await apiRequest(`/api/users/${id}/permissions`, {
-        method: "PATCH",
-        body: { permissions },
-      });
-    },
-    onSuccess: (updatedUser) => {
-      console.log("Permissions updated successfully, invalidating cache");
-      console.log("Updated user from server:", updatedUser);
-      
-      // Оновлюємо кеш
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      
-      // Закриваємо діалог та очищуємо стан
-      setShowPermissionsDialog(false);
-      setEditingUser(null);
-      setUserPermissions({});
-      
-      // Показуємо успішне повідомлення
-      toast({
-        title: "Успіх",
-        description: "Дозволи користувача оновлено успішно",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Помилка",
-        description: "Не вдалося оновити дозволи користувача",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const createForm = useForm<InsertLocalUser>({
-    resolver: zodResolver(insertLocalUserSchema),
+  // Form
+  const form = useForm<UserFormData>({
+    resolver: zodResolver(userFormSchema),
     defaultValues: {
       username: "",
       email: "",
-      password: "",
-      confirmPassword: "",
       firstName: "",
       lastName: "",
-      phone: "",
-      role: "user",
-      isActive: true,
-      permissions: {},
-    },
-  });
-
-  const editForm = useForm<Partial<InsertLocalUser>>({
-    resolver: zodResolver(
-      z.object({
-        username: z.string().min(1, "Ім'я користувача обов'язкове"),
-        email: z.string().email("Невірний формат email").optional(),
-        firstName: z.string().optional(),
-        lastName: z.string().optional(),
-        phone: z.string().optional(),
-        role: z.string().default("user"),
-        isActive: z.boolean().default(true),
-        permissions: z.record(z.any()).optional(),
-      })
-    ),
-    defaultValues: {
-      username: "",
-      email: "",
       password: "",
-      confirmPassword: "",
-      firstName: "",
-      lastName: "",
-      phone: "",
-      role: "user",
+      roleId: "",
       isActive: true,
-      permissions: {},
-      workerId: undefined,
     },
   });
 
-  const passwordForm = useForm<AdminResetPassword>({
-    resolver: zodResolver(adminResetPasswordSchema),
-    defaultValues: {
-      newPassword: "",
-      confirmPassword: "",
-    },
-  });
-
-  const filteredUsers = (users || []).filter((user: LocalUser) => {
-    const matchesSearch = 
-      user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.lastName?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesRole = roleFilter === "all" || user.role === roleFilter;
-    
-    return matchesSearch && matchesRole;
-  });
-
-  const handleEdit = (user: LocalUser) => {
+  // Handlers
+  const handleEdit = (user: User) => {
     setEditingUser(user);
-    editForm.reset({
+    form.reset({
       username: user.username,
       email: user.email || "",
       firstName: user.firstName || "",
       lastName: user.lastName || "",
-      phone: user.phone || "",
-      role: user.role,
+      password: "",
+      roleId: user.roleId?.toString() || "",
       isActive: user.isActive,
-      permissions: user.permissions || {},
     });
-    setShowEditDialog(true);
+    setShowDialog(true);
   };
 
-  const handleChangePassword = (user: LocalUser) => {
-    setEditingUser(user);
-    passwordForm.reset();
-    setShowPasswordDialog(true);
+  const handleDelete = (user: User) => {
+    if (confirm(`Ви впевнені, що хочете видалити користувача "${user.username}"?`)) {
+      deleteUserMutation.mutate(user.id);
+    }
   };
 
-  const handlePermissions = (user: LocalUser) => {
-    console.log("Opening permissions dialog for user:", user.id);
-    console.log("User permissions from data:", user.permissions);
-    setEditingUser(user);
-    setUserPermissions(user.permissions || {});
-    setShowPermissionsDialog(true);
-  };
-
-  const handleSavePermissions = () => {
+  const onSubmit = (data: UserFormData) => {
     if (editingUser) {
-      console.log("Saving permissions for user:", editingUser.id);
-      console.log("Current permissions state:", userPermissions);
-      updatePermissionsMutation.mutate({
-        id: editingUser.id,
-        permissions: userPermissions,
-      });
+      updateUserMutation.mutate({ ...data, id: editingUser.id });
+    } else {
+      createUserMutation.mutate(data);
     }
   };
-
-  const handlePermissionChange = (moduleName: string, checked: boolean) => {
-    setUserPermissions(prev => ({
-      ...prev,
-      [moduleName]: checked,
-    }));
-  };
-
-  const onCreateSubmit = (data: InsertLocalUser) => {
-    createUserMutation.mutate(data);
-  };
-
-  const onEditSubmit = (data: Partial<InsertLocalUser>) => {
-    if (editingUser) {
-      updateUserMutation.mutate({ id: editingUser.id, userData: data });
-    }
-  };
-
-  const onPasswordSubmit = (data: any) => {
-    if (editingUser) {
-      resetPasswordMutation.mutate({ 
-        id: editingUser.id, 
-        newPassword: data.newPassword 
-      });
-    }
-  };
-
-  const handleEmailPasswordReset = async (user: LocalUser) => {
-    if (!user.email) {
-      toast({
-        title: "Помилка",
-        description: "У користувача немає електронної пошти",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setEditingUser(user);
-    setShowEmailResetDialog(true);
-  };
-
-  const sendEmailResetMutation = useMutation({
-    mutationFn: async (user: LocalUser) => {
-      await apiRequest("/api/auth/send-password-reset", {
-        method: "POST",
-        body: { email: user.email, userId: user.id }
-      });
-    },
-    onSuccess: () => {
-      setShowEmailResetDialog(false);
-      setEditingUser(null);
-      toast({
-        title: "Успіх",
-        description: `Лист для скидання паролю відправлено`,
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Помилка",
-        description: "Не вдалося відправити лист для скидання паролю",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case "admin": return "destructive";
-      case "manager": return "default";
-      case "user": return "secondary";
-      case "viewer": return "outline";
-      default: return "secondary";
-    }
-  };
-
-  const getRoleDisplayName = (role: string) => {
-    switch (role) {
-      case "admin": return "Адміністратор";
-      case "manager": return "Менеджер";
-      case "user": return "Користувач";
-      case "viewer": return "Глядач";
-      default: return role;
-    }
-  };
-
-  if (isLoading) {
-    return <div className="p-6">Завантаження...</div>;
-  }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Управління користувачами</h1>
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Створити користувача
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Створити обліковий запис для робітника</DialogTitle>
-            </DialogHeader>
-            <Form {...createForm}>
-              <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-4">
-                <FormField
-                  control={createForm.control}
-                  name="workerId"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Робітник</FormLabel>
-                      <Popover open={openWorkerCombobox} onOpenChange={setOpenWorkerCombobox}>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={openWorkerCombobox}
-                              className={cn(
-                                "w-full justify-between",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value
-                                ? availableWorkers?.find((worker: any) => worker.id === field.value)
-                                  ? `${availableWorkers.find((worker: any) => worker.id === field.value)?.firstName} ${availableWorkers.find((worker: any) => worker.id === field.value)?.lastName}`
-                                  : "Виберіть робітника"
-                                : "Виберіть робітника"}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-full p-0">
-                          <Command>
-                            <CommandInput placeholder="Пошук робітника..." />
-                            <CommandEmpty>Робітника не знайдено.</CommandEmpty>
-                            <CommandGroup>
-                              {availableWorkers?.map((worker: any) => (
-                                <CommandItem
-                                  key={worker.id}
-                                  value={`${worker.firstName} ${worker.lastName}`}
-                                  onSelect={() => {
-                                    field.onChange(worker.id);
-                                    createForm.setValue("email", worker.email || "");
-                                    createForm.setValue("username", generateUsername(worker.firstName || "", worker.lastName || ""));
-                                    setOpenWorkerCombobox(false);
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      field.value === worker.id ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  {worker.firstName} {worker.lastName}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={createForm.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Ім'я користувача</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={createForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={createForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Пароль</FormLabel>
-                      <FormControl>
-                        <Input type="password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={createForm.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Підтвердження пароля</FormLabel>
-                      <FormControl>
-                        <Input type="password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-
-
-                <FormField
-                  control={createForm.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Роль в системі</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Виберіть роль" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="admin">Адміністратор</SelectItem>
-                          <SelectItem value="manager">Менеджер</SelectItem>
-                          <SelectItem value="user">Користувач</SelectItem>
-                          <SelectItem value="viewer">Глядач</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={createForm.control}
-                  name="isActive"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Активний</FormLabel>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
+    <>
+      {/* Header Section with Gradient */}
+      <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white">
+        <div className="w-full px-8 py-12">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm shadow-lg">
+                <UsersIcon className="w-10 h-10" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                  Користувачі
+                </h1>
+                <p className="text-blue-100 text-xl font-medium">Управління користувачами та їх правами доступу</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Dialog open={showDialog} onOpenChange={setShowDialog}>
+                <DialogTrigger asChild>
+                  <Button 
+                    onClick={() => {
+                      setEditingUser(null);
+                      form.reset();
+                    }}
+                    className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Додати користувача
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingUser ? "Редагування користувача" : "Новий користувач"}
+                    </DialogTitle>
+                    <DialogDescription>
+                      Заповніть форму для {editingUser ? "оновлення" : "створення"} користувача
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="firstName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Ім'я</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Ім'я" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex justify-end space-x-2">
-                  <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
-                    Скасувати
-                  </Button>
-                  <Button type="submit" disabled={createUserMutation.isPending}>
-                    {createUserMutation.isPending ? "Створення..." : "Створити"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Фільтри */}
-      <div className="flex space-x-4">
-        <div className="flex-1">
-          <Input
-            placeholder="Пошук користувачів..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-sm"
-          />
-        </div>
-        <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Фільтр за роллю" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Всі ролі</SelectItem>
-            <SelectItem value="admin">Адміністратор</SelectItem>
-            <SelectItem value="manager">Менеджер</SelectItem>
-            <SelectItem value="user">Користувач</SelectItem>
-            <SelectItem value="viewer">Глядач</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Список користувачів */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredUsers.map((user: LocalUser) => (
-          <Card key={user.id} className={`relative ${!user.isActive ? 'opacity-60' : ''} hover:shadow-md transition-shadow`}>
-            <CardHeader className="pb-4 px-6 pt-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-4 flex-1 min-w-0">
-                  {/* Фото користувача */}
-                  <div className="flex-shrink-0">
-                    {user.worker?.photo ? (
-                      <img
-                        src={user.worker.photo}
-                        alt={`${user.worker.firstName} ${user.worker.lastName}`}
-                        className="w-16 h-16 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
-                        <span className="text-gray-600 font-medium text-lg">
-                          {user.worker?.firstName?.charAt(0)}{user.worker?.lastName?.charAt(0)}
-                        </span>
+                        <FormField
+                          control={form.control}
+                          name="lastName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Прізвище</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Прізвище" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       </div>
-                    )}
-                  </div>
-                  
-                  {/* Інформація користувача */}
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-lg truncate leading-tight mb-1">
-                      {user.worker?.firstName} {user.worker?.lastName}
-                    </CardTitle>
-                    <div className="text-sm text-muted-foreground truncate mb-1">
-                      @{user.username}
-                    </div>
-                    <div className="text-sm text-muted-foreground truncate">
-                      {user.email}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  {user.isActive ? (
-                    <UserCheck className="h-6 w-6 text-green-600" />
-                  ) : (
-                    <UserX className="h-6 w-6 text-red-600" />
-                  )}
-                </div>
+                      <FormField
+                        control={form.control}
+                        name="username"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Логін</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Логін користувача" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="email" placeholder="email@example.com" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Пароль</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="password" placeholder="Пароль" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="roleId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Роль</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Оберіть роль" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {roles.map((role: any) => (
+                                  <SelectItem key={role.id} value={role.id.toString()}>
+                                    {role.displayName}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <div className="flex justify-end space-x-2">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setShowDialog(false)}
+                        >
+                          Скасувати
+                        </Button>
+                        <Button 
+                          type="submit" 
+                          disabled={createUserMutation.isPending || updateUserMutation.isPending}
+                        >
+                          {editingUser ? "Оновити" : "Створити"}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="w-full px-8 py-8 bg-gray-50">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">Всього користувачів</CardTitle>
+              <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors duration-300">
+                <UsersIcon className="h-6 w-6 text-blue-600 group-hover:rotate-12 transition-transform duration-300" />
               </div>
             </CardHeader>
-            
-            <CardContent className="pt-2 px-6 pb-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Badge variant={getRoleBadgeVariant(user.role)} className="text-sm px-3 py-1">
-                    {getRoleDisplayName(user.role)}
-                  </Badge>
-                  {user.lastLoginAt && (
-                    <div className="text-sm text-muted-foreground">
-                      {new Date(user.lastLoginAt).toLocaleDateString('uk-UA')}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex gap-1 pt-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(user)}
-                    className="flex-1 h-7 text-xs px-2"
-                  >
-                    <Edit className="h-3 w-3 mr-1" />
-                    Редагувати
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-7 px-2">
-                        <MoreHorizontal className="h-3 w-3" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleChangePassword(user)}>
-                        <Key className="h-4 w-4 mr-2" />
-                        Скинути пароль
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleEmailPasswordReset(user)}>
-                        <Mail className="h-4 w-4 mr-2" />
-                        Скинути через пошту
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handlePermissions(user)}>
-                        <Shield className="h-4 w-4 mr-2" />
-                        Налаштувати дозволи
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => toggleUserStatusMutation.mutate({ id: user.id, isActive: !user.isActive })}>
-                        {user.isActive ? (
-                          <>
-                            <UserX className="h-3 w-3 mr-2" />
-                            Деактивувати
-                          </>
-                        ) : (
-                          <>
-                            <UserCheck className="h-3 w-3 mr-2" />
-                            Активувати
-                          </>
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => deleteUserMutation.mutate(user.id)}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="h-3 w-3 mr-2" />
-                        Видалити
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-700">{users.length}</div>
+              <p className="text-xs text-blue-600 mt-1">зареєстрованих</p>
             </CardContent>
           </Card>
-        ))}
+
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-green-500 bg-gradient-to-br from-green-50 to-emerald-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">Активні</CardTitle>
+              <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors duration-300">
+                <UserCheck className="h-6 w-6 text-green-600 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-700">{users.filter(u => u.isActive).length}</div>
+              <p className="text-xs text-green-600 mt-1">активних користувачів</p>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-red-500 bg-gradient-to-br from-red-50 to-pink-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">Заблоковані</CardTitle>
+              <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors duration-300">
+                <UserX className="h-6 w-6 text-red-600 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-red-700">{users.filter(u => !u.isActive).length}</div>
+              <p className="text-xs text-red-600 mt-1">заблокованих</p>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-l-purple-500 bg-gradient-to-br from-purple-50 to-violet-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-600">З email</CardTitle>
+              <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors duration-300">
+                <Mail className="h-6 w-6 text-purple-600 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-700">{users.filter(u => u.email).length}</div>
+              <p className="text-xs text-purple-600 mt-1">мають email</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      {filteredUsers.length === 0 && (
-        <div className="text-center py-8 text-muted-foreground">
-          Користувачі не знайдені
-        </div>
-      )}
-
-      {/* Діалог редагування користувача */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Редагувати користувача</DialogTitle>
-          </DialogHeader>
-          <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
-              <FormField
-                control={editForm.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ім'я користувача</FormLabel>
-                    <FormControl>
-                      <Input {...field} disabled className="bg-gray-50" />
-                    </FormControl>
-                    <div className="text-xs text-muted-foreground">
-                      Логін неможливо змінити
-                    </div>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={editForm.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={editForm.control}
-                  name="firstName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Ім'я</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={editForm.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Прізвище</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+      {/* Search and Filters */}
+      <div className="w-full px-8 py-6">
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <Input
+                  placeholder="Пошук користувачів..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-
-              <FormField
-                control={editForm.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Телефон</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={editForm.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Роль</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Виберіть роль" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="admin">Адміністратор</SelectItem>
-                        <SelectItem value="manager">Менеджер</SelectItem>
-                        <SelectItem value="user">Користувач</SelectItem>
-                        <SelectItem value="viewer">Глядач</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={editForm.control}
-                name="isActive"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Активний</FormLabel>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>
-                  Скасувати
-                </Button>
-                <Button type="submit" disabled={updateUserMutation.isPending}>
-                  {updateUserMutation.isPending ? "Збереження..." : "Зберегти"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Діалог зміни пароля */}
-      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Скинути пароль</DialogTitle>
-          </DialogHeader>
-          <Form {...passwordForm}>
-            <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
-              <FormField
-                control={passwordForm.control}
-                name="newPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Новий пароль</FormLabel>
-                    <FormControl>
-                      <Input type="password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={passwordForm.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Підтвердження нового пароля</FormLabel>
-                    <FormControl>
-                      <Input type="password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setShowPasswordDialog(false)}>
-                  Скасувати
-                </Button>
-                <Button type="submit" disabled={resetPasswordMutation.isPending}>
-                  {resetPasswordMutation.isPending ? "Збереження..." : "Скинути пароль"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Діалог налаштування дозволів */}
-      <Dialog open={showPermissionsDialog} onOpenChange={setShowPermissionsDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Налаштування дозволів доступу</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="text-sm text-muted-foreground">
-              Користувач: {editingUser?.worker?.firstName} {editingUser?.worker?.lastName} (@{editingUser?.username})
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectValue placeholder="Фільтр за роллю" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Всі ролі</SelectItem>
+                  {roles.map((role: any) => (
+                    <SelectItem key={role.id} value={role.id.toString()}>
+                      {role.displayName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            
-            {/* Групове керування */}
-            <div className="flex gap-2 pb-4 border-b">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  const allModules = systemModules || [];
-                  const newPermissions: Record<string, boolean> = {};
-                  allModules.forEach((module: any) => {
-                    newPermissions[module.name] = true;
-                  });
-                  setUserPermissions(newPermissions);
-                }}
-              >
-                Увімкнути всі
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setUserPermissions({})}
-              >
-                Вимкнути всі
-              </Button>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Доступ до модулів:</Label>
-              {(systemModules || []).map((module: any) => (
-                <div key={module.id} className="flex items-center space-x-2 p-2 border rounded">
-                  <Switch 
-                    id={`module-${module.id}`}
-                    checked={userPermissions[module.name] || false}
-                    onCheckedChange={(checked) => handlePermissionChange(module.name, checked)}
-                  />
-                  <Label htmlFor={`module-${module.id}`} className="flex-1">
-                    {module.displayName}
-                  </Label>
-                  <div className="text-xs text-muted-foreground">
-                    {module.description}
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowPermissionsDialog(false)}>
-                Скасувати
-              </Button>
-              <Button 
-                onClick={handleSavePermissions}
-                disabled={updatePermissionsMutation.isPending}
-              >
-                {updatePermissionsMutation.isPending ? "Збереження..." : "Зберегти дозволи"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </CardContent>
+        </Card>
 
-      {/* Email Password Reset Dialog */}
-      <Dialog open={showEmailResetDialog} onOpenChange={setShowEmailResetDialog}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Відправити лист для скидання паролю</DialogTitle>
-            <DialogDescription>
-              Підтвердіть відправку листа для скидання паролю користувачу {editingUser?.username}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowEmailResetDialog(false)}
-            >
-              Скасувати
-            </Button>
-            <Button
-              onClick={() => editingUser && sendEmailResetMutation.mutate(editingUser)}
-              disabled={sendEmailResetMutation.isPending}
-            >
-              {sendEmailResetMutation.isPending ? "Відправлення..." : "Відправити"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+        {/* Users Table */}
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Користувач</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Роль</TableHead>
+                  <TableHead>Статус</TableHead>
+                  <TableHead>Дії</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8">
+                      Завантаження...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      Користувачів не знайдено
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{user.username}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {user.firstName && user.lastName 
+                              ? `${user.firstName} ${user.lastName}` 
+                              : "Без імені"
+                            }
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{user.email || "-"}</TableCell>
+                      <TableCell>
+                        {user.roleName ? (
+                          <Badge variant="outline">{user.roleName}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">Без ролі</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={user.isActive ? "default" : "secondary"}>
+                          {user.isActive ? "Активний" : "Заблокований"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(user)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(user)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }
