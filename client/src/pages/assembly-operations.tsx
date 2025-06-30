@@ -774,9 +774,8 @@ export default function AssemblyOperationsPage() {
               </Tabs>
             </CardContent>
           </Card>
-        </div>
+        </main>
       </div>
     </div>
-      </div>
   );
 }

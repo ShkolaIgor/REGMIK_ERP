@@ -2183,7 +2183,6 @@ export default function Orders() {
             </div>
           </div>
         </div>
-        {/*</header>*/}
 
       {/* Status Settings Panel */}
       {isStatusSettingsOpen && (
@@ -2790,8 +2789,7 @@ export default function Orders() {
           />
         </DialogContent>
       </Dialog>
-        </main>
-      </div>
+    </main>
     </div>
   );
 }
