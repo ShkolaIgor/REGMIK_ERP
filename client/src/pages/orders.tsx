@@ -1441,47 +1441,133 @@ export default function Orders() {
   }
 
   return (
+    <div className="flex-1 overflow-auto">
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         {/* Header Section */}
         <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
-          <div className="w-full px-8 py-8">
+          <div className="w-full px-8 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <HandPlatter className="w-6 h-6 text-white" />
-              </div>
-              <div >
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
-                  Замовлення клієнтів
-                </h1>
-                <p className="text-gray-600 mt-1">Управління замовленнями та їх статусами</p>
-              </div>
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <ShoppingCart className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-600 via-red-600 to-orange-800 bg-clip-text text-transparent">
+                      Замовлення клієнтів
+                    </h1>
+                    <p className="text-gray-600 mt-1">Управління замовленнями та їх статусами</p>
+                  </div>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
-
-              <Button
-                variant="outline"
-                onClick={() => setIsStatusSettingsOpen(!isStatusSettingsOpen)}
-              >
-                <Settings className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-3002" />
-                Налаштування статусів
-              </Button>
-              <div className="flex gap-2">
-                <OrdersXmlImport />
-                <OrderItemsXmlImport onImportComplete={() => {
-                  queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-                  toast({
-                    title: "Імпорт завершено",
-                    description: "Позиції замовлень успішно імпортовані",
-                  });
-                }} />
+                <Button
+                  variant="outline"
+                  onClick={() => setIsStatusSettingsOpen(!isStatusSettingsOpen)}
+                  className="border-orange-200 text-orange-600 hover:bg-orange-50"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Налаштування статусів
+                </Button>
+                <div className="flex gap-2">
+                  <OrdersXmlImport />
+                  <OrderItemsXmlImport onImportComplete={() => {
+                    queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+                    toast({
+                      title: "Імпорт завершено",
+                      description: "Позиції замовлень успішно імпортовані",
+                    });
+                  }} />
+                </div>
               </div>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            </div>
+          </div>
+        </div>
+
+        {/* Statistics Cards */}
+        <main className="w-full px-8 py-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <ShoppingCart className="w-4 h-4 text-orange-600" />
+                      <p className="text-sm text-orange-700 font-medium">Всього замовлень</p>
+                    </div>
+                    <p className="text-3xl font-bold text-orange-900 mb-1">{orders?.length || 0}</p>
+                    <p className="text-xs text-orange-600">Активні замовлення</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <ShoppingCart className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <TrendingUp className="w-4 h-4 text-green-600" />
+                      <p className="text-sm text-green-700 font-medium">Загальна сума</p>
+                    </div>
+                    <p className="text-3xl font-bold text-green-900 mb-1">₴{orders?.reduce((sum, order) => sum + parseFloat(order.totalAmount || '0'), 0).toLocaleString() || 0}</p>
+                    <p className="text-xs text-green-600">Сума замовлень</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <DollarSign className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Package className="w-4 h-4 text-blue-600" />
+                      <p className="text-sm text-blue-700 font-medium">Відвантажені</p>
+                    </div>
+                    <p className="text-3xl font-bold text-blue-900 mb-1">{orders?.filter(order => order.status === 'shipped').length || 0}</p>
+                    <p className="text-xs text-blue-600">Готові замовлення</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <Package className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-red-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="w-4 h-4 text-red-600" />
+                      <p className="text-sm text-red-700 font-medium">Прострочені</p>
+                    </div>
+                    <p className="text-3xl font-bold text-red-900 mb-1">{orders?.filter(order => order.dueDate && new Date(order.dueDate) < new Date() && order.status !== 'shipped').length || 0}</p>
+                    <p className="text-xs text-red-600">Потребують уваги</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <Clock className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button 
-                     className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                     className="bg-gradient-to-r from-orange-600 to-red-600 text-white hover:from-orange-700 hover:to-red-700 shadow-lg hover:shadow-xl transition-all duration-300"
                     onClick={() => {
                   setIsEditMode(false);
                   setEditingOrder(null);
@@ -2704,7 +2790,8 @@ export default function Orders() {
           />
         </DialogContent>
       </Dialog>
-    </div>
+        </main>
+      </div>
     </div>
   );
 }
