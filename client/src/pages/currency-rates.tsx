@@ -206,21 +206,101 @@ export default function CurrencyRates() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Курси валют НБУ</h1>
-          <p className="text-muted-foreground">
-            Автоматичне та ручне оновлення курсів валют з Національного банку України
-          </p>
+    <div>
+      {/* Header Section with Gradient */}
+      <div className="bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 text-white">
+        <div className="w-full px-8 py-12">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm shadow-lg">
+                <Banknote className="w-10 h-10" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-emerald-100 bg-clip-text text-transparent">
+                  Курси валют НБУ
+                </h1>
+                <p className="text-emerald-100 text-xl font-medium">Автоматичне та ручне оновлення курсів валют з НБУ</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Button 
+                onClick={handleUpdateCurrent} 
+                disabled={updateCurrentRatesMutation.isPending}
+                className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
+              >
+                <RefreshCw className={`mr-2 h-5 w-5 ${updateCurrentRatesMutation.isPending ? "animate-spin" : ""}`} />
+                Оновити зараз
+              </Button>
+            </div>
+          </div>
         </div>
-        <Button onClick={handleUpdateCurrent} disabled={updateCurrentRatesMutation.isPending}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${updateCurrentRatesMutation.isPending ? "animate-spin" : ""}`} />
-          Оновити зараз
-        </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Statistics Cards */}
+      <div className="w-full px-8 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200 hover:border-emerald-300">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-emerald-700">Всього валют</p>
+                  <p className="text-3xl font-bold text-emerald-900 mb-1">{rates.length}</p>
+                  <p className="text-xs text-emerald-600">У системі</p>
+                </div>
+                <div className="p-3 bg-emerald-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
+                  <Banknote className="w-8 h-8 text-emerald-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200 hover:border-blue-300">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-700">Авто-оновлення</p>
+                  <p className="text-3xl font-bold text-blue-900 mb-1">{settings?.autoUpdateEnabled ? "ВКЛ" : "ВИМК"}</p>
+                  <p className="text-xs text-blue-600">Статус</p>
+                </div>
+                <div className="p-3 bg-blue-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
+                  <Settings className="w-8 h-8 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200 hover:border-purple-300">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-purple-700">Останнє оновлення</p>
+                  <p className="text-3xl font-bold text-purple-900 mb-1">{settings?.lastUpdateStatus || "Немає"}</p>
+                  <p className="text-xs text-purple-600">Статус</p>
+                </div>
+                <div className="p-3 bg-purple-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
+                  <TrendingUp className="w-8 h-8 text-purple-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-orange-50 to-red-50 border-orange-200 hover:border-orange-300">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-orange-700">Час оновлення</p>
+                  <p className="text-3xl font-bold text-orange-900 mb-1">{settings?.updateTime || "09:00"}</p>
+                  <p className="text-xs text-orange-600">Щодня</p>
+                </div>
+                <div className="p-3 bg-orange-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
+                  <Calendar className="w-8 h-8 text-orange-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Поточні курси */}
         <div className="lg:col-span-2">
           <Card>
@@ -417,6 +497,8 @@ export default function CurrencyRates() {
           )}
         </CardContent>
       </Card>
+        </div>
+      </div>
     </div>
   );
 }
