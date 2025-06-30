@@ -32,9 +32,11 @@ export default function Reports() {
     queryKey: ["/api/inventory"],
   });
 
-  const { data: orders = [] } = useQuery({
+  const { data: ordersData } = useQuery({
     queryKey: ["/api/orders"],
   });
+  
+  const orders = ordersData?.orders || [];
 
   const { data: recipes = [] } = useQuery({
     queryKey: ["/api/recipes"],
