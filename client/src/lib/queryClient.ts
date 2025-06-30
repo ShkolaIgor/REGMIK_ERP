@@ -106,7 +106,7 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
-const defaultQueryFn = getQueryFn({ on401: "throw" });
+const defaultQueryFn = getQueryFn({ on401: "returnNull" });
 
 export const queryClient = new QueryClient({
   defaultOptions: {
