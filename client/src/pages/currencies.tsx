@@ -561,23 +561,34 @@ export default function Currencies() {
   const baseCurrency = currencies.find(c => c.isBase);
 
   return (
-    <div className="w-full px-4 py-3 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Валюти</h1>
-          <p className="text-muted-foreground">Управління валютами та курсами обміну</p>
-        </div>
-        
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button 
-              onClick={() => {
-                resetCurrencyForm();
-                setEditingCurrency(null);
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Додати валюту
+    <>
+      {/* Header Section with Gradient */}
+      <div className="bg-gradient-to-br from-green-600 via-emerald-600 to-teal-600 text-white">
+        <div className="w-full px-8 py-12">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm shadow-lg">
+                <DollarSign className="w-10 h-10" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-green-100 bg-clip-text text-transparent">
+                  Валюти
+                </h1>
+                <p className="text-green-100 text-xl font-medium">Управління валютами та курсами обміну</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    onClick={() => {
+                      resetCurrencyForm();
+                      setEditingCurrency(null);
+                    }}
+                    className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Додати валюту
             </Button>
           </DialogTrigger>
           <DialogContent>
