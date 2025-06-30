@@ -264,7 +264,7 @@ export default function WorkersPage() {
                       <User className="w-4 h-4 text-emerald-600" />
                       <p className="text-sm text-emerald-700 font-medium">Активні працівники</p>
                     </div>
-                    <p className="text-3xl font-bold text-emerald-900 mb-1">{workers.filter((w: Worker) => w.isActive).length}</p>
+                    <p className="text-3xl font-bold text-emerald-900 mb-1">{workers?.filter((w: Worker) => w.isActive).length || 0}</p>
                     <p className="text-xs text-emerald-600">Працюють зараз</p>
                   </div>
                   <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
