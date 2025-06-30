@@ -57,7 +57,7 @@ export default function Orders() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   // Queries
-  const { data: ordersData, isLoading } = useQuery({
+  const { data: ordersData, isLoading } = useQuery<{orders: Order[]}>({
     queryKey: ["/api/orders"],
     enabled: isAuthenticated,
   });
@@ -68,7 +68,7 @@ export default function Orders() {
   });
 
   // Extract orders array from API response
-  const orders = (ordersData?.orders || []) as Order[];
+  const orders = ordersData?.orders || [];
 
   // Filter orders
   const filteredOrders = orders.filter((order: Order) => {

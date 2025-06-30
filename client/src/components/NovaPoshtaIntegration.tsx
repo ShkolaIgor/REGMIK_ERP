@@ -319,8 +319,12 @@ export function NovaPoshtaIntegration({
           onTrackingNumberCreated(result.Number);
         }
       } else {
-        const errorData = await response.json();
-        console.error('Помилка API:', errorData);
+        try {
+          const errorData = await response.json();
+          console.error('Помилка API:', errorData);
+        } catch (jsonError) {
+          console.error('Помилка API (не JSON):', response.status, response.statusText);
+        }
       }
     } catch (error) {
       console.error('Помилка створення накладної:', error);
@@ -336,12 +340,11 @@ export function NovaPoshtaIntegration({
       return response.json();
     },
     enabled: cityQuery.length >= 2,
-    staleTime: 0, // Відключаємо кеш для правильного пошуку
-    cacheTime: 0, // Видаляємо кеш одразу після використання
+    staleTime: 0,
   });
 
   // Використовуємо результати сервера без додаткової фільтрації
-  const filteredCities = cities;
+  const filteredCities = cities || [];
 
   // Отримання відділень для обраного міста
   const { data: warehouses = [], isLoading: warehousesLoading } = useQuery<Warehouse[]>({
@@ -501,7 +504,7 @@ export function NovaPoshtaIntegration({
                 )}
                 {filteredCities.length > 0 && cityQuery.length >= 2 && !selectedCity && (
                   <div className="mt-2 border border-gray-200 rounded-md bg-white max-h-48 overflow-y-auto">
-                    {filteredCities.map((city) => (
+                    {filteredCities.map((city: City) => (
                       <div
                         key={city.Ref}
                         className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
