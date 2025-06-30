@@ -39,8 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Edit, Trash2, User, X, CheckCircle } from "lucide-react";
+import { Plus, Edit, Trash2, User, X } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { insertWorkerSchema, type Worker, type InsertWorker, type Position, type Department } from "@shared/schema";
 
@@ -201,126 +200,23 @@ export default function WorkersPage() {
   }
 
   return (
-    <div className="flex-1 overflow-auto">
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        {/* Header Section */}
-        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
-          <div className="w-full px-8 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <User className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
-                      Працівники
-                    </h1>
-                    <p className="text-gray-600 mt-1">Управління робітниками підприємства</p>
-                  </div>
-                </div>
-              </div>
-            
-              <div className="flex items-center space-x-4">
-                <Button 
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
-                  onClick={() => setIsCreateDialogOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Додати працівника
-                </Button>
-              </div>
-            </div>
-          </div>
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Робітники</h1>
+          <p className="text-muted-foreground">
+            Управління робітниками підприємства
+          </p>
         </div>
-
-        {/* Statistics Cards */}
-        <main className="w-full px-8 py-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
-              <CardContent className="p-6 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="flex items-center justify-between relative z-10">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <User className="w-4 h-4 text-blue-600" />
-                      <p className="text-sm text-blue-700 font-medium">Всього працівників</p>
-                    </div>
-                    <p className="text-3xl font-bold text-blue-900 mb-1">{workers?.length || 0}</p>
-                    <p className="text-xs text-blue-600">У штаті підприємства</p>
-                  </div>
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
-                    <User className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
-              <CardContent className="p-6 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="flex items-center justify-between relative z-10">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <User className="w-4 h-4 text-emerald-600" />
-                      <p className="text-sm text-emerald-700 font-medium">Активні працівники</p>
-                    </div>
-                    <p className="text-3xl font-bold text-emerald-900 mb-1">{workers?.filter((w: Worker) => w.isActive).length || 0}</p>
-                    <p className="text-xs text-emerald-600">Працюють зараз</p>
-                  </div>
-                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
-                    <User className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
-              <CardContent className="p-6 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-yellow-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="flex items-center justify-between relative z-10">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <User className="w-4 h-4 text-yellow-600" />
-                      <p className="text-sm text-yellow-700 font-medium">Посади</p>
-                    </div>
-                    <p className="text-3xl font-bold text-yellow-900 mb-1">{positions?.length || 0}</p>
-                    <p className="text-xs text-yellow-600">Різних спеціальностей</p>
-                  </div>
-                  <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
-                    <User className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
-              <CardContent className="p-6 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="flex items-center justify-between relative z-10">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <User className="w-4 h-4 text-purple-600" />
-                      <p className="text-sm text-purple-700 font-medium">Відділи</p>
-                    </div>
-                    <p className="text-3xl font-bold text-purple-900 mb-1">{departments?.length || 0}</p>
-                    <p className="text-xs text-purple-600">Структурних підрозділів</p>
-                  </div>
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
-                    <User className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
         <Dialog open={isCreateDialogOpen || !!editingWorker} onOpenChange={(open) => {
           if (!open) {
             handleDialogClose();
           }
         }}>
           <DialogTrigger asChild>
-            <Button style={{display: 'none'}}>
-              Hidden trigger
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Додати робітника
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -669,11 +565,9 @@ export default function WorkersPage() {
             </Form>
           </DialogContent>
         </Dialog>
+      </div>
 
-          {/* Workers Table */}
-          <Card className="bg-white/70 backdrop-blur-sm border-gray-200/50">
-            <CardContent className="p-6">
-              <div className="border rounded-lg">
+      <div className="border rounded-lg">
         <Table>
           <TableHeader>
             <TableRow>
@@ -773,10 +667,6 @@ export default function WorkersPage() {
             )}
           </TableBody>
         </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </main>
       </div>
     </div>
   );

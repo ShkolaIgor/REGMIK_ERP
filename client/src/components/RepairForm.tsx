@@ -89,20 +89,15 @@ export function RepairForm({ repair, onSuccess, onCancel }: RepairFormProps) {
   const { data: clientsData } = useQuery({
     queryKey: ["/api/clients/search", debouncedClientSearch],
     queryFn: async () => {
-      try {
-        const params = new URLSearchParams();
-        if (debouncedClientSearch) {
-          params.append('q', debouncedClientSearch);
-        }
-        params.append('limit', '50');
-        
-        const response = await fetch(`/api/clients/search?${params}`);
-        if (!response.ok) throw new Error('Failed to search clients');
-        return response.json();
-      } catch (error) {
-        console.error('Error fetching clients:', error);
-        return { clients: [] };
+      const params = new URLSearchParams();
+      if (debouncedClientSearch) {
+        params.append('q', debouncedClientSearch);
       }
+      params.append('limit', '50');
+      
+      const response = await fetch(`/api/clients/search?${params}`);
+      if (!response.ok) throw new Error('Failed to search clients');
+      return response.json();
     },
     enabled: true,
   });

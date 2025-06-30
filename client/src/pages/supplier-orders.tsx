@@ -68,7 +68,7 @@ const statusLabels = {
   cancelled: "Скасовано",
 };
 
-function SupplierOrdersPage() {
+export default function SupplierOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<SupplierOrder | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -236,14 +236,14 @@ function SupplierOrdersPage() {
         <div className="w-full px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 via-purple-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-                <ShoppingCart className="w-8 h-8 text-white" />
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <ShoppingCart className="w-10 h-10 text-white" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
-                  Склад замовлень постачальників
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                  Замовлення постачальників
                 </h1>
-                <p className="text-gray-600 mt-2 text-lg">Управління закупками та постачанням матеріалів для виробництва</p>
+                <p className="text-gray-500 mt-1">Управління закупками та постачанням матеріалів</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -278,7 +278,7 @@ function SupplierOrdersPage() {
                     <p className="text-sm text-blue-700 font-medium">Всього замовлень</p>
                   </div>
                   <p className="text-3xl font-bold text-blue-900 mb-1">{totalOrders}</p>
-                  <p className="text-xs text-blue-600">Всіх замовлень у системі</p>
+                  <p className="text-xs text-blue-600">Загальна кількість замовлень</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
                   <Package className="w-8 h-8 text-white" />
@@ -287,20 +287,20 @@ function SupplierOrdersPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
             <CardContent className="p-6 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-green-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="flex items-center justify-between relative z-10">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <CheckCircle className="w-4 h-4 text-green-600" />
-                    <p className="text-sm text-green-700 font-medium">Активні замовлення</p>
+                    <TrendingUp className="w-4 h-4 text-emerald-600" />
+                    <p className="text-sm text-emerald-700 font-medium">Активні замовлення</p>
                   </div>
-                  <p className="text-3xl font-bold text-green-900 mb-1">{activeOrders}</p>
-                  <p className="text-xs text-green-600">У процесі виконання</p>
+                  <p className="text-3xl font-bold text-emerald-900 mb-1">{activeOrders}</p>
+                  <p className="text-xs text-emerald-600">Замовлення в процесі</p>
                 </div>
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
-                  <CheckCircle className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <TrendingUp className="w-8 h-8 text-white" />
                 </div>
               </div>
             </CardContent>
@@ -315,8 +315,8 @@ function SupplierOrdersPage() {
                     <DollarSign className="w-4 h-4 text-purple-600" />
                     <p className="text-sm text-purple-700 font-medium">Загальна сума</p>
                   </div>
-                  <p className="text-3xl font-bold text-purple-900 mb-1">{Math.round(totalAmount).toLocaleString('uk-UA')} ₴</p>
-                  <p className="text-xs text-purple-600">Вартість всіх замовлень</p>
+                  <p className="text-3xl font-bold text-purple-900 mb-1">{formatCurrency(totalAmount)}</p>
+                  <p className="text-xs text-purple-600">Сума всіх замовлень</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
                   <DollarSign className="w-8 h-8 text-white" />
@@ -335,7 +335,7 @@ function SupplierOrdersPage() {
                     <p className="text-sm text-orange-700 font-medium">Очікують підтвердження</p>
                   </div>
                   <p className="text-3xl font-bold text-orange-900 mb-1">{pendingOrders}</p>
-                  <p className="text-xs text-orange-600">Потребують уваги</p>
+                  <p className="text-xs text-orange-600">Нові замовлення</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
                   <Clock className="w-8 h-8 text-white" />
@@ -345,128 +345,113 @@ function SupplierOrdersPage() {
           </Card>
         </div>
 
-        {/* SearchFilters Section */}
-        <Card className="shadow-lg border-gray-200/50">
-          <CardContent className="p-6">
-            <SearchFilters
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              filters={[
-                {
-                  key: "status",
-                  label: "Статус",
-                  value: statusFilter,
-                  options: [
-                    { value: "all", label: "Всі статуси" },
-                    { value: "draft", label: "Чернетка" },
-                    { value: "sent", label: "Відправлено" },
-                    { value: "confirmed", label: "Підтверджено" },
-                    { value: "in_delivery", label: "У доставці" },
-                    { value: "delivered", label: "Доставлено" },
-                    { value: "cancelled", label: "Скасовано" }
-                  ],
-                  onChange: setStatusFilter
-                },
-                {
-                  key: "supplier",
-                  label: "Постачальник",
-                  value: supplierFilter,
-                  options: [
-                    { value: "all", label: "Всі постачальники" },
-                    ...Array.isArray(suppliers) ? suppliers.map((supplier: any) => ({
-                      value: supplier.id?.toString() || "",
-                      label: supplier.name || "Без назви"
-                    })) : []
-                  ],
-                  onChange: setSupplierFilter
-                }
-              ]}
-            />
-          </CardContent>
-        </Card>
+        {/* Filters and Actions */}
+        <div className="w-full pb-3">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <SearchFilters
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  filters={[
+                    {
+                      key: "status",
+                      label: "Статус",
+                      value: statusFilter,
+                      options: [
+                        { value: "all", label: "Всі статуси" },
+                        { value: "draft", label: "Чернетка" },
+                        { value: "sent", label: "Відправлено" },
+                        { value: "confirmed", label: "Підтверджено" },
+                        { value: "in_delivery", label: "У доставці" },
+                        { value: "delivered", label: "Доставлено" },
+                        { value: "cancelled", label: "Скасовано" }
+                      ],
+                      onChange: setStatusFilter
+                    },
+                    {
+                      key: "supplier",
+                      label: "Постачальник",
+                      value: supplierFilter,
+                      options: [
+                        { value: "all", label: "Всі постачальники" },
+                        ...Array.isArray(suppliers) ? suppliers.map((supplier: any) => ({
+                          value: supplier.id.toString(),
+                          label: supplier.name
+                        })) : []
+                      ],
+                      onChange: setSupplierFilter
+                    }
+                  ]}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* DataTable Section */}
-        <Card className="shadow-lg border-gray-200/50">
-          <CardContent className="p-6">
-            <DataTable
-              data={filteredOrders}
-              columns={columns}
-              loading={isLoading}
-              storageKey="supplier-orders-table"
-            />
-          </CardContent>
-        </Card>
+        {/* Main DataTable */}
+        <div className="w-full">
+          <Card>
+            <CardContent className="p-0">
+              <DataTable
+                data={filteredOrders}
+                columns={columns}
+                loading={isLoading}
+                title="Список замовлень"
+                description="Оберіть замовлення до постачальника для перегляду та редагування його складу"
+                storageKey="supplier-orders-table"
+              />
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      {/* Order Details Dialog */}
-      <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Деталі замовлення {selectedOrder?.orderNumber}</DialogTitle>
-          </DialogHeader>
-          
-          {selectedOrder && (
-            <div className="space-y-6">
-              {/* Order Info */}
+      
+      {/* Dialog для деталей замовлення */}
+      {selectedOrder && (
+        <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Деталі замовлення {selectedOrder.orderNumber}</DialogTitle>
+            </DialogHeader>
+            
+            <div className="grid gap-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p><strong>Постачальник:</strong> {selectedOrder.supplier?.name}</p>
-                  <p><strong>Статус:</strong> 
-                    <Badge className={`ml-2 ${statusColors[selectedOrder.status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'}`}>
-                      {statusLabels[selectedOrder.status as keyof typeof statusLabels] || selectedOrder.status}
-                    </Badge>
-                  </p>
-                  <p><strong>Загальна сума:</strong> {Math.round(Number(selectedOrder.totalAmount)).toLocaleString('uk-UA')} ₴</p>
+                  <label className="text-sm font-medium">Постачальник:</label>
+                  <p className="text-sm text-muted-foreground">{selectedOrder.supplier.name}</p>
                 </div>
                 <div>
-                  <p><strong>Очікувана доставка:</strong> {selectedOrder.expectedDelivery ? new Date(selectedOrder.expectedDelivery).toLocaleDateString('uk-UA') : 'Не вказано'}</p>
-                  <p><strong>Створено:</strong> {new Date(selectedOrder.createdAt).toLocaleDateString('uk-UA')}</p>
-                  <p><strong>Примітки:</strong> {selectedOrder.notes || 'Немає примітків'}</p>
+                  <label className="text-sm font-medium">Статус:</label>
+                  <p className="text-sm text-muted-foreground">
+                    {statusLabels[selectedOrder.status as keyof typeof statusLabels]}
+                  </p>
                 </div>
-              </div>
-
-              {/* Order Items */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Позиції замовлення</h3>
-                <div className="space-y-2">
-                  {selectedOrder.items?.map((item) => (
-                    <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                      <div>
-                        <p className="font-medium">{item.product?.name || 'Невідомий товар'}</p>
-                        <p className="text-sm text-gray-600">SKU: {item.product?.sku || 'N/A'}</p>
-                      </div>
-                      <div className="text-right">
-                        <p>{Number(item.quantity)} {item.unit}</p>
-                        <p className="text-sm text-gray-600">{Math.round(Number(item.unitPrice)).toLocaleString('uk-UA')} ₴/шт</p>
-                        <p className="font-medium">{Math.round(Number(item.totalPrice)).toLocaleString('uk-UA')} ₴</p>
-                      </div>
-                    </div>
-                  ))}
+                <div>
+                  <label className="text-sm font-medium">Загальна сума:</label>
+                  <p className="text-sm text-muted-foreground">
+                    {formatCurrency(Number(selectedOrder.totalAmount))}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Очікувана доставка:</label>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedOrder.expectedDelivery ? new Date(selectedOrder.expectedDelivery).toLocaleDateString('uk-UA') : "Не вказано"}
+                  </p>
                 </div>
               </div>
               
-              {/* Status Update */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Оновити статус</h3>
-                <div className="flex gap-2">
-                  {Object.keys(statusLabels).map((status) => (
-                    <Button
-                      key={status}
-                      variant={selectedOrder.status === status ? "default" : "outline"}
-                      onClick={() => handleStatusChange(selectedOrder.id, status)}
-                      disabled={updateStatusMutation.isPending}
-                    >
-                      {statusLabels[status as keyof typeof statusLabels]}
-                    </Button>
-                  ))}
+              {selectedOrder.notes && (
+                <div>
+                  <label className="text-sm font-medium">Примітки:</label>
+                  <p className="text-sm text-muted-foreground mt-1">{selectedOrder.notes}</p>
                 </div>
-              </div>
+              )}
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+          </DialogContent>
+        </Dialog>
+      )}
+  
+      </div>
   );
 }
-
-export default SupplierOrdersPage;

@@ -180,33 +180,22 @@ export default function Categories() {
   }
 
   return (
-    <>
-      {/* Header Section with Gradient */}
-      <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white">
-        <div className="w-full px-8 py-12">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm shadow-lg">
-                <Package className="w-10 h-10" />
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-                  Категорії компонентів
-                </h1>
-                <p className="text-blue-100 text-xl font-medium">Управління категоріями електронних компонентів</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowImportDialog(true)}
-                  className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
-                >
-                  <Upload className="w-5 h-5 mr-2" />
-                  Імпорт категорій
-                </Button>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Категорії компонентів</h1>
+          <p className="text-muted-foreground mt-2">
+            Управління категоріями електронних компонентів
+          </p>
+        </div>
+        <div className="flex gap-2">
+        
+          <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+            <Button variant="outline" onClick={() => setShowImportDialog(true)}>
+              <Upload className="mr-2 h-4 w-4" />
+              Імпорт категорій
+            </Button>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Імпорт категорій компонентів</DialogTitle>
               </DialogHeader>
@@ -220,87 +209,17 @@ export default function Categories() {
               )}
             </DialogContent>
           </Dialog>
-              <Button 
-                onClick={() => {
-                  setEditingCategory(null);
-                  setIsDialogOpen(true);
-                }}
-                className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Додати категорію
-              </Button>
-            </div>
-          </div>
+          <Button onClick={() => {
+            setEditingCategory(null);
+            setIsDialogOpen(true);
+          }}>
+            <Plus className="mr-2 h-4 w-4" />
+            Додати категорію
+          </Button>
         </div>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="w-full px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:border-blue-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-blue-700">Всього категорій</p>
-                  <p className="text-3xl font-bold text-blue-900 mb-1">{categories?.length || 0}</p>
-                  <p className="text-xs text-blue-600">У системі</p>
-                </div>
-                <div className="p-3 bg-blue-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
-                  <Package className="w-8 h-8 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200 hover:border-indigo-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-indigo-700">Активні</p>
-                  <p className="text-3xl font-bold text-indigo-900 mb-1">{categories?.filter(c => c.name).length || 0}</p>
-                  <p className="text-xs text-indigo-600">Налаштованих</p>
-                </div>
-                <div className="p-3 bg-indigo-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
-                  <Plus className="w-8 h-8 text-indigo-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200 hover:border-purple-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-purple-700">З описом</p>
-                  <p className="text-3xl font-bold text-purple-900 mb-1">{categories?.filter(c => c.description).length || 0}</p>
-                  <p className="text-xs text-purple-600">Документованих</p>
-                </div>
-                <div className="p-3 bg-purple-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
-                  <Edit className="w-8 h-8 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-pink-50 to-red-50 border-pink-200 hover:border-pink-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-pink-700">Кольорових</p>
-                  <p className="text-3xl font-bold text-pink-900 mb-1">{categories?.filter(c => c.color && c.color !== '#3B82F6').length || 0}</p>
-                  <p className="text-xs text-pink-600">Персоналізованих</p>
-                </div>
-                <div className="p-3 bg-pink-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
-                  <Trash2 className="w-8 h-8 text-pink-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {(categories as ComponentCategory[])?.map((category) => (
           <Card key={category.id} className="relative">
             <CardHeader className="pb-3">
@@ -450,8 +369,6 @@ export default function Categories() {
           </form>
         </DialogContent>
       </Dialog>
-        </div>
-      </div>
-    </>
+    </div>
   );
 }
