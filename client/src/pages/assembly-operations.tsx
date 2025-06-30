@@ -227,31 +227,120 @@ export default function AssemblyOperationsPage() {
 
   return (
     <div className="flex-1 overflow-auto">
-      {/* Header Section with Gradient */}
-         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <div className="w-full px-8 py-3">
-          <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Settings className="w-8 h-8 text-white"/>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        {/* Header Section */}
+        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
+          <div className="w-full px-8 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Settings className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                      Збірка та розбірка товарів
+                    </h1>
+                    <p className="text-gray-600 mt-1">Управління операціями збірки та розбірки виробів</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
-                  Збірка та розбірка товарів
-                </h1>
-                <p className="text-gray-500 mt-1">Управління операціями збірки та розбірки виробів</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <Plus className="w-5 h-5 mr-2" />
+              <div className="flex items-center space-x-4">
+                <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
                     Нова операція
                   </Button>
                 </DialogTrigger>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Statistics Cards */}
+        <main className="w-full px-8 py-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Settings className="w-4 h-4 text-blue-600" />
+                      <p className="text-sm text-blue-700 font-medium">Всього операцій</p>
+                    </div>
+                    <p className="text-3xl font-bold text-blue-900 mb-1">{totalOperations}</p>
+                    <p className="text-xs text-blue-600">Активні операції</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <Settings className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Check className="w-4 h-4 text-green-600" />
+                      <p className="text-sm text-green-700 font-medium">Завершено</p>
+                    </div>
+                    <p className="text-3xl font-bold text-green-900 mb-1">{completedOperations}</p>
+                    <p className="text-xs text-green-600">Готові операції</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <Check className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <TrendingUp className="w-4 h-4 text-orange-600" />
+                      <p className="text-sm text-orange-700 font-medium">У процесі</p>
+                    </div>
+                    <p className="text-3xl font-bold text-orange-900 mb-1">{inProgressOperations}</p>
+                    <p className="text-xs text-orange-600">Активні операції</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <TrendingUp className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="w-4 h-4 text-purple-600" />
+                      <p className="text-sm text-purple-700 font-medium">Заплановано</p>
+                    </div>
+                    <p className="text-3xl font-bold text-purple-900 mb-1">{plannedOperations}</p>
+                    <p className="text-xs text-purple-600">Очікують виконання</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <Clock className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>
