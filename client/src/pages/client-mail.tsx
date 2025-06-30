@@ -179,21 +179,6 @@ export default function ClientMailPage() {
   const { senderRecipientFontSize, postalIndexFontSize, advertisementFontSize } = envelopeSettings;
 
   return (
-      <div className="w-full px-6 py-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Кореспонденція клієнтів</h1>
-          <div className="flex gap-2">
-          <Button
-            onClick={() => setIsEnvelopePrintDialogOpen(true)}
-            disabled={selectedClients.size === 0}
-            variant="outline"
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            Друкувати конверти ({selectedClients.size})
-          </Button>
-        </div>
-      </div>
-
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
           {/* Header Section  sticky top-0 z-40*/}
           <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
@@ -329,7 +314,7 @@ export default function ClientMailPage() {
 
       {/* Envelope Print Dialog with Vertical Layout */}
       <Dialog open={isEnvelopePrintDialogOpen} onOpenChange={setIsEnvelopePrintDialogOpen}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden" aria-describedby="envelope-dialog-description">
+        <DialogContent className="max-w-[60vw] max-h-[50vh] overflow-hidden" aria-describedby="envelope-dialog-description">
           <DialogHeader>
             <DialogTitle>Налаштування друку конвертів - {batchName}</DialogTitle>
             <div id="envelope-dialog-description" className="sr-only">
@@ -346,7 +331,7 @@ export default function ClientMailPage() {
                 style={{
                   width: `${envelopeSizes[envelopeSettings.envelopeSize].width}mm`,
                   height: `${envelopeSizes[envelopeSettings.envelopeSize].height}mm`,
-                  transform: `scale(0.6)`,
+                  transform: `scale(1)`,
                   transformOrigin: 'center',
                   maxWidth: '100%',
                   maxHeight: '100%'
@@ -356,8 +341,8 @@ export default function ClientMailPage() {
                   <div 
                     className="absolute border-2 border-dashed border-gray-300"
                     style={{
-                      top: '5mm',
-                      right: '5mm',
+                      top: '15mm',
+                      right: '15mm',
                       width: '25mm',
                       height: '15mm'
                     }}
@@ -482,7 +467,7 @@ export default function ClientMailPage() {
                     <TabsTrigger value="fonts">Шрифти</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="envelope" className="space-y-4 mt-4">
+                  <TabsContent value="envelope" className="space-y-4 mt-4 pl-4 pr-4">
                     <div>
                       <Label>Розмір конверта</Label>
                       <Select
@@ -490,7 +475,7 @@ export default function ClientMailPage() {
                         onValueChange={(value: EnvelopeSize) => 
                           setEnvelopeSettings(prev => ({ ...prev, envelopeSize: value }))
                         }
-                      >
+                       >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -503,7 +488,7 @@ export default function ClientMailPage() {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="advertisement" className="space-y-4 mt-4">
+                  <TabsContent value="advertisement" className="space-y-4 mt-4 pl-4 pr-4">
                     <div>
                       <Label>Рекламний текст</Label>
                       <Textarea
@@ -567,7 +552,7 @@ export default function ClientMailPage() {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="fonts" className="space-y-4 mt-4">
+                  <TabsContent value="fonts" className="space-y-4 mt-4 pl-4 pr-4">
                     <div>
                       <Label>Розмір шрифту відправника/одержувача: {senderRecipientFontSize}px</Label>
                       <Slider
@@ -642,6 +627,5 @@ export default function ClientMailPage() {
         </DialogContent>
       </Dialog>
       </div>
-    </div>
   );
 }
