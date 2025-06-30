@@ -123,6 +123,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### June 30, 2025
+- ✅ **ОЧИЩЕНО МЕНЮ ЛИСТУВАННЯ** - видалено старі версії сторінок client-mail-backup, client-mail-broken, client-mail-corrected, client-mail-final
+- ✅ **Виправлено імпорт у App.tsx** - оновлено посилання на актуальну сторінку client-mail
+- ✅ **Виправлено синтаксичну помилку** - коректно закрито Button компонент у сторінці листування
+- ✅ **Підтверджено працездатність** - сервер працює стабільно після очищення, API /api/clients/all повертає всі 30 клієнтів
+
 ### June 29, 2025
 - ✅ **ЗАВЕРШЕНО МАСОВЕ ОНОВЛЕННЯ СТИЛЮ: Застосовано BOM дизайн до всіх 11 сторінок системи**
 - ✅ **Виробництво та планування** - production-planning, production-analytics, production-forecasts

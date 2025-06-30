@@ -214,6 +214,7 @@ export default function ClientMailPage() {
                     onClick={() => setIsEnvelopePrintDialogOpen(true)}
                     disabled={selectedClients.size === 0}
                     variant="outline"
+                  >
                     <Printer className="h-4 w-4 mr-2" />
                     Друкувати конверти ({selectedClients.size})
                   </Button>

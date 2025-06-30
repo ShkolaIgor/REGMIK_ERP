@@ -17,7 +17,7 @@ import Clients from "@/pages/clients";
 import ClientContacts from "@/pages/client-contacts";
 import ClientNovaPoshtaSettings from "@/pages/client-nova-poshta-settings";
 import ClientDeliverySettings from "@/pages/client-delivery-settings";
-import ClientMail from "@/pages/client-mail-corrected";
+import ClientMail from "@/pages/client-mail";
 import Recipes from "@/pages/recipes";
 import TechCards from "@/pages/tech-cards";
 import BOM from "@/pages/bom";
