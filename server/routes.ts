@@ -5967,6 +5967,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint для отримання всіх клієнтів без пагінації
+  app.get("/api/clients/all", async (req, res) => {
+    try {
+      const clients = await storage.getClients();
+      res.json({ clients });
+    } catch (error) {
+      console.error("Failed to get all clients:", error);
+      res.status(500).json({ error: "Failed to get all clients" });
+    }
+  });
+
   app.get("/api/clients/:id", async (req, res) => {
     try {
       const id = req.params.id;
