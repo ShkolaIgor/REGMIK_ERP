@@ -11,17 +11,37 @@ export default function Reports() {
   const [reportType, setReportType] = useState("overview");
   const [period, setPeriod] = useState("last-month");
 
-  // Data fetching with proper null safety
-  const { data: ordersData } = useQuery({ queryKey: ["/api/orders"] });
-  const { data: inventoryData } = useQuery({ queryKey: ["/api/inventory"] });
-  const { data: productsData } = useQuery({ queryKey: ["/api/products"] });
-  const { data: recipesData } = useQuery({ queryKey: ["/api/recipes"] });
+  // Data fetching with proper null safety and loading states
+  const { data: ordersData, isLoading: ordersLoading } = useQuery({ queryKey: ["/api/orders"] });
+  const { data: inventoryData, isLoading: inventoryLoading } = useQuery({ queryKey: ["/api/inventory"] });
+  const { data: productsData, isLoading: productsLoading } = useQuery({ queryKey: ["/api/products"] });
+  const { data: recipesData, isLoading: recipesLoading } = useQuery({ queryKey: ["/api/recipes"] });
 
-  // Safe data extraction
-  const orders = Array.isArray(ordersData?.orders) ? ordersData.orders : [];
+  // Loading state
+  const isLoading = ordersLoading || inventoryLoading || productsLoading || recipesLoading;
+
+  // Safe data extraction with proper typing
+  const orders = Array.isArray((ordersData as any)?.orders) ? (ordersData as any).orders : [];
   const inventory = Array.isArray(inventoryData) ? inventoryData : [];
   const products = Array.isArray(productsData) ? productsData : [];
   const recipes = Array.isArray(recipesData) ? recipesData : [];
+
+  // Early return for loading state
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+          <div className="h-96 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
   // Calculate metrics with null safety
   const profitMetrics = {
@@ -39,12 +59,10 @@ export default function Reports() {
 
   const lowStockItems = inventory.filter((item: any) => item.quantity < 10).slice(0, 5);
 
-  const topPerformingProducts = Array.isArray(inventory) && Array.isArray(products)
-    ? products
-        .filter((product: any) => inventory.some((inv: any) => inv.productId === product.id))
-        .sort((a: any, b: any) => (b.cost || 0) - (a.cost || 0))
-        .slice(0, 5)
-    : [];
+  const topPerformingProducts = products
+    .filter((product: any) => inventory.some((inv: any) => inv.productId === product.id))
+    .sort((a: any, b: any) => (b.cost || 0) - (a.cost || 0))
+    .slice(0, 5);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('uk-UA', {

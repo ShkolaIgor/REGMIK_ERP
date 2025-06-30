@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import SimpleLogin from "@/pages/simple-login";
 import ForgotPassword from "@/pages/forgot-password";
@@ -261,6 +262,20 @@ function Router() {
   }
 
 function App() {
+  // Глобальний обробник unhandled promise rejections
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.warn("Unhandled promise rejection silenced:", event.reason);
+      event.preventDefault(); // Запобігаємо показу помилки в консолі
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
