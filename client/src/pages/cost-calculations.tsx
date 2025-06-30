@@ -76,19 +76,19 @@ export default function CostCalculations() {
       key: "totalCost",
       label: "Собівартість",
       sortable: true,
-      render: (calc: CostCalculation) => `${calc.totalCost.toLocaleString("uk-UA")} ₴`,
+      render: (calc: CostCalculation) => `${calc.totalCost?.toLocaleString("uk-UA") || "0"} ₴`,
     },
     {
       key: "margin",
       label: "Націнка",
       sortable: true,
-      render: (calc: CostCalculation) => `${calc.margin}%`,
+      render: (calc: CostCalculation) => `${calc.margin || 0}%`,
     },
     {
       key: "finalPrice",
       label: "Кінцева ціна",
       sortable: true,
-      render: (calc: CostCalculation) => `${calc.finalPrice.toLocaleString("uk-UA")} ₴`,
+      render: (calc: CostCalculation) => `${calc.finalPrice?.toLocaleString("uk-UA") || "0"} ₴`,
     },
   ];
 
@@ -105,11 +105,11 @@ export default function CostCalculations() {
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Собівартість:</span>
-            <span className="font-medium">{calc.totalCost.toLocaleString("uk-UA")} ₴</span>
+            <span className="font-medium">{calc.totalCost?.toLocaleString("uk-UA") || "0"} ₴</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Кінцева ціна:</span>
-            <span className="font-medium">{calc.finalPrice.toLocaleString("uk-UA")} ₴</span>
+            <span className="font-medium">{calc.finalPrice?.toLocaleString("uk-UA") || "0"} ₴</span>
           </div>
         </div>
       </CardContent>
