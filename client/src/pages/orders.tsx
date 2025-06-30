@@ -2184,9 +2184,9 @@ export default function Orders() {
           </div>
         </div>
 
-      {/* Status Settings Panel */}
-      {isStatusSettingsOpen && (
-        <div className="bg-gray-50 border-b border-gray-200 p-6">
+        {/* Status Settings Panel */}
+        {isStatusSettingsOpen && (
+          <div className="bg-gray-50 border-b border-gray-200 p-6">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Управління статусами замовлень</h3>
