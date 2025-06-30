@@ -307,10 +307,10 @@ export default function Clients() {
   }, [searchQuery]);
 
   const { data: clientsData, isLoading, isError, error: clientsError } = useQuery({
-    queryKey: ["/api/clients"],
+    queryKey: ["/api/clients/all"],
     queryFn: async () => {
       // Отримуємо всіх клієнтів без пагінації для DataTable
-      const response = await fetch(`/api/clients?limit=1000`);
+      const response = await fetch(`/api/clients/all`);
       if (!response.ok) throw new Error('Failed to fetch clients');
       return response.json();
     },
