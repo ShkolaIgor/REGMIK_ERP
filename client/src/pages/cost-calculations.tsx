@@ -174,7 +174,7 @@ export default function CostCalculationsPage() {
                 <Calculator className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="ext-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
                   Калькуляції вартості
                 </h1>
                 <p className="text-gray-500 mt-1">Розрахунок вартості та рентабельності продуктів</p>
