@@ -462,38 +462,39 @@ export default function Manufacturing() {
   }
 
   return (
-    <div className="w-full space-y-8">
-      {/* Header Section with Gradient */}
-      <div className="bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-600 text-white">
-        <div className="w-full px-8 py-12">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm shadow-lg">
-                <Factory className="w-10 h-10" />
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-                  Виготовлення товарів
-                </h1>
-                <p className="text-blue-100 text-xl font-medium">Управління виробничими завданнями та контроль якості</p>
-              </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        {/* Header Section  sticky top-0 z-40*/}
+        <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+          <div className="w-full px-8 py-3">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Factory className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                      Виготовлення товарів
+                    </h1>
+                    <p className="text-gray-500 mt-1">Управління виробничими завданнями та контроль якості</p>
+                  </div>
+                </div>
+            <div className="flex items-center space-x-4">
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                  onClick={() => setIsDialogOpen(true)}
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Створити завдання
+                </Button>
+              </DialogTrigger>
+            </Dialog>
             </div>
-            <div className="flex items-center gap-4">
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
-                    onClick={() => setIsDialogOpen(true)}
-                  >
-                    <Plus className="w-5 h-5 mr-2" />
-                    Створити завдання
-                  </Button>
-                </DialogTrigger>
-              </Dialog>
-            </div>
+              </div>
           </div>
-        </div>
-      </div>
+        </header>
+
 
       {/* Statistics Cards */}
       <div className="w-full px-8 py-3">
@@ -609,122 +610,226 @@ export default function Manufacturing() {
         </Card>
 
         {/* Manufacturing Orders Table */}
+        {/* Таблиця завдань */}
         <Card>
           <CardHeader>
-            <CardTitle>Завдання на виготовлення ({filteredOrders.length})</CardTitle>
+            <CardTitle>Завдання на виготовлення</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Номер</TableHead>
-                    <TableHead>Товар</TableHead>
-                    <TableHead>Кількість</TableHead>
-                    <TableHead>Прогрес</TableHead>
-                    <TableHead>Статус</TableHead>
-                    <TableHead>Пріоритет</TableHead>
-                    <TableHead>Виконавець</TableHead>
-                    <TableHead>Дії</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredOrders.map((order: ManufacturingOrder) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-mono">{order.orderNumber}</TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{order.product?.name || "Товар не вказано"}</div>
-                          <div className="text-sm text-gray-500">{order.product?.sku}</div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Номер</TableHead>
+                  <TableHead>Товар</TableHead>
+                  <TableHead>Кількість</TableHead>
+                  <TableHead>Прогрес</TableHead>
+                  <TableHead>Статус</TableHead>
+                  <TableHead>Пріоритет</TableHead>
+                  <TableHead>Джерело</TableHead>
+                  <TableHead>Серійні номери</TableHead>
+                  <TableHead>Відповідальний</TableHead>
+                  <TableHead>Дата завершення</TableHead>
+                  <TableHead>Дії</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredOrders.map((order: ManufacturingOrder) => (
+                  <TableRow key={order.id}>
+                    <TableCell className="font-medium">{order.orderNumber}</TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{order.product?.name}</div>
+                        <div className="text-sm text-gray-500">{order.product?.sku}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div>{order.producedQuantity} / {order.plannedQuantity} {order.unit}</div>
+                        <Progress 
+                          value={getProgress(order.plannedQuantity, order.producedQuantity)} 
+                          className="w-16 h-2 mt-1"
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <Progress value={getProgress(order.plannedQuantity, order.producedQuantity)} className="w-20" />
+                        <span className="text-xs text-gray-500">
+                          {Math.round(getProgress(order.plannedQuantity, order.producedQuantity))}%
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(order.status)}>
+                        <span className="flex items-center gap-1">
+                          {getStatusIcon(order.status)}
+                          {getStatusText(order.status)}
+                        </span>
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getPriorityColor(order.priority)}>
+                        {order.priority === "low" && "Низький"}
+                        {order.priority === "medium" && "Середній"}
+                        {order.priority === "high" && "Високий"}
+                        {order.priority === "urgent" && "Терміновий"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {order.sourceOrderId ? (
+                        <div className="text-sm">
+                          <div className="font-medium text-blue-600">
+                            Замовлення #{order.sourceOrderId}
+                          </div>
+                          <div className="text-gray-500 text-xs">
+                            Автоматично створено
+                          </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {order.producedQuantity}/{order.plannedQuantity} {order.unit}
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <Progress value={getProgress(order.plannedQuantity, order.producedQuantity)} className="w-20" />
-                          <span className="text-xs text-gray-500">
-                            {Math.round(getProgress(order.plannedQuantity, order.producedQuantity))}%
-                          </span>
+                      ) : (
+                        <span className="text-gray-400 text-sm">Ручне створення</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {order.serialNumbers && order.serialNumbers.length > 0 ? (
+                        <div className="text-sm">
+                          <div className="font-medium text-green-600">
+                            {order.serialNumbers.length} номерів
+                          </div>
+                          <div className="text-gray-600 leading-tight">
+                            <div className="text-xs">{order.serialNumbers[0]}</div>
+                            {order.serialNumbers.length > 1 && (
+                              <div className="text-xs">-</div>
+                            )}
+                            {order.serialNumbers.length > 1 && (
+                              <div className="text-xs">{order.serialNumbers[order.serialNumbers.length - 1]}</div>
+                            )}
+                          </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusBadgeColor(order.status)}>
-                          {getStatusLabel(order.status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={order.priority === "high" ? "destructive" : order.priority === "medium" ? "default" : "secondary"}>
-                          {order.priority === "high" ? "Високий" : order.priority === "medium" ? "Середній" : "Низький"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {order.worker?.firstName} {order.worker?.lastName}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          {order.status === "pending" && (
-                            <Button
-                              size="sm"
-                              onClick={() => startMutation.mutate(order.id)}
-                              disabled={startMutation.isPending}
-                            >
-                              <Play className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {order.status === "in_progress" && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => pauseMutation.mutate(order.id)}
-                                disabled={pauseMutation.isPending}
-                              >
-                                <Pause className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedOrder(order);
-                                  setCompleteData({
-                                    producedQuantity: order.plannedQuantity,
-                                    qualityRating: "good",
-                                    notes: ""
-                                  });
-                                  setIsCompleteDialogOpen(true);
-                                }}
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                          {order.status === "paused" && (
-                            <Button
-                              size="sm"
-                              onClick={() => resumeMutation.mutate(order.id)}
-                              disabled={resumeMutation.isPending}
-                            >
-                              <Play className="h-4 w-4" />
-                            </Button>
-                          )}
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => generateSerialNumbersMutation.mutate(order.id)}
+                          disabled={generateSerialNumbersMutation.isPending}
+                          className="h-8"
+                        >
+                          Згенерувати
+                        </Button>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {order.worker ? (
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          {order.worker.firstName} {order.worker.lastName}
+                        </div>
+                      ) : (
+                        <span className="text-gray-500">Не призначено</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {order.plannedEndDate ? (
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          {new Date(order.plannedEndDate).toLocaleDateString()}
+                        </div>
+                      ) : (
+                        <span className="text-gray-500">Не вказано</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setIsDetailsDialogOpen(true);
+                          }}
+                          title="Деталі"
+                        >
+                          <Package className="h-4 w-4" />
+                        </Button>
+                        {order.status === "pending" && (
                           <Button
-                            size="sm"
                             variant="outline"
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setIsDetailsDialogOpen(true);
-                            }}
+                            size="sm"
+                            onClick={() => startMutation.mutate(order.id)}
+                            title="Розпочати виробництво"
                           >
-                            <Search className="h-4 w-4" />
+                            <Play className="h-4 w-4" />
                           </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                        )}
+                        {order.status === "in_progress" && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => stopMutation.mutate(order.id)}
+                              disabled={stopMutation.isPending}
+                              title="Зупинити виробництво"
+                              className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                            >
+                              <Square className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedOrder(order);
+                                setCompleteData({
+                                  producedQuantity: order.producedQuantity,
+                                  qualityRating: "good",
+                                  notes: ""
+                                });
+                                setIsCompleteDialogOpen(true);
+                              }}
+                              title="Завершити виробництво"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                        {order.status === "paused" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => startMutation.mutate(order.id)}
+                            disabled={startMutation.isPending}
+                            title="Відновити виробництво"
+                            className="text-green-600 border-green-200 hover:bg-green-50"
+                          >
+                            <Play className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(order)}
+                          title="Редагувати"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(order.id, order.orderNumber)}
+                          title="Видалити"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            {filteredOrders.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                Завдання на виготовлення не знайдено
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -916,251 +1021,6 @@ export default function Manufacturing() {
         </Dialog>
       </div>
 
-      {/* Фільтри */}
-      <div className="flex gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Пошук за номером або товаром..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Всі статуси</SelectItem>
-            <SelectItem value="pending">Очікує</SelectItem>
-            <SelectItem value="in_progress">В роботі</SelectItem>
-            <SelectItem value="completed">Завершено</SelectItem>
-            <SelectItem value="paused">Пауза</SelectItem>
-            <SelectItem value="cancelled">Скасовано</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Таблиця завдань */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Завдання на виготовлення</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Номер</TableHead>
-                <TableHead>Товар</TableHead>
-                <TableHead>Кількість</TableHead>
-                <TableHead>Прогрес</TableHead>
-                <TableHead>Статус</TableHead>
-                <TableHead>Пріоритет</TableHead>
-                <TableHead>Джерело</TableHead>
-                <TableHead>Серійні номери</TableHead>
-                <TableHead>Відповідальний</TableHead>
-                <TableHead>Дата завершення</TableHead>
-                <TableHead>Дії</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredOrders.map((order: ManufacturingOrder) => (
-                <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.orderNumber}</TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{order.product?.name}</div>
-                      <div className="text-sm text-gray-500">{order.product?.sku}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <div>{order.producedQuantity} / {order.plannedQuantity} {order.unit}</div>
-                      <Progress 
-                        value={getProgress(order.plannedQuantity, order.producedQuantity)} 
-                        className="w-16 h-2 mt-1"
-                      />
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {Math.round(getProgress(order.plannedQuantity, order.producedQuantity))}%
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(order.status)}>
-                      <span className="flex items-center gap-1">
-                        {getStatusIcon(order.status)}
-                        {getStatusText(order.status)}
-                      </span>
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getPriorityColor(order.priority)}>
-                      {order.priority === "low" && "Низький"}
-                      {order.priority === "medium" && "Середній"}
-                      {order.priority === "high" && "Високий"}
-                      {order.priority === "urgent" && "Терміновий"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {order.sourceOrderId ? (
-                      <div className="text-sm">
-                        <div className="font-medium text-blue-600">
-                          Замовлення #{order.sourceOrderId}
-                        </div>
-                        <div className="text-gray-500 text-xs">
-                          Автоматично створено
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="text-gray-400 text-sm">Ручне створення</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {order.serialNumbers && order.serialNumbers.length > 0 ? (
-                      <div className="text-sm">
-                        <div className="font-medium text-green-600">
-                          {order.serialNumbers.length} номерів
-                        </div>
-                        <div className="text-gray-600 leading-tight">
-                          <div className="text-xs">{order.serialNumbers[0]}</div>
-                          {order.serialNumbers.length > 1 && (
-                            <div className="text-xs">-</div>
-                          )}
-                          {order.serialNumbers.length > 1 && (
-                            <div className="text-xs">{order.serialNumbers[order.serialNumbers.length - 1]}</div>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => generateSerialNumbersMutation.mutate(order.id)}
-                        disabled={generateSerialNumbersMutation.isPending}
-                        className="h-8"
-                      >
-                        Згенерувати
-                      </Button>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {order.worker ? (
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        {order.worker.firstName} {order.worker.lastName}
-                      </div>
-                    ) : (
-                      <span className="text-gray-500">Не призначено</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {order.plannedEndDate ? (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        {new Date(order.plannedEndDate).toLocaleDateString()}
-                      </div>
-                    ) : (
-                      <span className="text-gray-500">Не вказано</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedOrder(order);
-                          setIsDetailsDialogOpen(true);
-                        }}
-                        title="Деталі"
-                      >
-                        <Package className="h-4 w-4" />
-                      </Button>
-                      {order.status === "pending" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => startMutation.mutate(order.id)}
-                          title="Розпочати виробництво"
-                        >
-                          <Play className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {order.status === "in_progress" && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => stopMutation.mutate(order.id)}
-                            disabled={stopMutation.isPending}
-                            title="Зупинити виробництво"
-                            className="text-orange-600 border-orange-200 hover:bg-orange-50"
-                          >
-                            <Square className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setCompleteData({
-                                producedQuantity: order.producedQuantity,
-                                qualityRating: "good",
-                                notes: ""
-                              });
-                              setIsCompleteDialogOpen(true);
-                            }}
-                            title="Завершити виробництво"
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                      {order.status === "paused" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => startMutation.mutate(order.id)}
-                          disabled={startMutation.isPending}
-                          title="Відновити виробництво"
-                          className="text-green-600 border-green-200 hover:bg-green-50"
-                        >
-                          <Play className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(order)}
-                        title="Редагувати"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(order.id, order.orderNumber)}
-                        title="Видалити"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          
-          {filteredOrders.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              Завдання на виготовлення не знайдено
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Діалог деталей виробничого завдання */}
       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>

@@ -46,28 +46,28 @@ export default function ProductionAnalyticsPage() {
   });
 
   return (
-    <>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header Section with Gradient */}
-      <div className="bg-gradient-to-br from-purple-600 via-pink-600 to-red-600 text-white">
-        <div className="w-full px-8 py-12">
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="w-full px-8 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm shadow-lg">
-                <BarChart3 className="w-10 h-10" />
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <BarChart3 className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-pink-100 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
                   Аналіз завантаженості виробництва
                 </h1>
-                <p className="text-pink-100 text-xl font-medium">Моніторинг продуктивності та завантаженості персоналу</p>
+                <p className="text-gray-500 mt-1">Моніторинг продуктивності та завантаженості персоналу</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <Button
                 variant="outline"
-                className="bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/40 transition-all duration-300 shadow-lg backdrop-blur-sm px-6 py-3 font-semibold"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                <TrendingUp className="w-5 h-5 mr-2" />
+                <TrendingUp className="mr-2 h-4 w-4" />
                 Експорт звіту
               </Button>
             </div>
@@ -202,6 +202,6 @@ export default function ProductionAnalyticsPage() {
           </CardContent>
         </Card>
       </div>
-    </>
+    </div>
   );
 }
