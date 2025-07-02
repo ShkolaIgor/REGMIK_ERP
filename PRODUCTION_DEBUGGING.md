@@ -179,6 +179,57 @@ Content-Type: application/json
    grep "Автоматично створено товар" logs.txt
    ```
 
+## ❌ ВИЯВЛЕНА ПРОБЛЕМА: Мережеве з'єднання
+
+### Симптоми:
+- PHP логи показують успішне формування даних
+- Дані не доходять до Replit endpoint  
+- У консолі Replit немає логів від Бітрікс24 інтеграції
+
+### Причина:
+Production сервер не може підключитися до Replit development URL через:
+- Firewall restrictions
+- VPN/proxy блокування  
+- DNS resolving issues
+- Network security policies
+
+### ✅ РІШЕННЯ 1: Локальний тест webhook
+
+1. **Завантажте файл `local-webhook-test.php`** на ваш production сервер
+2. **Змініть URL в PHP скрипті**:
+   ```php
+   // Замість Replit URL використайте локальний
+   $localErpUrl = 'https://your-domain.com/local-webhook-test.php';
+   ```
+3. **Тестуйте локально** і перевіряйте логи
+
+### ✅ РІШЕННЯ 2: Deploy на Replit Production
+
+1. У Replit натисніть **кнопку Deploy** 
+2. Отримайте production URL (*.replit.app)
+3. Оновіть PHP скрипт з новим URL:
+   ```php
+   $localErpUrl = 'https://your-app.replit.app/api/bitrix/create-order-from-invoice';
+   ```
+
+### ✅ РІШЕННЯ 3: Webhook на production домені
+
+Створіть endpoint безпосередньо на https://erp.regmik.ua
+
+### Тестування локального webhook:
+
+```bash
+# Тест відправки даних на локальний endpoint
+curl -X POST https://your-domain.com/local-webhook-test.php \
+  -H "Content-Type: application/json" \
+  -d '{
+    "invoiceNumb": "TEST-001",
+    "clientEDRPOU": "1234567890", 
+    "companyEDRPOU": "0987654321",
+    "items": [{"productName": "Тест", "quantity": 1, "priceAccount": 100}]
+  }'
+```
+
 ### URL для тестування
 
 - Production URL: `https://f8b5b2ba-8ffe-4b9f-85c7-4b82acc96cfe-00-2vxegxo6dxlmg.picard.replit.dev`

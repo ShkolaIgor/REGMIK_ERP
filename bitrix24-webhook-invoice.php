@@ -134,6 +134,17 @@ function sendToLocalERP($data) {
     curl_close($ch);
     
     error_log("[PHP WEBHOOK] Локальна ERP відповідь - HTTP: $httpCode, Response: $response");
+    error_log("[PHP WEBHOOK] cURL Info: " . json_encode(curl_getinfo($ch)));
+    
+    // Додаткова діагностика якщо помилка
+    if ($httpCode !== 200) {
+        error_log("[PHP WEBHOOK] ДІАГНОСТИКА ПОМИЛКИ:");
+        error_log("[PHP WEBHOOK] - URL: $localErpUrl");
+        error_log("[PHP WEBHOOK] - HTTP Code: $httpCode");
+        error_log("[PHP WEBHOOK] - Response Body: $response");
+        error_log("[PHP WEBHOOK] - cURL Error: $error");
+        error_log("[PHP WEBHOOK] - Request Data: " . json_encode($data));
+    }
     
     if ($error) {
         error_log("[PHP WEBHOOK] cURL помилка: $error");
