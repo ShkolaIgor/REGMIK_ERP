@@ -10066,8 +10066,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Створюємо замовлення
       console.log("[BITRIX ORDER] =============== СТВОРЕННЯ ЗАМОВЛЕННЯ ===============");
+      
       const orderData = {
-        orderNumber: invoiceNumb,
+        invoiceNumber: invoiceNumb,    // Номер рахунку з Бітрікс24
         clientId: client.id,
         companyId: company.id,
         status: "Нове",
