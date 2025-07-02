@@ -183,9 +183,9 @@ export default function SupplierDocumentTypes() {
               Довідник типів документів ({filteredTypes.length} з {types.length})
             </p>
           </div>
-                                    </div>
-                                <div className="flex items-center space-x-4">
-                </div>
+        </div>
+        <div className="flex items-center space-x-4">
+        </div>            
           <Button onClick={() => setIsDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Новий тип документу

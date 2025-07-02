@@ -17,6 +17,7 @@ import {
   PieChart,
   Download,
   Calendar,
+  Flag,
   Factory
 } from "lucide-react";
 
@@ -244,13 +245,20 @@ export default function Reports() {
   };
 
   return (
-    <div className="flex-1 overflow-auto">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-900">Звіти та аналітика</h2>
-            <p className="text-gray-600">Прибутковість, оборот та планування матеріалів</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header Section  sticky top-0 z-40*/}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="w-full px-8 py-3">
+          <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Flag className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Звіти та аналітика
+                  </h1>
+                <p className="text-gray-500 mt-1">Прибутковість, оборот та планування матеріалів</p>
+          </div>
           </div>
           <div className="flex items-center space-x-4">
             <Select value={dateRange} onValueChange={setDateRange}>
@@ -264,97 +272,96 @@ export default function Reports() {
                 <SelectItem value="last-year">Останній рік</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={() => exportCurrentReport()}>
+            <Button 
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+              onClick={() => exportCurrentReport()}>
               <Download className="w-4 h-4 mr-2" />
               Експорт звіту
             </Button>
           </div>
+          </div>
         </div>
       </header>
 
-      <main className="p-6 space-y-6">
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+      {/* Key Metrics */}
+      <main className="w-full px-8 pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
                 <div>
-                  <p className="text-sm text-gray-600">Загальний оборот</p>
-                  <p className="text-3xl font-semibold text-gray-900">
-                    {formatCurrency(profitMetrics.totalRevenue)}
-                  </p>
-                  <div className="flex items-center mt-2 text-sm text-green-600">
-                    <TrendingUp className="w-4 h-4 mr-1" />
-                    +15.3% за місяць
+                  <div className="flex items-center gap-2 mb-1">
+                    <BarChart3 className="w-4 h-4 text-blue-600" />
+                    <p className="text-sm text-blue-700 font-medium">Загальний оборот</p>
                   </div>
+                  <p className="text-3xl font-bold text-blue-900 mb-1">{formatCurrency(profitMetrics.totalRevenue)}</p>
+                  <p className="text-xs text-blue-600">+15.3% за місяць</p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <BarChart3 className="w-6 h-6 text-blue-600" />
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <BarChart3 className="w-8 h-8 text-white" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Чистий прибуток</p>
-                  <p className="text-3xl font-semibold text-green-600">
-                    {formatCurrency(profitMetrics.totalProfit)}
-                  </p>
-                  <div className="flex items-center mt-2 text-sm text-green-600">
-                    <TrendingUp className="w-4 h-4 mr-1" />
-                    Маржа: {profitMetrics.profitMargin.toFixed(1)}%
-                  </div>
+         <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+          <CardContent className="p-6 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <DollarSign className="w-4 h-4 text-emerald-600" />
+                  <p className="text-sm text-emerald-700 font-medium">Чистий прибуток</p>
                 </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-green-600" />
-                </div>
+                <p className="text-3xl font-bold text-emerald-900 mb-1">{formatCurrency(profitMetrics.totalProfit)}</p>
+                <p className="text-xs text-emerald-600">Маржа: {profitMetrics.profitMargin.toFixed(1)}%</p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                <DollarSign className="w-8 h-8 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+          <CardContent className="p-6 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Factory className="w-4 h-4 text-purple-600" />
+                  <p className="text-sm text-purple-700 font-medium">Витрати на виробництво</p>
+                </div>
+                <p className="text-3xl font-bold text-purple-900 mb-1">{formatCurrency(productionCosts.totalProductionCost)}</p>
+                <p className="text-xs text-purple-600"> Всього витрат</p>
+              </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                <Factory className="w-8 h-8 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Витрати на виробництво</p>
-                  <p className="text-3xl font-semibold text-gray-900">
-                    {formatCurrency(productionCosts.totalProductionCost)}
-                  </p>
-                  <div className="flex items-center mt-2 text-sm text-gray-600">
-                    <Factory className="w-4 h-4 mr-1" />
-                    Всього витрат
-                  </div>
+       <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+          <CardContent className="p-6 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle className="w-4 h-4 text-orange-600" />
+                  <p className="text-sm text-orange-700 font-medium">Товари в дефіциті</p>
                 </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <Factory className="w-6 h-6 text-orange-600" />
-                </div>
+                <p className="text-3xl font-bold text-orange-900 mb-1">{lowStockItems.length}</p>
+                <p className="text-xs text-orange-600">Потребують поповнення</p>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Товари в дефіциті</p>
-                  <p className="text-3xl font-semibold text-red-600">
-                    {lowStockItems.length}
-                  </p>
-                  <div className="flex items-center mt-2 text-sm text-red-600">
-                    <AlertTriangle className="w-4 h-4 mr-1" />
-                    Потребують поповнення
-                  </div>
-                </div>
-                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-red-600" />
-                </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                <AlertTriangle className="w-8 h-8 text-white" />
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
