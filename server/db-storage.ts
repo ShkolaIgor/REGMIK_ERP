@@ -8961,6 +8961,196 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  // Analytics methods for profitability
+  async getSalesAnalytics(period: string = 'month'): Promise<any[]> {
+    try {
+      // Return sales data in format expected by frontend
+      const result = await this.db.select({
+        id: sales.id,
+        status: sales.status,
+        totalAmount: sales.totalAmount,
+        date: sales.createdAt
+      })
+      .from(sales)
+      .orderBy(desc(sales.createdAt));
+      
+      return result;
+    } catch (error) {
+      console.error('Error getting sales analytics:', error);
+      return [];
+    }
+  }
+
+  async getExpensesAnalytics(period: string = 'month'): Promise<any[]> {
+    try {
+      // Return expenses data in format expected by frontend
+      const result = await this.db.select({
+        id: expenses.id,
+        status: expenses.status,
+        totalAmount: expenses.amount,
+        date: expenses.createdAt
+      })
+      .from(expenses)
+      .orderBy(desc(expenses.createdAt));
+      
+      return result;
+    } catch (error) {
+      console.error('Error getting expenses analytics:', error);
+      return [];
+    }
+  }
+
+  async getProfitAnalytics(period: string = 'month'): Promise<any> {
+    try {
+      // Calculate profit from sales and expenses
+      const salesData = await this.getSalesAnalytics(period);
+      const expensesData = await this.getExpensesAnalytics(period);
+      
+      const totalSales = salesData.reduce((sum, sale) => sum + parseFloat(sale.totalAmount || '0'), 0);
+      const totalExpenses = expensesData.reduce((sum, expense) => sum + parseFloat(expense.totalAmount || '0'), 0);
+      
+      return {
+        totalSales,
+        totalExpenses,
+        profit: totalSales - totalExpenses,
+        margin: totalSales > 0 ? ((totalSales - totalExpenses) / totalSales * 100) : 0
+      };
+    } catch (error) {
+      console.error('Error getting profit analytics:', error);
+      return { totalSales: 0, totalExpenses: 0, profit: 0, margin: 0 };
+    }
+  }
+
+  async getTimeEntries(): Promise<any[]> {
+    try {
+      // Return time entries data
+      const result = await this.db.select()
+        .from(timeEntries)
+        .orderBy(desc(timeEntries.createdAt));
+      
+      return result;
+    } catch (error) {
+      console.error('Error getting time entries:', error);
+      return [];
+    }
+  }
+
+  async createTimeEntry(entry: any): Promise<any> {
+    try {
+      const result = await this.db.insert(timeEntries)
+        .values(entry)
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error creating time entry:', error);
+      throw error;
+    }
+  }
+
+  async updateTimeEntry(id: number, entry: any): Promise<any> {
+    try {
+      const result = await this.db.update(timeEntries)
+        .set(entry)
+        .where(eq(timeEntries.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error updating time entry:', error);
+      throw error;
+    }
+  }
+
+  async getInventoryAlerts(): Promise<any[]> {
+    try {
+      const result = await this.db.select()
+        .from(inventoryAlerts)
+        .orderBy(desc(inventoryAlerts.createdAt));
+      
+      return result;
+    } catch (error) {
+      console.error('Error getting inventory alerts:', error);
+      return [];
+    }
+  }
+
+  async checkAndCreateInventoryAlerts(): Promise<any[]> {
+    try {
+      // Check for low stock and create alerts
+      const lowStockProducts = await this.db.select({
+        productId: inventory.productId,
+        currentStock: inventory.quantity,
+        productName: products.name,
+        minStock: products.minStock
+      })
+      .from(inventory)
+      .leftJoin(products, eq(inventory.productId, products.id))
+      .where(
+        and(
+          isNotNull(products.minStock),
+          sql`${inventory.quantity} <= ${products.minStock}`
+        )
+      );
+
+      const alerts = [];
+      for (const product of lowStockProducts) {
+        const existingAlert = await this.db.select()
+          .from(inventoryAlerts)
+          .where(
+            and(
+              eq(inventoryAlerts.productId, product.productId),
+              eq(inventoryAlerts.isResolved, false)
+            )
+          )
+          .limit(1);
+
+        if (existingAlert.length === 0) {
+          const alert = await this.db.insert(inventoryAlerts)
+            .values({
+              productId: product.productId,
+              alertType: 'low_stock',
+              message: `Низький залишок товару ${product.productName}: ${product.currentStock} (мін: ${product.minStock})`,
+              isResolved: false
+            })
+            .returning();
+          alerts.push(alert[0]);
+        }
+      }
+
+      return alerts;
+    } catch (error) {
+      console.error('Error checking inventory alerts:', error);
+      return [];
+    }
+  }
+
+  async getProductProfitability(): Promise<any[]> {
+    try {
+      // Calculate profitability for each product
+      const result = await this.db.select({
+        productId: products.id,
+        productName: products.name,
+        price: products.price,
+        costPrice: products.costPrice
+      })
+      .from(products)
+      .where(and(
+        isNotNull(products.price),
+        isNotNull(products.costPrice)
+      ));
+
+      return result.map(product => ({
+        ...product,
+        profit: parseFloat(product.price || '0') - parseFloat(product.costPrice || '0'),
+        margin: parseFloat(product.price || '0') > 0 
+          ? ((parseFloat(product.price || '0') - parseFloat(product.costPrice || '0')) / parseFloat(product.price || '0') * 100) 
+          : 0
+      }));
+    } catch (error) {
+      console.error('Error getting product profitability:', error);
+      return [];
+    }
+  }
+
 
 }
 
