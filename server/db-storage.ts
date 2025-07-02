@@ -9125,21 +9125,23 @@ export class DatabaseStorage implements IStorage {
 
   async getProductProfitability(): Promise<any[]> {
     try {
-      // Calculate profitability for each product
-      const result = await this.db.select({
-        productId: products.id,
-        productName: products.name,
-        price: products.price,
-        costPrice: products.costPrice
-      })
-      .from(products)
-      .where(and(
-        isNotNull(products.price),
-        isNotNull(products.costPrice)
-      ));
+      // Use raw SQL query to avoid Drizzle ORM issues
+      const result = await this.pool.query(`
+        SELECT 
+          id as "productId",
+          name as "productName", 
+          price,
+          cost_price as "costPrice"
+        FROM products 
+        WHERE price IS NOT NULL AND cost_price IS NOT NULL
+      `);
 
-      return result.map(product => ({
-        ...product,
+      // Calculate profitability
+      return result.rows.map((product: any) => ({
+        productId: product.productId,
+        productName: product.productName,
+        price: product.price,
+        costPrice: product.costPrice,
         profit: parseFloat(product.price || '0') - parseFloat(product.costPrice || '0'),
         margin: parseFloat(product.price || '0') > 0 
           ? ((parseFloat(product.price || '0') - parseFloat(product.costPrice || '0')) / parseFloat(product.price || '0') * 100) 
