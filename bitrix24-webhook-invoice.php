@@ -11,7 +11,15 @@
 
 // Конфігурація
 $bitrixWebhookUrl = 'https://ваш-портал.bitrix24.com/rest/1/webhook_код/'; // Замініть на ваш webhook URL
-$localErpUrl = 'https://f8b5b2ba-8ffe-4b9f-85c7-4b82acc96cfe-00-2vxegxo6dxlmg.picard.replit.dev/api/bitrix/create-order-from-invoice';
+// URL локальної ERP системи - оберіть правильний варіант:
+// Для production Replit (змініть YOUR-APP-NAME на назву вашого додатку):
+$localErpUrl = 'https://YOUR-APP-NAME.replit.app/api/bitrix/create-order-from-invoice';
+
+// Для локального тестування (якщо на тому ж сервері):
+// $localErpUrl = 'http://localhost:5000/api/bitrix/create-order-from-invoice';
+
+// Поточна розробка (тимчасово відключена через мережеві проблеми):
+// $localErpUrl = 'https://f8b5b2ba-8ffe-4b9f-85c7-4b82acc96cfe-00-2vxegxo6dxlmg.picard.replit.dev/api/bitrix/create-order-from-invoice';
 $externalErpUrl = 'https://erp.regmik.ua/bitrix/hs/sync/receive_invoice/';
 $erpLogin = 'ШкоМ.';
 $erpPassword = '100';
@@ -134,7 +142,8 @@ function sendToLocalERP($data) {
     curl_close($ch);
     
     error_log("[PHP WEBHOOK] Локальна ERP відповідь - HTTP: $httpCode, Response: $response");
-    error_log("[PHP WEBHOOK] cURL Info: " . json_encode(curl_getinfo($ch)));
+    $curlInfo = curl_getinfo($ch);
+    error_log("[PHP WEBHOOK] cURL Info: " . json_encode($curlInfo));
     
     // Додаткова діагностика якщо помилка
     if ($httpCode !== 200) {
