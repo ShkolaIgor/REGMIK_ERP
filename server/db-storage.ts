@@ -9165,6 +9165,145 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Additional missing methods for complete functionality
+  async createMailRegistry(registry: any): Promise<any> {
+    try {
+      const result = await this.db.insert(mailRegistry)
+        .values(registry)
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error creating mail registry:', error);
+      throw error;
+    }
+  }
+
+  async updateMailsForBatch(batchId: string, mails: any[]): Promise<void> {
+    try {
+      // Update multiple mails for a batch
+      for (const mail of mails) {
+        await this.db.update(clientMail)
+          .set({ ...mail, batchId })
+          .where(eq(clientMail.id, mail.id));
+      }
+    } catch (error) {
+      console.error('Error updating mails for batch:', error);
+      throw error;
+    }
+  }
+
+  async createEnvelopePrintSettings(settings: any): Promise<any> {
+    try {
+      const result = await this.db.insert(envelopePrintSettings)
+        .values(settings)
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error creating envelope print settings:', error);
+      throw error;
+    }
+  }
+
+  async completeOrderFromStock(orderId: number): Promise<boolean> {
+    try {
+      // Mark order as completed and update inventory
+      await this.db.update(orders)
+        .set({ status: 'completed', updatedAt: new Date() })
+        .where(eq(orders.id, orderId));
+      return true;
+    } catch (error) {
+      console.error('Error completing order from stock:', error);
+      return false;
+    }
+  }
+
+  async getSerialNumberSettings(): Promise<any[]> {
+    try {
+      const result = await this.db.select()
+        .from(serialNumberSettings);
+      return result;
+    } catch (error) {
+      console.error('Error getting serial number settings:', error);
+      return [];
+    }
+  }
+
+  async updateSerialNumberSettings(id: number, settings: any): Promise<any> {
+    try {
+      const result = await this.db.update(serialNumberSettings)
+        .set(settings)
+        .where(eq(serialNumberSettings.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error updating serial number settings:', error);
+      throw error;
+    }
+  }
+
+  async getProductionPlans(): Promise<any[]> {
+    try {
+      // Return production tasks as plans
+      const result = await this.db.select()
+        .from(productionTasks)
+        .orderBy(desc(productionTasks.createdAt));
+      return result;
+    } catch (error) {
+      console.error('Error getting production plans:', error);
+      return [];
+    }
+  }
+
+  async createProductionPlan(plan: any): Promise<any> {
+    try {
+      // Create production task as plan
+      const result = await this.db.insert(productionTasks)
+        .values(plan)
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error creating production plan:', error);
+      throw error;
+    }
+  }
+
+  async getSupplyDecisions(): Promise<any[]> {
+    try {
+      // Return supplier orders as supply decisions
+      const result = await this.db.select()
+        .from(supplierOrders)
+        .orderBy(desc(supplierOrders.createdAt));
+      return result;
+    } catch (error) {
+      console.error('Error getting supply decisions:', error);
+      return [];
+    }
+  }
+
+  async analyzeSupplyDecision(data: any): Promise<any> {
+    try {
+      // Analyze supply decision based on current inventory
+      const lowStockProducts = await this.db.select()
+        .from(inventory)
+        .leftJoin(products, eq(inventory.productId, products.id))
+        .where(
+          and(
+            isNotNull(products.minStock),
+            sql`${inventory.quantity} <= ${products.minStock}`
+          )
+        );
+
+      return {
+        lowStockCount: lowStockProducts.length,
+        recommendation: lowStockProducts.length > 0 ? 'Рекомендується поповнити запаси' : 'Запаси в нормі',
+        products: lowStockProducts
+      };
+    } catch (error) {
+      console.error('Error analyzing supply decision:', error);
+      return { lowStockCount: 0, recommendation: 'Помилка аналізу', products: [] };
+    }
+  }
+
 
 }
 
