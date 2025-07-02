@@ -9906,6 +9906,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Новий endpoint для створення замовлень з повних даних рахунків Бітрікс24
+  app.post("/api/bitrix/create-order-from-invoice", async (req, res) => {
+    try {
+      console.log("[BITRIX ORDER] Створення замовлення з даних рахунку Бітрікс24:", JSON.stringify(req.body, null, 2));
+      
+      const { invoiceNumb, clientEDRPOU, companyEDRPOU, items } = req.body;
+      
+      if (!invoiceNumb || !clientEDRPOU || !companyEDRPOU || !items) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Відсутні обов'язкові поля: invoiceNumb, clientEDRPOU, companyEDRPOU, items" 
+        });
+      }
+
+      // Знаходимо клієнта за податковим кодом
+      const clientsResponse = await storage.getClients();
+      const clients = clientsResponse.clients || clientsResponse;
+      const client = clients.find(c => c.taxCode === clientEDRPOU);
+      
+      if (!client) {
+        return res.status(404).json({ 
+          success: false, 
+          message: `Клієнт з податковим кодом ${clientEDRPOU} не знайдений` 
+        });
+      }
+
+      // Знаходимо компанію за податковим кодом
+      const companies = await storage.getCompanies();
+      const company = companies.find(c => c.taxCode === companyEDRPOU);
+      
+      if (!company) {
+        return res.status(404).json({ 
+          success: false, 
+          message: `Компанія з податковим кодом ${companyEDRPOU} не знайдена` 
+        });
+      }
+
+      // Обробляємо товари/послуги
+      const products = await storage.getProducts();
+      const orderItems = [];
+      let totalAmount = 0;
+
+      for (const item of items) {
+        // Пошук товару за повним співпадінням назви
+        const matchingProducts = products.filter(p => p.name === item.productName);
+        
+        if (matchingProducts.length === 0) {
+          console.warn(`[BITRIX ORDER] Товар "${item.productName}" не знайдено`);
+          continue;
+        }
+
+        // Якщо знайдено декілька - беремо останнє додане (з найбільшим ID)
+        const product = matchingProducts.reduce((latest, current) => 
+          current.id > latest.id ? current : latest
+        );
+
+        const orderItem = {
+          productId: product.id,
+          quantity: parseInt(item.quantity) || 1,
+          unitPrice: parseFloat(item.priceAccount) || 0,
+          totalPrice: parseFloat(item.priceSum) || 0,
+          priceBrutto: parseFloat(item.priceBrutto) || null,
+          notes: `Тип: ${item.measureSymbol}`, // "послуга" або "товар"
+          // Додаємо прапорець що це з Бітрікс24 для правильної обробки цін
+          isBitrixItem: true
+        };
+
+        orderItems.push(orderItem);
+        totalAmount += orderItem.totalPrice;
+      }
+
+      if (orderItems.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Жоден товар з рахунку не знайдений в системі" 
+        });
+      }
+
+      // Створюємо замовлення
+      const orderData = {
+        orderNumber: invoiceNumb,
+        clientId: client.id,
+        companyId: company.id,
+        status: "Нове",
+        totalAmount: totalAmount.toString(),
+        notes: `Створено з рахунку Бітрікс24: ${invoiceNumb}`,
+        source: 'bitrix24'
+      };
+
+      console.log(`[BITRIX ORDER] Створення замовлення:`, orderData);
+      console.log(`[BITRIX ORDER] Позиції замовлення (${orderItems.length}):`, orderItems);
+
+      const order = await storage.createOrder(orderData, orderItems);
+      
+      res.json({
+        success: true,
+        message: `Замовлення ${invoiceNumb} успішно створено`,
+        order_id: order.id,
+        order_number: order.orderNumber,
+        client_name: client.name,
+        company_name: company.name,
+        total_amount: totalAmount,
+        items_count: orderItems.length
+      });
+
+    } catch (error) {
+      console.error("[BITRIX ORDER] Помилка створення замовлення:", error);
+      res.status(500).json({
+        success: false,
+        message: "Помилка створення замовлення",
+        error: error instanceof Error ? error.message : "Невідома помилка"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   // Process Component Categories XML Import Async Function
   async function processComponentCategoriesXmlImportAsync(

@@ -764,35 +764,49 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createOrder(insertOrder: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
-    // Генеруємо номер замовлення
-    const orderNumber = `ORD-${Date.now()}`;
+    // Генеруємо номер замовлення якщо не передано
+    const orderNumber = insertOrder.orderNumber || `ORD-${Date.now()}`;
     
-    // Отримуємо ціни товарів з бази даних та розраховуємо загальну суму
+    // Визначаємо чи це замовлення з Бітрікс24 (мають передані ціни)
+    const isBitrixOrder = insertOrder.source === 'bitrix24' && items.some(item => item.unitPrice !== undefined);
+    
     let totalAmount = 0;
     const itemsWithPrices: InsertOrderItem[] = [];
     
     for (const item of items) {
-      // Отримуємо товар з бази даних для встановлення актуальної ціни
-      const product = await db.select().from(products).where(eq(products.id, typeof item.productId === 'string' ? parseInt(item.productId) : item.productId)).limit(1);
-      
-      if (product.length > 0) {
-        const unitPrice = parseFloat(product[0].retailPrice || "0");
-        const quantity = parseFloat(typeof item.quantity === 'string' ? item.quantity : item.quantity?.toString() || "1");
-        const totalPrice = unitPrice * quantity;
-        
+      if (isBitrixOrder && item.unitPrice !== undefined && item.totalPrice !== undefined) {
+        // Для Бітрікс24 замовлень використовуємо передані ціни
         const itemWithPrice = {
           ...item,
-          unitPrice: unitPrice.toString(),
-          totalPrice: totalPrice.toString()
+          unitPrice: item.unitPrice.toString(),
+          totalPrice: item.totalPrice.toString()
         };
         
         itemsWithPrices.push(itemWithPrice);
-        totalAmount += totalPrice;
+        totalAmount += parseFloat(item.totalPrice.toString());
       } else {
-        // Якщо товар не знайдено, використовуємо передану ціну
-        const itemPrice = parseFloat(item.totalPrice || "0");
-        itemsWithPrices.push(item);
-        totalAmount += itemPrice;
+        // Для звичайних замовлень отримуємо ціни з бази даних
+        const product = await db.select().from(products).where(eq(products.id, typeof item.productId === 'string' ? parseInt(item.productId) : item.productId)).limit(1);
+        
+        if (product.length > 0) {
+          const unitPrice = parseFloat(product[0].retailPrice || "0");
+          const quantity = parseFloat(typeof item.quantity === 'string' ? item.quantity : item.quantity?.toString() || "1");
+          const totalPrice = unitPrice * quantity;
+          
+          const itemWithPrice = {
+            ...item,
+            unitPrice: unitPrice.toString(),
+            totalPrice: totalPrice.toString()
+          };
+          
+          itemsWithPrices.push(itemWithPrice);
+          totalAmount += totalPrice;
+        } else {
+          // Якщо товар не знайдено, використовуємо передану ціну
+          const itemPrice = parseFloat(item.totalPrice || "0");
+          itemsWithPrices.push(item);
+          totalAmount += itemPrice;
+        }
       }
     }
 
