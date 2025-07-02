@@ -10064,8 +10064,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Створюємо замовлення
-      console.log("[BITRIX ORDER] =============== СТВОРЕННЯ ЗАМОВЛЕННЯ ===============");
+      // Перевіряємо чи існує замовлення з таким invoice_number
+      console.log("[BITRIX ORDER] =============== ПЕРЕВІРКА ІСНУЮЧОГО ЗАМОВЛЕННЯ ===============");
+      const existingOrder = await storage.getOrderByInvoiceNumber(invoiceNumb);
+      
+      if (existingOrder) {
+        console.log("[BITRIX ORDER] Знайдено існуюче замовлення з invoice_number:", invoiceNumb, "ID:", existingOrder.id);
+        console.log("[BITRIX ORDER] Оновлюємо існуюче замовлення замість створення дублікату...");
+        
+        // Оновлюємо дані замовлення
+        const updateData = {
+          clientId: client.id,
+          companyId: company.id,
+          totalAmount: totalAmount.toString(),
+          notes: `Оновлено з рахунку Бітрікс24: ${invoiceNumb} (${new Date().toLocaleString('uk-UA')})`,
+          source: 'bitrix24'
+        };
+        
+        const updatedOrder = await storage.updateOrder(existingOrder.id, updateData);
+        
+        // Видаляємо старі позиції та додаємо нові
+        await storage.deleteOrderItems(existingOrder.id);
+        await storage.createOrderItems(existingOrder.id, orderItems);
+        
+        console.log("[BITRIX ORDER] ✅ Замовлення оновлено з ID:", updatedOrder.id);
+        
+        res.json({
+          success: true,
+          message: `Замовлення ${invoiceNumb} успішно оновлено`,
+          order_id: updatedOrder.id,
+          order_number: updatedOrder.orderNumber,
+          client_name: client.name,
+          company_name: company.name,
+          total_amount: totalAmount,
+          items_count: orderItems.length,
+          action: "updated"
+        });
+        return;
+      }
+      
+      console.log("[BITRIX ORDER] Замовлення з invoice_number", invoiceNumb, "не знайдено, створюємо нове...");
+
+      // Створюємо нове замовлення
+      console.log("[BITRIX ORDER] =============== СТВОРЕННЯ НОВОГО ЗАМОВЛЕННЯ ===============");
       
       const orderData = {
         // НЕ передаємо orderNumber - він автоматично генерується в createOrder
@@ -10097,7 +10138,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         client_name: client.name,
         company_name: company.name,
         total_amount: finalTotalAmount,
-        items_count: orderItems.length
+        items_count: orderItems.length,
+        action: "created"
       });
 
     } catch (error) {

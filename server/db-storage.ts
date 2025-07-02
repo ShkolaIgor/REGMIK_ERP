@@ -689,6 +689,11 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
+  async getOrderByInvoiceNumber(invoiceNumber: string): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.invoiceNumber, invoiceNumber));
+    return order;
+  }
+
   async getOrder(id: number): Promise<any> {
     try {
       console.log(`Getting order with ID: ${id}`);
@@ -862,7 +867,28 @@ export class DatabaseStorage implements IStorage {
     return order;
   }
 
-  async updateOrder(id: number, insertOrder: InsertOrder, items: InsertOrderItem[]): Promise<Order | undefined> {
+  // Простий метод оновлення замовлення без позицій
+  async updateOrder(id: number, updateData: Partial<InsertOrder>): Promise<Order | undefined> {
+    const orderResult = await db.update(orders)
+      .set(updateData)
+      .where(eq(orders.id, id))
+      .returning();
+    
+    return orderResult[0];
+  }
+
+  // Метод для видалення позицій замовлення
+  async deleteOrderItems(orderId: number): Promise<void> {
+    await db.delete(orderItems).where(eq(orderItems.orderId, orderId));
+  }
+
+  // Метод для створення позицій замовлення
+  async createOrderItems(orderId: number, items: any[]): Promise<void> {
+    const itemsToInsert = items.map(item => ({ ...item, orderId }));
+    await db.insert(orderItems).values(itemsToInsert);
+  }
+
+  async updateOrderWithItems(id: number, insertOrder: InsertOrder, items: InsertOrderItem[]): Promise<Order | undefined> {
     try {
       // Отримуємо ціни товарів з бази даних та розраховуємо загальну суму
       let totalAmount = 0;
