@@ -764,8 +764,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createOrder(insertOrder: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
-    // Генеруємо номер замовлення якщо не передано
-    const orderNumber = insertOrder.orderNumber || `ORD-${Date.now()}`;
+    // Автоматично генеруємо послідовний номер замовлення якщо не передано
+    let orderNumber = insertOrder.orderNumber;
+    
+    if (!orderNumber) {
+      // Знаходимо останній числовий номер замовлення
+      const lastOrderResult = await db.execute(sql`
+        SELECT order_number 
+        FROM orders 
+        WHERE order_number ~ '^[0-9]+$'
+        ORDER BY CAST(order_number AS INTEGER) DESC 
+        LIMIT 1
+      `);
+      
+      let nextNumber = 52422; // За замовчуванням, якщо немає попередніх
+      if (lastOrderResult.rows.length > 0) {
+        const lastNumber = parseInt(lastOrderResult.rows[0].order_number as string);
+        nextNumber = lastNumber + 1;
+      }
+      
+      orderNumber = nextNumber.toString();
+    }
     
     // Визначаємо чи це замовлення з Бітрікс24 (мають передані ціни)
     const isBitrixOrder = insertOrder.source === 'bitrix24' && items.some(item => item.unitPrice !== undefined);

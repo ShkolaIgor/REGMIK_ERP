@@ -10068,6 +10068,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("[BITRIX ORDER] =============== СТВОРЕННЯ ЗАМОВЛЕННЯ ===============");
       
       const orderData = {
+        // НЕ передаємо orderNumber - він автоматично генерується в createOrder
         invoiceNumber: invoiceNumb,    // Номер рахунку з Бітрікс24
         clientId: client.id,
         companyId: company.id,
