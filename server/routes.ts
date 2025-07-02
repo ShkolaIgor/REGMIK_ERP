@@ -9952,15 +9952,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Пошук товару за повним співпадінням назви
         const matchingProducts = products.filter(p => p.name === item.productName);
         
+        let product;
         if (matchingProducts.length === 0) {
-          console.warn(`[BITRIX ORDER] Товар "${item.productName}" не знайдено`);
-          continue;
-        }
+          // Товар не знайдено - створюємо новий
+          console.log(`[BITRIX ORDER] Товар "${item.productName}" не знайдено, створюю новий...`);
+          
+          const sku = item.productCode || `BTX-${Date.now()}`;
+          const productData = {
+            name: item.productName,
+            sku: sku,
+            description: `Товар синхронізований з Бітрікс24. Код: ${item.productCode || 'не вказано'}`,
+            isActive: true,
+            categoryId: 1, // Базова категорія
+            costPrice: item.priceAccount?.toString() || "0",
+            retailPrice: item.priceAccount?.toString() || "0",
+          };
 
-        // Якщо знайдено декілька - беремо останнє додане (з найбільшим ID)
-        const product = matchingProducts.reduce((latest, current) => 
-          current.id > latest.id ? current : latest
-        );
+          product = await storage.createProduct(productData);
+          console.log(`[BITRIX ORDER] Автоматично створено товар: ${product.name} (SKU: ${product.sku})`);
+        } else {
+          // Якщо знайдено декілька - беремо останнє додане (з найбільшим ID)
+          product = matchingProducts.reduce((latest, current) => 
+            current.id > latest.id ? current : latest
+          );
+        }
 
         const quantity = parseInt(item.quantity) || 1;
         const unitPrice = parseFloat(item.priceAccount) || 0;
@@ -9972,9 +9987,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           unitPrice: unitPrice,
           totalPrice: totalPrice,
           priceBrutto: parseFloat(item.priceBrutto) || null,
-          notes: `Тип: ${item.measureSymbol}`, // "послуга" або "товар"
-          // Додаємо прапорець що це з Бітрікс24 для правильної обробки цін
-          isBitrixItem: true
+          notes: `Тип: ${item.measureSymbol}. З Бітрікс24` // "послуга" або "товар"
         };
 
         orderItems.push(orderItem);

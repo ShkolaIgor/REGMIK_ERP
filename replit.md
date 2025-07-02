@@ -123,6 +123,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### July 2, 2025
+- ✅ **АВТОМАТИЧНЕ СТВОРЕННЯ ТОВАРІВ З БІТРІКС24** - повністю реалізовано функціонал auto-create товарів
+- ✅ **API endpoint `/api/bitrix/create-order-from-invoice`** - тепер автоматично створює товари якщо не знайдені
+- ✅ **Логіка пошуку товарів** - спочатку шукає за точною назвою, якщо не знайдено → створює новий
+- ✅ **SKU генерація** - використовує productCode з Бітрікс24 або автогенерує BTX-timestamp
+- ✅ **Ціноутворення** - нові товари отримують ціни з priceAccount з Бітрікс24 даних
+- ✅ **Протестовано успішно** - створено товар "Новий товар з Бітрікс24" (SKU: BTX-NEWTST) та замовлення #63
+- ✅ **Виправлено дублювання методів** - видалено duplicate getProductProfitability та getTopProfitableProducts
+- ✅ **Система готова для production** - повна інтеграція Бітрікс24 з автоматичним створенням товарів
+
 ### June 30, 2025
 - ✅ **МАСОВЕ ОЧИЩЕННЯ ЗАСТАРІЛИХ СТОРІНОК** - видалено всі старі версії компонентів системи
 - ✅ **Очищено листування** - видалено client-mail-backup, client-mail-broken, client-mail-corrected, client-mail-final
