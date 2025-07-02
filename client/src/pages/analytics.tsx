@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, TrendingDown, DollarSign, Target, AlertTriangle, Clock } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Target, AlertTriangle, Clock, ChartSpline} from "lucide-react";
 import { LoadingState, DashboardLoadingState } from "@/components/ui/loading-state";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ChartSkeleton, CardSkeleton } from "@/components/ui/skeleton";
@@ -79,25 +79,40 @@ export default function Analytics() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Аналітика</h1>
-        <div className="flex gap-2">
-          <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="week">Тиждень</SelectItem>
-              <SelectItem value="month">Місяць</SelectItem>
-              <SelectItem value="year">Рік</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        {/* Header Section  sticky top-0 z-40*/}
+        <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+          <div className="w-full px-8 py-3">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <ChartSpline className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                      Аналітика
+                    </h1>
+                    <p className="text-gray-500 mt-1">Аналітика виробництва</p>
+                  </div>
+                </div>
+            <div className="flex items-center space-x-4">
+            <Select value={period} onValueChange={setPeriod}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="week">Тиждень</SelectItem>
+                <SelectItem value="month">Місяць</SelectItem>
+                <SelectItem value="year">Рік</SelectItem>
+              </SelectContent>
+            </Select>
+            </div>
+              </div>
+          </div>
+        </header>
+        
       {/* Основні показники */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Statistics Cards */}
         {salesLoading || expensesLoading || timeLoading ? (
           <>
             <CardSkeleton />
@@ -106,59 +121,88 @@ export default function Analytics() {
             <CardSkeleton />
           </>
         ) : (
-          <>
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+        <div className="w-full px-8 pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Загальні продажі</p>
-                    <p className="text-2xl font-bold text-green-600">₴{totalSales.toLocaleString()}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <TrendingUp className="w-4 h-4 text-blue-600" />
+                      <p className="text-sm text-blue-700 font-medium">Загальні продажі</p>
+                    </div>
+                    <p className="text-3xl font-bold text-blue-900 mb-1">₴{totalSales.toLocaleString()}</p>
+                    <p className="text-xs text-blue-600">Загальні продажі</p>
                   </div>
-                  <TrendingUp className="h-8 w-8 text-green-600" />
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <TrendingUp className="w-8 h-8 text-white" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+            <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Загальні витрати</p>
-                    <p className="text-2xl font-bold text-red-600">₴{totalExpenses.toLocaleString()}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <TrendingDown className="w-4 h-4 text-emerald-600" />
+                      <p className="text-sm text-emerald-700 font-medium">Загальні витрати</p>
+                    </div>
+                    <p className="text-3xl font-bold text-emerald-900 mb-1">₴{totalExpenses.toLocaleString()}</p>
+                    <p className="text-xs text-emerald-600">Загальні витрати</p>
                   </div>
-                  <TrendingDown className="h-8 w-8 text-red-600" />
+                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <TrendingDown className="w-8 h-8 text-white" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Прибуток</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <DollarSign className="w-4 h-4 text-purple-600" />
+                      <p className="text-sm text-purple-700 font-medium">Прибуток</p>
+                    </div>
                     <p className={`text-2xl font-bold ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      ₴{totalProfit.toLocaleString()}
-                    </p>
+                      ₴{totalProfit.toLocaleString()}</p>
+                    <p className="text-xs text-purple-600">Прибуток</p>
                   </div>
-                  <DollarSign className="h-8 w-8 text-blue-600" />
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <DollarSign className="w-8 h-8 text-white" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+              <CardContent className="p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between relative z-10">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Відпрацьовано годин</p>
-                    <p className="text-2xl font-bold text-blue-600">{totalTimeHours}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="w-4 h-4 text-orange-600" />
+                      <p className="text-sm text-orange-700 font-medium">Відпрацьовано годин</p>
+                    </div>
+                    <p className="text-3xl font-bold text-orange-900 mb-1">{totalTimeHours}</p>
+                    <p className="text-xs text-orange-600">≠</p>
                   </div>
-                  <Clock className="h-8 w-8 text-blue-600" />
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                    <Clock className="w-8 h-8 text-white" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          </>
+          </div>
+          </div>
         )}
-      </div>
+
 
       <Tabs defaultValue="profit" className="space-y-4">
         <TabsList>
