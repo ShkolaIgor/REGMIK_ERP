@@ -774,16 +774,20 @@ export class DatabaseStorage implements IStorage {
     const itemsWithPrices: InsertOrderItem[] = [];
     
     for (const item of items) {
-      if (isBitrixOrder && item.unitPrice !== undefined && item.totalPrice !== undefined) {
-        // Для Бітрікс24 замовлень використовуємо передані ціни
+      if (isBitrixOrder && item.unitPrice !== undefined) {
+        // Для Бітрікс24 замовлень використовуємо передані ціни та розраховуємо totalPrice
+        const quantity = parseFloat(typeof item.quantity === 'string' ? item.quantity : item.quantity?.toString() || "1");
+        const unitPrice = parseFloat(item.unitPrice.toString());
+        const calculatedTotalPrice = quantity * unitPrice;
+        
         const itemWithPrice = {
           ...item,
-          unitPrice: item.unitPrice.toString(),
-          totalPrice: item.totalPrice.toString()
+          unitPrice: unitPrice.toString(),
+          totalPrice: calculatedTotalPrice.toString()
         };
         
         itemsWithPrices.push(itemWithPrice);
-        totalAmount += parseFloat(item.totalPrice.toString());
+        totalAmount += calculatedTotalPrice;
       } else {
         // Для звичайних замовлень отримуємо ціни з бази даних
         const product = await db.select().from(products).where(eq(products.id, typeof item.productId === 'string' ? parseInt(item.productId) : item.productId)).limit(1);

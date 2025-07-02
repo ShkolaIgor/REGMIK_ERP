@@ -9962,11 +9962,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           current.id > latest.id ? current : latest
         );
 
+        const quantity = parseInt(item.quantity) || 1;
+        const unitPrice = parseFloat(item.priceAccount) || 0;
+        const totalPrice = quantity * unitPrice;
+
         const orderItem = {
           productId: product.id,
-          quantity: parseInt(item.quantity) || 1,
-          unitPrice: parseFloat(item.priceAccount) || 0,
-          totalPrice: parseFloat(item.priceSum) || 0,
+          quantity: quantity,
+          unitPrice: unitPrice,
+          totalPrice: totalPrice,
           priceBrutto: parseFloat(item.priceBrutto) || null,
           notes: `Тип: ${item.measureSymbol}`, // "послуга" або "товар"
           // Додаємо прапорець що це з Бітрікс24 для правильної обробки цін
@@ -9974,7 +9978,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
 
         orderItems.push(orderItem);
-        totalAmount += orderItem.totalPrice;
+        totalAmount += totalPrice;
       }
 
       if (orderItems.length === 0) {
@@ -10000,6 +10004,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const order = await storage.createOrder(orderData, orderItems);
       
+      // Використовуємо загальну суму з створеного замовлення (Database Storage правильно її розрахував)
+      const finalTotalAmount = parseFloat(order.totalAmount || "0");
+      
       res.json({
         success: true,
         message: `Замовлення ${invoiceNumb} успішно створено`,
@@ -10007,7 +10014,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         order_number: order.orderNumber,
         client_name: client.name,
         company_name: company.name,
-        total_amount: totalAmount,
+        total_amount: finalTotalAmount,
         items_count: orderItems.length
       });
 
