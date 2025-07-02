@@ -195,8 +195,10 @@ export default function SupplierDocumentTypes() {
           </header>
       
         {/* Search */}
-        <div className="flex items-center gap-4">
-          <div className="relative flex-1 max-w-md">
+      <div className="w-full pb-3">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               placeholder="Пошук за назвою або описом..."
@@ -205,8 +207,9 @@ export default function SupplierDocumentTypes() {
               className="pl-10"
             />
           </div>
-        </div>
-
+        </CardContent>
+        </Card>
+      </div>
         {/* Types Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTypes.map((type: SupplierDocumentType) => (

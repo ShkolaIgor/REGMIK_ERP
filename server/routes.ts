@@ -124,7 +124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/analytics/product-profitability", isSimpleAuthenticated, async (req, res) => {
     try {
       const { period = 'month' } = req.query;
-      const profitabilityData = await storage.calculateProductProfitability(period as string);
+      const profitabilityData = await storage.getProductProfitability();
       res.json(profitabilityData);
     } catch (error) {
       console.error("Error fetching product profitability:", error);

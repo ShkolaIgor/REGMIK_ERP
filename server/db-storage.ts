@@ -9151,6 +9151,20 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getTopProfitableProducts(limit: number = 10, period: string = 'month'): Promise<any[]> {
+    try {
+      const profitabilityData = await this.getProductProfitability();
+      
+      // Sort by profit descending and take top N
+      return profitabilityData
+        .sort((a, b) => b.profit - a.profit)
+        .slice(0, limit);
+    } catch (error) {
+      console.error('Error getting top profitable products:', error);
+      return [];
+    }
+  }
+
 
 }
 
