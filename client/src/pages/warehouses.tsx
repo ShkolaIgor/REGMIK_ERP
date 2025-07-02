@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Building2, MapPin, Edit, Trash2, Search } from "lucide-react";
+import { Plus, Building2, MapPin, Edit, Trash2, Search, House } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -116,34 +116,26 @@ export default function WarehousesPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Building2 className="h-6 w-6 text-blue-600" />
-              <h1 className="text-xl font-semibold">Склади</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header Section  sticky top-0 z-40*/}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="w-full px-8 py-3">
+          <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <House className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Склади</h1>
+                  <p className="text-gray-500 mt-1">Управління складами</p>
             </div>
-            <Badge variant="secondary" className="flex items-center">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-1" />
-              Онлайн
-            </Badge>
           </div>
           <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Пошук складів..."
-                className="w-80 pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
+                <Button 
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <Plus className="w-4 h-4 mr-2" />
                   Додати склад
                 </Button>
               </DialogTrigger>
@@ -162,7 +154,27 @@ export default function WarehousesPage() {
             </Dialog>
           </div>
         </div>
+          </div>
       </header>
+
+      {/* Filters and Actions */}
+      <div className="w-full py-3">
+        <Card>
+          <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2 flex-1 max-w-2xl">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <Input
+          placeholder="Пошук складів..."
+          className="w-80 pl-10"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+            </div>
+                  </CardContent>
+                </Card>
+          </div>
 
       {/* Content */}
       <div className="p-6">

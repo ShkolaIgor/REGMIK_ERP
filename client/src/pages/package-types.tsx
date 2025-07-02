@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Package, Search } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Search, Cpu } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 interface PackageType {
@@ -189,17 +189,27 @@ export default function PackageTypes() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Типи корпусів</h1>
-          <p className="text-gray-600">Керування довідником типів корпусів компонентів</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header Section  sticky top-0 z-40*/}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="w-full px-8 py-3">
+          <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Cpu className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Типи корпусів</h1>
+                  <p className="text-gray-500 mt-1">Керування довідником типів корпусів компонентів</p>
         </div>
+        </div>
+      <div className="flex items-center space-x-4">
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={resetForm} className="flex items-center gap-2">
+            <Button 
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+              onClick={resetForm}>
               <Plus className="w-4 h-4" />
               Додати тип корпусу
             </Button>
@@ -268,9 +278,13 @@ export default function PackageTypes() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
+    </div>
+  </header>
 
       {/* Search */}
+    <div className="w-full py-3">
       <Card>
         <CardContent className="p-4">
           <div className="relative">
@@ -284,8 +298,10 @@ export default function PackageTypes() {
           </div>
         </CardContent>
       </Card>
+    </div>
 
       {/* Package Types Table */}
+    <div className="w-full space-y-6 flex-1 overflow-auto">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -350,6 +366,7 @@ export default function PackageTypes() {
           )}
         </CardContent>
       </Card>
+    </div>
     </div>
   );
 }

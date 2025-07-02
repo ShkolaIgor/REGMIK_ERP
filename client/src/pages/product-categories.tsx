@@ -14,7 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit, Trash2, Package, Search } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Search, ChartBarStacked } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Category, InsertCategory } from "@shared/schema";
 
@@ -208,17 +208,30 @@ export default function ProductCategories() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Категорії товарів</h1>
-          <p className="text-muted-foreground mt-2">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header Section  sticky top-0 z-40*/}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="w-full px-8 py-3">
+          <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <ChartBarStacked className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+            Категорії товарів
+                  </h1>
+          <p className="text-gray-500 mt-1">
             Управління категоріями виготовлюваної продукції
           </p>
         </div>
+      </div>
+      <div className="flex items-center space-x-4">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditingCategory(null)}>
+            <Button 
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+              onClick={() => setEditingCategory(null)}>
               <Plus className="mr-2 h-4 w-4" />
               Додати категорію
             </Button>
@@ -273,10 +286,14 @@ export default function ProductCategories() {
             </form>
           </DialogContent>
         </Dialog>
-      </div>
+        </div>
+        </div>
+        </div>
+
+    </header>
 
       {/* Пошук */}
-      <div className="flex items-center gap-4">
+      <div className="w-full pb-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input

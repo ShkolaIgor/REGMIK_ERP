@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Edit, Trash2, Star, RefreshCw } from "lucide-react";
+import { Plus, Edit, Trash2, Star, RefreshCw, PlaneLanding } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Carrier {
@@ -254,12 +254,27 @@ export default function Carriers() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Довідник перевізників</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header Section  sticky top-0 z-40*/}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="w-full px-8 py-3">
+          <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <PlaneLanding className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Довідник перевізників</h1>
+                              <p className="text-gray-500 mt-1">Перевізник товарів</p>
+                                        </div>
+                                      </div>
+                                  <div className="flex items-center space-x-4">
+                  </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={resetForm}>
+            <Button 
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+              onClick={resetForm}>
               <Plus className="h-4 w-4 mr-2" />
               Додати перевізника
             </Button>
@@ -465,6 +480,8 @@ export default function Carriers() {
           </DialogContent>
         </Dialog>
       </div>
+     </div>  
+    </header>
 
       <Card>
         <CardHeader>

@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Building2, Plus, Search, Edit, Trash2, BellElectric } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Department, InsertDepartment } from "@shared/schema";
 import { insertDepartmentSchema } from "@shared/schema";
@@ -154,16 +154,26 @@ export default function DepartmentsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Відділи</h1>
-          <p className="text-muted-foreground">Управління організаційними відділами</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header Section  sticky top-0 z-40*/}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="w-full px-8 py-3">
+          <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <BellElectric className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Відділи</h1>
+                  <p className="text-gray-500 mt-1">Управління організаційними відділами</p>
         </div>
+                                   </div>
+                                <div className="flex items-center space-x-4">
+                </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300" />
               Додати відділ
             </Button>
           </DialogTrigger>
@@ -218,8 +228,15 @@ export default function DepartmentsPage() {
           </DialogContent>
         </Dialog>
       </div>
+            </div>  
+          </header>
 
-      <div className="flex items-center space-x-2">
+        {/* Filters and Actions */}
+        <div className="w-full py-3">
+          <Card>
+            <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 flex-1 max-w-2xl">
         <Search className="h-4 w-4 text-gray-500" />
         <Input
           placeholder="Пошук відділів..."
@@ -228,6 +245,10 @@ export default function DepartmentsPage() {
           className="max-w-sm"
         />
       </div>
+            </div>
+                    </CardContent>
+                  </Card>
+            </div>
 
       {filteredDepartments.length === 0 ? (
         <Card>

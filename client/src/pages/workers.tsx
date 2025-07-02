@@ -39,7 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, User, X } from "lucide-react";
+import { Plus, Edit, Trash2, User, X, UsersRound } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { insertWorkerSchema, type Worker, type InsertWorker, type Position, type Department } from "@shared/schema";
 
@@ -200,21 +200,32 @@ export default function WorkersPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Робітники</h1>
-          <p className="text-muted-foreground">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header Section  sticky top-0 z-40*/}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="w-full px-8 py-3">
+          <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <UsersRound className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Робітники</h1>
+            <p className="text-gray-500 mt-1">
             Управління робітниками підприємства
           </p>
-        </div>
-        <Dialog open={isCreateDialogOpen || !!editingWorker} onOpenChange={(open) => {
+                      </div>
+                    </div>
+                <div className="flex items-center space-x-4">
+       <Dialog open={isCreateDialogOpen || !!editingWorker} onOpenChange={(open) => {
           if (!open) {
             handleDialogClose();
           }
         }}>
           <DialogTrigger asChild>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Button 
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300">
               <Plus className="mr-2 h-4 w-4" />
               Додати робітника
             </Button>
@@ -565,7 +576,10 @@ export default function WorkersPage() {
             </Form>
           </DialogContent>
         </Dialog>
-      </div>
+                  </div>
+                </div>
+                  </div>
+                </header>
 
       <div className="border rounded-lg">
         <Table>

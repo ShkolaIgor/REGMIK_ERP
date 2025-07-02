@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Award } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type Position, type InsertPosition, insertPositionSchema } from "@shared/schema";
@@ -190,15 +190,26 @@ export default function PositionsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Посади</h1>
-          <p className="text-muted-foreground">Управління посадами співробітників</p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header Section  sticky top-0 z-40*/}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="w-full px-8 py-3">
+          <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Award className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Посади</h1>
+            <p className="text-gray-500 mt-1">Управління посадами співробітників</p>
+                      </div>
+                    </div>
+                <div className="flex items-center space-x-4">
+</div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300">
               <Plus className="w-4 h-4 mr-2" />
               Додати посаду
             </Button>
@@ -306,7 +317,13 @@ export default function PositionsPage() {
           </DialogContent>
         </Dialog>
       </div>
+      </div>  
+    </header>
 
+    {/* Filters and Actions */}
+    <div className="w-full py-3">
+      <Card>
+        <CardContent className="p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2 flex-1 max-w-2xl">
           <Search className="w-4 h-4 text-gray-400" />
@@ -328,6 +345,9 @@ export default function PositionsPage() {
           />
         </div>
       </div>
+            </CardContent>
+          </Card>
+    </div>
 
       <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
         {filteredPositions.map((position: Position) => {

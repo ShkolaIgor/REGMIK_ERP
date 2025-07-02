@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit, Trash2, Search, Flame } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Flame, Wand } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -206,17 +206,26 @@ export default function SolderingTypes() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Типи пайки</h1>
-          <p className="text-gray-600">Керування довідником типів пайки компонентів</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">      
+    {/* Header */}
+    <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="w-full px-8 py-3">
+          <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Wand className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Типи пайки</h1>
+          <p className="text-gray-500 mt-1">Керування довідником типів пайки компонентів</p>
+          </div>
         </div>
-
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <div className="flex items-center space-x-4">
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={resetForm} className="flex items-center gap-2">
+            <Button 
+              onClick={resetForm}  
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300">
               <Plus className="w-4 h-4" />
               Додати тип пайки
             </Button>
@@ -297,9 +306,13 @@ export default function SolderingTypes() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
+      </div>
+    </header>
 
       {/* Search */}
+    <div className="w-full py-3">
       <Card>
         <CardContent className="pt-4">
           <div className="relative">
@@ -313,6 +326,7 @@ export default function SolderingTypes() {
           </div>
         </CardContent>
       </Card>
+      </div>
 
       {/* Soldering Types Table */}
       <Card>
