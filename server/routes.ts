@@ -9925,21 +9925,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Новий endpoint для створення замовлень з повних даних рахунків Бітрікс24
   app.post("/api/bitrix/create-order-from-invoice", async (req, res) => {
     try {
-      console.log("[BITRIX ORDER] =================== ПОЧАТОК ОБРОБКИ ===================");
-      console.log("[BITRIX ORDER] HTTP Headers:", JSON.stringify(req.headers, null, 2));
-      console.log("[BITRIX ORDER] Request Body Type:", typeof req.body);
-      console.log("[BITRIX ORDER] Request Body Keys:", Object.keys(req.body || {}));
-      console.log("[BITRIX ORDER] Повні дані запиту:", JSON.stringify(req.body, null, 2));
-      
       const { invoiceNumb, clientEDRPOU, companyEDRPOU, items } = req.body;
-      
-      console.log("[BITRIX ORDER] Витягнуті поля:");
-      console.log("  - invoiceNumb:", invoiceNumb);
-      console.log("  - clientEDRPOU:", clientEDRPOU);
-      console.log("  - companyEDRPOU:", companyEDRPOU);
-      console.log("  - items:", items);
-      console.log("  - items type:", typeof items);
-      console.log("  - items length:", Array.isArray(items) ? items.length : 'не масив');
       
       if (!invoiceNumb || !clientEDRPOU || !companyEDRPOU || !items) {
         return res.status(400).json({ 
@@ -9949,21 +9935,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Знаходимо клієнта за податковим кодом
-      console.log("[BITRIX ORDER] =============== ПОШУК КЛІЄНТА ===============");
       const clientsResponse = await storage.getClients();
       const clients = clientsResponse.clients || clientsResponse;
-      console.log("[BITRIX ORDER] Загальна кількість клієнтів в базі:", clients.length);
-      console.log("[BITRIX ORDER] Шукаємо клієнта з податковим кодом:", clientEDRPOU);
-      
-      // Виводимо всіх клієнтів з податковими кодами для діагностики
-      const clientsWithTaxCode = clients.filter(c => c.taxCode);
-      console.log("[BITRIX ORDER] Клієнти з податковими кодами:", clientsWithTaxCode.map(c => ({ id: c.id, name: c.name, taxCode: c.taxCode })));
-      
       const client = clients.find(c => c.taxCode === clientEDRPOU);
-      console.log("[BITRIX ORDER] Знайдений клієнт:", client ? `${client.name} (ID: ${client.id})` : 'НЕ ЗНАЙДЕНО');
       
       if (!client) {
-        console.log("[BITRIX ORDER] ПОМИЛКА: Клієнт не знайдений");
+        const clientsWithTaxCode = clients.filter(c => c.taxCode);
         return res.status(404).json({ 
           success: false, 
           message: `Клієнт з податковим кодом ${clientEDRPOU} не знайдений`,
@@ -9972,20 +9949,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Знаходимо компанію за податковим кодом
-      console.log("[BITRIX ORDER] =============== ПОШУК КОМПАНІЇ ===============");
       const companies = await storage.getCompanies();
-      console.log("[BITRIX ORDER] Загальна кількість компаній в базі:", companies.length);
-      console.log("[BITRIX ORDER] Шукаємо компанію з податковим кодом:", companyEDRPOU);
-      
-      // Виводимо всі компанії з податковими кодами для діагностики
-      const companiesWithTaxCode = companies.filter(c => c.taxCode);
-      console.log("[BITRIX ORDER] Компанії з податковими кодами:", companiesWithTaxCode.map(c => ({ id: c.id, name: c.name, taxCode: c.taxCode })));
-      
       const company = companies.find(c => c.taxCode === companyEDRPOU);
-      console.log("[BITRIX ORDER] Знайдена компанія:", company ? `${company.name} (ID: ${company.id})` : 'НЕ ЗНАЙДЕНО');
       
       if (!company) {
-        console.log("[BITRIX ORDER] ПОМИЛКА: Компанія не знайдена");
+        const companiesWithTaxCode = companies.filter(c => c.taxCode);
         return res.status(404).json({ 
           success: false, 
           message: `Компанія з податковим кодом ${companyEDRPOU} не знайдена`,
@@ -9994,25 +9962,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Обробляємо товари/послуги
-      console.log("[BITRIX ORDER] =============== ОБРОБКА ТОВАРІВ ===============");
       const products = await storage.getProducts();
-      console.log("[BITRIX ORDER] Загальна кількість товарів в базі:", products.length);
       const orderItems = [];
       let totalAmount = 0;
 
-      console.log("[BITRIX ORDER] Обробляємо", items.length, "позицій з рахунку:");
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
-        console.log(`[BITRIX ORDER] === Позиція ${i + 1} ===`);
-        console.log("[BITRIX ORDER] Дані позиції:", JSON.stringify(item, null, 2));
         // Пошук товару за повним співпадінням назви
         const matchingProducts = products.filter(p => p.name === item.productName);
         
         let product;
         if (matchingProducts.length === 0) {
           // Товар не знайдено - створюємо новий
-          console.log(`[BITRIX ORDER] Товар "${item.productName}" не знайдено, створюю новий...`);
-          
           const sku = item.productCode || `BTX-${Date.now()}`;
           const productData = {
             name: item.productName,
@@ -10025,23 +9986,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
 
           product = await storage.createProduct(productData);
-          console.log(`[BITRIX ORDER] Автоматично створено товар: ${product.name} (SKU: ${product.sku}, ID: ${product.id})`);
         } else {
           // Якщо знайдено декілька - беремо останнє додане (з найбільшим ID)
           product = matchingProducts.reduce((latest, current) => 
             current.id > latest.id ? current : latest
           );
-          console.log(`[BITRIX ORDER] Знайдено існуючий товар: ${product.name} (ID: ${product.id})`);
         }
 
         const quantity = parseInt(item.quantity) || 1;
         const unitPrice = parseFloat(item.priceAccount) || 0;
         const totalPrice = quantity * unitPrice;
-
-        console.log(`[BITRIX ORDER] Обчислення цін для позиції:`);
-        console.log(`  - Кількість: ${quantity}`);
-        console.log(`  - Ціна за одиницю: ${unitPrice}`);
-        console.log(`  - Загальна ціна: ${totalPrice}`);
 
         const orderItem = {
           productId: product.id,
@@ -10049,10 +10003,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           unitPrice: unitPrice,
           totalPrice: totalPrice,
           priceBrutto: parseFloat(item.priceBrutto) || null,
-          notes: `Тип: ${item.measureSymbol}. З Бітрікс24` // "послуга" або "товар"
+          notes: `Тип: ${item.measureSymbol}. З Бітрікс24`
         };
 
-        console.log("[BITRIX ORDER] Створена позиція замовлення:", orderItem);
         orderItems.push(orderItem);
         totalAmount += totalPrice;
       }
@@ -10065,13 +10018,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Перевіряємо чи існує замовлення з таким invoice_number
-      console.log("[BITRIX ORDER] =============== ПЕРЕВІРКА ІСНУЮЧОГО ЗАМОВЛЕННЯ ===============");
       const existingOrder = await storage.getOrderByInvoiceNumber(invoiceNumb);
       
       if (existingOrder) {
-        console.log("[BITRIX ORDER] Знайдено існуюче замовлення з invoice_number:", invoiceNumb, "ID:", existingOrder.id);
-        console.log("[BITRIX ORDER] Оновлюємо існуюче замовлення замість створення дублікату...");
-        
         // Оновлюємо дані замовлення
         const updateData = {
           clientId: client.id,
@@ -10087,8 +10036,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.deleteOrderItems(existingOrder.id);
         await storage.createOrderItems(existingOrder.id, orderItems);
         
-        console.log("[BITRIX ORDER] ✅ Замовлення оновлено з ID:", updatedOrder.id);
-        
         res.json({
           success: true,
           message: `Замовлення ${invoiceNumb} успішно оновлено`,
@@ -10102,15 +10049,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         return;
       }
-      
-      console.log("[BITRIX ORDER] Замовлення з invoice_number", invoiceNumb, "не знайдено, створюємо нове...");
 
       // Створюємо нове замовлення
-      console.log("[BITRIX ORDER] =============== СТВОРЕННЯ НОВОГО ЗАМОВЛЕННЯ ===============");
-      
       const orderData = {
-        // НЕ передаємо orderNumber - він автоматично генерується в createOrder
-        invoiceNumber: invoiceNumb,    // Номер рахунку з Бітрікс24
+        invoiceNumber: invoiceNumb,
         clientId: client.id,
         companyId: company.id,
         status: "Нове",
@@ -10119,15 +10061,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         source: 'bitrix24'
       };
 
-      console.log(`[BITRIX ORDER] Дані замовлення для створення:`, JSON.stringify(orderData, null, 2));
-      console.log(`[BITRIX ORDER] Позиції замовлення (${orderItems.length}):`, JSON.stringify(orderItems, null, 2));
-      console.log(`[BITRIX ORDER] Загальна сума позицій: ${totalAmount}`);
-
-      console.log("[BITRIX ORDER] Викликаємо storage.createOrder...");
       const order = await storage.createOrder(orderData, orderItems);
-      console.log("[BITRIX ORDER] ✅ Замовлення створено з ID:", order.id);
-      
-      // Використовуємо загальну суму з створеного замовлення (Database Storage правильно її розрахував)
       const finalTotalAmount = parseFloat(order.totalAmount || "0");
       
       res.json({
@@ -10143,23 +10077,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
     } catch (error) {
-      console.error("[BITRIX ORDER] ❌ КРИТИЧНА ПОМИЛКА:", error);
-      console.error("[BITRIX ORDER] Stack trace:", error.stack);
-      console.error("[BITRIX ORDER] Деталі помилки:", {
-        name: error.name,
-        message: error.message,
-        cause: error.cause
-      });
-      
       res.status(500).json({
         success: false,
         message: "Помилка створення замовлення",
-        error: error instanceof Error ? error.message : "Невідома помилка",
-        errorType: error.name,
-        timestamp: new Date().toISOString()
+        error: error instanceof Error ? error.message : "Невідома помилка"
       });
-      
-      console.log("[BITRIX ORDER] =================== ЗАВЕРШЕНО З ПОМИЛКОЮ ===================");
     }
   });
 
