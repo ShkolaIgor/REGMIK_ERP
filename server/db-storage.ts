@@ -9141,49 +9141,9 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getProductProfitability(): Promise<any[]> {
-    try {
-      // Use raw SQL query to avoid Drizzle ORM issues
-      const result = await this.pool.query(`
-        SELECT 
-          id as "productId",
-          name as "productName", 
-          price,
-          cost_price as "costPrice"
-        FROM products 
-        WHERE price IS NOT NULL AND cost_price IS NOT NULL
-      `);
 
-      // Calculate profitability
-      return result.rows.map((product: any) => ({
-        productId: product.productId,
-        productName: product.productName,
-        price: product.price,
-        costPrice: product.costPrice,
-        profit: parseFloat(product.price || '0') - parseFloat(product.costPrice || '0'),
-        margin: parseFloat(product.price || '0') > 0 
-          ? ((parseFloat(product.price || '0') - parseFloat(product.costPrice || '0')) / parseFloat(product.price || '0') * 100) 
-          : 0
-      }));
-    } catch (error) {
-      console.error('Error getting product profitability:', error);
-      return [];
-    }
-  }
 
-  async getTopProfitableProducts(limit: number = 10, period: string = 'month'): Promise<any[]> {
-    try {
-      const profitabilityData = await this.getProductProfitability();
-      
-      // Sort by profit descending and take top N
-      return profitabilityData
-        .sort((a, b) => b.profit - a.profit)
-        .slice(0, limit);
-    } catch (error) {
-      console.error('Error getting top profitable products:', error);
-      return [];
-    }
-  }
+
 
   // Additional missing methods for complete functionality
   async createMailRegistry(registry: any): Promise<any> {
