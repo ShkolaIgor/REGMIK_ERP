@@ -984,6 +984,70 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getOrderWithDetails(id: number): Promise<any> {
+    try {
+      // Отримуємо замовлення з клієнтом та компанією
+      const [order] = await db
+        .select({
+          id: orders.id,
+          orderNumber: orders.orderNumber,
+          invoiceNumber: orders.invoiceNumber,
+          status: orders.status,
+          totalAmount: orders.totalAmount,
+          notes: orders.notes,
+          source: orders.source,
+          createdAt: orders.createdAt,
+          client: {
+            id: clients.id,
+            name: clients.name,
+            taxCode: clients.taxCode,
+            phone: clients.phone,
+            email: clients.email
+          },
+          company: {
+            id: companies.id,
+            name: companies.name,
+            taxCode: companies.taxCode
+          }
+        })
+        .from(orders)
+        .leftJoin(clients, eq(orders.clientId, clients.id))
+        .leftJoin(companies, eq(orders.companyId, companies.id))
+        .where(eq(orders.id, id));
+
+      if (!order) {
+        return null;
+      }
+
+      // Отримуємо позиції замовлення з товарами
+      const items = await db
+        .select({
+          id: orderItems.id,
+          quantity: orderItems.quantity,
+          unitPrice: orderItems.unitPrice,
+          totalPrice: orderItems.totalPrice,
+          notes: orderItems.notes,
+          product: {
+            id: products.id,
+            name: products.name,
+            sku: products.sku,
+            description: products.description
+          }
+        })
+        .from(orderItems)
+        .leftJoin(products, eq(orderItems.productId, products.id))
+        .where(eq(orderItems.orderId, id));
+
+      return {
+        ...order,
+        items
+      };
+    } catch (error) {
+      console.error('Error getting order with details:', error);
+      throw error;
+    }
+  }
+
   async deleteOrder(id: number): Promise<boolean> {
     try {
       // Спочатку видаляємо всі товари з замовлення

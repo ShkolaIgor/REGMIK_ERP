@@ -15,7 +15,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { formatCurrency, getStatusColor, cn } from "@/lib/utils";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
 import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
-import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X, Settings, Palette, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, HandPlatter, DollarSign, Clock, TrendingUp } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X, Settings, Palette, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, HandPlatter, DollarSign, Clock, TrendingUp, Printer } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
 import { useForm } from "react-hook-form";
@@ -530,6 +530,14 @@ export default function Orders() {
               title="Повністю відвантажити"
             >
               <Truck className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePrintOrder(order)}
+              title="Друкувати замовлення"
+            >
+              <Printer className="w-4 h-4" />
             </Button>
           </div>
         );
@@ -1046,6 +1054,12 @@ export default function Orders() {
     if (confirm(`Підтвердити відвантаження замовлення ${order.orderNumber}?`)) {
       shipOrderMutation.mutate(order.id);
     }
+  }
+
+  const handlePrintOrder = (order: any) => {
+    // Відкриваємо PDF у новому вікні
+    const printUrl = `/api/orders/${order.id}/print`;
+    window.open(printUrl, '_blank');
   };
 
   // Функція для створення рахунку
