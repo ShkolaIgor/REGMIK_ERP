@@ -10085,180 +10085,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // API для друку замовлення
-  app.get('/api/orders/:id/print', async (req, res) => {
+  // API для отримання даних для попереднього перегляду друку
+  app.get('/api/orders/:id/print-preview', async (req, res) => {
     try {
       const orderId = parseInt(req.params.id);
-      console.log(`Print request for order ID: ${orderId}`);
+      console.log(`Print preview request for order ID: ${orderId}`);
       
       // Отримуємо замовлення з деталями
       const order = await storage.getOrderWithDetails(orderId);
-      console.log(`Order details:`, order ? 'Found' : 'Not found');
       
       if (!order) {
-        console.log(`Order not found for ID: ${orderId}`);
         return res.status(404).json({ message: "Замовлення не знайдено" });
       }
       
-      console.log(`Order structure:`, {
-        id: order.id,
+      // Форматуємо дані для попереднього перегляду
+      const printData = {
         orderNumber: order.orderNumber,
-        hasClient: !!order.client,
-        hasCompany: !!order.company,
-        itemsCount: order.items?.length || 0
-      });
-
-      // Генеруємо PDF документ
-      const { jsPDF } = await import('jspdf');
-      const pdf = new jsPDF();
+        date: new Date(order.createdAt).toLocaleDateString('uk-UA'),
+        client: order.client ? {
+          name: order.client.name,
+          phone: order.client.phone,
+          email: order.client.email,
+          taxCode: order.client.taxCode
+        } : null,
+        company: order.company ? {
+          name: order.company.name,
+          taxCode: order.company.taxCode
+        } : null,
+        items: order.items.map((item, index) => ({
+          position: index + 1,
+          name: item.product?.name || 'Невідомий товар',
+          sku: item.product?.sku || '-',
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          totalPrice: item.totalPrice
+        })),
+        totalAmount: order.totalAmount,
+        notes: order.notes,
+        status: order.status
+      };
       
-      // Налаштування українського шрифту (базовий Arial)
-      pdf.setFont('Arial', 'normal');
+      res.json(printData);
       
-      // Заголовок документа
-      pdf.setFontSize(16);
-      pdf.text('ПАКУВАЛЬНИЙ ЛИСТ', 105, 20, { align: 'center' });
-      
-      // Номер замовлення
-      pdf.setFontSize(14);
-      pdf.text(`Замовлення № ${order.orderNumber}`, 20, 40);
-      
-      // Інформація про клієнта та компанію
-      pdf.setFontSize(12);
-      let y = 60;
-      pdf.text(`Клієнт: ${order.client?.name || 'Не вказано'}`, 20, y);
-      y += 10;
-      if (order.client?.taxCode) {
-        pdf.text(`ЄДРПОУ: ${order.client.taxCode}`, 20, y);
-        y += 10;
-      }
-      pdf.text(`Компанія: ${order.company?.name || 'Не вказано'}`, 20, y);
-      y += 10;
-      pdf.text(`Статус: ${order.status}`, 20, y);
-      y += 10;
-      pdf.text(`Дата створення: ${new Date(order.createdAt).toLocaleDateString('uk-UA')}`, 20, y);
-      y += 20;
-
-      // Таблиця товарів
-      pdf.setFontSize(14);
-      pdf.text('Склад замовлення:', 20, y);
-      y += 15;
-      
-      // Заголовки таблиці
-      pdf.setFontSize(10);
-      pdf.text('№', 20, y);
-      pdf.text('Найменування товару', 30, y);
-      pdf.text('Кіл-ть', 140, y);
-      pdf.text('Ціна', 160, y);
-      pdf.text('Сума', 180, y);
-      y += 10;
-      
-      // Лінія під заголовками
-      pdf.line(20, y, 200, y);
-      y += 5;
-
-      // Позиції замовлення
-      let totalAmount = 0;
-      order.items?.forEach((item, index) => {
-        pdf.text((index + 1).toString(), 20, y);
-        
-        // Назва товару (обрізаємо якщо довга)
-        const productName = item.product?.name || 'Товар не знайдено';
-        const maxNameLength = 50;
-        const displayName = productName.length > maxNameLength 
-          ? productName.substring(0, maxNameLength) + '...' 
-          : productName;
-        pdf.text(displayName, 30, y);
-        
-        pdf.text(item.quantity.toString(), 140, y);
-        pdf.text(parseFloat(item.unitPrice || '0').toFixed(2), 160, y);
-        
-        const itemTotal = parseFloat(item.totalPrice || '0');
-        pdf.text(itemTotal.toFixed(2), 180, y);
-        totalAmount += itemTotal;
-        
-        y += 8;
-        
-        // Якщо сторінка закінчується, створюємо нову
-        if (y > 280) {
-          pdf.addPage();
-          y = 20;
-        }
-      });
-
-      // Підсумок
-      y += 10;
-      pdf.line(140, y, 200, y);
-      y += 10;
-      pdf.setFontSize(12);
-      pdf.text('Загальна сума:', 140, y);
-      pdf.text(`${totalAmount.toFixed(2)} грн`, 180, y);
-
-      // Операції виконання (як в шаблоні)
-      y += 30;
-      if (y > 250) {
-        pdf.addPage();
-        y = 20;
-      }
-      
-      pdf.setFontSize(14);
-      pdf.text('Операції виконання:', 20, y);
-      y += 15;
-      
-      // Створюємо таблицю операцій
-      const operations = [
-        'Комплектування',
-        'Електричний монтаж', 
-        'Збирання',
-        'Випроб. електричні',
-        'Маркування та контроль'
-      ];
-      
-      pdf.setFontSize(10);
-      pdf.text('Операція', 20, y);
-      pdf.text('Виконавець', 80, y);
-      pdf.text('Здав', 140, y);
-      pdf.text('Підпис', 170, y);
-      y += 10;
-      
-      pdf.line(20, y, 200, y);
-      y += 5;
-      
-      operations.forEach(operation => {
-        pdf.text(operation, 20, y);
-        // Порожні поля для заповнення
-        pdf.line(80, y + 2, 135, y + 2);  // Виконавець
-        pdf.line(140, y + 2, 165, y + 2); // Здав
-        pdf.line(170, y + 2, 200, y + 2); // Підпис
-        y += 15;
-      });
-
-      // Час та дата друку
-      y += 20;
-      if (y > 280) {
-        pdf.addPage();
-        y = 20;
-      }
-      
-      pdf.setFontSize(8);
-      const printTime = new Date().toLocaleString('uk-UA');
-      pdf.text(`Роздруковано: ${printTime}`, 140, y);
-
-      // Оновлюємо час друку замовлення
-      await storage.updateOrder(orderId, { printedAt: new Date() });
-
-      // Повертаємо PDF як відповідь
-      const pdfBuffer = Buffer.from(pdf.output('arraybuffer'));
-      
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="order-${order.orderNumber}.pdf"`);
-      res.send(pdfBuffer);
-
     } catch (error) {
-      console.error('Помилка генерації PDF:', error);
+      console.error('Помилка отримання даних для друку:', error);
       res.status(500).json({ 
-        message: "Помилка генерації звіту",
-        error: error instanceof Error ? error.message : "Невідома помилка"
+        message: "Помилка отримання даних",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // API для підтвердження друку (оновлення часу друку)
+  app.post('/api/orders/:id/confirm-print', async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      
+      // Оновлюємо дату друку в базі даних
+      await storage.updateOrder(orderId, {
+        printedAt: new Date()
+      });
+      
+      res.json({ success: true, message: "Друк підтверджено" });
+      
+    } catch (error) {
+      console.error('Помилка підтвердження друку:', error);
+      res.status(500).json({ 
+        message: "Помилка підтвердження друку",
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   });

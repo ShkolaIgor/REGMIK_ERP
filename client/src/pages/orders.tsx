@@ -31,6 +31,7 @@ import { InlineSerialNumbers } from "@/components/InlineSerialNumbers";
 import { NovaPoshtaIntegration } from "@/components/NovaPoshtaIntegration";
 import { OrdersXmlImport } from "@/components/OrdersXmlImport";
 import { OrderItemsXmlImport } from "@/components/OrderItemsXmlImport";
+import { PrintPreviewModal } from "@/components/PrintPreviewModal";
 // Типи
 type Order = {
   id: number;
@@ -167,6 +168,9 @@ export default function Orders() {
   const [isStatusSettingsOpen, setIsStatusSettingsOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [selectedContactId, setSelectedContactId] = useState<string>("");
+  const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
+  const [printData, setPrintData] = useState<any>(null);
+  const [printOrderId, setPrintOrderId] = useState<number>(0);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   const [contactComboboxOpen, setContactComboboxOpen] = useState(false);
   const [contactSearchValue, setContactSearchValue] = useState("");
@@ -1058,10 +1062,30 @@ export default function Orders() {
     }
   }
 
-  const handlePrintOrder = (order: any) => {
-    // Відкриваємо PDF у новому вікні
-    const printUrl = `/api/orders/${order.id}/print`;
-    window.open(printUrl, '_blank');
+  const handlePrintOrder = async (order: any) => {
+    try {
+      // Отримуємо дані для попереднього перегляду
+      const response = await fetch(`/api/orders/${order.id}/print-preview`);
+      if (response.ok) {
+        const data = await response.json();
+        setPrintData(data);
+        setPrintOrderId(order.id);
+        setIsPrintPreviewOpen(true);
+      } else {
+        toast({
+          title: "Помилка",
+          description: "Не вдалося завантажити дані для друку",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Помилка завантаження даних друку:', error);
+      toast({
+        title: "Помилка",
+        description: "Не вдалося завантажити дані для друку",
+        variant: "destructive",
+      });
+    }
   };
 
   // Функція для створення рахунку
@@ -2720,6 +2744,14 @@ export default function Orders() {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Попередній перегляд друку */}
+      <PrintPreviewModal
+        isOpen={isPrintPreviewOpen}
+        onClose={() => setIsPrintPreviewOpen(false)}
+        printData={printData}
+        orderId={printOrderId}
+      />
     </div>
     </div>
   );
