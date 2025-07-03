@@ -986,81 +986,56 @@ export class DatabaseStorage implements IStorage {
 
   async getOrderWithDetails(id: number): Promise<any> {
     try {
-      // Отримуємо замовлення з клієнтом та компанією
-      const [order] = await db
-        .select({
-          id: orders.id,
-          orderNumber: orders.orderNumber,
-          invoiceNumber: orders.invoiceNumber,
-          status: orders.status,
-          totalAmount: orders.totalAmount,
-          notes: orders.notes,
-          source: orders.source,
-          createdAt: orders.createdAt,
-          clientId: clients.id,
-          clientName: clients.name,
-          clientTaxCode: clients.taxCode,
-          clientPhone: clients.phone,
-          clientEmail: clients.email,
-          companyId: companies.id,
-          companyName: companies.name,
-          companyTaxCode: companies.taxCode,
-          printedAt: orders.printedAt
-        })
-        .from(orders)
-        .leftJoin(clients, eq(orders.clientId, clients.id))
-        .leftJoin(companies, eq(orders.companyId, companies.id))
-        .where(eq(orders.id, id));
+      // Спочатку отримуємо основну інформацію про замовлення
+      const [orderData] = await db.select().from(orders).where(eq(orders.id, id));
 
-      if (!order) {
+      if (!orderData) {
         return null;
       }
 
-      // Отримуємо позиції замовлення з товарами
+      // Окремо отримуємо клієнта, якщо він є  
+      let clientData = null;
+      if (orderData.clientId) {
+        const [client] = await db.select().from(clients).where(eq(clients.id, orderData.clientId));
+        clientData = client || null;
+      }
+
+      // Окремо отримуємо компанію, якщо вона є
+      let companyData = null;
+      if (orderData.companyId) {
+        const [company] = await db.select().from(companies).where(eq(companies.id, orderData.companyId));
+        companyData = company || null;
+      }
+
+      // Отримуємо позиції замовлення 
       const items = await db
-        .select({
-          id: orderItems.id,
-          quantity: orderItems.quantity,
-          unitPrice: orderItems.unitPrice,
-          totalPrice: orderItems.totalPrice,
-          notes: orderItems.notes,
-          productId: products.id,
-          productName: products.name,
-          productSku: products.sku,
-          productDescription: products.description
-        })
+        .select()
         .from(orderItems)
-        .leftJoin(products, eq(orderItems.productId, products.id))
         .where(eq(orderItems.orderId, id));
+
+      // Для кожної позиції отримуємо товар
+      const itemsWithProducts = await Promise.all(
+        items.map(async (item) => {
+          if (item.productId) {
+            const [product] = await db.select().from(products).where(eq(products.id, item.productId));
+            return {
+              ...item,
+              product: product || null
+            };
+          }
+          return {
+            ...item,
+            product: null
+          };
+        })
+      );
 
       // Форматуємо дані для сумісності з існуючим кодом
       const formattedOrder = {
-        ...order,
-        client: {
-          id: order.clientId,
-          name: order.clientName,
-          taxCode: order.clientTaxCode,
-          phone: order.clientPhone,
-          email: order.clientEmail
-        },
-        company: {
-          id: order.companyId,
-          name: order.companyName,
-          taxCode: order.companyTaxCode
-        },
-        items: items.map(item => ({
-          id: item.id,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          totalPrice: item.totalPrice,
-          notes: item.notes,
-          product: {
-            id: item.productId,
-            name: item.productName,
-            sku: item.productSku,
-            description: item.productDescription
-          }
-        }))
+        ...orderData,
+        client: clientData,
+        company: companyData,
+        items: itemsWithProducts.filter(item => item.product !== null)
       };
 
       return formattedOrder;
