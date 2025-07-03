@@ -10089,12 +10089,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/orders/:id/print', async (req, res) => {
     try {
       const orderId = parseInt(req.params.id);
+      console.log(`Print request for order ID: ${orderId}`);
       
       // Отримуємо замовлення з деталями
       const order = await storage.getOrderWithDetails(orderId);
+      console.log(`Order details:`, order ? 'Found' : 'Not found');
+      
       if (!order) {
+        console.log(`Order not found for ID: ${orderId}`);
         return res.status(404).json({ message: "Замовлення не знайдено" });
       }
+      
+      console.log(`Order structure:`, {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        hasClient: !!order.client,
+        hasCompany: !!order.company,
+        itemsCount: order.items?.length || 0
+      });
 
       // Генеруємо PDF документ
       const { jsPDF } = require('jspdf');
