@@ -3,10 +3,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Printer, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface PrintData {
   orderNumber: string;
+  invoiceNumber?: string;
   date: string;
+  shippedDate?: string;
   client?: {
     name: string;
     phone?: string;
@@ -40,6 +43,7 @@ interface PrintPreviewModalProps {
 export function PrintPreviewModal({ isOpen, onClose, printData, orderId }: PrintPreviewModalProps) {
   const [isPrinting, setIsPrinting] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handlePrint = async () => {
     if (!printData) return;
@@ -65,6 +69,9 @@ export function PrintPreviewModal({ isOpen, onClose, printData, orderId }: Print
             title: "Успіх",
             description: "Документ відправлено на друк",
           });
+          
+          // Оновлюємо кеш замовлень щоб показати нові дані printedAt
+          queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
         }
         
         onClose();
@@ -207,18 +214,62 @@ export function PrintPreviewModal({ isOpen, onClose, printData, orderId }: Print
     <!-- Паспорт технологічний -->
     <div class="document">
         <div class="header">
-            <div class="order-number">${data.orderNumber}</div>
+            <div class="order-number">№ ${data.orderNumber}</div>
             <div class="document-title">ПАСПОРТ ТЕХНОЛОГІЧНИЙ</div>
             <div class="date">${data.date}</div>
         </div>
         
-        <div class="section">
-            ${data.items.map(item => `
-            <div class="item-row">
-                <div class="item-number">${item.position}</div>
-                <div class="item-name">${item.name}</div>
+        <!-- Основна інформація -->
+        <div style="display: flex; gap: 10px; margin-bottom: 5mm;">
+            <div style="flex: 1; border: 1px solid #000; padding: 2mm;">
+                <div style="font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 1mm; margin-bottom: 2mm;">ІНФОРМАЦІЯ ПРО ЗАМОВЛЕННЯ</div>
+                <div><strong>Номер рахунку:</strong> ${data.invoiceNumber || data.orderNumber}</div>
+                <div><strong>Дата замовлення:</strong> ${data.date}</div>
+                <div><strong>Дата відвантаження:</strong> ${data.shippedDate || 'Не вказано'}</div>
+                <div><strong>Статус:</strong> ${data.status}</div>
             </div>
-            `).join('')}
+            <div style="flex: 1; border: 1px solid #000; padding: 2mm;">
+                <div style="font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 1mm; margin-bottom: 2mm;">ІНФОРМАЦІЯ ПРО КЛІЄНТА</div>
+                <div><strong>Назва:</strong> ${data.client?.name || 'Не вказано'}</div>
+                ${data.client?.taxCode ? `<div><strong>Податковий код:</strong> ${data.client.taxCode}</div>` : ''}
+                ${data.client?.phone ? `<div><strong>Телефон:</strong> ${data.client.phone}</div>` : ''}
+                ${data.client?.email ? `<div><strong>Email:</strong> ${data.client.email}</div>` : ''}
+            </div>
+        </div>
+        
+        <!-- Таблиця позицій -->
+        <div style="margin-bottom: 5mm;">
+            <div style="font-weight: bold; margin-bottom: 2mm; font-size: 10px;">ЗАМОВЛЕНІ ПОЗИЦІЇ</div>
+            <table style="width: 100%; border-collapse: collapse; border: 1px solid #000;">
+                <thead>
+                    <tr style="background-color: #f0f0f0;">
+                        <th style="border: 1px solid #000; padding: 2mm; text-align: left;">№</th>
+                        <th style="border: 1px solid #000; padding: 2mm; text-align: left;">Назва товару</th>
+                        <th style="border: 1px solid #000; padding: 2mm; text-align: left;">Артикул</th>
+                        <th style="border: 1px solid #000; padding: 2mm; text-align: center;">Кільк.</th>
+                        <th style="border: 1px solid #000; padding: 2mm; text-align: right;">Ціна</th>
+                        <th style="border: 1px solid #000; padding: 2mm; text-align: right;">Сума</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.items.map(item => `
+                    <tr>
+                        <td style="border: 1px solid #000; padding: 2mm;">${item.position}</td>
+                        <td style="border: 1px solid #000; padding: 2mm;">${item.name}</td>
+                        <td style="border: 1px solid #000; padding: 2mm; font-family: monospace;">${item.sku}</td>
+                        <td style="border: 1px solid #000; padding: 2mm; text-align: center;">${item.quantity}</td>
+                        <td style="border: 1px solid #000; padding: 2mm; text-align: right;">${item.unitPrice}</td>
+                        <td style="border: 1px solid #000; padding: 2mm; text-align: right;">${item.totalPrice}</td>
+                    </tr>
+                    `).join('')}
+                </tbody>
+                <tfoot>
+                    <tr style="background-color: #f0f0f0; font-weight: bold;">
+                        <td colspan="5" style="border: 1px solid #000; padding: 2mm; text-align: right;">ЗАГАЛЬНА СУМА:</td>
+                        <td style="border: 1px solid #000; padding: 2mm; text-align: right; font-size: 11px;">${data.totalAmount}</td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
         
         <table class="operations-table">
@@ -237,9 +288,9 @@ export function PrintPreviewModal({ isOpen, onClose, printData, orderId }: Print
         </table>
         
         <div class="company-info">
-            Виготовлювач: 4384319 ПП "НВФ "РЕГМІК" &nbsp;&nbsp;&nbsp; S (0462) 614-663<br>
+            ${data.company ? `Виготовлювач: ${data.company.taxCode ? data.company.taxCode + ' ' : ''}${data.company.name}` : 'Виготовлювач: 4384319 ПП "НВФ "РЕГМІК"'} &nbsp;&nbsp;&nbsp; ☎ (0462) 614-663<br>
             Отримувач: ${data.client?.name || 'Не вказано'}<br>
-            ТзОВ "БВП ТРЕЙД ГРУП"
+            ${data.notes ? `Примітки: ${data.notes}` : ''}
         </div>
     </div>
 

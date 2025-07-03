@@ -10101,7 +10101,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Форматуємо дані для попереднього перегляду
       const printData = {
         orderNumber: order.orderNumber,
+        invoiceNumber: order.invoiceNumber,
         date: new Date(order.createdAt).toLocaleDateString('uk-UA'),
+        shippedDate: order.shippedDate ? new Date(order.shippedDate).toLocaleDateString('uk-UA') : null,
         client: order.client ? {
           name: order.client.name,
           phone: order.client.phone,
