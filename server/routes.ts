@@ -10232,6 +10232,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const printTime = new Date().toLocaleString('uk-UA');
       pdf.text(`Роздруковано: ${printTime}`, 140, y);
 
+      // Оновлюємо час друку замовлення
+      await storage.updateOrder(orderId, { printedAt: new Date() });
+
       // Повертаємо PDF як відповідь
       const pdfBuffer = Buffer.from(pdf.output('arraybuffer'));
       

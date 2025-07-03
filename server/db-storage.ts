@@ -997,18 +997,15 @@ export class DatabaseStorage implements IStorage {
           notes: orders.notes,
           source: orders.source,
           createdAt: orders.createdAt,
-          client: {
-            id: clients.id,
-            name: clients.name,
-            taxCode: clients.taxCode,
-            phone: clients.phone,
-            email: clients.email
-          },
-          company: {
-            id: companies.id,
-            name: companies.name,
-            taxCode: companies.taxCode
-          }
+          clientId: clients.id,
+          clientName: clients.name,
+          clientTaxCode: clients.taxCode,
+          clientPhone: clients.phone,
+          clientEmail: clients.email,
+          companyId: companies.id,
+          companyName: companies.name,
+          companyTaxCode: companies.taxCode,
+          printedAt: orders.printedAt
         })
         .from(orders)
         .leftJoin(clients, eq(orders.clientId, clients.id))
@@ -1027,21 +1024,46 @@ export class DatabaseStorage implements IStorage {
           unitPrice: orderItems.unitPrice,
           totalPrice: orderItems.totalPrice,
           notes: orderItems.notes,
-          product: {
-            id: products.id,
-            name: products.name,
-            sku: products.sku,
-            description: products.description
-          }
+          productId: products.id,
+          productName: products.name,
+          productSku: products.sku,
+          productDescription: products.description
         })
         .from(orderItems)
         .leftJoin(products, eq(orderItems.productId, products.id))
         .where(eq(orderItems.orderId, id));
 
-      return {
+      // Форматуємо дані для сумісності з існуючим кодом
+      const formattedOrder = {
         ...order,
-        items
+        client: {
+          id: order.clientId,
+          name: order.clientName,
+          taxCode: order.clientTaxCode,
+          phone: order.clientPhone,
+          email: order.clientEmail
+        },
+        company: {
+          id: order.companyId,
+          name: order.companyName,
+          taxCode: order.companyTaxCode
+        },
+        items: items.map(item => ({
+          id: item.id,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          totalPrice: item.totalPrice,
+          notes: item.notes,
+          product: {
+            id: item.productId,
+            name: item.productName,
+            sku: item.productSku,
+            description: item.productDescription
+          }
+        }))
       };
+
+      return formattedOrder;
     } catch (error) {
       console.error('Error getting order with details:', error);
       throw error;

@@ -240,6 +240,7 @@ export const orders = pgTable("orders", {
   trackingNumber: text("tracking_number"), // номер відстеження Nova Poshta
   invoiceNumber: text("invoice_number"), // номер рахунку
   carrierId: integer("carrier_id").references(() => carriers.id), // зв'язок з перевізником
+  printedAt: timestamp("printed_at"), // дата і час останнього друку
   createdAt: timestamp("created_at").defaultNow(),
 });
 

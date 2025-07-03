@@ -55,6 +55,7 @@ type Order = {
   productionApprovedAt: Date | null;
   dueDate: Date | null;
   shippedDate: Date | null;
+  printedAt: Date | null;
   createdAt: Date | null;
 };
 
@@ -532,10 +533,11 @@ export default function Orders() {
               <Truck className="w-4 h-4" />
             </Button>
             <Button
-              variant="outline"
+              variant={order.printedAt ? "default" : "outline"}
               size="sm"
               onClick={() => handlePrintOrder(order)}
-              title="Друкувати замовлення"
+              title={order.printedAt ? `Друкувати замовлення (останній друк: ${new Date(order.printedAt).toLocaleString('uk-UA')})` : "Друкувати замовлення"}
+              className={order.printedAt ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}
             >
               <Printer className="w-4 h-4" />
             </Button>
