@@ -10109,7 +10109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Генеруємо PDF документ
-      const { jsPDF } = require('jspdf');
+      const { jsPDF } = await import('jspdf');
       const pdf = new jsPDF();
       
       // Налаштування українського шрифту (базовий Arial)
