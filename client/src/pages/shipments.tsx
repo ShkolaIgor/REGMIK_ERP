@@ -961,6 +961,67 @@ export default function Shipments() {
       </Card>
       </div>
 
+      {/* Statistics Cards */}
+      <div className="w-full px-8 py-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-l-4 border-l-blue-500 bg-gradient-to-br from-blue-50 to-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-600 mb-1">Всього відвантажень</p>
+                  <p className="text-2xl font-bold text-gray-900">{shipments?.length || 0}</p>
+                </div>
+                <div className="p-3 bg-blue-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
+                  <Package className="h-6 w-6 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-l-4 border-l-yellow-500 bg-gradient-to-br from-yellow-50 to-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-yellow-600 mb-1">Очікують відправки</p>
+                  <p className="text-2xl font-bold text-gray-900">{shipments?.filter((s: Shipment) => s.status === 'pending')?.length || 0}</p>
+                </div>
+                <div className="p-3 bg-yellow-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
+                  <Calendar className="h-6 w-6 text-yellow-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-l-4 border-l-blue-500 bg-gradient-to-br from-blue-50 to-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-600 mb-1">Відправлено</p>
+                  <p className="text-2xl font-bold text-gray-900">{shipments?.filter((s: Shipment) => s.status === 'shipped')?.length || 0}</p>
+                </div>
+                <div className="p-3 bg-blue-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
+                  <Truck className="h-6 w-6 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-l-4 border-l-green-500 bg-gradient-to-br from-green-50 to-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-600 mb-1">Доставлено</p>
+                  <p className="text-2xl font-bold text-gray-900">{shipments?.filter((s: Shipment) => s.status === 'delivered')?.length || 0}</p>
+                </div>
+                <div className="p-3 bg-green-100 rounded-full group-hover:rotate-12 transition-transform duration-300">
+                  <MapPin className="h-6 w-6 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       {/* Таблиця відвантажень */}
       <div className="w-full space-y-6 flex-1 overflow-auto">
       <Card>
