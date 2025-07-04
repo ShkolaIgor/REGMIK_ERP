@@ -559,12 +559,23 @@ export default function Shipments() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Відвантаження</h1>
-          <p className="text-gray-600">Управління відвантаженнями замовлень</p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header Section */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="w-full px-8 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Truck className="w-6 h-6 text-white" />
+              </div>
+              <div >
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Відвантаження</h1>
+                <p className="text-gray-600 mt-1">Управління відвантаженнями замовлень</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
         
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
@@ -573,7 +584,9 @@ export default function Shipments() {
           }
         }}>
           <DialogTrigger asChild>
-            <Button onClick={() => setIsDialogOpen(true)}>
+            <Button 
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+              onClick={() => setIsDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Створити відвантаження
             </Button>
@@ -921,8 +934,12 @@ export default function Shipments() {
           </DialogContent>
         </Dialog>
       </div>
+      </div>
+      </div>
+        </div>
 
       {/* Фільтри */}
+      <div className="w-full pb-3">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -942,8 +959,10 @@ export default function Shipments() {
           </div>
         </CardContent>
       </Card>
+      </div>
 
       {/* Таблиця відвантажень */}
+      <div className="w-full space-y-6 flex-1 overflow-auto">
       <Card>
         <CardHeader>
           <CardTitle>Список відвантажень</CardTitle>
@@ -1093,6 +1112,7 @@ export default function Shipments() {
           </Table>
         </CardContent>
       </Card>
+        </div>
 
       {/* Модальне вікно деталей відвантаження */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
