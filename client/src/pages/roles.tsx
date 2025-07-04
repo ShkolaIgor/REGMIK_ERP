@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Shield, Users, Settings, Plus, Edit, Trash2, Check, X } from "lucide-react";
+import { Shield, Users, Settings, Plus, Edit, Trash2, Check, X, Notebook } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -307,22 +307,33 @@ export default function RolesPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Shield className="h-6 w-6" />
-            Ролі та дозволи
-          </h1>
-          <p className="text-muted-foreground">
-            Управління ролями користувачів та їх дозволами в системі
-          </p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        {/* Header Section  sticky top-0 z-40*/}
+        <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
+          <div className="w-full px-8 py-3">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Notebook className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                      Ролі та дозволи
+                    </h1>
+                    <p className="text-gray-500 mt-1">Управління ролями користувачів та їх дозволами в системі</p>
+                  </div>
+                </div>
+            <div className="flex items-center space-x-4">
+              <Button 
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                onClick={handleCreateRole}>
+                <Plus className="h-4 w-4 mr-2" />
+                Створити роль
+              </Button>
+            </div>
+          </div>  
         </div>
-        <Button onClick={handleCreateRole}>
-          <Plus className="h-4 w-4 mr-2" />
-          Створити роль
-        </Button>
-      </div>
+      </header>
 
       <Tabs defaultValue="roles" className="space-y-4">
         <TabsList>

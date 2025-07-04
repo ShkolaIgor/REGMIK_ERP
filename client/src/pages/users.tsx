@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit, Trash2, Eye, UserCheck, UserX, Shield, Key, Settings, Check, ChevronsUpDown, Mail, MoreHorizontal } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, UserCheck, UserX, Shield, Key, Settings, Check, ChevronsUpDown, Mail, MoreHorizontal, UserSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -450,13 +450,24 @@ export default function Users() {
     return <div className="p-6">Завантаження...</div>;
   }
 
-  return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Управління користувачами</h1>
+  return (  
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="w-full px-8 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <UserSearch className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                  Управління користувачами</h1>
+                <p className="text-gray-500 mt-1">Управління користувачами в системі</p>
+              </div>
+            </div>
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300">
               <Plus className="h-4 w-4 mr-2" />
               Створити користувача
             </Button>
@@ -527,7 +538,7 @@ export default function Users() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={createForm.control}
                   name="username"
@@ -541,7 +552,7 @@ export default function Users() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={createForm.control}
                   name="email"
@@ -583,8 +594,6 @@ export default function Users() {
                     </FormItem>
                   )}
                 />
-
-
 
                 <FormField
                   control={createForm.control}
@@ -640,10 +649,15 @@ export default function Users() {
             </Form>
           </DialogContent>
         </Dialog>
-      </div>
+        </div>  
+        </div>
+      </header>
 
       {/* Фільтри */}
-      <div className="flex space-x-4">
+      <div className="w-full py-3">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex-1">
           <Input
             placeholder="Пошук користувачів..."
@@ -664,7 +678,10 @@ export default function Users() {
             <SelectItem value="viewer">Глядач</SelectItem>
           </SelectContent>
         </Select>
-      </div>
+             </div>
+                </CardContent>
+              </Card>
+            </div>
 
       {/* Список користувачів */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

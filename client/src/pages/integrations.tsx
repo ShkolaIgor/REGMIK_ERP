@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Settings, RefreshCw, TestTube, Trash2, Check, X, Clock, AlertCircle } from "lucide-react";
+import { Plus, Settings, RefreshCw, TestTube, Trash2, Check, X, Clock, AlertCircle, Workflow } from "lucide-react";
 
 interface IntegrationConfig {
   id: number;
@@ -252,17 +252,24 @@ export default function Integrations() {
   };
 
   return (
-    <div className="w-full px-4 py-3">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Інтеграції</h1>
-          <p className="text-muted-foreground">
-            Управління інтеграціями з Бітрікс24 та 1С
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="w-full px-8 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Workflow className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Інтеграції</h1>
+          <p className="text-muted-foreground">Управління інтеграціями із зовнішніми системами</p>
+                </div>
+              </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => resetForm()}>
+            <Button 
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+              onClick={() => resetForm()}>
               <Plus className="mr-2 h-4 w-4" />
               Додати інтеграцію
             </Button>
@@ -377,7 +384,9 @@ export default function Integrations() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
+          </div>  
+          </div>
+          </header>
 
       <Tabs defaultValue="configs" className="space-y-4">
         <TabsList>

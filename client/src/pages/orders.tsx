@@ -2528,6 +2528,7 @@ export default function Orders() {
         </Card>
 
         {/* Orders Table */}
+        <div className="w-full pt-3">
         <Card>
           <CardHeader>
             <CardTitle>Список замовлень</CardTitle>
@@ -2814,5 +2815,6 @@ export default function Orders() {
       />
     </div>
     </div>
+        </div>
   );
 }

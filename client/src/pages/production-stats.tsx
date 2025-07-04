@@ -13,6 +13,7 @@ import {
   Calendar,
   ShoppingCart,
   Truck,
+  FileChartPie,
   Clock
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
@@ -142,17 +143,24 @@ export default function ProductionStats() {
   const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
 
   return (
-    <div className="p-6 space-y-6 overflow-y-auto h-full">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Статистика виробництва</h1>
-          <p className="text-gray-600">Аналіз виготовленої продукції та замовлень</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        {/* Header Section  sticky top-0 z-40*/}
+        <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
+          <div className="w-full px-8 py-3">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <FileChartPie className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                      Статистика виробництва</h1>
+                    <p className="text-gray-500 mt-1">Аналіз виготовленої продукції та замовлень</p>
+                  </div>
+                </div>
+          </div>  
         </div>
-        <Badge variant="outline" className="text-green-600 border-green-200">
-          <Activity className="w-4 h-4 mr-1" />
-          Онлайн
-        </Badge>
-      </div>
+      </header>
 
       {/* Tabs */}
       <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { TrendingUp, DollarSign, Package, BarChart3, PieChart } from "lucide-react";
+import { TrendingUp, DollarSign, Package, BarChart3, PieChart, ChartScatter } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -103,84 +103,116 @@ export default function ProductProfitability() {
   };
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Аналіз рентабельності продуктів</h1>
-          <p className="text-muted-foreground">
-            Детальний аналіз прибутковості та рентабельності товарів
-          </p>
-        </div>
-        <div className="flex gap-4">
-          <Select value={period} onValueChange={setPeriod}>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header Section  sticky top-0 z-40*/}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
+        <div className="w-full px-8 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                 <ChartScatter className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                  Аналіз рентабельності продуктів</h1>
+                <p className="text-gray-500 mt-1">Детальний аналіз прибутковості та рентабельності товарів</p>
+              </div>
+            </div>
+          <div className="flex items-center space-x-4">
+            <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="week">Тиждень</SelectItem>
-              <SelectItem value="month">Місяць</SelectItem>
-              <SelectItem value="quarter">Квартал</SelectItem>
-              <SelectItem value="year">Рік</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+               <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="week">Тиждень</SelectItem>
+                <SelectItem value="month">Місяць</SelectItem>
+                <SelectItem value="quarter">Квартал</SelectItem>
+                <SelectItem value="year">Рік</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>  
+       </div>
+      </header>
 
       {/* Загальні показники */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Загальний дохід</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
-            <p className="text-xs text-muted-foreground">
-              За обраний період
-            </p>
-          </CardContent>
-        </Card>
+      <div className="w-full px-8 pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <DollarSign className="w-4 h-4 text-blue-600" />
+                    <p className="text-sm text-blue-700 font-medium">Загальний дохід</p>
+                  </div>
+                  <p className="text-3xl font-bold text-blue-900 mb-1">{formatCurrency(totalRevenue)}</p>
+                  <p className="text-xs text-blue-600">За обраний період</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <DollarSign className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Загальний прибуток</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalProfit)}</div>
-            <p className="text-xs text-muted-foreground">
-              Дохід мінус собівартість
-            </p>
-          </CardContent>
-        </Card>
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <TrendingUp className="w-4 h-4 text-emerald-600" />
+                    <p className="text-sm text-blue-700 font-medium">Загальний прибуток</p>
+                  </div>
+                  <p className="text-3xl font-bold text-blue-900 mb-1">{formatCurrency(totalProfit)}</p>
+                  <p className="text-xs text-emerald-600">Дохід мінус собівартість</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <TrendingUp className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Середня маржа</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{averageMargin.toFixed(1)}%</div>
-            <p className="text-xs text-muted-foreground">
-              По всіх продуктах
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Прибуткових товарів</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {profitabilityData.filter((item: any) => item.totalProfit > 0).length}
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <BarChart3 className="w-4 h-4 text-blue-600" />
+                  <p className="text-sm text-purple-700 font-medium">Середня маржа</p>
+                </div>
+                <p className="text-3xl font-bold text-blue-900 mb-1">{averageMargin.toFixed(1)}%</p>
+                <p className="text-xs text-purple-600">По всіх продуктах</p>
+              </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                <BarChart3 className="w-8 h-8 text-white" />
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              З {profitabilityData.length} загалом
-            </p>
           </CardContent>
         </Card>
+
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="flex items-center justify-between relative z-10">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Package className="w-4 h-4 text-blue-600" />
+                <p className="text-sm orange-blue-700 font-medium">Прибуткових товарів</p>
+              </div>
+              <p className="text-3xl font-bold text-blue-900 mb-1">{profitabilityData.filter((item: any) => item.totalProfit > 0).length}</p>
+              <p className="text-xs text-orange-600">З {profitabilityData.length} загалом</p>
+            </div>
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+              <Package className="w-8 h-8 text-white" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -219,6 +251,7 @@ export default function ProductProfitability() {
             )}
           </CardContent>
         </Card>
+  
 
         {/* Розподіл за рентабельністю */}
         <Card>
@@ -390,5 +423,6 @@ export default function ProductProfitability() {
         </Card>
       )}
     </div>
+        </div>
   );
 }
