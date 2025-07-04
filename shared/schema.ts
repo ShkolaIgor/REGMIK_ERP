@@ -240,6 +240,15 @@ export const orders = pgTable("orders", {
   trackingNumber: text("tracking_number"), // номер відстеження Nova Poshta
   invoiceNumber: text("invoice_number"), // номер рахунку
   carrierId: integer("carrier_id").references(() => carriers.id), // зв'язок з перевізником
+  
+  // Nova Poshta додаткові поля для замовлень
+  recipientCityRef: varchar("recipient_city_ref", { length: 255 }), // UUID міста отримувача
+  recipientCityName: varchar("recipient_city_name", { length: 255 }), // назва міста отримувача
+  recipientWarehouseRef: varchar("recipient_warehouse_ref", { length: 255 }), // UUID відділення отримувача
+  recipientWarehouseAddress: text("recipient_warehouse_address"), // адреса відділення отримувача
+  shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }), // розрахована вартість доставки
+  estimatedDelivery: timestamp("estimated_delivery"), // очікувана дата доставки
+  
   printedAt: timestamp("printed_at"), // дата і час останнього друку
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -564,20 +573,27 @@ export const insertInventorySchema = createInsertSchema(inventory).omit({ id: tr
 export const insertOrderSchema = createInsertSchema(orders).omit({ 
   id: true, 
   orderSequenceNumber: true,
-  createdAt: true, 
-  updatedAt: true 
+  createdAt: true
 });
 
 export const insertOrderSchemaForm = insertOrderSchema.extend({
   statusId: z.number().int().positive("Статус обов'язковий"),
-  clientContactsId: z.number().int().positive().optional()
+  clientContactsId: z.number().int().positive().optional(),
+  // Nova Poshta поля (опціональні)
+  recipientCityRef: z.string().optional(),
+  recipientCityName: z.string().optional(),
+  recipientWarehouseRef: z.string().optional(),
+  recipientWarehouseAddress: z.string().optional(),
+  shippingCost: z.string().optional(),
+  estimatedDelivery: z.string().optional()
 }).transform((data) => ({
   ...data,
   // Перетворюємо рядки дат у Date об'єкти або null
   paymentDate: data.paymentDate ? (typeof data.paymentDate === 'string' ? new Date(data.paymentDate) : data.paymentDate) : null,
   dueDate: data.dueDate ? (typeof data.dueDate === 'string' ? new Date(data.dueDate) : data.dueDate) : null,
   shippedDate: data.shippedDate ? (typeof data.shippedDate === 'string' ? new Date(data.shippedDate) : data.shippedDate) : null,
-  productionApprovedAt: data.productionApprovedAt ? (typeof data.productionApprovedAt === 'string' ? new Date(data.productionApprovedAt) : data.productionApprovedAt) : null
+  productionApprovedAt: data.productionApprovedAt ? (typeof data.productionApprovedAt === 'string' ? new Date(data.productionApprovedAt) : data.productionApprovedAt) : null,
+  estimatedDelivery: data.estimatedDelivery ? (typeof data.estimatedDelivery === 'string' ? new Date(data.estimatedDelivery) : data.estimatedDelivery) : null
 }));
 
 export type Order = typeof orders.$inferSelect;

@@ -136,6 +136,13 @@ const orderSchema = z.object({
   productionApproved: z.boolean().optional(),
   productionApprovedBy: z.string().optional(),
   productionApprovedAt: z.string().optional(),
+  // Nova Poshta поля
+  recipientCityRef: z.string().optional(),
+  recipientCityName: z.string().optional(),
+  recipientWarehouseRef: z.string().optional(),
+  recipientWarehouseAddress: z.string().optional(),
+  shippingCost: z.string().optional(),
+  estimatedDelivery: z.string().optional(),
 });
 
 const statusSchema = z.object({
@@ -1898,15 +1905,68 @@ export default function Orders() {
                   <div className="mt-6">
                     <NovaPoshtaIntegration
                       onAddressSelect={(address, cityRef, warehouseRef) => {
-                        // Можна зберегти адресу в додаткових полях
-                        console.log("Обрано адресу Nova Poshta:", address, cityRef, warehouseRef);
+                        // Зберігаємо адресу в примітках замовлення та в окремих полях
+                        const currentNotes = form.watch("notes") || "";
+                        const addressInfo = `Адреса доставки Nova Poshta: ${address}`;
+                        if (!currentNotes.includes("Адреса доставки Nova Poshta:")) {
+                          form.setValue("notes", currentNotes ? `${currentNotes}\n${addressInfo}` : addressInfo);
+                        }
+                        
+                        // Зберігаємо дані для API запитів (будуть передані на сервер при збереженні)
+                        form.setValue("recipientCityRef", cityRef);
+                        form.setValue("recipientWarehouseRef", warehouseRef);
+                        form.setValue("recipientWarehouseAddress", address);
+                        
+                        // Знайдемо назву міста за cityRef
+                        form.setValue("recipientCityName", "");
+                      }}
+                      onCostCalculated={(cost) => {
+                        // Зберігаємо розраховану вартість доставки в примітках та окремих полях
+                        const currentNotes = form.watch("notes") || "";
+                        const costInfo = `Вартість доставки: ${cost.Cost} грн, очікувана дата: ${cost.estimatedDeliveryDate || 'не вказано'}`;
+                        
+                        // Видаляємо попередню інформацію про вартість якщо є
+                        const updatedNotes = currentNotes.replace(/Вартість доставки:.*?\n?/g, '');
+                        form.setValue("notes", updatedNotes ? `${updatedNotes}\n${costInfo}` : costInfo);
+                        
+                        // Зберігаємо дані для API (будуть передані на сервер при збереженні)
+                        form.setValue("shippingCost", cost.Cost);
+                        if (cost.estimatedDeliveryDate) {
+                          form.setValue("estimatedDelivery", cost.estimatedDeliveryDate);
+                        }
                       }}
                       onTrackingNumberCreated={(trackingNumber) => {
                         form.setValue("trackingNumber", trackingNumber);
                       }}
                       orderId={isEditMode ? editingOrder?.id?.toString() : undefined}
-                      recipientName={clientSearchValue}
-                      recipientPhone={""}
+                      recipientName={(() => {
+                        // Спочатку перевіряємо обраного клієнта
+                        const selectedClient = clientsList?.find((c: any) => c.id.toString() === form.watch("clientId"));
+                        if (selectedClient) {
+                          return selectedClient.name;
+                        }
+                        // Якщо клієнт не знайдений, використовуємо пошуковий рядок
+                        return clientSearchValue || "";
+                      })()}
+                      recipientPhone={(() => {
+                        // Спочатку перевіряємо обраний контакт
+                        const selectedContact = clientContactsForOrder?.find((c: any) => c.id.toString() === form.watch("clientContactsId"));
+                        if (selectedContact && selectedContact.primaryPhone) {
+                          return selectedContact.primaryPhone;
+                        }
+                        // Якщо контакт не має телефону, перевіряємо клієнта
+                        const selectedClient = clientsList?.find((c: any) => c.id.toString() === form.watch("clientId"));
+                        if (selectedClient && selectedClient.phone) {
+                          return selectedClient.phone;
+                        }
+                        return "";
+                      })()}
+                      weight={(() => {
+                        // Використовуємо стандартну вагу 1 кг як базову, 
+                        // можна розрахувати з позицій замовлення в майбутньому
+                        return "1.0";
+                      })()}
+                      declaredValue={form.watch("totalAmount")}
                     />
                   </div>
                 )}
