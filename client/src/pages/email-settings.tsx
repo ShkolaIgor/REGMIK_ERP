@@ -115,10 +115,21 @@ export default function EmailSettings() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4 lg:space-y-6">
-      <div className="flex items-center gap-2">
-        <Settings className="h-5 w-5 lg:h-6 lg:w-6" />
-        <h1 className="text-xl lg:text-2xl font-bold">Налаштування Email</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header Section  sticky top-0 z-40*/}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="w-full px-8 py-3">
+    <div className="max-w-4xl space-y-4 lg:space-y-6">
+      <div className="flex items-center space-x-4">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+          <Settings className="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+            Налаштування Email
+          </h1>
+          <p className="text-gray-500 mt-1">Управління налаштуваннями Email</p>
+        </div>
       </div>
 
       <Card>
@@ -291,5 +302,8 @@ export default function EmailSettings() {
         </CardContent>
       </Card>
     </div>
-  );
+           </div>
+        </header>
+      </div>
+      );
 }

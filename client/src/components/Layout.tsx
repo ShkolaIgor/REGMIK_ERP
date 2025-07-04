@@ -73,7 +73,7 @@ const navigationItems = [
   {
     title: "Головна",
     items: [
-      { name: "Дашборд", href: "/", icon: LayoutDashboard }
+      { name: "Дашборд", href: "/dashboard", icon: LayoutDashboard }
     ]
   },
   {

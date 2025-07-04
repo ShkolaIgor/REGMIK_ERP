@@ -89,12 +89,13 @@ function Router() {
   }
 
   return (
-    <Layout>
+     <Layout>
       <Switch>
         <Route path="/" component={() => (
-          <div className="min-h-screen bg-gray-50 p-8">
-            <div className="max-w-7xl mx-auto">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+            <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
               <div className="bg-white rounded-lg shadow-sm border p-8 mb-8">
+                
                 <div className="flex items-center space-x-4 mb-6">
                   <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
                     <span className="text-white font-bold text-xl">R</span>
