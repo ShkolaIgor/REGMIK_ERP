@@ -185,15 +185,6 @@ export default function Inventory() {
               </div>
             <div className="flex items-center space-x-4">
               <div className="flex gap-2">
-                {/*<div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Пошук товарів..."
-                    className="w-80 pl-10"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div> */}
                 <ScannerButton
                   onScanResult={(barcode) => {
                     setSearchQuery(barcode);
@@ -204,7 +195,7 @@ export default function Inventory() {
                   }}
                 />
               </div>
-              <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
+              <Button variant="outline" className="border-blue-200 text-purple-600 hover:bg-blue-50">
                 <Download className="h-4 w-4 mr-2" />
                 Експорт
               </Button>

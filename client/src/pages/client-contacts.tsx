@@ -427,7 +427,7 @@ export default function ClientContacts() {
           </div>
 
           {/* Filters and Actions */}
-          <div className="w-full py-3">
+          <div className="w-full pb-3">
             <Card>
               <CardContent className="p-6">
                 <div className="flex flex-wrap items-center justify-between gap-4">
@@ -491,6 +491,8 @@ export default function ClientContacts() {
             <DataTable
               data={filteredContacts}
               columns={columns}
+              title="Список контактів клієнтів"
+              description="Оберіть контактну особу клієнта для перегляду та редагування"
               storageKey="client-contacts-table"
               cardTemplate={cardTemplate}
               onRowClick={(contact) => setEditingContact(contact)}
