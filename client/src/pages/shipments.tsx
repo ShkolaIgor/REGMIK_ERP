@@ -170,8 +170,21 @@ export default function Shipments() {
       return response.json();
     }
   });
+
+  // Завантаження всіх замовлень для редагування
+  const { data: allOrdersData } = useQuery({
+    queryKey: ["/api/orders", "all"],
+    queryFn: async () => {
+      const response = await fetch("/api/orders");
+      if (!response.ok) throw new Error("Failed to fetch all orders");
+      return response.json();
+    },
+    enabled: !!editingShipment // Завантажуємо тільки при редагуванні
+  });
   
-  const availableOrders = availableOrdersData?.orders || [];
+  const availableOrders = editingShipment 
+    ? (allOrdersData?.orders || [])
+    : (availableOrdersData?.orders || []);
 
   // Завантаження перевізників
   const { data: carriers = [] } = useQuery({
@@ -1018,27 +1031,47 @@ export default function Shipments() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            setEditingShipment(shipment);
-                            setFormData({
-                              orderId: shipment.orderId.toString(),
-                              carrierId: shipment.carrierId?.toString() || "",
-                              shippingAddress: shipment.recipientWarehouseAddress || "",
-                              recipientName: shipment.recipientName || "",
-                              recipientPhone: shipment.recipientPhone || "",
-                              weight: shipment.weight || "",
-                              length: shipment.length || "",
-                              width: shipment.width || "",
-                              height: shipment.height || "",
-                              shippingCost: shipment.shippingCost || "",
-                              declaredValue: shipment.declaredValue || "",
-                              estimatedDelivery: shipment.estimatedDelivery 
-                                ? new Date(shipment.estimatedDelivery).toISOString().split('T')[0] 
-                                : "",
-                              trackingNumber: shipment.trackingNumber || "",
-                              notes: shipment.notes || ""
-                            });
-                            setIsDialogOpen(true);
+                          onClick={async () => {
+                            try {
+                              // Завантажуємо деталі відвантаження з сервера
+                              const response = await fetch(`/api/shipments/${shipment.id}/details`);
+                              if (response.ok) {
+                                const details = await response.json();
+                                setEditingShipment(shipment);
+                                setFormData({
+                                  orderId: details.order ? details.order.id.toString() : shipment.orderId.toString(),
+                                  carrierId: shipment.carrierId?.toString() || "",
+                                  shippingAddress: shipment.recipientWarehouseAddress || "",
+                                  recipientName: shipment.recipientName || "",
+                                  recipientPhone: shipment.recipientPhone || "",
+                                  weight: shipment.weight || "",
+                                  length: shipment.length || "",
+                                  width: shipment.width || "",
+                                  height: shipment.height || "",
+                                  shippingCost: shipment.shippingCost || "",
+                                  declaredValue: shipment.declaredValue || "",
+                                  estimatedDelivery: shipment.estimatedDelivery 
+                                    ? new Date(shipment.estimatedDelivery).toISOString().split('T')[0] 
+                                    : "",
+                                  trackingNumber: shipment.trackingNumber || "",
+                                  notes: shipment.notes || ""
+                                });
+                                setIsDialogOpen(true);
+                              } else {
+                                toast({
+                                  title: "Помилка",
+                                  description: "Не вдалося завантажити деталі відвантаження",
+                                  variant: "destructive",
+                                });
+                              }
+                            } catch (error) {
+                              console.error("Error loading shipment details:", error);
+                              toast({
+                                title: "Помилка", 
+                                description: "Помилка при завантаженні деталей",
+                                variant: "destructive",
+                              });
+                            }
                           }}
                         >
                           <Edit className="h-4 w-4" />
