@@ -222,12 +222,6 @@ export function OrderItemsXmlImport({ orderId, onImportComplete }: OrderItemsXml
         onProceedToImport={() => setIsOpen(true)}
       />
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="sm">
-            <Upload className="h-4 w-4 mr-2" />
-            Імпорт позицій
-          </Button>
-        </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Імпорт позицій замовлень з XML</DialogTitle>
