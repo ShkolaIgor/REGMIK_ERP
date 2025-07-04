@@ -123,6 +123,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### July 4, 2025
+- ✅ **ДОДАНО ПОВНУ ІНТЕГРАЦІЮ NOVA POSHTA В ЗАМОВЛЕННЯ** - успішно реалізовано функціональність доставки
+- ✅ **Розширено схему бази даних** - додано поля recipient_city_ref, recipient_city_name, recipient_warehouse_ref, recipient_warehouse_address, shipping_cost, estimated_delivery до таблиці orders
+- ✅ **Оновлено Zod схему форм** - insertOrderSchemaForm тепер підтримує всі нові поля Nova Poshta з валідацією
+- ✅ **Інтегровано NovaPoshtaIntegration** - компонент автоматично зберігає обрані адреси та розраховану вартість доставки в формі замовлення
+- ✅ **Налаштовано callbacks** - onAddressSelect та onCostCalculated передають дані до форми та зберігають у примітках
+- ✅ **Backend автосумісність** - існуючі методи createOrder/updateOrder автоматично підтримують нові поля Nova Poshta
+- ✅ **ВИПРАВЛЕНО КРИТИЧНУ ПОМИЛКУ ВІДВАНТАЖЕНЬ** - додано leftJoin для clients та clientContacts таблиць у методі getShipmentDetails
+- ✅ **Відновлено функціональність редагування** - форма редагування відвантажень тепер завантажує дані без помилок
+
 ### July 3, 2025
 - ✅ **ПОКРАЩЕНО ПАСПОРТ ТЕХНОЛОГІЧНИЙ** - оновлено форматування для покращеної читабельності та інформативності
 - ✅ **Структурована інформація** - додано блоки "ІНФОРМАЦІЯ ПРО ЗАМОВЛЕННЯ" та "ІНФОРМАЦІЯ ПРО КЛІЄНТА"

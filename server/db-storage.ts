@@ -3579,6 +3579,8 @@ export class DatabaseStorage implements IStorage {
             contactName: clientContacts.fullName
           })
           .from(orders)
+          .leftJoin(clients, eq(orders.clientId, clients.id))
+          .leftJoin(clientContacts, eq(orders.clientContactsId, clientContacts.id))
           .where(eq(orders.id, shipment.orderId));
         order = orderResult[0] || null;
       }
