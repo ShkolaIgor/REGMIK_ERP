@@ -909,7 +909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const orderData = insertOrderSchemaForm.parse(order);
       
       // Передаємо дані без перетворення дат - це зробить db-storage.ts
-      const updatedOrder = await storage.updateOrder(id, orderData, items || []);
+      const updatedOrder = await storage.updateOrderWithItems(id, orderData, items || []);
       
       console.log("Updated order result:", updatedOrder);
       
