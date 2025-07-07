@@ -5,7 +5,7 @@ import { eq, and, isNull } from "drizzle-orm";
 import { analyzeOrderProduction, type OrderProductionAnalysis } from "./ai-production-service";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
 export interface ProductionTaskRecommendation {
   orderId: number;
@@ -163,6 +163,12 @@ async function generateOrderProductionTask(
   order: any,
   analysis: OrderProductionAnalysis
 ): Promise<ProductionTaskRecommendation> {
+  // Fallback якщо OpenAI API недоступний
+  if (!openai) {
+    console.log("OpenAI API недоступний, використовую fallback для виробничого завдання");
+    return createFallbackProductionTask(order, analysis);
+  }
+
   try {
     const prompt = `
 Створіть виробниче завдання для замовлення на основі AI аналізу:
@@ -515,5 +521,55 @@ export async function createProductionTasksFromPlan(orderRecommendations: Produc
     success: errors.length === 0,
     createdTasks,
     errors
+  };
+}
+
+// Fallback функція для створення виробничого завдання без OpenAI
+function createFallbackProductionTask(
+  order: any,
+  analysis: OrderProductionAnalysis
+): ProductionTaskRecommendation {
+  const startDate = new Date();
+  const endDate = new Date(startDate.getTime() + (analysis.totalProductionTime * 60 * 60 * 1000));
+
+  return {
+    orderId: order.id,
+    orderNumber: order.orderNumber,
+    totalProductionTime: analysis.totalProductionTime,
+    totalCost: analysis.totalCost,
+    priority: determinePriority(order, analysis),
+    estimatedStartDate: startDate.toISOString().split('T')[0],
+    estimatedEndDate: endDate.toISOString().split('T')[0],
+    requiredResources: {
+      specialists: analysis.productRecommendations.reduce((sum, prod) => 
+        sum + prod.recommendation.resourceRequirements.workforce.specialists, 0),
+      generalWorkers: analysis.productRecommendations.reduce((sum, prod) => 
+        sum + prod.recommendation.resourceRequirements.workforce.generalWorkers, 0),
+      equipment: ['Стандартне виробниче обладнання', 'Контрольні прилади'],
+      criticalMaterials: analysis.productRecommendations.flatMap(prod => 
+        prod.recommendation.resourceRequirements.materials.map(mat => mat.name)).slice(0, 5)
+    },
+    risks: [
+      {
+        type: 'Дефіцит ресурсів',
+        probability: 0.3,
+        impact: 'Затримка на 1-2 дні',
+        mitigation: 'Резервування ресурсів заздалегідь'
+      },
+      {
+        type: 'Технічні складнощі',
+        probability: 0.2,
+        impact: 'Збільшення часу виробництва',
+        mitigation: 'Додаткове навчання персоналу'
+      }
+    ],
+    dependencies: analysis.criticalPath,
+    productionSteps: analysis.productRecommendations.map((prod, index) => ({
+      stepNumber: index + 1,
+      operation: `Виготовлення ${prod.productName}`,
+      estimatedHours: prod.recommendation.productionTime.estimated,
+      requiredSkills: ['Базові навички виробництва', 'Контроль якості'],
+      qualityChecks: ['Візуальний огляд', 'Функціональне тестування']
+    }))
   };
 }

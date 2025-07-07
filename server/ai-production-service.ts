@@ -4,7 +4,7 @@ import { products, productComponents, orders, orderItems } from "@shared/schema"
 import { eq, inArray } from "drizzle-orm";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
 export interface ProductionRecommendation {
   productionTime: {
@@ -243,6 +243,12 @@ async function generateProductionRecommendation(
     qualityRequirements: string;
   }
 ): Promise<ProductionRecommendation> {
+  // Fallback якщо OpenAI API недоступний
+  if (!openai) {
+    console.log("OpenAI API недоступний, використовую fallback рекомендації");
+    return createFallbackProductionRecommendation(product, context);
+  }
+
   try {
     const prompt = `
 Ви експерт з виробничого планування в Україні. Проаналізуйте виготовлення товару та надайте детальні рекомендації.
@@ -496,4 +502,173 @@ async function generateOrderOptimizations(productRecommendations: any[], order: 
   }
   
   return optimizations;
+}
+
+// Fallback функція для генерації рекомендацій без OpenAI
+function createFallbackProductionRecommendation(
+  product: {
+    productName: string;
+    productSku: string;
+    description: string;
+    quantity: number;
+    components: Array<{
+      name: string;
+      sku: string;
+      quantity: number;
+      isOptional: boolean;
+      notes: string;
+    }>;
+  },
+  context: {
+    orderPriority: string;
+    deadline?: Date;
+    qualityRequirements: string;
+  }
+): ProductionRecommendation {
+  // Базовий розрахунок часу виробництва
+  const baseTime = Math.max(4, product.components.length * 2 + product.quantity * 0.5);
+  const priorityMultiplier = context.orderPriority === 'high' ? 0.8 : 1.0;
+  const estimatedTime = Math.round(baseTime * priorityMultiplier);
+
+  return {
+    productionTime: {
+      estimated: estimatedTime,
+      unit: 'hours',
+      breakdown: [
+        { stage: 'Підготовка матеріалів', time: Math.round(estimatedTime * 0.2), description: 'Перевірка та підготовка компонентів' },
+        { stage: 'Виробництво', time: Math.round(estimatedTime * 0.6), description: 'Основний процес виготовлення' },
+        { stage: 'Контроль якості', time: Math.round(estimatedTime * 0.15), description: 'Перевірка якості та тестування' },
+        { stage: 'Упакування', time: Math.round(estimatedTime * 0.05), description: 'Фінальне упакування' }
+      ]
+    },
+    resourceRequirements: {
+      materials: product.components.map(comp => ({
+        name: comp.name,
+        quantity: comp.quantity * product.quantity,
+        unit: 'шт',
+        availability: 'available',
+        estimatedCost: 50 * comp.quantity * product.quantity
+      })),
+      equipment: [
+        { name: 'Верстат', utilizationTime: estimatedTime * 0.7, bottleneck: false },
+        { name: 'Контрольне обладнання', utilizationTime: estimatedTime * 0.15, bottleneck: false }
+      ],
+      workforce: {
+        specialists: Math.max(1, Math.ceil(product.quantity / 10)),
+        generalWorkers: Math.max(1, Math.ceil(product.quantity / 5)),
+        totalHours: estimatedTime
+      }
+    },
+    productionSequence: [
+      {
+        step: 1,
+        operation: 'Підготовка робочого місця',
+        duration: Math.round(estimatedTime * 0.1),
+        dependencies: [],
+        riskLevel: 'low',
+        instructions: 'Перевірити наявність всіх інструментів та матеріалів'
+      },
+      {
+        step: 2,
+        operation: 'Обробка компонентів',
+        duration: Math.round(estimatedTime * 0.5),
+        dependencies: ['Підготовка робочого місця'],
+        riskLevel: 'medium',
+        instructions: 'Обробити всі компоненти згідно технологічної карти'
+      },
+      {
+        step: 3,
+        operation: 'Збирання',
+        duration: Math.round(estimatedTime * 0.3),
+        dependencies: ['Обробка компонентів'],
+        riskLevel: 'medium',
+        instructions: 'Зібрати товар відповідно до специфікації'
+      },
+      {
+        step: 4,
+        operation: 'Контроль якості',
+        duration: Math.round(estimatedTime * 0.1),
+        dependencies: ['Збирання'],
+        riskLevel: 'low',
+        instructions: 'Провести всі необхідні перевірки якості'
+      }
+    ],
+    qualityChecks: [
+      {
+        stage: 'Прийом матеріалів',
+        checkType: 'Візуальний огляд',
+        criteria: 'Відсутність дефектів та відповідність специфікації',
+        requiredTools: ['Штангенциркуль', 'Лінійка']
+      },
+      {
+        stage: 'Готовий товар',
+        checkType: 'Функціональне тестування',
+        criteria: 'Повна відповідність технічним вимогам',
+        requiredTools: ['Тестове обладнання']
+      }
+    ],
+    riskAssessment: {
+      overallRisk: 'medium',
+      risks: [
+        {
+          type: 'Дефіцит матеріалів',
+          probability: 0.2,
+          impact: 'Затримка виробництва на 1-2 дні',
+          mitigation: 'Перевірити наявність матеріалів перед початком'
+        },
+        {
+          type: 'Технічні проблеми',
+          probability: 0.15,
+          impact: 'Збільшення часу виробництва на 20%',
+          mitigation: 'Профілактичне обслуговування обладнання'
+        }
+      ]
+    },
+    costEstimate: {
+      materials: product.components.reduce((sum, comp) => sum + (50 * comp.quantity * product.quantity), 0),
+      labor: estimatedTime * 150, // 150 грн/година
+      overhead: estimatedTime * 50, // накладні витрати
+      total: 0, // буде розраховано нижче
+      profitMargin: 25
+    },
+    optimizations: [
+      {
+        type: 'time',
+        suggestion: 'Розглянути паралельну обробку компонентів',
+        impact: 'Скорочення часу на 15-20%',
+        implementation: 'Організувати декілька робочих місць'
+      },
+      {
+        type: 'cost',
+        suggestion: 'Оптимізувати закупівлю матеріалів',
+        impact: 'Економія до 10% на матеріалах',
+        implementation: 'Замовляти матеріали оптовими партіями'
+      }
+    ],
+    sustainability: {
+      energyConsumption: estimatedTime * 2, // кВт*год
+      wasteGeneration: product.quantity * 0.1, // кг
+      carbonFootprint: estimatedTime * 0.5, // кг CO2
+      recyclingOpportunities: ['Переробка металевих відходів', 'Повторне використання упаковки']
+    },
+    reasoning: 'Рекомендації розраховані на основі базових алгоритмів аналізу виробництва (OpenAI API недоступний)'
+  };
+
+  // Розрахунок загальної вартості
+  const materials = product.components.reduce((sum, comp) => sum + (50 * comp.quantity * product.quantity), 0);
+  const labor = estimatedTime * 150;
+  const overhead = estimatedTime * 50;
+  
+  const result = {
+    ...arguments[0],
+    costEstimate: {
+      materials,
+      labor,
+      overhead,
+      total: materials + labor + overhead,
+      profitMargin: 25
+    }
+  };
+
+  return result as ProductionRecommendation;
 }
