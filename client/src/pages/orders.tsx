@@ -32,6 +32,7 @@ import { NovaPoshtaIntegration } from "@/components/NovaPoshtaIntegration";
 import { OrdersXmlImport } from "@/components/OrdersXmlImport";
 import { OrderItemsXmlImport } from "@/components/OrderItemsXmlImport";
 import { PrintPreviewModal } from "@/components/PrintPreviewModal";
+import ComponentDeductions from "@/components/ComponentDeductions";
 // Типи
 type Order = {
   id: number;
@@ -2652,6 +2653,11 @@ export default function Orders() {
                               ) : (
                                 <p className="text-gray-500 text-sm">Замовлення не містить товарів</p>
                               )}
+                              
+                              {/* Списання компонентів */}
+                              <div className="mt-6 border-t pt-4">
+                                <ComponentDeductions orderId={order.id} />
+                              </div>
                             </div>
                           </TableCell>
                         </TableRow>

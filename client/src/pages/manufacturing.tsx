@@ -29,6 +29,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
+import ComponentDeductions from "@/components/ComponentDeductions";
 
 interface ManufacturingOrder {
   id: number;
@@ -1327,6 +1328,11 @@ export default function Manufacturing() {
                     </div>
                   </CardContent>
                 </Card>
+              )}
+
+              {/* Списання компонентів */}
+              {selectedOrder.sourceOrderId && (
+                <ComponentDeductions orderId={selectedOrder.sourceOrderId} />
               )}
             </div>
           )}

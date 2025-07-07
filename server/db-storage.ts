@@ -3,9 +3,11 @@ import { db, pool } from "./db";
 import { IStorage } from "./storage";
 import {
   users, localUsers, roles, systemModules, permissions, rolePermissions, userPermissions, userLoginHistory, categories, warehouses, units, products, inventory, orders, orderItems, orderStatuses,
+  componentDeductions, componentDeductionAdjustments,
   recipes, recipeIngredients, productionTasks, suppliers, techCards, techCardSteps, techCardMaterials,
   components, productComponents, costCalculations, materialShortages, supplierOrders, supplierOrderItems,
   assemblyOperations, assemblyOperationItems, workers, inventoryAudits, inventoryAuditItems,
+  componentDeductions, componentDeductionAdjustments,
   productionForecasts, warehouseTransfers, warehouseTransferItems, positions, departments, packageTypes, solderingTypes,
   componentCategories, componentAlternatives, carriers, shipments, shipmentItems, customerAddresses, senderSettings,
   manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, currencyRates, currencyUpdateSettings, serialNumbers, serialNumberSettings, emailSettings,
@@ -70,6 +72,8 @@ import {
   type RepairPart, type InsertRepairPart,
   type RepairStatusHistory, type InsertRepairStatusHistory,
   type RepairDocument, type InsertRepairDocument,
+  type ComponentDeduction, type InsertComponentDeduction,
+  type ComponentDeductionAdjustment, type InsertComponentDeductionAdjustment,
 
 } from "@shared/schema";
 
@@ -9389,6 +9393,292 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error analyzing supply decision:', error);
       return { lowStockCount: 0, recommendation: 'Помилка аналізу', products: [] };
+    }
+  }
+
+  // ===================== МЕТОДИ ДЛЯ СПИСАННЯ КОМПОНЕНТІВ =====================
+
+  // Створення списання компонентів для замовлення
+  async createComponentDeductionsForOrder(orderId: number): Promise<ComponentDeduction[]> {
+    try {
+      // Отримуємо позиції замовлення з товарами
+      const orderItemsData = await this.db.select({
+        id: orderItems.id,
+        orderId: orderItems.orderId,
+        productId: orderItems.productId,
+        quantity: orderItems.quantity,
+        productName: products.name,
+        productSku: products.sku
+      })
+        .from(orderItems)
+        .leftJoin(products, eq(orderItems.productId, products.id))
+        .where(eq(orderItems.orderId, orderId));
+
+      if (!orderItemsData.length) {
+        console.log('Позиції замовлення не знайдено');
+        return [];
+      }
+
+      const deductions: ComponentDeduction[] = [];
+
+      // Для кожного товару в замовленні знаходимо компоненти згідно BOM
+      for (const item of orderItemsData) {
+        if (!item.productId) continue;
+
+        // Отримуємо компоненти для товару
+        const componentsData = await this.db.select({
+          componentId: productComponents.componentProductId,
+          quantity: productComponents.quantity,
+          unit: units.name,
+          componentName: products.name,
+          componentSku: products.sku,
+          costPrice: products.costPrice
+        })
+          .from(productComponents)
+          .leftJoin(products, eq(productComponents.componentProductId, products.id))
+          .leftJoin(units, eq(productComponents.unitId, units.id))
+          .where(eq(productComponents.parentProductId, item.productId));
+
+        // Створюємо списання для кожного компонента
+        for (const component of componentsData) {
+          if (!component.componentId) continue;
+
+          const plannedQuantity = parseFloat(component.quantity || '0') * item.quantity;
+          const deductedQuantity = plannedQuantity; // По замовчуванню списуємо планову кількість
+
+          // Знаходимо склад з найбільшим залишком компонента
+          const warehouseWithStock = await this.db.select({
+            warehouseId: inventory.warehouseId,
+            quantity: inventory.quantity
+          })
+            .from(inventory)
+            .where(
+              and(
+                eq(inventory.productId, component.componentId),
+                sql`${inventory.quantity} > 0`
+              )
+            )
+            .orderBy(desc(inventory.quantity))
+            .limit(1);
+
+          const warehouseId = warehouseWithStock.length > 0 ? warehouseWithStock[0].warehouseId : 1;
+          const costPrice = parseFloat(component.costPrice || '0');
+          const totalCost = deductedQuantity * costPrice;
+
+          const deductionData: InsertComponentDeduction = {
+            orderId,
+            orderItemId: item.id,
+            componentId: component.componentId,
+            componentType: 'product',
+            plannedQuantity: plannedQuantity.toString(),
+            deductedQuantity: deductedQuantity.toString(),
+            warehouseId,
+            unit: component.unit || 'шт',
+            costPrice: costPrice.toString(),
+            totalCost: totalCost.toString(),
+            notes: `Автоматичне списання компонента ${component.componentSku} для товару ${item.productSku}`
+          };
+
+          const [deduction] = await this.db.insert(componentDeductions)
+            .values(deductionData)
+            .returning();
+
+          // Зменшуємо кількість компонента на складі
+          await this.db.update(inventory)
+            .set({
+              quantity: sql`${inventory.quantity} - ${deductedQuantity}`,
+              updatedAt: new Date()
+            })
+            .where(
+              and(
+                eq(inventory.productId, component.componentId),
+                eq(inventory.warehouseId, warehouseId)
+              )
+            );
+
+          deductions.push(deduction);
+        }
+      }
+
+      console.log(`Створено ${deductions.length} списань компонентів для замовлення ${orderId}`);
+      return deductions;
+    } catch (error) {
+      console.error('Помилка створення списань компонентів:', error);
+      throw error;
+    }
+  }
+
+  // Отримання списань компонентів для замовлення
+  async getComponentDeductionsByOrder(orderId: number): Promise<any[]> {
+    try {
+      const result = await this.db.select({
+        id: componentDeductions.id,
+        orderId: componentDeductions.orderId,
+        orderItemId: componentDeductions.orderItemId,
+        componentId: componentDeductions.componentId,
+        componentType: componentDeductions.componentType,
+        plannedQuantity: componentDeductions.plannedQuantity,
+        deductedQuantity: componentDeductions.deductedQuantity,
+        warehouseId: componentDeductions.warehouseId,
+        unit: componentDeductions.unit,
+        costPrice: componentDeductions.costPrice,
+        totalCost: componentDeductions.totalCost,
+        deductionDate: componentDeductions.deductionDate,
+        status: componentDeductions.status,
+        adjustmentReason: componentDeductions.adjustmentReason,
+        adjustedBy: componentDeductions.adjustedBy,
+        adjustedAt: componentDeductions.adjustedAt,
+        notes: componentDeductions.notes,
+        // Дані про компонент
+        componentName: products.name,
+        componentSku: products.sku,
+        // Дані про склад
+        warehouseName: warehouses.name,
+        // Дані про позицію замовлення
+        orderItemQuantity: orderItems.quantity,
+        productName: sql<string>`order_products.name`.as('productName'),
+        productSku: sql<string>`order_products.sku`.as('productSku')
+      })
+        .from(componentDeductions)
+        .leftJoin(products, eq(componentDeductions.componentId, products.id))
+        .leftJoin(warehouses, eq(componentDeductions.warehouseId, warehouses.id))
+        .leftJoin(orderItems, eq(componentDeductions.orderItemId, orderItems.id))
+        .leftJoin(
+          sql`${products} as order_products`,
+          sql`order_products.id = ${orderItems.productId}`
+        )
+        .where(eq(componentDeductions.orderId, orderId))
+        .orderBy(componentDeductions.deductionDate);
+
+      return result;
+    } catch (error) {
+      console.error('Помилка отримання списань компонентів:', error);
+      throw error;
+    }
+  }
+
+  // Коригування списання компонента
+  async adjustComponentDeduction(
+    deductionId: number, 
+    newQuantity: number, 
+    reason: string, 
+    adjustedBy: string
+  ): Promise<ComponentDeduction> {
+    try {
+      // Отримуємо поточне списання
+      const [currentDeduction] = await this.db.select()
+        .from(componentDeductions)
+        .where(eq(componentDeductions.id, deductionId));
+
+      if (!currentDeduction) {
+        throw new Error('Списання не знайдено');
+      }
+
+      const originalQuantity = parseFloat(currentDeduction.deductedQuantity);
+      const quantityDifference = newQuantity - originalQuantity;
+      const adjustmentType = quantityDifference > 0 ? 'increase' : 'decrease';
+
+      // Створюємо запис в історії коригувань
+      await this.db.insert(componentDeductionAdjustments)
+        .values({
+          deductionId,
+          adjustmentType,
+          originalQuantity: originalQuantity.toString(),
+          adjustedQuantity: newQuantity.toString(),
+          quantityDifference: Math.abs(quantityDifference).toString(),
+          reason,
+          adjustedBy,
+          notes: `Коригування списання з ${originalQuantity} до ${newQuantity}`
+        });
+
+      // Оновлюємо списання
+      const [updatedDeduction] = await this.db.update(componentDeductions)
+        .set({
+          deductedQuantity: newQuantity.toString(),
+          totalCost: (newQuantity * parseFloat(currentDeduction.costPrice || '0')).toString(),
+          adjustmentReason: reason,
+          adjustedBy,
+          adjustedAt: new Date(),
+          status: 'adjusted',
+          updatedAt: new Date()
+        })
+        .where(eq(componentDeductions.id, deductionId))
+        .returning();
+
+      // Коригуємо кількість на складі
+      await this.db.update(inventory)
+        .set({
+          quantity: sql`${inventory.quantity} - ${quantityDifference}`,
+          updatedAt: new Date()
+        })
+        .where(
+          and(
+            eq(inventory.productId, currentDeduction.componentId),
+            eq(inventory.warehouseId, currentDeduction.warehouseId)
+          )
+        );
+
+      console.log(`Коригування списання ${deductionId}: ${originalQuantity} → ${newQuantity}`);
+      return updatedDeduction;
+    } catch (error) {
+      console.error('Помилка коригування списання:', error);
+      throw error;
+    }
+  }
+
+  // Скасування списання компонента
+  async cancelComponentDeduction(deductionId: number, reason: string, cancelledBy: string): Promise<void> {
+    try {
+      // Отримуємо списання
+      const [deduction] = await this.db.select()
+        .from(componentDeductions)
+        .where(eq(componentDeductions.id, deductionId));
+
+      if (!deduction) {
+        throw new Error('Списання не знайдено');
+      }
+
+      // Повертаємо кількість на склад
+      await this.db.update(inventory)
+        .set({
+          quantity: sql`${inventory.quantity} + ${parseFloat(deduction.deductedQuantity)}`,
+          updatedAt: new Date()
+        })
+        .where(
+          and(
+            eq(inventory.productId, deduction.componentId),
+            eq(inventory.warehouseId, deduction.warehouseId)
+          )
+        );
+
+      // Оновлюємо статус списання
+      await this.db.update(componentDeductions)
+        .set({
+          status: 'cancelled',
+          adjustmentReason: reason,
+          adjustedBy: cancelledBy,
+          adjustedAt: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(componentDeductions.id, deductionId));
+
+      // Записуємо в історію
+      await this.db.insert(componentDeductionAdjustments)
+        .values({
+          deductionId,
+          adjustmentType: 'cancel',
+          originalQuantity: deduction.deductedQuantity,
+          adjustedQuantity: '0',
+          quantityDifference: deduction.deductedQuantity,
+          reason,
+          adjustedBy: cancelledBy,
+          notes: `Скасування списання компонента`
+        });
+
+      console.log(`Скасовано списання ${deductionId}`);
+    } catch (error) {
+      console.error('Помилка скасування списання:', error);
+      throw error;
     }
   }
 

@@ -10688,5 +10688,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===================== API ДЛЯ СПИСАННЯ КОМПОНЕНТІВ =====================
+
+  // Створення списання компонентів для замовлення
+  app.post("/api/component-deductions/create/:orderId", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.orderId);
+      
+      if (isNaN(orderId)) {
+        return res.status(400).json({ error: "Некоректний ID замовлення" });
+      }
+
+      const deductions = await storage.createComponentDeductionsForOrder(orderId);
+      
+      res.json({
+        success: true,
+        deductions,
+        count: deductions.length,
+        message: `Створено ${deductions.length} списань компонентів для замовлення ${orderId}`
+      });
+    } catch (error) {
+      console.error("Помилка створення списань компонентів:", error);
+      res.status(500).json({ 
+        error: "Не вдалося створити списання компонентів", 
+        details: error instanceof Error ? error.message : 'Невідома помилка'
+      });
+    }
+  });
+
+  // Отримання списань компонентів для замовлення
+  app.get("/api/component-deductions/order/:orderId", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.orderId);
+      
+      if (isNaN(orderId)) {
+        return res.status(400).json({ error: "Некоректний ID замовлення" });
+      }
+
+      const deductions = await storage.getComponentDeductionsByOrder(orderId);
+      
+      res.json({
+        success: true,
+        deductions,
+        count: deductions.length
+      });
+    } catch (error) {
+      console.error("Помилка отримання списань компонентів:", error);
+      res.status(500).json({ 
+        error: "Не вдалося отримати списання компонентів", 
+        details: error instanceof Error ? error.message : 'Невідома помилка'
+      });
+    }
+  });
+
+  // Коригування списання компонента
+  app.put("/api/component-deductions/:deductionId/adjust", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const deductionId = parseInt(req.params.deductionId);
+      const { quantity, reason, adjustedBy } = req.body;
+      
+      if (isNaN(deductionId)) {
+        return res.status(400).json({ error: "Некоректний ID списання" });
+      }
+
+      if (!quantity || !reason || !adjustedBy) {
+        return res.status(400).json({ error: "Кількість, причина та виконавець обов'язкові" });
+      }
+
+      const adjustedDeduction = await storage.adjustComponentDeduction(
+        deductionId, 
+        parseFloat(quantity), 
+        reason, 
+        adjustedBy
+      );
+      
+      res.json({
+        success: true,
+        deduction: adjustedDeduction,
+        message: `Списання ${deductionId} скориговано`
+      });
+    } catch (error) {
+      console.error("Помилка коригування списання:", error);
+      res.status(500).json({ 
+        error: "Не вдалося скоригувати списання", 
+        details: error instanceof Error ? error.message : 'Невідома помилка'
+      });
+    }
+  });
+
+  // Скасування списання компонента
+  app.delete("/api/component-deductions/:deductionId", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const deductionId = parseInt(req.params.deductionId);
+      const { reason, cancelledBy } = req.body;
+      
+      if (isNaN(deductionId)) {
+        return res.status(400).json({ error: "Некоректний ID списання" });
+      }
+
+      if (!reason || !cancelledBy) {
+        return res.status(400).json({ error: "Причина та виконавець обов'язкові" });
+      }
+
+      await storage.cancelComponentDeduction(deductionId, reason, cancelledBy);
+      
+      res.json({
+        success: true,
+        message: `Списання ${deductionId} скасовано`
+      });
+    } catch (error) {
+      console.error("Помилка скасування списання:", error);
+      res.status(500).json({ 
+        error: "Не вдалося скасувати списання", 
+        details: error instanceof Error ? error.message : 'Невідома помилка'
+      });
+    }
+  });
+
   return httpServer;
 }

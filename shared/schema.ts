@@ -379,17 +379,27 @@ export const recipeIngredients = pgTable("recipe_ingredients", {
 
 export const productionTasks = pgTable("production_tasks", {
   id: serial("id").primaryKey(),
-  recipeId: integer("recipe_id").references(() => recipes.id).notNull(),
+  orderId: integer("order_id").references(() => orders.id), // зв'язок з замовленням
+  recipeId: integer("recipe_id").references(() => recipes.id),
+  taskName: varchar("task_name", { length: 255 }).notNull(),
+  description: text("description"),
   quantity: integer("quantity").notNull(),
   unit: text("unit").notNull().default("шт"),
-  status: text("status").notNull().default("planned"), // planned, in-progress, quality-check, completed
+  status: text("status").notNull().default("planned"), // planned, in_progress, completed, cancelled
   priority: text("priority").notNull().default("medium"), // low, medium, high
+  assignedUserId: integer("assigned_user_id").references(() => users.id),
   assignedTo: text("assigned_to"),
+  estimatedHours: decimal("estimated_hours", { precision: 8, scale: 2 }),
+  actualHours: decimal("actual_hours", { precision: 8, scale: 2 }),
+  estimatedCost: decimal("estimated_cost", { precision: 12, scale: 2 }),
+  actualCost: decimal("actual_cost", { precision: 12, scale: 2 }),
   startDate: timestamp("start_date"),
+  dueDate: timestamp("due_date"),
   endDate: timestamp("end_date"),
   progress: integer("progress").default(0), // 0-100
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 
@@ -848,6 +858,44 @@ export const assemblyOperationItems = pgTable("assembly_operation_items", {
   status: text("status").notNull().default("pending"), // pending, consumed, returned
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Таблиця списання компонентів зі складу при виробництві
+export const componentDeductions = pgTable("component_deductions", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").references(() => orders.id).notNull(),
+  orderItemId: integer("order_item_id").references(() => orderItems.id).notNull(),
+  productionTaskId: integer("production_task_id").references(() => productionTasks.id),
+  componentId: integer("component_id").references(() => products.id).notNull(), // компонент (з products або components)
+  componentType: varchar("component_type", { length: 20 }).notNull().default("product"), // "product" або "component"
+  plannedQuantity: decimal("planned_quantity", { precision: 12, scale: 4 }).notNull(), // планова кількість згідно BOM
+  deductedQuantity: decimal("deducted_quantity", { precision: 12, scale: 4 }).notNull(), // фактично списана кількість
+  warehouseId: integer("warehouse_id").references(() => warehouses.id).notNull(),
+  unit: varchar("unit", { length: 50 }).notNull(),
+  costPrice: decimal("cost_price", { precision: 10, scale: 2 }), // собівартість на момент списання
+  totalCost: decimal("total_cost", { precision: 12, scale: 2 }), // загальна вартість списання
+  deductionDate: timestamp("deduction_date").notNull().defaultNow(),
+  status: varchar("status", { length: 50 }).notNull().default("active"), // active, adjusted, cancelled
+  adjustmentReason: text("adjustment_reason"), // причина коригування
+  adjustedBy: varchar("adjusted_by", { length: 100 }), // хто зробив коригування
+  adjustedAt: timestamp("adjusted_at"), // коли зроблено коригування
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Таблиця історії коригувань списань компонентів
+export const componentDeductionAdjustments = pgTable("component_deduction_adjustments", {
+  id: serial("id").primaryKey(),
+  deductionId: integer("deduction_id").references(() => componentDeductions.id).notNull(),
+  adjustmentType: varchar("adjustment_type", { length: 50 }).notNull(), // increase, decrease, cancel, restore
+  originalQuantity: decimal("original_quantity", { precision: 12, scale: 4 }).notNull(),
+  adjustedQuantity: decimal("adjusted_quantity", { precision: 12, scale: 4 }).notNull(),
+  quantityDifference: decimal("quantity_difference", { precision: 12, scale: 4 }).notNull(),
+  reason: text("reason").notNull(),
+  adjustedBy: varchar("adjusted_by", { length: 100 }).notNull(),
+  adjustedAt: timestamp("adjusted_at").notNull().defaultNow(),
+  notes: text("notes"),
 });
 
 // Налаштування поштового сервісу
@@ -1479,6 +1527,24 @@ export const departmentsRelations = relations(departments, ({ many }) => ({
 
 export type ComponentAlternative = typeof componentAlternatives.$inferSelect;
 export type InsertComponentAlternative = z.infer<typeof insertComponentAlternativeSchema>;
+
+// Схеми для списання компонентів
+export const insertComponentDeductionSchema = createInsertSchema(componentDeductions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertComponentDeductionAdjustmentSchema = createInsertSchema(componentDeductionAdjustments).omit({
+  id: true,
+  adjustedAt: true,
+});
+
+// Типи для списання компонентів
+export type ComponentDeduction = typeof componentDeductions.$inferSelect;
+export type InsertComponentDeduction = z.infer<typeof insertComponentDeductionSchema>;
+export type ComponentDeductionAdjustment = typeof componentDeductionAdjustments.$inferSelect;
+export type InsertComponentDeductionAdjustment = z.infer<typeof insertComponentDeductionAdjustmentSchema>;
 
 // Carrier types
 export type Carrier = typeof carriers.$inferSelect;
