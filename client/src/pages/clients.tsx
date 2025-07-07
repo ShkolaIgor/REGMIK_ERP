@@ -530,7 +530,7 @@ export default function Clients() {
           </div>
         </div>
         
-        <div className="flex justify-between items-center mb-3">
+        <div className="justify-between items-center mb-3">
           <CardDescription className="text-sm">
             {(() => {
               const clientType = clientTypes?.find((type: any) => type.id === client.clientTypeId);
@@ -873,6 +873,6 @@ export default function Clients() {
       </Dialog>
       </div>
     </div>
-      </div>
+    </div>
   );
 }

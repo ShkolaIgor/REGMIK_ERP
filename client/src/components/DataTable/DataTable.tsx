@@ -506,23 +506,40 @@ export function DataTable({
         <div className="col-span-full text-center py-8 text-gray-500">Дані не знайдено</div>
       ) : (
         paginatedData.map((row, index) => (
-          <Card 
-            key={index} 
-            className={cn(
-              "cursor-pointer hover:shadow-md transition-shadow min-h-[280px] flex flex-col",
-              onRowClick && "cursor-pointer"
-            )}
-            style={{
-              backgroundColor: settings.rowBackgroundColor,
-              color: settings.rowTextColor,
-              fontSize: `${settings.fontSize}px`,
-              fontWeight: settings.fontWeight,
-              fontStyle: settings.fontStyle
-            }}
-            onClick={() => onRowClick?.(row)}
-          >
-            <CardContent className="p-6 flex-1 flex flex-col">
-              {cardTemplate ? cardTemplate(row) : (
+          cardTemplate ? (
+            // Коли використовується cardTemplate, рендеримо його без зовнішнього Card
+            <div 
+              key={index}
+              className={cn(
+                onRowClick && "cursor-pointer"
+              )}
+              style={{
+                fontSize: `${settings.fontSize}px`,
+                fontWeight: settings.fontWeight,
+                fontStyle: settings.fontStyle
+              }}
+              onClick={() => onRowClick?.(row)}
+            >
+              {cardTemplate(row)}
+            </div>
+          ) : (
+            // Для стандартних карток використовуємо Card від DataTable
+            <Card 
+              key={index} 
+              className={cn(
+                "cursor-pointer hover:shadow-md transition-shadow min-h-[280px] flex flex-col",
+                onRowClick && "cursor-pointer"
+              )}
+              style={{
+                backgroundColor: settings.rowBackgroundColor,
+                color: settings.rowTextColor,
+                fontSize: `${settings.fontSize}px`,
+                fontWeight: settings.fontWeight,
+                fontStyle: settings.fontStyle
+              }}
+              onClick={() => onRowClick?.(row)}
+            >
+              <CardContent className="p-6 flex-1 flex flex-col">
                 <div className="space-y-3 flex-1">
                   {visibleColumns.slice(0, 6).map((column) => {
                     const columnSettings = settings.columnSettings[column.key] || defaultColumnSettings;
@@ -544,7 +561,7 @@ export function DataTable({
                       </div>
                     );
                   })}
-                  {actions && !cardTemplate && (
+                  {actions && (
                     <div className="pt-3 mt-auto border-t flex justify-end">
                       <div className="flex gap-1">
                         {actions(row)}
@@ -552,9 +569,9 @@ export function DataTable({
                     </div>
                   )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )
         ))
       )}
     </div>
@@ -1024,6 +1041,6 @@ export function DataTable({
       )}
     </div>
     </div>
-      </div>
+    </div>
   );
 }
