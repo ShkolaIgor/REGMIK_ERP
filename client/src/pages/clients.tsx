@@ -805,10 +805,6 @@ export default function Clients() {
                 />
 
                 <div className="flex items-center space-x-3">
-                  <Button variant="outline">
-                    <Download className="w-4 h-4 mr-2" />
-                    Експорт
-                  </Button>
                   <Button variant="outline" disabled>
                     <Scan className="w-4 h-4 mr-2" />
                     Сканер штрих-кодів
