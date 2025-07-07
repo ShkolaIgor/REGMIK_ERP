@@ -1,16 +1,8 @@
 import React from 'react';
-import { ImportWizard } from './ImportWizard';
+import { ClientsImportWizard } from './ClientsImportWizard';
 
 export function ClientsXmlImport() {
-  return (
-    <ImportWizard 
-      importType="clients"
-      onProceedToImport={() => {
-        // Майстер імпорту вже показав інформацію, тепер можна переходити до імпорту
-        console.log("Proceeding to clients import...");
-      }}
-    />
-  );
+  return <ClientsImportWizard />;
 }
 
 export default ClientsXmlImport;
