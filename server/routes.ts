@@ -5,6 +5,7 @@ import { registerSimpleIntegrationRoutes } from "./integrations-simple";
 import { registerSyncApiRoutes } from "./sync-api";
 import { sendCompanyDataToERP, sendInvoiceToERP, syncAllCompaniesFromBitrix, syncAllInvoicesFromBitrix, sendCompanyDataToERPWebhook, sendInvoiceToERPWebhook } from "./bitrix-sync";
 import { analyzeOrderProduction } from "./ai-production-service";
+import { generateMassProductionPlan, createProductionTasksFromPlan } from "./ai-mass-production-service";
 import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./simple-auth";
 import { novaPoshtaApi } from "./nova-poshta-api";
 import { novaPoshtaCache } from "./nova-poshta-cache";
@@ -10638,6 +10639,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error analyzing order production:", error);
       res.status(500).json({ 
         error: "Failed to analyze production", 
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Mass Production Planning API
+  app.post("/api/ai/mass-production-plan", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { plan, orderRecommendations } = await generateMassProductionPlan();
+      
+      res.json({
+        plan,
+        orderRecommendations,
+        summary: {
+          totalOrders: plan.totalOrders,
+          totalProductionTime: plan.totalProductionTime,
+          totalCost: plan.totalCost,
+          timeframe: plan.timeframe
+        }
+      });
+    } catch (error) {
+      console.error("Error generating mass production plan:", error);
+      res.status(500).json({ 
+        error: "Failed to generate mass production plan", 
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Create Production Tasks API
+  app.post("/api/ai/create-production-tasks", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { orderRecommendations } = req.body;
+      
+      if (!orderRecommendations || !Array.isArray(orderRecommendations)) {
+        return res.status(400).json({ error: "Valid order recommendations array is required" });
+      }
+
+      const result = await createProductionTasksFromPlan(orderRecommendations);
+      res.json(result);
+    } catch (error) {
+      console.error("Error creating production tasks:", error);
+      res.status(500).json({ 
+        error: "Failed to create production tasks", 
         details: error instanceof Error ? error.message : 'Unknown error'
       });
     }

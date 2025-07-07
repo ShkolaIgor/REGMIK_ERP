@@ -665,6 +665,8 @@ export default function Clients() {
               </div>
             </div>
           <div className="flex items-center space-x-4">
+            <ClientsXmlImport />
+            <ClientContactsXmlImport />
             <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
               <Download className="h-4 w-4 mr-2" />
               Експорт

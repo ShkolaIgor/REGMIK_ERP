@@ -151,7 +151,7 @@ export function AIProductionAnalysis({ orderId, orderNumber }: AIProductionAnaly
     mutationFn: async () => {
       return await apiRequest(`/api/ai/production-analysis`, {
         method: 'POST',
-        body: JSON.stringify({ orderId }),
+        body: { orderId },
         headers: {
           'Content-Type': 'application/json'
         }
