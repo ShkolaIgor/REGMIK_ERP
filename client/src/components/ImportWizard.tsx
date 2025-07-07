@@ -352,7 +352,7 @@ export function ImportWizard({ importType, onProceedToImport }: ImportWizardProp
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="flex items-center gap-2">
           <Info className="h-4 w-4" />
-          Майстер імпорту
+          Імпорт {getImportTypeLabel()}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
