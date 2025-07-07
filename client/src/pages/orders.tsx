@@ -32,8 +32,6 @@ import { NovaPoshtaIntegration } from "@/components/NovaPoshtaIntegration";
 import { OrdersXmlImport } from "@/components/OrdersXmlImport";
 import { OrderItemsXmlImport } from "@/components/OrderItemsXmlImport";
 import { PrintPreviewModal } from "@/components/PrintPreviewModal";
-import { AIProductionAnalysis } from "@/components/AIProductionAnalysis";
-import { MassProductionPlanner } from "@/components/MassProductionPlanner";
 // Типи
 type Order = {
   id: number;
@@ -554,10 +552,6 @@ export default function Orders() {
             >
               <Printer className="w-4 h-4" />
             </Button>
-            <AIProductionAnalysis 
-              orderId={order.id} 
-              orderNumber={order.orderNumber}
-            />
           </div>
         );
       
@@ -1530,7 +1524,6 @@ export default function Orders() {
                     description: "Позиції замовлень успішно імпортовані",
                   });
                 }} />
-                <MassProductionPlanner />
               </div>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
