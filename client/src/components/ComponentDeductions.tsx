@@ -52,6 +52,7 @@ export default function ComponentDeductions({ orderId }: ComponentDeductionsProp
   // Отримання списань компонентів для замовлення
   const { data: deductionsData, isLoading } = useQuery({
     queryKey: ['/api/component-deductions/order', orderId],
+    queryFn: () => apiRequest(`/api/component-deductions/order?orderId=${orderId}`),
     enabled: !!orderId,
   });
 

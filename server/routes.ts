@@ -10691,7 +10691,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===================== API ДЛЯ СПИСАННЯ КОМПОНЕНТІВ =====================
 
   // Створення списання компонентів для замовлення
-  app.post("/api/component-deductions/create/:orderId", isSimpleAuthenticated, async (req, res) => {
+  app.post("/api/component-deductions/create/:orderId", async (req, res) => {
     try {
       const orderId = parseInt(req.params.orderId);
       
@@ -10717,9 +10717,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Отримання списань компонентів для замовлення
-  app.get("/api/component-deductions/order/:orderId", isSimpleAuthenticated, async (req, res) => {
+  app.get("/api/component-deductions/order", async (req, res) => {
     try {
-      const orderId = parseInt(req.params.orderId);
+      const orderId = parseInt(req.query.orderId as string);
       
       if (isNaN(orderId)) {
         return res.status(400).json({ error: "Некоректний ID замовлення" });
@@ -10742,7 +10742,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Коригування списання компонента
-  app.put("/api/component-deductions/:deductionId/adjust", isSimpleAuthenticated, async (req, res) => {
+  app.put("/api/component-deductions/:deductionId/adjust", async (req, res) => {
     try {
       const deductionId = parseInt(req.params.deductionId);
       const { quantity, reason, adjustedBy } = req.body;
@@ -10777,7 +10777,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Скасування списання компонента
-  app.delete("/api/component-deductions/:deductionId", isSimpleAuthenticated, async (req, res) => {
+  app.delete("/api/component-deductions/:deductionId", async (req, res) => {
     try {
       const deductionId = parseInt(req.params.deductionId);
       const { reason, cancelledBy } = req.body;
