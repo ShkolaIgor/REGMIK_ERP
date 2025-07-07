@@ -342,7 +342,7 @@ export function ImportWizard({ importType, onProceedToImport }: ImportWizardProp
       case 'orders': return 'замовлень';
       case 'order-items': return 'позицій замовлень';
       case 'clients': return 'клієнтів';
-      case 'client-contacts': return 'контактів клієнтів';
+      case 'client-contacts': return 'контактів';
       default: return importType;
     }
   };

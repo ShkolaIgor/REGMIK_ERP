@@ -183,7 +183,7 @@ export function ClientsXmlImport() {
         </DialogTrigger>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Імпорт клієнтів з XML</DialogTitle>
+            <DialogTitle>Імпорт клієнтів</DialogTitle>
             <DialogDescription>
               Завантажте XML файл з клієнтами для імпорту в систему
             </DialogDescription>

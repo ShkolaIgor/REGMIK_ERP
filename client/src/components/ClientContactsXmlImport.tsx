@@ -147,7 +147,7 @@ export function ClientContactsXmlImport() {
         </DialogTrigger>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Імпорт контактів клієнтів з XML</DialogTitle>
+            <DialogTitle>Імпорт контактів</DialogTitle>
             <DialogDescription>
               Завантажте XML файл з контактами для імпорту в систему
             </DialogDescription>

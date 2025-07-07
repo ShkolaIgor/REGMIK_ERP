@@ -4,6 +4,7 @@ import { storage } from "./db-storage";
 import { registerSimpleIntegrationRoutes } from "./integrations-simple";
 import { registerSyncApiRoutes } from "./sync-api";
 import { sendCompanyDataToERP, sendInvoiceToERP, syncAllCompaniesFromBitrix, syncAllInvoicesFromBitrix, sendCompanyDataToERPWebhook, sendInvoiceToERPWebhook } from "./bitrix-sync";
+import { analyzeOrderProduction } from "./ai-production-service";
 import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./simple-auth";
 import { novaPoshtaApi } from "./nova-poshta-api";
 import { novaPoshtaCache } from "./nova-poshta-cache";
@@ -10617,6 +10618,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         success: false, 
         error: "Failed to import BOM XML",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // AI Production Analysis API
+  app.post("/api/ai/production-analysis", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { orderId } = req.body;
+      
+      if (!orderId || isNaN(parseInt(orderId))) {
+        return res.status(400).json({ error: "Valid order ID is required" });
+      }
+
+      const analysis = await analyzeOrderProduction(parseInt(orderId));
+      res.json(analysis);
+    } catch (error) {
+      console.error("Error analyzing order production:", error);
+      res.status(500).json({ 
+        error: "Failed to analyze production", 
         details: error instanceof Error ? error.message : 'Unknown error'
       });
     }

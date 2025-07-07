@@ -32,6 +32,7 @@ import { NovaPoshtaIntegration } from "@/components/NovaPoshtaIntegration";
 import { OrdersXmlImport } from "@/components/OrdersXmlImport";
 import { OrderItemsXmlImport } from "@/components/OrderItemsXmlImport";
 import { PrintPreviewModal } from "@/components/PrintPreviewModal";
+import { AIProductionAnalysis } from "@/components/AIProductionAnalysis";
 // Типи
 type Order = {
   id: number;
@@ -552,6 +553,10 @@ export default function Orders() {
             >
               <Printer className="w-4 h-4" />
             </Button>
+            <AIProductionAnalysis 
+              orderId={order.id} 
+              orderNumber={order.orderNumber}
+            />
           </div>
         );
       
