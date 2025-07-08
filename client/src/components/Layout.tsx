@@ -308,6 +308,18 @@ export function Layout({ children }: LayoutProps) {
         <div className="flex h-screen w-full">
           <AppSidebar />
           <SidebarInset>
+            {/* Mobile Header with Menu Button */}
+            <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4 md:hidden">
+              <SidebarTrigger className="h-8 w-8" />
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <Box className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-semibold text-gray-900">REGMIK ERP</h1>
+                </div>
+              </div>
+            </header>
             <main className="flex-1 overflow-auto p-4 lg:p-6">
               {children}
             </main>

@@ -123,6 +123,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### July 8, 2025
+- ✅ **ВИПРАВЛЕНО МОБІЛЬНЕ МЕНЮ** - додано видиму кнопку меню в header для мобільних пристроїв
+- ✅ **Розділено логіку відображення** - header з кнопкою меню показується тільки на мобільних пристроях (md:hidden)
+- ✅ **Додано брендинг в мобільний header** - логотип та назва REGMIK ERP для кращого UX на мобільних
+- ✅ **SidebarTrigger тепер доступний** - кнопка меню працює на всіх мобільних пристроях
+
 ### July 4, 2025
 - ✅ **ДОДАНО ПОВНУ ІНТЕГРАЦІЮ NOVA POSHTA В ЗАМОВЛЕННЯ** - успішно реалізовано функціональність доставки
 - ✅ **Розширено схему бази даних** - додано поля recipient_city_ref, recipient_city_name, recipient_warehouse_ref, recipient_warehouse_address, shipping_cost, estimated_delivery до таблиці orders
