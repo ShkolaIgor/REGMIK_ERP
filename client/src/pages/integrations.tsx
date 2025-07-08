@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Settings, RefreshCw, TestTube, Trash2, Check, X, Clock, AlertCircle, Workflow } from "lucide-react";
+import { Import1CInvoices } from "@/components/Import1CInvoices";
 
 interface IntegrationConfig {
   id: number;
@@ -442,6 +443,9 @@ export default function Integrations() {
                           <RefreshCw className="mr-2 h-4 w-4" />
                           Експорт
                         </Button>
+                        {integration.type === "1c" && (
+                          <Import1CInvoices />
+                        )}
                         <Button
                           variant="outline"
                           size="sm"

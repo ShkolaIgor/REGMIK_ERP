@@ -10805,5 +10805,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 1C Integration Endpoints
+  app.get('/api/1c/invoices', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const invoices = await storage.get1CInvoices();
+      res.json(invoices);
+    } catch (error) {
+      console.error('Error fetching 1C invoices:', error);
+      res.status(500).json({ message: 'Failed to fetch 1C invoices' });
+    }
+  });
+
+  app.post('/api/1c/invoices/:id/import', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const invoiceId = req.params.id;
+      const result = await storage.import1CInvoice(invoiceId);
+      res.json(result);
+    } catch (error) {
+      console.error('Error importing 1C invoice:', error);
+      res.status(500).json({ message: 'Failed to import 1C invoice' });
+    }
+  });
+
+  app.post('/api/1c/sync', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const result = await storage.sync1CInvoices();
+      res.json(result);
+    } catch (error) {
+      console.error('Error syncing 1C invoices:', error);
+      res.status(500).json({ message: 'Failed to sync 1C invoices' });
+    }
+  });
+
   return httpServer;
 }

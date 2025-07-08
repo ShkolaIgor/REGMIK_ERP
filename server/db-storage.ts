@@ -9683,6 +9683,261 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // 1C Integration methods
+  async get1CInvoices() {
+    try {
+      // This would typically connect to 1C API or database
+      // For now, return mock data structure with proper typing
+      const mockInvoices = [
+        {
+          id: "1C-001",
+          number: "ПН-00001",
+          date: "2025-07-08",
+          supplier: "ТОВ Постачальник 1",
+          supplierId: 1,
+          amount: 15000.50,
+          currency: "UAH",
+          status: "new",
+          items: [
+            {
+              name: "Компонент А",
+              quantity: 10,
+              price: 750.00,
+              total: 7500.00,
+              unit: "шт"
+            },
+            {
+              name: "Компонент Б", 
+              quantity: 5,
+              price: 1500.10,
+              total: 7500.50,
+              unit: "шт"
+            }
+          ],
+          exists: false
+        },
+        {
+          id: "1C-002",
+          number: "ПН-00002",
+          date: "2025-07-07",
+          supplier: "ТОВ Постачальник 2",
+          supplierId: 2,
+          amount: 25000.00,
+          currency: "UAH",
+          status: "processed",
+          items: [
+            {
+              name: "Компонент В",
+              quantity: 20,
+              price: 1250.00,
+              total: 25000.00,
+              unit: "шт"
+            }
+          ],
+          exists: true
+        },
+        {
+          id: "1C-003",
+          number: "ПН-00003",
+          date: "2025-07-06",
+          supplier: "ПАТ Електронні компоненти",
+          supplierId: 3,
+          amount: 45000.75,
+          currency: "UAH",
+          status: "new",
+          items: [
+            {
+              name: "Мікросхема STM32",
+              quantity: 50,
+              price: 450.00,
+              total: 22500.00,
+              unit: "шт"
+            },
+            {
+              name: "Резистор 10кОм",
+              quantity: 500,
+              price: 45.00,
+              total: 22500.75,
+              unit: "шт"
+            }
+          ],
+          exists: false
+        }
+      ];
+
+      // Check which invoices already exist in ERP by checking supplier receipts
+      const existingReceipts = await this.getSupplierReceipts();
+      
+      return mockInvoices.map(invoice => ({
+        ...invoice,
+        exists: existingReceipts.some(receipt => 
+          receipt.supplier_document_number === invoice.number ||
+          receipt.comment?.includes(invoice.id)
+        )
+      }));
+
+    } catch (error) {
+      console.error('Error fetching 1C invoices:', error);
+      throw error;
+    }
+  }
+
+  async import1CInvoice(invoiceId: string) {
+    try {
+      // Get invoice data from 1C
+      const invoices = await this.get1CInvoices();
+      const invoice = invoices.find(inv => inv.id === invoiceId);
+      
+      if (!invoice) {
+        throw new Error(`Накладна ${invoiceId} не знайдена в 1C`);
+      }
+
+      if (invoice.exists) {
+        throw new Error(`Накладна ${invoiceId} вже існує в ERP`);
+      }
+
+      // Check if supplier exists, create if not
+      const suppliers = await this.getSuppliers();
+      let supplier = suppliers.find(s => s.id === invoice.supplierId || s.name === invoice.supplier);
+      
+      if (!supplier) {
+        supplier = await this.createSupplier({
+          name: invoice.supplier,
+          isActive: true
+        });
+      }
+
+      // Get default document type
+      const documentTypes = await this.getSupplierDocumentTypes();
+      const defaultDocType = documentTypes.find(dt => dt.name === "Приходна накладна") || documentTypes[0];
+      
+      if (!defaultDocType) {
+        throw new Error("Не знайдено тип документа для приходної накладної");
+      }
+
+      // Create supplier receipt
+      const receiptData = {
+        receiptDate: new Date(invoice.date),
+        supplierId: supplier.id,
+        documentTypeId: defaultDocType.id,
+        supplierDocumentNumber: invoice.number,
+        supplierDocumentDate: new Date(invoice.date),
+        totalAmount: invoice.amount.toString(),
+        comment: `Імпортовано з 1C: ${invoice.id}`,
+        externalId: parseInt(invoiceId.replace('1C-', ''))
+      };
+
+      const receipt = await this.createSupplierReceipt(receiptData);
+
+      // Create receipt items
+      let totalCreated = 0;
+      for (const item of invoice.items) {
+        // Find or create component by name
+        const components = await this.getComponents();
+        let component = components.find(c => 
+          c.name.toLowerCase().includes(item.name.toLowerCase()) ||
+          item.name.toLowerCase().includes(c.name.toLowerCase())
+        );
+        
+        if (!component) {
+          // Create component if not exists
+          const componentCategories = await this.getComponentCategories();
+          const defaultCategory = componentCategories.find(cat => cat.name === "Загальні") || componentCategories[0];
+          
+          component = await this.createComponent({
+            name: item.name,
+            sku: `1C-${invoiceId}-${totalCreated + 1}`,
+            categoryId: defaultCategory?.id || 1,
+            isActive: true
+          });
+        }
+
+        // Create receipt item
+        await this.createSupplierReceiptItem({
+          receiptId: receipt.id,
+          componentId: component.id,
+          quantity: item.quantity,
+          unitPrice: item.price.toString(),
+          totalPrice: item.total.toString(),
+          unit: item.unit
+        });
+        
+        totalCreated++;
+      }
+
+      return {
+        success: true,
+        message: `Накладна ${invoice.number} успішно імпортована`,
+        receiptId: receipt.id,
+        itemsCreated: totalCreated
+      };
+
+    } catch (error) {
+      console.error('Error importing 1C invoice:', error);
+      throw error;
+    }
+  }
+
+  async sync1CInvoices() {
+    try {
+      const invoices = await this.get1CInvoices();
+      let imported = 0;
+      let skipped = 0;
+      const errors: string[] = [];
+      const results: Array<{
+        invoiceId: string;
+        invoiceNumber: string;
+        status: 'imported' | 'skipped' | 'error';
+        message: string;
+      }> = [];
+
+      for (const invoice of invoices) {
+        if (invoice.exists) {
+          skipped++;
+          results.push({
+            invoiceId: invoice.id,
+            invoiceNumber: invoice.number,
+            status: 'skipped',
+            message: 'Вже існує в ERP'
+          });
+          continue;
+        }
+
+        try {
+          const result = await this.import1CInvoice(invoice.id);
+          imported++;
+          results.push({
+            invoiceId: invoice.id,
+            invoiceNumber: invoice.number,
+            status: 'imported',
+            message: result.message
+          });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Невідома помилка';
+          errors.push(`${invoice.number}: ${errorMessage}`);
+          results.push({
+            invoiceId: invoice.id,
+            invoiceNumber: invoice.number,
+            status: 'error',
+            message: errorMessage
+          });
+        }
+      }
+
+      return {
+        success: true,
+        imported,
+        skipped,
+        errors,
+        total: invoices.length,
+        results
+      };
+
+    } catch (error) {
+      console.error('Error syncing 1C invoices:', error);
+      throw error;
+    }
+  }
 
 }
 
