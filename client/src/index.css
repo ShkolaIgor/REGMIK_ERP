@@ -34,6 +34,16 @@
   --ring: 207 90% 54%; /* #0078D4 */
   --radius: 0.5rem;
   
+  /* Sidebar colors */
+  --sidebar-background: 0 0% 100%; /* #FFFFFF */
+  --sidebar-foreground: 220 15% 15%; /* #1E293B */
+  --sidebar-primary: 207 90% 54%; /* #0078D4 */
+  --sidebar-primary-foreground: 210 40% 98%; /* #F8FAFC */
+  --sidebar-accent: 210 8% 95%; /* #F1F5F9 */
+  --sidebar-accent-foreground: 220 15% 15%; /* #1E293B */
+  --sidebar-border: 214 16% 90%; /* #E2E8F0 */
+  --sidebar-ring: 207 90% 54%; /* #0078D4 */
+  
   /* Regmik specific colors */
   --success: 142 76% 36%; /* #16A34A */
   --warning: 43 96% 56%; /* #F59E0B */
@@ -60,6 +70,16 @@
   --destructive: 0 84% 60%; /* #EF4444 */
   --destructive-foreground: 210 40% 98%; /* #F8FAFC */
   --ring: 207 90% 54%; /* #0078D4 */
+  
+  /* Sidebar dark colors */
+  --sidebar-background: 222 84% 5%; /* #0F172A */
+  --sidebar-foreground: 210 40% 98%; /* #F8FAFC */
+  --sidebar-primary: 207 90% 54%; /* #0078D4 */
+  --sidebar-primary-foreground: 210 40% 98%; /* #F8FAFC */
+  --sidebar-accent: 217 33% 17%; /* #1E293B */
+  --sidebar-accent-foreground: 210 40% 98%; /* #F8FAFC */
+  --sidebar-border: 217 33% 17%; /* #1E293B */
+  --sidebar-ring: 207 90% 54%; /* #0078D4 */
 }
 
 @layer base {
