@@ -295,6 +295,7 @@ export default function Integrations() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="bitrix24">Бітрікс24</SelectItem>
+                      <SelectItem value="1c">1С (загальна)</SelectItem>
                       <SelectItem value="1c_enterprise">1С:Підприємство</SelectItem>
                       <SelectItem value="1c_accounting">1С:Бухгалтерія</SelectItem>
                     </SelectContent>
@@ -443,7 +444,7 @@ export default function Integrations() {
                           <RefreshCw className="mr-2 h-4 w-4" />
                           Експорт
                         </Button>
-                        {integration.type === "1c" && (
+                        {(integration.type === "1c" || integration.type === "1c_enterprise" || integration.type === "1c_accounting") && (
                           <Import1CInvoices />
                         )}
                         <Button
