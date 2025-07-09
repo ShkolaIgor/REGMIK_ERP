@@ -6982,12 +6982,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Логування всіх PUT запитів до integrations
+  // Логування всіх запитів до integrations API
   app.use('/api/integrations', (req, res, next) => {
+    console.log(`ALL INTEGRATIONS REQUEST: ${req.method} ${req.url} from ${req.headers['user-agent']?.substring(0, 50)}...`);
     if (req.method === 'PUT') {
-      console.log(`MIDDLEWARE: ${req.method} ${req.url} - User Agent: ${req.headers['user-agent']}`);
-      console.log("MIDDLEWARE: Headers:", req.headers);
-      console.log("MIDDLEWARE: Cookies:", req.headers.cookie);
+      console.log(`PUT MIDDLEWARE: Full URL: ${req.url}, Params: ${JSON.stringify(req.params)}`);
+      console.log("PUT MIDDLEWARE: Cookies:", req.headers.cookie?.substring(0, 100) + "...");
     }
     next();
   });
@@ -7049,17 +7049,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Тестирование подключения к интеграции
-  app.post("/api/integrations/:id/test", async (req, res) => {
+  app.post("/api/integrations/:id/test", isSimpleAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      
-      // Здесь будет логика тестирования подключения
-      const success = true; // Заглушка
-      
-      res.json({ success, message: success ? "Connection successful" : "Connection failed" });
+      if (isNaN(id)) {
+        return res.status(400).json({ success: false, message: "Невірний ID інтеграції" });
+      }
+
+      const integration = await storage.getIntegrationConfig(id);
+      if (!integration) {
+        return res.status(404).json({ success: false, message: "Інтеграцію не знайдено" });
+      }
+
+      // Перевіряємо чи є базовий URL в конфігурації
+      const config = integration.config as any;
+      if (!config?.baseUrl) {
+        return res.json({ 
+          success: false, 
+          message: "Не вказано базовий URL для інтеграції" 
+        });
+      }
+
+      // Тестуємо з'єднання з базовим URL
+      try {
+        const testUrl = config.baseUrl.endsWith('/') ? config.baseUrl + 'test' : config.baseUrl + '/test';
+        const response = await fetch(testUrl, { 
+          method: 'GET',
+          signal: AbortSignal.timeout(5000) // 5 секунд тайм-аут
+        });
+        
+        res.json({ 
+          success: response.ok, 
+          message: response.ok ? "З'єднання успішне" : `Помилка: HTTP ${response.status}`
+        });
+      } catch (error: any) {
+        res.json({ 
+          success: false, 
+          message: `Не вдалося підключитися: ${error.message}`
+        });
+      }
     } catch (error) {
       console.error("Error testing integration connection:", error);
-      res.status(500).json({ error: "Failed to test connection" });
+      res.status(500).json({ success: false, message: "Помилка тестування з'єднання" });
     }
   });
 
