@@ -6901,13 +6901,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Получение конкретной конфигурации интеграции
-  app.get("/api/integrations/:id", async (req, res) => {
+  app.get("/api/integrations/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      console.log(`GET /api/integrations/${id} - Fetching integration`);
+      
+      if (isNaN(id)) {
+        console.error("Invalid integration ID:", req.params.id);
+        return res.status(400).json({ error: "Invalid integration ID" });
+      }
+
       const integration = await storage.getIntegrationConfig(id);
       if (!integration) {
+        console.error(`Integration with ID ${id} not found`);
         return res.status(404).json({ error: "Integration not found" });
       }
+      
+      console.log("Integration found:", integration);
       res.json(integration);
     } catch (error) {
       console.error("Error fetching integration:", error);
@@ -6916,9 +6926,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Создание новой конфигурации интеграции
-  app.post("/api/integrations", async (req, res) => {
+  app.post("/api/integrations", isSimpleAuthenticated, async (req, res) => {
     try {
       const { name, displayName, type, isActive, config } = req.body;
+      
+      console.log("POST /api/integrations - Creating integration:", { name, displayName, type, isActive, config });
       
       if (!name || !displayName || !type) {
         return res.status(400).json({ error: "Name, displayName and type are required" });
@@ -6933,6 +6945,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const integration = await storage.createIntegrationConfig(integrationData);
+      console.log("Integration created successfully:", integration);
       res.status(201).json(integration);
     } catch (error) {
       console.error("Error creating integration:", error);
