@@ -99,16 +99,20 @@ export default function Integrations() {
 
   const updateIntegrationMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      console.log("Updating integration:", { id, data });
       return apiRequest(`/api/integrations/${id}`, "PATCH", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/integrations"] });
+      setIsCreateDialogOpen(false);
+      resetForm();
       toast({
         title: "Успіх",
         description: "Інтеграцію оновлено успішно",
       });
     },
     onError: (error: any) => {
+      console.error("Update integration error:", error);
       toast({
         title: "Помилка",
         description: error.message || "Не вдалося оновити інтеграцію",

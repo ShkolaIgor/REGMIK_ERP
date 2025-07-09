@@ -6941,16 +6941,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Обновление конфигурации интеграции
-  app.patch("/api/integrations/:id", async (req, res) => {
+  app.patch("/api/integrations/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const updateData = req.body;
       
+      console.log(`PATCH /api/integrations/${id} - Update data:`, JSON.stringify(updateData, null, 2));
+      
+      if (isNaN(id)) {
+        console.error("Invalid integration ID:", req.params.id);
+        return res.status(400).json({ error: "Invalid integration ID" });
+      }
+
       const integration = await storage.updateIntegrationConfig(id, updateData);
       if (!integration) {
+        console.error(`Integration with ID ${id} not found`);
         return res.status(404).json({ error: "Integration not found" });
       }
 
+      console.log("Integration updated successfully:", integration);
       res.json(integration);
     } catch (error) {
       console.error("Error updating integration:", error);
