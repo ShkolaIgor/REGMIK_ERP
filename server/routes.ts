@@ -6988,17 +6988,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const updateData = req.body;
       
-      console.log(`PUT /api/integrations/${id} - Update data:`, JSON.stringify(updateData, null, 2));
+      console.log(`PUT /api/integrations/${id} - Received request`);
+      console.log("Request params:", req.params);
+      console.log("Request body:", JSON.stringify(updateData, null, 2));
+      console.log("User session:", req.session);
       
       if (isNaN(id)) {
         console.error("Invalid integration ID:", req.params.id);
         return res.status(400).json({ error: "Invalid integration ID" });
       }
 
+      // Перевіряємо чи існує інтеграція перед оновленням
+      const existingIntegration = await storage.getIntegrationConfig(id);
+      if (!existingIntegration) {
+        console.error(`Integration with ID ${id} not found in database`);
+        return res.status(404).json({ error: "Integration not found" });
+      }
+
+      console.log("Existing integration found:", existingIntegration);
+
       const integration = await storage.updateIntegrationConfig(id, updateData);
       if (!integration) {
-        console.error(`Integration with ID ${id} not found`);
-        return res.status(404).json({ error: "Integration not found" });
+        console.error(`Failed to update integration with ID ${id}`);
+        return res.status(500).json({ error: "Failed to update integration in database" });
       }
 
       console.log("Integration updated successfully:", integration);

@@ -99,8 +99,11 @@ export default function Integrations() {
 
   const updateIntegrationMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      console.log("Updating integration:", { id, data });
-      return apiRequest(`/api/integrations/${id}`, "PUT", data);
+      console.log("Frontend: Updating integration:", { id, data });
+      console.log("Frontend: Making PUT request to:", `/api/integrations/${id}`);
+      const result = await apiRequest(`/api/integrations/${id}`, "PUT", data);
+      console.log("Frontend: Update result:", result);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/integrations"] });
