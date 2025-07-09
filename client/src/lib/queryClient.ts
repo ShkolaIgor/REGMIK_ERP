@@ -75,8 +75,13 @@ export async function apiRequest(
     cache: "no-cache", // Примусово відключаємо кеш браузера для всіх запитів
   });
 
-  console.log(`Response status: ${res.status} for ${method} ${url}`);
-  console.log("Response headers:", Object.fromEntries(res.headers.entries()));
+  console.log(`Frontend: Response status: ${res.status} for ${method} ${url}`);
+  console.log("Frontend: Response headers:", Object.fromEntries(res.headers.entries()));
+  
+  if (res.status === 404) {
+    console.error(`Frontend: 404 ERROR - URL not found: ${url}`);
+    console.error("Frontend: Full URL being requested:", res.url);
+  }
 
   await throwIfResNotOk(res);
   

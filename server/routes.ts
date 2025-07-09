@@ -6982,6 +6982,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Логування всіх PUT запитів до integrations
+  app.use('/api/integrations', (req, res, next) => {
+    if (req.method === 'PUT') {
+      console.log(`MIDDLEWARE: ${req.method} ${req.url} - User Agent: ${req.headers['user-agent']}`);
+      console.log("MIDDLEWARE: Headers:", req.headers);
+      console.log("MIDDLEWARE: Cookies:", req.headers.cookie);
+    }
+    next();
+  });
+
   // PUT роут для сумісності з frontend (дублює PATCH)
   app.put("/api/integrations/:id", isSimpleAuthenticated, async (req, res) => {
     try {
