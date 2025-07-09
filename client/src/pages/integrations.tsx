@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -75,10 +75,14 @@ export default function Integrations() {
     cacheTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: false,
-    onSuccess: (data) => {
-      setLocalIntegrations(data);
-    }
   });
+
+  // Синхронізуємо локальний стейт з даними сервера
+  useEffect(() => {
+    if (integrations.length > 0) {
+      setLocalIntegrations(integrations);
+    }
+  }, [integrations]);
 
   // Використовуємо локальний стейт якщо є дані, інакше дані з query
   const displayIntegrations = localIntegrations.length > 0 ? localIntegrations : integrations;
