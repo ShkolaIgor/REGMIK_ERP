@@ -9718,6 +9718,7 @@ export class DatabaseStorage implements IStorage {
       });
 
       if (!response.ok) {
+        // Для production систем не використовуємо демонстраційні дані
         throw new Error(`Помилка з'єднання з 1C: HTTP ${response.status} ${response.statusText}`);
       }
 
@@ -9760,6 +9761,20 @@ export class DatabaseStorage implements IStorage {
       if (error instanceof TypeError && error.message.includes('fetch')) {
         throw new Error("Не вдалося підключитися до 1C системи. Перевірте налаштування URL та доступність сервера.");
       }
+      
+      // Якщо помилка з налаштуваннями, повертаємо детальну інформацію
+      if (error instanceof Error && error.message.includes('налаштований базовий URL')) {
+        throw new Error(`${error.message}\n\nДля налаштування 1C інтеграції:\n1. Перейдіть в розділ "Інтеграції"\n2. Виберіть 1C інтеграцію\n3. Вкажіть правильний URL сервера 1C (наприклад: http://192.168.1.100:8080)\n4. Додайте логін та пароль для авторизації\n5. Збережіть та протестуйте з'єднання`);
+      }
+      
+      // Логування для production debugging
+      console.log('1C Integration Config:', {
+        integrationFound: integration ? 'Yes' : 'No',
+        integrationId: integration?.id,
+        baseUrl: config?.baseUrl,
+        hasAuth: !!(config?.clientId && config?.clientSecret),
+        invoicesUrl: config?.baseUrl ? (config.baseUrl.endsWith('/') ? config.baseUrl + 'hs/invoices' : config.baseUrl + '/hs/invoices') : 'undefined'
+      });
       
       throw error;
     }
