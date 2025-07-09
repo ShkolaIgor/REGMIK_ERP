@@ -100,7 +100,7 @@ export default function Integrations() {
   const updateIntegrationMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
       console.log("Updating integration:", { id, data });
-      return apiRequest(`/api/integrations/${id}`, "PATCH", data);
+      return apiRequest(`/api/integrations/${id}`, "PUT", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/integrations"] });
@@ -213,8 +213,12 @@ export default function Integrations() {
     };
 
     if (selectedIntegration) {
+      console.log("Updating integration with ID:", selectedIntegration.id);
+      console.log("Selected integration full object:", selectedIntegration);
+      console.log("Config data:", configData);
       updateIntegrationMutation.mutate({ id: selectedIntegration.id, data: configData });
     } else {
+      console.log("Creating new integration");
       createIntegrationMutation.mutate(configData);
     }
   };

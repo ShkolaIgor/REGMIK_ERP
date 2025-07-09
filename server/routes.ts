@@ -6890,9 +6890,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===============================
 
   // Получение всех конфигураций интеграций
-  app.get("/api/integrations", async (req, res) => {
+  app.get("/api/integrations", isSimpleAuthenticated, async (req, res) => {
     try {
+      console.log("GET /api/integrations - Fetching all integrations");
       const integrations = await storage.getIntegrationConfigs();
+      console.log("Fetched integrations:", integrations);
       res.json(integrations);
     } catch (error) {
       console.error("Error fetching integrations:", error);
@@ -6960,6 +6962,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updateData = req.body;
       
       console.log(`PATCH /api/integrations/${id} - Update data:`, JSON.stringify(updateData, null, 2));
+      
+      if (isNaN(id)) {
+        console.error("Invalid integration ID:", req.params.id);
+        return res.status(400).json({ error: "Invalid integration ID" });
+      }
+
+      const integration = await storage.updateIntegrationConfig(id, updateData);
+      if (!integration) {
+        console.error(`Integration with ID ${id} not found`);
+        return res.status(404).json({ error: "Integration not found" });
+      }
+
+      console.log("Integration updated successfully:", integration);
+      res.json(integration);
+    } catch (error) {
+      console.error("Error updating integration:", error);
+      res.status(500).json({ error: "Failed to update integration" });
+    }
+  });
+
+  // PUT роут для сумісності з frontend (дублює PATCH)
+  app.put("/api/integrations/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = req.body;
+      
+      console.log(`PUT /api/integrations/${id} - Update data:`, JSON.stringify(updateData, null, 2));
       
       if (isNaN(id)) {
         console.error("Invalid integration ID:", req.params.id);
