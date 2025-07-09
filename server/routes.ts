@@ -6913,6 +6913,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Получение логов синхронизации (ПЕРЕД параметричним маршрутом)
+  app.get("/api/integrations/sync-logs", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { integrationId } = req.query;
+      const syncLogs = await storage.getSyncLogs(integrationId ? parseInt(integrationId as string) : undefined);
+      res.json(syncLogs);
+    } catch (error) {
+      console.error("Error fetching sync logs:", error);
+      res.status(500).json({ error: "Failed to fetch sync logs" });
+    }
+  });
+
   // Получение конкретной конфигурации интеграции
   app.get("/api/integrations/:id", isSimpleAuthenticated, async (req, res) => {
     try {
@@ -7128,18 +7140,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error starting sync:", error);
       res.status(500).json({ error: "Failed to start synchronization" });
-    }
-  });
-
-  // Получение логов синхронизации
-  app.get("/api/integrations/sync-logs", async (req, res) => {
-    try {
-      const { integrationId } = req.query;
-      const syncLogs = await storage.getSyncLogs(integrationId ? parseInt(integrationId as string) : undefined);
-      res.json(syncLogs);
-    } catch (error) {
-      console.error("Error fetching sync logs:", error);
-      res.status(500).json({ error: "Failed to fetch sync logs" });
     }
   });
 
