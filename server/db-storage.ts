@@ -13,6 +13,7 @@ import {
   manufacturingOrders, manufacturingOrderMaterials, manufacturingSteps, currencies, currencyRates, currencyUpdateSettings, serialNumbers, serialNumberSettings, emailSettings,
   sales, saleItems, expenses, timeEntries, inventoryAlerts, tasks, clients, clientContacts, clientNovaPoshtaSettings, clientNovaPoshtaApiSettings,
   clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences,
+  integrationConfigs, entityMappings, syncQueue, fieldMappings,
   repairs, repairParts, repairStatusHistory, repairDocuments, orderItemSerialNumbers, novaPoshtaCities, novaPoshtaWarehouses,
  type LocalUser, type InsertLocalUser,
   type Permission, type InsertPermission,
@@ -74,6 +75,11 @@ import {
   type RepairDocument, type InsertRepairDocument,
   type ComponentDeduction, type InsertComponentDeduction,
   type ComponentDeductionAdjustment, type InsertComponentDeductionAdjustment,
+  type IntegrationConfig, type InsertIntegrationConfig,
+  type SyncLog, type InsertSyncLog,
+  type EntityMapping, type InsertEntityMapping,
+  type SyncQueue, type InsertSyncQueue,
+  type FieldMapping, type InsertFieldMapping,
 
 } from "@shared/schema";
 
@@ -9936,6 +9942,145 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error syncing 1C invoices:', error);
       throw error;
+    }
+  }
+
+  // ===============================
+  // INTEGRATION CONFIGS METHODS
+  // ===============================
+
+  async getIntegrationConfigs(): Promise<IntegrationConfig[]> {
+    return await db.select().from(integrationConfigs).orderBy(integrationConfigs.displayName);
+  }
+
+  async getIntegrationConfig(id: number): Promise<IntegrationConfig | undefined> {
+    const [config] = await db.select().from(integrationConfigs).where(eq(integrationConfigs.id, id));
+    return config;
+  }
+
+  async createIntegrationConfig(config: InsertIntegrationConfig): Promise<IntegrationConfig> {
+    const [created] = await db.insert(integrationConfigs).values(config).returning();
+    return created;
+  }
+
+  async updateIntegrationConfig(id: number, config: Partial<InsertIntegrationConfig>): Promise<IntegrationConfig | undefined> {
+    const [updated] = await db
+      .update(integrationConfigs)
+      .set({ ...config, updatedAt: new Date() })
+      .where(eq(integrationConfigs.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteIntegrationConfig(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(integrationConfigs).where(eq(integrationConfigs.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error("Error deleting integration config:", error);
+      return false;
+    }
+  }
+
+  // ===============================
+  // SYNC LOGS METHODS
+  // ===============================
+
+  async getSyncLogs(integrationId?: number): Promise<SyncLog[]> {
+    if (integrationId) {
+      return await db.select().from(syncLogs)
+        .where(eq(syncLogs.integrationId, integrationId))
+        .orderBy(desc(syncLogs.createdAt));
+    }
+    return await db.select().from(syncLogs).orderBy(desc(syncLogs.createdAt));
+  }
+
+  async createSyncLog(log: InsertSyncLog): Promise<SyncLog> {
+    const [created] = await db.insert(syncLogs).values(log).returning();
+    return created;
+  }
+
+  async updateSyncLog(id: number, log: Partial<InsertSyncLog>): Promise<boolean> {
+    try {
+      const [updated] = await db
+        .update(syncLogs)
+        .set({ ...log, updatedAt: new Date() })
+        .where(eq(syncLogs.id, id))
+        .returning();
+      return !!updated;
+    } catch (error) {
+      console.error("Error updating sync log:", error);
+      return false;
+    }
+  }
+
+  // ===============================
+  // ENTITY MAPPINGS METHODS
+  // ===============================
+
+  async getEntityMappings(integrationId?: number, entityType?: string): Promise<EntityMapping[]> {
+    let query = db.select().from(entityMappings);
+    
+    if (integrationId && entityType) {
+      query = query.where(and(
+        eq(entityMappings.integrationId, integrationId),
+        eq(entityMappings.entityType, entityType)
+      ));
+    } else if (integrationId) {
+      query = query.where(eq(entityMappings.integrationId, integrationId));
+    }
+    
+    return await query.orderBy(entityMappings.lastSyncAt);
+  }
+
+  async createEntityMapping(mapping: InsertEntityMapping): Promise<EntityMapping> {
+    const [created] = await db.insert(entityMappings).values(mapping).returning();
+    return created;
+  }
+
+  async updateEntityMapping(id: number, mapping: Partial<InsertEntityMapping>): Promise<boolean> {
+    try {
+      const [updated] = await db
+        .update(entityMappings)
+        .set({ ...mapping, updatedAt: new Date() })
+        .where(eq(entityMappings.id, id))
+        .returning();
+      return !!updated;
+    } catch (error) {
+      console.error("Error updating entity mapping:", error);
+      return false;
+    }
+  }
+
+  // ===============================
+  // SYNC QUEUE METHODS  
+  // ===============================
+
+  async getSyncQueue(integrationId?: number): Promise<SyncQueue[]> {
+    if (integrationId) {
+      return await db.select().from(syncQueue)
+        .where(eq(syncQueue.integrationId, integrationId))
+        .orderBy(syncQueue.priority, syncQueue.scheduledAt);
+    }
+    return await db.select().from(syncQueue).orderBy(syncQueue.priority, syncQueue.scheduledAt);
+  }
+
+  async createSyncQueueItem(item: InsertSyncQueue): Promise<SyncQueue> {
+    const [created] = await db.insert(syncQueue).values(item).returning();
+    return created;
+  }
+
+  async updateSyncQueueItem(id: number, item: Partial<InsertSyncQueue>): Promise<boolean> {
+    try {
+      const [updated] = await db
+        .update(syncQueue)
+        .set({ ...item, updatedAt: new Date() })
+        .where(eq(syncQueue.id, id))
+        .returning();
+      return !!updated;
+    } catch (error) {
+      console.error("Error updating sync queue item:", error);
+      return false;
     }
   }
 

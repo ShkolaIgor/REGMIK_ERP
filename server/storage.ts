@@ -445,9 +445,7 @@ export interface IStorage {
   getEnvelopePrintSettings(): Promise<EnvelopePrintSettings[]>;
   createEnvelopePrintSettings(settings: InsertEnvelopePrintSettings): Promise<EnvelopePrintSettings>;
 
-  // Sync Logs
-  getSyncLogs(): Promise<SyncLog[]>;
-  createSyncLog(log: InsertSyncLog): Promise<SyncLog>;
+
 
   // Companies and multi-company functionality
   getCompanies(): Promise<any[]>;
@@ -459,12 +457,7 @@ export interface IStorage {
   getProductsByCompany(companyId: number): Promise<any[]>;
   getOrdersByCompany(companyId: number): Promise<any[]>;
 
-  // Integration configs
-  getIntegrationConfigs(): Promise<IntegrationConfig[]>;
-  getIntegrationConfig(id: number): Promise<IntegrationConfig | undefined>;
-  createIntegrationConfig(config: InsertIntegrationConfig): Promise<IntegrationConfig>;
-  updateIntegrationConfig(id: number, config: Partial<InsertIntegrationConfig>): Promise<IntegrationConfig | undefined>;
-  deleteIntegrationConfig(id: number): Promise<boolean>;
+
 
   // Currencies
   getCurrencies(): Promise<Currency[]>;
