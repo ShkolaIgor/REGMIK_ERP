@@ -9949,11 +9949,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateIntegrationConfig(id: number, config: Partial<InsertIntegrationConfig>): Promise<IntegrationConfig | undefined> {
+    console.log(`DATABASE: Updating integration ID ${id} with config:`, JSON.stringify(config, null, 2));
+    
+    const updateData = { ...config, updatedAt: new Date() };
+    console.log(`DATABASE: Final update data:`, JSON.stringify(updateData, null, 2));
+    
     const [updated] = await db
       .update(integrationConfigs)
-      .set({ ...config, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(integrationConfigs.id, id))
       .returning();
+    
+    console.log(`DATABASE: Updated integration result:`, JSON.stringify(updated, null, 2));
     return updated;
   }
 
