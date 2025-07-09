@@ -62,9 +62,10 @@ export async function apiRequest(
     requestBody = JSON.stringify(data);
   }
 
-  console.log(`Making ${method} request to: ${url}`);
-  console.log("Request headers:", !isFormData && data ? { "Content-Type": "application/json" } : {});
-  console.log("Request body:", requestBody);
+  console.log(`Frontend: Making ${method} request to: ${url}`);
+  console.log("Frontend: Request headers:", !isFormData && data ? { "Content-Type": "application/json" } : {});
+  console.log("Frontend: Request body:", requestBody);
+  console.log("Frontend: Document cookies:", document.cookie);
 
   const res = await fetch(url, {
     method,

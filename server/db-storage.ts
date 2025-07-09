@@ -6320,22 +6320,7 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount ?? 0) > 0;
   }
 
-  // Методи для логів синхронізації
-  async createSyncLog(logData: any): Promise<any> {
-    const [log] = await db
-      .insert(syncLogs)
-      .values({
-        integrationId: 1, // Тимчасово використовуємо фіксований ID
-        operation: 'batch_sync',
-        status: logData.status,
-        recordsFailed: logData.errorsCount,
-        startedAt: logData.startTime,
-        completedAt: logData.endTime,
-        details: logData.details
-      })
-      .returning();
-    return log;
-  }
+  // Методи для логів синхронізації (застарілий метод - видалено дублікат)
 
   async getSyncLogBySyncId(syncId: string): Promise<any> {
     // Поки що використовуємо просте пошук по деталях

@@ -6983,15 +6983,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // PUT роут для сумісності з frontend (дублює PATCH)
-  app.put("/api/integrations/:id", async (req, res) => {
+  app.put("/api/integrations/:id", isSimpleAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const updateData = req.body;
       
-      console.log(`PUT /api/integrations/${id} - Received request`);
+      console.log(`PUT /api/integrations/${id} - Received request from ${req.headers['user-agent']}`);
+      console.log("Request headers:", req.headers);
       console.log("Request params:", req.params);
       console.log("Request body:", JSON.stringify(updateData, null, 2));
       console.log("User session:", req.session);
+      console.log("Cookies:", req.headers.cookie);
       
       if (isNaN(id)) {
         console.error("Invalid integration ID:", req.params.id);
