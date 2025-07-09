@@ -2256,8 +2256,8 @@ export type InsertTask = z.infer<typeof insertTaskSchema>;
 // Таблиця конфігурацій інтеграцій
 export const integrationConfigs = pgTable("integration_configs", {
   id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(), // "bitrix24", "1c_enterprise", "1c_accounting"
-  displayName: varchar("display_name", { length: 200 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(), // "bitrix24", "1c_enterprise", "1c_accounting"
+  displayName: varchar("display_name", { length: 500 }).notNull(),
   type: varchar("type", { length: 50 }).notNull(), // "crm", "accounting", "erp"
   isActive: boolean("is_active").default(false),
   config: jsonb("config").$type<{
