@@ -6896,11 +6896,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const integrations = await storage.getIntegrationConfigs();
       console.log("Fetched integrations count:", integrations.length);
       
-      // Примусово відключаємо HTTP кеш для інтеграцій
+      // ПОВНІСТЮ ВІДКЛЮЧАЄМО HTTP КЕШИРУВАННЯ
       res.set({
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
         'Pragma': 'no-cache', 
-        'Expires': '0'
+        'Expires': '0',
+        'Last-Modified': new Date().toUTCString(),
+        'ETag': '"' + Date.now() + '"'
       });
       
       res.json(integrations);
