@@ -6896,16 +6896,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const integrations = await storage.getIntegrationConfigs();
       console.log("Fetched integrations count:", integrations.length);
       
-      // ПОВНІСТЮ ВІДКЛЮЧАЄМО HTTP КЕШИРУВАННЯ
+      // ПОВНІСТЮ БЛОКУЄМО БУДЬ-ЯКЕ КЕШИРУВАННЯ
       res.set({
-        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+        'Cache-Control': 'no-cache, no-store, must-revalidate, private, max-age=0',
         'Pragma': 'no-cache', 
-        'Expires': '0',
+        'Expires': '-1',
         'Last-Modified': new Date().toUTCString(),
-        'ETag': '"' + Date.now() + '"'
+        'Vary': '*'
       });
       
-      res.json(integrations);
+      // Видаляємо ETag щоб запобігти HTTP 304
+      res.removeHeader('ETag');
+      
+      res.status(200).json(integrations);
     } catch (error) {
       console.error("Error fetching integrations:", error);
       res.status(500).json({ error: "Failed to fetch integrations" });
