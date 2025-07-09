@@ -10978,6 +10978,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Тестування з'єднання інтеграції
+  app.post("/api/integrations/:id/test", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      console.log(`Testing connection for integration ID: ${id}`);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Некоректний ID інтеграції" 
+        });
+      }
+
+      const integration = await storage.getIntegrationConfig(id);
+      if (!integration) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Інтеграцію не знайдено" 
+        });
+      }
+
+      console.log("Testing integration:", integration.name, integration.type);
+      
+      // Перевіряємо тип інтеграції та тестуємо з'єднання
+      if (integration.type === '1c_accounting') {
+        const config = integration.config as any;
+        
+        if (!config?.baseUrl || config.baseUrl.trim() === '') {
+          return res.json({
+            success: false,
+            message: "URL сервера 1C не налаштований. Вкажіть базовий URL в налаштуваннях інтеграції."
+          });
+        }
+
+        // Формуємо URL для тестування
+        const testUrl = config.baseUrl.endsWith('/') 
+          ? config.baseUrl + 'invoices' 
+          : config.baseUrl + '/invoices';
+        
+        console.log("Testing 1C connection to:", testUrl);
+
+        try {
+          const response = await fetch(testUrl, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              ...(config.clientId && config.clientSecret ? {
+                'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
+              } : {})
+            },
+            signal: AbortSignal.timeout(5000) // 5 секунд тайм-аут
+          });
+
+          if (response.ok) {
+            const data = await response.text();
+            return res.json({
+              success: true,
+              message: `З'єднання з 1C успішне. Статус: ${response.status}`,
+              details: `URL: ${testUrl}, Response length: ${data.length} chars`
+            });
+          } else {
+            return res.json({
+              success: false,
+              message: `Помилка з'єднання з 1C: HTTP ${response.status} ${response.statusText}`,
+              details: `URL: ${testUrl}`
+            });
+          }
+        } catch (fetchError) {
+          console.error("1C connection test failed:", fetchError);
+          return res.json({
+            success: false,
+            message: "Не вдалося підключитися до 1C сервера",
+            details: fetchError instanceof Error ? fetchError.message : 'Невідома помилка'
+          });
+        }
+      } else {
+        // Для інших типів інтеграцій
+        return res.json({
+          success: true,
+          message: `Інтеграція типу ${integration.type} налаштована`,
+          details: `Назва: ${integration.displayName}, Активна: ${integration.isActive}`
+        });
+      }
+
+    } catch (error) {
+      console.error("Error testing integration:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Помилка тестування інтеграції",
+        details: error instanceof Error ? error.message : 'Невідома помилка'
+      });
+    }
+  });
+
   // 1C Integration Endpoints
   app.get('/api/1c/invoices', isSimpleAuthenticated, async (req, res) => {
     try {
