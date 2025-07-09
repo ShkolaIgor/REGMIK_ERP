@@ -108,13 +108,29 @@ export default function Integrations() {
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
       return await apiRequest(`/api/integrations/${id}`, "PUT", data);
     },
-    onSuccess: async () => {
-      // КРИТИЧНЕ ВИПРАВЛЕННЯ: Примусово оновлюємо список після успішного збереження
+    onSuccess: async (updatedIntegration) => {
+      // КРИТИЧНЕ ВИПРАВЛЕННЯ: Оновлюємо стейт та список
+      setSelectedIntegration(updatedIntegration);
+      
+      // Оновлюємо форму з новими даними
+      setFormData({
+        name: updatedIntegration.name,
+        displayName: updatedIntegration.displayName,
+        type: updatedIntegration.type,
+        baseUrl: updatedIntegration.config.baseUrl || "",
+        clientId: updatedIntegration.config.clientId || "",
+        clientSecret: updatedIntegration.config.clientSecret || "",
+        webhookUrl: updatedIntegration.config.webhookUrl || "",
+        syncInterval: updatedIntegration.config.syncInterval || 60,
+        syncMethods: updatedIntegration.config.syncMethods || [],
+      });
+      
       await queryClient.removeQueries({ queryKey: ["/api/integrations"] });
       await refetchIntegrations();
       
+      // Закриваємо діалог після успішного оновлення 
       setIsCreateDialogOpen(false);
-      resetForm();
+      
       toast({
         title: "Успіх", 
         description: "Інтеграцію оновлено успішно",
