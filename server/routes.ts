@@ -11048,10 +11048,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         } catch (fetchError) {
           console.error("1C connection test failed:", fetchError);
+          
+          let errorMessage = "Не вдалося підключитися до 1C сервера";
+          let errorDetails = fetchError instanceof Error ? fetchError.message : 'Невідома помилка';
+          
+          if (fetchError instanceof Error) {
+            if (fetchError.message.includes('timeout') || fetchError.message.includes('aborted')) {
+              errorMessage = "Тайм-аут підключення до 1C сервера";
+              errorDetails = `Сервер не відповів протягом 5 секунд. URL: ${testUrl}`;
+            } else if (fetchError.message.includes('ECONNREFUSED')) {
+              errorMessage = "Сервер 1C недоступний";
+              errorDetails = `З'єднання відхилено. Перевірте що 1C сервер запущений за адресою: ${testUrl}`;
+            } else if (fetchError.message.includes('ENOTFOUND')) {
+              errorMessage = "Неправильна адреса сервера 1C";
+              errorDetails = `Не вдалося знайти сервер за адресою: ${testUrl}`;
+            }
+          }
+          
           return res.json({
             success: false,
-            message: "Не вдалося підключитися до 1C сервера",
-            details: fetchError instanceof Error ? fetchError.message : 'Невідома помилка'
+            message: errorMessage,
+            details: errorDetails
           });
         }
       } else {
