@@ -68,6 +68,8 @@ export default function Integrations() {
   // Запити даних
   const { data: integrations = [], isLoading: integrationsLoading } = useQuery({
     queryKey: ["/api/integrations"],
+    staleTime: 0, // Завжди вважати дані застарілими
+    cacheTime: 0, // Не кешувати дані взагалі
   });
 
   const { data: syncLogs = [], isLoading: logsLoading } = useQuery({
@@ -105,8 +107,17 @@ export default function Integrations() {
       console.log("Frontend: Update result:", result);
       return result;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/integrations"] });
+    onSuccess: async (data, variables) => {
+      console.log("КЕШ: Invalidating queries after successful update");
+      console.log("КЕШ: Updated data from server:", data);
+      
+      // Примусово очищуємо кеш і перезавантажуємо дані
+      await queryClient.removeQueries({ queryKey: ["/api/integrations"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/integrations"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/integrations"] });
+      
+      console.log("КЕШ: Cache cleared and refetched");
+      
       setIsCreateDialogOpen(false);
       resetForm();
       toast({
@@ -200,11 +211,6 @@ export default function Integrations() {
   };
 
   const handleSubmit = () => {
-    console.log("ФОРМА: Handle submit called");
-    console.log("ФОРМА: Current formData state:", formData);
-    console.log("ФОРМА: formData.name:", formData.name);
-    console.log("ФОРМА: formData.displayName:", formData.displayName);
-    
     const configData = {
       name: formData.name,
       displayName: formData.displayName,
@@ -220,15 +226,9 @@ export default function Integrations() {
       },
     };
 
-    console.log("ФОРМА: Final config data being sent:", configData);
-
     if (selectedIntegration) {
-      console.log("Updating integration with ID:", selectedIntegration.id);
-      console.log("Selected integration full object:", selectedIntegration);
-      console.log("Config data:", configData);
       updateIntegrationMutation.mutate({ id: selectedIntegration.id, data: configData });
     } else {
-      console.log("Creating new integration");
       createIntegrationMutation.mutate(configData);
     }
   };
@@ -324,10 +324,7 @@ export default function Integrations() {
                   <Input
                     id="name"
                     value={formData.name}
-                    onChange={(e) => {
-                      console.log("ФОРМА: User manually changed name field to:", e.target.value);
-                      setFormData({ ...formData, name: e.target.value });
-                    }}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="bitrix24_main"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
@@ -341,10 +338,7 @@ export default function Integrations() {
                 <Input
                   id="displayName"
                   value={formData.displayName}
-                  onChange={(e) => {
-                    console.log("ФОРМА: User changed displayName to:", e.target.value);
-                    setFormData({ ...formData, displayName: e.target.value });
-                  }}
+                  onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
                   placeholder="Основний Бітрікс24"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
@@ -431,7 +425,9 @@ export default function Integrations() {
             <div>Завантаження...</div>
           ) : (
             <div className="grid gap-4">
-              {integrations.map((integration: IntegrationConfig) => (
+              {integrations.map((integration: IntegrationConfig) => {
+                console.log("UI: Рендеринг інтеграції:", integration.id, integration.name, integration.displayName);
+                return (
                 <Card key={integration.id}>
                   <CardHeader>
                     <div className="flex justify-between items-start">
@@ -443,7 +439,7 @@ export default function Integrations() {
                           </Badge>
                         </CardTitle>
                         <CardDescription>
-                          {integration.type} • {integration.name}
+                          {integration.type} • {integration.name} (ID: {integration.id})
                         </CardDescription>
                       </div>
                       <div className="flex gap-2">
@@ -481,9 +477,7 @@ export default function Integrations() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            console.log("ФОРМА: Початкове заповнення форми для редагування");
-                            console.log("ФОРМА: Integration name from DB:", integration.name);
-                            console.log("ФОРМА: Integration displayName from DB:", integration.displayName);
+                            console.log("UI: Відкриваємо форму редагування для інтеграції:", integration);
                             
                             setSelectedIntegration(integration);
                             const initialFormData = {
@@ -498,7 +492,6 @@ export default function Integrations() {
                               syncMethods: integration.config.syncMethods || [],
                             };
                             
-                            console.log("ФОРМА: Initial form data:", initialFormData);
                             setFormData(initialFormData);
                             setIsCreateDialogOpen(true);
                           }}
@@ -542,7 +535,8 @@ export default function Integrations() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
 
               {integrations.length === 0 && (
                 <Card>
