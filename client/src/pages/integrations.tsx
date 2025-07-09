@@ -324,9 +324,15 @@ export default function Integrations() {
                   <Input
                     id="name"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => {
+                      console.log("ФОРМА: User manually changed name field to:", e.target.value);
+                      setFormData({ ...formData, name: e.target.value });
+                    }}
                     placeholder="bitrix24_main"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Унікальне системне ім'я для внутрішнього використання
+                  </p>
                 </div>
               </div>
 
@@ -335,9 +341,15 @@ export default function Integrations() {
                 <Input
                   id="displayName"
                   value={formData.displayName}
-                  onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                  onChange={(e) => {
+                    console.log("ФОРМА: User changed displayName to:", e.target.value);
+                    setFormData({ ...formData, displayName: e.target.value });
+                  }}
                   placeholder="Основний Бітрікс24"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Назва яка відображається в інтерфейсі користувача
+                </p>
               </div>
 
               <div>

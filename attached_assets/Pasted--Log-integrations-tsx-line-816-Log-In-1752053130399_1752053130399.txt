@@ -1,0 +1,144 @@
+[Log] ФОРМА: Початкове заповнення форми для редагування (integrations.tsx, line 816)
+[Log] ФОРМА: Integration name from DB: – "ww" (integrations.tsx, line 817)
+[Log] ФОРМА: Integration displayName from DB: – "sssss" (integrations.tsx, line 818)
+[Log] ФОРМА: Initial form data: – {name: "ww", displayName: "sssss", type: "1c_accounting", …} (integrations.tsx, line 831)
+{name: "ww", displayName: "sssss", type: "1c_accounting", baseUrl: "", clientId: "", …}Object
+[Log] ФОРМА: Handle submit called (integrations.tsx, line 174)
+[Log] ФОРМА: Current formData state: – {name: "ww", displayName: "sssssqqq", type: "1c_accounting", …} (integrations.tsx, line 175)
+{name: "ww", displayName: "sssssqqq", type: "1c_accounting", baseUrl: "", clientId: "", …}Object
+[Log] ФОРМА: formData.name: – "ww" (integrations.tsx, line 176)
+[Log] ФОРМА: formData.displayName: – "sssssqqq" (integrations.tsx, line 177)
+[Log] ФОРМА: Final config data being sent: – {name: "ww", displayName: "sssssqqq", type: "1c_accounting", …} (integrations.tsx, line 192)
+{name: "ww", displayName: "sssssqqq", type: "1c_accounting", isActive: true, config: Object}Object
+[Log] Updating integration with ID: – 1 (integrations.tsx, line 194)
+[Log] Selected integration full object: – {id: 1, name: "ww", displayName: "sssss", …} (integrations.tsx, line 195)
+{id: 1, name: "ww", displayName: "sssss", type: "1c_accounting", isActive: true, …}Object
+[Log] Config data: – {name: "ww", displayName: "sssssqqq", type: "1c_accounting", …} (integrations.tsx, line 196)
+{name: "ww", displayName: "sssssqqq", type: "1c_accounting", isActive: true, config: Object}Object
+[Log] Frontend: Updating integration: – {id: 1, data: Object} (integrations.tsx, line 78)
+{id: 1, data: Object}Object
+[Log] Frontend: Making PUT request to: – "/api/integrations/1" (integrations.tsx, line 79)
+[Log] apiRequest - Integration update: – {url: "/api/integrations/1", method: "PUT", data: Object} (queryClient.ts, line 39)
+{url: "/api/integrations/1", method: "PUT", data: Object}Object
+[Log] Frontend: Making PUT request to: /api/integrations/1 (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – {Content-Type: "application/json"} (queryClient.ts, line 49)
+[Log] Frontend: Request body: – "{\"name\":\"ww\",\"displayName\":\"sssssqqq\",\"type\":\"1c_accounting\",\"isActive\":true,\"config\":{\"baseUrl\":\"\",\"clientId\":\"\",\"clientSecret\":\"\",\"webhook…" (queryClient.ts, line 50)
+"{\"name\":\"ww\",\"displayName\":\"sssssqqq\",\"type\":\"1c_accounting\",\"isActive\":true,\"config\":{\"baseUrl\":\"\",\"clientId\":\"\",\"clientSecret\":\"\",\"webhookUrl\":\"\",\"syncInterval\":60,\"syncMethods\":[]}}"
+[Log] Frontend: Document cookies: – "sidebar_state=false" (queryClient.ts, line 51)
+[Log] Frontend: Response status: 200 for PUT /api/integrations/1 (queryClient.ts, line 60)
+[Log] Frontend: Response headers: – {content-length: "269", content-type: "application/json; charset=utf-8", date: "Wed, 09 Jul 2025 09:24:52 GMT", …} (queryClient.ts, line 61)
+{content-length: "269", content-type: "application/json; charset=utf-8", date: "Wed, 09 Jul 2025 09:24:52 GMT", etag: "W/\"10d-KzQsxFHHMslLFUGGBA76EcrL440\"", replit-cluster: "picard", …}Object
+[Log] Frontend: Update result: – {id: 1, name: "ww", displayName: "sssssqqq", …} (integrations.tsx, line 81)
+{id: 1, name: "ww", displayName: "sssssqqq", type: "1c_accounting", isActive: true, …}Object
+[Debug] [vite] connecting... (client, line 495)
+[Debug] [vite] connected. (client, line 618)
+[Log] ФОРМА: Початкове заповнення форми для редагування (integrations.tsx, line 816)
+[Log] ФОРМА: Integration name from DB: – "ww" (integrations.tsx, line 817)
+[Log] ФОРМА: Integration displayName from DB: – "sssss" (integrations.tsx, line 818)
+[Log] ФОРМА: Initial form data: – {name: "ww", displayName: "sssss", type: "1c_accounting", …} (integrations.tsx, line 831)
+{name: "ww", displayName: "sssss", type: "1c_accounting", baseUrl: "", clientId: "", …}Object
+[Log] ФОРМА: Handle submit called (integrations.tsx, line 174)
+[Log] ФОРМА: Current formData state: – {name: "ww", displayName: "sssssqqqqq", type: "1c_accounting", …} (integrations.tsx, line 175)
+{name: "ww", displayName: "sssssqqqqq", type: "1c_accounting", baseUrl: "", clientId: "", …}Object
+[Log] ФОРМА: formData.name: – "ww" (integrations.tsx, line 176)
+[Log] ФОРМА: formData.displayName: – "sssssqqqqq" (integrations.tsx, line 177)
+[Log] ФОРМА: Final config data being sent: – {name: "ww", displayName: "sssssqqqqq", type: "1c_accounting", …} (integrations.tsx, line 192)
+{name: "ww", displayName: "sssssqqqqq", type: "1c_accounting", isActive: true, config: Object}Object
+[Log] Updating integration with ID: – 1 (integrations.tsx, line 194)
+[Log] Selected integration full object: – {id: 1, name: "ww", displayName: "sssss", …} (integrations.tsx, line 195)
+{id: 1, name: "ww", displayName: "sssss", type: "1c_accounting", isActive: true, …}Object
+[Log] Config data: – {name: "ww", displayName: "sssssqqqqq", type: "1c_accounting", …} (integrations.tsx, line 196)
+{name: "ww", displayName: "sssssqqqqq", type: "1c_accounting", isActive: true, config: Object}Object
+[Log] Frontend: Updating integration: – {id: 1, data: Object} (integrations.tsx, line 78)
+{id: 1, data: Object}Object
+[Log] Frontend: Making PUT request to: – "/api/integrations/1" (integrations.tsx, line 79)
+[Log] apiRequest - Integration update: – {url: "/api/integrations/1", method: "PUT", data: Object} (queryClient.ts, line 39)
+{url: "/api/integrations/1", method: "PUT", data: Object}Object
+[Log] Frontend: Making PUT request to: /api/integrations/1 (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – {Content-Type: "application/json"} (queryClient.ts, line 49)
+[Log] Frontend: Request body: (queryClient.ts, line 50)
+"{\"name\":\"ww\",\"displayName\":\"sssssqqqqq\",\"type\":\"1c_accounting\",\"isActive\":true,\"config\":{\"baseUrl\":\"\",\"clientId\":\"\",\"clientSecret\":\"\",\"webhookUrl\":\"\",\"syncInterval\":60,\"syncMethods\":[]}}"
+[Log] Frontend: Document cookies: – "sidebar_state=false" (queryClient.ts, line 51)
+[Log] Frontend: Response status: 200 for PUT /api/integrations/1 (queryClient.ts, line 60)
+[Log] Frontend: Response headers: (queryClient.ts, line 61)
+Object
+
+content-length: "271"
+
+content-type: "application/json; charset=utf-8"
+
+date: "Wed, 09 Jul 2025 09:25:13 GMT"
+
+etag: "W/\"10f-JZFtSuXCtQgm/1HFqYQclSvgMts\""
+
+replit-cluster: "picard"
+
+x-powered-by: "Express"
+
+x-robots-tag: "none, noindex, noarchive, nofollow, nositelinkssearchbox, noimageindex, none, noindex, noarchive, nofollow, nositelinkssearchbox…"
+
+Object Prototype
+
+__defineGetter__(propertyName, getterFunction)
+
+__defineSetter__(propertyName, setterFunction)
+
+__lookupGetter__(propertyName)
+
+__lookupSetter__(propertyName)
+
+constructor: function()
+
+hasOwnProperty(propertyName)
+
+isPrototypeOf(property)
+
+propertyIsEnumerable(propertyName)
+
+toLocaleString()
+
+toString()
+
+valueOf()
+[Log] Frontend: Update result: (integrations.tsx, line 81)
+Object
+
+config: {baseUrl: "", clientId: "", webhookUrl: "", syncMethods: [], clientSecret: "", …}
+
+createdAt: "2025-07-09T08:58:53.062Z"
+
+displayName: "sssssqqqqq"
+
+id: 1
+
+isActive: true
+
+name: "ww"
+
+type: "1c_accounting"
+
+updatedAt: "2025-07-09T09:25:13.241Z"
+
+Object Prototype
+
+__defineGetter__(propertyName, getterFunction)
+
+__defineSetter__(propertyName, setterFunction)
+
+__lookupGetter__(propertyName)
+
+__lookupSetter__(propertyName)
+
+constructor: function()
+
+hasOwnProperty(propertyName)
+
+isPrototypeOf(property)
+
+propertyIsEnumerable(propertyName)
+
+toLocaleString()
+
+toString()
+
+valueOf()
