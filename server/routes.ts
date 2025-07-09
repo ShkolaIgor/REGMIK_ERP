@@ -6899,9 +6899,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Примусово відключаємо HTTP кеш для інтеграцій
       res.set({
         'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-        'ETag': `"integrations-${Date.now()}"` // Унікальний ETag щоразу
+        'Pragma': 'no-cache', 
+        'Expires': '0'
       });
       
       res.json(integrations);

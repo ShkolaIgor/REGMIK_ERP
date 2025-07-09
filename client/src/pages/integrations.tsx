@@ -65,9 +65,9 @@ export default function Integrations() {
     syncMethods: [] as string[],
   });
 
-  // Запити даних з примусовим timestamp
-  const { data: integrations = [], isLoading: integrationsLoading } = useQuery({
-    queryKey: ["/api/integrations", Date.now()], // Унікальний ключ щоразу
+  // Запити даних
+  const { data: integrations = [], isLoading: integrationsLoading, refetch: refetchIntegrations } = useQuery({
+    queryKey: ["/api/integrations"],
     staleTime: 0,
     cacheTime: 0,
   });
@@ -82,8 +82,13 @@ export default function Integrations() {
       return apiRequest("/api/integrations", "POST", data);
     },
     onSuccess: () => {
-      // Примусово перезавантажуємо сторінку після створення
-      window.location.reload();
+      refetchIntegrations();
+      setIsCreateDialogOpen(false);
+      resetForm();
+      toast({
+        title: "Успіх",
+        description: "Інтеграцію створено успішно",
+      });
     },
     onError: (error: any) => {
       toast({
@@ -103,8 +108,13 @@ export default function Integrations() {
       return result;
     },
     onSuccess: () => {
-      // Примусово перезавантажуємо сторінку після оновлення
-      window.location.reload();
+      refetchIntegrations();
+      setIsCreateDialogOpen(false);
+      resetForm();
+      toast({
+        title: "Успіх", 
+        description: "Інтеграцію оновлено успішно",
+      });
     },
     onError: (error: any) => {
       console.error("Update integration error:", error);
