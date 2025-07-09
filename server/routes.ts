@@ -6895,6 +6895,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("GET /api/integrations - Fetching all integrations");
       const integrations = await storage.getIntegrationConfigs();
       console.log("Fetched integrations count:", integrations.length);
+      
+      // Примусово відключаємо HTTP кеш для інтеграцій
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'ETag': `"integrations-${Date.now()}"` // Унікальний ETag щоразу
+      });
+      
       res.json(integrations);
     } catch (error) {
       console.error("Error fetching integrations:", error);

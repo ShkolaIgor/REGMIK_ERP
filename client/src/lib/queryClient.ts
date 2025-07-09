@@ -67,9 +67,18 @@ export async function apiRequest(
   console.log("Frontend: Request body:", requestBody);
   console.log("Frontend: Document cookies:", document.cookie);
 
+  const headers: HeadersInit = !isFormData && data ? { "Content-Type": "application/json" } : {};
+  
+  // Для інтеграцій додаємо антикеш заголовки
+  if (url.includes('/integrations')) {
+    headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+    headers['Pragma'] = 'no-cache';
+    headers['Expires'] = '0';
+  }
+
   const res = await fetch(url, {
     method,
-    headers: !isFormData && data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: requestBody,
     credentials: "include",
     cache: "no-cache", // Примусово відключаємо кеш браузера для всіх запитів
