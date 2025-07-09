@@ -1,0 +1,53 @@
+[Debug] [vite] connecting... (client, line 495)
+[Debug] [vite] connected. (client, line 618)
+[Log] Frontend: Making POST request to: /api/integrations (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – {Content-Type: "application/json"} (queryClient.ts, line 49)
+[Log] Frontend: Request body: – "{\"name\":\"1с\",\"displayName\":\"Імпорт\",\"type\":\"1c_accounting\",\"isActive\":true,\"config\":{\"baseUrl\":\"\",\"clientId\":\"\",\"clientSecret\":\"\",\"webhookUr…" (queryClient.ts, line 50)
+"{\"name\":\"1с\",\"displayName\":\"Імпорт\",\"type\":\"1c_accounting\",\"isActive\":true,\"config\":{\"baseUrl\":\"\",\"clientId\":\"\",\"clientSecret\":\"\",\"webhookUrl\":\"\",\"syncInterval\":60,\"syncMethods\":[]}}"
+[Log] Frontend: Document cookies: – "sidebar_state=false" (queryClient.ts, line 51)
+[Log] Frontend: Response status: 201 for POST /api/integrations (queryClient.ts, line 66)
+[Log] Frontend: Response headers: – {content-length: "274", content-type: "application/json; charset=utf-8", date: "Wed, 09 Jul 2025 13:14:13 GMT", …} (queryClient.ts, line 67)
+{content-length: "274", content-type: "application/json; charset=utf-8", date: "Wed, 09 Jul 2025 13:14:13 GMT", replit-cluster: "picard", x-powered-by: "Express", …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1с" – "Імпорт" (integrations.tsx, line 694)
+[Log] UI: Відкриваємо форму редагування для інтеграції: – {id: 1, name: "1с", displayName: "Імпорт", …} (integrations.tsx, line 822)
+{id: 1, name: "1с", displayName: "Імпорт", type: "1c_accounting", isActive: true, …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1с" – "Імпорт" (integrations.tsx, line 694)
+[Log] UI: Рендеринг інтеграції: – 1 – "1с" – "Імпорт" (integrations.tsx, line 694)
+[Log] UI: Рендеринг інтеграції: – 1 – "1с" – "Імпорт" (integrations.tsx, line 694)
+[Log] apiRequest - Integration update: – {url: "/api/integrations/1", method: "PUT", data: Object} (queryClient.ts, line 39)
+{url: "/api/integrations/1", method: "PUT", data: Object}Object
+[Log] Frontend: Making PUT request to: /api/integrations/1 (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – {Content-Type: "application/json"} (queryClient.ts, line 49)
+[Log] Frontend: Request body: – "{\"name\":\"1с_\",\"displayName\":\"Імпорт\",\"type\":\"1c_accounting\",\"isActive\":true,\"config\":{\"baseUrl\":\"\",\"clientId\":\"\",\"clientSecret\":\"\",\"webhookU…" (queryClient.ts, line 50)
+"{\"name\":\"1с_\",\"displayName\":\"Імпорт\",\"type\":\"1c_accounting\",\"isActive\":true,\"config\":{\"baseUrl\":\"\",\"clientId\":\"\",\"clientSecret\":\"\",\"webhookUrl\":\"\",\"syncInterval\":60,\"syncMethods\":[]}}"
+[Log] Frontend: Document cookies: – "sidebar_state=false" (queryClient.ts, line 51)
+[Log] UI: Рендеринг інтеграції: – 1 – "1с" – "Імпорт" (integrations.tsx, line 694)
+[Log] Frontend: Response status: 200 for PUT /api/integrations/1 (queryClient.ts, line 66)
+[Log] Frontend: Response headers: – {content-length: "275", content-type: "application/json; charset=utf-8", date: "Wed, 09 Jul 2025 13:14:23 GMT", …} (queryClient.ts, line 67)
+{content-length: "275", content-type: "application/json; charset=utf-8", date: "Wed, 09 Jul 2025 13:14:23 GMT", replit-cluster: "picard", x-powered-by: "Express", …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1с" – "Імпорт" (integrations.tsx, line 694)
+[Log] UI: Рендеринг інтеграції: – 1 – "1с" – "Імпорт" (integrations.tsx, line 694)
+[Debug] [vite] connecting... (client, line 495)
+[Debug] [vite] connected. (client, line 618)
+[Log] UI: Рендеринг інтеграції: – 1 – "1с" – "Імпорт" (integrations.tsx, line 694)
+[Log] UI: Відкриваємо форму редагування для інтеграції: – {id: 1, name: "1с", displayName: "Імпорт", …} (integrations.tsx, line 822)
+{id: 1, name: "1с", displayName: "Імпорт", type: "1c_accounting", isActive: true, …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1с" – "Імпорт" (integrations.tsx, line 694)
+[Log] UI: Рендеринг інтеграції: – 1 – "1с" – "Імпорт" (integrations.tsx, line 694, x10)
+[Log] apiRequest - Integration update: – {url: "/api/integrations/1", method: "PUT", data: Object} (queryClient.ts, line 39)
+{url: "/api/integrations/1", method: "PUT", data: Object}Object
+[Log] Frontend: Making PUT request to: /api/integrations/1 (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – {Content-Type: "application/json"} (queryClient.ts, line 49)
+[Log] Frontend: Request body: – "{\"name\":\"1с\",\"displayName\":\"Імпорт накладних\",\"type\":\"1c_accounting\",\"isActive\":true,\"config\":{\"baseUrl\":\"\",\"clientId\":\"\",\"clientSecret\":\"\",…" (queryClient.ts, line 50)
+"{\"name\":\"1с\",\"displayName\":\"Імпорт накладних\",\"type\":\"1c_accounting\",\"isActive\":true,\"config\":{\"baseUrl\":\"\",\"clientId\":\"\",\"clientSecret\":\"\",\"webhookUrl\":\"\",\"syncInterval\":60,\"syncMethods\":[]}}"
+[Log] Frontend: Document cookies: – "sidebar_state=false" (queryClient.ts, line 51)
+[Log] UI: Рендеринг інтеграції: – 1 – "1с" – "Імпорт" (integrations.tsx, line 694)
+[Log] Frontend: Response status: 200 for PUT /api/integrations/1 (queryClient.ts, line 66)
+[Log] Frontend: Response headers: – {content-length: "293", content-type: "application/json; charset=utf-8", date: "Wed, 09 Jul 2025 13:14:52 GMT", …} (queryClient.ts, line 67)
+{content-length: "293", content-type: "application/json; charset=utf-8", date: "Wed, 09 Jul 2025 13:14:52 GMT", replit-cluster: "picard", x-powered-by: "Express", …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1с" – "Імпорт" (integrations.tsx, line 694)
+[Log] UI: Рендеринг інтеграції: – 1 – "1с" – "Імпорт" (integrations.tsx, line 694)
+[Debug] [vite] connecting... (client, line 495)
+[Debug] [vite] connected. (client, line 618)
+[Debug] [vite] connecting... (client, line 495)
+[Debug] [vite] connected. (client, line 618)

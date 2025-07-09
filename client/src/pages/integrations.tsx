@@ -83,8 +83,11 @@ export default function Integrations() {
     mutationFn: async (data: any) => {
       return apiRequest("/api/integrations", "POST", data);
     },
-    onSuccess: () => {
-      refetchIntegrations();
+    onSuccess: async () => {
+      // КРИТИЧНЕ ВИПРАВЛЕННЯ: Примусово оновлюємо список після створення
+      await queryClient.removeQueries({ queryKey: ["/api/integrations"] });
+      await refetchIntegrations();
+      
       setIsCreateDialogOpen(false);
       resetForm();
       toast({
@@ -106,9 +109,9 @@ export default function Integrations() {
       return await apiRequest(`/api/integrations/${id}`, "PUT", data);
     },
     onSuccess: async () => {
-      // РАДИКАЛЬНЕ ВИПРАВЛЕННЯ: Повністю інвалідуємо та перезавантажуємо кеш
-      await queryClient.invalidateQueries({ queryKey: ["/api/integrations"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/integrations"] });
+      // КРИТИЧНЕ ВИПРАВЛЕННЯ: Примусово оновлюємо список після успішного збереження
+      await queryClient.removeQueries({ queryKey: ["/api/integrations"] });
+      await refetchIntegrations();
       
       setIsCreateDialogOpen(false);
       resetForm();
