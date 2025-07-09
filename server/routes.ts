@@ -6889,29 +6889,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ІНТЕГРАЦІЇ БІТРІКС24 ТА 1С API
   // ===============================
 
-  // Получение всех конфигураций интеграций
+  // Получение всех конфигураций интеграций - РАДИКАЛЬНЕ ВИПРАВЛЕННЯ
   app.get("/api/integrations", isSimpleAuthenticated, async (req, res) => {
     try {
-      console.log("GET /api/integrations - Fetching all integrations");
       const integrations = await storage.getIntegrationConfigs();
-      console.log("Fetched integrations count:", integrations.length);
       
-      // ПОВНІСТЮ БЛОКУЄМО БУДЬ-ЯКЕ КЕШИРУВАННЯ
-      res.set({
-        'Cache-Control': 'no-cache, no-store, must-revalidate, private, max-age=0',
-        'Pragma': 'no-cache', 
-        'Expires': '-1',
-        'Last-Modified': new Date().toUTCString(),
-        'Vary': '*'
-      });
+      // ПОВНІСТЮ ЗАБОРОНИТИ КЕШИРУВАННЯ
+      res.header('Cache-Control', 'no-cache, no-store, must-revalidate, private, max-age=0');
+      res.header('Pragma', 'no-cache');
+      res.header('Expires', '-1');
+      res.header('Last-Modified', new Date().toUTCString());
+      res.header('Vary', '*');
       
-      // Видаляємо ETag щоб запобігти HTTP 304
+      // Видаляємо всі ETag заголовки
       res.removeHeader('ETag');
+      res.removeHeader('etag');
       
-      res.status(200).json(integrations);
+      // Примусово HTTP 200
+      return res.status(200).json(integrations);
     } catch (error) {
       console.error("Error fetching integrations:", error);
-      res.status(500).json({ error: "Failed to fetch integrations" });
+      return res.status(500).json({ error: "Failed to fetch integrations" });
     }
   });
 

@@ -65,11 +65,13 @@ export default function Integrations() {
     syncMethods: [] as string[],
   });
 
-  // Запити даних з примусовим оновленням кешу
+  // Запити даних без кешування
   const { data: integrations = [], isLoading: integrationsLoading, refetch: refetchIntegrations } = useQuery({
-    queryKey: ["/api/integrations", Date.now()], // Додаємо timestamp для унікальності
+    queryKey: ["/api/integrations"],
     staleTime: 0,
     cacheTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
   });
 
   const { data: syncLogs = [], isLoading: logsLoading } = useQuery({
