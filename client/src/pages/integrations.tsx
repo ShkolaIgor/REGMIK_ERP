@@ -65,11 +65,11 @@ export default function Integrations() {
     syncMethods: [] as string[],
   });
 
-  // Запити даних
+  // Запити даних з примусовим timestamp
   const { data: integrations = [], isLoading: integrationsLoading } = useQuery({
-    queryKey: ["/api/integrations"],
-    staleTime: 0, // Завжди вважати дані застарілими
-    cacheTime: 0, // Не кешувати дані взагалі
+    queryKey: ["/api/integrations", Date.now()], // Унікальний ключ щоразу
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   const { data: syncLogs = [], isLoading: logsLoading } = useQuery({
@@ -82,13 +82,8 @@ export default function Integrations() {
       return apiRequest("/api/integrations", "POST", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/integrations"] });
-      setIsCreateDialogOpen(false);
-      resetForm();
-      toast({
-        title: "Успіх",
-        description: "Інтеграцію створено успішно",
-      });
+      // Примусово перезавантажуємо сторінку після створення
+      window.location.reload();
     },
     onError: (error: any) => {
       toast({
@@ -107,23 +102,9 @@ export default function Integrations() {
       console.log("Frontend: Update result:", result);
       return result;
     },
-    onSuccess: async (data, variables) => {
-      console.log("КЕШ: Invalidating queries after successful update");
-      console.log("КЕШ: Updated data from server:", data);
-      
-      // Примусово очищуємо кеш і перезавантажуємо дані
-      await queryClient.removeQueries({ queryKey: ["/api/integrations"] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/integrations"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/integrations"] });
-      
-      console.log("КЕШ: Cache cleared and refetched");
-      
-      setIsCreateDialogOpen(false);
-      resetForm();
-      toast({
-        title: "Успіх",
-        description: "Інтеграцію оновлено успішно",
-      });
+    onSuccess: () => {
+      // Примусово перезавантажуємо сторінку після оновлення
+      window.location.reload();
     },
     onError: (error: any) => {
       console.error("Update integration error:", error);
