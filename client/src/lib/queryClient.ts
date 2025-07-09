@@ -44,9 +44,12 @@ export async function apiRequest(
     data = urlOrOptions.body;
   }
 
-  // Логування запитів на оновлення статусу
+  // Логування запитів на оновлення статусу та інтеграцій
   if (url.includes('/status') && method === 'PUT') {
     console.log("apiRequest - Status update:", { url, method, data });
+  }
+  if (url.includes('/integrations') && method === 'PUT') {
+    console.log("apiRequest - Integration update:", { url, method, data });
   }
 
   // Визначаємо чи це FormData для файлових завантажень
@@ -59,6 +62,10 @@ export async function apiRequest(
     requestBody = JSON.stringify(data);
   }
 
+  console.log(`Making ${method} request to: ${url}`);
+  console.log("Request headers:", !isFormData && data ? { "Content-Type": "application/json" } : {});
+  console.log("Request body:", requestBody);
+
   const res = await fetch(url, {
     method,
     headers: !isFormData && data ? { "Content-Type": "application/json" } : {},
@@ -66,6 +73,9 @@ export async function apiRequest(
     credentials: "include",
     cache: "no-cache", // Примусово відключаємо кеш браузера для всіх запитів
   });
+
+  console.log(`Response status: ${res.status} for ${method} ${url}`);
+  console.log("Response headers:", Object.fromEntries(res.headers.entries()));
 
   await throwIfResNotOk(res);
   

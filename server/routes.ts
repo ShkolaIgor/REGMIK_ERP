@@ -6894,7 +6894,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("GET /api/integrations - Fetching all integrations");
       const integrations = await storage.getIntegrationConfigs();
-      console.log("Fetched integrations:", integrations);
+      console.log("Fetched integrations count:", integrations.length);
       res.json(integrations);
     } catch (error) {
       console.error("Error fetching integrations:", error);
@@ -6983,7 +6983,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // PUT роут для сумісності з frontend (дублює PATCH)
-  app.put("/api/integrations/:id", isSimpleAuthenticated, async (req, res) => {
+  app.put("/api/integrations/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const updateData = req.body;
