@@ -7086,29 +7086,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Перевіряємо чи є базовий URL в конфігурації
       const config = integration.config as any;
-      if (!config?.baseUrl) {
+      if (!config?.baseUrl || config.baseUrl.trim() === '' || config.baseUrl === 'http://') {
         return res.json({ 
           success: false, 
-          message: "Не вказано базовий URL для інтеграції" 
+          message: "Не вказано базовий URL для інтеграції. Будь ласка, вкажіть правильний URL в налаштуваннях." 
         });
       }
 
-      // Тестуємо з'єднання з базовим URL
+      // Тестуємо з'єднання залежно від типу інтеграції
       try {
-        const testUrl = config.baseUrl.endsWith('/') ? config.baseUrl + 'test' : config.baseUrl + '/test';
+        let testUrl: string;
+        
+        if (integration.type === '1c_accounting') {
+          // Для 1C тестуємо endpoint накладних
+          testUrl = config.baseUrl.endsWith('/') 
+            ? config.baseUrl + 'hs/invoices' 
+            : config.baseUrl + '/hs/invoices';
+        } else {
+          // Для інших типів інтеграцій використовуємо загальний test endpoint
+          testUrl = config.baseUrl.endsWith('/') ? config.baseUrl + 'test' : config.baseUrl + '/test';
+        }
+
+        console.log(`Тестування з'єднання з інтеграцією ${integration.displayName}: ${testUrl}`);
+        
         const response = await fetch(testUrl, { 
           method: 'GET',
-          signal: AbortSignal.timeout(5000) // 5 секунд тайм-аут
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            // Додаємо базову авторизацію якщо є clientId та clientSecret
+            ...(config.clientId && config.clientSecret ? {
+              'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
+            } : {})
+          },
+          signal: AbortSignal.timeout(10000) // 10 секунд тайм-аут
         });
         
-        res.json({ 
-          success: response.ok, 
-          message: response.ok ? "З'єднання успішне" : `Помилка: HTTP ${response.status}`
-        });
+        if (response.ok) {
+          // Додаткова перевірка для 1C - чи повертається JSON
+          if (integration.type === '1c_accounting') {
+            try {
+              const data = await response.json();
+              res.json({ 
+                success: true, 
+                message: `З'єднання успішне. 1C система відповідає правильно.`
+              });
+            } catch (jsonError) {
+              res.json({ 
+                success: false, 
+                message: `Сервер відповідає, але повертає некоректні дані. Перевірте налаштування 1C HTTP-сервісу.`
+              });
+            }
+          } else {
+            res.json({ 
+              success: true, 
+              message: "З'єднання успішне"
+            });
+          }
+        } else {
+          res.json({ 
+            success: false, 
+            message: `Помилка з'єднання: HTTP ${response.status} ${response.statusText}`
+          });
+        }
       } catch (error: any) {
+        let errorMessage = "Не вдалося підключитися";
+        
+        if (error.name === 'AbortError') {
+          errorMessage = "Тайм-аут з'єднання. Сервер не відповідає протягом 10 секунд.";
+        } else if (error.code === 'ECONNREFUSED') {
+          errorMessage = "З'єднання відхилено. Перевірте чи запущений сервер та правильність URL.";
+        } else if (error.code === 'ENOTFOUND') {
+          errorMessage = "Сервер не знайдено. Перевірте правильність URL та доступність мережі.";
+        } else {
+          errorMessage = `Помилка з'єднання: ${error.message}`;
+        }
+        
         res.json({ 
           success: false, 
-          message: `Не вдалося підключитися: ${error.message}`
+          message: errorMessage
         });
       }
     } catch (error) {

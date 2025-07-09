@@ -9677,98 +9677,90 @@ export class DatabaseStorage implements IStorage {
   // 1C Integration methods
   async get1CInvoices() {
     try {
-      // This would typically connect to 1C API or database
-      // For now, return mock data structure with proper typing
-      const mockInvoices = [
-        {
-          id: "1C-001",
-          number: "ПН-00001",
-          date: "2025-07-08",
-          supplier: "ТОВ Постачальник 1",
-          supplierId: 1,
-          amount: 15000.50,
-          currency: "UAH",
-          status: "new",
-          items: [
-            {
-              name: "Компонент А",
-              quantity: 10,
-              price: 750.00,
-              total: 7500.00,
-              unit: "шт"
-            },
-            {
-              name: "Компонент Б", 
-              quantity: 5,
-              price: 1500.10,
-              total: 7500.50,
-              unit: "шт"
-            }
-          ],
-          exists: false
-        },
-        {
-          id: "1C-002",
-          number: "ПН-00002",
-          date: "2025-07-07",
-          supplier: "ТОВ Постачальник 2",
-          supplierId: 2,
-          amount: 25000.00,
-          currency: "UAH",
-          status: "processed",
-          items: [
-            {
-              name: "Компонент В",
-              quantity: 20,
-              price: 1250.00,
-              total: 25000.00,
-              unit: "шт"
-            }
-          ],
-          exists: true
-        },
-        {
-          id: "1C-003",
-          number: "ПН-00003",
-          date: "2025-07-06",
-          supplier: "ПАТ Електронні компоненти",
-          supplierId: 3,
-          amount: 45000.75,
-          currency: "UAH",
-          status: "new",
-          items: [
-            {
-              name: "Мікросхема STM32",
-              quantity: 50,
-              price: 450.00,
-              total: 22500.00,
-              unit: "шт"
-            },
-            {
-              name: "Резистор 10кОм",
-              quantity: 500,
-              price: 45.00,
-              total: 22500.75,
-              unit: "шт"
-            }
-          ],
-          exists: false
-        }
-      ];
+      // Шукаємо активну 1C інтеграцію
+      const integrations = await db.select()
+        .from(integrationConfigs)
+        .where(and(
+          eq(integrationConfigs.type, '1c_accounting'),
+          eq(integrationConfigs.isActive, true)
+        ));
 
-      // Check which invoices already exist in ERP by checking supplier receipts
+      if (integrations.length === 0) {
+        throw new Error("Не знайдено активну 1C інтеграцію. Будь ласка, налаштуйте інтеграцію з 1C.");
+      }
+
+      const integration = integrations[0];
+      const config = integration.config as any;
+
+      if (!config?.baseUrl || config.baseUrl.trim() === '' || config.baseUrl === 'http://') {
+        throw new Error("Не налаштований базовий URL для 1C інтеграції. Будь ласка, вкажіть правильний URL в налаштуваннях інтеграції.");
+      }
+
+      // Формуємо URL для запиту накладних
+      const invoicesUrl = config.baseUrl.endsWith('/') 
+        ? config.baseUrl + 'hs/invoices' 
+        : config.baseUrl + '/hs/invoices';
+
+      console.log(`Запит накладних з 1C: ${invoicesUrl}`);
+
+      // Виконуємо запит до 1C системи
+      const response = await fetch(invoicesUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          // Додаємо базову авторизацію якщо є clientId та clientSecret
+          ...(config.clientId && config.clientSecret ? {
+            'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
+          } : {})
+        },
+        signal: AbortSignal.timeout(10000) // 10 секунд тайм-аут
+      });
+
+      if (!response.ok) {
+        throw new Error(`Помилка з'єднання з 1C: HTTP ${response.status} ${response.statusText}`);
+      }
+
+      const invoicesData = await response.json();
+      
+      // Перетворюємо дані з 1C у внутрішній формат
+      const invoices = Array.isArray(invoicesData) ? invoicesData : [];
+      
+      // Перевіряємо які накладні вже існують в ERP
       const existingReceipts = await this.getSupplierReceipts();
       
-      return mockInvoices.map(invoice => ({
-        ...invoice,
+      return invoices.map((invoice: any) => ({
+        id: invoice.id || invoice.ID || `1C-${Date.now()}`,
+        number: invoice.number || invoice.НомерДокумента || "Невідомий",
+        date: invoice.date || invoice.Дата || new Date().toISOString().split('T')[0],
+        supplier: invoice.supplier || invoice.Постачальник || "Невідомий постачальник",
+        supplierId: invoice.supplierId || invoice.IDПостачальника || 1,
+        amount: parseFloat(invoice.amount || invoice.Сума || 0),
+        currency: invoice.currency || invoice.Валюта || "UAH",
+        status: invoice.status || invoice.Статус || "new",
+        items: Array.isArray(invoice.items || invoice.Позиції) 
+          ? (invoice.items || invoice.Позиції).map((item: any) => ({
+              name: item.name || item.Назва || "Невідомий товар",
+              quantity: parseFloat(item.quantity || item.Кількість || 0),
+              price: parseFloat(item.price || item.Ціна || 0),
+              total: parseFloat(item.total || item.Сума || 0),
+              unit: item.unit || item.ОдиницяВиміру || "шт"
+            }))
+          : [],
         exists: existingReceipts.some(receipt => 
-          receipt.supplier_document_number === invoice.number ||
-          receipt.comment?.includes(invoice.id)
+          receipt.supplier_document_number === (invoice.number || invoice.НомерДокумента) ||
+          receipt.comment?.includes(invoice.id || invoice.ID)
         )
       }));
 
     } catch (error) {
       console.error('Error fetching 1C invoices:', error);
+      
+      // Якщо помилка з'єднання, повертаємо зрозуміле повідомлення
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error("Не вдалося підключитися до 1C системи. Перевірте налаштування URL та доступність сервера.");
+      }
+      
       throw error;
     }
   }
