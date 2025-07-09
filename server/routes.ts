@@ -72,8 +72,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   });
 
-  // Register simple integration routes
-  registerSimpleIntegrationRoutes(app);
+  // ВІДКЛЮЧЕНО: Register simple integration routes (конфліктує з БД маршрутами)
+  // registerSimpleIntegrationRoutes(app);
   
   // Register sync API routes
   registerSyncApiRoutes(app);
