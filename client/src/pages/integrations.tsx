@@ -65,6 +65,9 @@ export default function Integrations() {
     syncMethods: [] as string[],
   });
 
+  // Локальний стейт для інтеграцій
+  const [localIntegrations, setLocalIntegrations] = useState<IntegrationConfig[]>([]);
+
   // Запити даних без кешування
   const { data: integrations = [], isLoading: integrationsLoading, refetch: refetchIntegrations } = useQuery({
     queryKey: ["/api/integrations"],
@@ -72,7 +75,13 @@ export default function Integrations() {
     cacheTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: false,
+    onSuccess: (data) => {
+      setLocalIntegrations(data);
+    }
   });
+
+  // Використовуємо локальний стейт якщо є дані, інакше дані з query
+  const displayIntegrations = localIntegrations.length > 0 ? localIntegrations : integrations;
 
   const { data: syncLogs = [], isLoading: logsLoading } = useQuery({
     queryKey: ["/api/integrations/sync-logs"],
@@ -83,10 +92,9 @@ export default function Integrations() {
     mutationFn: async (data: any) => {
       return apiRequest("/api/integrations", "POST", data);
     },
-    onSuccess: async () => {
-      // КРИТИЧНЕ ВИПРАВЛЕННЯ: Примусово оновлюємо список після створення
-      await queryClient.removeQueries({ queryKey: ["/api/integrations"] });
-      await refetchIntegrations();
+    onSuccess: async (newIntegration) => {
+      // КРИТИЧНЕ ВИПРАВЛЕННЯ: СИНХРОННО додаємо до локального стейту
+      setLocalIntegrations(prev => [...prev, newIntegration]);
       
       setIsCreateDialogOpen(false);
       resetForm();
@@ -109,7 +117,13 @@ export default function Integrations() {
       return await apiRequest(`/api/integrations/${id}`, "PUT", data);
     },
     onSuccess: async (updatedIntegration) => {
-      // КРИТИЧНЕ ВИПРАВЛЕННЯ: Оновлюємо стейт та список
+      // КРИТИЧНЕ ВИПРАВЛЕННЯ: СИНХРОННО оновлюємо локальний стейт
+      setLocalIntegrations(prev => 
+        prev.map(integration => 
+          integration.id === updatedIntegration.id ? updatedIntegration : integration
+        )
+      );
+      
       setSelectedIntegration(updatedIntegration);
       
       // Оновлюємо форму з новими даними
@@ -124,9 +138,6 @@ export default function Integrations() {
         syncInterval: updatedIntegration.config.syncInterval || 60,
         syncMethods: updatedIntegration.config.syncMethods || [],
       });
-      
-      await queryClient.removeQueries({ queryKey: ["/api/integrations"] });
-      await refetchIntegrations();
       
       // Закриваємо діалог після успішного оновлення 
       setIsCreateDialogOpen(false);
@@ -436,7 +447,7 @@ export default function Integrations() {
             <div>Завантаження...</div>
           ) : (
             <div className="grid gap-4">
-              {integrations.map((integration: IntegrationConfig) => {
+              {displayIntegrations.map((integration: IntegrationConfig) => {
                 console.log("UI: Рендеринг інтеграції:", integration.id, integration.name, integration.displayName);
                 return (
                 <Card key={integration.id}>
