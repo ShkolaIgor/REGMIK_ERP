@@ -200,6 +200,11 @@ export default function Integrations() {
   };
 
   const handleSubmit = () => {
+    console.log("ФОРМА: Handle submit called");
+    console.log("ФОРМА: Current formData state:", formData);
+    console.log("ФОРМА: formData.name:", formData.name);
+    console.log("ФОРМА: formData.displayName:", formData.displayName);
+    
     const configData = {
       name: formData.name,
       displayName: formData.displayName,
@@ -214,6 +219,8 @@ export default function Integrations() {
         syncMethods: formData.syncMethods,
       },
     };
+
+    console.log("ФОРМА: Final config data being sent:", configData);
 
     if (selectedIntegration) {
       console.log("Updating integration with ID:", selectedIntegration.id);
@@ -462,8 +469,12 @@ export default function Integrations() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
+                            console.log("ФОРМА: Початкове заповнення форми для редагування");
+                            console.log("ФОРМА: Integration name from DB:", integration.name);
+                            console.log("ФОРМА: Integration displayName from DB:", integration.displayName);
+                            
                             setSelectedIntegration(integration);
-                            setFormData({
+                            const initialFormData = {
                               name: integration.name,
                               displayName: integration.displayName,
                               type: integration.type,
@@ -473,7 +484,10 @@ export default function Integrations() {
                               webhookUrl: integration.config.webhookUrl || "",
                               syncInterval: integration.config.syncInterval || 60,
                               syncMethods: integration.config.syncMethods || [],
-                            });
+                            };
+                            
+                            console.log("ФОРМА: Initial form data:", initialFormData);
+                            setFormData(initialFormData);
                             setIsCreateDialogOpen(true);
                           }}
                         >

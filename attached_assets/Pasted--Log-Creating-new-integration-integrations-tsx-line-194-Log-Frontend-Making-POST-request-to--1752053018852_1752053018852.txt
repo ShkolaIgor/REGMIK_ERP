@@ -1,0 +1,107 @@
+[Log] Creating new integration (integrations.tsx, line 194)
+[Log] Frontend: Making POST request to: /api/integrations (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – {Content-Type: "application/json"} (queryClient.ts, line 49)
+[Log] Frontend: Request body: – "{\"name\":\"ww\",\"displayName\":\"sssss\",\"type\":\"1c_accounting\",\"isActive\":true,\"config\":{\"baseUrl\":\"\",\"clientId\":\"\",\"clientSecret\":\"\",\"webhookUrl…" (queryClient.ts, line 50)
+"{\"name\":\"ww\",\"displayName\":\"sssss\",\"type\":\"1c_accounting\",\"isActive\":true,\"config\":{\"baseUrl\":\"\",\"clientId\":\"\",\"clientSecret\":\"\",\"webhookUrl\":\"\",\"syncInterval\":60,\"syncMethods\":[]}}"
+[Log] Frontend: Document cookies: – "sidebar_state=false" (queryClient.ts, line 51)
+[Log] Frontend: Response status: 201 for POST /api/integrations (queryClient.ts, line 60)
+[Log] Frontend: Response headers: – {content-length: "266", content-type: "application/json; charset=utf-8", date: "Wed, 09 Jul 2025 09:23:04 GMT", …} (queryClient.ts, line 61)
+{content-length: "266", content-type: "application/json; charset=utf-8", date: "Wed, 09 Jul 2025 09:23:04 GMT", etag: "W/\"10a-fnQ1oe0aMplb/0C0aXTnEiefpRE\"", replit-cluster: "picard", …}Object
+[Log] Updating integration with ID: – 1 (integrations.tsx, line 189)
+[Log] Selected integration full object: – {id: 1, name: "ww", displayName: "sssss", …} (integrations.tsx, line 190)
+{id: 1, name: "ww", displayName: "sssss", type: "1c_accounting", isActive: true, …}Object
+[Log] Config data: – {name: "ww", displayName: "sssssqqq", type: "1c_accounting", …} (integrations.tsx, line 191)
+{name: "ww", displayName: "sssssqqq", type: "1c_accounting", isActive: true, config: Object}Object
+[Log] Frontend: Updating integration: – {id: 1, data: Object} (integrations.tsx, line 78)
+{id: 1, data: Object}Object
+[Log] Frontend: Making PUT request to: – "/api/integrations/1" (integrations.tsx, line 79)
+[Log] apiRequest - Integration update: – {url: "/api/integrations/1", method: "PUT", data: Object} (queryClient.ts, line 39)
+{url: "/api/integrations/1", method: "PUT", data: Object}Object
+[Log] Frontend: Making PUT request to: /api/integrations/1 (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – {Content-Type: "application/json"} (queryClient.ts, line 49)
+[Log] Frontend: Request body: (queryClient.ts, line 50)
+"{\"name\":\"ww\",\"displayName\":\"sssssqqq\",\"type\":\"1c_accounting\",\"isActive\":true,\"config\":{\"baseUrl\":\"\",\"clientId\":\"\",\"clientSecret\":\"\",\"webhookUrl\":\"\",\"syncInterval\":60,\"syncMethods\":[]}}"
+[Log] Frontend: Document cookies: – "sidebar_state=false" (queryClient.ts, line 51)
+[Log] Frontend: Response status: 200 for PUT /api/integrations/1 (queryClient.ts, line 60)
+[Log] Frontend: Response headers: (queryClient.ts, line 61)
+Object
+
+content-length: "269"
+
+content-type: "application/json; charset=utf-8"
+
+date: "Wed, 09 Jul 2025 09:23:13 GMT"
+
+etag: "W/\"10d-oUjbOQO3PRqYeQrsLOfN5f1R9/8\""
+
+replit-cluster: "picard"
+
+x-powered-by: "Express"
+
+x-robots-tag: "none, noindex, noarchive, nofollow, nositelinkssearchbox, noimageindex, none, noindex, noarchive, nofollow, nositelinkssearchbox…"
+
+Object Prototype
+
+__defineGetter__(propertyName, getterFunction)
+
+__defineSetter__(propertyName, setterFunction)
+
+__lookupGetter__(propertyName)
+
+__lookupSetter__(propertyName)
+
+constructor: function()
+
+hasOwnProperty(propertyName)
+
+isPrototypeOf(property)
+
+propertyIsEnumerable(propertyName)
+
+toLocaleString()
+
+toString()
+
+valueOf()
+[Log] Frontend: Update result: (integrations.tsx, line 81)
+Object
+
+config: {baseUrl: "", clientId: "", webhookUrl: "", syncMethods: [], clientSecret: "", …}
+
+createdAt: "2025-07-09T08:58:53.062Z"
+
+displayName: "sssssqqq"
+
+id: 1
+
+isActive: true
+
+name: "ww"
+
+type: "1c_accounting"
+
+updatedAt: "2025-07-09T09:23:13.667Z"
+
+Object Prototype
+
+__defineGetter__(propertyName, getterFunction)
+
+__defineSetter__(propertyName, setterFunction)
+
+__lookupGetter__(propertyName)
+
+__lookupSetter__(propertyName)
+
+constructor: function()
+
+hasOwnProperty(propertyName)
+
+isPrototypeOf(property)
+
+propertyIsEnumerable(propertyName)
+
+toLocaleString()
+
+toString()
+
+valueOf()
