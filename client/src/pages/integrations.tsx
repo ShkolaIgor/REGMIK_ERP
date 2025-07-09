@@ -65,9 +65,9 @@ export default function Integrations() {
     syncMethods: [] as string[],
   });
 
-  // Запити даних
+  // Запити даних з примусовим оновленням кешу
   const { data: integrations = [], isLoading: integrationsLoading, refetch: refetchIntegrations } = useQuery({
-    queryKey: ["/api/integrations"],
+    queryKey: ["/api/integrations", Date.now()], // Додаємо timestamp для унікальності
     staleTime: 0,
     cacheTime: 0,
   });
@@ -101,14 +101,13 @@ export default function Integrations() {
 
   const updateIntegrationMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      console.log("Frontend: Updating integration:", { id, data });
-      console.log("Frontend: Making PUT request to:", `/api/integrations/${id}`);
-      const result = await apiRequest(`/api/integrations/${id}`, "PUT", data);
-      console.log("Frontend: Update result:", result);
-      return result;
+      return await apiRequest(`/api/integrations/${id}`, "PUT", data);
     },
-    onSuccess: () => {
-      refetchIntegrations();
+    onSuccess: async () => {
+      // РАДИКАЛЬНЕ ВИПРАВЛЕННЯ: Повністю інвалідуємо та перезавантажуємо кеш
+      await queryClient.invalidateQueries({ queryKey: ["/api/integrations"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/integrations"] });
+      
       setIsCreateDialogOpen(false);
       resetForm();
       toast({
