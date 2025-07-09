@@ -4,6 +4,10 @@ import { setupVite, serveStatic, log } from "./vite";
 import { novaPoshtaCache } from "./nova-poshta-cache";
 
 const app = express();
+
+// КРИТИЧНЕ ВИПРАВЛЕННЯ: Відключаємо ETag на рівні всього серверу
+app.set('etag', false);
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
