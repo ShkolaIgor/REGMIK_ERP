@@ -125,7 +125,14 @@ export function setupSimpleAuth(app: Express) {
       
       // Якщо не знайшли серед демо користувачів, перевіряємо базу даних
       console.log("Checking database for user:", username);
-      const dbUser = await storage.getLocalUserByUsername(username);
+      let dbUser;
+      try {
+        dbUser = await storage.getLocalUserByUsername(username);
+        console.log("Database query successful, user found:", !!dbUser);
+      } catch (dbError) {
+        console.error("Database error when searching for user:", dbError);
+        return res.status(500).json({ message: "Помилка бази даних" });
+      }
       
       if (dbUser) {
         console.log("Database user found:", dbUser.username);
@@ -145,7 +152,15 @@ export function setupSimpleAuth(app: Express) {
           console.log("Database user authenticated successfully");
           
           // Отримуємо повні дані користувача з робітником
-          const fullUser = await storage.getLocalUserWithWorker(dbUser.id);
+          let fullUser;
+          try {
+            fullUser = await storage.getLocalUserWithWorker(dbUser.id);
+            console.log("Full user data retrieved successfully");
+          } catch (fullUserError) {
+            console.error("Error getting full user data:", fullUserError);
+            // Продовжуємо без worker даних
+            fullUser = null;
+          }
           
           // Створюємо сесію для користувача з бази даних
           (req.session as any).user = {
@@ -158,7 +173,13 @@ export function setupSimpleAuth(app: Express) {
           };
           
           // Оновлюємо час останнього входу
-          await storage.updateUserLastLogin(dbUser.id);
+          try {
+            await storage.updateUserLastLogin(dbUser.id);
+            console.log("User last login updated successfully");
+          } catch (updateError) {
+            console.error("Error updating last login:", updateError);
+            // Не блокуємо login через цю помилку
+          }
           
           return req.session.save((err) => {
             if (err) {

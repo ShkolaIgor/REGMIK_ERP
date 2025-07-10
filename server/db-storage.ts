@@ -9678,7 +9678,7 @@ export class DatabaseStorage implements IStorage {
   async get1CInvoices() {
     try {
       // Шукаємо активну 1C інтеграцію
-      const integrations = await db.select()
+      const integrations = await this.db.select()
         .from(integrationConfigs)
         .where(and(
           eq(integrationConfigs.type, '1c_accounting'),
@@ -9776,13 +9776,7 @@ export class DatabaseStorage implements IStorage {
       }
       
       // Логування для production debugging
-      console.log('1C Integration Config:', {
-        integrationFound: integration ? 'Yes' : 'No',
-        integrationId: integration?.id,
-        baseUrl: config?.baseUrl,
-        hasAuth: !!(config?.clientId && config?.clientSecret),
-        invoicesUrl: config?.baseUrl ? (config.baseUrl.endsWith('/') ? config.baseUrl + 'hs/invoices' : config.baseUrl + '/hs/invoices') : 'undefined'
-      });
+      console.log('1C Integration Error occurred');
       
       throw error;
     }
