@@ -7050,17 +7050,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`🔥 Integration ID: ${id}, Type: ${integration.type}`);
 
         try {
-          // Тестуємо з POST методом, оскільки 1C HTTP-сервіс не підтримує GET
+          // Спочатку пробуємо GET запит
+          console.log(`🔥 Trying GET request to: ${testUrl}`);
           const response = await fetch(testUrl, {
-            method: 'POST',
+            method: 'GET',
             headers: {
-              'Content-Type': 'application/json',
+              'Accept': 'application/json',
               'Authorization': `Basic ${Buffer.from(`${integration.config.clientId}:${integration.config.clientSecret}`).toString('base64')}`
-            },
-            body: JSON.stringify({
-              action: 'test_connection',
-              timestamp: new Date().toISOString()
-            })
+            }
           });
 
           console.log(`🔥 Response status: ${response.status}`);
