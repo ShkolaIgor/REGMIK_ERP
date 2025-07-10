@@ -10930,7 +10930,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('DEBUG: URL already ends with /invoices, not adding');
         }
         
-        console.log(`Тестування з'єднання з інтеграцією ${integration.displayName}: ${testUrl}`);
+        console.log(`🔥🔥🔥 ENDPOINT WORKING: ${integration.displayName}: ${testUrl}`);
+        console.log(`🔥 Integration ID: ${id}, Type: ${integration.type}`);
 
         try {
           // Тестуємо з POST методом, оскільки 1C HTTP-сервіс не підтримує GET

@@ -1,0 +1,64 @@
+[Log] Frontend: Making POST request to: /api/integrations/1/test (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Request headers: – {} (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Request body: – undefined (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-D0-eVZX0.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426)
+[Log] Frontend: Response status: 200 for POST /api/integrations/1/test (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Response headers: – {content-length: "82", content-type: "application/json; charset=utf-8", date: "Thu, 10 Jul 2025 07:59:51 GMT", …} (index-D0-eVZX0.js, line 48)
+{content-length: "82", content-type: "application/json; charset=utf-8", date: "Thu, 10 Jul 2025 07:59:51 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426)
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426, x3)
+[Log] Frontend: Making POST request to: /api/integrations/1/test (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Request headers: – {} (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Request body: – undefined (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-D0-eVZX0.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426)
+[Log] Frontend: Response status: 200 for POST /api/integrations/1/test (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Response headers: – {content-length: "82", content-type: "application/json; charset=utf-8", date: "Thu, 10 Jul 2025 08:01:53 GMT", …} (index-D0-eVZX0.js, line 48)
+{content-length: "82", content-type: "application/json; charset=utf-8", date: "Thu, 10 Jul 2025 08:01:53 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426)
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426, x2)
+[Log] UI: Відкриваємо форму редагування для інтеграції: – {id: 1, name: "1c_get_invoices_in", displayName: "Імпорт вхідних накладних з 1С", …} (index-D0-eVZX0.js, line 1426)
+{id: 1, name: "1c_get_invoices_in", displayName: "Імпорт вхідних накладних з 1С", type: "1c_accounting", isActive: true, …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426)
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426, x4)
+[Log] apiRequest - Integration update: – {url: "/api/integrations/1", method: "PUT", data: Object} (index-D0-eVZX0.js, line 48)
+{url: "/api/integrations/1", method: "PUT", data: Object}Object
+[Log] Frontend: Making PUT request to: /api/integrations/1 (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Request headers: – {Content-Type: "application/json"} (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Request body: – "{\"name\":\"1c_get_invoices_in\",\"displayName\":\"Імпорт вхідних накладних з 1С\",\"type\":\"1c_accounting\",\"isActive\":true,\"config\":{\"baseUrl\":\"https…" (index-D0-eVZX0.js, line 48)
+"{\"name\":\"1c_get_invoices_in\",\"displayName\":\"Імпорт вхідних накладних з 1С\",\"type\":\"1c_accounting\",\"isActive\":true,\"config\":{\"baseUrl\":\"https://baf.regmik.ua/bitrix/hs/erp/invoices/\",\"clientId\":\"Школа І.М.\",\"clientSecret\":\"1\",\"webhookUrl\":\"\",\"syncInterval\":60,\"syncMethods\":[]}}"
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-D0-eVZX0.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426)
+[Log] Frontend: Response status: 200 for PUT /api/integrations/1 (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Response headers: – {content-encoding: "gzip", content-type: "application/json; charset=utf-8", date: "Thu, 10 Jul 2025 08:02:24 GMT", …} (index-D0-eVZX0.js, line 48)
+{content-encoding: "gzip", content-type: "application/json; charset=utf-8", date: "Thu, 10 Jul 2025 08:02:24 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426)
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426)
+[Log] Frontend: Making POST request to: /api/integrations/1/test (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Request headers: – {} (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Request body: – undefined (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-D0-eVZX0.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426)
+[Log] Frontend: Response status: 200 for POST /api/integrations/1/test (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Response headers: – {content-length: "82", content-type: "application/json; charset=utf-8", date: "Thu, 10 Jul 2025 08:02:27 GMT", …} (index-D0-eVZX0.js, line 48)
+{content-length: "82", content-type: "application/json; charset=utf-8", date: "Thu, 10 Jul 2025 08:02:27 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426)
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426, x3)
+[Log] Frontend: Making POST request to: /api/integrations/1/test (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Request headers: – {} (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Request body: – undefined (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-D0-eVZX0.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426)
+[Log] Frontend: Response status: 200 for POST /api/integrations/1/test (index-D0-eVZX0.js, line 48)
+[Log] Frontend: Response headers: – {content-length: "82", content-type: "application/json; charset=utf-8", date: "Thu, 10 Jul 2025 08:09:02 GMT", …} (index-D0-eVZX0.js, line 48)
+{content-length: "82", content-type: "application/json; charset=utf-8", date: "Thu, 10 Jul 2025 08:09:02 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426)
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426, x5)
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426)
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-D0-eVZX0.js, line 1426, x4)
