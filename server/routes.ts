@@ -10879,7 +10879,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Тестування з'єднання інтеграції
-  app.post("/api/integrations/:id/test", isSimpleAuthenticated, async (req, res) => {
+  app.post("/api/integrations/:id/test", async (req, res) => {
     console.log(`🔥 TEST ENDPOINT TRIGGERED FOR ID: ${req.params.id}`);
     console.log(`🔥 Request method: ${req.method}, URL: ${req.url}`);
     console.log(`🔥 Headers:`, req.headers);
