@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Settings, RefreshCw, TestTube, Trash2, Check, X, Clock, AlertCircle, Workflow } from "lucide-react";
 import { Import1CInvoices } from "@/components/Import1CInvoices";
+import { SimpleLogin } from "@/components/SimpleLogin";
 
 interface IntegrationConfig {
   id: number;
@@ -65,8 +66,9 @@ export default function Integrations() {
     syncMethods: [] as string[],
   });
 
-  // Локальний стейт для інтеграцій
+  // Локальний стейт для інтеграцій та авторизації
   const [localIntegrations, setLocalIntegrations] = useState<IntegrationConfig[]>([]);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
 
   // Запити даних без кешування
   const { data: integrations = [], isLoading: integrationsLoading, refetch: refetchIntegrations } = useQuery({
@@ -310,15 +312,24 @@ export default function Integrations() {
           <p className="text-muted-foreground">Управління інтеграціями із зовнішніми системами</p>
                 </div>
               </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button 
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
-              onClick={() => resetForm()}>
-              <Plus className="mr-2 h-4 w-4" />
-              Додати інтеграцію
-            </Button>
-          </DialogTrigger>
+              
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowLoginDialog(true)}
+                >
+                  Увійти
+                </Button>
+                
+                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                      onClick={() => resetForm()}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Додати інтеграцію
+                    </Button>
+                  </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>
@@ -435,10 +446,11 @@ export default function Integrations() {
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
-          </div>  
+                </Dialog>
+              </div>
           </div>
-          </header>
+        </div>
+      </header>
 
       <Tabs defaultValue="configs" className="space-y-4">
         <TabsList>
@@ -628,6 +640,19 @@ export default function Integrations() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Login Dialog */}
+      <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Потрібна авторизація</DialogTitle>
+            <DialogDescription>
+              Для використання 1С інтеграції потрібно увійти в систему
+            </DialogDescription>
+          </DialogHeader>
+          <SimpleLogin onSuccess={() => setShowLoginDialog(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

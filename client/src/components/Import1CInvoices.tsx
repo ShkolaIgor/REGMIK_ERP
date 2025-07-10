@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Upload, Eye, Check, X, FileText, Building2, Calendar, DollarSign } from "lucide-react";
+import { Loader2, Upload, Eye, Check, X, FileText, Building2, Calendar, DollarSign, AlertCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -47,9 +47,13 @@ export function Import1CInvoices() {
   const { toast } = useToast();
 
   // Завантаження доступних накладних з 1C
-  const { data: invoices1C = [], isLoading: loadingInvoices, refetch: refetchInvoices } = useQuery({
+  const { data: invoices1C = [], isLoading: loadingInvoices, error: invoicesError, refetch: refetchInvoices } = useQuery({
     queryKey: ["/api/1c/invoices"],
     enabled: isOpen,
+    retry: false,
+    onError: (error) => {
+      console.error("1C Invoices API Error:", error);
+    }
   });
 
   // Мутація для імпорту вибраних накладних
@@ -262,6 +266,18 @@ export function Import1CInvoices() {
               <div className="flex items-center justify-center h-32">
                 <Loader2 className="w-6 h-6 animate-spin" />
                 <span className="ml-2">Завантаження накладних з 1C...</span>
+              </div>
+            ) : invoicesError ? (
+              <div className="text-center py-8 text-red-600">
+                <AlertCircle className="w-8 h-8 mx-auto mb-2" />
+                <p className="mb-2">Помилка завантаження: {invoicesError instanceof Error ? invoicesError.message : 'Невідома помилка'}</p>
+                {invoicesError instanceof Error && invoicesError.message.includes('401') && (
+                  <p className="text-sm text-gray-600 mb-4">Потрібна авторизація в системі</p>
+                )}
+                <Button variant="outline" size="sm" onClick={() => refetchInvoices()}>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Спробувати знову
+                </Button>
               </div>
             ) : invoices1C.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
