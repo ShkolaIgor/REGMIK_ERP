@@ -7110,7 +7110,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Логування всіх запитів до integrations API
   app.use('/api/integrations', (req, res, next) => {
-    console.log(`ALL INTEGRATIONS REQUEST: ${req.method} ${req.url} from ${req.headers['user-agent']?.substring(0, 50)}...`);
+    console.log(`🔴 MIDDLEWARE: ${req.method} ${req.url} from ${req.headers['user-agent']?.substring(0, 50)}...`);
+    if (req.method === 'POST' && req.url.includes('/test')) {
+      console.log(`🔴 MIDDLEWARE CAUGHT TEST REQUEST: ${req.method} ${req.url}`);
+      console.log(`🔴 MIDDLEWARE: Params: ${JSON.stringify(req.params)}`);
+    }
     if (req.method === 'PUT') {
       console.log(`PUT MIDDLEWARE: Full URL: ${req.url}, Params: ${JSON.stringify(req.params)}`);
       console.log("PUT MIDDLEWARE: Cookies:", req.headers.cookie?.substring(0, 100) + "...");
