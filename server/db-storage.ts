@@ -9674,6 +9674,117 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Product Name Mapping methods
+  async findProductByAlternativeName(externalProductName: string, systemName: string): Promise<{ erpProductId: number; erpProductName: string } | null> {
+    try {
+      // Шукаємо зіставлення в таблиці productNameMappings
+      const mapping = await this.db.select({
+        erpProductId: productNameMappings.erpProductId,
+        erpProductName: productNameMappings.erpProductName,
+      })
+      .from(productNameMappings)
+      .where(and(
+        eq(productNameMappings.externalSystemName, systemName),
+        eq(productNameMappings.externalProductName, externalProductName),
+        eq(productNameMappings.isActive, true)
+      ))
+      .limit(1);
+
+      if (mapping.length > 0 && mapping[0].erpProductId) {
+        // Оновлюємо статистику використання
+        await this.db.update(productNameMappings)
+          .set({
+            lastUsed: new Date(),
+            usageCount: sql`${productNameMappings.usageCount} + 1`
+          })
+          .where(and(
+            eq(productNameMappings.externalSystemName, systemName),
+            eq(productNameMappings.externalProductName, externalProductName)
+          ));
+
+        return {
+          erpProductId: mapping[0].erpProductId,
+          erpProductName: mapping[0].erpProductName || externalProductName
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Помилка пошуку товару за альтернативною назвою:', error);
+      return null;
+    }
+  }
+
+  async createProductNameMapping(mapping: InsertProductNameMapping): Promise<ProductNameMapping> {
+    try {
+      const result = await this.db.insert(productNameMappings).values(mapping).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Помилка створення зіставлення назв товарів:', error);
+      throw error;
+    }
+  }
+
+  async getProductNameMappings(systemName?: string): Promise<ProductNameMapping[]> {
+    try {
+      const query = this.db.select().from(productNameMappings);
+      
+      if (systemName) {
+        return await query.where(eq(productNameMappings.externalSystemName, systemName));
+      }
+      
+      return await query;
+    } catch (error) {
+      console.error('Помилка отримання зіставлень назв товарів:', error);
+      throw error;
+    }
+  }
+
+  async suggestProductMapping(externalProductName: string, systemName: string): Promise<{ productId: number; productName: string; similarity: number }[]> {
+    try {
+      // Отримуємо всі товари з ERP
+      const allProducts = await this.db.select({
+        id: products.id,
+        name: products.name,
+        sku: products.sku
+      }).from(products);
+
+      // Простий алгоритм пошуку схожості на основі слів
+      const suggestions = allProducts.map(product => {
+        const similarity = this.calculateNameSimilarity(externalProductName, product.name);
+        return {
+          productId: product.id,
+          productName: product.name,
+          similarity
+        };
+      }).filter(item => item.similarity > 0.3) // Фільтруємо тільки схожі на 30%+
+        .sort((a, b) => b.similarity - a.similarity) // Сортуємо за схожістю
+        .slice(0, 5); // Топ 5 пропозицій
+
+      return suggestions;
+    } catch (error) {
+      console.error('Помилка пошуку схожих товарів:', error);
+      return [];
+    }
+  }
+
+  private calculateNameSimilarity(name1: string, name2: string): number {
+    // Простий алгоритм схожості на основі спільних слів
+    const words1 = name1.toLowerCase().split(/\s+/);
+    const words2 = name2.toLowerCase().split(/\s+/);
+    
+    let matches = 0;
+    const totalWords = Math.max(words1.length, words2.length);
+    
+    for (const word1 of words1) {
+      if (words2.some(word2 => word2.includes(word1) || word1.includes(word2))) {
+        matches++;
+      }
+    }
+    
+    return matches / totalWords;
+  }
+
   // 1C Integration methods
   async get1CInvoices() {
     try {
@@ -9815,29 +9926,46 @@ export class DatabaseStorage implements IStorage {
       // Перевіряємо які накладні вже існують в ERP
       const existingReceipts = await this.getSupplierReceipts();
       
-      return invoices.map((invoice: any) => ({
-        id: invoice.id || invoice.ID || `1C-${Date.now()}`,
-        number: invoice.number || invoice.НомерДокумента || "Невідомий",
-        date: invoice.date || invoice.Дата || new Date().toISOString().split('T')[0],
-        supplier: invoice.supplier || invoice.Постачальник || "Невідомий постачальник",
-        supplierId: invoice.supplierId || invoice.IDПостачальника || 1,
-        amount: parseFloat(invoice.amount || invoice.Сума || 0),
-        currency: invoice.currency || invoice.Валюта || "UAH",
-        status: invoice.status || invoice.Статус || "new",
-        items: Array.isArray(invoice.items || invoice.Позиції) 
-          ? (invoice.items || invoice.Позиції).map((item: any) => ({
-              name: item.name || item.Назва || "Невідомий товар",
-              quantity: parseFloat(item.quantity || item.Кількість || 0),
-              price: parseFloat(item.price || item.Ціна || 0),
-              total: parseFloat(item.total || item.Сума || 0),
-              unit: item.unit || item.ОдиницяВиміру || "шт"
+      // Обробляємо кожну накладну асинхронно
+      const processedInvoices = await Promise.all(invoices.map(async (invoice: any) => {
+        const items = Array.isArray(invoice.items || invoice.Позиції) 
+          ? await Promise.all((invoice.items || invoice.Позиції).map(async (item: any) => {
+              const externalProductName = item.name || item.Назва || "Невідомий товар";
+              
+              // Пошук товару за альтернативною назвою з 1C
+              const mappedProduct = await this.findProductByAlternativeName(externalProductName, '1c');
+              
+              return {
+                name: mappedProduct ? mappedProduct.erpProductName : externalProductName,
+                erpProductId: mappedProduct ? mappedProduct.erpProductId : null,
+                originalName: externalProductName, // зберігаємо оригінальну назву з 1C
+                isMapped: !!mappedProduct, // показуємо чи товар зіставлений
+                quantity: parseFloat(item.quantity || item.Кількість || 0),
+                price: parseFloat(item.price || item.Ціна || 0),
+                total: parseFloat(item.total || item.Сума || 0),
+                unit: item.unit || item.ОдиницяВиміру || "шт"
+              };
             }))
-          : [],
-        exists: existingReceipts.some(receipt => 
-          receipt.supplier_document_number === (invoice.number || invoice.НомерДокумента) ||
-          receipt.comment?.includes(invoice.id || invoice.ID)
-        )
+          : [];
+
+        return {
+          id: invoice.id || invoice.ID || `1C-${Date.now()}`,
+          number: invoice.number || invoice.НомерДокумента || "Невідомий",
+          date: invoice.date || invoice.Дата || new Date().toISOString().split('T')[0],
+          supplier: invoice.supplier || invoice.Постачальник || "Невідомий постачальник",
+          supplierId: invoice.supplierId || invoice.IDПостачальника || 1,
+          amount: parseFloat(invoice.amount || invoice.Сума || 0),
+          currency: invoice.currency || invoice.Валюта || "UAH",
+          status: invoice.status || invoice.Статус || "new",
+          items,
+          exists: existingReceipts.some(receipt => 
+            receipt.supplier_document_number === (invoice.number || invoice.НомерДокумента) ||
+            receipt.comment?.includes(invoice.id || invoice.ID)
+          )
+        };
       }));
+
+      return processedInvoices;
 
     } catch (error) {
       console.error('Error fetching 1C invoices:', error);
@@ -9909,24 +10037,65 @@ export class DatabaseStorage implements IStorage {
       // Create receipt items
       let totalCreated = 0;
       for (const item of invoice.items) {
-        // Find or create component by name
-        const components = await this.getComponents();
-        let component = components.find(c => 
-          c.name.toLowerCase().includes(item.name.toLowerCase()) ||
-          item.name.toLowerCase().includes(c.name.toLowerCase())
-        );
+        let component;
+        
+        // Спочатку перевіряємо чи є зіставлення у товару
+        if (item.erpProductId) {
+          // Товар уже зіставлений, шукаємо відповідний компонент
+          const components = await this.getComponents();
+          component = components.find(c => c.id === item.erpProductId);
+        }
         
         if (!component) {
-          // Create component if not exists
-          const componentCategories = await this.getComponentCategories();
-          const defaultCategory = componentCategories.find(cat => cat.name === "Загальні") || componentCategories[0];
+          // Пошук компонента за назвою (оригінальною або ERP назвою)
+          const components = await this.getComponents();
+          const searchName = item.name; // використовуємо ERP назву якщо товар зіставлений
           
-          component = await this.createComponent({
-            name: item.name,
-            sku: `1C-${invoiceId}-${totalCreated + 1}`,
-            categoryId: defaultCategory?.id || 1,
-            isActive: true
-          });
+          component = components.find(c => 
+            c.name.toLowerCase().includes(searchName.toLowerCase()) ||
+            searchName.toLowerCase().includes(c.name.toLowerCase())
+          );
+          
+          // Якщо не знайшли компонент, створюємо новий
+          if (!component) {
+            const componentCategories = await this.getComponentCategories();
+            const defaultCategory = componentCategories.find(cat => cat.name === "Загальні") || componentCategories[0];
+            
+            component = await this.createComponent({
+              name: item.name, // використовуємо ERP назву
+              sku: `1C-${invoiceId}-${totalCreated + 1}`,
+              categoryId: defaultCategory?.id || 1,
+              isActive: true
+            });
+            
+            // Якщо у нас є оригінальна назва з 1C і вона відрізняється, створюємо зіставлення
+            if (item.originalName && item.originalName !== item.name && !item.isMapped) {
+              await this.createProductNameMapping({
+                externalSystemName: '1c',
+                externalProductName: item.originalName,
+                erpProductId: component.id,
+                erpProductName: item.name,
+                mappingType: 'automatic',
+                confidence: 0.8,
+                isActive: true,
+                createdBy: 'system'
+              });
+              console.log(`Створено автоматичне зіставлення: "${item.originalName}" -> "${item.name}"`);
+            }
+          } else if (item.originalName && item.originalName !== component.name && !item.isMapped) {
+            // Компонент знайдений, але є оригінальна назва з 1C - створюємо зіставлення
+            await this.createProductNameMapping({
+              externalSystemName: '1c',
+              externalProductName: item.originalName,
+              erpProductId: component.id,
+              erpProductName: component.name,
+              mappingType: 'automatic',
+              confidence: 0.9,
+              isActive: true,
+              createdBy: 'system'
+            });
+            console.log(`Створено автоматичне зіставлення: "${item.originalName}" -> "${component.name}"`);
+          }
         }
 
         // Create receipt item

@@ -2253,6 +2253,36 @@ export type InsertTask = z.infer<typeof insertTaskSchema>;
 // ІНТЕГРАЦІЇ З ЗОВНІШНІМИ СИСТЕМАМИ
 // ================================
 
+// Таблиця зіставлення назв товарів між системами (1C <-> ERP)
+export const productNameMappings = pgTable("product_name_mappings", {
+  id: serial("id").primaryKey(),
+  externalSystemName: varchar("external_system_name", { length: 50 }).notNull(), // "1c", "bitrix24", тощо
+  externalProductName: varchar("external_product_name", { length: 500 }).notNull(), // назва товару в зовнішній системі
+  erpProductId: integer("erp_product_id").references(() => products.id), // зв'язок з товаром в ERP
+  erpProductName: varchar("erp_product_name", { length: 500 }), // назва товару в ERP (для швидкого пошуку)
+  externalProductCode: varchar("external_product_code", { length: 100 }), // артикул в зовнішній системі
+  mappingType: varchar("mapping_type", { length: 20 }).notNull().default("manual"), // manual, auto, suggestion
+  confidence: decimal("confidence", { precision: 3, scale: 2 }).default("1.0"), // впевненість в зіставленні (0-1)
+  isActive: boolean("is_active").default(true),
+  notes: text("notes"),
+  createdBy: varchar("created_by", { length: 100 }),
+  lastUsed: timestamp("last_used"),
+  usageCount: integer("usage_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertProductNameMappingSchema = createInsertSchema(productNameMappings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  usageCount: true,
+  lastUsed: true
+});
+
+export type ProductNameMapping = typeof productNameMappings.$inferSelect;
+export type InsertProductNameMapping = z.infer<typeof insertProductNameMappingSchema>;
+
 // Таблиця конфігурацій інтеграцій
 export const integrationConfigs = pgTable("integration_configs", {
   id: serial("id").primaryKey(),

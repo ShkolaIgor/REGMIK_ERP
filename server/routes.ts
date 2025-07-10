@@ -6886,6 +6886,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===============================
+  // PRODUCT NAME MAPPING API
+  // ===============================
+
+  // Product Name Mapping routes
+  app.get("/api/product-mappings", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { systemName } = req.query;
+      const mappings = await storage.getProductNameMappings(systemName as string);
+      res.json(mappings);
+    } catch (error) {
+      console.error("Error fetching product name mappings:", error);
+      res.status(500).json({ error: "Failed to fetch product name mappings" });
+    }
+  });
+
+  app.post("/api/product-mappings", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertProductNameMappingSchema.parse(req.body);
+      const mapping = await storage.createProductNameMapping(validatedData);
+      res.status(201).json(mapping);
+    } catch (error) {
+      console.error("Error creating product name mapping:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid mapping data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create product name mapping" });
+      }
+    }
+  });
+
+  app.get("/api/product-mappings/suggest/:systemName", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { systemName } = req.params;
+      const { productName } = req.query;
+      
+      if (!productName) {
+        return res.status(400).json({ error: "Product name is required" });
+      }
+      
+      const suggestions = await storage.suggestProductMapping(productName as string, systemName);
+      res.json(suggestions);
+    } catch (error) {
+      console.error("Error suggesting product mappings:", error);
+      res.status(500).json({ error: "Failed to suggest product mappings" });
+    }
+  });
+
+  app.get("/api/product-mappings/find/:systemName", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { systemName } = req.params;
+      const { productName } = req.query;
+      
+      if (!productName) {
+        return res.status(400).json({ error: "Product name is required" });
+      }
+      
+      const mapping = await storage.findProductByAlternativeName(productName as string, systemName);
+      res.json(mapping);
+    } catch (error) {
+      console.error("Error finding product by alternative name:", error);
+      res.status(500).json({ error: "Failed to find product by alternative name" });
+    }
+  });
+
+  // ===============================
   // ІНТЕГРАЦІЇ БІТРІКС24 ТА 1С API
   // ===============================
 
