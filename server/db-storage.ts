@@ -9697,37 +9697,94 @@ export class DatabaseStorage implements IStorage {
         return await this.getProduction1CDemo();
       }
 
-      // Формуємо URL для запиту накладних
-      let invoicesUrl = config.baseUrl.trim();
-      
-      // Якщо URL не закінчується на /invoices, додаємо це
-      if (!invoicesUrl.endsWith('/invoices')) {
-        invoicesUrl = invoicesUrl.endsWith('/') ? invoicesUrl + 'invoices' : invoicesUrl + '/invoices';
+      // Використовуємо точний URL з налаштувань без модифікації
+      // Для BAF системи очікуємо повний шлях типу: http://baf.regmik.ua/bitrix/hs/erp/invoices
+      const invoicesUrl = config.baseUrl.trim();
+
+      console.log(`Запит накладних з BAF: ${invoicesUrl}`);
+      console.log(`Авторизація: ${config.clientId}:****`);
+
+      // Спочатку пробуємо GET запит (можливо BAF очікує GET)
+      let response;
+      try {
+        console.log('Спроба GET запиту до BAF системи...');
+        response = await fetch(invoicesUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            // Додаємо базову авторизацію якщо є clientId та clientSecret
+            ...(config.clientId && config.clientSecret ? {
+              'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
+            } : {})
+          },
+          signal: AbortSignal.timeout(10000) // 10 секунд тайм-аут
+        });
+
+        if (response.ok) {
+          console.log('GET запит успішний');
+        } else {
+          console.log(`GET запит неуспішний: ${response.status}, пробуємо POST...`);
+          throw new Error('GET failed, trying POST');
+        }
+      } catch (getError) {
+        console.log('GET запит не вдався, пробуємо POST запит...');
+        
+        // Якщо GET не вдався, пробуємо POST з JSON body
+        response = await fetch(invoicesUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            // Додаємо базову авторизацію якщо є clientId та clientSecret
+            ...(config.clientId && config.clientSecret ? {
+              'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
+            } : {})
+          },
+          body: JSON.stringify({ 
+            action: 'getInvoices',
+            limit: 100
+          }),
+          signal: AbortSignal.timeout(10000) // 10 секунд тайм-аут
+        });
+        
+        if (!response.ok) {
+          console.log(`POST запит також неуспішний: ${response.status}, пробуємо POST з URL parameters...`);
+          
+          // Третя спроба: POST з URL parameters
+          const urlWithParams = `${invoicesUrl}?action=getInvoices&limit=100`;
+          response = await fetch(urlWithParams, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Accept': 'application/json',
+              ...(config.clientId && config.clientSecret ? {
+                'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
+              } : {})
+            },
+            signal: AbortSignal.timeout(10000)
+          });
+        }
       }
 
-      console.log(`Запит накладних з 1C: ${invoicesUrl}`);
-
-      // Виконуємо запит до 1C системи з POST методом
-      const response = await fetch(invoicesUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          // Додаємо базову авторизацію якщо є clientId та clientSecret
-          ...(config.clientId && config.clientSecret ? {
-            'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
-          } : {})
-        },
-        body: JSON.stringify({ 
-          action: 'getInvoices',
-          limit: 100
-        }),
-        signal: AbortSignal.timeout(10000) // 10 секунд тайм-аут
-      });
-
+      console.log(`Відповідь сервера: HTTP ${response.status} ${response.statusText}`);
+      
       if (!response.ok) {
-        // Для production систем не використовуємо демонстраційні дані
-        throw new Error(`Помилка з'єднання з 1C: HTTP ${response.status} ${response.statusText}`);
+        // Отримуємо детальну відповідь сервера для діагностики
+        let errorDetails = '';
+        try {
+          const errorText = await response.text();
+          errorDetails = errorText || response.statusText;
+          console.log(`Детальна помилка від BAF сервера: ${errorDetails}`);
+        } catch (e) {
+          errorDetails = response.statusText;
+        }
+        
+        // Для BAF системи з помилкою 500 повертаємо детальну інформацію
+        if (response.status === 500 && errorDetails.includes('некоректне значення')) {
+          throw new Error(`BAF сервер повернув помилку: "${errorDetails}". Це означає що 1C обробник не налаштований правильно. Перевірте:\n1. Чи створено HTTP-сервіс в 1C з правильним endpoint\n2. Чи є права доступу у користувача "${config.clientId}"\n3. Чи правильно обробляються JSON параметри в 1C коді`);
+        }
+        
+        throw new Error(`Помилка з'єднання з BAF: HTTP ${response.status} - ${errorDetails}`);
       }
 
       const invoicesData = await response.json();
