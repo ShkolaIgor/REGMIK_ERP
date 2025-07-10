@@ -66,27 +66,27 @@ export function registerSimpleIntegrationRoutes(app: Express) {
     }
   });
 
-  // Тестування з'єднання
-  app.post("/api/integrations/:id/test", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const integration = integrations.get(id);
-      
-      if (!integration) {
-        return res.status(404).json({ error: "Integration not found" });
-      }
+  // ВІДКЛЮЧЕНО: Конфліктує з основним test endpoint у routes.ts
+  // app.post("/api/integrations/:id/test", async (req, res) => {
+  //   try {
+  //     const id = parseInt(req.params.id);
+  //     const integration = integrations.get(id);
+  //     
+  //     if (!integration) {
+  //       return res.status(404).json({ error: "Integration not found" });
+  //     }
 
-      // Заглушка для тестування
-      res.json({ 
-        success: true, 
-        message: "Connection test successful",
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error("Error testing integration:", error);
-      res.status(500).json({ error: "Failed to test integration" });
-    }
-  });
+  //     // Заглушка для тестування
+  //     res.json({ 
+  //       success: true, 
+  //       message: "Connection test successful",
+  //       timestamp: new Date().toISOString()
+  //     });
+  //   } catch (error) {
+  //     console.error("Error testing integration:", error);
+  //     res.status(500).json({ error: "Failed to test integration" });
+  //   }
+  // });
 
   // Запуск синхронізації
   app.post("/api/integrations/:id/sync", async (req, res) => {
