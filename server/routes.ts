@@ -11024,8 +11024,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Тестування з'єднання з інтеграцією ${integration.displayName}: ${testUrl}`);
 
         try {
+          // Тестуємо з POST методом, оскільки 1C HTTP-сервіс не підтримує GET
           const response = await fetch(testUrl, {
-            method: 'GET',
+            method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
@@ -11033,6 +11034,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
               } : {})
             },
+            body: JSON.stringify({ test: true }), // Тестовий запит
             signal: AbortSignal.timeout(5000) // 5 секунд тайм-аут
           });
 

@@ -9707,9 +9707,9 @@ export class DatabaseStorage implements IStorage {
 
       console.log(`Запит накладних з 1C: ${invoicesUrl}`);
 
-      // Виконуємо запит до 1C системи
+      // Виконуємо запит до 1C системи з POST методом
       const response = await fetch(invoicesUrl, {
-        method: 'GET',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -9718,6 +9718,10 @@ export class DatabaseStorage implements IStorage {
             'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
           } : {})
         },
+        body: JSON.stringify({ 
+          action: 'getInvoices',
+          limit: 100
+        }),
         signal: AbortSignal.timeout(10000) // 10 секунд тайм-аут
       });
 
