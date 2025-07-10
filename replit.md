@@ -132,6 +132,8 @@ User has Russian-language 1C system and needs integration setup guidance.
 - ✅ **Створено повну документацію** - BAF_1C_SETUP_GUIDE.md з кодом для налаштування HTTP-сервісу в 1C
 - ✅ **Покращено error handling** - детальні повідомлення про проблеми з авторизацією та endpoints
 - ✅ **Система готова до production** - всі backend endpoints працюють, потрібно тільки налаштувати 1C HTTP-сервіс
+- ✅ **Підтверджено з'єднання з BAF** - endpoint /hs/erp/invoices існує та отримує запити від ERP
+- ✅ **Створено діагностичний код** - 1C_DEBUG_PARAMETERS.md містить код для налагодження обробника в 1C
 
 ### July 9, 2025
 - ✅ **КРИТИЧНУ ПРОБЛЕМУ ІНТЕГРАЦІЙ ВИПРАВЛЕНО** - усунуто конфлікт між memory та database маршрутами

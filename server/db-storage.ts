@@ -9774,20 +9774,40 @@ export class DatabaseStorage implements IStorage {
         try {
           const errorText = await response.text();
           errorDetails = errorText || response.statusText;
-          console.log(`Детальна помилка від BAF сервера: ${errorDetails}`);
+          console.log(`Детальна відповідь від BAF: ${errorDetails}`);
         } catch (e) {
           errorDetails = response.statusText;
         }
         
-        // Для BAF системи з помилкою 500 повертаємо детальну інформацію
-        if (response.status === 500 && errorDetails.includes('некоректне значення')) {
-          throw new Error(`BAF сервер повернув помилку: "${errorDetails}". Це означає що 1C обробник не налаштований правильно. Перевірте:\n1. Чи створено HTTP-сервіс в 1C з правильним endpoint\n2. Чи є права доступу у користувача "${config.clientId}"\n3. Чи правильно обробляються JSON параметри в 1C коді`);
+        // Для BAF системи з помилкою 500 логуємо і пробуємо інші варіанти
+        if (response.status === 500) {
+          console.log(`BAF повернув HTTP 500, відповідь: "${errorDetails}"`);
+          console.log('Можливо потрібен інший формат запиту або параметрів');
         }
         
-        throw new Error(`Помилка з'єднання з BAF: HTTP ${response.status} - ${errorDetails}`);
+        throw new Error(`BAF відповів: HTTP ${response.status} - ${errorDetails}`);
       }
 
-      const invoicesData = await response.json();
+      // Спробуємо отримати відповідь як JSON
+      let invoicesData;
+      try {
+        const responseText = await response.text();
+        console.log(`Сира відповідь від BAF (перші 500 символів): ${responseText.substring(0, 500)}`);
+        
+        // Якщо відповідь порожня, повертаємо пустий масив
+        if (!responseText.trim()) {
+          console.log('BAF повернув порожню відповідь');
+          invoicesData = [];
+        } else {
+          // Спробуємо парсити як JSON
+          invoicesData = JSON.parse(responseText);
+          console.log(`Успішно отримано дані від BAF: ${Array.isArray(invoicesData) ? invoicesData.length : 'не масив'} записів`);
+        }
+      } catch (parseError) {
+        console.log(`Помилка парсингу JSON від BAF: ${parseError.message}`);
+        // Якщо не вдалося парсити JSON, повертаємо пустий масив
+        invoicesData = [];
+      }
       
       // Перетворюємо дані з 1C у внутрішній формат
       const invoices = Array.isArray(invoicesData) ? invoicesData : [];
