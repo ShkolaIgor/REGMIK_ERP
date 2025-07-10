@@ -10999,7 +10999,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      console.log("Testing integration:", integration.name, integration.type);
+      console.log(`Testing integration ID ${id}:`, integration.name, integration.displayName, integration.type);
+      console.log("Integration config:", JSON.stringify(integration.config, null, 2));
       
       // Перевіряємо тип інтеграції та тестуємо з'єднання
       if (integration.type === '1c_accounting') {
