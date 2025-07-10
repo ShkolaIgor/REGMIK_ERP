@@ -9698,9 +9698,12 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Формуємо URL для запиту накладних
-      const invoicesUrl = config.baseUrl.endsWith('/') 
-        ? config.baseUrl + 'invoices' 
-        : config.baseUrl + '/invoices';
+      let invoicesUrl = config.baseUrl.trim();
+      
+      // Якщо URL не закінчується на /invoices, додаємо це
+      if (!invoicesUrl.endsWith('/invoices')) {
+        invoicesUrl = invoicesUrl.endsWith('/') ? invoicesUrl + 'invoices' : invoicesUrl + '/invoices';
+      }
 
       console.log(`Запит накладних з 1C: ${invoicesUrl}`);
 

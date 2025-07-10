@@ -11014,11 +11014,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Формуємо URL для тестування
-        const testUrl = config.baseUrl.endsWith('/') 
-          ? config.baseUrl + 'invoices' 
-          : config.baseUrl + '/invoices';
+        let testUrl = config.baseUrl.trim();
         
-        console.log("Testing 1C connection to:", testUrl);
+        // Якщо URL не закінчується на /invoices, додаємо це
+        if (!testUrl.endsWith('/invoices')) {
+          testUrl = testUrl.endsWith('/') ? testUrl + 'invoices' : testUrl + '/invoices';
+        }
+        
+        console.log(`Тестування з'єднання з інтеграцією ${integration.displayName}: ${testUrl}`);
 
         try {
           const response = await fetch(testUrl, {
