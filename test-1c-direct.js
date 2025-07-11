@@ -77,6 +77,38 @@ async function testDirect1CConnection() {
       try {
         const jsonData = JSON.parse(responseText);
         console.log('✅ JSON валідний, кількість записів:', Array.isArray(jsonData) ? jsonData.length : 'не масив');
+        
+        // Тест вихідних рахунків
+        console.log('\n📤 Тестування вихідних рахунків...');
+        const outgoingResponse = await fetch(outgoingUrl, {
+          method: 'POST',
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            action: 'getOutgoingInvoices',
+            limit: 20
+          }),
+          signal: AbortSignal.timeout(10000)
+        });
+        
+        console.log(`📤 Вихідні рахунки: ${outgoingResponse.status} ${outgoingResponse.statusText}`);
+        
+        if (outgoingResponse.ok) {
+          const outgoingText = await outgoingResponse.text();
+          console.log(`📤 Вихідні дані (перші 200 символів): ${outgoingText.substring(0, 200)}`);
+          
+          try {
+            const outgoingData = JSON.parse(outgoingText);
+            console.log('✅ Вихідні рахунки JSON валідний, кількість:', Array.isArray(outgoingData) ? outgoingData.length : 'не масив');
+          } catch (e) {
+            console.log('⚠️ Вихідні рахунки - відповідь не є валідним JSON');
+          }
+        } else {
+          console.log(`❌ Помилка вихідних рахунків: ${outgoingResponse.status}`);
+        }
+        
       } catch (parseError) {
         console.log('⚠️ Відповідь не є валідним JSON');
       }

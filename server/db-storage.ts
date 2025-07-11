@@ -10313,20 +10313,20 @@ export class DatabaseStorage implements IStorage {
         throw new Error("1C URL не налаштований. Будь ласка, вкажіть URL 1C сервера в налаштуваннях інтеграції.");
       }
 
-      // Формуємо URL додаючи /outgoing-invoices до базового URL
+      // Використовуємо той самий endpoint /invoices з різним action
       let outgoingUrl = config.baseUrl.trim();
       if (!outgoingUrl.endsWith('/')) outgoingUrl += '/';
-      outgoingUrl += 'outgoing-invoices';
+      outgoingUrl += 'invoices';
       
       console.log(`Запит реальних вихідних рахунків з 1C: ${outgoingUrl}`);
-      console.log(`Параметри запиту: action=getOutgoingInvoices, limit=100`);
+      console.log(`Параметри запиту: action=getOutgoingInvoices, limit=100 (використовуємо той самий endpoint що і для вхідних)`);
 
       // Використовуємо ту ж логіку що і в get1CInvoices: GET → POST JSON → POST URL params
       let response;
       
       try {
         // Спочатку пробуємо GET (хоча знаємо що не працює)
-        console.log('Пробуємо GET запит...');
+        console.log('Пробуємо GET запит для вихідних рахунків...');
         response = await fetch(`${outgoingUrl}?action=getOutgoingInvoices&limit=100`, {
           method: 'GET',
           headers: {
@@ -10346,7 +10346,7 @@ export class DatabaseStorage implements IStorage {
           throw new Error('GET failed, trying POST');
         }
       } catch (getError) {
-        console.log('GET запит не вдався, пробуємо POST з JSON body...');
+        console.log('GET запит не вдався, пробуємо POST з JSON body для вихідних рахунків...');
         
         // Пробуємо POST з JSON body
         response = await fetch(outgoingUrl, {
@@ -10367,7 +10367,7 @@ export class DatabaseStorage implements IStorage {
         });
         
         if (!response.ok) {
-          console.log(`POST JSON також неуспішний: ${response.status}, пробуємо POST з URL параметрами...`);
+          console.log(`POST JSON також неуспішний: ${response.status}, пробуємо POST з URL параметрами для вихідних рахунків...`);
           
           // Третя спроба: POST з URL parameters
           const urlWithParams = `${outgoingUrl}?action=getOutgoingInvoices&limit=100`;
