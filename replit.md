@@ -128,7 +128,7 @@ User has Russian-language 1C system and needs integration setup guidance.
 - ✅ **ВІДКАТ УНИФІКАЦІЇ 1С ENDPOINTS** - повернуто до оригінальної структури після повідомлення користувача
 - ✅ **Роздільні endpoints відновлено**: `/invoices` для вхідних накладних, `/outgoing-invoices` для вихідних рахунків
 - ✅ **Виправлено get1COutgoingInvoices()** - повернуто з `/invoices` на `/outgoing-invoices` endpoint
-- ✅ **Видалено action параметр для вихідних рахунків** - спрощено до `{"limit": 100}`
+- ✅ **ОСТАТОЧНО ВИПРАВЛЕНО 1С ВИХІДНІ РАХУНКИ** - додано відсутній параметр `action=getOutgoingInvoices`
 - ✅ **Створено документацію відкату** - `1C_URL_STRUCTURE_FIX.md` з детальним описом змін
 - ✅ **Протестовано URL структуру** - підтверджено правильність роздільних endpoints
 - ❌ **Блокер: HTTP 401 Unauthorized** - проблема авторизації BAF сервера заважає тестуванню інтеграції

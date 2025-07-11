@@ -1,57 +1,98 @@
 #!/usr/bin/env node
 
-// Простий діагностичний скрипт для перевірки 1С інтеграції
-import pg from 'pg';
-
-const { Pool } = pg;
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+/**
+ * Діагностика проблеми з 1С вихідними рахунками
+ */
 
 async function test1CIntegration() {
-  try {
-    console.log('🔍 Діагностика 1С інтеграції');
+    console.log('=== ДІАГНОСТИКА 1С ВИХІДНИХ РАХУНКІВ ===\n');
     
-    // Перевірка підключення до БД
-    console.log('📊 Перевірка підключення до БД...');
-    const dbResult = await pool.query('SELECT NOW() as current_time');
-    console.log('✅ БД підключено:', dbResult.rows[0]);
+    // Тестуємо формування URL
+    const baseUrl = 'http://baf.regmik.ua/bitrix/hs/erp';
     
-    // Перевірка інтеграційних конфігурацій
-    console.log('🔧 Перевірка 1С конфігурацій...');
-    const integrations = await pool.query(`
-      SELECT id, name, type, is_active, config 
-      FROM integration_configs 
-      WHERE type = '1c_accounting' AND is_active = true
-    `);
+    console.log('1. Формування URL для вихідних рахунків:');
+    let outgoingUrl = baseUrl.trim();
+    if (!outgoingUrl.endsWith('/')) outgoingUrl += '/';
+    outgoingUrl += 'outgoing-invoices';
     
-    console.log(`📋 Знайдено ${integrations.rows.length} активних 1С інтеграцій:`);
-    for (const integration of integrations.rows) {
-      console.log(`  - ID: ${integration.id}, Назва: ${integration.name}`);
-      console.log(`  - Конфігурація:`, integration.config);
-    }
+    console.log(`   Базовий URL: ${baseUrl}`);
+    console.log(`   Кінцевий URL: ${outgoingUrl}`);
+    console.log(`   Правильно: ${outgoingUrl === 'http://baf.regmik.ua/bitrix/hs/erp/outgoing-invoices' ? '✅' : '❌'}`);
     
-    if (integrations.rows.length === 0) {
-      console.log('❌ ПРОБЛЕМА: Не знайдено активних 1С інтеграцій!');
-      console.log('💡 Рішення: Створіть активну 1С інтеграцію через веб-інтерфейс');
-    }
+    // Тестуємо запит
+    console.log('\n2. Тестування запиту:');
+    const auth = Buffer.from('100:ШкоМ.').toString('base64');
     
-    // Тестування простого HTTP запиту
-    console.log('🌐 Тестування HTTP запиту...');
     try {
-      const response = await fetch('https://httpbin.org/get');
-      const data = await response.json();
-      console.log('✅ HTTP запити працюють');
-    } catch (httpError) {
-      console.log('❌ HTTP запити не працюють:', httpError.message);
+        console.log(`   Відправляємо POST на: ${outgoingUrl}`);
+        console.log(`   Авторизація: Basic ${auth.substring(0, 20)}...`);
+        console.log(`   Body: {"limit": 100}`);
+        
+        const response = await fetch(outgoingUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Basic ${auth}`,
+                'User-Agent': 'REGMIK-ERP/1.0'
+            },
+            body: JSON.stringify({ 
+                limit: 100
+            })
+        });
+        
+        console.log(`   Статус: ${response.status} ${response.statusText}`);
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log(`   ✅ Отримано: ${data.invoices?.length || 0} вихідних рахунків`);
+        } else {
+            const errorText = await response.text();
+            console.log(`   ❌ Помилка: ${errorText.substring(0, 200)}`);
+        }
+        
+    } catch (error) {
+        console.log(`   ❌ Помилка підключення: ${error.message}`);
     }
     
-  } catch (error) {
-    console.error('❌ КРИТИЧНА ПОМИЛКА:', error);
-  } finally {
-    await pool.end();
-    process.exit();
-  }
+    console.log('\n3. Порівняння з вхідними накладними:');
+    const invoicesUrl = baseUrl + '/invoices';
+    
+    try {
+        console.log(`   Відправляємо POST на: ${invoicesUrl}`);
+        console.log(`   Body: {"action": "getInvoices", "limit": 100}`);
+        
+        const response = await fetch(invoicesUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Basic ${auth}`,
+                'User-Agent': 'REGMIK-ERP/1.0'
+            },
+            body: JSON.stringify({ 
+                action: 'getInvoices',
+                limit: 100
+            })
+        });
+        
+        console.log(`   Статус: ${response.status} ${response.statusText}`);
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log(`   ✅ Отримано: ${data.invoices?.length || 0} вхідних накладних`);
+        } else {
+            const errorText = await response.text();
+            console.log(`   ❌ Помилка: ${errorText.substring(0, 200)}`);
+        }
+        
+    } catch (error) {
+        console.log(`   ❌ Помилка підключення: ${error.message}`);
+    }
+    
+    console.log('\n=== ВИСНОВОК ===');
+    console.log('Якщо вихідні рахунки повертають 401/404, а вхідні накладні працюють - проблема в 1С налаштуваннях');
+    console.log('Можливо потрібно створити окремий HTTP-сервіс для вихідних рахунків в 1С');
 }
 
-test1CIntegration();
+test1CIntegration().catch(console.error);
