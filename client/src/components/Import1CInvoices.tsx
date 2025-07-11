@@ -53,7 +53,21 @@ export function Import1CInvoices() {
     retry: false,
     onError: (error) => {
       console.error("1C Invoices API Error:", error);
+      toast({
+        title: "Помилка завантаження",
+        description: "Не вдалося завантажити накладні з 1С. Перевірте підключення.",
+        variant: "destructive",
+      });
     }
+  });
+
+  // Додаємо логування для дебагу
+  console.log("1C Invoices Debug:", {
+    isOpen,
+    loadingInvoices,
+    invoicesError,
+    invoices1C,
+    invoicesCount: invoices1C?.length || 0
   });
 
   // Мутація для імпорту вибраних накладних

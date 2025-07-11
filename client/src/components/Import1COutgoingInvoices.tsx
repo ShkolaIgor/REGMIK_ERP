@@ -74,6 +74,15 @@ export function Import1COutgoingInvoices() {
     }
   });
 
+  // Додаємо логування для дебагу
+  console.log("1C Outgoing Invoices Debug:", {
+    isOpen,
+    loadingInvoices,
+    invoicesError,
+    outgoingInvoices,
+    invoicesCount: outgoingInvoices?.length || 0
+  });
+
   const handleSelectAll = () => {
     if (selectedInvoices.size === outgoingInvoices.length) {
       setSelectedInvoices(new Set());
