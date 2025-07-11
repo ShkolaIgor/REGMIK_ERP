@@ -82,7 +82,7 @@
                 СтрокаJSON = СтрокаJSON + """amount"":" + Формат(Счет.amount, "ЧГ=") + ",";
                 СтрокаJSON = СтрокаJSON + """currency"":""" + Счет.currency + """,";
                 СтрокаJSON = СтрокаJSON + """notes"":""" + Счет.notes + """,";
-                СтрокаJSON = СтрокаJSON + """paymentStatus"":""" + Счет.paymentStatus + """";
+                СтрокаJSON = СтрокаJSON + """status"":""" + Счет.status + """";
                 СтрокаJSON = СтрокаJSON + "}";
             КонецЦикла;
             СтрокаJSON = СтрокаJSON + "],";
