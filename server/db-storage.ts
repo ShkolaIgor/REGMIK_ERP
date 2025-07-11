@@ -10228,65 +10228,94 @@ export class DatabaseStorage implements IStorage {
       const config = integration.config as any;
 
       if (!config?.baseUrl || config.baseUrl.trim() === '' || config.baseUrl === 'http://') {
-        console.log("1C URL не налаштований, використовуємо demo дані для вихідних рахунків");
-        return await this.getDemoOutgoingInvoices();
+        throw new Error("1C URL не налаштований. Будь ласка, вкажіть URL 1C сервера в налаштуваннях інтеграції.");
       }
 
-      // Формуємо URL для отримання вихідних рахунків
-      const outgoingUrl = config.baseUrl.replace('/invoices', '/outgoing-invoices');
+      // Формуємо правильний URL для вихідних рахунків  
+      let outgoingUrl = config.baseUrl;
       
-      console.log(`Запит вихідних рахунків з 1C: ${outgoingUrl}`);
+      // Перевіряємо чи URL закінчується на /invoices та змінюємо на /outgoing-invoices
+      if (outgoingUrl.endsWith('/invoices')) {
+        outgoingUrl = outgoingUrl.replace('/invoices', '/outgoing-invoices');
+      } else if (outgoingUrl.endsWith('/hs/erp/invoices')) {
+        outgoingUrl = outgoingUrl.replace('/hs/erp/invoices', '/hs/erp/outgoing-invoices');
+      } else if (!outgoingUrl.includes('outgoing-invoices')) {
+        // Якщо URL не містить правильний endpoint, додаємо його
+        if (!outgoingUrl.endsWith('/')) outgoingUrl += '/';
+        outgoingUrl += 'hs/erp/outgoing-invoices';
+      }
+      
+      console.log(`Запит реальних вихідних рахунків з 1C: ${outgoingUrl}`);
+      console.log(`Параметри запиту: action=getInvoices, limit=100`);
 
-      // Робимо запит до 1C системи
-      const response = await fetch(outgoingUrl, {
-        method: 'POST',
+      // Робимо GET запит з параметрами (як очікує 1C HTTP-сервіс)
+      const urlWithParams = `${outgoingUrl}?action=getInvoices&limit=100`;
+      
+      const response = await fetch(urlWithParams, {
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'User-Agent': 'REGMIK-ERP/1.0',
           ...(config.clientId && config.clientSecret ? {
             'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
           } : {})
         },
-        body: JSON.stringify({ 
-          action: 'getOutgoingInvoices',
-          limit: 100
-        }),
-        signal: AbortSignal.timeout(15000)
+        signal: AbortSignal.timeout(30000) // Збільшуємо timeout до 30 секунд
       });
 
+      console.log(`1C відповідь: ${response.status} ${response.statusText}`);
+
       if (!response.ok) {
-        throw new Error(`1C сервер повернув помилку: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error(`1C помилка: ${errorText}`);
+        throw new Error(`1C сервер повернув помилку: ${response.status} ${response.statusText}. Деталі: ${errorText}`);
       }
 
-      const data = await response.json();
+      const responseText = await response.text();
+      console.log(`1C raw response: ${responseText.substring(0, 500)}...`);
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('Помилка парсингу JSON:', jsonError);
+        throw new Error(`1C повернув некоректний JSON: ${responseText.substring(0, 200)}`);
+      }
       
       if (!data || !Array.isArray(data.invoices)) {
-        throw new Error("1C сервер повернув некоректні дані");
+        console.error('Некоректна структура даних від 1C:', data);
+        throw new Error(`1C повернув некоректну структуру даних. Очікувалось {invoices: []}, отримано: ${JSON.stringify(data).substring(0, 200)}`);
       }
 
-      // Обробляємо дані з 1C
-      const processedInvoices = data.invoices.map((invoice: any) => {
+      console.log(`Отримано ${data.invoices.length} вихідних рахунків з 1C`);
+
+      // Обробляємо реальні дані з 1C
+      const processedInvoices = data.invoices.map((invoice: any, index: number) => {
+        console.log(`Обробляємо рахунок ${index + 1}:`, invoice);
+        
         return {
-          id: invoice.ID || invoice.id,
-          number: invoice.НомерДокумента || invoice.Number || invoice.number,
-          date: invoice.ДатаДокумента || invoice.Date || invoice.date,
-          clientName: invoice.Клиент || invoice.Client || invoice.client || invoice.Контрагент || invoice.Counterparty,
-          total: this.parseUkrainianDecimal(invoice.Сумма || invoice.Amount || invoice.total || "0"),
-          currency: invoice.Валюта || invoice.Currency || invoice.currency || "UAH",
-          status: invoice.Статус || invoice.Status || invoice.status || "draft",
-          paymentStatus: invoice.СтатусОплати || invoice.PaymentStatus || invoice.paymentStatus || "unpaid",
-          description: invoice.Примітка || invoice.Comment || invoice.description || "",
-          positions: invoice.Позиції || invoice.Positions || invoice.positions || []
+          id: invoice.invoiceNumber || invoice.НомерСчета || invoice.number || `1c-${index}`,
+          number: invoice.invoiceNumber || invoice.НомерСчета || invoice.number || `№${index + 1}`,
+          date: invoice.date || invoice.ДатаСчета || invoice.ДатаДокумента || new Date().toISOString().split('T')[0],
+          clientName: invoice.clientName || invoice.НаименованиеКонтрагента || invoice.Контрагент || invoice.client || "Клієнт не вказано",
+          total: this.parseUkrainianDecimal(String(invoice.totalAmount || invoice.СуммаДокумента || invoice.Сумма || invoice.total || "0")),
+          currency: invoice.currency || invoice.КодВалюты || invoice.Валюта || "UAH",
+          status: invoice.status || invoice.Статус || "confirmed",
+          paymentStatus: invoice.paymentStatus || invoice.СтатусОплаты || invoice.СтатусОплати || "unpaid",
+          description: invoice.description || invoice.Примітка || invoice.Comment || "",
+          clientTaxCode: invoice.clientTaxCode || invoice.КодНалогоплательщика || invoice.ІПН || "",
+          itemsCount: invoice.itemsCount || invoice.КоличествоПозиций || invoice.КількістьПозицій || 0,
+          managerName: invoice.managerName || invoice.ИмяМенеджера || invoice.ІмяМенеджера || "",
+          positions: invoice.positions || invoice.Позиції || invoice.Positions || []
         };
       });
 
-      console.log(`Отримано ${processedInvoices.length} вихідних рахунків з 1C`);
+      console.log(`Успішно оброблено ${processedInvoices.length} вихідних рахунків`);
       return processedInvoices;
 
     } catch (error) {
-      console.error('Помилка отримання вихідних рахунків з 1C:', error);
-      console.log("Помилка з'єднання з 1C, використовуємо demo дані для вихідних рахунків");
-      return await this.getDemoOutgoingInvoices();
+      console.error('Критична помилка отримання вихідних рахунків з 1C:', error);
+      throw error;
     }
   }
 
