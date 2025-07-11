@@ -217,7 +217,7 @@ export function Import1COutgoingInvoices() {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Download className="w-4 h-4 mr-2" />
-          Імпорт вихідних рахунків з 1С
+          Імпорт рахунків з 1С
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">

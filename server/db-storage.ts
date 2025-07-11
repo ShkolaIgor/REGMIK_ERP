@@ -8560,25 +8560,37 @@ export class DatabaseStorage implements IStorage {
     if (typeof value === 'number') return value;
     
     try {
-      let strValue = value.toString();
+      let strValue = value.toString().trim();
       
-      // Обробляємо українські числа з комами як роздільниками розрядів
-      // Приклад: "4,632.00" або "4,632,980.50" або "1,234.56"
-      if (strValue.includes(',')) {
-        // Якщо є і кома і крапка - кома це роздільник розрядів
-        if (strValue.includes('.')) {
-          // Видаляємо коми (роздільники розрядів), крапка залишається як десятковий роздільник
+      // Видаляємо всі пробіли з числа
+      strValue = strValue.replace(/\s+/g, '');
+      
+      // Обробляємо українські числа
+      // Приклад: "2,176.8" → 2176.8
+      // Приклад: "2 176,8" → 2176.8
+      // Приклад: "2176.8" → 2176.8
+      
+      // Якщо є і кома і крапка - визначаємо що є що
+      if (strValue.includes(',') && strValue.includes('.')) {
+        const commaIndex = strValue.lastIndexOf(',');
+        const dotIndex = strValue.lastIndexOf('.');
+        
+        if (dotIndex > commaIndex) {
+          // Крапка після коми - кома це роздільник розрядів
           strValue = strValue.replace(/,/g, '');
         } else {
-          // Тільки кома - це може бути десятковий роздільник
-          // Якщо цифр після коми 2 або менше - це десятковий роздільник
-          const parts = strValue.split(',');
-          if (parts.length === 2 && parts[1].length <= 2) {
-            strValue = strValue.replace(',', '.');
-          } else {
-            // Інакше коми - це роздільники розрядів
-            strValue = strValue.replace(/,/g, '');
-          }
+          // Кома після крапки - кома це десятковий роздільник
+          strValue = strValue.replace(/\./g, '').replace(',', '.');
+        }
+      } else if (strValue.includes(',')) {
+        // Тільки кома - перевіряємо чи це десятковий роздільник
+        const parts = strValue.split(',');
+        if (parts.length === 2 && parts[1].length <= 2) {
+          // Кома як десятковий роздільник
+          strValue = strValue.replace(',', '.');
+        } else {
+          // Кома як роздільник розрядів
+          strValue = strValue.replace(/,/g, '');
         }
       }
       
@@ -9972,14 +9984,52 @@ export class DatabaseStorage implements IStorage {
           ? await Promise.all((invoice.items || invoice.Позиції).map(async (item: any) => {
               const externalProductName = item.name || item.Назва || "Невідомий товар";
               
-              // Пошук товару за альтернативною назвою з 1C
-              const mappedProduct = await this.findProductByAlternativeName(externalProductName, '1c');
+              // ПОКРАЩЕНА ЛОГІКА ПОШУКУ ТОВАРІВ:
+              // 1. Пошук зіставлення в productNameMappings
+              let mappedProduct = await this.findProductByAlternativeName(externalProductName, '1c');
+              
+              // 2. Якщо не знайдено зіставлення, шукаємо товар напряму
+              if (!mappedProduct) {
+                const allProducts = await this.getProducts();
+                
+                // Точний пошук за назвою
+                let foundProduct = allProducts.find(p => 
+                  p.name.toLowerCase() === externalProductName.toLowerCase() ||
+                  p.sku.toLowerCase() === externalProductName.toLowerCase()
+                );
+                
+                // Частковий пошук якщо точний не знайдено
+                if (!foundProduct) {
+                  foundProduct = allProducts.find(p => 
+                    p.name.toLowerCase().includes(externalProductName.toLowerCase()) ||
+                    externalProductName.toLowerCase().includes(p.name.toLowerCase())
+                  );
+                }
+                
+                // Якщо знайшли товар, створюємо автоматичне зіставлення
+                if (foundProduct) {
+                  await this.createProductNameMapping({
+                    externalSystemName: '1c',
+                    externalProductName: externalProductName,
+                    erpProductId: foundProduct.id,
+                    erpProductName: foundProduct.name,
+                    confidenceScore: 0.8,
+                    isActive: true,
+                    createdBy: 'system'
+                  });
+                  
+                  mappedProduct = {
+                    erpProductId: foundProduct.id,
+                    erpProductName: foundProduct.name
+                  };
+                }
+              }
               
               return {
                 name: mappedProduct ? mappedProduct.erpProductName : externalProductName,
                 erpProductId: mappedProduct ? mappedProduct.erpProductId : null,
-                originalName: externalProductName, // зберігаємо оригінальну назву з 1C
-                isMapped: !!mappedProduct, // показуємо чи товар зіставлений
+                originalName: externalProductName,
+                isMapped: !!mappedProduct,
                 quantity: this.parseUkrainianDecimal(item.quantity || item.Кількість || 0),
                 price: this.parseUkrainianDecimal(item.price || item.Ціна || 0),
                 total: this.parseUkrainianDecimal(item.total || item.Сума || 0),
@@ -10344,6 +10394,17 @@ export class DatabaseStorage implements IStorage {
 
     } catch (error) {
       console.error('Критична помилка отримання вихідних рахунків з 1C:', error);
+      
+      // Детальна діагностика помилок
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error("Не вдалося підключитися до 1C системи. Перевірте URL та доступність сервера.");
+      }
+      
+      if (error.message.includes('timeout')) {
+        throw new Error("Тайм-аут з'єднання з 1C. Сервер не відповідає протягом 30 секунд.");
+      }
+      
+      // Передаємо оригінальну помилку
       throw error;
     }
   }
