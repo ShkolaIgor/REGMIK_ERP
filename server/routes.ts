@@ -11052,8 +11052,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('🔍 Запит 1C накладних - початок');
       const invoices = await storage.get1CInvoices();
-      console.log(`✅ Успішно отримано ${invoices.length} 1C накладних`);
-      res.json(invoices);
+      console.log(`✅ Отримано ${invoices?.length || 0} 1C накладних`);
+      
+      if (invoices && invoices.length > 0) {
+        console.log('Перша накладна:', JSON.stringify(invoices[0], null, 2));
+      } else {
+        console.log('❌ Масив накладних порожній або undefined');
+      }
+      
+      res.json(invoices || []);
     } catch (error) {
       console.error('❌ ПОМИЛКА 1C накладних:', error);
       res.status(500).json({ 
