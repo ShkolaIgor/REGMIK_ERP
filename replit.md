@@ -130,6 +130,7 @@ User has Russian-language 1C system and needs integration setup guidance.
 - ✅ **Реалізовано import1COutgoingInvoice()** - повний імпорт рахунків з автоматичним створенням клієнтів та товарів
 - ✅ **API endpoint POST /api/1c/outgoing-invoices/import** - backend маршрут для імпорту вихідних рахунків
 - ✅ **Frontend компонент Import1COutgoingInvoices** - інтерфейс користувача з прогрес-баром та обробкою помилок
+- ✅ **Виправлено помилку useMutation** - додано відсутні імпорти useMutation та apiRequest у Frontend компоненті
 - ✅ **Автоматичне створення сутностей** - система створює клієнтів за taxCode/назвою та товари з автоматичними SKU
 - ✅ **Готова система для production** - повна функціональність імпорту вихідних рахунків працює з fallback даними
 - ✅ **РЕАЛІЗОВАНО FALLBACK МЕХАНІЗМ ДЛЯ 1С ІНТЕГРАЦІЇ** - система тепер працює навіть коли 1С сервер недоступний
