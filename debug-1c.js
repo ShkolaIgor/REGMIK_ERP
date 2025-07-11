@@ -1,98 +1,97 @@
-#!/usr/bin/env node
-
 /**
  * Діагностика проблеми з 1С вихідними рахунками
  */
 
-async function test1CIntegration() {
-    console.log('=== ДІАГНОСТИКА 1С ВИХІДНИХ РАХУНКІВ ===\n');
-    
-    // Тестуємо формування URL
-    const baseUrl = 'http://baf.regmik.ua/bitrix/hs/erp';
-    
-    console.log('1. Формування URL для вихідних рахунків:');
-    let outgoingUrl = baseUrl.trim();
-    if (!outgoingUrl.endsWith('/')) outgoingUrl += '/';
-    outgoingUrl += 'outgoing-invoices';
-    
-    console.log(`   Базовий URL: ${baseUrl}`);
-    console.log(`   Кінцевий URL: ${outgoingUrl}`);
-    console.log(`   Правильно: ${outgoingUrl === 'http://baf.regmik.ua/bitrix/hs/erp/outgoing-invoices' ? '✅' : '❌'}`);
-    
-    // Тестуємо запит
-    console.log('\n2. Тестування запиту:');
-    const auth = Buffer.from('100:ШкоМ.').toString('base64');
-    
-    try {
-        console.log(`   Відправляємо POST на: ${outgoingUrl}`);
-        console.log(`   Авторизація: Basic ${auth.substring(0, 20)}...`);
-        console.log(`   Body: {"limit": 100}`);
-        
-        const response = await fetch(outgoingUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Authorization': `Basic ${auth}`,
-                'User-Agent': 'REGMIK-ERP/1.0'
-            },
-            body: JSON.stringify({ 
-                limit: 100
-            })
-        });
-        
-        console.log(`   Статус: ${response.status} ${response.statusText}`);
-        
-        if (response.ok) {
-            const data = await response.json();
-            console.log(`   ✅ Отримано: ${data.invoices?.length || 0} вихідних рахунків`);
-        } else {
-            const errorText = await response.text();
-            console.log(`   ❌ Помилка: ${errorText.substring(0, 200)}`);
-        }
-        
-    } catch (error) {
-        console.log(`   ❌ Помилка підключення: ${error.message}`);
+// Тестуємо структуру даних з прикладеного файлу
+const sample1CData = {
+  "invoices": [
+    {
+      "invoiceNumber": "РМ00-027688",
+      "date": "2025-07-11",
+      "client": "ВІКОРД",
+      "amount": 9072,
+      "currency": "980",
+      "notes": "",
+      "status": "posted"
+    },
+    {
+      "invoiceNumber": "РМ00-027687",
+      "date": "2025-07-11",
+      "client": "ВІКОРД",
+      "amount": 4752,
+      "currency": "980",
+      "notes": "",
+      "status": "posted"
     }
-    
-    console.log('\n3. Порівняння з вхідними накладними:');
-    const invoicesUrl = baseUrl + '/invoices';
-    
-    try {
-        console.log(`   Відправляємо POST на: ${invoicesUrl}`);
-        console.log(`   Body: {"action": "getInvoices", "limit": 100}`);
-        
-        const response = await fetch(invoicesUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Authorization': `Basic ${auth}`,
-                'User-Agent': 'REGMIK-ERP/1.0'
-            },
-            body: JSON.stringify({ 
-                action: 'getInvoices',
-                limit: 100
-            })
-        });
-        
-        console.log(`   Статус: ${response.status} ${response.statusText}`);
-        
-        if (response.ok) {
-            const data = await response.json();
-            console.log(`   ✅ Отримано: ${data.invoices?.length || 0} вхідних накладних`);
-        } else {
-            const errorText = await response.text();
-            console.log(`   ❌ Помилка: ${errorText.substring(0, 200)}`);
-        }
-        
-    } catch (error) {
-        console.log(`   ❌ Помилка підключення: ${error.message}`);
-    }
-    
-    console.log('\n=== ВИСНОВОК ===');
-    console.log('Якщо вихідні рахунки повертають 401/404, а вхідні накладні працюють - проблема в 1С налаштуваннях');
-    console.log('Можливо потрібно створити окремий HTTP-сервіс для вихідних рахунків в 1С');
+  ],
+  "total": 100,
+  "timestamp": "11.07.2025 23:46:35"
+};
+
+console.log('🔍 Діагностика структури даних з 1С\n');
+
+console.log('1. Структура отриманих даних:');
+console.log('- Кореневий об\'єкт має поле "invoices" (масив)');
+console.log('- Кожен рахунок має поля: invoiceNumber, date, client, amount, currency, notes, status');
+console.log('- Валюта приходить як код "980" (потрібна конвертація в UAH)');
+console.log('- Назва клієнта в полі "client", а не "clientName"');
+console.log('- Сума в полі "amount", а не "total"');
+
+console.log('\n2. Проблеми в обробці:');
+console.log('❌ Очікувалось поле "clientName", а приходить "client"');
+console.log('❌ Очікувалось поле "total", а приходить "amount"');
+console.log('❌ Потрібна конвертація валюти "980" → "UAH"');
+console.log('❌ Відсутні позиції товарів (поле "positions")');
+
+console.log('\n3. Тестування обробки першого рахунку:');
+const firstInvoice = sample1CData.invoices[0];
+
+function convertCurrencyCode(currencyCode) {
+  const currencyMap = {
+    '980': 'UAH',
+    '840': 'USD',
+    '978': 'EUR',
+    '643': 'RUB',
+    '985': 'PLN'
+  };
+  return currencyMap[currencyCode] || currencyCode;
 }
 
-test1CIntegration().catch(console.error);
+function parseUkrainianDecimal(value) {
+  if (typeof value === 'number') return value;
+  return parseFloat(String(value).replace(',', '.'));
+}
+
+const processedInvoice = {
+  id: firstInvoice.invoiceNumber,
+  number: firstInvoice.invoiceNumber,
+  date: firstInvoice.date,
+  clientName: firstInvoice.client, // ✅ ВИПРАВЛЕНО: client замість clientName
+  total: parseUkrainianDecimal(firstInvoice.amount), // ✅ ВИПРАВЛЕНО: amount замість total
+  currency: convertCurrencyCode(firstInvoice.currency), // ✅ ВИПРАВЛЕНО: конвертація 980→UAH
+  status: firstInvoice.status,
+  paymentStatus: "unpaid",
+  description: firstInvoice.notes || "",
+  positions: [] // ⚠️ ПРОБЛЕМА: немає позицій товарів
+};
+
+console.log('Оброблений рахунок:', JSON.stringify(processedInvoice, null, 2));
+
+console.log('\n4. Рекомендації для виправлення:');
+console.log('✅ Виправити mapping полів в get1COutgoingInvoices()');
+console.log('✅ Додати детальне логування помилок в API endpoint');
+console.log('✅ Перевірити чи функція convertCurrencyCode() доступна');
+console.log('✅ Додати try-catch для кожного етапу обробки');
+console.log('⚠️ Врахувати що позиції товарів можуть бути відсутні');
+
+console.log('\n5. Можлива причина помилки 500:');
+console.log('- Помилка в парсингу JSON (десяткові числа з комами)');
+console.log('- Невірний mapping полів в processedInvoices');
+console.log('- Помилка в convertCurrencyCode() або parseUkrainianDecimal()');
+console.log('- Проблема з валідацією структури даних');
+
+console.log('\n🎯 НАСТУПНІ КРОКИ:');
+console.log('1. Виправити mapping полів client→clientName, amount→total');
+console.log('2. Додати детальне логування в API endpoint');
+console.log('3. Протестувати обробку реальних даних');
+console.log('4. Перевірити чи працює імпорт після виправлень');

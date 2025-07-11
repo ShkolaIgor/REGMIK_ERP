@@ -10643,25 +10643,45 @@ export class DatabaseStorage implements IStorage {
 
       console.log(`Отримано ${data.invoices.length} вихідних рахунків з 1C`);
 
-      // Обробляємо реальні дані з 1C
+      // Обробляємо реальні дані з 1C з детальним логуванням
+      console.log('🔧 Початок обробки рахунків з 1С...');
       const processedInvoices = data.invoices.map((invoice: any, index: number) => {
-        console.log(`Обробляємо рахунок ${index + 1}:`, invoice);
-        
-        return {
-          id: invoice.invoiceNumber || invoice.НомерСчета || invoice.number || `1c-${index}`,
-          number: invoice.invoiceNumber || invoice.НомерСчета || invoice.number || `№${index + 1}`,
-          date: invoice.date || invoice.ДатаСчета || invoice.ДатаДокумента || new Date().toISOString().split('T')[0],
-          clientName: invoice.client || invoice.clientName || invoice.НаименованиеКонтрагента || invoice.Контрагент || "Клієнт не вказано",
-          total: this.parseUkrainianDecimal(String(invoice.amount || invoice.totalAmount || invoice.СуммаДокумента || invoice.Сумма || invoice.total || "0")),
-          currency: this.convertCurrencyCode(invoice.currency || invoice.КодВалюты || invoice.Валюта || "UAH"),
-          status: invoice.status || invoice.Статус || "confirmed",
-          paymentStatus: invoice.paymentStatus || invoice.СтатусОплаты || invoice.СтатусОплати || "unpaid",
-          description: invoice.notes || invoice.description || invoice.Примітка || invoice.Comment || "",
-          clientTaxCode: invoice.clientTaxCode || invoice.КодНалогоплательщика || invoice.ІПН || "",
-          itemsCount: invoice.itemsCount || invoice.КоличествоПозиций || invoice.КількістьПозицій || 0,
-          managerName: invoice.managerName || invoice.ИмяМенеджера || invoice.ІмяМенеджера || "",
-          positions: invoice.positions || invoice.Позиції || invoice.Positions || []
-        };
+        try {
+          console.log(`📋 Обробляємо рахунок ${index + 1}/${data.invoices.length}:`);
+          console.log('- Сирі дані:', JSON.stringify(invoice, null, 2));
+          
+          // Перевіряємо наявність ключових полів
+          console.log('🔍 Перевірка полів:');
+          console.log('- invoiceNumber:', invoice.invoiceNumber || 'відсутнє');
+          console.log('- client:', invoice.client || 'відсутнє'); 
+          console.log('- amount:', invoice.amount || 'відсутнє');
+          console.log('- currency:', invoice.currency || 'відсутнє');
+          console.log('- date:', invoice.date || 'відсутнє');
+          
+          const processedInvoice = {
+            id: invoice.invoiceNumber || invoice.НомерСчета || invoice.number || `1c-${index}`,
+            number: invoice.invoiceNumber || invoice.НомерСчета || invoice.number || `№${index + 1}`,
+            date: invoice.date || invoice.ДатаСчета || invoice.ДатаДокумента || new Date().toISOString().split('T')[0],
+            clientName: invoice.client || invoice.clientName || invoice.НаименованиеКонтрагента || invoice.Контрагент || "Клієнт не вказано",
+            total: this.parseUkrainianDecimal(String(invoice.amount || invoice.totalAmount || invoice.СуммаДокумента || invoice.Сумма || invoice.total || "0")),
+            currency: this.convertCurrencyCode(invoice.currency || invoice.КодВалюты || invoice.Валюта || "UAH"),
+            status: invoice.status || invoice.Статус || "confirmed",
+            paymentStatus: invoice.paymentStatus || invoice.СтатусОплаты || invoice.СтатусОплати || "unpaid",
+            description: invoice.notes || invoice.description || invoice.Примітка || invoice.Comment || "",
+            clientTaxCode: invoice.clientTaxCode || invoice.КодНалогоплательщика || invoice.ІПН || "",
+            itemsCount: invoice.itemsCount || invoice.КоличествоПозиций || invoice.КількістьПозицій || 0,
+            managerName: invoice.managerName || invoice.ИмяМенеджера || invoice.ІмяМенеджера || "",
+            positions: invoice.positions || invoice.Позиції || invoice.Positions || []
+          };
+          
+          console.log('✅ Оброблений рахунок:', JSON.stringify(processedInvoice, null, 2));
+          return processedInvoice;
+          
+        } catch (processingError) {
+          console.error(`❌ Помилка обробки рахунку ${index + 1}:`, processingError);
+          console.error('- Проблемний рахунок:', invoice);
+          throw new Error(`Помилка обробки рахунку ${index + 1}: ${processingError.message}`);
+        }
       });
 
       console.log(`Успішно оброблено ${processedInvoices.length} вихідних рахунків`);

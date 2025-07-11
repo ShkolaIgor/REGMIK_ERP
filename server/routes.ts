@@ -11075,16 +11075,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/1c/outgoing-invoices', isSimpleAuthenticated, async (req, res) => {
     try {
       console.log('🔍 Запит 1C вихідних рахунків - початок');
+      console.log('🔧 Викликаємо storage.get1COutgoingInvoices()...');
+      
       const outgoingInvoices = await storage.get1COutgoingInvoices();
-      console.log(`✅ Успішно отримано ${outgoingInvoices.length} вихідних рахунків`);
-      res.json(outgoingInvoices);
+      
+      console.log(`✅ Успішно отримано ${outgoingInvoices?.length || 0} вихідних рахунків`);
+      console.log('📄 Структура першого рахунку:', outgoingInvoices?.[0] ? JSON.stringify(outgoingInvoices[0], null, 2) : 'Немає рахунків');
+      
+      res.json(outgoingInvoices || []);
     } catch (error) {
-      console.error('❌ ПОМИЛКА 1C вихідних рахунків:', error);
+      console.error('❌ КРИТИЧНА ПОМИЛКА 1C вихідних рахунків:', error);
+      console.error('📍 Детальна діагностика помилки:');
+      console.error('- Тип помилки:', typeof error);
+      console.error('- Конструктор помилки:', error?.constructor?.name);
+      console.error('- Повідомлення:', error instanceof Error ? error.message : String(error));
+      console.error('- Stack trace:', error instanceof Error ? error.stack : 'Немає stack trace');
+      
       res.status(500).json({ 
         message: 'Не вдалося отримати вихідні рахунки з 1С', 
-        error: error instanceof Error ? error.message : 'Невідома помилка',
+        error: error instanceof Error ? error.message : String(error),
+        errorType: error?.constructor?.name || typeof error,
         stack: error instanceof Error ? error.stack : undefined,
-        details: 'Перевірте налаштування 1C інтеграції та з\'єднання з сервером'
+        details: 'Детальна діагностика записана в консоль сервера',
+        timestamp: new Date().toISOString()
       });
     }
   });

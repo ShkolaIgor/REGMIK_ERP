@@ -1,4 +1,6 @@
-const { spawn } = require('child_process');
+import { spawn } from 'child_process';
+
+console.log('Starting development server...');
 
 // Запускаємо npm run dev
 const dev = spawn('npm', ['run', 'dev'], {
@@ -13,5 +15,3 @@ dev.on('error', (err) => {
 dev.on('close', (code) => {
   console.log(`Dev server exited with code ${code}`);
 });
-
-console.log('Starting development server...');

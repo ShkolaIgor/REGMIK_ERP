@@ -1,127 +1,66 @@
-#!/usr/bin/env node
-
-// Тест 1С API напряму
-import pg from 'pg';
-
-const { Pool } = pg;
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+/**
+ * Прямий тест API endpoint для вихідних рахунків 1С
+ */
 
 async function testDirect1CConnection() {
+  const baseUrl = process.env.REPL_URL ? `https://${process.env.REPL_URL}` : 'http://localhost:5000';
+  const endpoint = `${baseUrl}/api/1c/outgoing-invoices`;
+  
+  console.log('🔍 Тестування прямого з\'єднання з 1С API');
+  console.log(`📡 URL: ${endpoint}`);
+  
   try {
-    console.log('🔍 Тестування прямого з\'єднання з 1С...');
-    
-    // Отримуємо налаштування 1С
-    const integrations = await pool.query(`
-      SELECT * FROM integration_configs 
-      WHERE type = '1c_accounting' AND is_active = true 
-      LIMIT 1
-    `);
-    
-    if (integrations.rows.length === 0) {
-      console.log('❌ Активна 1С інтеграція не знайдена');
-      return;
-    }
-    
-    const config = integrations.rows[0].config;
-    console.log('🔧 Використовуємо конфігурацію:', config);
-    
-    // Тестуємо формування URL для різних endpoints
-    const baseUrl = config.baseUrl;
-    const invoicesUrl = baseUrl + (baseUrl.endsWith('/') ? '' : '/') + 'invoices';
-    const outgoingUrl = baseUrl + (baseUrl.endsWith('/') ? '' : '/') + 'outgoing-invoices';
-    
-    console.log(`🌐 Базовий URL: ${baseUrl}`);
-    console.log(`📥 URL вхідних накладних: ${invoicesUrl}`);
-    console.log(`📤 URL вихідних рахунків: ${outgoingUrl}`);
-    
-    const testUrl = invoicesUrl;
-    
-    // Формуємо headers
-    const headers = {
-      'Accept': 'application/json',
-      'User-Agent': 'REGMIK-ERP/1.0'
-    };
-    
-    if (config.clientId && config.clientSecret) {
-      headers.Authorization = `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`;
-      console.log('🔐 Додано Basic авторизацію');
-    }
-    
-    console.log('📤 Відправляємо POST запит з JSON...');
-    const response = await fetch(testUrl, {
-      method: 'POST',
+    // Симулюємо авторизацію (якщо потрібна)
+    const response = await fetch(endpoint, {
+      method: 'GET',
       headers: {
-        ...headers,
+        'Accept': 'application/json',
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        action: 'getInvoices',
-        limit: 50
-      }),
-      signal: AbortSignal.timeout(10000)
+      }
     });
     
-    console.log(`📥 Відповідь: ${response.status} ${response.statusText}`);
+    console.log(`📊 HTTP статус: ${response.status} ${response.statusText}`);
+    console.log('📋 Response headers:');
+    for (const [key, value] of response.headers.entries()) {
+      console.log(`  ${key}: ${value}`);
+    }
     
     const responseText = await response.text();
-    console.log(`📄 Контент (перші 500 символів): ${responseText.substring(0, 500)}`);
+    console.log(`📄 Response body length: ${responseText.length} символів`);
+    console.log(`📄 Response body (перші 500 символів):`);
+    console.log(responseText.substring(0, 500));
     
-    if (!response.ok) {
-      console.log('❌ Помилка:', responseText);
-    } else {
-      console.log('✅ З\'єднання успішне');
-      
-      // Спробуємо парсити JSON
+    if (response.ok) {
       try {
-        const jsonData = JSON.parse(responseText);
-        console.log('✅ JSON валідний, кількість записів:', Array.isArray(jsonData) ? jsonData.length : 'не масив');
+        const data = JSON.parse(responseText);
+        console.log('\n✅ JSON успішно парситься');
+        console.log(`📊 Кількість рахунків: ${Array.isArray(data) ? data.length : 'Не масив'}`);
         
-        // Тест вихідних рахунків
-        console.log('\n📤 Тестування вихідних рахунків...');
-        const outgoingResponse = await fetch(outgoingUrl, {
-          method: 'POST',
-          headers: {
-            ...headers,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            action: 'getOutgoingInvoices',
-            limit: 20
-          }),
-          signal: AbortSignal.timeout(10000)
-        });
-        
-        console.log(`📤 Вихідні рахунки: ${outgoingResponse.status} ${outgoingResponse.statusText}`);
-        
-        if (outgoingResponse.ok) {
-          const outgoingText = await outgoingResponse.text();
-          console.log(`📤 Вихідні дані (перші 200 символів): ${outgoingText.substring(0, 200)}`);
-          
-          try {
-            const outgoingData = JSON.parse(outgoingText);
-            console.log('✅ Вихідні рахунки JSON валідний, кількість:', Array.isArray(outgoingData) ? outgoingData.length : 'не масив');
-          } catch (e) {
-            console.log('⚠️ Вихідні рахунки - відповідь не є валідним JSON');
-          }
-        } else {
-          console.log(`❌ Помилка вихідних рахунків: ${outgoingResponse.status}`);
+        if (Array.isArray(data) && data.length > 0) {
+          console.log('📋 Перший рахунок:');
+          console.log(JSON.stringify(data[0], null, 2));
         }
-        
-      } catch (parseError) {
-        console.log('⚠️ Відповідь не є валідним JSON');
+      } catch (jsonError) {
+        console.error('❌ Помилка парсингу JSON:', jsonError.message);
+        console.error('🔧 Можливо проблема з кодуванням або структурою відповіді');
+      }
+    } else {
+      console.error('❌ HTTP помилка');
+      
+      try {
+        const errorData = JSON.parse(responseText);
+        console.error('📄 Деталі помилки:');
+        console.error(JSON.stringify(errorData, null, 2));
+      } catch {
+        console.error('📄 Текст помилки:', responseText);
       }
     }
     
-  } catch (error) {
-    console.error('❌ ПОМИЛКА тестування:', error.message);
-    if (error.name === 'AbortError') {
-      console.error('⏰ Тайм-аут запиту (більше 10 секунд)');
-    }
-  } finally {
-    await pool.end();
+  } catch (networkError) {
+    console.error('❌ Мережева помилка:', networkError.message);
+    console.error('🔧 Можливо сервер не запущений або недоступний');
   }
 }
 
-testDirect1CConnection();
+// Запускаємо тест
+testDirect1CConnection().catch(console.error);
