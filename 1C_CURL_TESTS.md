@@ -6,7 +6,7 @@
 curl -X POST "http://baf.regmik.ua/bitrix/hs/erp/invoices" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
-  -H "Authorization: Basic MTAwOtCo0LrQvtCcLg==" \
+  -H "Authorization: Basic 0KjQutC+0LvQsCDQhi7Qnzo6MQ==" \
   -H "User-Agent: REGMIK-ERP/1.0" \
   -d '{
     "action": "getInvoices",
@@ -20,7 +20,7 @@ curl -X POST "http://baf.regmik.ua/bitrix/hs/erp/invoices" \
 curl -X POST "http://baf.regmik.ua/bitrix/hs/erp/outgoing-invoices" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
-  -H "Authorization: Basic MTAwOtCo0LrQvtCcLg==" \
+  -H "Authorization: Basic 0KjQutC+0LvQsCDQhi7Qnzo6MQ==" \
   -H "User-Agent: REGMIK-ERP/1.0" \
   -d '{
     "action": "getOutgoingInvoices",
@@ -33,7 +33,7 @@ curl -X POST "http://baf.regmik.ua/bitrix/hs/erp/outgoing-invoices" \
 ```bash
 curl -X GET "http://baf.regmik.ua/bitrix/hs/erp/outgoing-invoices?action=getOutgoingInvoices&limit=100" \
   -H "Accept: application/json" \
-  -H "Authorization: Basic MTAwOtCo0LrQvtCcLg==" \
+  -H "Authorization: Basic 0KjQutC+0LvQsCDQhi7Qnzo6MQ==" \
   -H "User-Agent: REGMIK-ERP/1.0"
 ```
 
@@ -43,7 +43,7 @@ curl -X GET "http://baf.regmik.ua/bitrix/hs/erp/outgoing-invoices?action=getOutg
 curl -X POST "http://baf.regmik.ua/bitrix/hs/erp/outgoing-invoices?action=getOutgoingInvoices&limit=100" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -H "Accept: application/json" \
-  -H "Authorization: Basic MTAwOtCo0LrQvtCcLg==" \
+  -H "Authorization: Basic 0KjQutC+0LvQoCDQhi7Qnzo6MQ==" \
   -H "User-Agent: REGMIK-ERP/1.0"
 ```
 
@@ -80,6 +80,6 @@ curl -X POST "http://baf.regmik.ua/bitrix/hs/erp/outgoing-invoices?action=getOut
 
 ## Примітки
 
-- **MTAwOtCo0LrQvtCcLg==** - це Base64 кодування "100:ШкоМ."
+- **0KjQutC+0LvQsCDQhi7Qnzo6MQ==** - це Base64 кодування "Школа І.М.:1"
 - Поточна проблема: HTTP 401 - проблема авторизації на BAF сервері
 - Виправлений код ERP тепер правильно формує всі запити
