@@ -11061,18 +11061,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 1C Outgoing Invoices endpoint
   app.get('/api/1c/outgoing-invoices', isSimpleAuthenticated, async (req, res) => {
     try {
+      console.log('Запит вихідних рахунків з 1С через API endpoint');
       const outgoingInvoices = await storage.get1COutgoingInvoices();
+      console.log(`API endpoint повертає ${outgoingInvoices.length} вихідних рахунків`);
       res.json(outgoingInvoices);
     } catch (error) {
-      console.error('Error fetching 1C outgoing invoices:', error);
-      // Fallback to demo data if 1C connection fails
-      try {
-        const demoInvoices = await storage.getDemoOutgoingInvoices();
-        res.json(demoInvoices);
-      } catch (demoError) {
-        console.error('Error fetching demo outgoing invoices:', demoError);
-        res.status(500).json({ message: 'Failed to fetch 1C outgoing invoices' });
-      }
+      console.error('Критична помилка отримання вихідних рахунків з 1С:', error);
+      res.status(500).json({ 
+        message: 'Не вдалося отримати вихідні рахунки з 1С', 
+        error: error instanceof Error ? error.message : 'Невідома помилка'
+      });
     }
   });
 

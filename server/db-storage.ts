@@ -10319,49 +10319,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Demo дані для вихідних рахунків
-  async getDemoOutgoingInvoices() {
-    return [
-      {
-        id: "demo-out-001",
-        number: "ВИХ-001",
-        date: "2025-01-10",
-        clientName: "ТОВ ДЕМО КЛІЄНТ",
-        total: 12500.00,
-        currency: "UAH",
-        status: "confirmed",
-        paymentStatus: "paid",
-        description: "Демо вихідний рахунок #1",
-        positions: [
-          {
-            productName: "Послуга консультації",
-            quantity: 5,
-            price: 2500.00,
-            total: 12500.00
-          }
-        ]
-      },
-      {
-        id: "demo-out-002", 
-        number: "ВИХ-002",
-        date: "2025-01-11",
-        clientName: "ПП ТЕСТОВИЙ КЛІЄНТ",
-        total: 8750.00,
-        currency: "UAH",
-        status: "draft",
-        paymentStatus: "unpaid",
-        description: "Демо вихідний рахунок #2",
-        positions: [
-          {
-            productName: "Технічна підтримка",
-            quantity: 2,
-            price: 4375.00,
-            total: 8750.00
-          }
-        ]
-      }
-    ];
-  }
+  // ДЕМО ДАНІ ВИДАЛЕНО - система працює тільки з реальними даними з 1С
 
   // ===============================
   // INTEGRATION CONFIGS METHODS
