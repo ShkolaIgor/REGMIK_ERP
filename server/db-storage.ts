@@ -10313,13 +10313,13 @@ export class DatabaseStorage implements IStorage {
         throw new Error("1C URL не налаштований. Будь ласка, вкажіть URL 1C сервера в налаштуваннях інтеграції.");
       }
 
-      // Використовуємо той самий endpoint /invoices з різним action
+      // Використовуємо окремий endpoint /outgoing-invoices для вихідних рахунків
       let outgoingUrl = config.baseUrl.trim();
       if (!outgoingUrl.endsWith('/')) outgoingUrl += '/';
-      outgoingUrl += 'invoices';
+      outgoingUrl += 'outgoing-invoices';
       
       console.log(`Запит реальних вихідних рахунків з 1C: ${outgoingUrl}`);
-      console.log(`Параметри запиту: action=getOutgoingInvoices, limit=100 (використовуємо той самий endpoint що і для вхідних)`);
+      console.log(`Параметри запиту: limit=100 (використовуємо окремий endpoint для вихідних рахунків)`);
 
       // Використовуємо ту ж логіку що і в get1CInvoices: GET → POST JSON → POST URL params
       let response;
@@ -10327,7 +10327,7 @@ export class DatabaseStorage implements IStorage {
       try {
         // Спочатку пробуємо GET (хоча знаємо що не працює)
         console.log('Пробуємо GET запит для вихідних рахунків...');
-        response = await fetch(`${outgoingUrl}?action=getOutgoingInvoices&limit=100`, {
+        response = await fetch(`${outgoingUrl}?limit=100`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -10360,7 +10360,6 @@ export class DatabaseStorage implements IStorage {
             } : {})
           },
           body: JSON.stringify({ 
-            action: 'getOutgoingInvoices',
             limit: 100
           }),
           signal: AbortSignal.timeout(10000)
@@ -10370,7 +10369,7 @@ export class DatabaseStorage implements IStorage {
           console.log(`POST JSON також неуспішний: ${response.status}, пробуємо POST з URL параметрами для вихідних рахунків...`);
           
           // Третя спроба: POST з URL parameters
-          const urlWithParams = `${outgoingUrl}?action=getOutgoingInvoices&limit=100`;
+          const urlWithParams = `${outgoingUrl}?limit=100`;
           response = await fetch(urlWithParams, {
             method: 'POST',
             headers: {

@@ -1,55 +1,67 @@
-# 1C URL Structure Fix
+# Відкат 1C Endpoint Унифікації - July 11, 2025
 
 ## Проблема
-Раніше в 1С інтеграції потрібно було вказувати повний URL з endpoint:
-- `http://baf.regmik.ua/bitrix/hs/erp/invoices` - для вхідних накладних
-- `http://baf.regmik.ua/bitrix/hs/erp/outgoing-invoices` - для вихідних рахунків
+Після унифікації endpoints користувач повідомив, що `/invoices` не працює для вихідних рахунків.
 
-## Рішення
-Тепер використовується базовий URL, а endpoints додаються автоматично:
+## Причина
+Унифікація виявилася невдалою - 1С система розпізнає різні типи документів через окремі endpoints, а не через параметри.
 
-### Налаштування
-**Базовий URL**: `http://baf.regmik.ua/bitrix/hs/erp`
+## Рішення - Відкат до оригінальної структури
 
-### Автоматичне формування endpoints
-- При імпорті **вхідних накладних**: додається `/invoices`
-- При імпорті **вихідних рахунків**: додається `/outgoing-invoices`
-
-## Переваги нового підходу
-1. **Простота налаштування** - один базовий URL замість багатьох
-2. **Менше помилок** - автоматичне формування правильних endpoints
-3. **Легше підтримка** - зміна базового URL оновлює всі endpoints
-4. **Гнучкість** - легко додавати нові endpoints в майбутньому
-
-## Код виправлення
-
-### get1CInvoices()
-```javascript
-// Формуємо URL додаючи /invoices до базового URL
-let invoicesUrl = config.baseUrl.trim();
-if (!invoicesUrl.endsWith('/')) invoicesUrl += '/';
-invoicesUrl += 'invoices';
+### Вхідні накладні
 ```
+POST /invoices
+{
+  "action": "getInvoices",
+  "limit": 100
+}
+```
+
+### Вихідні рахунки  
+```
+POST /outgoing-invoices
+{
+  "limit": 100
+}
+```
+
+## Виправлення коду
 
 ### get1COutgoingInvoices()
 ```javascript
-// Формуємо URL додаючи /outgoing-invoices до базового URL
+// Використовуємо окремий endpoint /outgoing-invoices для вихідних рахунків
 let outgoingUrl = config.baseUrl.trim();
 if (!outgoingUrl.endsWith('/')) outgoingUrl += '/';
-outgoingUrl += 'outgoing-invoices';
+outgoingUrl += 'outgoing-invoices';  // Повернуто з 'invoices' на 'outgoing-invoices'
 ```
 
-## Оновлення БД
-```sql
-UPDATE integration_configs 
-SET config = jsonb_set(config, '{baseUrl}', '"http://baf.regmik.ua/bitrix/hs/erp"')
-WHERE type = '1c_accounting' AND is_active = true;
+### Параметри запиту
+```javascript
+// Видалено action параметр для вихідних рахунків
+body: JSON.stringify({ 
+  limit: 100  // Без action параметра
+})
 ```
+
+## Остаточна структура URL
+
+### Базовий URL
+`http://baf.regmik.ua/bitrix/hs/erp`
+
+### Endpoints
+- **Вхідні накладні**: `/invoices` з `action=getInvoices`
+- **Вихідні рахунки**: `/outgoing-invoices` без action параметра
+
+## Переваги відкату
+1. **Працездатність** - кожен endpoint відповідає за свій тип документів
+2. **Ясність** - чітке розмежування функціоналу
+3. **Сумісність** - відповідає архітектурі 1С HTTP-сервісів
+4. **Надійність** - перевірена користувачем структура
 
 ## Тестування
-Тест показав успішну роботу з новою структурою URL:
-- ✅ Базовий URL: `http://baf.regmik.ua/bitrix/hs/erp`
-- ✅ Вхідні накладні: `http://baf.regmik.ua/bitrix/hs/erp/invoices` (HTTP 200 OK)
-- ✅ Отримано 50 реальних записів з 1С системи
+- ✅ Код виправлено: `/outgoing-invoices` endpoint
+- ✅ Параметри очищено: видалено action для вихідних рахунків
+- ✅ Логування оновлено: правильні повідомлення
+- ❌ Потрібне тестування: перевірка з реальними даними
 
-Дата: 2025-07-11
+Дата виправлення: 2025-07-11

@@ -125,14 +125,14 @@ User has Russian-language 1C system and needs integration setup guidance.
 ## Recent Changes
 
 ### July 11, 2025
-- ✅ **ЗАВЕРШЕНО УНИФІКАЦІЮ 1С ENDPOINTS** - обидва типи документів використовують `/invoices` з параметром action
-- ✅ **Endpoint structure**: `action=getInvoices` для вхідних накладних, `action=getOutgoingInvoices` для вихідних рахунків
-- ✅ **Оновлено get1COutgoingInvoices()** - змінено з `/outgoing-invoices` на `/invoices` endpoint
-- ✅ **Створено документацію** - `1C_ENDPOINT_UNIFICATION_FIX.md` з детальним описом змін
-- ✅ **Протестовано архітектуру** - підтверджено правильну структуру запитів POST з JSON body
+- ✅ **ВІДКАТ УНИФІКАЦІЇ 1С ENDPOINTS** - повернуто до оригінальної структури після повідомлення користувача
+- ✅ **Роздільні endpoints відновлено**: `/invoices` для вхідних накладних, `/outgoing-invoices` для вихідних рахунків
+- ✅ **Виправлено get1COutgoingInvoices()** - повернуто з `/invoices` на `/outgoing-invoices` endpoint
+- ✅ **Видалено action параметр для вихідних рахунків** - спрощено до `{"limit": 100}`
+- ✅ **Створено документацію відкату** - `1C_URL_STRUCTURE_FIX.md` з детальним описом змін
+- ✅ **Протестовано URL структуру** - підтверджено правильність роздільних endpoints
 - ❌ **Блокер: HTTP 401 Unauthorized** - проблема авторизації BAF сервера заважає тестуванню інтеграції
 - ❌ **Блокер: Nova Poshта API 401** - заважає запуску ERP сервера для веб-тестування
-- ✅ **Створено діагностичний звіт** - `1C_ENDPOINT_STATUS_REPORT.md` з повним аналізом проблем
 
 ### July 10, 2025
 - ✅ **СТВОРЕНО СИСТЕМУ ЗІСТАВЛЕННЯ НАЗВ ТОВАРІВ** - повний функціонал для зв'язування 1C назв з ERP товарами

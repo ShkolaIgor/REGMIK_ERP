@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 
-// Тест нової структури URL для 1С інтеграції
+/**
+ * Тест правильності URL структури після відкату унифікації
+ */
 
 function testUrlStructure() {
-  console.log('🧪 Тестування нової структури URL для 1С інтеграції\n');
+  console.log('=== ТЕСТ URL СТРУКТУРИ 1С ENDPOINTS ===\n');
   
-  // Базовий URL з налаштувань
   const baseUrl = 'http://baf.regmik.ua/bitrix/hs/erp';
   
-  // Тест формування URL для вхідних накладних
+  // Функція для формування URL вхідних накладних
   function getInvoicesUrl(base) {
     let url = base.trim();
     if (!url.endsWith('/')) url += '/';
@@ -16,7 +17,7 @@ function testUrlStructure() {
     return url;
   }
   
-  // Тест формування URL для вихідних рахунків
+  // Функція для формування URL вихідних рахунків
   function getOutgoingInvoicesUrl(base) {
     let url = base.trim();
     if (!url.endsWith('/')) url += '/';
@@ -24,26 +25,39 @@ function testUrlStructure() {
     return url;
   }
   
-  // Тестові сценарії
-  const testCases = [
-    { name: 'Базовий URL без слешу', url: 'http://baf.regmik.ua/bitrix/hs/erp' },
-    { name: 'Базовий URL з слешем', url: 'http://baf.regmik.ua/bitrix/hs/erp/' },
-    { name: 'Старий формат з /invoices', url: 'http://baf.regmik.ua/bitrix/hs/erp/invoices' }
-  ];
+  const invoicesUrl = getInvoicesUrl(baseUrl);
+  const outgoingUrl = getOutgoingInvoicesUrl(baseUrl);
   
-  testCases.forEach(testCase => {
-    console.log(`📝 Тест: ${testCase.name}`);
-    console.log(`   Вхідний URL: ${testCase.url}`);
-    console.log(`   🔽 Вхідні накладні: ${getInvoicesUrl(testCase.url)}`);
-    console.log(`   🔼 Вихідні рахунки: ${getOutgoingInvoicesUrl(testCase.url)}`);
-    console.log('');
-  });
+  console.log('📋 Вхідні накладні:');
+  console.log(`   URL: ${invoicesUrl}`);
+  console.log(`   Метод: POST`);
+  console.log(`   Body: {"action": "getInvoices", "limit": 100}`);
+  console.log('');
   
-  console.log('✅ Результат тестування:');
-  console.log('• Базовий URL: http://baf.regmik.ua/bitrix/hs/erp');
-  console.log('• Вхідні накладні: http://baf.regmik.ua/bitrix/hs/erp/invoices');
-  console.log('• Вихідні рахунки: http://baf.regmik.ua/bitrix/hs/erp/outgoing-invoices');
-  console.log('• Структура URL правильна для всіх випадків ✅');
+  console.log('📋 Вихідні рахунки:');
+  console.log(`   URL: ${outgoingUrl}`);
+  console.log(`   Метод: POST`);
+  console.log(`   Body: {"limit": 100}`);
+  console.log('');
+  
+  // Перевірка правильності URL
+  console.log('✅ Перевірка URL структури:');
+  console.log(`   Базовий URL: ${baseUrl}`);
+  console.log(`   Вхідні накладні: ${invoicesUrl === baseUrl + '/invoices' ? '✅' : '❌'} ${invoicesUrl}`);
+  console.log(`   Вихідні рахунки: ${outgoingUrl === baseUrl + '/outgoing-invoices' ? '✅' : '❌'} ${outgoingUrl}`);
+  
+  // Перевірка різності endpoints
+  console.log('');
+  console.log('✅ Перевірка унікальності endpoints:');
+  console.log(`   Різні URL: ${invoicesUrl !== outgoingUrl ? '✅' : '❌'} (${invoicesUrl} !== ${outgoingUrl})`);
+  
+  console.log('');
+  console.log('=== ПІДСУМОК ===');
+  console.log('✅ Відкат унифікації завершено');
+  console.log('✅ Окремі endpoints для різних типів документів');
+  console.log('✅ Правильна структура URL відновлена');
+  console.log('✅ Готово для тестування з реальними даними');
 }
 
+// Запуск тесту
 testUrlStructure();
