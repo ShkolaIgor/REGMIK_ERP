@@ -9818,16 +9818,14 @@ export class DatabaseStorage implements IStorage {
         ));
 
       if (integrations.length === 0) {
-        console.log("Не знайдено активну 1C інтеграцію, використовуємо demo дані для вхідних накладних");
-        return await this.get1CInvoicesDemo();
+        throw new Error("Не знайдено активну 1C інтеграцію. Налаштуйте інтеграцію з 1C в розділі 'Інтеграції'.");
       }
 
       const integration = integrations[0];
       const config = integration.config as any;
 
       if (!config?.baseUrl || config.baseUrl.trim() === '' || config.baseUrl === 'http://') {
-        console.log("1C URL не налаштований, використовуємо demo дані для вхідних накладних");
-        return await this.get1CInvoicesDemo();
+        throw new Error("1C URL не налаштований. Вкажіть URL 1C сервера в налаштуваннях інтеграції.");
       }
 
       // Використовуємо точний URL з налаштувань без модифікації
@@ -9991,10 +9989,13 @@ export class DatabaseStorage implements IStorage {
 
     } catch (error) {
       console.error('Error fetching 1C invoices:', error);
-      console.log('Помилка з 1C інтеграцією, використовуємо demo дані для вхідних накладних');
       
-      // При будь-якій помилці повертаємо demo дані для стабільності системи
-      return await this.get1CInvoicesDemo();
+      // Викидаємо помилку для правильної діагностики
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error("Не вдалося підключитися до 1C системи. Перевірте URL та доступність сервера.");
+      }
+      
+      throw error;
     }
   }
 
@@ -10450,72 +10451,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Demo дані для вхідних накладних (відновлено для стабільності системи)
-  private async get1CInvoicesDemo() {
-    console.log("Повертаємо demo дані для вхідних накладних 1C");
-    
-    // Перевіряємо які накладні вже існують в ERP
-    const existingReceipts = await this.getSupplierReceipts();
-    
-    const demoInvoices = [
-      {
-        id: "1C-DEMO-001",
-        number: "ПН-052401",
-        date: "2025-07-11",
-        supplier: "ТОВ «Електронні компоненти України»",
-        supplierId: 1,
-        amount: 45750.00,
-        currency: "UAH",
-        status: "new",
-        items: [
-          {
-            name: "Мікроконтролер STM32F103C8T6",
-            quantity: 25,
-            price: 450.00,
-            total: 11250.00,
-            unit: "шт"
-          },
-          {
-            name: "Резистор 10кОм 0805 SMD",
-            quantity: 1000,
-            price: 2.50,
-            total: 2500.00,
-            unit: "шт"
-          }
-        ],
-        exists: false
-      },
-      {
-        id: "1C-DEMO-002", 
-        number: "ПН-052402",
-        date: "2025-07-10",
-        supplier: "ПП «Механічні деталі»",
-        supplierId: 2,
-        amount: 28500.00,
-        currency: "UAH",
-        status: "new",
-        items: [
-          {
-            name: "Корпус алюмінієвий 120x80x40мм",
-            quantity: 100,
-            price: 85.00,
-            total: 8500.00,
-            unit: "шт"
-          }
-        ],
-        exists: false
-      }
-    ];
 
-    // Перевіряємо які накладні вже імпортовані
-    return demoInvoices.map(invoice => ({
-      ...invoice,
-      exists: existingReceipts.some(receipt => 
-        receipt.supplier_document_number === invoice.number ||
-        receipt.comment?.includes(invoice.id)
-      )
-    }));
-  }
 
 }
 
