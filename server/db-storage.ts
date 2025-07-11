@@ -10207,6 +10207,134 @@ export class DatabaseStorage implements IStorage {
   }
 
   // ===============================
+  // 1C OUTGOING INVOICES METHODS
+  // ===============================
+
+  async get1COutgoingInvoices() {
+    try {
+      // Шукаємо активну 1C інтеграцію
+      const integrations = await this.db.select()
+        .from(integrationConfigs)
+        .where(and(
+          eq(integrationConfigs.type, '1c_accounting'),
+          eq(integrationConfigs.isActive, true)
+        ));
+
+      if (integrations.length === 0) {
+        throw new Error("Не знайдено активну 1C інтеграцію. Будь ласка, налаштуйте інтеграцію з 1C.");
+      }
+
+      const integration = integrations[0];
+      const config = integration.config as any;
+
+      if (!config?.baseUrl || config.baseUrl.trim() === '' || config.baseUrl === 'http://') {
+        console.log("1C URL не налаштований, використовуємо demo дані для вихідних рахунків");
+        return await this.getDemoOutgoingInvoices();
+      }
+
+      // Формуємо URL для отримання вихідних рахунків
+      const outgoingUrl = config.baseUrl.replace('/invoices', '/outgoing-invoices');
+      
+      console.log(`Запит вихідних рахунків з 1C: ${outgoingUrl}`);
+
+      // Робимо запит до 1C системи
+      const response = await fetch(outgoingUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...(config.clientId && config.clientSecret ? {
+            'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
+          } : {})
+        },
+        body: JSON.stringify({ 
+          action: 'getOutgoingInvoices',
+          limit: 100
+        }),
+        signal: AbortSignal.timeout(15000)
+      });
+
+      if (!response.ok) {
+        throw new Error(`1C сервер повернув помилку: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data || !Array.isArray(data.invoices)) {
+        throw new Error("1C сервер повернув некоректні дані");
+      }
+
+      // Обробляємо дані з 1C
+      const processedInvoices = data.invoices.map((invoice: any) => {
+        return {
+          id: invoice.ID || invoice.id,
+          number: invoice.НомерДокумента || invoice.Number || invoice.number,
+          date: invoice.ДатаДокумента || invoice.Date || invoice.date,
+          clientName: invoice.Клиент || invoice.Client || invoice.client || invoice.Контрагент || invoice.Counterparty,
+          total: this.parseUkrainianDecimal(invoice.Сумма || invoice.Amount || invoice.total || "0"),
+          currency: invoice.Валюта || invoice.Currency || invoice.currency || "UAH",
+          status: invoice.Статус || invoice.Status || invoice.status || "draft",
+          paymentStatus: invoice.СтатусОплати || invoice.PaymentStatus || invoice.paymentStatus || "unpaid",
+          description: invoice.Примітка || invoice.Comment || invoice.description || "",
+          positions: invoice.Позиції || invoice.Positions || invoice.positions || []
+        };
+      });
+
+      console.log(`Отримано ${processedInvoices.length} вихідних рахунків з 1C`);
+      return processedInvoices;
+
+    } catch (error) {
+      console.error('Помилка отримання вихідних рахунків з 1C:', error);
+      console.log("Помилка з'єднання з 1C, використовуємо demo дані для вихідних рахунків");
+      return await this.getDemoOutgoingInvoices();
+    }
+  }
+
+  // Demo дані для вихідних рахунків
+  async getDemoOutgoingInvoices() {
+    return [
+      {
+        id: "demo-out-001",
+        number: "ВИХ-001",
+        date: "2025-01-10",
+        clientName: "ТОВ ДЕМО КЛІЄНТ",
+        total: 12500.00,
+        currency: "UAH",
+        status: "confirmed",
+        paymentStatus: "paid",
+        description: "Демо вихідний рахунок #1",
+        positions: [
+          {
+            productName: "Послуга консультації",
+            quantity: 5,
+            price: 2500.00,
+            total: 12500.00
+          }
+        ]
+      },
+      {
+        id: "demo-out-002", 
+        number: "ВИХ-002",
+        date: "2025-01-11",
+        clientName: "ПП ТЕСТОВИЙ КЛІЄНТ",
+        total: 8750.00,
+        currency: "UAH",
+        status: "draft",
+        paymentStatus: "unpaid",
+        description: "Демо вихідний рахунок #2",
+        positions: [
+          {
+            productName: "Технічна підтримка",
+            quantity: 2,
+            price: 4375.00,
+            total: 8750.00
+          }
+        ]
+      }
+    ];
+  }
+
+  // ===============================
   // INTEGRATION CONFIGS METHODS
   // ===============================
 

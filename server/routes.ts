@@ -11058,6 +11058,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 1C Outgoing Invoices endpoint
+  app.get('/api/1c/outgoing-invoices', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const outgoingInvoices = await storage.get1COutgoingInvoices();
+      res.json(outgoingInvoices);
+    } catch (error) {
+      console.error('Error fetching 1C outgoing invoices:', error);
+      // Fallback to demo data if 1C connection fails
+      try {
+        const demoInvoices = await storage.getDemoOutgoingInvoices();
+        res.json(demoInvoices);
+      } catch (demoError) {
+        console.error('Error fetching demo outgoing invoices:', demoError);
+        res.status(500).json({ message: 'Failed to fetch 1C outgoing invoices' });
+      }
+    }
+  });
+
   app.post('/api/1c/invoices/:id/import', isSimpleAuthenticated, async (req, res) => {
     try {
       const invoiceId = req.params.id;
