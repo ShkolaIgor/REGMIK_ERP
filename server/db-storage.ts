@@ -9838,6 +9838,19 @@ export class DatabaseStorage implements IStorage {
     return matches / totalWords;
   }
 
+  // Допоміжна функція для конвертації коду валюти
+  private convertCurrencyCode(currencyCode: string): string {
+    const currencyMap: Record<string, string> = {
+      '980': 'UAH',  // Україна гривня
+      '840': 'USD',  // США долар
+      '978': 'EUR',  // Євро
+      '643': 'RUB',  // Російський рубль
+      '985': 'PLN'   // Польський злотий
+    };
+    
+    return currencyMap[currencyCode] || currencyCode;
+  }
+
   // 1C Integration methods
   async get1CInvoices() {
     try {
@@ -10046,7 +10059,7 @@ export class DatabaseStorage implements IStorage {
           supplierName: invoice.supplier || invoice.Постачальник || "Невідомий постачальник",
           supplierId: invoice.supplierId || invoice.IDПостачальника || 1,
           amount: this.parseUkrainianDecimal(invoice.amount || invoice.Сума || 0),
-          currency: invoice.currency || invoice.Валюта || "UAH",
+          currency: this.convertCurrencyCode(invoice.currency || invoice.Валюта || "UAH"),
           status: invoice.status || invoice.Статус || "new",
           items,
           exists: existingReceipts.some(receipt => 
@@ -10504,7 +10517,7 @@ export class DatabaseStorage implements IStorage {
           date: invoice.date || invoice.ДатаСчета || invoice.ДатаДокумента || new Date().toISOString().split('T')[0],
           clientName: invoice.clientName || invoice.НаименованиеКонтрагента || invoice.Контрагент || invoice.client || "Клієнт не вказано",
           total: this.parseUkrainianDecimal(String(invoice.totalAmount || invoice.СуммаДокумента || invoice.Сумма || invoice.total || "0")),
-          currency: invoice.currency || invoice.КодВалюты || invoice.Валюта || "UAH",
+          currency: this.convertCurrencyCode(invoice.currency || invoice.КодВалюты || invoice.Валюта || "UAH"),
           status: invoice.status || invoice.Статус || "confirmed",
           paymentStatus: invoice.paymentStatus || invoice.СтатусОплаты || invoice.СтатусОплати || "unpaid",
           description: invoice.description || invoice.Примітка || invoice.Comment || "",

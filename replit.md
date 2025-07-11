@@ -131,6 +131,9 @@ User has Russian-language 1C system and needs integration setup guidance.
 - ✅ **Покращено обробку JSON помилок** - система намагається виправити українські десяткові коми
 - ✅ **Протестовано fallback функціональність** - підтверджена робота при недоступності 1С серверу
 - ✅ **Система готова до production** - frontend компоненти можуть працювати з тестовими даними
+- ✅ **Виправлено код валюти 980** - додано convertCurrencyCode() для автоматичної конвертації 980→UAH
+- ✅ **Покращено інтерфейси TypeScript** - оновлено OutgoingInvoice1C з повною структурою даних
+- ✅ **Протестовано API методи** - підтверджена робота get1CInvoices() та get1COutgoingInvoices() з fallback
 - ✅ **ВІДКАТ УНИФІКАЦІЇ 1С ENDPOINTS** - повернуто до оригінальної структури після повідомлення користувача
 - ✅ **Роздільні endpoints відновлено**: `/invoices` для вхідних накладних, `/outgoing-invoices` для вихідних рахунків
 - ✅ **Виправлено get1COutgoingInvoices()** - повернуто з `/invoices` на `/outgoing-invoices` endpoint

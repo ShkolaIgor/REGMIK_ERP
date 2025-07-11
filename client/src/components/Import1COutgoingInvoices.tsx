@@ -33,6 +33,9 @@ interface OutgoingInvoice1C {
   status: string;
   paymentStatus: string;
   description: string;
+  clientTaxCode?: string;
+  itemsCount?: number;
+  managerName?: string;
   positions: Array<{
     productName: string;
     quantity: number;
