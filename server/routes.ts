@@ -11050,48 +11050,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 1C Integration Endpoints
   app.get('/api/1c/invoices', isSimpleAuthenticated, async (req, res) => {
     try {
+      console.log('🔍 Запит 1C накладних - початок');
       const invoices = await storage.get1CInvoices();
+      console.log(`✅ Успішно отримано ${invoices.length} 1C накладних`);
       res.json(invoices);
     } catch (error) {
-      console.error('Error fetching 1C invoices:', error);
-      res.status(500).json({ message: 'Failed to fetch 1C invoices' });
+      console.error('❌ ПОМИЛКА 1C накладних:', error);
+      res.status(500).json({ 
+        message: 'Не вдалося отримати накладні з 1С',
+        error: error instanceof Error ? error.message : 'Невідома помилка',
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   });
 
   // 1C Outgoing Invoices endpoint
   app.get('/api/1c/outgoing-invoices', isSimpleAuthenticated, async (req, res) => {
     try {
-      console.log('Запит вихідних рахунків з 1С через API endpoint');
+      console.log('🔍 Запит 1C вихідних рахунків - початок');
       const outgoingInvoices = await storage.get1COutgoingInvoices();
-      console.log(`API endpoint повертає ${outgoingInvoices.length} вихідних рахунків`);
+      console.log(`✅ Успішно отримано ${outgoingInvoices.length} вихідних рахунків`);
       res.json(outgoingInvoices);
     } catch (error) {
-      console.error('Критична помилка отримання вихідних рахунків з 1С:', error);
+      console.error('❌ ПОМИЛКА 1C вихідних рахунків:', error);
       res.status(500).json({ 
         message: 'Не вдалося отримати вихідні рахунки з 1С', 
-        error: error instanceof Error ? error.message : 'Невідома помилка'
+        error: error instanceof Error ? error.message : 'Невідома помилка',
+        stack: error instanceof Error ? error.stack : undefined,
+        details: 'Перевірте налаштування 1C інтеграції та з\'єднання з сервером'
       });
     }
   });
 
   app.post('/api/1c/invoices/:id/import', isSimpleAuthenticated, async (req, res) => {
     try {
+      console.log(`🔍 Імпорт 1C накладної ${req.params.id} - початок`);
       const invoiceId = req.params.id;
       const result = await storage.import1CInvoice(invoiceId);
+      console.log(`✅ Успішно імпортовано накладну ${invoiceId}`);
       res.json(result);
     } catch (error) {
-      console.error('Error importing 1C invoice:', error);
-      res.status(500).json({ message: 'Failed to import 1C invoice' });
+      console.error(`❌ ПОМИЛКА імпорту накладної ${req.params.id}:`, error);
+      res.status(500).json({ 
+        message: 'Не вдалося імпортувати накладну з 1С',
+        error: error instanceof Error ? error.message : 'Невідома помилка',
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   });
 
   app.post('/api/1c/sync', isSimpleAuthenticated, async (req, res) => {
     try {
+      console.log('🔍 Синхронізація 1C накладних - початок');
       const result = await storage.sync1CInvoices();
+      console.log(`✅ Синхронізація завершена: ${JSON.stringify(result)}`);
       res.json(result);
     } catch (error) {
-      console.error('Error syncing 1C invoices:', error);
-      res.status(500).json({ message: 'Failed to sync 1C invoices' });
+      console.error('❌ ПОМИЛКА синхронізації 1C:', error);
+      res.status(500).json({ 
+        message: 'Не вдалося синхронізувати накладні з 1С',
+        error: error instanceof Error ? error.message : 'Невідома помилка',
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   });
 

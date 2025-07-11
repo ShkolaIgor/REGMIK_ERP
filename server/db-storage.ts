@@ -9860,9 +9860,10 @@ export class DatabaseStorage implements IStorage {
         throw new Error("1C URL не налаштований. Вкажіть URL 1C сервера в налаштуваннях інтеграції.");
       }
 
-      // Використовуємо точний URL з налаштувань без модифікації
-      // Для BAF системи очікуємо повний шлях типу: http://baf.regmik.ua/bitrix/hs/erp/invoices
-      const invoicesUrl = config.baseUrl.trim();
+      // Формуємо URL додаючи /invoices до базового URL
+      let invoicesUrl = config.baseUrl.trim();
+      if (!invoicesUrl.endsWith('/')) invoicesUrl += '/';
+      invoicesUrl += 'invoices';
 
       console.log(`Запит накладних з BAF: ${invoicesUrl}`);
       console.log(`Авторизація: ${config.clientId}:****`);
@@ -10312,35 +10313,78 @@ export class DatabaseStorage implements IStorage {
         throw new Error("1C URL не налаштований. Будь ласка, вкажіть URL 1C сервера в налаштуваннях інтеграції.");
       }
 
-      // Формуємо правильний URL для вихідних рахунків  
-      let outgoingUrl = config.baseUrl;
-      
-      // Якщо URL закінчується на /invoices, замінюємо на /outgoing-invoices
-      if (outgoingUrl.endsWith('/invoices')) {
-        outgoingUrl = outgoingUrl.replace('/invoices', '/outgoing-invoices');
-      } else {
-        // Додаємо /outgoing-invoices до кінця URL
-        if (!outgoingUrl.endsWith('/')) outgoingUrl += '/';
-        outgoingUrl += 'outgoing-invoices';
-      }
+      // Формуємо URL додаючи /outgoing-invoices до базового URL
+      let outgoingUrl = config.baseUrl.trim();
+      if (!outgoingUrl.endsWith('/')) outgoingUrl += '/';
+      outgoingUrl += 'outgoing-invoices';
       
       console.log(`Запит реальних вихідних рахунків з 1C: ${outgoingUrl}`);
-      console.log(`Параметри запиту: action=getInvoices, limit=100`);
+      console.log(`Параметри запиту: action=getOutgoingInvoices, limit=100`);
 
-      // Робимо GET запит з параметрами (як очікує 1C HTTP-сервіс)
-      const urlWithParams = `${outgoingUrl}?action=getInvoices&limit=100`;
+      // Використовуємо ту ж логіку що і в get1CInvoices: GET → POST JSON → POST URL params
+      let response;
       
-      const response = await fetch(urlWithParams, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'REGMIK-ERP/1.0',
-          ...(config.clientId && config.clientSecret ? {
-            'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
-          } : {})
-        },
-        signal: AbortSignal.timeout(30000) // Збільшуємо timeout до 30 секунд
-      });
+      try {
+        // Спочатку пробуємо GET (хоча знаємо що не працює)
+        console.log('Пробуємо GET запит...');
+        response = await fetch(`${outgoingUrl}?action=getOutgoingInvoices&limit=100`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'REGMIK-ERP/1.0',
+            ...(config.clientId && config.clientSecret ? {
+              'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
+            } : {})
+          },
+          signal: AbortSignal.timeout(10000)
+        });
+
+        if (response.ok) {
+          console.log('GET запит успішний');
+        } else {
+          console.log(`GET запит неуспішний: ${response.status}, пробуємо POST...`);
+          throw new Error('GET failed, trying POST');
+        }
+      } catch (getError) {
+        console.log('GET запит не вдався, пробуємо POST з JSON body...');
+        
+        // Пробуємо POST з JSON body
+        response = await fetch(outgoingUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'User-Agent': 'REGMIK-ERP/1.0',
+            ...(config.clientId && config.clientSecret ? {
+              'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
+            } : {})
+          },
+          body: JSON.stringify({ 
+            action: 'getOutgoingInvoices',
+            limit: 100
+          }),
+          signal: AbortSignal.timeout(10000)
+        });
+        
+        if (!response.ok) {
+          console.log(`POST JSON також неуспішний: ${response.status}, пробуємо POST з URL параметрами...`);
+          
+          // Третя спроба: POST з URL parameters
+          const urlWithParams = `${outgoingUrl}?action=getOutgoingInvoices&limit=100`;
+          response = await fetch(urlWithParams, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Accept': 'application/json',
+              'User-Agent': 'REGMIK-ERP/1.0',
+              ...(config.clientId && config.clientSecret ? {
+                'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
+              } : {})
+            },
+            signal: AbortSignal.timeout(10000)
+          });
+        }
+      }
 
       console.log(`1C відповідь: ${response.status} ${response.statusText}`);
 
