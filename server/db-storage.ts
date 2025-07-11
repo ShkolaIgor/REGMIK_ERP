@@ -8560,9 +8560,29 @@ export class DatabaseStorage implements IStorage {
     if (typeof value === 'number') return value;
     
     try {
-      // Конвертуємо в строку та замінюємо кому на крапку для українського формату
-      const normalized = value.toString().replace(',', '.');
-      const parsed = parseFloat(normalized);
+      let strValue = value.toString();
+      
+      // Обробляємо українські числа з комами як роздільниками розрядів
+      // Приклад: "4,632.00" або "4,632,980.50" або "1,234.56"
+      if (strValue.includes(',')) {
+        // Якщо є і кома і крапка - кома це роздільник розрядів
+        if (strValue.includes('.')) {
+          // Видаляємо коми (роздільники розрядів), крапка залишається як десятковий роздільник
+          strValue = strValue.replace(/,/g, '');
+        } else {
+          // Тільки кома - це може бути десятковий роздільник
+          // Якщо цифр після коми 2 або менше - це десятковий роздільник
+          const parts = strValue.split(',');
+          if (parts.length === 2 && parts[1].length <= 2) {
+            strValue = strValue.replace(',', '.');
+          } else {
+            // Інакше коми - це роздільники розрядів
+            strValue = strValue.replace(/,/g, '');
+          }
+        }
+      }
+      
+      const parsed = parseFloat(strValue);
       
       if (!isNaN(parsed)) {
         return parsed;
@@ -10063,36 +10083,56 @@ export class DatabaseStorage implements IStorage {
           const components = await this.getComponents();
           const searchName = item.name; // використовуємо ERP назву якщо товар зіставлений
           
+          // Спочатку точний пошук
           component = components.find(c => 
-            c.name.toLowerCase().includes(searchName.toLowerCase()) ||
-            searchName.toLowerCase().includes(c.name.toLowerCase())
+            c.name.toLowerCase() === searchName.toLowerCase() ||
+            c.sku.toLowerCase() === searchName.toLowerCase()
           );
+          
+          // Якщо не знайшли точний збіг, шукаємо частковий
+          if (!component) {
+            component = components.find(c => 
+              c.name.toLowerCase().includes(searchName.toLowerCase()) ||
+              searchName.toLowerCase().includes(c.name.toLowerCase()) ||
+              (c.sku && (c.sku.toLowerCase().includes(searchName.toLowerCase()) || 
+                         searchName.toLowerCase().includes(c.sku.toLowerCase())))
+            );
+          }
           
           // Якщо не знайшли компонент, створюємо новий
           if (!component) {
             const componentCategories = await this.getComponentCategories();
             const defaultCategory = componentCategories.find(cat => cat.name === "Загальні") || componentCategories[0];
             
+            if (!defaultCategory) {
+              throw new Error("Не знайдено категорію компонентів для створення нового товару");
+            }
+            
+            // Створюємо унікальний SKU
+            const uniqueSku = `1C-${Date.now()}-${totalCreated + 1}`;
+            
             component = await this.createComponent({
-              name: item.name, // використовуємо ERP назву
-              sku: `1C-${invoiceId}-${totalCreated + 1}`,
-              categoryId: defaultCategory?.id || 1,
+              name: searchName, // використовуємо назву з ERP/1C
+              sku: uniqueSku,
+              categoryId: defaultCategory.id,
               isActive: true
             });
             
+            console.log(`Створено новий компонент: "${searchName}" (SKU: ${uniqueSku})`);
+            
             // Якщо у нас є оригінальна назва з 1C і вона відрізняється, створюємо зіставлення
-            if (item.originalName && item.originalName !== item.name && !item.isMapped) {
+            if (item.originalName && item.originalName !== searchName && !item.isMapped) {
               await this.createProductNameMapping({
                 externalSystemName: '1c',
                 externalProductName: item.originalName,
                 erpProductId: component.id,
-                erpProductName: item.name,
+                erpProductName: searchName,
                 mappingType: 'automatic',
                 confidence: 0.8,
                 isActive: true,
                 createdBy: 'system'
               });
-              console.log(`Створено автоматичне зіставлення: "${item.originalName}" -> "${item.name}"`);
+              console.log(`Створено автоматичне зіставлення: "${item.originalName}" -> "${searchName}"`);
             }
           } else if (item.originalName && item.originalName !== component.name && !item.isMapped) {
             // Компонент знайдений, але є оригінальна назва з 1C - створюємо зіставлення
@@ -10225,15 +10265,13 @@ export class DatabaseStorage implements IStorage {
       // Формуємо правильний URL для вихідних рахунків  
       let outgoingUrl = config.baseUrl;
       
-      // Перевіряємо чи URL закінчується на /invoices та змінюємо на /outgoing-invoices
+      // Якщо URL закінчується на /invoices, замінюємо на /outgoing-invoices
       if (outgoingUrl.endsWith('/invoices')) {
         outgoingUrl = outgoingUrl.replace('/invoices', '/outgoing-invoices');
-      } else if (outgoingUrl.endsWith('/hs/erp/invoices')) {
-        outgoingUrl = outgoingUrl.replace('/hs/erp/invoices', '/hs/erp/outgoing-invoices');
-      } else if (!outgoingUrl.includes('outgoing-invoices')) {
-        // Якщо URL не містить правильний endpoint, додаємо його
+      } else {
+        // Додаємо /outgoing-invoices до кінця URL
         if (!outgoingUrl.endsWith('/')) outgoingUrl += '/';
-        outgoingUrl += 'hs/erp/outgoing-invoices';
+        outgoingUrl += 'outgoing-invoices';
       }
       
       console.log(`Запит реальних вихідних рахунків з 1C: ${outgoingUrl}`);
