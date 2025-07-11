@@ -9973,7 +9973,7 @@ export class DatabaseStorage implements IStorage {
           id: invoice.id || invoice.ID || `1C-${Date.now()}`,
           number: invoice.number || invoice.НомерДокумента || "Невідомий",
           date: invoice.date || invoice.Дата || new Date().toISOString().split('T')[0],
-          supplier: invoice.supplier || invoice.Постачальник || "Невідомий постачальник",
+          supplierName: invoice.supplier || invoice.Постачальник || "Невідомий постачальник",
           supplierId: invoice.supplierId || invoice.IDПостачальника || 1,
           amount: this.parseUkrainianDecimal(invoice.amount || invoice.Сума || 0),
           currency: invoice.currency || invoice.Валюта || "UAH",
@@ -10024,11 +10024,11 @@ export class DatabaseStorage implements IStorage {
 
       // Check if supplier exists, create if not
       const suppliers = await this.getSuppliers();
-      let supplier = suppliers.find(s => s.id === invoice.supplierId || s.name === invoice.supplier);
+      let supplier = suppliers.find(s => s.id === invoice.supplierId || s.name === invoice.supplierName);
       
       if (!supplier) {
         supplier = await this.createSupplier({
-          name: invoice.supplier,
+          name: invoice.supplierName,
           isActive: true
         });
       }

@@ -307,7 +307,7 @@ export function Import1CInvoices() {
                           <div>
                             <div className="font-medium text-sm">
                               <Building2 className="w-3 h-3 inline mr-1" />
-                              {invoice.supplier}
+                              {invoice.supplierName}
                             </div>
                           </div>
                           
