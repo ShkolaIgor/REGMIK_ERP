@@ -8553,6 +8553,27 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  private parseUkrainianDecimal(value: string | number): number {
+    if (!value) return 0;
+    
+    // Якщо це вже число - повертаємо як є
+    if (typeof value === 'number') return value;
+    
+    try {
+      // Конвертуємо в строку та замінюємо кому на крапку для українського формату
+      const normalized = value.toString().replace(',', '.');
+      const parsed = parseFloat(normalized);
+      
+      if (!isNaN(parsed)) {
+        return parsed;
+      }
+      
+      return 0;
+    } catch {
+      return 0;
+    }
+  }
+
   // Supplier Document Types methods
   async getSupplierDocumentTypes() {
     try {
@@ -9940,9 +9961,9 @@ export class DatabaseStorage implements IStorage {
                 erpProductId: mappedProduct ? mappedProduct.erpProductId : null,
                 originalName: externalProductName, // зберігаємо оригінальну назву з 1C
                 isMapped: !!mappedProduct, // показуємо чи товар зіставлений
-                quantity: parseFloat(item.quantity || item.Кількість || 0),
-                price: parseFloat(item.price || item.Ціна || 0),
-                total: parseFloat(item.total || item.Сума || 0),
+                quantity: this.parseUkrainianDecimal(item.quantity || item.Кількість || 0),
+                price: this.parseUkrainianDecimal(item.price || item.Ціна || 0),
+                total: this.parseUkrainianDecimal(item.total || item.Сума || 0),
                 unit: item.unit || item.ОдиницяВиміру || "шт"
               };
             }))
@@ -9954,7 +9975,7 @@ export class DatabaseStorage implements IStorage {
           date: invoice.date || invoice.Дата || new Date().toISOString().split('T')[0],
           supplier: invoice.supplier || invoice.Постачальник || "Невідомий постачальник",
           supplierId: invoice.supplierId || invoice.IDПостачальника || 1,
-          amount: parseFloat(invoice.amount || invoice.Сума || 0),
+          amount: this.parseUkrainianDecimal(invoice.amount || invoice.Сума || 0),
           currency: invoice.currency || invoice.Валюта || "UAH",
           status: invoice.status || invoice.Статус || "new",
           items,
