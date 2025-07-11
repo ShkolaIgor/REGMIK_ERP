@@ -86,29 +86,67 @@ export function Import1COutgoingInvoices() {
     invoicesCount: outgoingInvoices?.length || 0
   });
 
-  const handleSelectAll = () => {
-    if (selectedInvoices.size === outgoingInvoices.length) {
+  // Мутація для імпорту вибраних рахунків
+  const importMutation = useMutation({
+    mutationFn: async (invoiceIds: string[]) => {
+      const results = [];
+      for (const invoiceId of invoiceIds) {
+        const result = await apiRequest(`/api/1c/outgoing-invoices/${invoiceId}/import`, {
+          method: 'POST'
+        });
+        results.push(result);
+      }
+      return results;
+    },
+    onSuccess: (results) => {
+      toast({
+        title: "Імпорт завершено",
+        description: `Успішно імпортовано ${results.length} вихідних рахунків як замовлення`,
+        variant: "default",
+      });
+      
+      // Оновлюємо дані
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      
       setSelectedInvoices(new Set());
-    } else {
+      setIsImporting(false);
+      setImportProgress(null);
+    },
+    onError: (error) => {
+      console.error("Import error:", error);
+      toast({
+        title: "Помилка імпорту",
+        description: error instanceof Error ? error.message : "Невідома помилка",
+        variant: "destructive",
+      });
+      setIsImporting(false);
+    }
+  });
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
       setSelectedInvoices(new Set(outgoingInvoices.map((inv: OutgoingInvoice1C) => inv.id)));
+    } else {
+      setSelectedInvoices(new Set());
     }
   };
 
-  const handleSelectInvoice = (invoiceId: string) => {
+  const handleSelectInvoice = (invoiceId: string, checked: boolean) => {
     const newSelected = new Set(selectedInvoices);
-    if (newSelected.has(invoiceId)) {
-      newSelected.delete(invoiceId);
-    } else {
+    if (checked) {
       newSelected.add(invoiceId);
+    } else {
+      newSelected.delete(invoiceId);
     }
     setSelectedInvoices(newSelected);
   };
 
-  const handleImport = async () => {
+  const handleImport = () => {
     if (selectedInvoices.size === 0) {
       toast({
-        title: "Нічого не вибрано",
-        description: "Будь ласка, виберіть рахунки для імпорту",
+        title: "Оберіть рахунки",
+        description: "Будь ласка, оберіть хоча б один рахунок для імпорту",
         variant: "destructive",
       });
       return;
@@ -123,79 +161,7 @@ export function Import1COutgoingInvoices() {
       errors: []
     });
 
-    try {
-      // TODO: Implement actual import logic for outgoing invoices
-      // For now, simulate the import process
-      let processed = 0;
-      let succeeded = 0;
-      let failed = 0;
-      const errors: string[] = [];
-
-      for (const invoiceId of selectedInvoices) {
-        try {
-          // Simulate processing delay
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // TODO: Replace with actual API call
-          // const response = await fetch(`/api/1c/outgoing-invoices/${invoiceId}/import`, {
-          //   method: 'POST',
-          //   headers: { 'Content-Type': 'application/json' }
-          // });
-          
-          // if (!response.ok) {
-          //   throw new Error(`HTTP ${response.status}`);
-          // }
-          
-          succeeded++;
-          processed++;
-          
-          setImportProgress(prev => prev ? {
-            ...prev,
-            processed,
-            succeeded,
-            failed
-          } : null);
-          
-        } catch (error) {
-          failed++;
-          processed++;
-          const invoice = outgoingInvoices.find((inv: OutgoingInvoice1C) => inv.id === invoiceId);
-          errors.push(`${invoice?.number || invoiceId}: ${error.message}`);
-          
-          setImportProgress(prev => prev ? {
-            ...prev,
-            processed,
-            succeeded,
-            failed,
-            errors
-          } : null);
-        }
-      }
-
-      toast({
-        title: "Імпорт завершено",
-        description: `Успішно імпортовано ${succeeded} з ${selectedInvoices.size} рахунків`,
-        variant: succeeded > 0 ? "default" : "destructive",
-      });
-
-      // Оновлюємо дані після імпорту
-      await queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
-      
-      // Очищаємо вибрані рахунки
-      setSelectedInvoices(new Set());
-      
-    } catch (error) {
-      console.error("Import error:", error);
-      toast({
-        title: "Помилка імпорту",
-        description: "Не вдалося імпортувати рахунки",
-        variant: "destructive",
-      });
-    } finally {
-      setIsImporting(false);
-      setTimeout(() => setImportProgress(null), 3000);
-    }
+    importMutation.mutate(Array.from(selectedInvoices));
   };
 
   const getStatusBadge = (status: string) => {
@@ -357,7 +323,8 @@ export function Import1COutgoingInvoices() {
                             <Checkbox
                               id={`invoice-${invoice.id}`}
                               checked={selectedInvoices.has(invoice.id)}
-                              onCheckedChange={() => handleSelectInvoice(invoice.id)}
+                              onCheckedChange={(checked) => handleSelectInvoice(invoice.id, checked as boolean)}
+                              disabled={isImporting}
                             />
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-2">

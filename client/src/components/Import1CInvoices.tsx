@@ -13,13 +13,17 @@ interface Invoice1C {
   id: string;
   number: string;
   date: string;
-  supplier: string;
+  supplierName: string;
+  supplierTaxCode?: string;
   supplierId?: number;
   amount: number;
   currency: string;
   status: string;
   items: Array<{
     name: string;
+    erpProductId?: number | null;
+    originalName?: string;
+    isMapped?: boolean;
     quantity: number;
     price: number;
     total: number;
@@ -321,8 +325,11 @@ export function Import1CInvoices() {
                           <div>
                             <div className="font-medium text-sm">
                               <Building2 className="w-3 h-3 inline mr-1" />
-                              {invoice.supplier}
+                              {invoice.supplierName}
                             </div>
+                            {invoice.supplierTaxCode && (
+                              <div className="text-xs text-gray-500">ЕДРПОУ: {invoice.supplierTaxCode}</div>
+                            )}
                           </div>
                           
                           <div>
@@ -385,7 +392,10 @@ export function Import1CInvoices() {
                   <CardContent className="space-y-2">
                     <div><strong>Номер:</strong> {showPreview.number}</div>
                     <div><strong>Дата:</strong> {new Date(showPreview.date).toLocaleDateString('uk-UA')}</div>
-                    <div><strong>Постачальник:</strong> {showPreview.supplier}</div>
+                    <div><strong>Постачальник:</strong> {showPreview.supplierName}</div>
+                    {showPreview.supplierTaxCode && (
+                      <div><strong>ЕДРПОУ:</strong> {showPreview.supplierTaxCode}</div>
+                    )}
                     <div><strong>Статус:</strong> {showPreview.status}</div>
                   </CardContent>
                 </Card>

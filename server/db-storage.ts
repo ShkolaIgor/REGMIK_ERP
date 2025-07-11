@@ -10057,6 +10057,7 @@ export class DatabaseStorage implements IStorage {
           number: invoice.number || invoice.НомерДокумента || "Невідомий",
           date: invoice.date || invoice.Дата || new Date().toISOString().split('T')[0],
           supplierName: invoice.supplier || invoice.Постачальник || "Невідомий постачальник",
+          supplierTaxCode: invoice.ЕДРПОУ || invoice.supplierTaxCode || "",
           supplierId: invoice.supplierId || invoice.IDПостачальника || 1,
           amount: this.parseUkrainianDecimal(invoice.amount || invoice.Сума || 0),
           currency: this.convertCurrencyCode(invoice.currency || invoice.Валюта || "UAH"),
@@ -10085,6 +10086,7 @@ export class DatabaseStorage implements IStorage {
             number: "ПН-000001",
             date: "2025-01-10",
             supplierName: "ТОВ \"Тестовий Постачальник\"",
+            supplierTaxCode: "12345678",
             supplierId: 1,
             amount: 15000.00,
             currency: "UAH",
@@ -10092,13 +10094,19 @@ export class DatabaseStorage implements IStorage {
             items: [
               {
                 name: "Демо товар 1",
+                erpProductId: null,
+                originalName: "Демо товар 1",
+                isMapped: false,
                 quantity: 10,
                 price: 500.00,
                 total: 5000.00,
                 unit: "шт"
               },
               {
-                name: "Демо товар 2", 
+                name: "Демо товар 2",
+                erpProductId: null,
+                originalName: "Демо товар 2", 
+                isMapped: false,
                 quantity: 5,
                 price: 1000.00,
                 total: 5000.00,
@@ -10106,6 +10114,9 @@ export class DatabaseStorage implements IStorage {
               },
               {
                 name: "Демо товар 3",
+                erpProductId: null,
+                originalName: "Демо товар 3",
+                isMapped: false,
                 quantity: 1,
                 price: 5000.00,
                 total: 5000.00,
@@ -10119,6 +10130,7 @@ export class DatabaseStorage implements IStorage {
             number: "ПН-000002",
             date: "2025-01-11",
             supplierName: "ПП \"Демо Постачальник\"",
+            supplierTaxCode: "87654321",
             supplierId: 1,
             amount: 8500.00,
             currency: "UAH",
@@ -10126,6 +10138,9 @@ export class DatabaseStorage implements IStorage {
             items: [
               {
                 name: "Демо компонент А",
+                erpProductId: null,
+                originalName: "Демо компонент А",
+                isMapped: false,
                 quantity: 20,
                 price: 200.00,
                 total: 4000.00,
@@ -10133,6 +10148,9 @@ export class DatabaseStorage implements IStorage {
               },
               {
                 name: "Демо компонент Б",
+                erpProductId: null,
+                originalName: "Демо компонент Б",
+                isMapped: false,
                 quantity: 15,
                 price: 300.00,
                 total: 4500.00,
@@ -10144,6 +10162,124 @@ export class DatabaseStorage implements IStorage {
         ];
       }
       
+      throw error;
+    }
+  }
+
+  async import1COutgoingInvoice(invoiceId: string) {
+    try {
+      // Get outgoing invoice data from 1C
+      const outgoingInvoices = await this.get1COutgoingInvoices();
+      const invoice = outgoingInvoices.find(inv => inv.id === invoiceId);
+      
+      if (!invoice) {
+        throw new Error(`Вихідний рахунок ${invoiceId} не знайдений в 1C`);
+      }
+
+      // Check if client exists, create if not
+      let client = null;
+      if (invoice.clientTaxCode) {
+        // Спочатку шукаємо клієнта за податковим кодом
+        const clients = await this.getClients();
+        client = clients.find(c => c.tax_code === invoice.clientTaxCode);
+      }
+      
+      if (!client) {
+        // Шукаємо клієнта за назвою
+        const clients = await this.getClients();
+        client = clients.find(c => 
+          c.name?.toLowerCase() === invoice.clientName?.toLowerCase() ||
+          c.full_name?.toLowerCase() === invoice.clientName?.toLowerCase()
+        );
+      }
+
+      if (!client) {
+        // Створюємо нового клієнта
+        const clientData = {
+          name: invoice.clientName,
+          full_name: invoice.clientName,
+          tax_code: invoice.clientTaxCode || null,
+          client_type_id: 1, // Individual by default
+          is_active: true
+        };
+        
+        client = await this.createClient(clientData);
+        console.log(`Створено нового клієнта: ${client.name} (ID: ${client.id})`);
+      }
+
+      // Generate unique order number
+      const orderNumber = await this.generateOrderNumber();
+
+      // Create order
+      const orderData = {
+        orderNumber,
+        invoiceNumber: invoice.number,
+        orderDate: new Date(invoice.date),
+        clientId: client.id,
+        status: invoice.paymentStatus === 'paid' ? 'paid' : 
+               invoice.paymentStatus === 'partial' ? 'partial' : 'confirmed',
+        notes: `Імпортовано з 1C: ${invoice.id}. ${invoice.description || ''}`,
+        orderTotal: invoice.total.toString(),
+        currency: invoice.currency || 'UAH'
+      };
+
+      const order = await this.createOrder(orderData);
+      console.log(`Створено замовлення: ${order.order_number} (ID: ${order.id})`);
+
+      // Create order items from invoice positions
+      let totalItemsCreated = 0;
+      for (const position of invoice.positions || []) {
+        let product;
+        
+        // Пошук товару за назвою
+        const products = await this.getProducts();
+        product = products.find(p => 
+          p.name.toLowerCase() === position.productName.toLowerCase() ||
+          p.sku.toLowerCase() === position.productName.toLowerCase()
+        );
+        
+        // Якщо товар не знайдений, створюємо новий
+        if (!product) {
+          const productData = {
+            name: position.productName,
+            sku: `1C-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            categoryId: 1, // Default category
+            sellPrice: position.price.toString(),
+            costPrice: (position.price * 0.7).toString(), // Примірна собівартість
+            isActive: true
+          };
+          
+          product = await this.createProduct(productData);
+          console.log(`Створено новий товар: ${product.name} (SKU: ${product.sku})`);
+        }
+
+        // Create order item
+        const orderItemData = {
+          orderId: order.id,
+          productId: product.id,
+          quantity: position.quantity.toString(),
+          unitPrice: position.price.toString(),
+          totalPrice: position.total.toString()
+        };
+
+        await this.createOrderItem(orderItemData);
+        totalItemsCreated++;
+      }
+
+      console.log(`Імпорт завершено: створено замовлення ${order.order_number} з ${totalItemsCreated} позиціями`);
+      
+      return {
+        orderId: order.id,
+        orderNumber: order.order_number,
+        clientName: client.name,
+        totalItems: totalItemsCreated,
+        totalAmount: invoice.total,
+        status: 'imported',
+        message: `Вихідний рахунок ${invoice.number} успішно імпортовано як замовлення ${order.order_number}`
+      };
+
+    } catch (error) {
+      console.error(`Помилка імпорту вихідного рахунку ${invoiceId}:`, error);
       throw error;
     }
   }
@@ -10743,7 +10879,41 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // ===============================
+  // ORDER NUMBER GENERATION
+  // ===============================
 
+  async generateOrderNumber(): Promise<string> {
+    try {
+      // Отримуємо всі замовлення і знаходимо останній номер
+      const allOrders = await db.select({ order_number: orders.orderNumber })
+        .from(orders)
+        .orderBy(desc(orders.id));
+      
+      // Знаходимо найбільший числовий номер замовлення
+      let lastNumber = 50000; // Стартовий номер
+      
+      for (const order of allOrders) {
+        if (order.order_number) {
+          // Видаляємо всі нецифрові символи та отримуємо число
+          const numberPart = order.order_number.replace(/\D/g, '');
+          if (numberPart) {
+            const num = parseInt(numberPart);
+            if (!isNaN(num) && num > lastNumber) {
+              lastNumber = num;
+            }
+          }
+        }
+      }
+      
+      // Повертаємо наступний номер
+      return (lastNumber + 1).toString();
+    } catch (error) {
+      console.error('Помилка генерації номера замовлення:', error);
+      // Fallback - використовуємо timestamp
+      return (50000 + Date.now() % 10000).toString();
+    }
+  }
 
 }
 

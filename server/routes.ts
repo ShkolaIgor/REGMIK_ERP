@@ -11089,6 +11089,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Import outgoing invoice from 1C to ERP as order
+  app.post('/api/1c/outgoing-invoices/:invoiceId/import', isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log(`Імпорт вихідного рахунку ${req.params.invoiceId} з 1C до ERP...`);
+      const result = await storage.import1COutgoingInvoice(req.params.invoiceId);
+      console.log(`✅ Успішно імпортовано вихідний рахунок: замовлення #${result.orderId}`);
+      res.json(result);
+    } catch (error) {
+      console.error(`❌ Помилка імпорту вихідного рахунку ${req.params.invoiceId}:`, error);
+      res.status(500).json({ 
+        error: 'Failed to import outgoing invoice',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        invoiceId: req.params.invoiceId
+      });
+    }
+  });
+
   app.post('/api/1c/invoices/:id/import', isSimpleAuthenticated, async (req, res) => {
     try {
       console.log(`🔍 Імпорт 1C накладної ${req.params.id} - початок`);
