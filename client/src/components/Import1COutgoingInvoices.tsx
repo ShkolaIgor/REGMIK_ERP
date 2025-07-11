@@ -63,7 +63,7 @@ export function Import1COutgoingInvoices() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Завантаження доступних вихідних рахунків з 1C
+  // Завантаження доступних вихідних рахунків з 1C з fallback даними
   const { data: outgoingInvoices = [], isLoading: loadingInvoices, error: invoicesError, refetch: refetchInvoices } = useQuery({
     queryKey: ["/api/1c/outgoing-invoices"],
     enabled: isOpen,
@@ -72,19 +72,85 @@ export function Import1COutgoingInvoices() {
       console.error("1C Outgoing Invoices fetch error:", error);
       toast({
         title: "Помилка завантаження",
-        description: "Не вдалося завантажити вихідні рахунки з 1С",
+        description: "Не вдалося завантажити вихідні рахунки з 1С. Показую демо дані.",
         variant: "destructive",
       });
     }
   });
 
+  // Fallback дані для демонстрації коли API недоступне
+  const fallbackInvoices: OutgoingInvoice1C[] = [
+    {
+      id: "demo-out-1",
+      number: "РП-000001",
+      date: "2025-01-12",
+      clientName: "ТОВ \"Тестовий Клієнт\"",
+      total: 25000.00,
+      currency: "UAH",
+      status: "confirmed",
+      paymentStatus: "unpaid",
+      description: "Демо рахунок для тестування",
+      clientTaxCode: "12345678",
+      itemsCount: 2,
+      managerName: "Іван Петренко",
+      positions: [
+        {
+          productName: "Демо продукт 1",
+          quantity: 5,
+          price: 2000.00,
+          total: 10000.00
+        },
+        {
+          productName: "Демо продукт 2", 
+          quantity: 3,
+          price: 5000.00,
+          total: 15000.00
+        }
+      ]
+    },
+    {
+      id: "demo-out-2",
+      number: "РП-000002",
+      date: "2025-01-13",
+      clientName: "ПП \"Демо Клієнт\"",
+      total: 12500.00,
+      currency: "UAH",
+      status: "confirmed",
+      paymentStatus: "partial",
+      description: "Частково оплачений рахунок",
+      clientTaxCode: "87654321",
+      itemsCount: 2,
+      managerName: "Марія Коваленко",
+      positions: [
+        {
+          productName: "Демо сервіс А",
+          quantity: 1,
+          price: 7500.00,
+          total: 7500.00
+        },
+        {
+          productName: "Демо сервіс Б",
+          quantity: 2,
+          price: 2500.00,
+          total: 5000.00
+        }
+      ]
+    }
+  ];
+
+  // Використовуємо fallback дані якщо API недоступне
+  const displayInvoices = invoicesError ? fallbackInvoices : outgoingInvoices;
+
   // Додаємо логування для дебагу
   console.log("1C Outgoing Invoices Debug:", {
     isOpen,
     loadingInvoices,
-    invoicesError,
+    invoicesError: invoicesError?.message || null,
     outgoingInvoices,
-    invoicesCount: outgoingInvoices?.length || 0
+    displayInvoices,
+    invoicesCount: outgoingInvoices?.length || 0,
+    displayInvoicesCount: displayInvoices?.length || 0,
+    usingFallback: !!invoicesError
   });
 
   // Мутація для імпорту вибраних рахунків
@@ -127,7 +193,7 @@ export function Import1COutgoingInvoices() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedInvoices(new Set(outgoingInvoices.map((inv: OutgoingInvoice1C) => inv.id)));
+      setSelectedInvoices(new Set(displayInvoices.map((inv: OutgoingInvoice1C) => inv.id)));
     } else {
       setSelectedInvoices(new Set());
     }
@@ -268,12 +334,15 @@ export function Import1COutgoingInvoices() {
           )}
 
           {/* Основний контент */}
-          {!loadingInvoices && !invoicesError && outgoingInvoices.length > 0 && (
+          {!loadingInvoices && displayInvoices.length > 0 && (
             <>
               {/* Заголовок зі статистикою */}
               <Card className="mb-4">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Знайдено рахунків: {outgoingInvoices.length}</CardTitle>
+                  <CardTitle className="text-base">
+                    Знайдено рахунків: {displayInvoices.length}
+                    {invoicesError && <span className="text-sm text-orange-600 ml-2">(демо дані)</span>}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
@@ -281,7 +350,7 @@ export function Import1COutgoingInvoices() {
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           id="select-all"
-                          checked={selectedInvoices.size === outgoingInvoices.length}
+                          checked={selectedInvoices.size === displayInvoices.length}
                           onCheckedChange={handleSelectAll}
                         />
                         <label htmlFor="select-all" className="text-sm font-medium">
@@ -316,7 +385,7 @@ export function Import1COutgoingInvoices() {
               {/* Список рахунків */}
               <ScrollArea className="flex-1">
                 <div className="space-y-2">
-                  {outgoingInvoices.map((invoice: OutgoingInvoice1C) => (
+                  {displayInvoices.map((invoice: OutgoingInvoice1C) => (
                     <Card key={invoice.id} className="border-l-4 border-l-blue-500">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
@@ -384,7 +453,7 @@ export function Import1COutgoingInvoices() {
           )}
 
           {/* Пусто */}
-          {!loadingInvoices && !invoicesError && outgoingInvoices.length === 0 && (
+          {!loadingInvoices && !invoicesError && displayInvoices.length === 0 && (
             <Card>
               <CardContent className="pt-6">
                 <div className="text-center">

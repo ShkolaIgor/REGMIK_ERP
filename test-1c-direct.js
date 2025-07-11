@@ -2,65 +2,104 @@
  * Прямий тест API endpoint для вихідних рахунків 1С
  */
 
+import http from 'http';
+
 async function testDirect1CConnection() {
-  const baseUrl = process.env.REPL_URL ? `https://${process.env.REPL_URL}` : 'http://localhost:5000';
-  const endpoint = `${baseUrl}/api/1c/outgoing-invoices`;
+  console.log('🔧 Прямий тест 1С вихідних рахунків API\n');
   
-  console.log('🔍 Тестування прямого з\'єднання з 1С API');
-  console.log(`📡 URL: ${endpoint}`);
-  
-  try {
-    // Симулюємо авторизацію (якщо потрібна)
-    const response = await fetch(endpoint, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
+  const options = {
+    hostname: 'localhost',
+    port: 3000,
+    path: '/api/1c/outgoing-invoices',
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  };
+
+  return new Promise((resolve, reject) => {
+    console.log('📡 Відправляємо запит на http://localhost:3000/api/1c/outgoing-invoices');
+    
+    const req = http.request(options, (res) => {
+      console.log(`📊 Статус відповіді: ${res.statusCode}`);
+      console.log('📋 Headers:', res.headers);
+      
+      let data = '';
+      
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      res.on('end', () => {
+        console.log('📄 Сирі дані відповіді:');
+        console.log(data);
+        
+        try {
+          if (res.statusCode === 200) {
+            const jsonData = JSON.parse(data);
+            console.log('\n✅ JSON парсинг успішний');
+            console.log(`📊 Тип даних: ${Array.isArray(jsonData) ? 'Array' : typeof jsonData}`);
+            console.log(`📊 Кількість рахунків: ${Array.isArray(jsonData) ? jsonData.length : 'не масив'}`);
+            
+            if (Array.isArray(jsonData) && jsonData.length > 0) {
+              console.log('\n📋 Перший рахунок:');
+              console.log(JSON.stringify(jsonData[0], null, 2));
+            } else {
+              console.log('\n⚠️  Масив порожній або дані не є масивом');
+            }
+            
+            resolve(jsonData);
+          } else {
+            console.log(`\n❌ HTTP помилка ${res.statusCode}`);
+            try {
+              const errorData = JSON.parse(data);
+              console.log('📋 Деталі помилки:', errorData);
+            } catch {
+              console.log('📋 Текст помилки:', data);
+            }
+            reject(new Error(`HTTP ${res.statusCode}: ${data}`));
+          }
+        } catch (parseError) {
+          console.error('❌ Помилка парсингу JSON:', parseError);
+          console.log('📄 Проблемний контент:', data);
+          reject(parseError);
+        }
+      });
     });
     
-    console.log(`📊 HTTP статус: ${response.status} ${response.statusText}`);
-    console.log('📋 Response headers:');
-    for (const [key, value] of response.headers.entries()) {
-      console.log(`  ${key}: ${value}`);
-    }
+    req.on('error', (error) => {
+      console.error('❌ Помилка мережевого з\'єднання:', error);
+      reject(error);
+    });
     
-    const responseText = await response.text();
-    console.log(`📄 Response body length: ${responseText.length} символів`);
-    console.log(`📄 Response body (перші 500 символів):`);
-    console.log(responseText.substring(0, 500));
+    req.on('timeout', () => {
+      console.error('❌ Тайм-аут запиту');
+      req.destroy();
+      reject(new Error('Request timeout'));
+    });
     
-    if (response.ok) {
-      try {
-        const data = JSON.parse(responseText);
-        console.log('\n✅ JSON успішно парситься');
-        console.log(`📊 Кількість рахунків: ${Array.isArray(data) ? data.length : 'Не масив'}`);
-        
-        if (Array.isArray(data) && data.length > 0) {
-          console.log('📋 Перший рахунок:');
-          console.log(JSON.stringify(data[0], null, 2));
-        }
-      } catch (jsonError) {
-        console.error('❌ Помилка парсингу JSON:', jsonError.message);
-        console.error('🔧 Можливо проблема з кодуванням або структурою відповіді');
-      }
-    } else {
-      console.error('❌ HTTP помилка');
-      
-      try {
-        const errorData = JSON.parse(responseText);
-        console.error('📄 Деталі помилки:');
-        console.error(JSON.stringify(errorData, null, 2));
-      } catch {
-        console.error('📄 Текст помилки:', responseText);
-      }
-    }
-    
-  } catch (networkError) {
-    console.error('❌ Мережева помилка:', networkError.message);
-    console.error('🔧 Можливо сервер не запущений або недоступний');
-  }
+    req.setTimeout(10000); // 10 секунд тайм-аут
+    req.end();
+  });
 }
 
-// Запускаємо тест
-testDirect1CConnection().catch(console.error);
+// Запуск тесту
+console.log('🚀 Запуск прямого тесту 1С API...\n');
+
+testDirect1CConnection()
+  .then((result) => {
+    console.log('\n🎯 РЕЗУЛЬТАТ ТЕСТУВАННЯ:');
+    console.log('✅ API endpoint працює');
+    console.log('✅ Дані отримано успішно');
+    console.log(`✅ Повернуто ${Array.isArray(result) ? result.length : 0} рахунків`);
+  })
+  .catch((error) => {
+    console.log('\n❌ ПРОБЛЕМА З API:');
+    console.error(error.message);
+    console.log('\n💡 Можливі причини:');
+    console.log('   - Сервер не запущений');
+    console.log('   - Проблема з авторизацією (isSimpleAuthenticated)');
+    console.log('   - Помилка в storage.get1COutgoingInvoices()');
+    console.log('   - З\'єднання з 1С сервером недоступне');
+  });

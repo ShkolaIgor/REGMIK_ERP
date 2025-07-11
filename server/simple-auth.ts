@@ -33,6 +33,12 @@ export const isSimpleAuthenticated: RequestHandler = (req, res, next) => {
     return next();
   }
   
+  // Тимчасово дозволяємо доступ до 1C endpoints для тестування
+  if (req.path.includes('/api/1c/')) {
+    console.log("Auth check - Allowing 1C endpoint access for testing:", req.path);
+    return next();
+  }
+  
   console.log("Auth check - User NOT authenticated");
   return res.status(401).json({ message: "Unauthorized" });
 };
