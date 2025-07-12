@@ -10508,7 +10508,10 @@ export class DatabaseStorage implements IStorage {
 
   async get1COutgoingInvoices() {
     try {
+      console.log('🔧 get1COutgoingInvoices() - початок виконання');
+      
       // Шукаємо активну 1C інтеграцію
+      console.log('📊 Шукаємо активну 1C інтеграцію...');
       const integrations = await this.db.select()
         .from(integrationConfigs)
         .where(and(
@@ -10516,14 +10519,26 @@ export class DatabaseStorage implements IStorage {
           eq(integrationConfigs.isActive, true)
         ));
 
+      console.log(`🔍 Знайдено ${integrations.length} активних 1C інтеграцій`);
+
       if (integrations.length === 0) {
+        console.error('❌ Не знайдено активну 1C інтеграцію');
         throw new Error("Не знайдено активну 1C інтеграцію. Будь ласка, налаштуйте інтеграцію з 1C.");
       }
 
       const integration = integrations[0];
       const config = integration.config as any;
+      
+      console.log('⚙️ Конфігурація інтеграції:', {
+        id: integration.id,
+        name: integration.name,
+        baseUrl: config?.baseUrl,
+        hasClientId: !!config?.clientId,
+        hasClientSecret: !!config?.clientSecret
+      });
 
       if (!config?.baseUrl || config.baseUrl.trim() === '' || config.baseUrl === 'http://') {
+        console.error('❌ 1C URL не налаштований:', config?.baseUrl);
         throw new Error("1C URL не налаштований. Будь ласка, вкажіть URL 1C сервера в налаштуваннях інтеграції.");
       }
 
@@ -10550,7 +10565,7 @@ export class DatabaseStorage implements IStorage {
               'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
             } : {})
           },
-          signal: AbortSignal.timeout(10000)
+          signal: AbortSignal.timeout(3000)
         });
 
         if (response.ok) {
@@ -10577,7 +10592,7 @@ export class DatabaseStorage implements IStorage {
             action: 'getOutgoingInvoices',
             limit: 100
           }),
-          signal: AbortSignal.timeout(10000)
+          signal: AbortSignal.timeout(3000)
         });
         
         if (!response.ok) {
@@ -10734,11 +10749,15 @@ export class DatabaseStorage implements IStorage {
       return processedInvoices;
 
     } catch (error) {
-      console.error('Критична помилка отримання вихідних рахунків з 1C:', error);
+      console.error('❌ КРИТИЧНА ПОМИЛКА get1COutgoingInvoices:', error);
+      console.error('📍 Тип помилки:', typeof error);
+      console.error('📍 Конструктор помилки:', error?.constructor?.name);
+      console.error('📍 Повідомлення помилки:', error instanceof Error ? error.message : String(error));
+      console.error('📍 Stack trace:', error instanceof Error ? error.stack : 'Немає stack trace');
       
       // Детальна діагностика помилок
       if (error instanceof TypeError && error.message.includes('fetch')) {
-        console.log("1C сервер недоступний. Повертаємо тестові вихідні рахунки для демонстрації.");
+        console.log("💡 1C сервер недоступний. Повертаємо тестові вихідні рахунки для демонстрації.");
         
         // Fallback: повертаємо тестові вихідні рахунки для демонстрації
         return [
