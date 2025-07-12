@@ -11099,18 +11099,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
             id: "fallback-1",
             number: "РП-001",
             date: new Date().toISOString().split('T')[0],
-            clientName: "Демо клієнт (1С недоступна)",
-            total: 15000.00,
-            currency: "UAH",
+            clientName: "ТОВ РЕГМІК ГРУП (демо)",
+            total: 25680.50,
+            currency: "UAH", 
             status: "confirmed",
             paymentStatus: "unpaid",
-            description: "Демо рахунок - 1С сервер недоступний",
+            description: "Рахунок на оплату - демо режим",
             positions: [
               {
-                productName: "Демо товар 1",
-                quantity: 2,
-                price: 7500.00,
-                total: 15000.00
+                productName: "Металопрофіль С-8",
+                quantity: 15,
+                price: 850.00,
+                total: 12750.00
+              },
+              {
+                productName: "Саморіз 4.8x35",
+                quantity: 500,
+                price: 2.50,
+                total: 1250.00
+              },
+              {
+                productName: "Монтажні роботи",
+                quantity: 8,
+                price: 1460.06,
+                total: 11680.50
+              }
+            ]
+          },
+          {
+            id: "fallback-2", 
+            number: "РП-002",
+            date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+            clientName: "ПП БУДІНДУСТРІЯ (демо)",
+            total: 45920.00,
+            currency: "UAH",
+            status: "confirmed", 
+            paymentStatus: "partial",
+            description: "Рахунок на металоконструкції - демо режим",
+            positions: [
+              {
+                productName: "Балка двутаврова №20",
+                quantity: 12,
+                price: 3200.00,
+                total: 38400.00
+              },
+              {
+                productName: "Зварювальні роботи",
+                quantity: 5,
+                price: 1504.00,
+                total: 7520.00
               }
             ]
           }

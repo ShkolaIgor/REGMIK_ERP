@@ -346,9 +346,13 @@ export function Import1COutgoingInvoices() {
               {/* Заголовок зі статистикою */}
               <Card className="mb-4">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">
+                  <CardTitle className="text-base flex items-center gap-2">
                     Знайдено рахунків: {displayInvoices.length}
-                    {isUsingFallback && <span className="text-sm text-orange-600 ml-2">(демо дані)</span>}
+                    {(isUsingFallback || displayInvoices?.some(inv => inv.clientName?.includes('(демо)'))) && (
+                      <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full font-normal">
+                        демо режим - 1С недоступна
+                      </span>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
