@@ -477,6 +477,139 @@ export default function Components() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Edit Component Dialog */}
+        <Dialog open={!!editingComponent} onOpenChange={(open) => !open && setEditingComponent(null)}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Редагування компонента</DialogTitle>
+              <DialogDescription>
+                Змініть інформацію про компонент
+              </DialogDescription>
+            </DialogHeader>
+            {editingComponent && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Назва *</label>
+                    <input
+                      type="text"
+                      value={editingComponent.name}
+                      onChange={(e) => setEditingComponent({...editingComponent, name: e.target.value})}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">SKU *</label>
+                    <input
+                      type="text"
+                      value={editingComponent.sku}
+                      onChange={(e) => setEditingComponent({...editingComponent, sku: e.target.value})}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Ціна за одиницю</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editingComponent.unitPrice}
+                      onChange={(e) => setEditingComponent({...editingComponent, unitPrice: e.target.value})}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Одиниця виміру</label>
+                    <input
+                      type="text"
+                      value={editingComponent.unit}
+                      onChange={(e) => setEditingComponent({...editingComponent, unit: e.target.value})}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Мінімальний запас</label>
+                    <input
+                      type="number"
+                      value={editingComponent.minStock || ''}
+                      onChange={(e) => setEditingComponent({...editingComponent, minStock: e.target.value ? parseInt(e.target.value) : null})}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Максимальний запас</label>
+                    <input
+                      type="number"
+                      value={editingComponent.maxStock || ''}
+                      onChange={(e) => setEditingComponent({...editingComponent, maxStock: e.target.value ? parseInt(e.target.value) : null})}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Опис</label>
+                  <textarea
+                    value={editingComponent.description || ''}
+                    onChange={(e) => setEditingComponent({...editingComponent, description: e.target.value})}
+                    rows={3}
+                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={editingComponent.isActive}
+                    onChange={(e) => setEditingComponent({...editingComponent, isActive: e.target.checked})}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <label className="text-sm font-medium">Компонент активний</label>
+                </div>
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setEditingComponent(null)}
+                  >
+                    Скасувати
+                  </Button>
+                  <Button 
+                    onClick={async () => {
+                      try {
+                        await apiRequest(`/api/components/${editingComponent.id}`, {
+                          method: 'PATCH',
+                          body: {
+                            name: editingComponent.name,
+                            sku: editingComponent.sku,
+                            description: editingComponent.description,
+                            unitPrice: editingComponent.unitPrice,
+                            unit: editingComponent.unit,
+                            minStock: editingComponent.minStock,
+                            maxStock: editingComponent.maxStock,
+                            isActive: editingComponent.isActive
+                          }
+                        });
+                        queryClient.invalidateQueries({ queryKey: ["/api/components"] });
+                        setEditingComponent(null);
+                        toast({
+                          title: "Успішно",
+                          description: "Компонент оновлено"
+                        });
+                      } catch (error) {
+                        toast({
+                          title: "Помилка",
+                          description: "Не вдалося оновити компонент",
+                          variant: "destructive"
+                        });
+                      }
+                    }}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                  >
+                    Зберегти зміни
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

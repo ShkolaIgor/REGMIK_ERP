@@ -560,6 +560,10 @@ export interface IStorage {
   createFieldMapping(mapping: InsertFieldMapping): Promise<FieldMapping>;
   updateFieldMapping(id: number, mapping: Partial<InsertFieldMapping>): Promise<FieldMapping | undefined>;
   deleteFieldMapping(id: number): Promise<boolean>;
+
+  // 1C Integration - Component Import
+  import1CInvoice(invoiceId: string): Promise<{ success: boolean; message: string; componentIds?: number[]; }>;
+  get1CInvoices(): Promise<any[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -2060,8 +2064,18 @@ export class MemStorage implements IStorage {
   
   checkUserPermission(userId: number, moduleName: string, action: string): Promise<boolean>;
   getUserAccessibleModules(userId: number): Promise<SystemModule[]>;
+
+  // 1C Integration - Component Import
+  async import1CInvoice(invoiceId: string): Promise<{ success: boolean; message: string; componentIds?: number[]; }> {
+    return { success: false, message: "MemStorage не підтримує 1C інтеграцію" };
+  }
+
+  async get1CInvoices(): Promise<any[]> {
+    return [];
+  }
 }
 
 import { DatabaseStorage } from "./db-storage";
 
-export const storage = new DatabaseStorage();
+// Тимчасово використовуємо MemStorage для тестування import1CInvoice
+export const storage = process.env.NODE_ENV === 'test' ? new MemStorage() : new DatabaseStorage();

@@ -430,7 +430,7 @@ export function Import1CInvoices() {
                                 ) : (
                                   <div className="flex items-center gap-2">
                                     <span className="text-xs text-orange-600 font-medium">ERP:</span>
-                                    <span className="text-sm text-gray-500 italic">товар буде створено</span>
+                                    <span className="text-sm text-gray-500 italic">компонент буде створено</span>
                                     <span className="text-xs bg-orange-100 text-orange-800 px-1 rounded">новий</span>
                                   </div>
                                 )}
