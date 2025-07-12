@@ -10002,16 +10002,7 @@ export class DatabaseStorage implements IStorage {
     return currencyMap[currencyCode] || currencyCode;
   }
 
-  // Допоміжна функція для розбору українських десяткових чисел
-  private parseUkrainianDecimal(value: any): number {
-    if (typeof value === 'number') return value;
-    if (typeof value !== 'string') return 0;
-    
-    // Заміняємо українські коми на крапки для правильного парсингу
-    const cleanValue = value.toString().replace(',', '.');
-    const parsed = parseFloat(cleanValue);
-    return isNaN(parsed) ? 0 : parsed;
-  }
+
 
   // Допоміжна функція для мапінгу статусів оплати 1С в ERP формат
   private mapPaymentStatus(status: string): "paid" | "partial" | "unpaid" {
