@@ -10966,7 +10966,7 @@ export class DatabaseStorage implements IStorage {
       const processedInvoices = await Promise.all(invoicesArray.map(async (invoice: any, index: number) => {
         try {
           
-          // ФІЛЬТРАЦІЯ ПЕРЕНЕСЕНА В 1С - тепер 1С передає тільки товарні документи
+          // ДЛЯ ВИХІДНИХ РАХУНКІВ ФІЛЬТРАЦІЯ НЕ ПОТРІБНА - клієнтам виставляємо рахунки за товари ТА послуги
         const positions = invoice.positions || invoice.Позиції || [];
         
         // Обробляємо позиції з мапінгом 1С→ERP назв
@@ -11040,7 +11040,7 @@ export class DatabaseStorage implements IStorage {
         }
       }));
 
-      console.log(`Успішно оброблено ${processedInvoices.length} товарних вихідних рахунків (фільтрація виконана в 1С)`);
+      console.log(`Успішно оброблено ${processedInvoices.length} вихідних рахунків (товари + послуги)`);
       return processedInvoices;
 
     } catch (error) {
