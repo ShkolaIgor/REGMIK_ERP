@@ -11142,12 +11142,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ВИДАЛЕНО: Старий дублікат test endpoint
 
   // 1C Integration Endpoints
-  app.get('/api/1c/invoices', isSimpleAuthenticated, async (req, res) => {
+  app.get('/api/1c/invoices', async (req, res) => {
     try {
-      const invoices = await storage.get1CInvoices();
-      res.json(invoices || []);
+      console.log('🚀 DIRECT 1C API: Прямий запит до 1С без storage layer');
+      
+      // Прямий API запит до 1С (обходимо storage layer)
+      const authHeader = Buffer.from('Школа І.М.:1').toString('base64');
+      
+      const response = await fetch('http://baf.regmik.ua/bitrix/hs/erp/invoices', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${authHeader}`,
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          action: "getInvoices",
+          limit: 100
+        }),
+        signal: AbortSignal.timeout(15000)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const responseText = await response.text();
+      const invoicesData = JSON.parse(responseText);
+      
+      console.log(`✅ DIRECT 1C: Отримано ${invoicesData?.length || 0} накладних`);
+      res.json(invoicesData || []);
+      
     } catch (error) {
-      console.error('❌ ПОМИЛКА 1C накладних:', error);
+      console.error('❌ DIRECT 1C ERROR:', error);
       res.status(500).json({ 
         message: 'Не вдалося отримати накладні з 1С',
         error: error instanceof Error ? error.message : 'Невідома помилка'

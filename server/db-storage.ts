@@ -10074,6 +10074,10 @@ export class DatabaseStorage implements IStorage {
 
       const { baseUrl, clientId, clientSecret } = oneСIntegration.config;
 
+      // Визначаємо тип запиту (browser vs curl)
+      const isBrowserRequest = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
+      console.log(`🌐 Тип запиту: ${isBrowserRequest ? 'Browser/Frontend' : 'Server'}`);
+      
       // Basic авторизація
       const authHeader = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
       
@@ -10088,7 +10092,7 @@ export class DatabaseStorage implements IStorage {
           action: "getInvoices",
           limit: 100
         }),
-        signal: AbortSignal.timeout(45000)
+        signal: AbortSignal.timeout(20000)
       });
 
       if (!response.ok) {
@@ -10199,7 +10203,7 @@ export class DatabaseStorage implements IStorage {
           'Accept': 'application/json'
         },
         body: JSON.stringify(requestData),
-        signal: AbortSignal.timeout(45000) // 45 секунд
+        signal: AbortSignal.timeout(20000) // 20 секунд
       });
 
       if (!response.ok) {
