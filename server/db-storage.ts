@@ -10702,20 +10702,23 @@ export class DatabaseStorage implements IStorage {
             console.log(`🧠 Інтелектуальний пошук для: "${itemName}"`);
             
             // Витягуємо ключові характеристики (D6, L300, М20х1,5, DN50, тощо)
-            const characteristics = itemName.match(/[DGLMР]\d+[xх]?\d*[,\.]?\d*|DN\d+/gi) || [];
+            const characteristics = itemName.match(/[DGLMР]\d+[xх]?\d*[,\.]?\d*|DN\d+|М\d+[xх]?\d*[,\.]?\d*/gi) || [];
             console.log(`🔍 Знайдені характеристики: ${characteristics.join(', ')}`);
             
             if (characteristics.length > 0) {
               // Шукаємо товари з такими ж характеристиками
               let matchingProducts = await db.select().from(products);
+              console.log(`📊 Загальна кількість товарів в базі: ${matchingProducts.length}`);
               
-              // Фільтруємо товари які містять всі ключові характеристики
+              // Фільтруємо товари які містять хоча б одну характеристику
               const candidates = matchingProducts.filter(product => {
                 const matchCount = characteristics.filter(char => 
                   product.name.toLowerCase().includes(char.toLowerCase())
                 ).length;
-                return matchCount >= Math.max(1, characteristics.length - 1); // Дозволяємо 1 невідповідність
+                return matchCount >= 1; // Дозволяємо хоча б 1 збіг
               });
+              
+              console.log(`🎯 Знайдено кандидатів з схожими характеристиками: ${candidates.length}`);
               
               if (candidates.length > 0) {
                 // Сортуємо за кількістю збігів
@@ -10726,20 +10729,30 @@ export class DatabaseStorage implements IStorage {
                   ).length
                 })).sort((a, b) => b.score - a.score);
                 
+                // Логуємо топ 3 кандидати для діагностики
+                console.log(`🔝 Топ кандидати:`);
+                scored.slice(0, 3).forEach((candidate, index) => {
+                  console.log(`   ${index + 1}. "${candidate.product.name}" (збігів: ${candidate.score}/${characteristics.length})`);
+                });
+                
                 const bestMatch = scored[0].product;
                 foundProduct = { type: 'product', id: bestMatch.id, name: bestMatch.name, isNew: false };
                 console.log(`🧠 ІНТЕЛЕКТУАЛЬНИЙ збіг товар: "${itemName}" → "${bestMatch.name}" (ID: ${bestMatch.id}, збігів: ${scored[0].score}/${characteristics.length})`);
               } else {
-                // Простий частковий пошук як fallback
-                const [partialProductMatch] = await db
-                  .select()
-                  .from(products)
-                  .where(ilike(products.name, `%${itemName.substring(0, 10)}%`))
-                  .limit(1);
+                console.log(`❌ Не знайдено товарів з схожими характеристиками`);
                 
-                if (partialProductMatch) {
-                  foundProduct = { type: 'product', id: partialProductMatch.id, name: partialProductMatch.name, isNew: false };
-                  console.log(`🔎 ЧАСТКОВИЙ збіг товар: "${itemName}" → "${partialProductMatch.name}" (ID: ${partialProductMatch.id})`);
+                // Пошук товарів що містять хоча б частину назви
+                const partialCandidates = matchingProducts.filter(product => {
+                  const words = itemName.split(/[\s\-]+/).filter(word => word.length > 2);
+                  return words.some(word => product.name.toLowerCase().includes(word.toLowerCase()));
+                });
+                
+                console.log(`🔍 Знайдено кандидатів за частковими словами: ${partialCandidates.length}`);
+                
+                if (partialCandidates.length > 0) {
+                  const bestPartialMatch = partialCandidates[0];
+                  foundProduct = { type: 'product', id: bestPartialMatch.id, name: bestPartialMatch.name, isNew: false };
+                  console.log(`🔎 ЧАСТКОВИЙ збіг товар: "${itemName}" → "${bestPartialMatch.name}" (ID: ${bestPartialMatch.id})`);
                 }
               }
             } else {
