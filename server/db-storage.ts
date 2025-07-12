@@ -10666,6 +10666,7 @@ export class DatabaseStorage implements IStorage {
         console.log(`🔍 Шукаємо товар: "${itemName}" (довжина: ${itemName.length})`);
         
         // КРОК 1A: Спочатку точний пошук за оригінальною назвою (НАЙВАЖЛИВІШИЙ)
+        console.log(`🔍 Точний пошук: SELECT * FROM products WHERE name = '${itemName}'`);
         const [exactProductMatch] = await db
           .select()
           .from(products)
@@ -10675,12 +10676,14 @@ export class DatabaseStorage implements IStorage {
         // КРОК 1A2: Якщо точний збіг не знайдено, пробуємо пошук з ILIKE для часткових збігів
         let likeProductMatch = null;
         if (!exactProductMatch) {
+          console.log(`🔍 Частковий пошук: SELECT * FROM products WHERE name ILIKE '%${itemName}%'`);
           const [likeMatch] = await db
             .select()
             .from(products)
             .where(ilike(products.name, `%${itemName}%`))
             .limit(1);
           likeProductMatch = likeMatch;
+          console.log(`🔍 Частковий результат: ${likeMatch ? `знайдено "${likeMatch.name}" (ID: ${likeMatch.id})` : 'не знайдено'}`);
         }
         
         if (exactProductMatch) {
@@ -10692,22 +10695,18 @@ export class DatabaseStorage implements IStorage {
         } else {
           console.log(`❌ Точний збіг не знайдено для: "${itemName}"`);
           
-          // КРОК 1B: Пошук по нормалізованим назвам (тільки для латинських назв)
-          if (/^[a-zA-Z0-9\s\-_\.\/\\()[\]{}]+$/.test(itemName)) {
-            const normalizedItemName = this.normalizeProductName(itemName);
-            console.log(`📝 Нормалізована назва: "${itemName}" → "${normalizedItemName}"`);
-            
-            const allProducts = await db.select().from(products);
-            
-            for (const product of allProducts) {
-              if (/^[a-zA-Z0-9\s\-_\.\/\\()[\]{}]+$/.test(product.name)) {
-                const normalizedProductName = this.normalizeProductName(product.name);
-                if (normalizedProductName === normalizedItemName) {
-                  foundProduct = { type: 'product', id: product.id, name: product.name, isNew: false };
-                  console.log(`🔍 НОРМАЛІЗОВАНИЙ збіг товар: "${itemName}" (${normalizedItemName}) → "${product.name}" (${normalizedProductName}) (ID: ${product.id})`);
-                  break;
-                }
-              }
+          // КРОК 1B: Пошук по нормалізованим назвам (для ВСІХ назв включно з кирилицею)
+          const normalizedItemName = this.normalizeProductName(itemName);
+          console.log(`📝 Нормалізована назва: "${itemName}" → "${normalizedItemName}"`);
+          
+          const allProducts = await db.select().from(products);
+          
+          for (const product of allProducts) {
+            const normalizedProductName = this.normalizeProductName(product.name);
+            if (normalizedProductName === normalizedItemName) {
+              foundProduct = { type: 'product', id: product.id, name: product.name, isNew: false };
+              console.log(`🔍 НОРМАЛІЗОВАНИЙ збіг товар: "${itemName}" (${normalizedItemName}) → "${product.name}" (${normalizedProductName}) (ID: ${product.id})`);
+              break;
             }
           }
           
@@ -10803,22 +10802,18 @@ export class DatabaseStorage implements IStorage {
           } else {
             console.log(`❌ Точний збіг компонент не знайдено для: "${itemName}"`);
             
-            // КРОК 2B: Пошук по нормалізованим назвам (тільки для латинських назв)
-            if (/^[a-zA-Z0-9\s\-_\.\/\\()[\]{}]+$/.test(itemName)) {
-              const normalizedItemName = this.normalizeProductName(itemName);
-              console.log(`📝 Нормалізована назва компонента: "${itemName}" → "${normalizedItemName}"`);
-              
-              const allComponents = await db.select().from(components);
-              
-              for (const component of allComponents) {
-                if (/^[a-zA-Z0-9\s\-_\.\/\\()[\]{}]+$/.test(component.name)) {
-                  const normalizedComponentName = this.normalizeProductName(component.name);
-                  if (normalizedComponentName === normalizedItemName) {
-                    componentMatch = component;
-                    console.log(`🔍 НОРМАЛІЗОВАНИЙ збіг компонент: "${itemName}" (${normalizedItemName}) → "${component.name}" (${normalizedComponentName}) (ID: ${component.id})`);
-                    break;
-                  }
-                }
+            // КРОК 2B: Пошук по нормалізованим назвам (для ВСІХ назв включно з кирилицею)
+            const normalizedItemName = this.normalizeProductName(itemName);
+            console.log(`📝 Нормалізована назва компонента: "${itemName}" → "${normalizedItemName}"`);
+            
+            const allComponents = await db.select().from(components);
+            
+            for (const component of allComponents) {
+              const normalizedComponentName = this.normalizeProductName(component.name);
+              if (normalizedComponentName === normalizedItemName) {
+                componentMatch = component;
+                console.log(`🔍 НОРМАЛІЗОВАНИЙ збіг компонент: "${itemName}" (${normalizedItemName}) → "${component.name}" (${normalizedComponentName}) (ID: ${component.id})`);
+                break;
               }
             }
             

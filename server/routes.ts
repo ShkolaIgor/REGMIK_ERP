@@ -1214,6 +1214,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // TEST ENDPOINT - Тестовий пошук товарів
+  app.get("/api/test-product-search", async (req, res) => {
+    try {
+      const itemName = req.query.product || "РП2-У-110";
+      console.log(`🧪 DIRECT SEARCH TEST: "${itemName}"`);
+      
+      // Точна копія алгоритму з import1COutgoingInvoice
+      const [exactMatch] = await db
+        .select()
+        .from(products)
+        .where(eq(products.name, itemName))
+        .limit(1);
+      
+      let likeMatch = null;
+      if (!exactMatch) {
+        console.log(`🔍 Exact match NOT found, trying partial...`);
+        const [likeResult] = await db
+          .select()
+          .from(products)
+          .where(ilike(products.name, `%${itemName}%`))
+          .limit(1);
+        likeMatch = likeResult;
+      }
+      
+      res.json({
+        searchTerm: itemName,
+        exactMatch: exactMatch || null,
+        likeMatch: likeMatch || null,
+        found: !!(exactMatch || likeMatch),
+        algorithm: exactMatch ? "exact" : likeMatch ? "partial" : "none"
+      });
+    } catch (error) {
+      console.error('❌ Test search error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Get status for components XML import job
   app.get("/api/components/import-xml/:jobId/status", (req, res) => {
     const jobId = req.params.jobId;
