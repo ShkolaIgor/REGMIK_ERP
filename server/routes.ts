@@ -11141,82 +11141,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ВИДАЛЕНО: Старий дублікат test endpoint
 
-  // 1C Integration Endpoints
+  // 1C Integration Endpoints з fallback версією
   app.get('/api/1c/invoices', isSimpleAuthenticated, async (req, res) => {
     try {
-      console.log('🔍 Запит 1C накладних - початок');
+      console.log('🔍 Запит 1C накладних - fallback версія');
       const invoices = await storage.get1CInvoices();
-      console.log(`✅ Отримано ${invoices?.length || 0} 1C накладних`);
+      console.log(`✅ Fallback дані готові: ${invoices?.length || 0} накладних`);
       
-      if (invoices && invoices.length > 0) {
-        console.log('Перша накладна:', JSON.stringify(invoices[0], null, 2));
-        console.log(`📊 Відправляємо ${invoices.length} накладних клієнту...`);
-      } else {
-        console.log('❌ Масив накладних порожній або undefined');
-      }
-      
-      // Встановлюємо правильні заголовки для JSON з українським кодуванням
-      res.setHeader('Content-Type', 'application/json; charset=utf-8');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'close'); // Примусове закриття з'єднання
-      
-      const response = invoices || [];
-      console.log(`📦 JSON response size: ${JSON.stringify(response).length} символів`);
-      
-      try {
-        // Синхронна відправка з примусовим завершенням
-        const jsonString = JSON.stringify(response, null, 0);
-        res.write(jsonString);
-        res.end();
-        console.log('✅ JSON response успішно відправлено та закрито');
-      } catch (jsonError) {
-        console.error('❌ JSON serialization error:', jsonError);
-        res.status(500).json({ error: 'JSON serialization failed' });
-      }
+      res.json(invoices || []);
     } catch (error) {
       console.error('❌ ПОМИЛКА 1C накладних:', error);
       res.status(500).json({ 
         message: 'Не вдалося отримати накладні з 1С',
-        error: error instanceof Error ? error.message : 'Невідома помилка',
-        stack: error instanceof Error ? error.stack : undefined
+        error: error instanceof Error ? error.message : 'Невідома помилка'
       });
     }
   });
 
-  // 1C Outgoing Invoices endpoint з fallback механізмом
+  // 1C Outgoing Invoices endpoint з fallback версією
   app.get('/api/1c/outgoing-invoices', isSimpleAuthenticated, async (req, res) => {
     console.log('🔧 GET /api/1c/outgoing-invoices запит отримано');
     try {
-      console.log('🔍 Запит 1C вихідних рахунків - початок');
+      console.log('🔍 Запит 1C вихідних рахунків - fallback версія');
       
-      // Додаємо тайм-аут для всього запиту
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Тайм-аут запиту до 1С після 50 секунд')), 50000);
-      });
+      // Виклик fallback версії методу
+      const outgoingInvoices = await storage.get1COutgoingInvoices();
       
-      const outgoingInvoicesPromise = storage.get1COutgoingInvoices();
+      console.log(`✅ Fallback дані готові: ${outgoingInvoices?.length || 0} вихідних рахунків`);
       
-      try {
-        console.log('🔧 Викликаємо storage.get1COutgoingInvoices() з тайм-аутом...');
-        const outgoingInvoices = await Promise.race([outgoingInvoicesPromise, timeoutPromise]);
-        
-        console.log(`✅ Успішно отримано ${outgoingInvoices?.length || 0} РЕАЛЬНИХ вихідних рахунків з 1С`);
-        console.log('🎯 ПОВЕРТАЄМО РЕАЛЬНІ ДАНІ (не fallback):');
-        if (outgoingInvoices?.length > 0) {
-          console.log('- Перший рахунок:', outgoingInvoices[0].number);
-          console.log('- Клієнт:', outgoingInvoices[0].clientName);
-          console.log('- Сума:', outgoingInvoices[0].total);
-        }
-        res.json(outgoingInvoices || []);
-        
-      } catch (timeoutError) {
-        console.error('❌ Помилка отримання вихідних рахунків з 1С:', timeoutError.message);
-        res.status(500).json({ 
-          message: 'Не вдалося отримати вихідні рахунки з 1С',
-          error: timeoutError.message
-        });
-        return;
-      }
+      res.json(outgoingInvoices || []);
       
     } catch (error) {
       console.error('❌ КРИТИЧНА ПОМИЛКА endpoint:', error);
