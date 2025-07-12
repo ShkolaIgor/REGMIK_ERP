@@ -11207,23 +11207,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 1C Outgoing Invoices endpoint з fallback версією
-  app.get('/api/1c/outgoing-invoices', isSimpleAuthenticated, async (req, res) => {
-    console.log('🔧 GET /api/1c/outgoing-invoices запит отримано');
+  // 1C Outgoing Invoices endpoint - прямий запит до 1С через curl
+  app.get('/api/1c/outgoing-invoices', async (req, res) => {
     try {
-      console.log('🔍 Запит 1C вихідних рахунків - fallback версія');
+      console.log('🚀 DIRECT 1C OUTGOING API: Прямий запит до 1С вихідних рахунків через curl');
       
-      // Виклик fallback версії методу
-      const outgoingInvoices = await storage.get1COutgoingInvoices();
+      const { exec } = await import('child_process');
+      const { promisify } = await import('util');
+      const execAsync = promisify(exec);
       
-      console.log(`✅ Fallback дані готові: ${outgoingInvoices?.length || 0} вихідних рахунків`);
+      // Виконуємо curl запит оскільки Node.js fetch має проблеми з цим endpoint
+      const curlCommand = `curl -X POST "http://baf.regmik.ua/bitrix/hs/erp/outgoing-invoices" \
+        -H "Authorization: Basic $(echo -n 'Школа І.М.:1' | base64)" \
+        -H "Content-Type: application/json" \
+        -d '{"action":"getOutgoingInvoices","limit":100}' \
+        --max-time 30`;
       
-      res.json(outgoingInvoices || []);
+      const { stdout, stderr } = await execAsync(curlCommand);
+      
+      if (stderr && !stdout) {
+        throw new Error(`Curl error: ${stderr}`);
+      }
+      
+      console.log(`📋 1C OUTGOING CURL RESPONSE (${stdout.length} chars): OK`);
+      
+      // Парсинг JSON з curl відповіді
+      let rawInvoicesData;
+      try {
+        rawInvoicesData = JSON.parse(stdout);
+      } catch (parseError) {
+        console.error('❌ JSON parsing error:', parseError);
+        console.error('Raw response:', stdout.substring(0, 500));
+        throw new Error('Помилка парсингу JSON відповіді з 1С');
+      }
+      
+      console.log(`📋 1C OUTGOING DATA TYPE: ${typeof rawInvoicesData}`);
+      
+      // Обробляємо відповідь з 1С (структура: {invoices: [...], total: X})
+      const invoicesArray = rawInvoicesData?.invoices || [];
+      
+      console.log(`📋 1C OUTGOING ARRAY LENGTH: ${invoicesArray.length}`);
+      
+      // Конвертуємо сирі дані з 1С до формату ERP для вихідних рахунків
+      // Структура з curl: {invoiceNumber, date, client, amount, currency, status, positions}
+      const processedInvoices = invoicesArray.map((invoice: any) => ({
+        id: `1c-out-${Date.now()}-${Math.random()}`,
+        number: invoice.invoiceNumber || invoice.НомерДокумента,
+        date: invoice.date || invoice.ДатаДокумента,
+        clientName: invoice.client || invoice.Клиент,
+        clientTaxCode: invoice.clientTaxCode || invoice.КодКлієнта,
+        total: invoice.amount || invoice.СуммаДокумента,
+        currency: invoice.currency === "980" ? "UAH" : (invoice.currency || "UAH"),
+        status: invoice.status || 'confirmed',
+        paymentStatus: invoice.paymentStatus || 'unpaid',
+        description: invoice.notes || invoice.description || '',
+        managerName: invoice.manager || invoice.Менеджер,
+        positions: (invoice.positions || []).map((item: any) => ({
+          productName: item.productName || item.НаименованиеТовара,
+          quantity: item.quantity || item.Количество || 0,
+          price: item.price || item.Цена || 0,
+          total: item.total || item.Сумма || 0
+        })),
+        itemsCount: invoice.itemsCount || (invoice.positions || []).length
+      }));
+      
+      console.log(`✅ DIRECT 1C OUTGOING: Обробмено ${processedInvoices?.length || 0} вихідних рахунків`);
+      res.json(processedInvoices || []);
       
     } catch (error) {
-      console.error('❌ КРИТИЧНА ПОМИЛКА endpoint:', error);
+      console.error('❌ DIRECT 1C OUTGOING ERROR:', error);
       res.status(500).json({ 
-        message: 'Критична помилка при отриманні вихідних рахунків з 1С',
+        message: 'Не вдалося отримати вихідні рахунки з 1С',
         error: error instanceof Error ? error.message : 'Невідома помилка'
       });
     }
