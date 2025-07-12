@@ -10045,7 +10045,7 @@ export class DatabaseStorage implements IStorage {
               'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
             } : {})
           },
-          signal: AbortSignal.timeout(10000) // 10 секунд тайм-аут
+          signal: AbortSignal.timeout(45000) // 45 секунд тайм-аут
         });
 
         if (response.ok) {
@@ -10072,7 +10072,7 @@ export class DatabaseStorage implements IStorage {
             action: 'getInvoices',
             limit: 100
           }),
-          signal: AbortSignal.timeout(10000) // 10 секунд тайм-аут
+          signal: AbortSignal.timeout(45000) // 45 секунд тайм-аут
         });
         
         if (!response.ok) {
@@ -10089,7 +10089,7 @@ export class DatabaseStorage implements IStorage {
                 'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
               } : {})
             },
-            signal: AbortSignal.timeout(10000)
+            signal: AbortSignal.timeout(45000)
           });
         }
       }
@@ -10147,7 +10147,8 @@ export class DatabaseStorage implements IStorage {
       const processedInvoices = await Promise.all(invoices.map(async (invoice: any) => {
         const items = Array.isArray(invoice.items || invoice.Позиції) 
           ? await Promise.all((invoice.items || invoice.Позиції).map(async (item: any) => {
-              const externalProductName = item.name || item.Назва || "Невідомий товар";
+              // ВИПРАВЛЕННЯ: Покращений пошук назви товару з кількох джерел
+              const externalProductName = item.name || item.Назва || item.productName || item.НаименованиеТовара || item.НазваТовару || "Товар (назва не вказана)";
               
               // ПОКРАЩЕНА ЛОГІКА ПОШУКУ ТОВАРІВ:
               // 1. Пошук зіставлення в productNameMappings
@@ -10755,7 +10756,7 @@ export class DatabaseStorage implements IStorage {
               'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
             } : {})
           },
-          signal: AbortSignal.timeout(30000)
+          signal: AbortSignal.timeout(45000)
         });
 
         if (response.ok) {
@@ -10782,7 +10783,7 @@ export class DatabaseStorage implements IStorage {
             action: 'getOutgoingInvoices',
             limit: 100
           }),
-          signal: AbortSignal.timeout(30000)
+          signal: AbortSignal.timeout(45000)
         });
         
         if (!response.ok) {
@@ -10800,7 +10801,7 @@ export class DatabaseStorage implements IStorage {
                 'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
               } : {})
             },
-            signal: AbortSignal.timeout(30000)
+            signal: AbortSignal.timeout(45000)
           });
         }
       }
