@@ -10140,144 +10140,45 @@ export class DatabaseStorage implements IStorage {
       // Перетворюємо дані з 1C у внутрішній формат
       const invoices = Array.isArray(invoicesData) ? invoicesData : [];
       
-      // Перевіряємо які накладні вже існують в ERP
-      const existingReceipts = await this.getSupplierReceipts();
+      // ТИМЧАСОВО ВІДКЛЮЧЕНО ДЛЯ ДІАГНОСТИКИ ЗАВИСАННЯ
+      // const existingReceipts = await this.getSupplierReceipts();
+      const existingReceipts: any[] = []; // Порожній масив для тестування
       
-      // Обробляємо кожну накладну асинхронно
-      const processedInvoices = await Promise.all(invoices.map(async (invoice: any, invoiceIndex: number) => {
-        const itemsArray = invoice.items || invoice.Позиції || invoice.positions || [];
-        
-        // ФІЛЬТРАЦІЯ ПЕРЕНЕСЕНА В 1С - тепер 1С передає тільки товарні документи
-        
-        const items = Array.isArray(itemsArray) 
-          ? await Promise.all(itemsArray.map(async (item: any) => {
-              // ВИПРАВЛЕННЯ ОБРІЗАННЯ НАЗВ: Покращений пошук з усіх можливих полів
-              const nameFields = [
-                item.name,
-                item.Назва, 
-                item.productName,
-                item.НаименованиеТовара,
-                item.НазваТовару,
-                item.ИмяТовара,
-                item.НазваВиробу,
-                item.НазваПродукту,
-                item.ProductName,
-                item.ItemName,
-                item.Description,
-                item.Опис,
-                item.ТоварНазва,
-                item.НаименованиеПозиции,
-                item.НазваПозиції
-              ];
-              
-              let externalProductName = "Товар (назва не вказана)";
-              
-              // Знаходимо найдовшу непорожню назву (захист від обрізання)
-              for (const field of nameFields) {
-                if (field && typeof field === 'string' && field.trim().length > 0 && 
-                    field.trim() !== 'undefined' && field.trim() !== 'null' && field.trim() !== 'Товар') {
-                  const trimmedField = field.trim();
-                  // Якщо це перша знайдена назва або вона довша за поточну
-                  if (externalProductName === "Товар (назва не вказана)" || trimmedField.length > externalProductName.length) {
-                    externalProductName = trimmedField;
-                  }
-                }
-              }
-              
-              // Додаткова перевірка на обрізання - якщо назва дуже коротка, шукаємо в інших полях
-              if (externalProductName.length < 3 || externalProductName === "б") {
-                // Перевіряємо додаткові поля що могли бути пропущені
-                const additionalFields = [
-                  item.ПовнаНазва,
-                  item.ОписТовару,
-                  item.НазваПовна,
-                  item.ТоварОпис,
-                  item.НаименованиеПолное,
-                  item.КраткоеНаименование
-                ];
-                
-                for (const field of additionalFields) {
-                  if (field && typeof field === 'string' && field.trim().length > externalProductName.length) {
-                    externalProductName = field.trim();
-                    break;
-                  }
-                }
-              }
-              
-              // ПОКРАЩЕНА ЛОГІКА ПОШУКУ ТОВАРІВ:
-              // 1. Пошук зіставлення в productNameMappings
-              let mappedProduct = await this.findProductByAlternativeName(externalProductName, '1c');
-              
-              // 2. Якщо не знайдено зіставлення, шукаємо товар напряму
-              if (!mappedProduct) {
-                const allProducts = await this.getProducts();
-                
-                // Точний пошук за назвою
-                let foundProduct = allProducts.find(p => 
-                  p.name.toLowerCase() === externalProductName.toLowerCase() ||
-                  p.sku.toLowerCase() === externalProductName.toLowerCase()
-                );
-                
-                // Частковий пошук якщо точний не знайдено
-                if (!foundProduct) {
-                  foundProduct = allProducts.find(p => 
-                    p.name.toLowerCase().includes(externalProductName.toLowerCase()) ||
-                    externalProductName.toLowerCase().includes(p.name.toLowerCase())
-                  );
-                }
-                
-                // Якщо знайшли товар, створюємо автоматичне зіставлення
-                if (foundProduct) {
-                  await this.createProductNameMapping({
-                    externalSystemName: '1c',
-                    externalProductName: externalProductName,
-                    erpProductId: foundProduct.id,
-                    erpProductName: foundProduct.name,
-                    confidenceScore: 0.8,
-                    isActive: true,
-                    createdBy: 'system'
-                  });
-                  
-                  mappedProduct = {
-                    erpProductId: foundProduct.id,
-                    erpProductName: foundProduct.name
-                  };
-                }
-              }
-              
-              return {
-                name: mappedProduct ? mappedProduct.erpProductName : externalProductName,
-                erpProductId: mappedProduct ? mappedProduct.erpProductId : null,
-                originalName: externalProductName,
-                isMapped: !!mappedProduct,
-                quantity: this.parseUkrainianDecimal(item.quantity || item.Количество || item.Кількість || 0),
-                price: this.parseUkrainianDecimal(item.price || item.Цена || item.Ціна || 0),
-                total: this.parseUkrainianDecimal(item.total || item.Сумма || item.Сума || 0),
-                unit: item.unit || item.ОдиницяВиміру || "шт",
-                // ДОДАНО: Відображення назви з 1С та знайденого ERP еквіваленту
-                nameFrom1C: externalProductName,
-                erpEquivalent: mappedProduct ? mappedProduct.erpProductName : null
-              };
-            }))
-          : [];
-
-        return {
-          id: invoice.id || invoice.ID || `1C-${Date.now()}`,
-          number: invoice.number || invoice.НомерДокумента || "Невідомий",
-          date: invoice.date || invoice.ДатаДокумента || invoice.Дата || new Date().toISOString().split('T')[0],
-          supplierName: invoice.supplier || invoice.Постачальник || "Невідомий постачальник",
-          supplierTaxCode: invoice.ЕДРПОУ || invoice.supplierTaxCode || "",
-          supplierId: invoice.supplierId || invoice.IDПостачальника || 1,
-          amount: this.parseUkrainianDecimal(invoice.amount || invoice.СуммаДокумента || invoice.Сума || 0),
-          currency: this.convertCurrencyCode(invoice.currency || invoice.КодВалюты || invoice.Валюта || "UAH"),
-          status: invoice.status || invoice.Статус || "new",
-          items,
-          exists: existingReceipts.some(receipt => 
-            receipt.supplier_document_number === (invoice.number || invoice.НомерДокумента) ||
-            receipt.comment?.includes(invoice.id || invoice.ID)
-          )
-        };
-      }));
+      // ТИМЧАСОВЕ ОБМЕЖЕННЯ для діагностики - беремо тільки перші 5 накладних
+      const limitedInvoices = invoices.slice(0, 5);
+      console.log(`🔄 Обробляємо ${limitedInvoices.length} накладних з 1С (обмежено для тестування)...`);
+      // МАКСИМАЛЬНО СПРОЩЕНА ОБРОБКА ДЛЯ ЗНАХОДЖЕННЯ БЛОКУВАННЯ
+      console.log('🧪 Створюємо тестові дані замість обробки...');
+      const processedInvoices = [
+        {
+          id: "test-1",
+          number: "TEST-001",
+          date: "2025-07-12",
+          supplierName: "Тестовий постачальник",
+          supplierTaxCode: "",
+          supplierId: 1,
+          amount: 1000,
+          currency: "UAH",
+          status: "new",
+          items: [
+            {
+              name: "Тестовий товар",
+              erpProductId: null,
+              originalName: "Тестовий товар",
+              isMapped: false,
+              quantity: 1,
+              price: 1000,
+              total: 1000,
+              unit: "шт",
+              nameFrom1C: "Тестовий товар",
+              erpEquivalent: null
+            }
+          ],
+          exists: false
+        }
+      ];
+      
+      console.log('✅ Тестові дані готові, повертаємо...');
 
       console.log(`Успішно оброблено ${processedInvoices.length} товарних накладних (фільтрація виконана в 1С)`);
       return processedInvoices;

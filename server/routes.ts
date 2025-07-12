@@ -11150,11 +11150,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (invoices && invoices.length > 0) {
         console.log('Перша накладна:', JSON.stringify(invoices[0], null, 2));
+        console.log(`📊 Відправляємо ${invoices.length} накладних клієнту...`);
       } else {
         console.log('❌ Масив накладних порожній або undefined');
       }
       
-      res.json(invoices || []);
+      // Встановлюємо правильні заголовки для JSON з українським кодуванням
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'close'); // Примусове закриття з'єднання
+      
+      const response = invoices || [];
+      console.log(`📦 JSON response size: ${JSON.stringify(response).length} символів`);
+      
+      try {
+        // Синхронна відправка з примусовим завершенням
+        const jsonString = JSON.stringify(response, null, 0);
+        res.write(jsonString);
+        res.end();
+        console.log('✅ JSON response успішно відправлено та закрито');
+      } catch (jsonError) {
+        console.error('❌ JSON serialization error:', jsonError);
+        res.status(500).json({ error: 'JSON serialization failed' });
+      }
     } catch (error) {
       console.error('❌ ПОМИЛКА 1C накладних:', error);
       res.status(500).json({ 

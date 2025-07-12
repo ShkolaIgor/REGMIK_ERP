@@ -1,0 +1,223 @@
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: true, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: true, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-Ct3OH_BO.js, line 737)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 27}Object
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 27}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: true, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: true, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-Ct3OH_BO.js, line 737)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-Ct3OH_BO.js, line 737)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: true, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: true, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-Ct3OH_BO.js, line 737)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: true, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: true, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-Ct3OH_BO.js, line 737)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: true, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: true, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-Ct3OH_BO.js, line 737)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: true, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: true, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-Ct3OH_BO.js, line 737)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: true, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: true, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-Ct3OH_BO.js, line 737)
+[Error] Failed to load resource: the server responded with a status of 500 () (invoices, line 0)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: Error: 500: , …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: Error: 500: , invoices1C: [], invoicesCount: 0}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: true, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: true, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-Ct3OH_BO.js, line 737)
+[Error] Failed to load resource: the server responded with a status of 500 () (invoices, line 0)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: Error: 500: , …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: Error: 500: , invoices1C: [], invoicesCount: 0}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: true, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: true, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Error] Failed to load resource: the server responded with a status of 500 () (invoices, line 0)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: Error: 500: , …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: Error: 500: , invoices1C: [], invoicesCount: 0}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: true, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: true, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Error] Failed to load resource: the server responded with a status of 500 () (invoices, line 0)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: Error: 500: , …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: Error: 500: , invoices1C: [], invoicesCount: 0}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: true, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: true, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Error] Failed to load resource: the server responded with a status of 500 () (invoices, line 0)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: Error: 500: , …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: Error: 500: , invoices1C: [], invoicesCount: 0}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: true, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: true, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Error] Failed to load resource: the server responded with a status of 500 () (invoices, line 0)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: Error: 500: , …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: Error: 500: , invoices1C: [], invoicesCount: 0}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: true, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: true, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Error] Failed to load resource: the server responded with a status of 500 () (invoices, line 0)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: Error: 500: , …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: Error: 500: , invoices1C: [], invoicesCount: 0}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-Ct3OH_BO.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: true, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: true, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-Ct3OH_BO.js, line 737)
+[Error] Failed to load resource: the server responded with a status of 500 () (invoices, line 0)
+[Log] 1C Invoices Debug: (index-Ct3OH_BO.js, line 1443)
+Object
+
+invoices1C: [] (0)
+
+invoicesCount: 0
+
+invoicesError: Error: 500:
+
+column: 43280
+
+line: 48
+
+message: "500: "
+
+sourceURL: "https://erp.regmik.ua/assets/index-Ct3OH_BO.js"
+
+stack: "@https://erp.regmik.ua/assets/index-Ct3OH_BO.js:48:43280"
+
+Error Prototype
+
+isOpen: true
+
+loadingInvoices: false
+
+Object Prototype
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: true, invoicesError: null, …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: true, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Error] Failed to load resource: the server responded with a status of 500 () (invoices, line 0)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: Error: 500: , …} (index-Ct3OH_BO.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: Error: 500: , invoices1C: [], invoicesCount: 0}Object
