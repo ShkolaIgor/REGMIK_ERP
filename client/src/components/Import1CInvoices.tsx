@@ -161,7 +161,7 @@ export function Import1CInvoices() {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            Імпорт приходних накладних з 1C
+            Імпорт товарів з 1C накладних
           </DialogTitle>
         </DialogHeader>
 

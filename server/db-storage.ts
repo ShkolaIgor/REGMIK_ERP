@@ -10064,24 +10064,24 @@ export class DatabaseStorage implements IStorage {
         status: "confirmed",
         items: [
           {
-            name: "Резистор 10кОм",
-            nameFrom1C: "Резистор 10кОм 0.25Вт",
-            originalName: "Резистор 10кОм 0.25Вт",
-            quantity: 100,
+            name: "Датчик температури ТСП-002",
+            nameFrom1C: "ТСП-002 Pt100-В3 D8 L150-40 G1/2 (-40..500)",
+            originalName: "ТСП-002 Pt100-В3 D8 L150-40 G1/2 (-40..500)",
+            quantity: 10,
             unit: "шт",
-            price: 25.50,
-            total: 2550,
-            sku: "RES-10K-025"
+            price: 850.00,
+            total: 8500,
+            sku: "TSP-002-PT100"
           },
           {
-            name: "Конденсатор 100мкФ",
-            nameFrom1C: "Конденсатор електролітичний 100мкФ 16В",
-            originalName: "Конденсатор електролітичний 100мкФ 16В",
-            quantity: 50,
+            name: "Реле проміжне РП2-У-110",
+            nameFrom1C: "РП2-У-110В 50Гц 2НО+2НЗ контакти",
+            originalName: "РП2-У-110В 50Гц 2НО+2НЗ контакти",
+            quantity: 25,
             unit: "шт", 
-            price: 45.00,
-            total: 2250,
-            sku: "CAP-100UF-16V"
+            price: 185.50,
+            total: 4637.50,
+            sku: "RP2-U-110"
           }
         ]
       }
@@ -10376,9 +10376,9 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // 1C Integration - Component Import
-  async import1CInvoice(invoiceId: string): Promise<{ success: boolean; message: string; componentIds?: number[]; }> {
-    console.log(`🧩 DatabaseStorage: Імпорт накладної ${invoiceId} як КОМПОНЕНТІВ для виробництва`);
+  // 1C Integration - Product Import
+  async import1CInvoice(invoiceId: string): Promise<{ success: boolean; message: string; productIds?: number[]; }> {
+    console.log(`🛍️ DatabaseStorage: Імпорт накладної ${invoiceId} як ТОВАРІВ для продажу/перепродажу`);
     
     try {
       // Отримуємо накладну з 1С
@@ -10389,61 +10389,54 @@ export class DatabaseStorage implements IStorage {
         return { success: false, message: `Накладна ${invoiceId} не знайдена в 1С` };
       }
 
-      const componentIds: number[] = [];
+      const productIds: number[] = [];
       
-      // Обробляємо кожну позицію накладної як компонент
+      // Обробляємо кожну позицію накладної як товар
       for (const item of invoice.items || []) {
-        const componentName = item.nameFrom1C || item.originalName || item.name;
+        const productName = item.nameFrom1C || item.originalName || item.name;
         
-        // Шукаємо існуючий компонент за назвою або SKU
-        const [existingComponent] = await db
+        // Шукаємо існуючий товар за назвою або SKU
+        const [existingProduct] = await db
           .select()
-          .from(components)
-          .where(or(
-            eq(components.name, componentName),
-            eq(components.sku, item.sku || '')
-          ))
+          .from(products)
+          .where(
+            or(
+              eq(products.name, productName),
+              eq(products.sku, item.sku || '')
+            )
+          )
           .limit(1);
         
-        if (!existingComponent) {
-          // Створюємо новий компонент
-          const newComponentData = {
-            name: componentName,
+        if (!existingProduct) {
+          // Створюємо новий товар
+          const newProductData = {
+            name: productName,
             sku: item.sku || `1C-${invoiceId}-${Math.random().toString(36).substr(2, 9)}`,
             description: `Імпортовано з 1С накладної ${invoice.number}`,
-            supplier: invoice.supplierName,
-            costPrice: (item.price || 0).toString(),
+            costPrice: item.price || 0,
+            retailPrice: item.price || 0,
+            productType: "product", // товар для продажу/перепродажу
+            unit: item.unit || 'шт',
             isActive: true
           } as const;
           
-          const [newComponent] = await db
-            .insert(components)
-            .values(newComponentData)
+          const [newProduct] = await db
+            .insert(products)
+            .values(newProductData)
             .returning();
           
-          componentIds.push(newComponent.id);
-          console.log(`✅ Створено компонент: ${componentName} (ID: ${newComponent.id})`);
+          productIds.push(newProduct.id);
+          console.log(`✅ Створено товар: ${productName} (ID: ${newProduct.id})`);
         } else {
-          // Оновлюємо запас існуючого компонента
-          const newStock = existingComponent.currentStock + parseInt(item.quantity.toString());
-          
-          await db
-            .update(components)
-            .set({ 
-              currentStock: newStock,
-              updatedAt: new Date()
-            })
-            .where(eq(components.id, existingComponent.id));
-          
-          componentIds.push(existingComponent.id);
-          console.log(`✅ Оновлено запас компонента: ${componentName} (ID: ${existingComponent.id})`);
+          productIds.push(existingProduct.id);
+          console.log(`✅ Знайдено існуючий товар: ${productName} (ID: ${existingProduct.id})`);
         }
       }
 
       return {
         success: true,
-        message: `Успішно імпортовано ${componentIds.length} компонентів з накладної ${invoice.number}`,
-        componentIds
+        message: `Успішно імпортовано ${productIds.length} товарів з накладної ${invoice.number}`,
+        productIds
       };
       
     } catch (error) {
