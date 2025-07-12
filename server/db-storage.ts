@@ -10083,6 +10083,10 @@ export class DatabaseStorage implements IStorage {
       // Basic авторизація
       const authHeader = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
       
+      console.log(`📡 1C Request: POST ${baseUrl}/hs/erp/invoices`);
+      console.log(`🔐 Auth: Basic ${authHeader.substring(0, 20)}...`);
+      
+      // Використовуємо POST метод згідно з вашим кодом 1С
       const response = await fetch(`${baseUrl}/hs/erp/invoices`, {
         method: 'POST',
         headers: {
@@ -10090,11 +10094,16 @@ export class DatabaseStorage implements IStorage {
           'Content-Type': 'application/json; charset=utf-8',
           'Accept': 'application/json'
         },
-        body: JSON.stringify(requestData),
+        // Відправляємо порожній POST запит, як у вашому коді invoicesPOST
+        body: JSON.stringify({}),
         signal: AbortSignal.timeout(45000) // 45 секунд
       });
 
+      console.log(`📊 1C Response: ${response.status} ${response.statusText}`);
+      
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ 1C HTTP помилка: ${response.status} - ${errorText.substring(0, 200)}`);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
