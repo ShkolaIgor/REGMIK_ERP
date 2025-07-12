@@ -10057,36 +10057,22 @@ export class DatabaseStorage implements IStorage {
     );
   }
 
-  // 1C Integration methods
+  // 1C Integration methods  
   async get1CInvoices() {
-    console.log('🔗 РЕАЛЬНА 1С ІНТЕГРАЦІЯ: Підключення до BAF системи для вхідних накладних');
-    
     try {
       // Отримуємо конфігурацію 1С інтеграції
       const integrations = await this.getIntegrations();
       const oneСIntegration = integrations.find(int => int.name?.includes('1С') || int.type === '1c');
       
       if (!oneСIntegration?.config?.baseUrl) {
-        console.error('❌ 1С інтеграція не налаштована або відсутній baseUrl');
         throw new Error('1С інтеграція не налаштована');
       }
 
       const { baseUrl, clientId, clientSecret } = oneСIntegration.config;
-      console.log(`🌐 Підключення до: ${baseUrl}/hs/erp/invoices`);
-
-      // Формуємо запит до 1С
-      const requestData = {
-        action: "getInvoices",
-        limit: 100
-      };
 
       // Basic авторизація
       const authHeader = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
       
-      console.log(`📡 1C Request: POST ${baseUrl}/hs/erp/invoices`);
-      console.log(`🔐 Auth: Basic ${authHeader.substring(0, 20)}...`);
-      
-      // Використовуємо POST метод згідно з вашим кодом 1С
       const response = await fetch(`${baseUrl}/hs/erp/invoices`, {
         method: 'POST',
         headers: {
@@ -10094,21 +10080,18 @@ export class DatabaseStorage implements IStorage {
           'Content-Type': 'application/json; charset=utf-8',
           'Accept': 'application/json'
         },
-        // Відправляємо порожній POST запит, як у вашому коді invoicesPOST
-        body: JSON.stringify({}),
-        signal: AbortSignal.timeout(45000) // 45 секунд
+        body: JSON.stringify({
+          action: "getInvoices",
+          limit: 100
+        }),
+        signal: AbortSignal.timeout(45000)
       });
 
-      console.log(`📊 1C Response: ${response.status} ${response.statusText}`);
-      
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`❌ 1C HTTP помилка: ${response.status} - ${errorText.substring(0, 200)}`);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const responseText = await response.text();
-      console.log('📥 Отримано відповідь від 1С:', responseText.substring(0, 200) + '...');
 
       // Парсинг JSON з обробкою українських десяткових чисел
       let invoicesData;
@@ -10175,35 +10158,7 @@ export class DatabaseStorage implements IStorage {
 
     } catch (error) {
       console.error('❌ Помилка з\'єднання з 1С:', error);
-      
-      // У разі помилки підключення - повертаємо fallback дані з поясненням
-      console.log('🔄 Використовуємо fallback дані через помилку підключення до 1С');
-      return [
-        {
-          id: "fallback-demo-1",
-          number: "ПН-FALLBACK-001",
-          date: new Date().toISOString().split('T')[0],
-          supplierName: "FALLBACK: Помилка підключення до 1С",
-          supplierTaxCode: "00000000",
-          supplierId: 1,
-          amount: 1.00,
-          currency: "UAH",
-          status: "draft" as const,
-          items: [
-            {
-              name: "Помилка з'єднання з 1С",
-              erpProductId: null,
-              originalName: "Перевірте налаштування інтеграції",
-              isMapped: false,
-              quantity: 1,
-              price: 1.00,
-              total: 1.00,
-              unit: "шт"
-            }
-          ],
-          exists: false
-        }
-      ];
+      throw error;
     }
   }
 

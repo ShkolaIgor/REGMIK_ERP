@@ -11141,13 +11141,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ВИДАЛЕНО: Старий дублікат test endpoint
 
-  // 1C Integration Endpoints з fallback версією
+  // 1C Integration Endpoints
   app.get('/api/1c/invoices', isSimpleAuthenticated, async (req, res) => {
     try {
-      console.log('🔍 Запит 1C накладних - fallback версія');
       const invoices = await storage.get1CInvoices();
-      console.log(`✅ Fallback дані готові: ${invoices?.length || 0} накладних`);
-      
       res.json(invoices || []);
     } catch (error) {
       console.error('❌ ПОМИЛКА 1C накладних:', error);
