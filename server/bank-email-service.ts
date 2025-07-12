@@ -233,8 +233,8 @@ export class BankEmailService {
         return null;
       }
 
-      // Конвертуємо суму з українського формату (коми як десяткові розділювачі)
-      const amountStr = amountMatch[1].replace(',', '.');
+      // Конвертуємо суму - підтримуємо і крапки, і коми як десяткові розділювачі
+      const amountStr = amountMatch[1].replace(',', '.'); // Українські коми → крапки
       const amount = parseFloat(amountStr);
 
       const vatAmount = vatMatch ? parseFloat(vatMatch[1].replace(',', '.')) : undefined;
