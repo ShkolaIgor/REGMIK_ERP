@@ -10488,9 +10488,9 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // 1C Integration - Product Import
-  async import1CInvoice(invoiceId: string): Promise<{ success: boolean; message: string; productIds?: number[]; }> {
-    console.log(`🛍️ DatabaseStorage: Імпорт накладної ${invoiceId} як ТОВАРІВ для продажу/перепродажу`);
+  // 1C Integration - Component Import (НАКЛАДНІ МІСТЯТЬ КОМПОНЕНТИ)
+  async import1CInvoice(invoiceId: string): Promise<{ success: boolean; message: string; componentIds?: number[]; }> {
+    console.log(`🔧 DatabaseStorage: Імпорт накладної ${invoiceId} як КОМПОНЕНТІВ для виробництва`);
     
     try {
       // Отримуємо накладну з 1С
@@ -10501,100 +10501,98 @@ export class DatabaseStorage implements IStorage {
         return { success: false, message: `Накладна ${invoiceId} не знайдена в 1С` };
       }
 
-      const productIds: number[] = [];
+      const componentIds: number[] = [];
       
-      // Обробляємо кожну позицію накладної як товар
+      // Обробляємо кожну позицію накладної як компонент
       for (const item of invoice.items || []) {
-        const productName = item.nameFrom1C || item.originalName || item.name;
+        const componentName = item.nameFrom1C || item.originalName || item.name;
         
-        // Спочатку шукаємо зіставлення з 1С
-        const mapping = await this.findProductByAlternativeName(productName, "1C");
+        // Спочатку шукаємо зіставлення з 1С в таблиці компонентів
+        const mapping = await this.findProductByAlternativeName(componentName, "1C");
         
-        let existingProduct = null;
+        let existingComponent = null;
         if (mapping) {
-          // Якщо знайдено зіставлення, шукаємо товар за ERP ID
-          const [mappedProduct] = await db
+          // Якщо знайдено зіставлення, шукаємо компонент за ERP ID
+          const [mappedComponent] = await db
             .select()
-            .from(products)
-            .where(eq(products.id, mapping.erpProductId))
+            .from(components)
+            .where(eq(components.id, mapping.erpProductId))
             .limit(1);
-          existingProduct = mappedProduct;
-          console.log(`🔗 Знайдено зіставлення: "${productName}" → "${mapping.erpProductName}" (ID: ${mapping.erpProductId})`);
+          existingComponent = mappedComponent;
+          console.log(`🔗 Знайдено зіставлення: "${componentName}" → "${mapping.erpProductName}" (ID: ${mapping.erpProductId})`);
         } else {
-          // Якщо зіставлення не знайдено, шукаємо за назвою або SKU
-          const [directProduct] = await db
+          // Якщо зіставлення не знайдено, шукаємо за назвою або SKU в таблиці components
+          const [directComponent] = await db
             .select()
-            .from(products)
+            .from(components)
             .where(
               or(
-                eq(products.name, productName),
-                eq(products.sku, item.sku || '')
+                eq(components.name, componentName),
+                eq(components.sku, item.sku || '')
               )
             )
             .limit(1);
-          existingProduct = directProduct;
+          existingComponent = directComponent;
         }
         
-        if (!existingProduct) {
-          // Створюємо новий товар
-          const newProductData = {
-            name: productName,
+        if (!existingComponent) {
+          // Створюємо новий компонент
+          const newComponentData = {
+            name: componentName,
             sku: item.sku || `1C-${invoiceId}-${Math.random().toString(36).substr(2, 9)}`,
             description: `Імпортовано з 1С накладної ${invoice.number}`,
+            supplier: item.supplier || 'Невідомий постачальник',
             costPrice: item.price || 0,
-            retailPrice: item.price || 0,
-            productType: "product", // товар для продажу/перепродажу
-            unit: item.unit || 'шт',
             isActive: true
           } as const;
           
-          const [newProduct] = await db
-            .insert(products)
-            .values(newProductData)
+          const [newComponent] = await db
+            .insert(components)
+            .values(newComponentData)
             .returning();
           
-          // Автоматично створюємо зіставлення для нового товару
+          // Автоматично створюємо зіставлення для нового компонента
           if (!mapping) {
             await this.createProductNameMapping({
               externalSystemName: "1C",
-              externalProductName: productName,
-              erpProductId: newProduct.id,
-              erpProductName: newProduct.name,
+              externalProductName: componentName,
+              erpProductId: newComponent.id,
+              erpProductName: newComponent.name,
               confidence: 1.0,
               isActive: true,
               mappingType: "automatic",
               createdAt: new Date()
             });
-            console.log(`🔗 Створено автоматичне зіставлення: "${productName}" → "${newProduct.name}" (ID: ${newProduct.id})`);
+            console.log(`🔗 Створено автоматичне зіставлення: "${componentName}" → "${newComponent.name}" (ID: ${newComponent.id})`);
           }
           
-          productIds.push(newProduct.id);
-          console.log(`✅ Створено товар: ${productName} (ID: ${newProduct.id})`);
+          componentIds.push(newComponent.id);
+          console.log(`✅ Створено компонент: ${componentName} (ID: ${newComponent.id})`);
         } else {
-          // Якщо товар знайдено, але зіставлення не було, створюємо його
+          // Якщо компонент знайдено, але зіставлення не було, створюємо його
           if (!mapping) {
             await this.createProductNameMapping({
               externalSystemName: "1C",
-              externalProductName: productName,
-              erpProductId: existingProduct.id,
-              erpProductName: existingProduct.name,
+              externalProductName: componentName,
+              erpProductId: existingComponent.id,
+              erpProductName: existingComponent.name,
               confidence: 0.9,
               isActive: true,
               mappingType: "automatic",
               createdAt: new Date()
             });
-            console.log(`🔗 Створено зіставлення для існуючого товару: "${productName}" → "${existingProduct.name}" (ID: ${existingProduct.id})`);
+            console.log(`🔗 Створено зіставлення для існуючого компонента: "${componentName}" → "${existingComponent.name}" (ID: ${existingComponent.id})`);
           }
           
-          productIds.push(existingProduct.id);
-          console.log(`✅ Знайдено існуючий товар: ${productName} (ID: ${existingProduct.id})`);
+          componentIds.push(existingComponent.id);
+          console.log(`✅ Знайдено існуючий компонент: ${componentName} (ID: ${existingComponent.id})`);
         }
       }
 
       return {
         success: true,
-        message: `Успішно імпортовано ${productIds.length} товарів з накладної ${invoice.number}`,
-        productIds
+        message: `Успішно імпортовано ${componentIds.length} компонентів з накладної ${invoice.number}`,
+        componentIds
       };
       
     } catch (error) {
@@ -10604,6 +10602,185 @@ export class DatabaseStorage implements IStorage {
         message: error instanceof Error ? error.message : 'Невідома помилка імпорту'
       };
     }
+  }
+
+  // 1C Integration - Order Import (ВИХІДНІ РАХУНКИ МІСТЯТЬ ТОВАРИ АБО КОМПОНЕНТИ)
+  async import1COutgoingInvoice(invoiceId: string): Promise<{ success: boolean; message: string; orderId?: number; }> {
+    console.log(`📋 DatabaseStorage: Імпорт вихідного рахунку ${invoiceId} як ЗАМОВЛЕННЯ (пошук у products і components)`);
+    
+    try {
+      // Отримуємо вихідний рахунок з 1С
+      const allOutgoingInvoices = await this.get1COutgoingInvoices();
+      const invoice = allOutgoingInvoices.find((inv: any) => inv.id === invoiceId);
+      
+      if (!invoice) {
+        return { success: false, message: `Вихідний рахунок ${invoiceId} не знайдений в 1С` };
+      }
+
+      // Створюємо або знаходимо клієнта
+      let client = await this.findOrCreateClientForOutgoingInvoice(invoice);
+      
+      // Генеруємо номер замовлення
+      const orderNumber = await this.generateOrderNumber();
+      
+      // Створюємо замовлення
+      const orderData = {
+        order_number: orderNumber,
+        invoice_number: invoice.number,
+        client_id: client.id,
+        total_amount: invoice.total || 0,
+        currency: invoice.currency === "980" ? "UAH" : invoice.currency,
+        status: "pending",
+        order_date: new Date(invoice.date),
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+      
+      const [newOrder] = await db.insert(orders).values(orderData).returning();
+      
+      // Обробляємо позиції рахунку - шукаємо у products І components
+      for (const item of invoice.positions || []) {
+        const itemName = item.productName || item.name;
+        
+        // КРОК 1: Шукаємо в таблиці products (товари для продажу)
+        let foundProduct = null;
+        const [productMatch] = await db
+          .select()
+          .from(products)
+          .where(
+            or(
+              eq(products.name, itemName),
+              ilike(products.name, `%${itemName}%`)
+            )
+          )
+          .limit(1);
+        
+        if (productMatch) {
+          foundProduct = { type: 'product', id: productMatch.id, name: productMatch.name, isNew: false };
+          console.log(`🛍️ Знайдено товар: "${itemName}" → "${productMatch.name}" (ID: ${productMatch.id})`);
+        } else {
+          // КРОК 2: Шукаємо в таблиці components (компоненти для виробництва)
+          const [componentMatch] = await db
+            .select()
+            .from(components)
+            .where(
+              or(
+                eq(components.name, itemName),
+                ilike(components.name, `%${itemName}%`)
+              )
+            )
+            .limit(1);
+          
+          if (componentMatch) {
+            // Створюємо товар на основі компонента для продажу
+            const newProductData = {
+              name: componentMatch.name,
+              sku: componentMatch.sku + "-SALE",
+              description: `Товар створений з компонента для продажу (з рахунку ${invoice.number})`,
+              costPrice: componentMatch.costPrice,
+              retailPrice: item.price || componentMatch.costPrice * 1.2, // 20% markup
+              productType: "product",
+              unit: 'шт',
+              isActive: true
+            };
+            
+            const [newProduct] = await db.insert(products).values(newProductData).returning();
+            foundProduct = { type: 'product', id: newProduct.id, name: newProduct.name, isNew: true };
+            console.log(`🔄 Створено товар з компонента: "${itemName}" → "${newProduct.name}" (ID: ${newProduct.id})`);
+          }
+        }
+        
+        // КРОК 3: Якщо нічого не знайдено, створюємо новий товар
+        if (!foundProduct) {
+          const newProductData = {
+            name: itemName,
+            sku: `1C-OUT-${invoiceId}-${Math.random().toString(36).substr(2, 9)}`,
+            description: `Імпортовано з 1С вихідного рахунку ${invoice.number}`,
+            costPrice: (item.price || 0) * 0.8, // припускаємо 20% маржу
+            retailPrice: item.price || 0,
+            productType: "product",
+            unit: 'шт',
+            isActive: true
+          };
+          
+          const [newProduct] = await db.insert(products).values(newProductData).returning();
+          foundProduct = { type: 'product', id: newProduct.id, name: newProduct.name, isNew: true };
+          console.log(`➕ Створено новий товар: "${itemName}" (ID: ${newProduct.id})`);
+        }
+        
+        // Створюємо позицію замовлення
+        const orderItemData = {
+          order_id: newOrder.id,
+          product_id: foundProduct.id,
+          quantity: item.quantity || 1,
+          price: item.price || 0,
+          total: item.total || (item.price * item.quantity) || 0
+        };
+        
+        await db.insert(orderItems).values(orderItemData);
+        console.log(`✅ Додано позицію: ${foundProduct.name} x${item.quantity} = ${item.total}`);
+      }
+
+      return {
+        success: true,
+        message: `Успішно імпортовано вихідний рахунок ${invoice.number} як замовлення #${newOrder.id}`,
+        orderId: newOrder.id
+      };
+      
+    } catch (error) {
+      console.error(`❌ Помилка імпорту вихідного рахунку ${invoiceId}:`, error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Невідома помилка імпорту'
+      };
+    }
+  }
+
+  // Допоміжний метод для створення клієнта з вихідного рахунку
+  private async findOrCreateClientForOutgoingInvoice(invoice: any) {
+    // Спочатку шукаємо існуючого клієнта за назвою або податковим кодом
+    let client = null;
+    
+    if (invoice.clientTaxCode) {
+      const [existingClient] = await db
+        .select()
+        .from(clients)
+        .where(eq(clients.taxCode, invoice.clientTaxCode))
+        .limit(1);
+      client = existingClient;
+    }
+    
+    if (!client && invoice.clientName) {
+      const [existingClient] = await db
+        .select()
+        .from(clients)
+        .where(eq(clients.name, invoice.clientName))
+        .limit(1);
+      client = existingClient;
+    }
+    
+    // Якщо клієнт не знайдений, створюємо нового
+    if (!client) {
+      const clientData = {
+        name: invoice.clientName || 'Невідомий клієнт',
+        taxCode: invoice.clientTaxCode || null,
+        email: null,
+        phone: null,
+        address: null,
+        clientTypeId: 1, // припускаємо стандартний тип клієнта
+        isActive: true,
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+      
+      const [newClient] = await db.insert(clients).values(clientData).returning();
+      client = newClient;
+      console.log(`👤 Створено нового клієнта: "${invoice.clientName}" (ID: ${client.id})`);
+    } else {
+      console.log(`👤 Знайдено існуючого клієнта: "${client.name}" (ID: ${client.id})`);
+    }
+    
+    return client;
   }
 
 

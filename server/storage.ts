@@ -564,6 +564,10 @@ export interface IStorage {
   // 1C Integration - Component Import
   import1CInvoice(invoiceId: string): Promise<{ success: boolean; message: string; componentIds?: number[]; }>;
   get1CInvoices(): Promise<any[]>;
+  
+  // 1C Integration - Order Import  
+  import1COutgoingInvoice(invoiceId: string): Promise<{ success: boolean; message: string; orderId?: number; }>;
+  get1COutgoingInvoices(): Promise<any[]>;
 }
 
 export class MemStorage implements IStorage {
