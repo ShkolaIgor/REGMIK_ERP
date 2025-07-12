@@ -10548,12 +10548,13 @@ export class DatabaseStorage implements IStorage {
       outgoingUrl += 'invoices';
       
       console.log(`Запит реальних вихідних рахунків з 1C: ${outgoingUrl}`);
-      console.log(`Параметри запиту: action=getCustomerInvoices, limit=100 (ТИМЧАСОВО ВІДКЛЮЧЕНО - 1С не підтримує окремі вихідні рахунки)`);
+      console.log(`Параметри запиту: action=getOutgoingInvoices, limit=100 (рахунки клієнтам)`);
 
-      // ТИМЧАСОВО ВІДКЛЮЧАЄМО РЕАЛЬНИЙ ЗАПИТ - 1С повертає накладні замість рахунків
-      console.log('⚠️ ТИМЧАСОВО ВІДКЛЮЧЕНО: 1С сервер повертає приходні накладні замість рахунків клієнтам');
-      console.log('🔄 Використовуємо демо дані до налаштування правильного endpoint для вихідних рахунків');
-      throw new Error('Тимчасово відключено - 1С повертає неправильні дані');
+      // ТИМЧАСОВО ПОВЕРТАЄМОСЯ ДО FALLBACK - 1С повертає накладні замість рахунків
+      console.log('⚠️ ПРОБЛЕМА ВИЯВЛЕНА: 1С повертає накладні постачальників замість рахунків клієнтам');
+      console.log('📋 Для виправлення потрібно налаштувати endpoint СчетНаОплатуПокупателю в 1С');
+      console.log('🔄 Тимчасово повертаємося до fallback даних рахунків клієнтам');
+      throw new Error('1С повертає накладні постачальників замість рахунків клієнтам');
       
       // Використовуємо ту ж логіку що і в get1CInvoices: GET → POST JSON → POST URL params
       let response;
@@ -10561,7 +10562,7 @@ export class DatabaseStorage implements IStorage {
       try {
         // Спочатку пробуємо GET (хоча знаємо що не працює)
         console.log('Пробуємо GET запит для вихідних рахунків...');
-        response = await fetch(`${outgoingUrl}?action=getCustomerInvoices&limit=100`, {
+        response = await fetch(`${outgoingUrl}?action=getOutgoingInvoices&limit=100`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -10594,7 +10595,7 @@ export class DatabaseStorage implements IStorage {
             } : {})
           },
           body: JSON.stringify({ 
-            action: 'getCustomerInvoices',
+            action: 'getOutgoingInvoices',
             limit: 100
           }),
           signal: AbortSignal.timeout(8000)
@@ -10604,7 +10605,7 @@ export class DatabaseStorage implements IStorage {
           console.log(`POST JSON також неуспішний: ${response.status}, пробуємо POST з URL параметрами для вихідних рахунків...`);
           
           // Третя спроба: POST з URL parameters
-          const urlWithParams = `${outgoingUrl}?action=getCustomerInvoices&limit=100`;
+          const urlWithParams = `${outgoingUrl}?action=getOutgoingInvoices&limit=100`;
           response = await fetch(urlWithParams, {
             method: 'POST',
             headers: {
@@ -10727,7 +10728,7 @@ export class DatabaseStorage implements IStorage {
           // Перевіряємо наявність ключових полів (українські/російські та англійські)
           console.log('🔍 Перевірка полів:');
           console.log('- НомерДокумента:', invoice.НомерДокумента || 'відсутнє');
-          console.log('- Постачальник:', invoice.Постачальник || 'відсутнє'); 
+          console.log('- Клієнт/Постачальник:', invoice.Клієнт || invoice.Покупатель || invoice.Постачальник || 'відсутнє'); 
           console.log('- Сума:', invoice.Сума || 'відсутнє');
           console.log('- Валюта:', invoice.Валюта || 'відсутнє');
           console.log('- Дата:', invoice.Дата || 'відсутнє');
@@ -10738,7 +10739,7 @@ export class DatabaseStorage implements IStorage {
             id: invoice.НомерДокумента || invoice.invoiceNumber || invoice.НомерСчета || invoice.number || `1c-${index}`,
             number: invoice.НомерДокумента || invoice.invoiceNumber || invoice.НомерСчета || invoice.number || `№${index + 1}`,
             date: invoice.Дата || invoice.date || invoice.ДатаСчета || invoice.ДатаДокумента || new Date().toISOString().split('T')[0],
-            clientName: invoice.Постачальник || invoice.client || invoice.clientName || invoice.НаименованиеКонтрагента || invoice.Контрагент || "Клієнт не вказано",
+            clientName: invoice.Клієнт || invoice.Покупатель || invoice.Постачальник || invoice.client || invoice.clientName || invoice.НаименованиеКонтрагента || invoice.Контрагент || "Клієнт не вказано",
             total: this.parseUkrainianDecimal(String(invoice.Сума || invoice.amount || invoice.totalAmount || invoice.СуммаДокумента || invoice.Сумма || invoice.total || "0")),
             currency: this.convertCurrencyCode(invoice.Валюта || invoice.currency || invoice.КодВалюты || "UAH"),
             status: invoice.Статус || invoice.status || "confirmed",
