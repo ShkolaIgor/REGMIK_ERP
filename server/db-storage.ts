@@ -10147,9 +10147,10 @@ export class DatabaseStorage implements IStorage {
       const processedInvoices = await Promise.all(invoices.map(async (invoice: any, invoiceIndex: number) => {
         const itemsArray = invoice.items || invoice.Позиції || [];
         
-        // Пропускаємо накладні без позицій (послуги, витрати тощо)
+        // ФІЛЬТРАЦІЯ: Пропускаємо накладні тільки з послугами, показуємо тільки товари
         if (!Array.isArray(itemsArray) || itemsArray.length === 0) {
-          // Це нормально - не всі накладні мають матеріальні позиції
+          // Пропускаємо накладні без позицій (послуги, витрати тощо)
+          return null;
         }
         
         const items = Array.isArray(itemsArray) 
@@ -10256,7 +10257,10 @@ export class DatabaseStorage implements IStorage {
                 quantity: this.parseUkrainianDecimal(item.quantity || item.Кількість || 0),
                 price: this.parseUkrainianDecimal(item.price || item.Ціна || 0),
                 total: this.parseUkrainianDecimal(item.total || item.Сума || 0),
-                unit: item.unit || item.ОдиницяВиміру || "шт"
+                unit: item.unit || item.ОдиницяВиміру || "шт",
+                // ДОДАНО: Відображення назви з 1С та знайденого ERP еквіваленту
+                nameFrom1C: externalProductName,
+                erpEquivalent: mappedProduct ? mappedProduct.erpProductName : null
               };
             }))
           : [];
@@ -10279,7 +10283,8 @@ export class DatabaseStorage implements IStorage {
         };
       }));
 
-      return processedInvoices;
+      // Фільтруємо null значення (накладні без товарних позицій)
+      return processedInvoices.filter(invoice => invoice !== null);
 
     } catch (error) {
       console.error('Error fetching 1C invoices:', error);
@@ -10962,10 +10967,63 @@ export class DatabaseStorage implements IStorage {
 
       // Обробляємо реальні дані з 1C з детальним логуванням
       console.log('🔧 Початок обробки рахунків з 1С...');
-      const processedInvoices = invoicesArray.map((invoice: any, index: number) => {
+      const processedInvoices = await Promise.all(invoicesArray.map(async (invoice: any, index: number) => {
         try {
           
-          const processedInvoice = {
+          // ФІЛЬТРАЦІЯ ВИХІДНИХ РАХУНКІВ: пропускаємо без товарів, показуємо тільки товари
+        const positions = invoice.positions || invoice.Позиції || [];
+        
+        // Якщо немає позицій - пропускаємо рахунок (тільки послуги/витрати)
+        if (!Array.isArray(positions) || positions.length === 0) {
+          return null;
+        }
+        
+        // Обробляємо позиції з мапінгом 1С→ERP назв
+        const processedPositions = await Promise.all(positions.map(async (position: any) => {
+          const productName = position.productName || position.НаименованиеТовара || position.НазваТовару || "Невідомий товар";
+          
+          // Пошук зіставлення назв товарів 1С→ERP
+          let mappedProduct = await this.findProductByAlternativeName(productName, '1c');
+          
+          if (!mappedProduct) {
+            const allProducts = await this.getProducts();
+            const foundProduct = allProducts.find(p => 
+              p.name.toLowerCase() === productName.toLowerCase() ||
+              p.sku.toLowerCase() === productName.toLowerCase() ||
+              p.name.toLowerCase().includes(productName.toLowerCase()) ||
+              productName.toLowerCase().includes(p.name.toLowerCase())
+            );
+            
+            if (foundProduct) {
+              await this.createProductNameMapping({
+                externalSystemName: '1c',
+                externalProductName: productName,
+                erpProductId: foundProduct.id,
+                erpProductName: foundProduct.name,
+                confidenceScore: 0.8,
+                isActive: true,
+                createdBy: 'system'
+              });
+              
+              mappedProduct = {
+                erpProductId: foundProduct.id,
+                erpProductName: foundProduct.name
+              };
+            }
+          }
+          
+          return {
+            productName,
+            nameFrom1C: productName,
+            erpEquivalent: mappedProduct?.erpProductName || null,
+            erpProductId: mappedProduct?.erpProductId || null,
+            quantity: this.parseUkrainianDecimal(String(position.quantity || position.Кількість || "0")),
+            price: this.parseUkrainianDecimal(String(position.price || position.Ціна || "0")),
+            total: this.parseUkrainianDecimal(String(position.total || position.Сума || "0"))
+          };
+        }));
+
+        const processedInvoice = {
             id: invoice.НомерДокумента || invoice.invoiceNumber || invoice.НомерСчета || invoice.number || `1c-${index}`,
             number: invoice.НомерДокумента || invoice.invoiceNumber || invoice.НомерСчета || invoice.number || `№${index + 1}`,
             date: invoice.Дата || invoice.date || invoice.ДатаСчета || invoice.ДатаДокумента || new Date().toISOString().split('T')[0],
@@ -10976,50 +11034,10 @@ export class DatabaseStorage implements IStorage {
             paymentStatus: invoice.СтатусОплати || invoice.paymentStatus || invoice.СтатусОплаты || "unpaid",
             description: invoice.Примітка || invoice.notes || invoice.description || invoice.Comment || "",
             clientTaxCode: invoice.ЕДРПОУ || invoice.clientTaxCode || invoice.КодНалогоплательщика || invoice.ІПН || "",
-            itemsCount: invoice.КількістьПозицій || invoice.itemsCount || invoice.КоличествоПозиций || (invoice.Позиції?.length || 0),
+            itemsCount: processedPositions.length,
             managerName: invoice.ІмяМенеджера || invoice.managerName || invoice.ИмяМенеджера || "",
-            positions: (invoice.Позиції || invoice.positions || invoice.Positions || []).map((pos: any) => {
-              // ВИПРАВЛЕННЯ ОБРІЗАННЯ НАЗВ У ВИХІДНИХ РАХУНКАХ
-              const positionNameFields = [
-                pos.productName,
-                pos.НаименованиеТовара, 
-                pos.Товар,
-                pos.name,
-                pos.Назва,
-                pos.НазваТовару,
-                pos.ИмяТовара,
-                pos.НазваВиробу,
-                pos.НазваПродукту,
-                pos.ProductName,
-                pos.ItemName,
-                pos.Description,
-                pos.Опис,
-                pos.ТоварНазва,
-                pos.НаименованиеПозиции,
-                pos.НазваПозиції
-              ];
-              
-              let productName = "Товар (назва не вказана)";
-              
-              // Знаходимо найдовшу непорожню назву (захист від обрізання)
-              for (const field of positionNameFields) {
-                if (field && typeof field === 'string' && field.trim().length > 0 && 
-                    field.trim() !== 'undefined' && field.trim() !== 'null' && field.trim() !== 'Товар') {
-                  const trimmedField = field.trim();
-                  // Якщо це перша знайдена назва або вона довша за поточну
-                  if (productName === "Товар (назва не вказана)" || trimmedField.length > productName.length) {
-                    productName = trimmedField;
-                  }
-                }
-              }
-              
-              return {
-                productName,
-                quantity: this.parseUkrainianDecimal(pos.quantity || pos.Количество || pos.Кількість || 1),
-                price: this.parseUkrainianDecimal(pos.price || pos.Цена || pos.Ціна || 0),
-                total: this.parseUkrainianDecimal(pos.total || pos.Сумма || pos.Сума || 0)
-              };
-            })
+            positions: processedPositions,
+            notes: invoice.Примітки || invoice.notes || invoice.НотаПримечание || ""
           };
           
           return processedInvoice;
@@ -11029,10 +11047,12 @@ export class DatabaseStorage implements IStorage {
           console.error('- Проблемний рахунок:', invoice);
           throw new Error(`Помилка обробки рахунку ${index + 1}: ${processingError.message}`);
         }
-      });
+      }));
 
-      console.log(`Успішно оброблено ${processedInvoices.length} вихідних рахунків`);
-      return processedInvoices;
+      // Фільтруємо null значення (рахунки без товарних позицій)  
+      const filteredInvoices = processedInvoices.filter(invoice => invoice !== null);
+      console.log(`Успішно оброблено ${filteredInvoices.length} вихідних рахунків з товарними позиціями (з ${invoicesArray.length} загалом)`);
+      return filteredInvoices;
 
     } catch (error) {
       console.error('❌ КРИТИЧНА ПОМИЛКА get1COutgoingInvoices:', error);

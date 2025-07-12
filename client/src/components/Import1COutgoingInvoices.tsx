@@ -553,15 +553,35 @@ export function Import1COutgoingInvoices() {
                     <CardContent>
                       <div className="space-y-2">
                         {showPreview.positions.map((position, index) => (
-                          <div key={index} className="flex justify-between items-center p-2 bg-muted rounded">
-                            <div className="flex-1">
-                              <p className="font-medium">{position.productName}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {position.quantity} x {position.price.toLocaleString('uk-UA')} {showPreview.currency}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-medium">{position.total.toLocaleString('uk-UA')} {showPreview.currency}</p>
+                          <div key={index} className="p-3 bg-muted rounded-lg border">
+                            <div className="space-y-2">
+                              {/* Назва з 1С */}
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-blue-600 font-medium">1С:</span>
+                                <span className="text-sm font-medium">{position.nameFrom1C || position.productName}</span>
+                              </div>
+                              
+                              {/* ERP еквівалент */}
+                              {position.erpEquivalent ? (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-green-600 font-medium">ERP:</span>
+                                  <span className="text-sm text-green-700">{position.erpEquivalent}</span>
+                                  <span className="text-xs bg-green-100 text-green-800 px-1 rounded">знайдено</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-orange-600 font-medium">ERP:</span>
+                                  <span className="text-sm text-gray-500 italic">товар буде створено</span>
+                                  <span className="text-xs bg-orange-100 text-orange-800 px-1 rounded">новий</span>
+                                </div>
+                              )}
+                              
+                              {/* Кількість та ціни */}
+                              <div className="flex justify-between items-center text-sm text-muted-foreground">
+                                <span>Кількість: {position.quantity}</span>
+                                <span>Ціна: {position.price.toLocaleString('uk-UA')} {showPreview.currency}</span>
+                                <span className="font-medium">Сума: {position.total.toLocaleString('uk-UA')} {showPreview.currency}</span>
+                              </div>
                             </div>
                           </div>
                         ))}

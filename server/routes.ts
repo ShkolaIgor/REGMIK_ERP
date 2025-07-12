@@ -11167,12 +11167,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // 1C Outgoing Invoices endpoint з fallback механізмом
   app.get('/api/1c/outgoing-invoices', isSimpleAuthenticated, async (req, res) => {
+    console.log('🔧 GET /api/1c/outgoing-invoices запит отримано');
     try {
       console.log('🔍 Запит 1C вихідних рахунків - початок');
       
       // Додаємо тайм-аут для всього запиту
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Тайм-аут запиту до 1С після 30 секунд')), 30000);
+        setTimeout(() => reject(new Error('Тайм-аут запиту до 1С після 50 секунд')), 50000);
       });
       
       const outgoingInvoicesPromise = storage.get1COutgoingInvoices();

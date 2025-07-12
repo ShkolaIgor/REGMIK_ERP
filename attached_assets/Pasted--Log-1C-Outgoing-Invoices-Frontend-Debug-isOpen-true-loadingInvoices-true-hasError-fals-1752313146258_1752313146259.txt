@@ -1,0 +1,1515 @@
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: true, hasError: false, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: true, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-CGq30zTh.js, line 737)
+[Error] Failed to load resource: the server responded with a status of 500 () (outgoing-invoices, line 0)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17033)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-CGq30zTh.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-CGq30zTh.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17033)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Error] Error: Minified React error #301; visit https://reactjs.org/docs/error-decoder.html?invariant=301 for the full message or use the non-minified dev environment for full errors and additional helpful warnings. — index-CGq30zTh.js:38:17081
+	$3 (index-CGq30zTh.js:40:167)
+	(anonymous function) (index-CGq30zTh.js:40:391)
+	hR (index-CGq30zTh.js:38:15561)
+	AR (index-CGq30zTh.js:40:32081)
+	uY (index-CGq30zTh.js:40:31500)
+	Wpe (index-CGq30zTh.js:40:31050)
+	Gpe (index-CGq30zTh.js:40:40963)
+	wm (index-CGq30zTh.js:40:40316)
+	ER (index-CGq30zTh.js:40:36916)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Error] Error: Minified React error #301; visit https://reactjs.org/docs/error-decoder.html?invariant=301 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+	Df (index-CGq30zTh.js:38:3381)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-CGq30zTh.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-CGq30zTh.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-CGq30zTh.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-CGq30zTh.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-CGq30zTh.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: false, loadingInvoices: false, hasError: false, …} (index-CGq30zTh.js, line 1443)
+{isOpen: false, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: true, invoicesError: null, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: true, invoicesError: null, invoices1C: [], invoicesCount: 0}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-CGq30zTh.js, line 737)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 50}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 50}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-CGq30zTh.js, line 737)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 50}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 50}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-CGq30zTh.js, line 737)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 50}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 50}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-CGq30zTh.js, line 737)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 50}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 50}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-CGq30zTh.js, line 737)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 50}Object
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-CGq30zTh.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 50}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: true, hasError: false, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: true, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-CGq30zTh.js, line 737)
+[Error] Failed to load resource: the server responded with a status of 500 () (outgoing-invoices, line 0)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17033)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	ER (index-CGq30zTh.js:40:36713)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-CGq30zTh.js, line 1443)
+[Log] 1C Invoices Debug: – {isOpen: false, loadingInvoices: false, invoicesError: null, …} (index-CGq30zTh.js, line 1443)
+{isOpen: false, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 50}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17033)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: true, …} (index-CGq30zTh.js, line 1443)
+{isOpen: true, loadingInvoices: false, hasError: true, errorMessage: "500: ", realDataCount: 0, …}Object
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: (index-CGq30zTh.js, line 1443)
+Object
+
+displayDataCount: 2
+
+errorMessage: "500: "
+
+firstDisplayInvoice: {id: "demo-out-1", number: "РП-000001", date: "2025-01-12", clientName: "ТОВ \"Тестовий Клієнт\"", total: 25000, …}
+
+firstRealInvoice: null
+
+hasError: true
+
+isOpen: true
+
+loadingInvoices: false
+
+realDataCount: 0
+
+usingFallback: true
+
+Object Prototype
+[Error] ❌ 1C Outgoing Invoices fetch error: – Error: 500:  — index-CGq30zTh.js:48:43281
+Error: 500:  — index-CGq30zTh.js:48:43281
+	Jht (index-CGq30zTh.js:1443:48400)
+	VD (index-CGq30zTh.js:38:17144)
+	B3 (index-CGq30zTh.js:40:3146)
+	pY (index-CGq30zTh.js:40:39825)
+	Hpe (index-CGq30zTh.js:40:39751)
+	CS (index-CGq30zTh.js:40:39602)
+	X3 (index-CGq30zTh.js:40:35963)
+	ER (index-CGq30zTh.js:40:36768)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Error] Error: Minified React error #301; visit https://reactjs.org/docs/error-decoder.html?invariant=301 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+VD — index-CGq30zTh.js:38:17081
+B3 — index-CGq30zTh.js:40:3146
+pY — index-CGq30zTh.js:40:39825
+Hpe — index-CGq30zTh.js:40:39751
+CS — index-CGq30zTh.js:40:39602
+X3 — index-CGq30zTh.js:40:35963
+ER — index-CGq30zTh.js:40:36768
+Df — index-CGq30zTh.js:38:3290
+(anonymous function) — index-CGq30zTh.js:40:34289
+
+	$3 (index-CGq30zTh.js:40:167)
+	(anonymous function) (index-CGq30zTh.js:40:391)
+	hR (index-CGq30zTh.js:38:15561)
+	AR (index-CGq30zTh.js:40:32081)
+	uY (index-CGq30zTh.js:40:31500)
+	Wpe (index-CGq30zTh.js:40:31050)
+	Gpe (index-CGq30zTh.js:40:40963)
+	wm (index-CGq30zTh.js:40:40316)
+	ER (index-CGq30zTh.js:40:36916)
+	Df (index-CGq30zTh.js:38:3290)
+	(anonymous function) (index-CGq30zTh.js:40:34289)
+[Error] Error: Minified React error #301; visit https://reactjs.org/docs/error-decoder.html?invariant=301 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+	Df (index-CGq30zTh.js:38:3381)
+	(anonymous function) (index-CGq30zTh.js:40:34289)

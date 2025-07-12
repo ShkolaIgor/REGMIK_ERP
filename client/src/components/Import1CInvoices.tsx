@@ -431,7 +431,30 @@ export function Import1CInvoices() {
                       <tbody>
                         {showPreview.items.map((item, idx) => (
                           <tr key={idx} className="border-b">
-                            <td className="p-2">{item.name}</td>
+                            <td className="p-2">
+                              <div className="space-y-1">
+                                {/* Назва з 1С */}
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-blue-600 font-medium">1С:</span>
+                                  <span className="text-sm">{item.nameFrom1C || item.originalName || item.name}</span>
+                                </div>
+                                
+                                {/* ERP еквівалент */}
+                                {item.erpEquivalent ? (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-green-600 font-medium">ERP:</span>
+                                    <span className="text-sm text-green-700">{item.erpEquivalent}</span>
+                                    <span className="text-xs bg-green-100 text-green-800 px-1 rounded">знайдено</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-orange-600 font-medium">ERP:</span>
+                                    <span className="text-sm text-gray-500 italic">товар буде створено</span>
+                                    <span className="text-xs bg-orange-100 text-orange-800 px-1 rounded">новий</span>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
                             <td className="p-2 text-right">{item.quantity}</td>
                             <td className="p-2">{item.unit}</td>
                             <td className="p-2 text-right">{item.price.toLocaleString('uk-UA')}</td>
