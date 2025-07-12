@@ -10145,7 +10145,7 @@ export class DatabaseStorage implements IStorage {
       
       // Обробляємо кожну накладну асинхронно
       const processedInvoices = await Promise.all(invoices.map(async (invoice: any, invoiceIndex: number) => {
-        const itemsArray = invoice.items || invoice.Позиції || [];
+        const itemsArray = invoice.items || invoice.Позиції || invoice.positions || [];
         
         // ФІЛЬТРАЦІЯ ПЕРЕНЕСЕНА В 1С - тепер 1С передає тільки товарні документи
         
@@ -10250,9 +10250,9 @@ export class DatabaseStorage implements IStorage {
                 erpProductId: mappedProduct ? mappedProduct.erpProductId : null,
                 originalName: externalProductName,
                 isMapped: !!mappedProduct,
-                quantity: this.parseUkrainianDecimal(item.quantity || item.Кількість || 0),
-                price: this.parseUkrainianDecimal(item.price || item.Ціна || 0),
-                total: this.parseUkrainianDecimal(item.total || item.Сума || 0),
+                quantity: this.parseUkrainianDecimal(item.quantity || item.Количество || item.Кількість || 0),
+                price: this.parseUkrainianDecimal(item.price || item.Цена || item.Ціна || 0),
+                total: this.parseUkrainianDecimal(item.total || item.Сумма || item.Сума || 0),
                 unit: item.unit || item.ОдиницяВиміру || "шт",
                 // ДОДАНО: Відображення назви з 1С та знайденого ERP еквіваленту
                 nameFrom1C: externalProductName,
@@ -10264,12 +10264,12 @@ export class DatabaseStorage implements IStorage {
         return {
           id: invoice.id || invoice.ID || `1C-${Date.now()}`,
           number: invoice.number || invoice.НомерДокумента || "Невідомий",
-          date: invoice.date || invoice.Дата || new Date().toISOString().split('T')[0],
+          date: invoice.date || invoice.ДатаДокумента || invoice.Дата || new Date().toISOString().split('T')[0],
           supplierName: invoice.supplier || invoice.Постачальник || "Невідомий постачальник",
           supplierTaxCode: invoice.ЕДРПОУ || invoice.supplierTaxCode || "",
           supplierId: invoice.supplierId || invoice.IDПостачальника || 1,
-          amount: this.parseUkrainianDecimal(invoice.amount || invoice.Сума || 0),
-          currency: this.convertCurrencyCode(invoice.currency || invoice.Валюта || "UAH"),
+          amount: this.parseUkrainianDecimal(invoice.amount || invoice.СуммаДокумента || invoice.Сума || 0),
+          currency: this.convertCurrencyCode(invoice.currency || invoice.КодВалюты || invoice.Валюта || "UAH"),
           status: invoice.status || invoice.Статус || "new",
           items,
           exists: existingReceipts.some(receipt => 
