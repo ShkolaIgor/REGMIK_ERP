@@ -10661,212 +10661,77 @@ export class DatabaseStorage implements IStorage {
       for (const item of invoice.positions || []) {
         const itemName = item.productName || item.name;
         
-        // КРОК 1: Шукаємо в таблиці products (товари для продажу) - ВИПРАВЛЕНИЙ ПОШУК
-        let foundProduct = null;
-        console.log(`🔍 Шукаємо товар: "${itemName}" (довжина: ${itemName.length})`);
+        console.log(`🔍 КРИТИЧНИЙ ТЕСТ: Шукаємо товар "${itemName}"`);
         
-        // КРОК 1A: Спочатку точний пошук за оригінальною назвою (НАЙВАЖЛИВІШИЙ)
-        console.log(`🔍 Точний пошук: SELECT * FROM products WHERE name = '${itemName}'`);
-        const [exactProductMatch] = await db
+        // ТЕСТ 1: Прямий SQL запит для перевірки наявності товару
+        const testQuery = await db
           .select()
           .from(products)
           .where(eq(products.name, itemName))
           .limit(1);
         
-        // КРОК 1A2: Якщо точний збіг не знайдено, пробуємо пошук з ILIKE для часткових збігів
-        let likeProductMatch = null;
-        if (!exactProductMatch) {
-          console.log(`🔍 Частковий пошук: SELECT * FROM products WHERE name ILIKE '%${itemName}%'`);
-          const [likeMatch] = await db
-            .select()
-            .from(products)
-            .where(ilike(products.name, `%${itemName}%`))
-            .limit(1);
-          likeProductMatch = likeMatch;
-          console.log(`🔍 Частковий результат: ${likeMatch ? `знайдено "${likeMatch.name}" (ID: ${likeMatch.id})` : 'не знайдено'}`);
-        }
-        
-        if (exactProductMatch) {
-          foundProduct = { type: 'product', id: exactProductMatch.id, name: exactProductMatch.name, isNew: false };
-          console.log(`🎯 ТОЧНИЙ збіг товар: "${itemName}" → "${exactProductMatch.name}" (ID: ${exactProductMatch.id})`);
-        } else if (likeProductMatch) {
-          foundProduct = { type: 'product', id: likeProductMatch.id, name: likeProductMatch.name, isNew: false };
-          console.log(`🎯 ЧАСТКОВИЙ збіг товар: "${itemName}" → "${likeProductMatch.name}" (ID: ${likeProductMatch.id})`);
+        console.log(`🔍 SQL результат: ${testQuery.length} записів знайдено`);
+        if (testQuery.length > 0) {
+          console.log(`✅ ТОВАР ЗНАЙДЕНИЙ: "${testQuery[0].name}" (ID: ${testQuery[0].id})`);
         } else {
-          console.log(`❌ Точний збіг не знайдено для: "${itemName}"`);
-          
-          // КРОК 1B: Пошук по нормалізованим назвам (для ВСІХ назв включно з кирилицею)
-          const normalizedItemName = this.normalizeProductName(itemName);
-          console.log(`📝 Нормалізована назва: "${itemName}" → "${normalizedItemName}"`);
-          
-          const allProducts = await db.select().from(products);
-          
-          for (const product of allProducts) {
-            const normalizedProductName = this.normalizeProductName(product.name);
-            if (normalizedProductName === normalizedItemName) {
-              foundProduct = { type: 'product', id: product.id, name: product.name, isNew: false };
-              console.log(`🔍 НОРМАЛІЗОВАНИЙ збіг товар: "${itemName}" (${normalizedItemName}) → "${product.name}" (${normalizedProductName}) (ID: ${product.id})`);
-              break;
-            }
-          }
-          
-          // КРОК 1C: Інтелектуальний пошук за ключовими характеристиками
-          if (!foundProduct) {
-            console.log(`🧠 Інтелектуальний пошук для: "${itemName}"`);
-            
-            // Витягуємо ключові характеристики (D6, L300, М20х1,5, DN50, тощо)
-            const characteristics = itemName.match(/[DGLMР]\d+[xх]?\d*[,\.]?\d*|DN\d+|М\d+[xх]?\d*[,\.]?\d*/gi) || [];
-            console.log(`🔍 Знайдені характеристики: ${characteristics.join(', ')}`);
-            
-            if (characteristics.length > 0) {
-              // Шукаємо товари з такими ж характеристиками
-              let matchingProducts = await db.select().from(products);
-              console.log(`📊 Загальна кількість товарів в базі: ${matchingProducts.length}`);
-              
-              // Фільтруємо товари які містять хоча б одну характеристику
-              const candidates = matchingProducts.filter(product => {
-                const matchCount = characteristics.filter(char => 
-                  product.name.toLowerCase().includes(char.toLowerCase())
-                ).length;
-                return matchCount >= 1; // Дозволяємо хоча б 1 збіг
-              });
-              
-              console.log(`🎯 Знайдено кандидатів з схожими характеристиками: ${candidates.length}`);
-              
-              if (candidates.length > 0) {
-                // Сортуємо за кількістю збігів
-                const scored = candidates.map(product => ({
-                  product,
-                  score: characteristics.filter(char => 
-                    product.name.toLowerCase().includes(char.toLowerCase())
-                  ).length
-                })).sort((a, b) => b.score - a.score);
-                
-                // Логуємо топ 3 кандидати для діагностики
-                console.log(`🔝 Топ кандидати:`);
-                scored.slice(0, 3).forEach((candidate, index) => {
-                  console.log(`   ${index + 1}. "${candidate.product.name}" (збігів: ${candidate.score}/${characteristics.length})`);
-                });
-                
-                const bestMatch = scored[0].product;
-                foundProduct = { type: 'product', id: bestMatch.id, name: bestMatch.name, isNew: false };
-                console.log(`🧠 ІНТЕЛЕКТУАЛЬНИЙ збіг товар: "${itemName}" → "${bestMatch.name}" (ID: ${bestMatch.id}, збігів: ${scored[0].score}/${characteristics.length})`);
-              } else {
-                console.log(`❌ Не знайдено товарів з схожими характеристиками`);
-                
-                // Пошук товарів що містять хоча б частину назви
-                const partialCandidates = matchingProducts.filter(product => {
-                  const words = itemName.split(/[\s\-]+/).filter(word => word.length > 2);
-                  return words.some(word => product.name.toLowerCase().includes(word.toLowerCase()));
-                });
-                
-                console.log(`🔍 Знайдено кандидатів за частковими словами: ${partialCandidates.length}`);
-                
-                if (partialCandidates.length > 0) {
-                  const bestPartialMatch = partialCandidates[0];
-                  foundProduct = { type: 'product', id: bestPartialMatch.id, name: bestPartialMatch.name, isNew: false };
-                  console.log(`🔎 ЧАСТКОВИЙ збіг товар: "${itemName}" → "${bestPartialMatch.name}" (ID: ${bestPartialMatch.id})`);
-                }
-              }
-            } else {
-              // Звичайний частковий пошук
-              const [partialProductMatch] = await db
-                .select()
-                .from(products)
-                .where(ilike(products.name, `%${itemName}%`))
-                .limit(1);
-              
-              if (partialProductMatch) {
-                foundProduct = { type: 'product', id: partialProductMatch.id, name: partialProductMatch.name, isNew: false };
-                console.log(`🔎 ЧАСТКОВИЙ збіг товар: "${itemName}" → "${partialProductMatch.name}" (ID: ${partialProductMatch.id})`);
-              }
-            }
-          }
+          console.log(`❌ ТОВАР НЕ ЗНАЙДЕНИЙ у таблиці products`);
         }
         
-        if (!foundProduct) {
-          // КРОК 2: Шукаємо в таблиці components (компоненти для виробництва) - ВИПРАВЛЕНИЙ ПОШУК
-          console.log(`🔧 Шукаємо компонент: "${itemName}"`);
-          
-          // КРОК 2A: Спочатку точний пошук за оригінальною назвою
-          const [exactComponentMatch] = await db
-            .select()
-            .from(components)
-            .where(eq(components.name, itemName))
-            .limit(1);
-          
-          let componentMatch = exactComponentMatch;
-          
-          if (componentMatch) {
-            console.log(`🎯 ТОЧНИЙ збіг компонент: "${itemName}" → "${componentMatch.name}" (ID: ${componentMatch.id})`);
-          } else {
-            console.log(`❌ Точний збіг компонент не знайдено для: "${itemName}"`);
-            
-            // КРОК 2B: Пошук по нормалізованим назвам (для ВСІХ назв включно з кирилицею)
-            const normalizedItemName = this.normalizeProductName(itemName);
-            console.log(`📝 Нормалізована назва компонента: "${itemName}" → "${normalizedItemName}"`);
-            
-            const allComponents = await db.select().from(components);
-            
-            for (const component of allComponents) {
-              const normalizedComponentName = this.normalizeProductName(component.name);
-              if (normalizedComponentName === normalizedItemName) {
-                componentMatch = component;
-                console.log(`🔍 НОРМАЛІЗОВАНИЙ збіг компонент: "${itemName}" (${normalizedItemName}) → "${component.name}" (${normalizedComponentName}) (ID: ${component.id})`);
-                break;
-              }
-            }
-            
-            // КРОК 2C: Якщо не знайдено, пробуємо часткове співпадіння
-            if (!componentMatch) {
-              const [partialComponentMatch] = await db
-                .select()
-                .from(components)
-                .where(ilike(components.name, `%${itemName}%`))
-                .limit(1);
-              
-              componentMatch = partialComponentMatch;
-              if (componentMatch) {
-                console.log(`🔎 ЧАСТКОВИЙ збіг компонент: "${itemName}" → "${componentMatch.name}" (ID: ${componentMatch.id})`);
-              }
-            }
-          }
-          
-          if (componentMatch) {
-            // Створюємо товар на основі компонента для продажу
-            const newProductData = {
-              name: componentMatch.name,
-              sku: componentMatch.sku + "-SALE",
-              description: `Товар створений з компонента для продажу (з рахунку ${invoice.number})`,
-              costPrice: componentMatch.costPrice,
-              retailPrice: item.price || componentMatch.costPrice * 1.2, // 20% markup
-              productType: "product",
-              unit: 'шт',
-              isActive: true
-            };
-            
-            const [newProduct] = await db.insert(products).values(newProductData).returning();
-            foundProduct = { type: 'product', id: newProduct.id, name: newProduct.name, isNew: true };
-            console.log(`🔄 Створено товар з компонента: "${itemName}" → "${newProduct.name}" (ID: ${newProduct.id})`);
-          }
+        // ТЕСТ 2: Пошук у components
+        const testComponentQuery = await db
+          .select()
+          .from(components)
+          .where(eq(components.name, itemName))
+          .limit(1);
+        
+        console.log(`🔍 Components результат: ${testComponentQuery.length} записів знайдено`);
+        if (testComponentQuery.length > 0) {
+          console.log(`✅ КОМПОНЕНТ ЗНАЙДЕНИЙ: "${testComponentQuery[0].name}" (ID: ${testComponentQuery[0].id})`);
+        } else {
+          console.log(`❌ КОМПОНЕНТ НЕ ЗНАЙДЕНИЙ у таблиці components`);
         }
         
-        // КРОК 3: Якщо нічого не знайдено, створюємо новий товар
-        if (!foundProduct) {
-          const newProductData = {
+        // ЛОГІКА ВИБОРУ: products має пріоритет над components
+        let foundProduct = null;
+        
+        if (testQuery.length > 0) {
+          foundProduct = { type: 'product', id: testQuery[0].id, name: testQuery[0].name, isNew: false };
+          console.log(`🎯 ВИКОРИСТОВУЄМО ТОВАР: "${testQuery[0].name}" (ID: ${testQuery[0].id})`);
+        } else if (testComponentQuery.length > 0) {
+          // Створюємо товар з компонента
+          const component = testComponentQuery[0];
+          const newProduct = await db.insert(products).values({
+            name: component.name,
+            sku: component.sku || `COMP-${component.id}`,
+            category_id: 1, // Default category
+            retail_price: component.cost_price || 0,
+            cost_price: component.cost_price || 0,
+            description: component.description || '',
+            is_active: true,
+            created_at: new Date(),
+            updated_at: new Date()
+          }).returning();
+          
+          foundProduct = { type: 'product', id: newProduct[0].id, name: newProduct[0].name, isNew: true };
+          console.log(`✅ СТВОРЕНО ТОВАР З КОМПОНЕНТА: "${component.name}" → товар ID: ${newProduct[0].id}`);
+        } else {
+          console.log(`❌ НІ ТОВАР НІ КОМПОНЕНТ НЕ ЗНАЙДЕНІ. Створюємо новий товар.`);
+          
+          // Створюємо новий товар
+          const newProduct = await db.insert(products).values({
             name: itemName,
-            sku: `1C-OUT-${invoiceId}-${Math.random().toString(36).substr(2, 9)}`,
-            description: `Імпортовано з 1С вихідного рахунку ${invoice.number}`,
-            costPrice: (item.price || 0) * 0.8, // припускаємо 20% маржу
-            retailPrice: item.price || 0,
-            productType: "product",
-            unit: 'шт',
-            isActive: true
-          };
+            sku: `1C-${Date.now()}`,
+            category_id: 1, // Default category
+            retail_price: item.price || 0,
+            cost_price: item.price || 0,
+            description: `Імпортовано з 1С рахунку ${invoice.number}`,
+            is_active: true,
+            created_at: new Date(),
+            updated_at: new Date()
+          }).returning();
           
-          const [newProduct] = await db.insert(products).values(newProductData).returning();
-          foundProduct = { type: 'product', id: newProduct.id, name: newProduct.name, isNew: true };
-          console.log(`➕ Створено новий товар: "${itemName}" (ID: ${newProduct.id})`);
+          foundProduct = { type: 'product', id: newProduct[0].id, name: newProduct[0].name, isNew: true };
+          console.log(`✅ СТВОРЕНО НОВИЙ ТОВАР: "${itemName}" (ID: ${newProduct[0].id})`);
         }
         
         // Створюємо позицію замовлення
@@ -10875,13 +10740,15 @@ export class DatabaseStorage implements IStorage {
           product_id: foundProduct.id,
           quantity: item.quantity || 1,
           price: item.price || 0,
-          total: item.total || (item.price * item.quantity) || 0
+          total_price: item.total || (item.price * item.quantity) || 0,
+          created_at: new Date(),
+          updated_at: new Date()
         };
         
-        await db.insert(orderItems).values(orderItemData);
-        console.log(`✅ Додано позицію: ${foundProduct.name} x${item.quantity} = ${item.total}`);
+        const [newOrderItem] = await db.insert(orderItems).values(orderItemData).returning();
+        console.log(`✅ Створено позицію замовлення: ${foundProduct.name} x${item.quantity} (ID: ${newOrderItem.id})`);
       }
-
+      
       return {
         success: true,
         message: `Успішно імпортовано вихідний рахунок ${invoice.number} як замовлення #${newOrder.id}`,
