@@ -10663,7 +10663,7 @@ export class DatabaseStorage implements IStorage {
         
         // КРОК 1: Шукаємо в таблиці products (товари для продажу) - ВИПРАВЛЕНИЙ ПОШУК
         let foundProduct = null;
-        console.log(`🔍 Шукаємо товар: "${itemName}"`);
+        console.log(`🔍 Шукаємо товар: "${itemName}" (довжина: ${itemName.length})`);
         
         // КРОК 1A: Спочатку точний пошук за оригінальною назвою (НАЙВАЖЛИВІШИЙ)
         const [exactProductMatch] = await db
@@ -10672,9 +10672,23 @@ export class DatabaseStorage implements IStorage {
           .where(eq(products.name, itemName))
           .limit(1);
         
+        // КРОК 1A2: Якщо точний збіг не знайдено, пробуємо пошук з ILIKE для часткових збігів
+        let likeProductMatch = null;
+        if (!exactProductMatch) {
+          const [likeMatch] = await db
+            .select()
+            .from(products)
+            .where(ilike(products.name, `%${itemName}%`))
+            .limit(1);
+          likeProductMatch = likeMatch;
+        }
+        
         if (exactProductMatch) {
           foundProduct = { type: 'product', id: exactProductMatch.id, name: exactProductMatch.name, isNew: false };
           console.log(`🎯 ТОЧНИЙ збіг товар: "${itemName}" → "${exactProductMatch.name}" (ID: ${exactProductMatch.id})`);
+        } else if (likeProductMatch) {
+          foundProduct = { type: 'product', id: likeProductMatch.id, name: likeProductMatch.name, isNew: false };
+          console.log(`🎯 ЧАСТКОВИЙ збіг товар: "${itemName}" → "${likeProductMatch.name}" (ID: ${likeProductMatch.id})`);
         } else {
           console.log(`❌ Точний збіг не знайдено для: "${itemName}"`);
           
