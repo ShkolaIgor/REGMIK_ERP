@@ -11087,11 +11087,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('🔧 Викликаємо storage.get1COutgoingInvoices() з тайм-аутом...');
         const outgoingInvoices = await Promise.race([outgoingInvoicesPromise, timeoutPromise]);
         
-        console.log(`✅ Успішно отримано ${outgoingInvoices?.length || 0} вихідних рахунків`);
+        console.log(`✅ Успішно отримано ${outgoingInvoices?.length || 0} РЕАЛЬНИХ вихідних рахунків з 1С`);
+        console.log('🎯 ПОВЕРТАЄМО РЕАЛЬНІ ДАНІ (не fallback):');
+        if (outgoingInvoices?.length > 0) {
+          console.log('- Перший рахунок:', outgoingInvoices[0].number);
+          console.log('- Клієнт:', outgoingInvoices[0].clientName);
+          console.log('- Сума:', outgoingInvoices[0].total);
+        }
         res.json(outgoingInvoices || []);
         
       } catch (timeoutError) {
         console.log('⏰ Тайм-аут або помилка 1С, використовуємо fallback дані');
+        console.log('📊 Деталі помилки:', timeoutError.message);
         
         // Fallback дані при недоступності 1С
         const fallbackData = [

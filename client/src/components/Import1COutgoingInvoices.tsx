@@ -68,6 +68,18 @@ export function Import1COutgoingInvoices() {
     queryKey: ["/api/1c/outgoing-invoices"],
     enabled: isOpen,
     retry: false,
+    onSuccess: (data) => {
+      console.log('🎯 FRONTEND: Отримано дані з API:');
+      console.log('- Кількість рахунків:', data?.length || 0);
+      if (data?.length > 0) {
+        console.log('- Перший рахунок:', data[0]);
+        console.log('- Номер першого рахунку:', data[0]?.number);
+        console.log('- Це реальні дані з 1С?', !data[0]?.number?.startsWith('РП-000'));
+      }
+    },
+    onError: (error) => {
+      console.log('❌ FRONTEND: Помилка API:', error);
+    }
   });
 
   // Fallback дані для демонстрації коли API недоступне

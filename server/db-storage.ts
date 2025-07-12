@@ -10755,64 +10755,13 @@ export class DatabaseStorage implements IStorage {
       console.error('📍 Повідомлення помилки:', error instanceof Error ? error.message : String(error));
       console.error('📍 Stack trace:', error instanceof Error ? error.stack : 'Немає stack trace');
       
-      // Детальна діагностика помилок
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        console.log("💡 1C сервер недоступний. Повертаємо тестові вихідні рахунки для демонстрації.");
-        
-        // Fallback: повертаємо тестові вихідні рахунки для демонстрації
-        return [
-          {
-            id: "demo-out-1",
-            number: "РП-000001",
-            date: "2025-01-12",
-            clientName: "ТОВ \"Тестовий Клієнт\"",
-            total: 25000.00,
-            currency: "UAH",
-            status: "confirmed",
-            paymentStatus: "unpaid",
-            description: "Демо рахунок для тестування",
-            positions: [
-              {
-                productName: "Демо продукт 1",
-                quantity: 5,
-                price: 2000.00,
-                total: 10000.00
-              },
-              {
-                productName: "Демо продукт 2",
-                quantity: 3,
-                price: 5000.00,
-                total: 15000.00
-              }
-            ]
-          },
-          {
-            id: "demo-out-2",
-            number: "РП-000002",
-            date: "2025-01-13",
-            clientName: "ПП \"Демо Клієнт\"",
-            total: 12500.00,
-            currency: "UAH",
-            status: "confirmed",
-            paymentStatus: "partial",
-            description: "Частково оплачений рахунок",
-            positions: [
-              {
-                productName: "Демо сервіс А",
-                quantity: 1,
-                price: 7500.00,
-                total: 7500.00
-              },
-              {
-                productName: "Демо сервіс Б",
-                quantity: 2,
-                price: 2500.00,
-                total: 5000.00
-              }
-            ]
-          }
-        ];
-      }
+      // ВИПРАВЛЕНО: Тільки прокидуємо помилку назовні, fallback обробляється в routes.ts
+      console.log("💡 Детальна діагностика помилки для передачі в routes.ts");
+      console.log("- Це TypeError з fetch?", error instanceof TypeError && error.message.includes('fetch'));
+      console.log("- Це timeout помилка?", error.message?.includes('timeout'));
+      console.log("- Це мережева помилка?", error.message?.includes('network') || error.message?.includes('ENOTFOUND'));
+      
+      // НЕ ПОВЕРТАЄМО FALLBACK ТУТ - передаємо помилку в routes.ts для обробки
       
       if (error.message.includes('timeout')) {
         throw new Error("Тайм-аут з'єднання з 1C. Сервер не відповідає протягом 30 секунд.");
