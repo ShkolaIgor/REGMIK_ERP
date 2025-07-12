@@ -386,6 +386,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
+    console.log(`🛠️ createProduct() отримав дані:`, JSON.stringify(insertProduct, null, 2));
     const result = await db.insert(products).values(insertProduct).returning();
     return result[0];
   }
@@ -10168,13 +10169,18 @@ export class DatabaseStorage implements IStorage {
 
   async import1COutgoingInvoice(invoiceId: string) {
     try {
+      console.log(`🔧 import1COutgoingInvoice(${invoiceId}) - початок виконання`);
       // Get outgoing invoice data from 1C
       const outgoingInvoices = await this.get1COutgoingInvoices();
+      console.log(`📊 Отримано ${outgoingInvoices.length} рахунків з 1C`);
       const invoice = outgoingInvoices.find(inv => inv.id === invoiceId);
+      console.log(`🔍 Знайдено рахунок:`, invoice ? `${invoice.number} (${invoice.clientName})` : 'НЕ ЗНАЙДЕНО');
       
       if (!invoice) {
         throw new Error(`Вихідний рахунок ${invoiceId} не знайдений в 1C`);
       }
+      
+      console.log(`📋 Структура знайденого рахунку:`, JSON.stringify(invoice, null, 2));
 
       // Check if client exists, create if not
       let client = null;
@@ -10197,12 +10203,25 @@ export class DatabaseStorage implements IStorage {
         // Створюємо нового клієнта
         const clientData = {
           name: invoice.clientName,
-          full_name: invoice.clientName,
-          tax_code: invoice.clientTaxCode || null,
-          client_type_id: 1, // Individual by default
-          is_active: true
+          fullName: invoice.clientName,
+          taxCode: invoice.clientTaxCode || null,
+          clientTypeId: 1, // Individual by default
+          legalAddress: null,
+          physicalAddress: null,
+          addressesMatch: false,
+          discount: "0.00",
+          notes: `Автоматично створено при імпорті з 1С: ${invoice.number}`,
+          externalId: null,
+          source: "1c",
+          carrierId: null,
+          cityRef: null,
+          warehouseRef: null,
+          isActive: true,
+          isCustomer: true,
+          isSupplier: false
         };
         
+        console.log(`🔍 Створюємо клієнта з даними:`, JSON.stringify(clientData, null, 2));
         client = await this.createClient(clientData);
         console.log(`Створено нового клієнта: ${client.name} (ID: ${client.id})`);
       }
@@ -10211,20 +10230,37 @@ export class DatabaseStorage implements IStorage {
       const orderNumber = await this.generateOrderNumber();
 
       // Create order
+      console.log(`📋 Дані рахунку для створення замовлення:`, JSON.stringify({
+        invoiceId: invoice.id,
+        invoiceNumber: invoice.number,
+        invoiceTotal: invoice.total,
+        invoiceTotalType: typeof invoice.total,
+        paymentStatus: invoice.paymentStatus
+      }, null, 2));
+
+      // Перевіряємо та забезпечуємо коректне значення total
+      const totalAmountValue = invoice.total && !isNaN(invoice.total) ? invoice.total.toString() : '0.00';
+      
       const orderData = {
         orderNumber,
         invoiceNumber: invoice.number,
-        orderDate: new Date(invoice.date),
         clientId: client.id,
         status: invoice.paymentStatus === 'paid' ? 'paid' : 
                invoice.paymentStatus === 'partial' ? 'partial' : 'confirmed',
         notes: `Імпортовано з 1C: ${invoice.id}. ${invoice.description || ''}`,
-        orderTotal: invoice.total.toString(),
-        currency: invoice.currency || 'UAH'
+        totalAmount: totalAmountValue,
+        paymentType: invoice.paymentStatus === 'paid' ? 'full' : 'none',
+        paidAmount: invoice.paymentStatus === 'paid' ? totalAmountValue : '0.00'
       };
 
-      const order = await this.createOrder(orderData);
-      console.log(`Створено замовлення: ${order.order_number} (ID: ${order.id})`);
+      console.log(`📋 orderData для DB insert:`, JSON.stringify(orderData, null, 2));
+
+      // Спочатку створюємо замовлення без позицій
+      const [order] = await db.insert(orders).values({
+        ...orderData,
+        source: "1c"
+      }).returning();
+      console.log(`Створено замовлення: ${order.orderNumber} (ID: ${order.id})`);
 
       // Create order items from invoice positions
       let totalItemsCreated = 0;
@@ -10246,9 +10282,11 @@ export class DatabaseStorage implements IStorage {
             categoryId: 1, // Default category
             sellPrice: position.price.toString(),
             costPrice: (position.price * 0.7).toString(), // Примірна собівартість
+            retailPrice: position.price.toString(), // Роздрібна ціна
             isActive: true
           };
           
+          console.log(`🛠️ Готові дані для createProduct:`, JSON.stringify(productData, null, 2));
           product = await this.createProduct(productData);
           console.log(`Створено новий товар: ${product.name} (SKU: ${product.sku})`);
         }
