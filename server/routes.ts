@@ -11168,10 +11168,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const responseText = await response.text();
-      const invoicesData = JSON.parse(responseText);
+      const rawInvoicesData = JSON.parse(responseText);
       
-      console.log(`✅ DIRECT 1C: Отримано ${invoicesData?.length || 0} накладних`);
-      res.json(invoicesData || []);
+      // Конвертуємо сирі дані з 1С до формату ERP
+      const processedInvoices = rawInvoicesData.map((invoice: any) => ({
+        id: `1c-${Date.now()}-${Math.random()}`,
+        number: invoice.НомерДокумента || invoice.number,
+        date: invoice.ДатаДокумента || invoice.date,
+        supplierName: invoice.Постачальник || invoice.supplierName,
+        amount: invoice.СуммаДокумента || invoice.amount,
+        currency: invoice.КодВалюты === "980" ? "UAH" : (invoice.КодВалюты || invoice.currency || "UAH"),
+        status: 'confirmed' as const,
+        items: (invoice.Позиції || invoice.items || []).map((item: any) => ({
+          name: item.НаименованиеТовара || item.name,
+          originalName: item.НаименованиеТовара || item.name,
+          quantity: item.Количество || item.quantity || 0,
+          price: item.Цена || item.price || 0,
+          total: item.Сумма || item.total || 0,
+          unit: item.ЕдиницаИзмерения || item.unit || "шт",
+          codeTovara: item.КодТовара || item.codeTovara,
+          nomerStroki: item.НомерСтроки || item.nomerStroki,
+          isMapped: false,
+          erpProductId: undefined
+        })),
+        exists: false,
+        kilkistTovariv: invoice.КількістьТоварів || invoice.itemsCount
+      }));
+      
+      console.log(`✅ DIRECT 1C: Обробмено ${processedInvoices?.length || 0} накладних`);
+      res.json(processedInvoices || []);
       
     } catch (error) {
       console.error('❌ DIRECT 1C ERROR:', error);
