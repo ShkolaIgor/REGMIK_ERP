@@ -10144,11 +10144,68 @@ export class DatabaseStorage implements IStorage {
       const existingReceipts = await this.getSupplierReceipts();
       
       // Обробляємо кожну накладну асинхронно
-      const processedInvoices = await Promise.all(invoices.map(async (invoice: any) => {
-        const items = Array.isArray(invoice.items || invoice.Позиції) 
-          ? await Promise.all((invoice.items || invoice.Позиції).map(async (item: any) => {
-              // ВИПРАВЛЕННЯ: Покращений пошук назви товару з кількох джерел
-              const externalProductName = item.name || item.Назва || item.productName || item.НаименованиеТовара || item.НазваТовару || "Товар (назва не вказана)";
+      const processedInvoices = await Promise.all(invoices.map(async (invoice: any, invoiceIndex: number) => {
+        const itemsArray = invoice.items || invoice.Позиції || [];
+        
+        // Пропускаємо накладні без позицій (послуги, витрати тощо)
+        if (!Array.isArray(itemsArray) || itemsArray.length === 0) {
+          // Це нормально - не всі накладні мають матеріальні позиції
+        }
+        
+        const items = Array.isArray(itemsArray) 
+          ? await Promise.all(itemsArray.map(async (item: any) => {
+              // ВИПРАВЛЕННЯ ОБРІЗАННЯ НАЗВ: Покращений пошук з усіх можливих полів
+              const nameFields = [
+                item.name,
+                item.Назва, 
+                item.productName,
+                item.НаименованиеТовара,
+                item.НазваТовару,
+                item.ИмяТовара,
+                item.НазваВиробу,
+                item.НазваПродукту,
+                item.ProductName,
+                item.ItemName,
+                item.Description,
+                item.Опис,
+                item.ТоварНазва,
+                item.НаименованиеПозиции,
+                item.НазваПозиції
+              ];
+              
+              let externalProductName = "Товар (назва не вказана)";
+              
+              // Знаходимо найдовшу непорожню назву (захист від обрізання)
+              for (const field of nameFields) {
+                if (field && typeof field === 'string' && field.trim().length > 0 && 
+                    field.trim() !== 'undefined' && field.trim() !== 'null' && field.trim() !== 'Товар') {
+                  const trimmedField = field.trim();
+                  // Якщо це перша знайдена назва або вона довша за поточну
+                  if (externalProductName === "Товар (назва не вказана)" || trimmedField.length > externalProductName.length) {
+                    externalProductName = trimmedField;
+                  }
+                }
+              }
+              
+              // Додаткова перевірка на обрізання - якщо назва дуже коротка, шукаємо в інших полях
+              if (externalProductName.length < 3 || externalProductName === "б") {
+                // Перевіряємо додаткові поля що могли бути пропущені
+                const additionalFields = [
+                  item.ПовнаНазва,
+                  item.ОписТовару,
+                  item.НазваПовна,
+                  item.ТоварОпис,
+                  item.НаименованиеПолное,
+                  item.КраткоеНаименование
+                ];
+                
+                for (const field of additionalFields) {
+                  if (field && typeof field === 'string' && field.trim().length > externalProductName.length) {
+                    externalProductName = field.trim();
+                    break;
+                  }
+                }
+              }
               
               // ПОКРАЩЕНА ЛОГІКА ПОШУКУ ТОВАРІВ:
               // 1. Пошук зіставлення в productNameMappings
@@ -10907,18 +10964,6 @@ export class DatabaseStorage implements IStorage {
       console.log('🔧 Початок обробки рахунків з 1С...');
       const processedInvoices = invoicesArray.map((invoice: any, index: number) => {
         try {
-          console.log(`📋 Обробляємо рахунок ${index + 1}/${invoicesArray.length}:`);
-          console.log('- Сирі дані:', JSON.stringify(invoice, null, 2));
-          
-          // Перевіряємо наявність ключових полів (українські/російські та англійські)
-          console.log('🔍 Перевірка полів:');
-          console.log('- НомерДокумента:', invoice.НомерДокумента || 'відсутнє');
-          console.log('- Клієнт/Постачальник:', invoice.Клієнт || invoice.Покупатель || invoice.Постачальник || 'відсутнє'); 
-          console.log('- Сума:', invoice.Сума || 'відсутнє');
-          console.log('- Валюта:', invoice.Валюта || 'відсутнє');
-          console.log('- Дата:', invoice.Дата || 'відсутнє');
-          console.log('- ЕДРПОУ:', invoice.ЕДРПОУ || 'відсутнє');
-          console.log('- Позиції:', invoice.Позиції?.length || 0, 'позицій');
           
           const processedInvoice = {
             id: invoice.НомерДокумента || invoice.invoiceNumber || invoice.НомерСчета || invoice.number || `1c-${index}`,
@@ -10933,10 +10978,50 @@ export class DatabaseStorage implements IStorage {
             clientTaxCode: invoice.ЕДРПОУ || invoice.clientTaxCode || invoice.КодНалогоплательщика || invoice.ІПН || "",
             itemsCount: invoice.КількістьПозицій || invoice.itemsCount || invoice.КоличествоПозиций || (invoice.Позиції?.length || 0),
             managerName: invoice.ІмяМенеджера || invoice.managerName || invoice.ИмяМенеджера || "",
-            positions: invoice.Позиції || invoice.positions || invoice.Positions || []
+            positions: (invoice.Позиції || invoice.positions || invoice.Positions || []).map((pos: any) => {
+              // ВИПРАВЛЕННЯ ОБРІЗАННЯ НАЗВ У ВИХІДНИХ РАХУНКАХ
+              const positionNameFields = [
+                pos.productName,
+                pos.НаименованиеТовара, 
+                pos.Товар,
+                pos.name,
+                pos.Назва,
+                pos.НазваТовару,
+                pos.ИмяТовара,
+                pos.НазваВиробу,
+                pos.НазваПродукту,
+                pos.ProductName,
+                pos.ItemName,
+                pos.Description,
+                pos.Опис,
+                pos.ТоварНазва,
+                pos.НаименованиеПозиции,
+                pos.НазваПозиції
+              ];
+              
+              let productName = "Товар (назва не вказана)";
+              
+              // Знаходимо найдовшу непорожню назву (захист від обрізання)
+              for (const field of positionNameFields) {
+                if (field && typeof field === 'string' && field.trim().length > 0 && 
+                    field.trim() !== 'undefined' && field.trim() !== 'null' && field.trim() !== 'Товар') {
+                  const trimmedField = field.trim();
+                  // Якщо це перша знайдена назва або вона довша за поточну
+                  if (productName === "Товар (назва не вказана)" || trimmedField.length > productName.length) {
+                    productName = trimmedField;
+                  }
+                }
+              }
+              
+              return {
+                productName,
+                quantity: this.parseUkrainianDecimal(pos.quantity || pos.Количество || pos.Кількість || 1),
+                price: this.parseUkrainianDecimal(pos.price || pos.Цена || pos.Ціна || 0),
+                total: this.parseUkrainianDecimal(pos.total || pos.Сумма || pos.Сума || 0)
+              };
+            })
           };
           
-          console.log('✅ Оброблений рахунок:', JSON.stringify(processedInvoice, null, 2));
           return processedInvoice;
           
         } catch (processingError) {
