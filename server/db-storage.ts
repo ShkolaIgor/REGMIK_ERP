@@ -15,6 +15,7 @@ import {
   clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences,
   integrationConfigs, entityMappings, syncQueue, fieldMappings, productNameMappings,
   repairs, repairParts, repairStatusHistory, repairDocuments, orderItemSerialNumbers, novaPoshtaCities, novaPoshtaWarehouses,
+  bankPaymentNotifications, orderPayments,
  type LocalUser, type InsertLocalUser,
   type Permission, type InsertPermission,
   type RolePermission, type InsertRolePermission, type UserPermission, type InsertUserPermission,
@@ -65,6 +66,8 @@ import {
   type SolderingType, type InsertSolderingType,
   type ComponentAlternative, type InsertComponentAlternative,
   type EmailSettings, type InsertEmailSettings,
+  type BankPaymentNotification, type InsertBankPaymentNotification,
+  type OrderPayment, type InsertOrderPayment,
   type ClientContact, type InsertClientContact,
   type ClientNovaPoshtaSettings, type InsertClientNovaPoshtaSettings,
   type ClientNovaPoshtaApiSettings, type InsertClientNovaPoshtaApiSettings,
@@ -4150,6 +4153,10 @@ export class DatabaseStorage implements IStorage {
         fromEmail: settings.fromEmail,
         fromName: settings.fromName,
         isActive: settings.isActive,
+        bankEmailUser: settings.bankEmailUser,
+        bankEmailPassword: settings.bankEmailPassword,
+        bankEmailAddress: settings.bankEmailAddress,
+        bankMonitoringEnabled: settings.bankMonitoringEnabled,
         createdAt: settings.createdAt,
         updatedAt: settings.updatedAt,
       };
@@ -4189,6 +4196,158 @@ export class DatabaseStorage implements IStorage {
       }
     } catch (error) {
       console.error("Error updating email settings:", error);
+      throw error;
+    }
+  }
+
+  // Bank Payment Notification methods
+  async createBankPaymentNotification(notification: InsertBankPaymentNotification): Promise<BankPaymentNotification> {
+    try {
+      const [created] = await db
+        .insert(bankPaymentNotifications)
+        .values(notification)
+        .returning();
+      return created;
+    } catch (error) {
+      console.error("Error creating bank payment notification:", error);
+      throw error;
+    }
+  }
+
+  async getBankPaymentNotifications(filters?: {
+    processed?: boolean;
+    fromDate?: Date;
+    toDate?: Date;
+  }): Promise<BankPaymentNotification[]> {
+    try {
+      let query = db.select().from(bankPaymentNotifications);
+      
+      const conditions = [];
+      if (filters?.processed !== undefined) {
+        conditions.push(eq(bankPaymentNotifications.processed, filters.processed));
+      }
+      if (filters?.fromDate) {
+        conditions.push(gte(bankPaymentNotifications.receivedAt, filters.fromDate));
+      }
+      if (filters?.toDate) {
+        conditions.push(lte(bankPaymentNotifications.receivedAt, filters.toDate));
+      }
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+      
+      const result = await query.orderBy(desc(bankPaymentNotifications.receivedAt));
+      return result;
+    } catch (error) {
+      console.error("Error getting bank payment notifications:", error);
+      throw error;
+    }
+  }
+
+  async updateBankPaymentNotification(id: number, updates: Partial<BankPaymentNotification>): Promise<BankPaymentNotification | undefined> {
+    try {
+      const [updated] = await db
+        .update(bankPaymentNotifications)
+        .set(updates)
+        .where(eq(bankPaymentNotifications.id, id))
+        .returning();
+      return updated;
+    } catch (error) {
+      console.error("Error updating bank payment notification:", error);
+      throw error;
+    }
+  }
+
+  // Order Payment methods
+  async createOrderPayment(payment: InsertOrderPayment): Promise<OrderPayment> {
+    try {
+      const [created] = await db
+        .insert(orderPayments)
+        .values(payment)
+        .returning();
+      return created;
+    } catch (error) {
+      console.error("Error creating order payment:", error);
+      throw error;
+    }
+  }
+
+  async getOrderPayments(orderId?: number): Promise<OrderPayment[]> {
+    try {
+      let query = db.select().from(orderPayments);
+      
+      if (orderId) {
+        query = query.where(eq(orderPayments.orderId, orderId));
+      }
+      
+      const result = await query.orderBy(desc(orderPayments.paymentDate));
+      return result;
+    } catch (error) {
+      console.error("Error getting order payments:", error);
+      throw error;
+    }
+  }
+
+  async getOrderByInvoiceNumber(invoiceNumber: string): Promise<Order | undefined> {
+    try {
+      const [order] = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.invoiceNumber, invoiceNumber))
+        .limit(1);
+      return order;
+    } catch (error) {
+      console.error("Error getting order by invoice number:", error);
+      throw error;
+    }
+  }
+
+  async updateOrderPaymentStatus(orderId: number, paymentAmount: number, paymentType: string = "bank_transfer"): Promise<{ order: Order; payment: OrderPayment }> {
+    try {
+      // Отримуємо замовлення
+      const order = await this.getOrder(orderId);
+      if (!order) {
+        throw new Error("Order not found");
+      }
+
+      const orderTotal = parseFloat(order.totalAmount?.toString() || "0");
+      const currentPaid = parseFloat(order.paidAmount?.toString() || "0");
+      const newPaidAmount = currentPaid + paymentAmount;
+
+      // Визначаємо новий статус оплати
+      let paymentStatus = "none";
+      if (newPaidAmount >= orderTotal) {
+        paymentStatus = "full";
+      } else if (newPaidAmount > 0) {
+        paymentStatus = "partial";
+      }
+
+      // Оновлюємо замовлення
+      const [updatedOrder] = await db
+        .update(orders)
+        .set({
+          paidAmount: newPaidAmount.toString(),
+          paymentType: paymentType,
+          paymentStatus: paymentStatus,
+          updatedAt: new Date()
+        })
+        .where(eq(orders.id, orderId))
+        .returning();
+
+      // Створюємо запис про платіж
+      const payment = await this.createOrderPayment({
+        orderId: orderId,
+        paymentAmount: paymentAmount.toString(),
+        paymentDate: new Date(),
+        paymentType: paymentType,
+        paymentStatus: "confirmed",
+        notes: `Автоматично створено з банківського повідомлення`
+      });
+
+      return { order: updatedOrder, payment };
+    } catch (error) {
+      console.error("Error updating order payment status:", error);
       throw error;
     }
   }

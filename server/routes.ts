@@ -33,6 +33,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import crypto from "crypto";
 import { sendEmail } from "./email-service";
+import { bankEmailService } from "./bank-email-service";
 import multer from "multer";
 import xml2js from "xml2js";
 import { DOMParser } from "@xmldom/xmldom";
@@ -5710,6 +5711,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: errorMessage,
         details: error.message || "Невідома помилка"
       });
+    }
+  });
+
+  // Bank Email Monitoring endpoints
+  app.get("/api/bank-payments/notifications", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { processed, fromDate, toDate } = req.query;
+      
+      const filters: any = {};
+      if (processed !== undefined) {
+        filters.processed = processed === 'true';
+      }
+      if (fromDate) {
+        filters.fromDate = new Date(fromDate as string);
+      }
+      if (toDate) {
+        filters.toDate = new Date(toDate as string);
+      }
+
+      const notifications = await storage.getBankPaymentNotifications(filters);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error getting bank payment notifications:", error);
+      res.status(500).json({ error: "Failed to get bank payment notifications" });
+    }
+  });
+
+  app.post("/api/bank-payments/process-manual", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { emailContent } = req.body;
+      
+      if (!emailContent || typeof emailContent !== 'string') {
+        return res.status(400).json({ error: "Email content is required" });
+      }
+
+      const result = await bankEmailService.manualProcessEmail(emailContent);
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error) {
+      console.error("Error processing manual bank email:", error);
+      res.status(500).json({ error: "Failed to process bank email" });
+    }
+  });
+
+  app.get("/api/bank-payments/stats", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const stats = await bankEmailService.getBankEmailStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error getting bank email stats:", error);
+      res.status(500).json({ error: "Failed to get bank email stats" });
+    }
+  });
+
+  app.post("/api/bank-payments/test-monitoring", isSimpleAuthenticated, async (req, res) => {
+    try {
+      // Тестовий email з реального прикладу користувача
+      const testEmailContent = `
+Щановний клієнте!
+
+Інформуємо Вас про рух коштів по рахунку: UA123456789012345678901234567890
+Валюта: UAH
+
+Операція від 12.07.2025:
+Тип операції: зараховано
+Сумма: 9072,00
+Корреспондент: ВІКОРД ТОВ
+Призначення платежу: Оплата згідно рахунку РМ00-027688 від 11.07.2025, у т.ч. ПДВ 1512,00
+
+З повагою,
+Укрсіббанк
+      `;
+
+      const result = await bankEmailService.manualProcessEmail(testEmailContent);
+      res.json(result);
+    } catch (error) {
+      console.error("Error testing bank email monitoring:", error);
+      res.status(500).json({ error: "Failed to test bank email monitoring" });
+    }
+  });
+
+  app.get("/api/order-payments/:orderId", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.orderId);
+      const payments = await storage.getOrderPayments(orderId);
+      res.json(payments);
+    } catch (error) {
+      console.error("Error getting order payments:", error);
+      res.status(500).json({ error: "Failed to get order payments" });
     }
   });
 

@@ -909,9 +909,69 @@ export const emailSettings = pgTable("email_settings", {
   fromEmail: varchar("from_email", { length: 255 }),
   fromName: varchar("from_name", { length: 255 }).default("REGMIK ERP"),
   isActive: boolean("is_active").default(false),
+  
+  // Налаштування банківського email моніторингу
+  bankEmailUser: varchar("bank_email_user", { length: 255 }), // SMTP користувач для банківської пошти
+  bankEmailPassword: varchar("bank_email_password", { length: 255 }), // SMTP пароль для банківської пошти
+  bankEmailAddress: varchar("bank_email_address", { length: 255 }), // Адреса з якої приходять банківські повідомлення
+  bankMonitoringEnabled: boolean("bank_monitoring_enabled").default(false), // Увімкнути моніторинг банківських email
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   updatedBy: varchar("updated_by", { length: 50 })
+});
+
+// Таблиця для банківських повідомлень про платежі
+export const bankPaymentNotifications = pgTable("bank_payment_notifications", {
+  id: serial("id").primaryKey(),
+  messageId: varchar("message_id", { length: 255 }).unique(), // Унікальний ID email повідомлення
+  subject: varchar("subject", { length: 255 }), // Тема листа
+  fromAddress: varchar("from_address", { length: 255 }), // Адреса відправника
+  receivedAt: timestamp("received_at").notNull(), // Час отримання листа
+  
+  // Банківські деталі з листа
+  accountNumber: varchar("account_number", { length: 50 }), // Номер рахунку
+  currency: varchar("currency", { length: 3 }).default("UAH"), // Валюта
+  operationType: varchar("operation_type", { length: 50 }), // тип операції: зараховано/списано
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(), // Сума операції
+  correspondent: varchar("correspondent", { length: 255 }), // Назва кореспондента
+  paymentPurpose: text("payment_purpose"), // Призначення платежу
+  
+  // Розпізнані дані
+  invoiceNumber: varchar("invoice_number", { length: 50 }), // Номер рахунку з призначення (РМ00-XXXXXX)
+  invoiceDate: timestamp("invoice_date"), // Дата рахунку
+  vatAmount: decimal("vat_amount", { precision: 12, scale: 2 }), // Сума ПДВ
+  
+  // Статус обробки
+  processed: boolean("processed").default(false), // Чи оброблено платіж
+  orderId: integer("order_id").references(() => orders.id), // Пов'язане замовлення
+  processingError: text("processing_error"), // Помилка обробки
+  
+  // Мета-дані
+  rawEmailContent: text("raw_email_content"), // Повний зміст email
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Таблиця для історії платежів замовлень
+export const orderPayments = pgTable("order_payments", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").references(() => orders.id).notNull(),
+  paymentAmount: decimal("payment_amount", { precision: 12, scale: 2 }).notNull(),
+  paymentDate: timestamp("payment_date").notNull(),
+  paymentType: varchar("payment_type", { length: 50 }).notNull().default("bank_transfer"), // bank_transfer, cash, card
+  paymentStatus: varchar("payment_status", { length: 50 }).notNull().default("confirmed"), // pending, confirmed, cancelled
+  
+  // Зв'язок з банківським повідомленням
+  bankNotificationId: integer("bank_notification_id").references(() => bankPaymentNotifications.id),
+  
+  // Деталі платежу
+  bankAccount: varchar("bank_account", { length: 50 }), // Рахунок надходження
+  correspondent: varchar("correspondent", { length: 255 }), // Хто заплатив
+  reference: varchar("reference", { length: 255 }), // Номер документу/посилання
+  notes: text("notes"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: varchar("created_by", { length: 100 })
 });
 
 // Таблиця клієнтів з налаштуваннями Нової Пошти
@@ -1407,6 +1467,17 @@ export const insertEmailSettingsSchema = createInsertSchema(emailSettings).omit(
   updatedAt: true 
 });
 
+// Схеми валідації для банківських платежів
+export const insertBankPaymentNotificationSchema = createInsertSchema(bankPaymentNotifications).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertOrderPaymentSchema = createInsertSchema(orderPayments).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
 // User schema for auth (updated for Replit Auth)
 export const insertUserSchemaAuth = createInsertSchema(users);
 export type Category = typeof categories.$inferSelect;
@@ -1438,6 +1509,12 @@ export type SupplierReceiptItem = typeof supplierReceiptItems.$inferSelect;
 export type InsertSupplierReceiptItem = z.infer<typeof insertSupplierReceiptItemSchema>;
 export type EmailSettings = typeof emailSettings.$inferSelect;
 export type InsertEmailSettings = z.infer<typeof insertEmailSettingsSchema>;
+
+// Типи для банківських платежів
+export type BankPaymentNotification = typeof bankPaymentNotifications.$inferSelect;
+export type InsertBankPaymentNotification = z.infer<typeof insertBankPaymentNotificationSchema>;
+export type OrderPayment = typeof orderPayments.$inferSelect;
+export type InsertOrderPayment = z.infer<typeof insertOrderPaymentSchema>;
 
 export type PackageType = typeof packageTypes.$inferSelect;
 export type InsertPackageType = z.infer<typeof insertPackageTypeSchema>;

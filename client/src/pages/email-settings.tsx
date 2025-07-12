@@ -10,7 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertEmailSettingsSchema, type InsertEmailSettings } from "@shared/schema";
-import { Settings, Mail, TestTube } from "lucide-react";
+import { Settings, Mail, TestTube, CreditCard } from "lucide-react";
+import { BankMonitoringTest } from "@/components/BankMonitoringTest";
 
 export default function EmailSettings() {
   const { toast } = useToast();
@@ -33,6 +34,10 @@ export default function EmailSettings() {
       fromEmail: "",
       fromName: "REGMIK ERP",
       isActive: false,
+      bankEmailUser: "",
+      bankEmailPassword: "",
+      bankEmailAddress: "",
+      bankMonitoringEnabled: false,
     },
   });
 
@@ -48,6 +53,10 @@ export default function EmailSettings() {
         fromEmail: emailSettings?.fromEmail || "",
         fromName: emailSettings?.fromName || "REGMIK ERP",
         isActive: emailSettings?.isActive || false,
+        bankEmailUser: emailSettings?.bankEmailUser || "",
+        bankEmailPassword: emailSettings?.bankEmailPassword || "",
+        bankEmailAddress: emailSettings?.bankEmailAddress || "",
+        bankMonitoringEnabled: emailSettings?.bankMonitoringEnabled || false,
       });
     }
   }, [emailSettings, form]);
@@ -271,6 +280,93 @@ export default function EmailSettings() {
               </Button>
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-4 lg:pb-6">
+          <CardTitle className="flex items-center gap-2 text-lg lg:text-xl">
+            <CreditCard className="h-4 w-4 lg:h-5 lg:w-5" />
+            Налаштування банку для моніторингу платежів
+          </CardTitle>
+          <CardDescription className="text-sm lg:text-base">
+            Налаштуйте підключення до банківської пошти для автоматичного відмічення оплат
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="space-y-4 lg:space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="bankEmailUser">SMTP Користувач банку</Label>
+                <Input
+                  id="bankEmailUser"
+                  placeholder="bank@example.com"
+                  {...form.register("bankEmailUser")}
+                />
+                {form.formState.errors.bankEmailUser && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.bankEmailUser.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bankEmailPassword">SMTP Пароль банку</Label>
+                <Input
+                  id="bankEmailPassword"
+                  type="password"
+                  placeholder="Пароль для банківської пошти"
+                  {...form.register("bankEmailPassword")}
+                />
+                {form.formState.errors.bankEmailPassword && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.bankEmailPassword.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2 lg:col-span-2">
+                <Label htmlFor="bankEmailAddress">Адреса банківських повідомлень</Label>
+                <Input
+                  id="bankEmailAddress"
+                  placeholder="noreply@ukrsib.com.ua"
+                  {...form.register("bankEmailAddress")}
+                />
+                <p className="text-xs text-gray-500">
+                  Вкажіть email адресу з якої банк надсилає повідомлення про платежі
+                </p>
+                {form.formState.errors.bankEmailAddress && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.bankEmailAddress.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="bankMonitoringEnabled"
+                checked={Boolean(form.watch("bankMonitoringEnabled"))}
+                onCheckedChange={(checked) => form.setValue("bankMonitoringEnabled", checked)}
+              />
+              <Label htmlFor="bankMonitoringEnabled">Увімкнути моніторинг банківських платежів</Label>
+            </div>
+
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <h4 className="font-semibold text-blue-900 mb-2">Інструкції для налаштування банківського моніторингу:</h4>
+              <ul className="list-disc list-inside text-sm text-blue-800 space-y-1">
+                <li>Використовуйте ті ж SMTP налаштування що й для звичайної пошти</li>
+                <li>Вкажіть точну адресу відправника банківських повідомлень (наприклад: noreply@ukrsib.com.ua)</li>
+                <li>Система буде шукати в листах: "тип операції: зараховано", номери рахунків РМ00-XXXXXX та суми</li>
+                <li>При знаходженні платежу система автоматично оновить статус замовлення</li>
+                <li>Підтримується часткова оплата - якщо сума менша за рахунок</li>
+              </ul>
+            </div>
+
+            <div className="pt-4 border-t border-gray-200">
+              <BankMonitoringTest />
+            </div>
+          </div>
         </CardContent>
       </Card>
 
