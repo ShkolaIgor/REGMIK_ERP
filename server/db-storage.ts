@@ -10395,17 +10395,33 @@ export class DatabaseStorage implements IStorage {
       for (const item of invoice.items || []) {
         const productName = item.nameFrom1C || item.originalName || item.name;
         
-        // Шукаємо існуючий товар за назвою або SKU
-        const [existingProduct] = await db
-          .select()
-          .from(products)
-          .where(
-            or(
-              eq(products.name, productName),
-              eq(products.sku, item.sku || '')
+        // Спочатку шукаємо зіставлення з 1С
+        const mapping = await this.findProductByAlternativeName(productName, "1C");
+        
+        let existingProduct = null;
+        if (mapping) {
+          // Якщо знайдено зіставлення, шукаємо товар за ERP ID
+          const [mappedProduct] = await db
+            .select()
+            .from(products)
+            .where(eq(products.id, mapping.erpProductId))
+            .limit(1);
+          existingProduct = mappedProduct;
+          console.log(`🔗 Знайдено зіставлення: "${productName}" → "${mapping.erpProductName}" (ID: ${mapping.erpProductId})`);
+        } else {
+          // Якщо зіставлення не знайдено, шукаємо за назвою або SKU
+          const [directProduct] = await db
+            .select()
+            .from(products)
+            .where(
+              or(
+                eq(products.name, productName),
+                eq(products.sku, item.sku || '')
+              )
             )
-          )
-          .limit(1);
+            .limit(1);
+          existingProduct = directProduct;
+        }
         
         if (!existingProduct) {
           // Створюємо новий товар
@@ -10425,9 +10441,39 @@ export class DatabaseStorage implements IStorage {
             .values(newProductData)
             .returning();
           
+          // Автоматично створюємо зіставлення для нового товару
+          if (!mapping) {
+            await this.createProductNameMapping({
+              externalSystemName: "1C",
+              externalProductName: productName,
+              erpProductId: newProduct.id,
+              erpProductName: newProduct.name,
+              confidence: 1.0,
+              isActive: true,
+              mappingType: "automatic",
+              createdAt: new Date()
+            });
+            console.log(`🔗 Створено автоматичне зіставлення: "${productName}" → "${newProduct.name}" (ID: ${newProduct.id})`);
+          }
+          
           productIds.push(newProduct.id);
           console.log(`✅ Створено товар: ${productName} (ID: ${newProduct.id})`);
         } else {
+          // Якщо товар знайдено, але зіставлення не було, створюємо його
+          if (!mapping) {
+            await this.createProductNameMapping({
+              externalSystemName: "1C",
+              externalProductName: productName,
+              erpProductId: existingProduct.id,
+              erpProductName: existingProduct.name,
+              confidence: 0.9,
+              isActive: true,
+              mappingType: "automatic",
+              createdAt: new Date()
+            });
+            console.log(`🔗 Створено зіставлення для існуючого товару: "${productName}" → "${existingProduct.name}" (ID: ${existingProduct.id})`);
+          }
+          
           productIds.push(existingProduct.id);
           console.log(`✅ Знайдено існуючий товар: ${productName} (ID: ${existingProduct.id})`);
         }

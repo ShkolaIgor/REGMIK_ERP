@@ -6123,6 +6123,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Product Name Mappings API
+  app.get("/api/product-name-mappings", async (req, res) => {
+    try {
+      const externalSystem = req.query.externalSystem as string;
+      const mappings = await storage.getProductNameMappings(externalSystem);
+      res.json(mappings);
+    } catch (error) {
+      console.error("Failed to get product name mappings:", error);
+      res.status(500).json({ error: "Failed to get product name mappings" });
+    }
+  });
+
+  app.post("/api/product-name-mappings", async (req, res) => {
+    try {
+      const mapping = await storage.createProductNameMapping(req.body);
+      res.status(201).json(mapping);
+    } catch (error) {
+      console.error("Failed to create product name mapping:", error);
+      res.status(500).json({ error: "Failed to create product name mapping" });
+    }
+  });
+
+  app.put("/api/product-name-mappings/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const mapping = await storage.updateProductNameMapping(id, req.body);
+      if (!mapping) {
+        return res.status(404).json({ error: "Product name mapping not found" });
+      }
+      res.json(mapping);
+    } catch (error) {
+      console.error("Failed to update product name mapping:", error);
+      res.status(500).json({ error: "Failed to update product name mapping" });
+    }
+  });
+
+  app.delete("/api/product-name-mappings/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteProductNameMapping(id);
+      if (!success) {
+        return res.status(404).json({ error: "Product name mapping not found" });
+      }
+      res.json({ message: "Product name mapping deleted successfully" });
+    } catch (error) {
+      console.error("Failed to delete product name mapping:", error);
+      res.status(500).json({ error: "Failed to delete product name mapping" });
+    }
+  });
+
+  // Test endpoint for product mapping functionality
+  app.post("/api/test-product-mapping", async (req, res) => {
+    try {
+      const { productName } = req.body;
+      if (!productName) {
+        return res.status(400).json({ error: "Product name is required" });
+      }
+
+      const mapping = await storage.findProductByAlternativeName(productName, "1C");
+      if (mapping) {
+        res.json({
+          success: true,
+          found: true,
+          mapping: {
+            erpProductId: mapping.erpProductId,
+            erpProductName: mapping.erpProductName
+          },
+          message: `Знайдено товар в ERP: ${mapping.erpProductName} (ID: ${mapping.erpProductId})`
+        });
+      } else {
+        res.json({
+          success: true,
+          found: false,
+          message: `Товар "${productName}" не знайдено в зіставленнях`
+        });
+      }
+    } catch (error) {
+      console.error("Failed to test product mapping:", error);
+      res.status(500).json({ error: "Failed to test product mapping" });
+    }
+  });
+
   // XML Import endpoint for clients
   // Store import jobs in memory (in production, use Redis or database)
   const importJobs = new Map<string, {
