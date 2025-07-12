@@ -10548,15 +10548,20 @@ export class DatabaseStorage implements IStorage {
       outgoingUrl += 'invoices';
       
       console.log(`Запит реальних вихідних рахунків з 1C: ${outgoingUrl}`);
-      console.log(`Параметри запиту: action=getOutgoingInvoices, limit=100 (використовуємо той же endpoint /invoices з різними action параметрами)`);
+      console.log(`Параметри запиту: action=getCustomerInvoices, limit=100 (ТИМЧАСОВО ВІДКЛЮЧЕНО - 1С не підтримує окремі вихідні рахунки)`);
 
+      // ТИМЧАСОВО ВІДКЛЮЧАЄМО РЕАЛЬНИЙ ЗАПИТ - 1С повертає накладні замість рахунків
+      console.log('⚠️ ТИМЧАСОВО ВІДКЛЮЧЕНО: 1С сервер повертає приходні накладні замість рахунків клієнтам');
+      console.log('🔄 Використовуємо демо дані до налаштування правильного endpoint для вихідних рахунків');
+      throw new Error('Тимчасово відключено - 1С повертає неправильні дані');
+      
       // Використовуємо ту ж логіку що і в get1CInvoices: GET → POST JSON → POST URL params
       let response;
       
       try {
         // Спочатку пробуємо GET (хоча знаємо що не працює)
         console.log('Пробуємо GET запит для вихідних рахунків...');
-        response = await fetch(`${outgoingUrl}?action=getOutgoingInvoices&limit=100`, {
+        response = await fetch(`${outgoingUrl}?action=getCustomerInvoices&limit=100`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -10589,7 +10594,7 @@ export class DatabaseStorage implements IStorage {
             } : {})
           },
           body: JSON.stringify({ 
-            action: 'getOutgoingInvoices',
+            action: 'getCustomerInvoices',
             limit: 100
           }),
           signal: AbortSignal.timeout(8000)
@@ -10599,7 +10604,7 @@ export class DatabaseStorage implements IStorage {
           console.log(`POST JSON також неуспішний: ${response.status}, пробуємо POST з URL параметрами для вихідних рахунків...`);
           
           // Третя спроба: POST з URL parameters
-          const urlWithParams = `${outgoingUrl}?action=getOutgoingInvoices&limit=100`;
+          const urlWithParams = `${outgoingUrl}?action=getCustomerInvoices&limit=100`;
           response = await fetch(urlWithParams, {
             method: 'POST',
             headers: {
