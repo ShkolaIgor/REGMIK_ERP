@@ -103,6 +103,12 @@ export class BankEmailService {
     try {
       const emailSettings = await storage.getEmailSettings();
       
+      console.log("🏦 Перевірка банківської адреси:");
+      console.log("  Email settings:", emailSettings);
+      console.log("  Bank email address:", emailSettings?.bankEmailAddress);
+      console.log("  From address:", emailContent.fromAddress);
+      console.log("  Contains check:", emailContent.fromAddress.includes(emailSettings?.bankEmailAddress || ""));
+      
       // Перевіряємо чи email від банку
       if (!emailSettings?.bankEmailAddress || !emailContent.fromAddress.includes(emailSettings.bankEmailAddress)) {
         return { success: false, message: "Email не від банківської адреси" };
@@ -116,6 +122,7 @@ export class BankEmailService {
       }
 
       // Створюємо запис про банківське повідомлення
+      console.log("🏦 Зберігання операції:", paymentInfo.operationType);
       const notification: InsertBankPaymentNotification = {
         messageId: emailContent.messageId,
         subject: emailContent.subject,
@@ -137,7 +144,14 @@ export class BankEmailService {
       const savedNotification = await storage.createBankPaymentNotification(notification);
 
       // Якщо це зарахування коштів та знайдено номер рахунку - обробляємо платіж
+      console.log("🏦 Перевірка умов для обробки платежу:");
+      console.log("  operationType:", paymentInfo.operationType);
+      console.log("  invoiceNumber:", paymentInfo.invoiceNumber);
+      console.log("  Умова зараховано:", paymentInfo.operationType === "зараховано");
+      console.log("  Умова номер рахунку:", !!paymentInfo.invoiceNumber);
+      
       if (paymentInfo.operationType === "зараховано" && paymentInfo.invoiceNumber) {
+        console.log("🏦 Розпочинаю обробку платежу...");
         const paymentResult = await this.processPayment(savedNotification.id, paymentInfo);
         
         if (paymentResult.success) {
@@ -187,13 +201,23 @@ export class BankEmailService {
     vatAmount?: number;
   } | null {
     try {
+      console.log("🏦 Аналіз тексту email:", emailText.substring(0, 200) + "...");
+      
       // Шукаємо ключові фрази з прикладу користувача
       const accountMatch = emailText.match(/рух коштів по рахунку:\s*([A-Z0-9]+)/i);
       const currencyMatch = emailText.match(/валюта:\s*([A-Z]{3})/i);
-      const operationMatch = emailText.match(/тип операції:\s*([^,]+)/i);
+      const operationMatch = emailText.match(/тип операції:\s*([^\n\r]+)/i);
       const amountMatch = emailText.match(/сумма:\s*([\d,\.]+)/i);
       const correspondentMatch = emailText.match(/корреспондент:\s*([^,]+)/i);
       const purposeMatch = emailText.match(/призначення платежу:\s*([^\.]+)/i);
+      
+      console.log("🏦 Результати пошуку регекспів:");
+      console.log("  accountMatch:", accountMatch?.[1]);
+      console.log("  currencyMatch:", currencyMatch?.[1]);
+      console.log("  operationMatch:", operationMatch?.[1]);
+      console.log("  amountMatch:", amountMatch?.[1]);
+      console.log("  correspondentMatch:", correspondentMatch?.[1]);
+      console.log("  purposeMatch:", purposeMatch?.[1]);
       
       // Шукаємо номер рахунку в призначенні платежу (РМ00-XXXXXX)
       const invoiceMatch = emailText.match(/РМ00-(\d+)/i);
@@ -221,10 +245,17 @@ export class BankEmailService {
         invoiceDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
       }
 
+      // Очищаємо operationType від зайвих символів і тексту
+      const cleanOperationType = operationMatch[1].trim().split('\n')[0].trim();
+      
+      console.log("🏦 Очищена operationType:", cleanOperationType);
+      console.log("🏦 Перевірка чи це 'зараховано':", cleanOperationType === "зараховано");
+      console.log("🏦 Повертаю результат з operationType:", cleanOperationType);
+
       return {
         accountNumber: accountMatch[1],
         currency: currencyMatch?.[1] || "UAH",
-        operationType: operationMatch[1].trim(),
+        operationType: cleanOperationType,
         amount: amount,
         correspondent: correspondentMatch[1].trim(),
         paymentPurpose: purposeMatch?.[1]?.trim() || "",
@@ -259,7 +290,10 @@ export class BankEmailService {
       const result = await storage.updateOrderPaymentStatus(
         order.id, 
         paymentInfo.amount, 
-        "bank_transfer"
+        "bank_transfer",
+        notificationId,
+        paymentInfo.accountNumber,
+        paymentInfo.correspondent
       );
 
       console.log(`🏦✅ Платіж оброблено: Замовлення #${order.id} (${paymentInfo.invoiceNumber}) - ${paymentInfo.amount} UAH`);
@@ -280,15 +314,25 @@ export class BankEmailService {
    * Ручна обробка банківського повідомлення (для тестування)
    */
   async manualProcessEmail(emailContent: string): Promise<{ success: boolean; message: string; details?: any }> {
-    const mockEmail = {
-      messageId: `manual-${Date.now()}`,
-      subject: "Банківське повідомлення",
-      fromAddress: "noreply@ukrsib.com.ua",
-      receivedAt: new Date(),
-      textContent: emailContent,
-    };
+    try {
+      const emailSettings = await storage.getEmailSettings();
+      
+      // Для тестування використовуємо налаштовану банківську адресу або fallback
+      const fromAddress = emailSettings?.bankEmailAddress || "noreply@ukrsib.com.ua";
+      
+      const mockEmail = {
+        messageId: `manual-${Date.now()}`,
+        subject: "Банківське повідомлення",
+        fromAddress: fromAddress,
+        receivedAt: new Date(),
+        textContent: emailContent,
+      };
 
-    return await this.processBankEmail(mockEmail);
+      return await this.processBankEmail(mockEmail);
+    } catch (error) {
+      console.error("❌ Помилка ручної обробки email:", error);
+      return { success: false, message: `Помилка: ${error.message}` };
+    }
   }
 
   /**

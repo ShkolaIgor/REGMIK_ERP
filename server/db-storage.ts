@@ -4289,21 +4289,9 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getOrderByInvoiceNumber(invoiceNumber: string): Promise<Order | undefined> {
-    try {
-      const [order] = await db
-        .select()
-        .from(orders)
-        .where(eq(orders.invoiceNumber, invoiceNumber))
-        .limit(1);
-      return order;
-    } catch (error) {
-      console.error("Error getting order by invoice number:", error);
-      throw error;
-    }
-  }
 
-  async updateOrderPaymentStatus(orderId: number, paymentAmount: number, paymentType: string = "bank_transfer"): Promise<{ order: Order; payment: OrderPayment }> {
+
+  async updateOrderPaymentStatus(orderId: number, paymentAmount: number, paymentType: string = "bank_transfer", bankNotificationId?: number, bankAccount?: string, correspondent?: string): Promise<{ order: Order; payment: OrderPayment }> {
     try {
       // Отримуємо замовлення
       const order = await this.getOrder(orderId);
@@ -4342,6 +4330,9 @@ export class DatabaseStorage implements IStorage {
         paymentDate: new Date(),
         paymentType: paymentType,
         paymentStatus: "confirmed",
+        bankNotificationId: bankNotificationId,
+        bankAccount: bankAccount,
+        correspondent: correspondent,
         notes: `Автоматично створено з банківського повідомлення`
       });
 
