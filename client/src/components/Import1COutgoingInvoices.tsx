@@ -82,69 +82,9 @@ export function Import1COutgoingInvoices() {
     }
   });
 
-  // Fallback дані для демонстрації коли API недоступне
-  const fallbackInvoices: OutgoingInvoice1C[] = [
-    {
-      id: "demo-out-1",
-      number: "РП-000001",
-      date: "2025-01-12",
-      clientName: "ТОВ \"Тестовий Клієнт\"",
-      total: 25000.00,
-      currency: "UAH",
-      status: "confirmed",
-      paymentStatus: "unpaid",
-      description: "Демо рахунок для тестування",
-      clientTaxCode: "12345678",
-      itemsCount: 2,
-      managerName: "Іван Петренко",
-      positions: [
-        {
-          productName: "Демо продукт 1",
-          quantity: 5,
-          price: 2000.00,
-          total: 10000.00
-        },
-        {
-          productName: "Демо продукт 2", 
-          quantity: 3,
-          price: 5000.00,
-          total: 15000.00
-        }
-      ]
-    },
-    {
-      id: "demo-out-2",
-      number: "РП-000002",
-      date: "2025-01-13",
-      clientName: "ПП \"Демо Клієнт\"",
-      total: 12500.00,
-      currency: "UAH",
-      status: "confirmed",
-      paymentStatus: "partial",
-      description: "Частково оплачений рахунок",
-      clientTaxCode: "87654321",
-      itemsCount: 2,
-      managerName: "Марія Коваленко",
-      positions: [
-        {
-          productName: "Демо сервіс А",
-          quantity: 1,
-          price: 7500.00,
-          total: 7500.00
-        },
-        {
-          productName: "Демо сервіс Б",
-          quantity: 2,
-          price: 2500.00,
-          total: 5000.00
-        }
-      ]
-    }
-  ];
-
-  // ВИПРАВЛЕНО: Логіка відображення - тільки реальні дані, fallback тільки при помилці
-  const displayInvoices = invoicesError ? fallbackInvoices : outgoingInvoices;
-  const isUsingFallback = !!invoicesError;
+  // Дані отримуються тільки з реальної 1С системи
+  const displayInvoices = outgoingInvoices || [];
+  const isUsingFallback = false;
 
   // Додаємо логування для дебагу
   console.log("🔧 1C Outgoing Invoices Frontend Debug:", {
@@ -166,7 +106,7 @@ export function Import1COutgoingInvoices() {
     if (!loadingInvoices) {
       toast({
         title: "Помилка завантаження",
-        description: "Не вдалося завантажити вихідні рахунки з 1С. Показую демо дані.",
+        description: "Не вдалося завантажити вихідні рахунки з 1С. Перевірте з'єднання з сервером.",
         variant: "destructive",
       });
     }

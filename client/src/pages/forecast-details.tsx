@@ -25,35 +25,9 @@ import {
 import { ArrowLeft, TrendingUp, BarChart3, Calendar, Target, Activity } from "lucide-react";
 import { type ProductionForecast } from "@shared/schema";
 
-// Тестові дані для демонстрації графіків
-const generateForecastData = (forecastType: string, periodType: string) => {
-  const periods = periodType === 'daily' ? 30 : periodType === 'weekly' ? 12 : 6;
-  const data = [];
-  
-  for (let i = 0; i < periods; i++) {
-    const baseValue = forecastType === 'demand' ? 100 + Math.random() * 50 : 
-                     forecastType === 'capacity' ? 80 + Math.random() * 40 : 
-                     50 + Math.random() * 30;
-    
-    data.push({
-      period: periodType === 'daily' ? `День ${i + 1}` : 
-              periodType === 'weekly' ? `Тиждень ${i + 1}` : 
-              `Місяць ${i + 1}`,
-      actual: Math.round(baseValue + Math.sin(i * 0.5) * 20),
-      predicted: Math.round(baseValue + Math.sin(i * 0.5 + 0.2) * 18 + Math.random() * 10 - 5),
-      confidence: Math.round(85 + Math.random() * 10),
-    });
-  }
-  
-  return data;
-};
+// Дані прогнозів завантажуються з API
 
-const generateAccuracyData = () => [
-  { metric: 'MAPE', value: 12.5, benchmark: 15 },
-  { metric: 'RMSE', value: 8.3, benchmark: 10 },
-  { metric: 'MAE', value: 6.7, benchmark: 8 },
-  { metric: 'R²', value: 0.85, benchmark: 0.8 },
-];
+// Дані точності завантажуються з API
 
 const generateDistributionData = () => [
   { range: '0-50', count: 15, color: '#8884d8' },

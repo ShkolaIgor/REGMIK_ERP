@@ -626,9 +626,7 @@ export class MemStorage implements IStorage {
   }
 
   private initializeData() {
-    // Initialize with sample data for demonstration
-    const defaultCategory: Category = { id: 1, name: "Електроніка", description: "Електронні компоненти" };
-    this.categories.set(1, defaultCategory);
+    // Production режим - дані завантажуються з API та бази даних
     this.currentCategoryId = 2;
 
     // Initialize default units

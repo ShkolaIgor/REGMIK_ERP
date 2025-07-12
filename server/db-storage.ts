@@ -9912,15 +9912,15 @@ export class DatabaseStorage implements IStorage {
         };
       }
 
-      // 2. Якщо точне зіставлення не знайдено, шукаємо схожі назви товарів
-      const similarProduct = await this.findSimilarProduct(externalProductName);
-      if (similarProduct) {
-        // Автоматично створюємо зіставлення для знайденого схожого товару
+      // 2. Якщо точне зіставлення не знайдено, шукаємо схожі компоненти
+      const similarComponent = await this.findSimilarComponent(externalProductName);
+      if (similarComponent) {
+        // Автоматично створюємо зіставлення для знайденого схожого компонента
         await this.createProductNameMapping({
           externalSystemName: systemName,
           externalProductName: externalProductName,
-          erpProductId: similarProduct.id,
-          erpProductName: similarProduct.name,
+          erpProductId: similarComponent.id,
+          erpProductName: similarComponent.name,
           mappingType: 'automatic',
           confidence: 0.85, // Нижча впевненість для схожих назв
           isActive: true,
@@ -9930,8 +9930,8 @@ export class DatabaseStorage implements IStorage {
 
         
         return {
-          erpProductId: similarProduct.id,
-          erpProductName: similarProduct.name
+          erpProductId: similarComponent.id,
+          erpProductName: similarComponent.name
         };
       }
 
@@ -9942,8 +9942,8 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Функція для пошуку схожих товарів за назвою (шукаємо в components для накладних)
-  private async findSimilarProduct(externalProductName: string): Promise<Product | null> {
+  // Функція для пошуку схожих компонентів за назвою (для накладних)
+  private async findSimilarComponent(externalProductName: string): Promise<{ id: number; name: string } | null> {
     try {
       // Нормалізуємо назву для пошуку - видаляємо пробіли, тире, дужки
       const normalizedExternal = this.normalizeProductName(externalProductName);
@@ -9956,18 +9956,18 @@ export class DatabaseStorage implements IStorage {
         
         // Перевіряємо точну відповідність після нормалізації
         if (normalizedExternal === normalizedComponent) {
-          return this.convertComponentToProduct(component);
+          return { id: component.id, name: component.name };
         }
         
         // Перевіряємо, чи містить одна назва іншу
         if (normalizedExternal.includes(normalizedComponent) || normalizedComponent.includes(normalizedExternal)) {
-          return this.convertComponentToProduct(component);
+          return { id: component.id, name: component.name };
         }
         
         // Перевіряємо схожість за спільними символами (для випадків типу "BZX84C3V3" vs "BZX84C3V3LT1G")
         const commonLength = this.getCommonPartLength(normalizedExternal, normalizedComponent);
         if (commonLength >= 6) { // Мінімум 6 символів спільної частини
-          return this.convertComponentToProduct(component);
+          return { id: component.id, name: component.name };
         }
       }
       

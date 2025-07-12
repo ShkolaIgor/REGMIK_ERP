@@ -77,27 +77,8 @@ export function setupSimpleSession(app: Express) {
   }));
 }
 
-// Демо користувачі з цілочисельними ID що відповідають базі даних
-const demoUsers = [
-  {
-    id: 1,
-    username: "demo",
-    password: "demo123",
-    email: "demo@example.com",
-    firstName: "Демо",
-    lastName: "Користувач",
-    profileImageUrl: null
-  },
-  {
-    id: 2, 
-    username: "admin",
-    password: "admin123",
-    email: "admin@regmik.com",
-    firstName: "Адміністратор",
-    lastName: "Системи",
-    profileImageUrl: null
-  }
-];
+// Production режим - користувачі тільки з бази даних
+const productionUsers: any[] = [];
 
 export function setupSimpleAuth(app: Express) {
   // Маршрут для простого входу
@@ -110,32 +91,7 @@ export function setupSimpleAuth(app: Express) {
     console.log("Trimmed username:", username);
     
     try {
-      // Спочатку перевіряємо демо користувачів
-      const demoUser = demoUsers.find(u => u.username === username && u.password === password);
-      
-      if (demoUser) {
-        console.log("Demo user found:", demoUser.username);
-        // Створюємо сесію для демо користувача
-        (req.session as any).user = {
-          id: demoUser.id,
-          username: demoUser.username,
-          email: demoUser.email,
-          firstName: demoUser.firstName,
-          lastName: demoUser.lastName,
-          profileImageUrl: demoUser.profileImageUrl
-        };
-        
-        return req.session.save((err) => {
-          if (err) {
-            console.error("Session save error:", err);
-            return res.status(500).json({ message: "Помилка збереження сесії" });
-          }
-          console.log("Session saved successfully for demo user, ID:", req.sessionID);
-          res.json({ success: true, user: demoUser });
-        });
-      }
-      
-      // Якщо не знайшли серед демо користувачів, перевіряємо базу даних
+      // Production режим - тільки перевірка в базі даних
       console.log("Checking database for user:", username);
       let dbUser;
       try {
