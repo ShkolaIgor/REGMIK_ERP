@@ -10061,10 +10061,14 @@ export class DatabaseStorage implements IStorage {
   async get1CInvoices() {
     try {
       // Отримуємо конфігурацію 1С інтеграції
-      const integrations = await this.getIntegrations();
-      const oneСIntegration = integrations.find(int => int.name?.includes('1С') || int.type === '1c');
+      const integrations = await db.select().from(integrationConfigs);
+      console.log('[1C DEBUG] Знайдені інтеграції:', integrations.map(i => ({ name: i.name, type: i.type, hasBaseUrl: !!i.config?.baseUrl })));
+      
+      const oneСIntegration = integrations.find(int => int.name?.includes('1c') || int.type?.includes('1c') || int.name === '1c_import');
+      console.log('[1C DEBUG] Вибрана 1С інтеграція:', oneСIntegration ? { name: oneСIntegration.name, type: oneСIntegration.type, baseUrl: oneСIntegration.config?.baseUrl } : 'НЕ ЗНАЙДЕНО');
       
       if (!oneСIntegration?.config?.baseUrl) {
+        console.log('[1C ERROR] 1С інтеграція не налаштована або відсутній baseUrl');
         throw new Error('1С інтеграція не налаштована');
       }
 
