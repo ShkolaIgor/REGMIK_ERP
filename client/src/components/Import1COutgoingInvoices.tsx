@@ -63,19 +63,11 @@ export function Import1COutgoingInvoices() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Завантаження доступних вихідних рахунків з 1C з fallback даними
+  // Завантаження доступних вихідних рахунків з 1C
   const { data: outgoingInvoices = [], isLoading: loadingInvoices, error: invoicesError, refetch: refetchInvoices } = useQuery({
     queryKey: ["/api/1c/outgoing-invoices"],
     enabled: isOpen,
     retry: false,
-    onError: (error) => {
-      console.error("1C Outgoing Invoices fetch error:", error);
-      toast({
-        title: "Помилка завантаження",
-        description: "Не вдалося завантажити вихідні рахунки з 1С. Показую демо дані.",
-        variant: "destructive",
-      });
-    }
   });
 
   // Fallback дані для демонстрації коли API недоступне
@@ -138,21 +130,35 @@ export function Import1COutgoingInvoices() {
     }
   ];
 
-  // Логіка відображення: спочатку реальні дані, потім fallback
-  const displayInvoices = outgoingInvoices && outgoingInvoices.length > 0 ? outgoingInvoices : fallbackInvoices;
-  const isUsingFallback = !outgoingInvoices || outgoingInvoices.length === 0 || invoicesError;
+  // ВИПРАВЛЕНО: Логіка відображення - тільки реальні дані, fallback тільки при помилці
+  const displayInvoices = invoicesError ? fallbackInvoices : outgoingInvoices;
+  const isUsingFallback = !!invoicesError;
 
   // Додаємо логування для дебагу
-  console.log("1C Outgoing Invoices Debug:", {
+  console.log("🔧 1C Outgoing Invoices Frontend Debug:", {
     isOpen,
     loadingInvoices,
-    invoicesError: invoicesError?.message || null,
-    outgoingInvoices,
-    displayInvoices,
-    invoicesCount: outgoingInvoices?.length || 0,
-    displayInvoicesCount: displayInvoices?.length || 0,
-    usingFallback: isUsingFallback
+    hasError: !!invoicesError,
+    errorMessage: invoicesError?.message || null,
+    realDataCount: outgoingInvoices?.length || 0,
+    displayDataCount: displayInvoices?.length || 0,
+    usingFallback: isUsingFallback,
+    firstRealInvoice: outgoingInvoices?.[0] || null,
+    firstDisplayInvoice: displayInvoices?.[0] || null
   });
+
+  // Сповіщення при помилці завантаження
+  if (invoicesError && isOpen) {
+    console.error("❌ 1C Outgoing Invoices fetch error:", invoicesError);
+    // Показуємо toast тільки один раз при відкритті
+    if (!loadingInvoices) {
+      toast({
+        title: "Помилка завантаження",
+        description: "Не вдалося завантажити вихідні рахунки з 1С. Показую демо дані.",
+        variant: "destructive",
+      });
+    }
+  }
 
   // Мутація для імпорту вибраних рахунків
   const importMutation = useMutation({

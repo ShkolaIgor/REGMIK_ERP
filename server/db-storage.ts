@@ -10609,13 +10609,21 @@ export class DatabaseStorage implements IStorage {
       }
 
       const responseText = await response.text();
-      console.log(`1C raw response length: ${responseText.length} characters`);
-      console.log(`1C raw response start: ${responseText.substring(0, 200)}...`);
-      console.log(`1C raw response end: ...${responseText.substring(responseText.length - 200)}`);
+      console.log(`✅ 1C ВІДПОВІДЬ ОТРИМАНА! Довжина: ${responseText.length} characters`);
+      console.log(`📋 Початок відповіді: ${responseText.substring(0, 500)}...`);
+      console.log(`📋 Кінець відповіді: ...${responseText.substring(responseText.length - 500)}`);
       
       let data;
       try {
+        console.log('🔧 Парсимо JSON від 1С...');
         data = JSON.parse(responseText);
+        console.log('✅ JSON УСПІШНО РОЗПАРСЕНО!');
+        console.log('📊 Структура даних:', {
+          hasInvoices: !!data.invoices,
+          invoicesCount: data.invoices?.length || 0,
+          total: data.total,
+          timestamp: data.timestamp
+        });
       } catch (jsonError) {
         console.error('Помилка парсингу JSON:', jsonError);
         console.error('Проблемний JSON фрагмент:', responseText.substring(0, 1000));
@@ -10645,45 +10653,41 @@ export class DatabaseStorage implements IStorage {
           }
           
           data = JSON.parse(fixedJson);
-          console.log('JSON успішно виправлено!');
+          console.log('✅ JSON УСПІШНО ВИПРАВЛЕНО ТА РОЗПАРСЕНО!');
+          console.log('📊 Виправлена структура даних:', {
+            hasInvoices: !!data.invoices,
+            invoicesCount: data.invoices?.length || 0,
+            total: data.total,
+            timestamp: data.timestamp
+          });
         } catch (fixError) {
           console.error('Друга спроба виправлення JSON також неуспішна:', fixError);
           
-          // Остання спроба - використовуємо fallback дані для демонстрації
-          console.log('Використовуємо fallback дані для демонстрації функціональності...');
-          data = {
-            invoices: [
-              {
-                invoiceNumber: "РМ00-027688",
-                date: "2025-07-11",
-                client: "ВІКОРД",
-                amount: 9072,
-                currency: "980",
-                notes: "",
-                status: "posted"
-              },
-              {
-                invoiceNumber: "РМ00-027687", 
-                date: "2025-07-11",
-                client: "ВІКОРД",
-                amount: 4752,
-                currency: "980",
-                notes: "",
-                status: "posted"
-              }
-            ],
-            total: 2
-          };
-          console.log('Fallback дані застосовано для демонстрації роботи');
+          // ВИПРАВЛЕНО: НЕ застосовуємо fallback, а перекидуємо помилку
+          console.error('❌ Критична помилка парсингу JSON від 1С. Перекидуємо помилку.');
+          throw new Error(`Не вдалося обробити відповідь від 1С: ${jsonError.message}. Перевірте формат даних від 1С сервера.`);
         }
       }
       
       if (!data || !Array.isArray(data.invoices)) {
-        console.error('Некоректна структура даних від 1C:', data);
+        console.error('❌ Некоректна структура даних від 1C:', data);
         throw new Error(`1C повернув некоректну структуру даних. Очікувалось {invoices: []}, отримано: ${JSON.stringify(data).substring(0, 200)}`);
       }
 
-      console.log(`Отримано ${data.invoices.length} вихідних рахунків з 1C`);
+      console.log(`🎉 УСПІШНО ОТРИМАНО ${data.invoices.length} РЕАЛЬНИХ ВИХІДНИХ РАХУНКІВ З 1C!`);
+      
+      // ПЕРЕВІРЯЄМО ЧИ РАХУНКИ МАЮТЬ ПОЗИЦІЇ
+      if (data.invoices.length > 0) {
+        const firstInvoice = data.invoices[0];
+        console.log('🔍 Перевірка першого рахунку на наявність позицій:');
+        console.log('- invoiceNumber:', firstInvoice.invoiceNumber);
+        console.log('- client:', firstInvoice.client);
+        console.log('- amount:', firstInvoice.amount);
+        console.log('- positions:', firstInvoice.positions?.length || 0, 'позицій');
+        if (firstInvoice.positions?.length > 0) {
+          console.log('- перша позиція:', firstInvoice.positions[0]);
+        }
+      }
 
       // Обробляємо реальні дані з 1C з детальним логуванням
       console.log('🔧 Початок обробки рахунків з 1С...');
