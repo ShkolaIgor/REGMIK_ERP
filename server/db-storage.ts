@@ -10542,13 +10542,13 @@ export class DatabaseStorage implements IStorage {
         throw new Error("1C URL не налаштований. Будь ласка, вкажіть URL 1C сервера в налаштуваннях інтеграції.");
       }
 
-      // Використовуємо окремий endpoint /outgoing-invoices для вихідних рахунків
+      // Використовуємо той же endpoint /invoices з параметром action=getOutgoingInvoices
       let outgoingUrl = config.baseUrl.trim();
       if (!outgoingUrl.endsWith('/')) outgoingUrl += '/';
-      outgoingUrl += 'outgoing-invoices';
+      outgoingUrl += 'invoices';
       
       console.log(`Запит реальних вихідних рахунків з 1C: ${outgoingUrl}`);
-      console.log(`Параметри запиту: action=getOutgoingInvoices, limit=100 (використовуємо окремий endpoint для вихідних рахунків)`);
+      console.log(`Параметри запиту: action=getOutgoingInvoices, limit=100 (використовуємо той же endpoint /invoices з різними action параметрами)`);
 
       // Використовуємо ту ж логіку що і в get1CInvoices: GET → POST JSON → POST URL params
       let response;
@@ -10565,7 +10565,7 @@ export class DatabaseStorage implements IStorage {
               'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
             } : {})
           },
-          signal: AbortSignal.timeout(3000)
+          signal: AbortSignal.timeout(8000)
         });
 
         if (response.ok) {
@@ -10592,7 +10592,7 @@ export class DatabaseStorage implements IStorage {
             action: 'getOutgoingInvoices',
             limit: 100
           }),
-          signal: AbortSignal.timeout(3000)
+          signal: AbortSignal.timeout(8000)
         });
         
         if (!response.ok) {
@@ -10610,7 +10610,7 @@ export class DatabaseStorage implements IStorage {
                 'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
               } : {})
             },
-            signal: AbortSignal.timeout(10000)
+            signal: AbortSignal.timeout(8000)
           });
         }
       }
@@ -10684,55 +10684,65 @@ export class DatabaseStorage implements IStorage {
         }
       }
       
-      if (!data || !Array.isArray(data.invoices)) {
+      // ВИПРАВЛЕНО: 1С може повертати прямий масив або об'єкт з полем invoices
+      let invoicesArray;
+      if (Array.isArray(data)) {
+        console.log('✅ 1С повернув прямий масив рахунків');
+        invoicesArray = data;
+      } else if (data && Array.isArray(data.invoices)) {
+        console.log('✅ 1С повернув об\'єкт з полем invoices');
+        invoicesArray = data.invoices;
+      } else {
         console.error('❌ Некоректна структура даних від 1C:', data);
-        throw new Error(`1C повернув некоректну структуру даних. Очікувалось {invoices: []}, отримано: ${JSON.stringify(data).substring(0, 200)}`);
+        throw new Error(`1C повернув некоректну структуру даних. Очікувалось [] або {invoices: []}, отримано: ${JSON.stringify(data).substring(0, 200)}`);
       }
 
-      console.log(`🎉 УСПІШНО ОТРИМАНО ${data.invoices.length} РЕАЛЬНИХ ВИХІДНИХ РАХУНКІВ З 1C!`);
+      console.log(`🎉 УСПІШНО ОТРИМАНО ${invoicesArray.length} РЕАЛЬНИХ ВИХІДНИХ РАХУНКІВ З 1C!`);
       
       // ПЕРЕВІРЯЄМО ЧИ РАХУНКИ МАЮТЬ ПОЗИЦІЇ
-      if (data.invoices.length > 0) {
-        const firstInvoice = data.invoices[0];
+      if (invoicesArray.length > 0) {
+        const firstInvoice = invoicesArray[0];
         console.log('🔍 Перевірка першого рахунку на наявність позицій:');
-        console.log('- invoiceNumber:', firstInvoice.invoiceNumber);
-        console.log('- client:', firstInvoice.client);
-        console.log('- amount:', firstInvoice.amount);
-        console.log('- positions:', firstInvoice.positions?.length || 0, 'позицій');
-        if (firstInvoice.positions?.length > 0) {
-          console.log('- перша позиція:', firstInvoice.positions[0]);
+        console.log('- invoiceNumber/НомерДокумента:', firstInvoice.invoiceNumber || firstInvoice.НомерДокумента);
+        console.log('- client/Постачальник:', firstInvoice.client || firstInvoice.Постачальник);
+        console.log('- amount/Сума:', firstInvoice.amount || firstInvoice.Сума);
+        console.log('- positions/Позиції:', firstInvoice.positions?.length || firstInvoice.Позиції?.length || 0, 'позицій');
+        if (firstInvoice.positions?.length > 0 || firstInvoice.Позиції?.length > 0) {
+          console.log('- перша позиція:', firstInvoice.positions?.[0] || firstInvoice.Позиції?.[0]);
         }
       }
 
       // Обробляємо реальні дані з 1C з детальним логуванням
       console.log('🔧 Початок обробки рахунків з 1С...');
-      const processedInvoices = data.invoices.map((invoice: any, index: number) => {
+      const processedInvoices = invoicesArray.map((invoice: any, index: number) => {
         try {
-          console.log(`📋 Обробляємо рахунок ${index + 1}/${data.invoices.length}:`);
+          console.log(`📋 Обробляємо рахунок ${index + 1}/${invoicesArray.length}:`);
           console.log('- Сирі дані:', JSON.stringify(invoice, null, 2));
           
-          // Перевіряємо наявність ключових полів
+          // Перевіряємо наявність ключових полів (українські/російські та англійські)
           console.log('🔍 Перевірка полів:');
-          console.log('- invoiceNumber:', invoice.invoiceNumber || 'відсутнє');
-          console.log('- client:', invoice.client || 'відсутнє'); 
-          console.log('- amount:', invoice.amount || 'відсутнє');
-          console.log('- currency:', invoice.currency || 'відсутнє');
-          console.log('- date:', invoice.date || 'відсутнє');
+          console.log('- НомерДокумента:', invoice.НомерДокумента || 'відсутнє');
+          console.log('- Постачальник:', invoice.Постачальник || 'відсутнє'); 
+          console.log('- Сума:', invoice.Сума || 'відсутнє');
+          console.log('- Валюта:', invoice.Валюта || 'відсутнє');
+          console.log('- Дата:', invoice.Дата || 'відсутнє');
+          console.log('- ЕДРПОУ:', invoice.ЕДРПОУ || 'відсутнє');
+          console.log('- Позиції:', invoice.Позиції?.length || 0, 'позицій');
           
           const processedInvoice = {
-            id: invoice.invoiceNumber || invoice.НомерСчета || invoice.number || `1c-${index}`,
-            number: invoice.invoiceNumber || invoice.НомерСчета || invoice.number || `№${index + 1}`,
-            date: invoice.date || invoice.ДатаСчета || invoice.ДатаДокумента || new Date().toISOString().split('T')[0],
-            clientName: invoice.client || invoice.clientName || invoice.НаименованиеКонтрагента || invoice.Контрагент || "Клієнт не вказано",
-            total: this.parseUkrainianDecimal(String(invoice.amount || invoice.totalAmount || invoice.СуммаДокумента || invoice.Сумма || invoice.total || "0")),
-            currency: this.convertCurrencyCode(invoice.currency || invoice.КодВалюты || invoice.Валюта || "UAH"),
-            status: invoice.status || invoice.Статус || "confirmed",
-            paymentStatus: invoice.paymentStatus || invoice.СтатусОплаты || invoice.СтатусОплати || "unpaid",
-            description: invoice.notes || invoice.description || invoice.Примітка || invoice.Comment || "",
-            clientTaxCode: invoice.clientTaxCode || invoice.КодНалогоплательщика || invoice.ІПН || "",
-            itemsCount: invoice.itemsCount || invoice.КоличествоПозиций || invoice.КількістьПозицій || 0,
-            managerName: invoice.managerName || invoice.ИмяМенеджера || invoice.ІмяМенеджера || "",
-            positions: invoice.positions || invoice.Позиції || invoice.Positions || []
+            id: invoice.НомерДокумента || invoice.invoiceNumber || invoice.НомерСчета || invoice.number || `1c-${index}`,
+            number: invoice.НомерДокумента || invoice.invoiceNumber || invoice.НомерСчета || invoice.number || `№${index + 1}`,
+            date: invoice.Дата || invoice.date || invoice.ДатаСчета || invoice.ДатаДокумента || new Date().toISOString().split('T')[0],
+            clientName: invoice.Постачальник || invoice.client || invoice.clientName || invoice.НаименованиеКонтрагента || invoice.Контрагент || "Клієнт не вказано",
+            total: this.parseUkrainianDecimal(String(invoice.Сума || invoice.amount || invoice.totalAmount || invoice.СуммаДокумента || invoice.Сумма || invoice.total || "0")),
+            currency: this.convertCurrencyCode(invoice.Валюта || invoice.currency || invoice.КодВалюты || "UAH"),
+            status: invoice.Статус || invoice.status || "confirmed",
+            paymentStatus: invoice.СтатусОплати || invoice.paymentStatus || invoice.СтатусОплаты || "unpaid",
+            description: invoice.Примітка || invoice.notes || invoice.description || invoice.Comment || "",
+            clientTaxCode: invoice.ЕДРПОУ || invoice.clientTaxCode || invoice.КодНалогоплательщика || invoice.ІПН || "",
+            itemsCount: invoice.КількістьПозицій || invoice.itemsCount || invoice.КоличествоПозиций || (invoice.Позиції?.length || 0),
+            managerName: invoice.ІмяМенеджера || invoice.managerName || invoice.ИмяМенеджера || "",
+            positions: invoice.Позиції || invoice.positions || invoice.Positions || []
           };
           
           console.log('✅ Оброблений рахунок:', JSON.stringify(processedInvoice, null, 2));
