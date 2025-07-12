@@ -11506,6 +11506,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mass import 1C outgoing invoices
+  app.post('/api/1c/outgoing-invoices/import', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { invoices } = req.body;
+      
+      if (!invoices || !Array.isArray(invoices)) {
+        return res.status(400).json({ error: "Invalid invoices data" });
+      }
+
+      console.log(`🚀 Масовий імпорт ${invoices.length} вихідних рахунків з 1C...`);
+
+      const results = [];
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const invoice of invoices) {
+        try {
+          console.log(`🔍 Імпорт рахунку ${invoice.number}...`);
+          const result = await storage.import1COutgoingInvoice(invoice.id);
+          results.push({
+            success: true,
+            invoiceNumber: invoice.number,
+            orderId: result.orderId,
+            message: result.message
+          });
+          successCount++;
+          console.log(`✅ Успішно імпортовано рахунок ${invoice.number} → замовлення #${result.orderId}`);
+        } catch (error) {
+          console.error(`❌ Помилка імпорту рахунку ${invoice.number}:`, error);
+          results.push({
+            success: false,
+            invoiceNumber: invoice.number,
+            message: `Failed to import: ${error.message}`
+          });
+          errorCount++;
+        }
+      }
+
+      console.log(`📊 Результат масового імпорту: ${successCount} успішних, ${errorCount} помилок`);
+
+      res.json({
+        success: true,
+        message: `Import completed: ${successCount} success, ${errorCount} errors`,
+        results,
+        summary: {
+          total: invoices.length,
+          success: successCount,
+          errors: errorCount
+        }
+      });
+    } catch (error) {
+      console.error("❌ Критична помилка масового імпорту:", error);
+      res.status(500).json({ error: "Failed to import 1C outgoing invoices" });
+    }
+  });
+
   app.post('/api/1c/invoices/:id/import', isSimpleAuthenticated, async (req, res) => {
     try {
       console.log(`🔍 Імпорт 1C накладної ${req.params.id} - початок`);
