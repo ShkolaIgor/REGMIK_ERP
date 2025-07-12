@@ -10567,7 +10567,7 @@ export class DatabaseStorage implements IStorage {
               'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
             } : {})
           },
-          signal: AbortSignal.timeout(8000)
+          signal: AbortSignal.timeout(30000)
         });
 
         if (response.ok) {
@@ -10594,7 +10594,7 @@ export class DatabaseStorage implements IStorage {
             action: 'getOutgoingInvoices',
             limit: 100
           }),
-          signal: AbortSignal.timeout(8000)
+          signal: AbortSignal.timeout(30000)
         });
         
         if (!response.ok) {
@@ -10612,7 +10612,7 @@ export class DatabaseStorage implements IStorage {
                 'Authorization': `Basic ${Buffer.from(config.clientId + ':' + config.clientSecret).toString('base64')}`
               } : {})
             },
-            signal: AbortSignal.timeout(8000)
+            signal: AbortSignal.timeout(30000)
           });
         }
       }

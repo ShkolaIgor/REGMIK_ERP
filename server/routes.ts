@@ -11078,7 +11078,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Додаємо тайм-аут для всього запиту
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Тайм-аут запиту до 1С після 8 секунд')), 8000);
+        setTimeout(() => reject(new Error('Тайм-аут запиту до 1С після 30 секунд')), 30000);
       });
       
       const outgoingInvoicesPromise = storage.get1COutgoingInvoices();
