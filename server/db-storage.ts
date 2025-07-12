@@ -10545,7 +10545,7 @@ export class DatabaseStorage implements IStorage {
       // Використовуємо той же endpoint /invoices з параметром action=getOutgoingInvoices
       let outgoingUrl = config.baseUrl.trim();
       if (!outgoingUrl.endsWith('/')) outgoingUrl += '/';
-      outgoingUrl += 'invoices';
+      outgoingUrl += 'outgoing-invoices';
       
       console.log(`Запит реальних вихідних рахунків з 1C: ${outgoingUrl}`);
       console.log(`Параметри запиту: action=getOutgoingInvoices, limit=100 (рахунки клієнтам)`);
