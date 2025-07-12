@@ -138,8 +138,9 @@ export function Import1COutgoingInvoices() {
     }
   ];
 
-  // Використовуємо fallback дані якщо API недоступне
-  const displayInvoices = invoicesError ? fallbackInvoices : outgoingInvoices;
+  // Логіка відображення: спочатку реальні дані, потім fallback
+  const displayInvoices = outgoingInvoices && outgoingInvoices.length > 0 ? outgoingInvoices : fallbackInvoices;
+  const isUsingFallback = !outgoingInvoices || outgoingInvoices.length === 0 || invoicesError;
 
   // Додаємо логування для дебагу
   console.log("1C Outgoing Invoices Debug:", {
@@ -150,7 +151,7 @@ export function Import1COutgoingInvoices() {
     displayInvoices,
     invoicesCount: outgoingInvoices?.length || 0,
     displayInvoicesCount: displayInvoices?.length || 0,
-    usingFallback: !!invoicesError
+    usingFallback: isUsingFallback
   });
 
   // Мутація для імпорту вибраних рахунків
@@ -341,7 +342,7 @@ export function Import1COutgoingInvoices() {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base">
                     Знайдено рахунків: {displayInvoices.length}
-                    {invoicesError && <span className="text-sm text-orange-600 ml-2">(демо дані)</span>}
+                    {isUsingFallback && <span className="text-sm text-orange-600 ml-2">(демо дані)</span>}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
