@@ -10147,11 +10147,7 @@ export class DatabaseStorage implements IStorage {
       const processedInvoices = await Promise.all(invoices.map(async (invoice: any, invoiceIndex: number) => {
         const itemsArray = invoice.items || invoice.Позиції || [];
         
-        // ФІЛЬТРАЦІЯ: Пропускаємо накладні тільки з послугами, показуємо тільки товари
-        if (!Array.isArray(itemsArray) || itemsArray.length === 0) {
-          // Пропускаємо накладні без позицій (послуги, витрати тощо)
-          return null;
-        }
+        // ФІЛЬТРАЦІЯ ПЕРЕНЕСЕНА В 1С - тепер 1С передає тільки товарні документи
         
         const items = Array.isArray(itemsArray) 
           ? await Promise.all(itemsArray.map(async (item: any) => {
@@ -10283,8 +10279,8 @@ export class DatabaseStorage implements IStorage {
         };
       }));
 
-      // Фільтруємо null значення (накладні без товарних позицій)
-      return processedInvoices.filter(invoice => invoice !== null);
+      console.log(`Успішно оброблено ${processedInvoices.length} товарних накладних (фільтрація виконана в 1С)`);
+      return processedInvoices;
 
     } catch (error) {
       console.error('Error fetching 1C invoices:', error);
@@ -10970,13 +10966,8 @@ export class DatabaseStorage implements IStorage {
       const processedInvoices = await Promise.all(invoicesArray.map(async (invoice: any, index: number) => {
         try {
           
-          // ФІЛЬТРАЦІЯ ВИХІДНИХ РАХУНКІВ: пропускаємо без товарів, показуємо тільки товари
+          // ФІЛЬТРАЦІЯ ПЕРЕНЕСЕНА В 1С - тепер 1С передає тільки товарні документи
         const positions = invoice.positions || invoice.Позиції || [];
-        
-        // Якщо немає позицій - пропускаємо рахунок (тільки послуги/витрати)
-        if (!Array.isArray(positions) || positions.length === 0) {
-          return null;
-        }
         
         // Обробляємо позиції з мапінгом 1С→ERP назв
         const processedPositions = await Promise.all(positions.map(async (position: any) => {
@@ -11049,10 +11040,8 @@ export class DatabaseStorage implements IStorage {
         }
       }));
 
-      // Фільтруємо null значення (рахунки без товарних позицій)  
-      const filteredInvoices = processedInvoices.filter(invoice => invoice !== null);
-      console.log(`Успішно оброблено ${filteredInvoices.length} вихідних рахунків з товарними позиціями (з ${invoicesArray.length} загалом)`);
-      return filteredInvoices;
+      console.log(`Успішно оброблено ${processedInvoices.length} товарних вихідних рахунків (фільтрація виконана в 1С)`);
+      return processedInvoices;
 
     } catch (error) {
       console.error('❌ КРИТИЧНА ПОМИЛКА get1COutgoingInvoices:', error);
