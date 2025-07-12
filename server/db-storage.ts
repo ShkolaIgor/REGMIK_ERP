@@ -9881,7 +9881,7 @@ export class DatabaseStorage implements IStorage {
   // Product Name Mapping methods
   async findProductByAlternativeName(externalProductName: string, systemName: string): Promise<{ erpProductId: number; erpProductName: string } | null> {
     try {
-      // Шукаємо зіставлення в таблиці productNameMappings
+      // 1. Спочатку шукаємо точне зіставлення в таблиці productNameMappings
       const mapping = await this.db.select({
         erpProductId: productNameMappings.erpProductId,
         erpProductName: productNameMappings.erpProductName,
@@ -9912,11 +9912,74 @@ export class DatabaseStorage implements IStorage {
         };
       }
 
+      // 2. Якщо точне зіставлення не знайдено, шукаємо схожі назви товарів
+      const similarProduct = await this.findSimilarProduct(externalProductName);
+      if (similarProduct) {
+        // Автоматично створюємо зіставлення для знайденого схожого товару
+        await this.createProductNameMapping({
+          externalSystemName: systemName,
+          externalProductName: externalProductName,
+          erpProductId: similarProduct.id,
+          erpProductName: similarProduct.name,
+          mappingType: 'automatic',
+          confidence: 0.85, // Нижча впевненість для схожих назв
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+
+        console.log(`🔗 Створено автоматичне зіставлення для схожого товару: "${externalProductName}" → "${similarProduct.name}" (ID: ${similarProduct.id})`);
+        
+        return {
+          erpProductId: similarProduct.id,
+          erpProductName: similarProduct.name
+        };
+      }
+
       return null;
     } catch (error) {
       console.error('Помилка пошуку товару за альтернативною назвою:', error);
       return null;
     }
+  }
+
+  // Функція для пошуку схожих товарів за назвою
+  private async findSimilarProduct(externalProductName: string): Promise<Product | null> {
+    try {
+      // Нормалізуємо назву для пошуку - видаляємо пробіли, тире, дужки
+      const normalizedExternal = this.normalizeProductName(externalProductName);
+      
+      // Отримуємо всі товари для порівняння
+      const allProducts = await this.db.select().from(products);
+      
+      for (const product of allProducts) {
+        const normalizedProduct = this.normalizeProductName(product.name);
+        
+        // Перевіряємо точну відповідність після нормалізації
+        if (normalizedExternal === normalizedProduct) {
+          return product;
+        }
+        
+        // Перевіряємо, чи містить одна назва іншу
+        if (normalizedExternal.includes(normalizedProduct) || normalizedProduct.includes(normalizedExternal)) {
+          return product;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Помилка пошуку схожих товарів:', error);
+      return null;
+    }
+  }
+
+  // Функція для нормалізації назви товару
+  private normalizeProductName(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/[\s\-_\.]/g, '') // Видаляємо пробіли, тире, підкреслення, крапки
+      .replace(/[()]/g, '') // Видаляємо дужки
+      .trim();
   }
 
   async createProductNameMapping(mapping: InsertProductNameMapping): Promise<ProductNameMapping> {
