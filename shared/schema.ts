@@ -2714,4 +2714,78 @@ export const insertClientTypeSchema = createInsertSchema(clientTypes).omit({
 export type ClientType = typeof clientTypes.$inferSelect;
 export type InsertClientType = z.infer<typeof insertClientTypeSchema>;
 
+// ===============================
+// 1C INTEGRATION TYPES - Based on actual 1C code structure
+// ===============================
+
+// Типи для вхідних накладних згідно з кодом 1С (ПоступлениеТоваровУслуг.Товары)
+export interface Invoice1CItem {
+  НаименованиеТовара: string; // Назва товару
+  КодТовара?: string; // Код товару
+  Количество: number; // Кількість
+  Цена: number; // Ціна
+  Сумма: number; // Сума
+  НомерСтроки?: number; // Номер рядка
+}
+
+export interface Invoice1C {
+  НомерДокумента: string; // Номер документа
+  ДатаДокумента: string; // Дата документа
+  Постачальник: string; // Контрагент (постачальник)
+  СуммаДокумента: number; // Сума документа
+  КодВалюты: string; // Код валюти
+  Позиції: Invoice1CItem[]; // Товарні позиції
+  КількістьТоварів?: number; // Кількість товарів
+}
+
+// Типи для вихідних рахунків згідно з кодом 1С (СчетНаОплатуПокупателю)
+export interface OutgoingInvoice1CPosition {
+  productName: string; // Назва товару/послуги
+  quantity: number; // Кількість
+  price: number; // Ціна
+  total: number; // Сума
+}
+
+export interface OutgoingInvoice1C {
+  id: string; // ID для ERP
+  number: string; // НомерДокумента
+  date: string; // Дата
+  clientName: string; // Клиент
+  clientTaxCode?: string; // ЄДРПОУ клієнта
+  total: number; // Сума
+  currency: string; // Валюта
+  paymentStatus: 'paid' | 'partial' | 'unpaid'; // Статус оплати
+  description?: string; // Опис
+  positions: OutgoingInvoice1CPosition[]; // Позиції рахунку
+}
+
+// Обробка товарних позицій для ERP
+export interface ProcessedInvoiceItem {
+  name: string; // Назва товару для ERP
+  erpProductId?: number; // ID товару в ERP (якщо знайдено)
+  originalName: string; // Оригінальна назва з 1С
+  isMapped: boolean; // Чи знайдено відповідність в ERP
+  quantity: number; // Кількість
+  price: number; // Ціна
+  total: number; // Загальна сума
+  unit: string; // Одиниця виміру
+  codeTovara?: string; // Код товару з 1С
+  nomerStroki?: number; // Номер рядка з 1С
+}
+
+export interface ProcessedInvoice1C {
+  id: string; // Унікальний ID для ERP
+  number: string; // Номер документа
+  date: string; // Дата документа
+  supplierName: string; // Назва постачальника
+  supplierTaxCode?: string; // Податковий код постачальника
+  supplierId?: number; // ID постачальника в ERP
+  amount: number; // Загальна сума
+  currency: string; // Валюта
+  status: 'confirmed' | 'draft'; // Статус документа
+  items: ProcessedInvoiceItem[]; // Оброблені позиції
+  exists: boolean; // Чи існує в ERP
+  kilkistTovariv?: number; // Кількість товарів з 1С
+}
+
 

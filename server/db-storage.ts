@@ -10117,13 +10117,14 @@ export class DatabaseStorage implements IStorage {
         invoicesData = JSON.parse(cleanedText);
       }
 
-      // Обробка отриманих даних
+      // Обробка отриманих даних згідно з вашим кодом 1С
       const processedInvoices = await Promise.all(
         invoicesData.map(async (invoice: any) => {
-          // Обробка товарних позицій з альтернативними назвами
+          // Обробка позицій згідно з структурою з вашого коду 1С
           const processedItems = await Promise.all(
-            (invoice.items || invoice.Позиции || []).map(async (item: any) => {
-              const productName = this.extractLongestProductName(item);
+            (invoice.Позиції || invoice.items || []).map(async (item: any) => {
+              // Використовуємо точно ті поля, що є у вашому коді 1С
+              const productName = item.НаименованиеТовара || 'Невідомий товар';
               
               // Пошук товару в ERP за альтернативними назвами
               const erpProduct = await this.findProductByAlternativeName(productName);
@@ -10131,28 +10132,31 @@ export class DatabaseStorage implements IStorage {
               return {
                 name: productName,
                 erpProductId: erpProduct?.id || null,
-                originalName: item.НаименованиеТовара || item.productName || productName,
+                originalName: productName,
                 isMapped: !!erpProduct,
-                quantity: parseFloat(item.Количество || item.quantity || 0),
-                price: this.parseUkrainianDecimal(item.Цена || item.price || 0),
-                total: this.parseUkrainianDecimal(item.Сумма || item.total || 0),
-                unit: item.ЕдиницаИзмерения || item.unit || 'шт'
+                quantity: parseFloat(item.Количество || 0),
+                price: this.parseUkrainianDecimal(item.Цена || 0),
+                total: this.parseUkrainianDecimal(item.Сумма || 0),
+                unit: 'шт', // В коді 1С немає поля одиниці виміру для товарів
+                codeTovara: item.КодТовара || '', // Додаткове поле з вашого коду
+                nomerStroki: item.НомерСтроки || 0 // Номер рядка з вашого коду
               };
             })
           );
 
           return {
-            id: invoice.Ссылка || invoice.id || `1c-${Date.now()}`,
-            number: invoice.НомерДокумента || invoice.number,
-            date: invoice.ДатаДокумента || invoice.date,
-            supplierName: invoice.Контрагент || invoice.supplierName || 'Невідомий постачальник',
-            supplierTaxCode: invoice.ИНН || invoice.taxCode || '',
+            id: `1c-${Date.now()}-${Math.random()}`, // Унікальний ID для ERP
+            number: invoice.НомерДокумента || 'Без номера',
+            date: invoice.ДатаДокумента || new Date().toISOString().split('T')[0],
+            supplierName: invoice.Постачальник || 'Невідомий постачальник',
+            supplierTaxCode: '', // В коді 1С немає ІПН постачальника
             supplierId: null,
-            amount: this.parseUkrainianDecimal(invoice.СуммаДокумента || invoice.amount || 0),
-            currency: this.convertCurrencyCode(invoice.Валюта || invoice.currency || '980'),
-            status: invoice.Проведен ? 'confirmed' : 'draft',
+            amount: this.parseUkrainianDecimal(invoice.СуммаДокумента || 0),
+            currency: this.convertCurrencyCode(invoice.КодВалюты || '980'),
+            status: 'confirmed', // В коді 1С тільки проведені документи
             items: processedItems,
-            exists: false
+            exists: false,
+            kilkistTovariv: invoice.КількістьТоварів || processedItems.length // З вашого коду
           };
         })
       );

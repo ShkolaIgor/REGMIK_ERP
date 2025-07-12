@@ -8,29 +8,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Upload, Eye, Check, X, FileText, Building2, Calendar, DollarSign, AlertCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { ProcessedInvoice1C } from "@shared/schema";
 
-interface Invoice1C {
-  id: string;
-  number: string;
-  date: string;
-  supplierName: string;
-  supplierTaxCode?: string;
-  supplierId?: number;
-  amount: number;
-  currency: string;
-  status: string;
-  items: Array<{
-    name: string;
-    erpProductId?: number | null;
-    originalName?: string;
-    isMapped?: boolean;
-    quantity: number;
-    price: number;
-    total: number;
-    unit: string;
-  }>;
-  exists?: boolean; // вже існує в ERP
-}
+// Тип для накладних згідно з реальним кодом 1С
+type Invoice1C = ProcessedInvoice1C;
 
 interface ImportProgress {
   total: number;
