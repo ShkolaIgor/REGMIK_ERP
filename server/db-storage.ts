@@ -10002,139 +10002,295 @@ export class DatabaseStorage implements IStorage {
     return currencyMap[currencyCode] || currencyCode;
   }
 
+  // Допоміжна функція для розбору українських десяткових чисел
+  private parseUkrainianDecimal(value: any): number {
+    if (typeof value === 'number') return value;
+    if (typeof value !== 'string') return 0;
+    
+    // Заміняємо українські коми на крапки для правильного парсингу
+    const cleanValue = value.toString().replace(',', '.');
+    const parsed = parseFloat(cleanValue);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+
+  // Допоміжна функція для мапінгу статусів оплати 1С в ERP формат
+  private mapPaymentStatus(status: string): "paid" | "partial" | "unpaid" {
+    if (!status) return "unpaid";
+    
+    const statusLower = status.toLowerCase();
+    
+    if (statusLower.includes('paid') || statusLower.includes('оплачен') || statusLower.includes('оплачено')) {
+      return "paid";
+    }
+    
+    if (statusLower.includes('partial') || statusLower.includes('частичн') || statusLower.includes('частково')) {
+      return "partial";
+    }
+    
+    return "unpaid";
+  }
+
+  // Допоміжна функція для витягування найдовшої назви товару з 1С полів
+  private extractLongestProductName(item: any): string {
+    const possibleNames = [
+      item.НаименованиеТовара,
+      item.productName,
+      item.name,
+      item.Назва,
+      item.НазваТовару,
+      item.Наименование,
+      item.Description,
+      item.Опис,
+      item.fullName,
+      item.displayName,
+      item.itemName,
+      item.goods,
+      item.product,
+      item.товар
+    ].filter(name => name && typeof name === 'string' && name.trim().length > 0);
+
+    if (possibleNames.length === 0) return 'Невідомий товар';
+    
+    // Повертаємо найдовшу назву (найбільш детальну)
+    return possibleNames.reduce((longest, current) => 
+      current.length > longest.length ? current : longest
+    );
+  }
+
   // 1C Integration methods
   async get1CInvoices() {
-    console.log('🔍 FALLBACK ВЕРСІЯ: Використовуємо демо дані замість 1С запитів для вхідних накладних');
-    console.log('📋 Генеруємо fallback вхідні накладні з реальними даними...');
-
+    console.log('🔗 РЕАЛЬНА 1С ІНТЕГРАЦІЯ: Підключення до BAF системи для вхідних накладних');
+    
     try {
-      // Fallback: повертаємо тестові дані для демонстрації
+      // Отримуємо конфігурацію 1С інтеграції
+      const integrations = await this.getIntegrations();
+      const oneСIntegration = integrations.find(int => int.name?.includes('1С') || int.type === '1c');
+      
+      if (!oneСIntegration?.config?.baseUrl) {
+        console.error('❌ 1С інтеграція не налаштована або відсутній baseUrl');
+        throw new Error('1С інтеграція не налаштована');
+      }
+
+      const { baseUrl, clientId, clientSecret } = oneСIntegration.config;
+      console.log(`🌐 Підключення до: ${baseUrl}/hs/erp/invoices`);
+
+      // Формуємо запит до 1С
+      const requestData = {
+        action: "getInvoices",
+        limit: 100
+      };
+
+      // Basic авторизація
+      const authHeader = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+      
+      const response = await fetch(`${baseUrl}/hs/erp/invoices`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${authHeader}`,
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(requestData),
+        signal: AbortSignal.timeout(45000) // 45 секунд
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const responseText = await response.text();
+      console.log('📥 Отримано відповідь від 1С:', responseText.substring(0, 200) + '...');
+
+      // Парсинг JSON з обробкою українських десяткових чисел
+      let invoicesData;
+      try {
+        // Спочатку намагаємося парсити як є
+        invoicesData = JSON.parse(responseText);
+      } catch (parseError) {
+        console.log('🔧 Виправляємо формат чисел та невидимі символи...');
+        // Заміняємо українські десяткові коми на крапки та очищуємо невидимі символи
+        const cleanedText = responseText
+          .replace(/(\d+),(\d{2})/g, '$1.$2') // Десяткові числа
+          .replace(/[\u200B-\u200D\uFEFF]/g, '') // Невидимі символи
+          .trim();
+        
+        invoicesData = JSON.parse(cleanedText);
+      }
+
+      // Обробка отриманих даних
+      const processedInvoices = await Promise.all(
+        invoicesData.map(async (invoice: any) => {
+          // Обробка товарних позицій з альтернативними назвами
+          const processedItems = await Promise.all(
+            (invoice.items || invoice.Позиции || []).map(async (item: any) => {
+              const productName = this.extractLongestProductName(item);
+              
+              // Пошук товару в ERP за альтернативними назвами
+              const erpProduct = await this.findProductByAlternativeName(productName);
+              
+              return {
+                name: productName,
+                erpProductId: erpProduct?.id || null,
+                originalName: item.НаименованиеТовара || item.productName || productName,
+                isMapped: !!erpProduct,
+                quantity: parseFloat(item.Количество || item.quantity || 0),
+                price: this.parseUkrainianDecimal(item.Цена || item.price || 0),
+                total: this.parseUkrainianDecimal(item.Сумма || item.total || 0),
+                unit: item.ЕдиницаИзмерения || item.unit || 'шт'
+              };
+            })
+          );
+
+          return {
+            id: invoice.Ссылка || invoice.id || `1c-${Date.now()}`,
+            number: invoice.НомерДокумента || invoice.number,
+            date: invoice.ДатаДокумента || invoice.date,
+            supplierName: invoice.Контрагент || invoice.supplierName || 'Невідомий постачальник',
+            supplierTaxCode: invoice.ИНН || invoice.taxCode || '',
+            supplierId: null,
+            amount: this.parseUkrainianDecimal(invoice.СуммаДокумента || invoice.amount || 0),
+            currency: this.convertCurrencyCode(invoice.Валюта || invoice.currency || '980'),
+            status: invoice.Проведен ? 'confirmed' : 'draft',
+            items: processedItems,
+            exists: false
+          };
+        })
+      );
+
+      console.log(`✅ Отримано ${processedInvoices.length} накладних з 1С`);
+      return processedInvoices;
+
+    } catch (error) {
+      console.error('❌ Помилка з\'єднання з 1С:', error);
+      
+      // У разі помилки підключення - повертаємо fallback дані з поясненням
+      console.log('🔄 Використовуємо fallback дані через помилку підключення до 1С');
       return [
         {
-          id: "demo-1",
-          number: "ПН-000001",
-          date: "2025-01-10",
-          supplierName: "ТОВ \"Тестовий Постачальник\"",
-          supplierTaxCode: "12345678",
+          id: "fallback-demo-1",
+          number: "ПН-FALLBACK-001",
+          date: new Date().toISOString().split('T')[0],
+          supplierName: "FALLBACK: Помилка підключення до 1С",
+          supplierTaxCode: "00000000",
           supplierId: 1,
-          amount: 15000.00,
+          amount: 1.00,
           currency: "UAH",
-          status: "confirmed",
+          status: "draft" as const,
           items: [
             {
-              name: "Демо товар 1",
+              name: "Помилка з'єднання з 1С",
               erpProductId: null,
-              originalName: "Демо товар 1",
+              originalName: "Перевірте налаштування інтеграції",
               isMapped: false,
-              quantity: 10,
-              price: 500.00,
-              total: 5000.00,
-              unit: "шт"
-            },
-            {
-              name: "Демо товар 2",
-              erpProductId: null,
-              originalName: "Демо товар 2", 
-              isMapped: false,
-              quantity: 5,
-              price: 1000.00,
-              total: 5000.00,
+              quantity: 1,
+              price: 1.00,
+              total: 1.00,
               unit: "шт"
             }
           ],
           exists: false
         }
       ];
-    } catch (error) {
-      console.error('Error generating fallback 1C invoices:', error);
-      throw error;
     }
   }
 
   async get1COutgoingInvoices() {
+    console.log('🔗 РЕАЛЬНА 1С ІНТЕГРАЦІЯ: Підключення до BAF системи для вихідних рахунків');
+    
     try {
-      console.log('🔍 FALLBACK ВЕРСІЯ: Використовуємо демо дані замість 1С запитів для вихідних рахунків');
+      // Отримуємо конфігурацію 1С інтеграції
+      const integrations = await this.getIntegrations();
+      const oneСIntegration = integrations.find(int => int.name?.includes('1С') || int.type === '1c');
       
-      // ТИМЧАСОВА ВЕРСІЯ: Повертаємо fallback дані з реальними українськими даними
-      // Це усуває проблему зависання POST запитів до BAF системи
-      
-      console.log('📋 Генеруємо fallback вихідні рахунки з реальними даними...');
-      
-      const fallbackOutgoingInvoices = [
-        {
-          id: "OUT-" + Date.now(),
-          number: "РМ00-027688",
-          date: "2025-07-11",
-          clientName: "ВІКОРД ТОВ",
-          clientTaxCode: "123456789",
-          total: 9072.00,
-          currency: "UAH",
-          paymentStatus: "paid" as const,
-          description: "Охолоджувач середи для манометрів",
-          positions: [
-            {
-              productName: "Охолоджувач середи для манометрів G1/2.14.G1/2 L117 (250..40)",
-              quantity: 8,
-              price: 1050.00,
-              total: 7560.00
-            }
-          ]
-        },
-        {
-          id: "OUT-" + (Date.now() + 1),
-          number: "РМ00-027687", 
-          date: "2025-07-11",
-          clientName: "ЧЕРНІГІВВОДОКАНАЛ КП",
-          clientTaxCode: "987654321",
-          total: 4752.00,
-          currency: "UAH",
-          paymentStatus: "partial" as const,
-          description: "Термометр промисловий",
-          positions: [
-            {
-              productName: "Термометр промисловий ТБП-63/50/Р 0-120°С G1/2",
-              quantity: 12,
-              price: 396.00,
-              total: 4752.00
-            }
-          ]
-        },
-        {
-          id: "OUT-" + (Date.now() + 2),
-          number: "РМ00-027586",
-          date: "2025-06-27", 
-          clientName: "УКРЕНЕРГО НЕК",
-          clientTaxCode: "111222333",
-          total: 10539.60,
-          currency: "UAH",
-          paymentStatus: "unpaid" as const,
-          description: "Реле тиску",
-          positions: [
-            {
-              productName: "РП2-У-110",
-              quantity: 2,
-              price: 4391.50,
-              total: 8783.00
-            }
-          ]
-        }
-      ];
+      if (!oneСIntegration?.config?.baseUrl) {
+        console.error('❌ 1С інтеграція не налаштована або відсутній baseUrl');
+        throw new Error('1С інтеграція не налаштована');
+      }
 
-      console.log(`✅ Fallback дані готові: ${fallbackOutgoingInvoices.length} вихідних рахунків`);
-      return fallbackOutgoingInvoices;
+      const { baseUrl, clientId, clientSecret } = oneСIntegration.config;
+      console.log(`🌐 Підключення до: ${baseUrl}/hs/erp/outgoing-invoices`);
+
+      // Формуємо запит до 1С для вихідних рахунків
+      const requestData = {
+        action: "getOutgoingInvoices",
+        limit: 100
+      };
+
+      // Basic авторизація
+      const authHeader = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+      
+      const response = await fetch(`${baseUrl}/hs/erp/outgoing-invoices`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${authHeader}`,
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(requestData),
+        signal: AbortSignal.timeout(45000) // 45 секунд
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const responseText = await response.text();
+      console.log('📥 Отримано відповідь вихідних рахунків від 1С:', responseText.substring(0, 200) + '...');
+
+      // Парсинг JSON з обробкою українських десяткових чисел
+      let outgoingInvoicesData;
+      try {
+        outgoingInvoicesData = JSON.parse(responseText);
+      } catch (parseError) {
+        console.log('🔧 Виправляємо формат чисел для вихідних рахунків...');
+        const cleanedText = responseText
+          .replace(/(\d+),(\d{2})/g, '$1.$2')
+          .replace(/[\u200B-\u200D\uFEFF]/g, '')
+          .trim();
+        
+        outgoingInvoicesData = JSON.parse(cleanedText);
+      }
+
+      // Обробка отриманих вихідних рахунків
+      const processedOutgoingInvoices = outgoingInvoicesData.map((invoice: any) => {
+        // Обробка позицій рахунку
+        const positions = (invoice.positions || invoice.Позиции || []).map((item: any) => ({
+          productName: item.productName || item.НаименованиеТовара || item.productName || 'Невідомий товар',
+          quantity: parseFloat(item.quantity || item.Количество || 0),
+          price: this.parseUkrainianDecimal(item.price || item.Цена || 0),
+          total: this.parseUkrainianDecimal(item.total || item.Сумма || 0)
+        }));
+
+        return {
+          id: invoice.id || invoice.Ссылка || `out-1c-${Date.now()}`,
+          number: invoice.number || invoice.НомерДокумента || `1C-${Date.now()}`,
+          date: invoice.date || invoice.ДатаДокумента || new Date().toISOString().split('T')[0],
+          clientName: invoice.clientName || invoice.client || invoice.Клиент || 'Невідомий клієнт',
+          clientTaxCode: invoice.clientTaxCode || invoice.ИНН || '',
+          total: this.parseUkrainianDecimal(invoice.total || invoice.amount || invoice.СуммаДокумента || 0),
+          currency: this.convertCurrencyCode(invoice.currency || invoice.Валюта || '980'),
+          paymentStatus: this.mapPaymentStatus(invoice.paymentStatus || invoice.status),
+          description: invoice.description || invoice.Комментарий || '',
+          positions: positions
+        };
+      });
+
+      console.log(`✅ Отримано ${processedOutgoingInvoices.length} вихідних рахунків з 1С`);
+      return processedOutgoingInvoices;
 
     } catch (error) {
-      console.error('❌ ПОМИЛКА fallback даних для вихідних рахунків:', error);
+      console.error('❌ Помилка з\'єднання з 1С для вихідних рахунків:', error);
       
-      // Мінімальні emergency fallback дані
+      // У разі помилки підключення - повертаємо fallback дані з поясненням
+      console.log('🔄 Використовуємо fallback дані через помилку підключення до 1С');
       return [
         {
-          id: "emergency-out-1",
-          number: "DEMO-OUT-001",
-          date: "2025-07-12",
-          clientName: "Тестовий клієнт",
-          clientTaxCode: "",
-          total: 5000.00,
+          id: "fallback-out-1",
+          number: "OUT-FALLBACK-001", 
+          date: new Date().toISOString().split('T')[0],
+          clientName: "FALLBACK: Помилка підключення до 1С",
+          clientTaxCode: "00000000",
+          total: 1.00,
           currency: "UAH",
           paymentStatus: "unpaid" as const,
           description: "Тестовий рахунок",
