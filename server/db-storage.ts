@@ -9928,7 +9928,6 @@ export class DatabaseStorage implements IStorage {
           updatedAt: new Date()
         });
 
-        console.log(`🔗 Створено автоматичне зіставлення для схожого товару: "${externalProductName}" → "${similarProduct.name}" (ID: ${similarProduct.id})`);
         
         return {
           erpProductId: similarProduct.id,
@@ -9943,34 +9942,84 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Функція для пошуку схожих товарів за назвою
+  // Функція для пошуку схожих товарів за назвою (шукаємо в components для накладних)
   private async findSimilarProduct(externalProductName: string): Promise<Product | null> {
     try {
       // Нормалізуємо назву для пошуку - видаляємо пробіли, тире, дужки
       const normalizedExternal = this.normalizeProductName(externalProductName);
       
-      // Отримуємо всі товари для порівняння
-      const allProducts = await this.db.select().from(products);
+      // Отримуємо всі компоненти для порівняння (накладні містять компоненти)
+      const allComponents = await this.db.select().from(components);
       
-      for (const product of allProducts) {
-        const normalizedProduct = this.normalizeProductName(product.name);
+      for (const component of allComponents) {
+        const normalizedComponent = this.normalizeProductName(component.name);
         
         // Перевіряємо точну відповідність після нормалізації
-        if (normalizedExternal === normalizedProduct) {
-          return product;
+        if (normalizedExternal === normalizedComponent) {
+          return this.convertComponentToProduct(component);
         }
         
         // Перевіряємо, чи містить одна назва іншу
-        if (normalizedExternal.includes(normalizedProduct) || normalizedProduct.includes(normalizedExternal)) {
-          return product;
+        if (normalizedExternal.includes(normalizedComponent) || normalizedComponent.includes(normalizedExternal)) {
+          return this.convertComponentToProduct(component);
+        }
+        
+        // Перевіряємо схожість за спільними символами (для випадків типу "BZX84C3V3" vs "BZX84C3V3LT1G")
+        const commonLength = this.getCommonPartLength(normalizedExternal, normalizedComponent);
+        if (commonLength >= 6) { // Мінімум 6 символів спільної частини
+          return this.convertComponentToProduct(component);
         }
       }
       
       return null;
     } catch (error) {
-      console.error('Помилка пошуку схожих товарів:', error);
+      console.error('Помилка пошуку схожих компонентів:', error);
       return null;
     }
+  }
+
+  // Допоміжний метод для конвертації компонента в Product
+  private convertComponentToProduct(component: any): Product {
+    return {
+      id: component.id,
+      name: component.name,
+      sku: component.sku,
+      description: component.description,
+      cost_price: component.costPrice,
+      retail_price: component.costPrice,
+      product_type: 'component',
+      unit: 'шт',
+      is_active: component.isActive,
+      created_at: component.createdAt || new Date(),
+      barcode: null,
+      category_id: null,
+      photo: null,
+      min_stock: null,
+      max_stock: null,
+      manufacturing_strategy: null,
+      preferred_supply_method: null,
+      lead_time_days: null,
+      is_selectable: null,
+      company_id: null
+    } as Product;
+  }
+
+  // Допоміжний метод для пошуку спільної частини двох рядків
+  private getCommonPartLength(str1: string, str2: string): number {
+    // Шукаємо найдовшу спільну підстроку
+    let maxLength = 0;
+    
+    // Перевіряємо всі можливі підстроки першого рядка
+    for (let i = 0; i < str1.length; i++) {
+      for (let j = i + 1; j <= str1.length; j++) {
+        const substring = str1.substring(i, j);
+        if (substring.length > maxLength && str2.includes(substring)) {
+          maxLength = substring.length;
+        }
+      }
+    }
+    
+    return maxLength;
   }
 
   // Функція для нормалізації назви товару

@@ -2335,7 +2335,7 @@ export const productNameMappings = pgTable("product_name_mappings", {
   id: serial("id").primaryKey(),
   externalSystemName: varchar("external_system_name", { length: 50 }).notNull(), // "1c", "bitrix24", тощо
   externalProductName: varchar("external_product_name", { length: 500 }).notNull(), // назва товару в зовнішній системі
-  erpProductId: integer("erp_product_id").references(() => products.id), // зв'язок з товаром в ERP
+  erpProductId: integer("erp_product_id").references(() => components.id), // зв'язок з компонентом в ERP (накладні містять компоненти)
   erpProductName: varchar("erp_product_name", { length: 500 }), // назва товару в ERP (для швидкого пошуку)
   externalProductCode: varchar("external_product_code", { length: 100 }), // артикул в зовнішній системі
   mappingType: varchar("mapping_type", { length: 20 }).notNull().default("manual"), // manual, auto, suggestion
