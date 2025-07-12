@@ -9942,11 +9942,14 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Функція для пошуку схожих компонентів за назвою (для накладних)
+  // Функція для пошуку схожих компонентів за назвою (для накладних) - ПОКРАЩЕНА
   private async findSimilarComponent(externalProductName: string): Promise<{ id: number; name: string } | null> {
     try {
-      // Нормалізуємо назву для пошуку - видаляємо пробіли, тире, дужки
+      console.log(`🔍 Пошук схожого компонента для: "${externalProductName}"`);
+      
+      // Нормалізуємо назву для пошуку - ПОКРАЩЕНА НОРМАЛІЗАЦІЯ
       const normalizedExternal = this.normalizeProductName(externalProductName);
+      console.log(`📝 Нормалізована назва: "${normalizedExternal}"`);
       
       // Отримуємо всі компоненти для порівняння (накладні містять компоненти)
       const allComponents = await this.db.select().from(components);
@@ -9954,23 +9957,27 @@ export class DatabaseStorage implements IStorage {
       for (const component of allComponents) {
         const normalizedComponent = this.normalizeProductName(component.name);
         
-        // Перевіряємо точну відповідність після нормалізації
+        // КРОК 1: Перевіряємо точну відповідність після нормалізації (DF10S = DF-10S)
         if (normalizedExternal === normalizedComponent) {
+          console.log(`✅ ТОЧНИЙ збіг після нормалізації: "${externalProductName}" (${normalizedExternal}) = "${component.name}" (${normalizedComponent})`);
           return { id: component.id, name: component.name };
         }
         
-        // Перевіряємо, чи містить одна назва іншу
+        // КРОК 2: Перевіряємо, чи містить одна назва іншу
         if (normalizedExternal.includes(normalizedComponent) || normalizedComponent.includes(normalizedExternal)) {
+          console.log(`🎯 ВКЛЮЧЕННЯ збіг: "${externalProductName}" ↔ "${component.name}"`);
           return { id: component.id, name: component.name };
         }
         
-        // Перевіряємо схожість за спільними символами (для випадків типу "BZX84C3V3" vs "BZX84C3V3LT1G")
+        // КРОК 3: Перевіряємо схожість за спільними символами (BZX84C3V3 vs BZX84C3V3LT1G)
         const commonLength = this.getCommonPartLength(normalizedExternal, normalizedComponent);
         if (commonLength >= 6) { // Мінімум 6 символів спільної частини
+          console.log(`🔗 СХОЖІСТЬ збіг: "${externalProductName}" ↔ "${component.name}" (спільних символів: ${commonLength})`);
           return { id: component.id, name: component.name };
         }
       }
       
+      console.log(`❌ Схожий компонент не знайдено для: "${externalProductName}"`);
       return null;
     } catch (error) {
       console.error('Помилка пошуку схожих компонентів:', error);
@@ -10022,12 +10029,24 @@ export class DatabaseStorage implements IStorage {
     return maxLength;
   }
 
-  // Функція для нормалізації назви товару
+  // Функція для нормалізації назви товару (ПОКРАЩЕНА ДЛЯ DF10S = DF-10S)
   private normalizeProductName(name: string): string {
     return name
       .toLowerCase()
-      .replace(/[\s\-_\.]/g, '') // Видаляємо пробіли, тире, підкреслення, крапки
-      .replace(/[()]/g, '') // Видаляємо дужки
+      .replace(/[\s\-_\.\/\\]/g, '') // Видаляємо пробіли, тире, підкреслення, крапки, слеші
+      .replace(/[()[\]{}]/g, '') // Видаляємо всі види дужок
+      .replace(/[а-яё]/g, (match) => { // Транслітерація українських/російських літер
+        const map: {[key: string]: string} = {
+          'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
+          'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+          'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+          'ф': 'f', 'х': 'h', 'ц': 'c', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
+          'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+          'і': 'i', 'ї': 'yi', 'є': 'ye', 'ґ': 'g'
+        };
+        return map[match] || match;
+      })
+      .replace(/[^a-z0-9]/g, '') // Залишаємо тільки латинські літери та цифри
       .trim();
   }
 
@@ -10642,34 +10661,88 @@ export class DatabaseStorage implements IStorage {
       for (const item of invoice.positions || []) {
         const itemName = item.productName || item.name;
         
-        // КРОК 1: Шукаємо в таблиці products (товари для продажу)
+        // КРОК 1: Шукаємо в таблиці products (товари для продажу) - ПОКРАЩЕНИЙ ПОШУК
         let foundProduct = null;
-        const [productMatch] = await db
+        const normalizedItemName = this.normalizeProductName(itemName);
+        
+        // Спочатку точний пошук
+        const [exactProductMatch] = await db
           .select()
           .from(products)
-          .where(
-            or(
-              eq(products.name, itemName),
-              ilike(products.name, `%${itemName}%`)
-            )
-          )
+          .where(eq(products.name, itemName))
           .limit(1);
         
-        if (productMatch) {
-          foundProduct = { type: 'product', id: productMatch.id, name: productMatch.name, isNew: false };
-          console.log(`🛍️ Знайдено товар: "${itemName}" → "${productMatch.name}" (ID: ${productMatch.id})`);
+        if (exactProductMatch) {
+          foundProduct = { type: 'product', id: exactProductMatch.id, name: exactProductMatch.name, isNew: false };
+          console.log(`🎯 ТОЧНИЙ збіг товар: "${itemName}" → "${exactProductMatch.name}" (ID: ${exactProductMatch.id})`);
         } else {
-          // КРОК 2: Шукаємо в таблиці components (компоненти для виробництва)
-          const [componentMatch] = await db
+          // Пошук по нормалізованим назвам
+          const allProducts = await db.select().from(products);
+          
+          for (const product of allProducts) {
+            const normalizedProductName = this.normalizeProductName(product.name);
+            if (normalizedProductName === normalizedItemName) {
+              foundProduct = { type: 'product', id: product.id, name: product.name, isNew: false };
+              console.log(`🔍 НОРМАЛІЗОВАНИЙ збіг товар: "${itemName}" (${normalizedItemName}) → "${product.name}" (${normalizedProductName}) (ID: ${product.id})`);
+              break;
+            }
+          }
+          
+          // Якщо не знайдено точного нормалізованого збігу, пробуємо часткове співпадіння
+          if (!foundProduct) {
+            const [partialProductMatch] = await db
+              .select()
+              .from(products)
+              .where(ilike(products.name, `%${itemName}%`))
+              .limit(1);
+            
+            if (partialProductMatch) {
+              foundProduct = { type: 'product', id: partialProductMatch.id, name: partialProductMatch.name, isNew: false };
+              console.log(`🔎 ЧАСТКОВИЙ збіг товар: "${itemName}" → "${partialProductMatch.name}" (ID: ${partialProductMatch.id})`);
+            }
+          }
+        }
+        
+        if (!foundProduct) {
+          // КРОК 2: Шукаємо в таблиці components (компоненти для виробництва) - ПОКРАЩЕНИЙ ПОШУК
+          // Спочатку точний пошук
+          const [exactComponentMatch] = await db
             .select()
             .from(components)
-            .where(
-              or(
-                eq(components.name, itemName),
-                ilike(components.name, `%${itemName}%`)
-              )
-            )
+            .where(eq(components.name, itemName))
             .limit(1);
+          
+          let componentMatch = exactComponentMatch;
+          
+          if (!componentMatch) {
+            // Пошук по нормалізованим назвам
+            const allComponents = await db.select().from(components);
+            
+            for (const component of allComponents) {
+              const normalizedComponentName = this.normalizeProductName(component.name);
+              if (normalizedComponentName === normalizedItemName) {
+                componentMatch = component;
+                console.log(`🔍 НОРМАЛІЗОВАНИЙ збіг компонент: "${itemName}" (${normalizedItemName}) → "${component.name}" (${normalizedComponentName}) (ID: ${component.id})`);
+                break;
+              }
+            }
+            
+            // Якщо не знайдено точного нормалізованого збігу, пробуємо часткове співпадіння
+            if (!componentMatch) {
+              const [partialComponentMatch] = await db
+                .select()
+                .from(components)
+                .where(ilike(components.name, `%${itemName}%`))
+                .limit(1);
+              
+              componentMatch = partialComponentMatch;
+              if (componentMatch) {
+                console.log(`🔎 ЧАСТКОВИЙ збіг компонент: "${itemName}" → "${componentMatch.name}" (ID: ${componentMatch.id})`);
+              }
+            }
+          } else {
+            console.log(`🎯 ТОЧНИЙ збіг компонент: "${itemName}" → "${componentMatch.name}" (ID: ${componentMatch.id})`);
+          }
           
           if (componentMatch) {
             // Створюємо товар на основі компонента для продажу
