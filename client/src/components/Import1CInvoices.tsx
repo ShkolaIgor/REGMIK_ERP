@@ -358,62 +358,65 @@ export function Import1CInvoices() {
 
       {/* Діалог перегляду накладної */}
       <Dialog open={!!showPreview} onOpenChange={() => setShowPreview(null)}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
+        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>Перегляд накладної {showPreview?.number}</DialogTitle>
           </DialogHeader>
           
           {showPreview && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">Інформація про документ</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div><strong>Номер:</strong> {showPreview.number}</div>
-                    <div><strong>Дата:</strong> {new Date(showPreview.date).toLocaleDateString('uk-UA')}</div>
-                    <div><strong>Постачальник:</strong> {showPreview.supplierName}</div>
-                    {showPreview.supplierTaxCode && (
-                      <div><strong>ЕДРПОУ:</strong> {showPreview.supplierTaxCode}</div>
-                    )}
-                    <div><strong>Статус:</strong> {showPreview.status}</div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">Сума</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {showPreview.amount.toLocaleString('uk-UA')} {showPreview.currency}
-                    </div>
-                  </CardContent>
-                </Card>
+            <div className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-shrink-0 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">Інформація про документ</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div><strong>Номер:</strong> {showPreview.number}</div>
+                      <div><strong>Дата:</strong> {new Date(showPreview.date).toLocaleDateString('uk-UA')}</div>
+                      <div><strong>Постачальник:</strong> {showPreview.supplierName}</div>
+                      {showPreview.supplierTaxCode && (
+                        <div><strong>ЕДРПОУ:</strong> {showPreview.supplierTaxCode}</div>
+                      )}
+                      <div><strong>Статус:</strong> {showPreview.status}</div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">Сума</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {showPreview.amount.toLocaleString('uk-UA')} {showPreview.currency}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
               
-              <Card>
-                <CardHeader>
+              <Card className="flex-1 flex flex-col mt-4 overflow-hidden">
+                <CardHeader className="flex-shrink-0">
                   <CardTitle className="text-sm">Позиції накладної з зіставленням компонентів</CardTitle>
                   <CardDescription>
                     Відображено зіставлення назв товарів з 1С з компонентами в ERP системі
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left p-2">Найменування з 1С</th>
-                          <th className="text-left p-2">Зіставлення ERP</th>
-                          <th className="text-right p-2">Кількість</th>
-                          <th className="text-left p-2">Од. вим.</th>
-                          <th className="text-right p-2">Ціна</th>
-                          <th className="text-right p-2">Сума</th>
-                        </tr>
-                      </thead>
-                      <tbody>
+                <CardContent className="flex-1 overflow-hidden p-0">
+                  <div className="h-full overflow-y-auto p-4">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="sticky top-0 bg-white border-b z-10">
+                          <tr>
+                            <th className="text-left p-2 bg-gray-50">Найменування з 1С</th>
+                            <th className="text-left p-2 bg-gray-50">Зіставлення ERP</th>
+                            <th className="text-right p-2 bg-gray-50">Кількість</th>
+                            <th className="text-left p-2 bg-gray-50">Од. вим.</th>
+                            <th className="text-right p-2 bg-gray-50">Ціна</th>
+                            <th className="text-right p-2 bg-gray-50">Сума</th>
+                          </tr>
+                        </thead>
+                        <tbody>
                         {showPreview.items.map((item, idx) => (
                           <tr key={idx} className="border-b">
                             <td className="p-2">
@@ -455,8 +458,9 @@ export function Import1CInvoices() {
                             <td className="p-2 text-right font-medium">{item.total.toLocaleString('uk-UA')}</td>
                           </tr>
                         ))}
-                      </tbody>
-                    </table>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
