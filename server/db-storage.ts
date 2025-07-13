@@ -10082,27 +10082,47 @@ export class DatabaseStorage implements IStorage {
       // Отримуємо всі компоненти для порівняння (накладні містять компоненти)
       const allComponents = await this.db.select().from(components);
       
+      let bestMatch: { component: any; score: number; type: string } | null = null;
+      
       for (const component of allComponents) {
         const normalizedComponent = this.normalizeProductName(component.name);
         
-        // КРОК 1: Перевіряємо точну відповідність після нормалізації (DF10S = DF-10S)
+        // КРОК 1: Перевіряємо точну відповідність після нормалізації (найвищий пріоритет)
         if (normalizedExternal === normalizedComponent) {
-          console.log(`✅ ТОЧНИЙ збіг після нормалізації: "${externalProductName}" (${normalizedExternal}) = "${component.name}" (${normalizedComponent})`);
           return { id: component.id, name: component.name };
         }
         
-        // КРОК 2: Перевіряємо, чи містить одна назва іншу
+        // КРОК 2: Спеціальна логіка для компонентів з довгими назвами (другий пріоритет)
+        // Перевіряємо, чи містить зовнішня назва точний код компонента
+        if (normalizedExternal.length > normalizedComponent.length && normalizedComponent.length >= 8) {
+          if (normalizedExternal.includes(normalizedComponent)) {
+            const exactScore = normalizedComponent.length * 100; // Найвищий бал за точне включення
+            if (!bestMatch || exactScore > bestMatch.score) {
+              bestMatch = { component, score: exactScore, type: "ТОЧНЕ_ВКЛЮЧЕННЯ" };
+            }
+          }
+        }
+        
+        // КРОК 3: Перевіряємо, чи містить одна назва іншу (третій пріоритет)
         if (normalizedExternal.includes(normalizedComponent) || normalizedComponent.includes(normalizedExternal)) {
-          console.log(`🎯 ВКЛЮЧЕННЯ збіг: "${externalProductName}" ↔ "${component.name}"`);
-          return { id: component.id, name: component.name };
+          const includeScore = Math.min(normalizedExternal.length, normalizedComponent.length) * 10;
+          if (!bestMatch || includeScore > bestMatch.score) {
+            bestMatch = { component, score: includeScore, type: "ВКЛЮЧЕННЯ" };
+          }
         }
         
-        // КРОК 3: Перевіряємо схожість за спільними символами (BZX84C3V3 vs BZX84C3V3LT1G)
+        // КРОК 4: Перевіряємо схожість за спільними символами (найнижчий пріоритет)
         const commonLength = this.getCommonPartLength(normalizedExternal, normalizedComponent);
-        if (commonLength >= 6) { // Мінімум 6 символів спільної частини
-          console.log(`🔗 СХОЖІСТЬ збіг: "${externalProductName}" ↔ "${component.name}" (спільних символів: ${commonLength})`);
-          return { id: component.id, name: component.name };
+        if (commonLength >= 6) {
+          const similarityScore = commonLength;
+          if (!bestMatch || (bestMatch.type === "СХОЖІСТЬ" && similarityScore > bestMatch.score)) {
+            bestMatch = { component, score: similarityScore, type: "СХОЖІСТЬ" };
+          }
         }
+      }
+      
+      if (bestMatch) {
+        return { id: bestMatch.component.id, name: bestMatch.component.name };
       }
       
       console.log(`❌ Схожий компонент не знайдено для: "${externalProductName}"`);
