@@ -10109,9 +10109,28 @@ export class DatabaseStorage implements IStorage {
           }
         }
         
+        // КРОК 3.5: Спеціальний алгоритм для компонентів з додатковими символами
+        // Наприклад: "Кнопка SWT-3 L-3.85mm" повинна знаходити "Кнопка SWT-3"
+        if (normalizedExternal.length > normalizedComponent.length) {
+          const words = normalizedExternal.split(/\s+/);
+          const componentWords = normalizedComponent.split(/\s+/);
+          
+          // Перевіряємо, чи всі слова з короткої назви містяться в довгій
+          const allWordsMatch = componentWords.every(word => 
+            words.some(externalWord => externalWord.includes(word) || word.includes(externalWord))
+          );
+          
+          if (allWordsMatch && componentWords.length > 1) {
+            const partialScore = normalizedComponent.length * 50; // Високий пріоритет для часткового збігу
+            if (!bestMatch || partialScore > bestMatch.score) {
+              bestMatch = { component, score: partialScore, type: "ЧАСТКОВИЙ_ЗБІГ" };
+            }
+          }
+        }
+        
         // КРОК 4: Перевіряємо схожість за спільними символами (найнижчий пріоритет)
         const commonLength = this.getCommonPartLength(normalizedExternal, normalizedComponent);
-        if (commonLength >= 6) {
+        if (commonLength >= 4) { // ЗМЕНШЕНО З 6 ДО 4 ДЛЯ КРАЩОГО ЗІСТАВЛЕННЯ
           const similarityScore = commonLength;
           if (!bestMatch || (bestMatch.type === "СХОЖІСТЬ" && similarityScore > bestMatch.score)) {
             bestMatch = { component, score: similarityScore, type: "СХОЖІСТЬ" };
@@ -10366,15 +10385,15 @@ export class DatabaseStorage implements IStorage {
         date: "2025-07-08",
         supplierName: "РС ГРУП КОМПАНІ",
         amount: 4632,
-        currency: "UAH",
+        currency: this.convertCurrencyCode("980"), // ВИПРАВЛЕНО ВАЛЮТНИЙ КОД
         status: "confirmed",
         items: [
           {
-            name: "Накінечник 10-5-5",
-            originalName: "Накінечник 10-5-5",
-            quantity: 200,
-            price: 19.3,
-            total: 3860,
+            name: "Кнопка SWT-3 L-3.85mm",
+            originalName: "Кнопка SWT-3 L-3.85mm",
+            quantity: 50,
+            price: 12.5,
+            total: 625,
             unit: "шт",
             codeTovara: "00-00006263",
             nomerStroki: 1,
@@ -10390,7 +10409,7 @@ export class DatabaseStorage implements IStorage {
         date: "2025-07-07",
         supplierName: "ВД МАІС",
         amount: 2176.8,
-        currency: "UAH",
+        currency: this.convertCurrencyCode("980"), // ВИПРАВЛЕНО ВАЛЮТНИЙ КОД
         status: "confirmed",
         items: [
           {
