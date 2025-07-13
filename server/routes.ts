@@ -1251,6 +1251,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // TEST ENDPOINT - Тестування кирилично-латинського зіставлення компонентів
+  app.get("/api/test-cyrillic-latin-matching", async (req, res) => {
+    try {
+      const testInput = req.query.input as string || "74НС04D";
+      console.log(`🧪 CYRILLIC-LATIN TEST: "${testInput}"`);
+      
+      // Використовуємо алгоритм пошуку компонентів з кирилично-латинським зіставленням
+      const foundComponent = await storage.findSimilarComponent(testInput);
+      
+      res.json({
+        input: testInput,
+        foundComponent: foundComponent || null,
+        success: !!foundComponent,
+        message: foundComponent ? 
+          `Знайдено компонент: ${foundComponent.name} (ID: ${foundComponent.id})` :
+          'Компонент не знайдено навіть з кирилично-латинським зіставленням'
+      });
+    } catch (error) {
+      console.error('❌ Cyrillic-Latin test error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Get status for components XML import job
   app.get("/api/components/import-xml/:jobId/status", (req, res) => {
     const jobId = req.params.jobId;
