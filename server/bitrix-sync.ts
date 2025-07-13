@@ -1,6 +1,19 @@
 import { storage } from "./storage";
 import type { InsertClient, InsertOrder, InsertOrderItem, InsertProduct } from "@shared/schema";
 
+// Функція конвертації валютного коду
+function convertCurrencyCode(currencyCode: string): string {
+  const currencyMap: Record<string, string> = {
+    '980': 'UAH',  // Україна гривня
+    '840': 'USD',  // США долар
+    '978': 'EUR',  // Євро
+    '643': 'RUB',  // Російський рубль
+    '985': 'PLN'   // Польський злотий
+  };
+  
+  return currencyMap[currencyCode] || currencyCode;
+}
+
 // Типи для Бітрікс24 API
 interface BitrixCompanyData {
   ID: string;
@@ -563,7 +576,7 @@ export async function sendInvoiceToERPWebhook(invoiceData: BitrixInvoiceData): P
       InvoiceNumber: invoiceData.ACCOUNT_NUMBER,
       InvoiceDate: invoiceData.DATE,
       TotalAmount: invoiceData.PRICE,
-      Currency: invoiceData.CURRENCY || "UAH",
+      Currency: convertCurrencyCode(invoiceData.CURRENCY) || "UAH",
       ClientId: invoiceData.CLIENT,
       Status: invoiceData.STATUS,
       BitrixId: invoiceData.ID,

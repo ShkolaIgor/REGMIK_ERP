@@ -6957,14 +6957,14 @@ export class DatabaseStorage implements IStorage {
             )
           ))
           .orderBy(desc(serialNumbers.saleDate))
-          .limit(50);
+; // ПРИБРАНО ВСІ ЛІМІТИ ДЛЯ АВТОМАТИЧНОГО ЗІСТАВЛЕННЯ
       }
 
       return await db.select()
         .from(serialNumbers)
         .where(eq(serialNumbers.status, "sold"))
         .orderBy(desc(serialNumbers.saleDate))
-        .limit(50);
+; // ПРИБРАНО ВСІ ЛІМІТИ ДЛЯ АВТОМАТИЧНОГО ЗІСТАВЛЕННЯ
     } catch (error) {
       console.error("Error in getSerialNumbersForRepair:", error);
       return [];
@@ -7387,7 +7387,7 @@ export class DatabaseStorage implements IStorage {
     try {
       if (!query || query.length < 2) {
         // Return first cities without filtering
-        const cities = await this.db.select().from(novaPoshtaCities).limit(50);
+        const cities = await this.db.select().from(novaPoshtaCities); // ПРИБРАНО ЛІМІТ ДЛЯ ПОВНОГО ПОШУКУ
         
         const transformedCities = cities.map(city => ({
           Ref: city.ref,
@@ -10967,8 +10967,7 @@ export class DatabaseStorage implements IStorage {
         foundProducts = await db
           .select()
           .from(products)
-          .where(ilike(products.name, `%${normalizedName}%`))
-          .limit(100); // Збільшено ліміт для повного пошуку
+          .where(ilike(products.name, `%${normalizedName}%`)); // ПРИБРАНО ВСІ ЛІМІТИ
           
         console.log(`🔍 Нормалізований пошук "${normalizedName}": ${foundProducts.length} записів`);
         
@@ -11004,8 +11003,7 @@ export class DatabaseStorage implements IStorage {
         foundComponents = await db
           .select()
           .from(components)
-          .where(ilike(components.name, `%${itemName}%`))
-          .limit(100); // Збільшено ліміт для повного пошуку компонентів
+          .where(ilike(components.name, `%${itemName}%`)); // ПРИБРАНО ВСІ ЛІМІТИ
         console.log(`🔍 Components пошук: ${foundComponents.length} записів`);
       }
       
