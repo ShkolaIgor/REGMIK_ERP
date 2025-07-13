@@ -10071,13 +10071,10 @@ export class DatabaseStorage implements IStorage {
   // Функція для пошуку схожих компонентів за назвою (для накладних) - ПОКРАЩЕНА
   private async findSimilarComponent(externalProductName: string): Promise<{ id: number; name: string } | null> {
     try {
-      console.log(`🔍 Пошук схожого компонента для: "${externalProductName}"`);
-      
-      // Нормалізуємо назву для пошуку - ПОКРАЩЕНА НОРМАЛІЗАЦІЯ
+      // Нормалізуємо назву для пошуку
       const normalizedExternal = this.normalizeProductName(externalProductName);
-      console.log(`📝 Нормалізована назва: "${normalizedExternal}"`);
       
-      // Отримуємо всі компоненти для порівняння (накладні містять компоненти)
+      // Отримуємо всі компоненти для порівняння
       const allComponents = await this.db.select().from(components);
       
       let bestMatch: { component: any; score: number; type: string } | null = null;
@@ -10102,10 +10099,14 @@ export class DatabaseStorage implements IStorage {
         }
         
         // КРОК 3: Перевіряємо, чи містить одна назва іншу (третій пріоритет)
+        // Додаємо валідацію релевантності для уникнення неправильних збігів
         if (normalizedExternal.includes(normalizedComponent) || normalizedComponent.includes(normalizedExternal)) {
-          const includeScore = Math.min(normalizedExternal.length, normalizedComponent.length) * 10;
-          if (!bestMatch || includeScore > bestMatch.score) {
-            bestMatch = { component, score: includeScore, type: "ВКЛЮЧЕННЯ" };
+          // Перевіряємо, чи справді релевантні категорії компонентів
+          if (this.areComponentCategoriesCompatible(normalizedExternal, normalizedComponent)) {
+            const includeScore = Math.min(normalizedExternal.length, normalizedComponent.length) * 10;
+            if (!bestMatch || includeScore > bestMatch.score) {
+              bestMatch = { component, score: includeScore, type: "ВКЛЮЧЕННЯ" };
+            }
           }
         }
         
@@ -10134,9 +10135,12 @@ export class DatabaseStorage implements IStorage {
         );
         
         if (keyMatches.length > 0) {
-          const keyScore = keyMatches.length * 100 + normalizedComponent.length * 10; // Високий пріоритет для ключових збігів
-          if (!bestMatch || keyScore > bestMatch.score) {
-            bestMatch = { component, score: keyScore, type: "КЛЮЧОВИЙ_ЗБІГ" };
+          // Перевіряємо сумісність категорій перед додаванням ключового збігу
+          if (this.areComponentCategoriesCompatible(normalizedExternal, normalizedComponent)) {
+            const keyScore = keyMatches.length * 100 + normalizedComponent.length * 10; // Високий пріоритет для ключових збігів
+            if (!bestMatch || keyScore > bestMatch.score) {
+              bestMatch = { component, score: keyScore, type: "КЛЮЧОВИЙ_ЗБІГ" };
+            }
           }
         }
         
@@ -10147,8 +10151,16 @@ export class DatabaseStorage implements IStorage {
         if (numberMatches.length > 0 && componentNumbers.length > 0) {
           const commonNumbers = numberMatches.filter(num => componentNumbers.includes(num));
           if (commonNumbers.length > 0) {
+            // БЛОКУЄМО неправильні збіги: клемник НЕ може бути метчиком
+            const isTerminalBlock = normalizedExternal.includes('klemhik');
+            const isThreadingTap = normalizedComponent.includes('metchik');
+            
+            if (isTerminalBlock && isThreadingTap) {
+              continue; // пропускаємо цей компонент - блокуємо неправильні збіги
+            }
+            
             // Віддаємо пріоритет довшим назвам з числовими збігами
-            const numberScore = commonNumbers.length * 150 + normalizedComponent.length * 20; // Пріоритет для довших і детальніших назв
+            const numberScore = commonNumbers.length * 150 + normalizedComponent.length * 20;
             if (!bestMatch || numberScore > bestMatch.score) {
               bestMatch = { component, score: numberScore, type: "ЧИСЛОВИЙ_ЗБІГ" };
             }
@@ -10157,24 +10169,77 @@ export class DatabaseStorage implements IStorage {
         
         // КРОК 4: Перевіряємо схожість за спільними символами (найнижчий пріоритет)
         const commonLength = this.getCommonPartLength(normalizedExternal, normalizedComponent);
-        if (commonLength >= 4) { // ЗМЕНШЕНО З 6 ДО 4 ДЛЯ КРАЩОГО ЗІСТАВЛЕННЯ
-          const similarityScore = commonLength;
-          if (!bestMatch || (bestMatch.type === "СХОЖІСТЬ" && similarityScore > bestMatch.score)) {
-            bestMatch = { component, score: similarityScore, type: "СХОЖІСТЬ" };
+        
+        // Мінімальна релевантність: спільних символів має бути принаймні 30% від найкоротшої назви
+        const minLength = Math.min(normalizedExternal.length, normalizedComponent.length);
+        const relevanceThreshold = Math.max(6, Math.floor(minLength * 0.3));
+        
+        if (commonLength >= relevanceThreshold) {
+          // Перевіряємо сумісність категорій для схожості
+          if (this.areComponentCategoriesCompatible(normalizedExternal, normalizedComponent)) {
+            const similarityScore = commonLength;
+            if (!bestMatch || (bestMatch.type === "СХОЖІСТЬ" && similarityScore > bestMatch.score)) {
+              bestMatch = { component, score: similarityScore, type: "СХОЖІСТЬ" };
+            }
           }
         }
       }
       
       if (bestMatch) {
+        // Додаткова перевірка релевантності перед поверненням результату
+        if (bestMatch.type === "СХОЖІСТЬ" && bestMatch.score < 8) {
+          return null;
+        }
+        
         return { id: bestMatch.component.id, name: bestMatch.component.name };
       }
       
-      console.log(`❌ Схожий компонент не знайдено для: "${externalProductName}"`);
       return null;
     } catch (error) {
       console.error('Помилка пошуку схожих компонентів:', error);
       return null;
     }
+  }
+
+  // Функція для перевірки сумісності категорій компонентів
+  private areComponentCategoriesCompatible(external: string, component: string): boolean {
+    // Категорії компонентів, які НЕ можуть бути змішані
+    const incompatiblePairs = [
+      // Електронні vs механічні
+      ['mikpocxema', 'metchik'], // мікросхема vs метчик (виправлено написання)
+      ['mikpocxema', 'myfta'], // мікросхема vs муфта
+      ['mikpocxema', 'kleika'], // мікросхема vs клейка стрічка
+      ['kondehcatop', 'myfta'], // конденсатор vs муфта
+      ['kondehcatop', 'metchik'], // конденсатор vs метчик (виправлено написання)
+      ['klemhik', 'metchik'], // клемник vs метчик (виправлено написання)
+      ['klemhik', 'myfta'], // клемник vs муфта
+      // Механічні vs допоміжні матеріали
+      ['metchik', 'kleika'], // метчик vs клейка стрічка (виправлено написання)
+      ['myfta', 'kleika'], // муфта vs клейка стрічка
+      // Інструменти vs електроніка
+      ['metchik', 'klemhik'], // метчик vs клемник - СИМЕТРИЧНИЙ (виправлено написання)
+      ['metchik', 'mikpocxema'], // метчик vs мікросхема (виправлено написання)
+      ['metchik', 'kondehcatop'], // метчик vs конденсатор (виправлено написання)
+      // Допоміжні матеріали vs будь-що конкретне
+      ['kleika', 'metchik'], // клейка стрічка vs метчик (виправлено написання)
+      ['kleika', 'klemhik'], // клейка стрічка vs клемник
+      ['kleika', 'mikpocxema'], // клейка стрічка vs мікросхема
+    ];
+
+    // Перевіряємо, чи не є пара несумісною
+    for (const [cat1, cat2] of incompatiblePairs) {
+      const externalContainsCat1 = external.includes(cat1);
+      const componentContainsCat2 = component.includes(cat2);
+      const externalContainsCat2 = external.includes(cat2);
+      const componentContainsCat1 = component.includes(cat1);
+      
+      if ((externalContainsCat1 && componentContainsCat2) ||
+          (externalContainsCat2 && componentContainsCat1)) {
+        return false; // Блокуємо несумісні категорії
+      }
+    }
+
+    return true; // Якщо немає явних конфліктів, дозволяємо збіг
   }
 
   // Допоміжний метод для конвертації компонента в Product
