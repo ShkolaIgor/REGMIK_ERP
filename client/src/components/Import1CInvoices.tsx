@@ -582,31 +582,31 @@ export function Import1CInvoices() {
                 </div>
               </div>
               
-              <Card className="flex-1 flex flex-col mt-4 overflow-hidden">
-                <CardHeader className="flex-shrink-0">
+              <Card className="flex-1 flex flex-col mt-4">
+                <CardHeader className="flex-shrink-0 pb-2">
                   <CardTitle className="text-sm">Позиції накладної з зіставленням компонентів</CardTitle>
                   <CardDescription>
                     Відображено зіставлення назв товарів з 1С з компонентами в ERP системі
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="flex-1 overflow-hidden p-0">
-                  <div className="flex-1 overflow-y-auto border-t" style={{ maxHeight: 'calc(90vh - 320px)' }}>
+                <CardContent className="flex-1 min-h-0 p-0">
+                  <div className="h-96 overflow-y-auto border border-gray-200 rounded-md">
                     <table className="w-full text-sm">
-                      <thead className="sticky top-0 bg-white border-b z-10 shadow-sm">
+                      <thead className="sticky top-0 bg-gray-50 border-b z-10">
                         <tr>
-                          <th className="text-left p-3 bg-gray-50 font-semibold">Найменування з 1С</th>
-                          <th className="text-left p-3 bg-gray-50 font-semibold">Зіставлення ERP</th>
-                          <th className="text-right p-3 bg-gray-50 font-semibold">Кількість</th>
-                          <th className="text-left p-3 bg-gray-50 font-semibold">Од. вим.</th>
-                          <th className="text-right p-3 bg-gray-50 font-semibold">Ціна</th>
-                          <th className="text-right p-3 bg-gray-50 font-semibold">Сума</th>
+                          <th className="text-left p-3 font-semibold">Найменування з 1С</th>
+                          <th className="text-left p-3 font-semibold">Зіставлення ERP</th>
+                          <th className="text-right p-3 font-semibold">Кількість</th>
+                          <th className="text-left p-3 font-semibold">Од. вим.</th>
+                          <th className="text-right p-3 font-semibold">Ціна</th>
+                          <th className="text-right p-3 font-semibold">Сума</th>
                         </tr>
                       </thead>
                       <tbody>
                         {showPreview.items.map((item, idx) => (
                           <tr key={idx} className="border-b hover:bg-gray-50 transition-colors">
                             <td className="p-3 max-w-xs">
-                              <div className="font-medium text-sm">
+                              <div className="font-medium text-sm break-words">
                                 {item.nameFrom1C || item.originalName || item.name}
                               </div>
                               {item.sku && (
@@ -626,10 +626,10 @@ export function Import1CInvoices() {
                                 }}
                               />
                             </td>
-                            <td className="p-3 text-right font-medium">{item.quantity}</td>
-                            <td className="p-3 text-gray-600">{item.unit}</td>
-                            <td className="p-3 text-right font-medium">{item.price.toLocaleString('uk-UA')} грн</td>
-                            <td className="p-3 text-right font-bold text-blue-600">{item.total.toLocaleString('uk-UA')} грн</td>
+                            <td className="p-3 text-right font-medium whitespace-nowrap">{item.quantity}</td>
+                            <td className="p-3 text-gray-600 whitespace-nowrap">{item.unit}</td>
+                            <td className="p-3 text-right font-medium whitespace-nowrap">{item.price.toLocaleString('uk-UA')} грн</td>
+                            <td className="p-3 text-right font-bold text-blue-600 whitespace-nowrap">{item.total.toLocaleString('uk-UA')} грн</td>
                           </tr>
                         ))}
                       </tbody>
