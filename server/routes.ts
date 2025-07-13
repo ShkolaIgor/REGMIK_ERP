@@ -11288,21 +11288,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ВИДАЛЕНО: Старий дублікат test endpoint
 
   // 1C Integration Endpoints
-  // Накладні з рахунком обліку 202
-  app.get('/api/1c/invoices-202', isSimpleAuthenticated, async (req, res) => {
-    try {
-      console.log('🔗 API: Отримання накладних з рахунком обліку 202');
-      const invoices = await storage.get1CInvoices202();
-      res.json(invoices);
-    } catch (error) {
-      console.error('❌ Помилка отримання накладних 202:', error);
-      res.status(500).json({ 
-        error: 'Failed to fetch invoices with account 202',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
   app.get('/api/1c/invoices', async (req, res) => {
     try {
       console.log('🚀 DIRECT 1C API: Прямий запит до 1С без storage layer');

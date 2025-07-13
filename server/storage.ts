@@ -565,7 +565,6 @@ export interface IStorage {
   // 1C Integration - Component Import
   import1CInvoice(invoiceId: string): Promise<{ success: boolean; message: string; componentIds?: number[]; }>;
   get1CInvoices(): Promise<any[]>;
-  get1CInvoices202(): Promise<any[]>; // Накладні з рахунком обліку 202
   
   // 1C Integration - Order Import  
   import1COutgoingInvoice(invoiceId: string): Promise<{ success: boolean; message: string; orderId?: number; }>;
@@ -2103,10 +2102,6 @@ export class MemStorage implements IStorage {
   }
 
   async get1CInvoices(): Promise<any[]> {
-    return [];
-  }
-
-  async get1CInvoices202(): Promise<any[]> {
     return [];
   }
 

@@ -14,7 +14,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Settings, RefreshCw, TestTube, Trash2, Check, X, Clock, AlertCircle, Workflow } from "lucide-react";
 import { Import1CInvoices } from "@/components/Import1CInvoices";
-import { Import1CInvoices202 } from "@/components/Import1CInvoices202";
 import { Import1COutgoingInvoices } from "@/components/Import1COutgoingInvoices";
 import { SimpleLogin } from "@/components/SimpleLogin";
 
@@ -593,7 +592,6 @@ export default function Integrations() {
                         {(integration.type === "1c" || integration.type === "1c_enterprise" || integration.type === "1c_accounting") && (
                           <>
                             <Import1CInvoices />
-                            <Import1CInvoices202 />
                             <Import1COutgoingInvoices />
                             <Button
                               variant="outline"
