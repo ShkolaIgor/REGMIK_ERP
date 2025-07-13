@@ -9967,31 +9967,29 @@ export class DatabaseStorage implements IStorage {
         };
       }
 
-      // 2. Шукаємо в таблиці products (ДОДАНО НОВИЙ ПОШУК)
-      console.log(`🔍 Пошук в таблиці products...`);
-      const similarProduct = await this.findSimilarProduct(externalProductName);
-      if (similarProduct) {
-        console.log(`✅ Знайдено товар в products: ${similarProduct.name} (ID: ${similarProduct.id})`);
-        
-        // ТИМЧАСОВЕ РІШЕННЯ: Не створюємо зіставлення через foreign key constraint
-        // TODO: Виправити схему БД для підтримки посилань на products AND components
-        console.log(`⚠️ Пропускаємо створення зіставлення через foreign key constraint на components`);
-
-        return {
-          erpProductId: similarProduct.id,
-          erpProductName: similarProduct.name
-        };
-      }
-
-      // 3. Якщо в products не знайдено, шукаємо в компонентах
-      console.log(`🔍 Пошук в таблиці components...`);
+      // 2. ДЛЯ ВХІДНИХ НАКЛАДНИХ: Шукаємо ТІЛЬКИ в таблиці components
+      console.log(`🔍 Пошук в таблиці components (для вхідних накладних)...`);
       const similarComponent = await this.findSimilarComponent(externalProductName);
       if (similarComponent) {
         console.log(`✅ Знайдено компонент: ${similarComponent.name} (ID: ${similarComponent.id})`);
         
-        // ТИМЧАСОВЕ РІШЕННЯ: Не створюємо зіставлення через foreign key constraint
-        // TODO: Виправити схему БД для підтримки посилань на products AND components
-        console.log(`⚠️ Пропускаємо створення зіставлення для компонента через foreign key constraint`);
+        // Автоматично створюємо зіставлення для майбутніх використань
+        try {
+          await this.db.insert(productNameMappings).values({
+            externalSystemName: systemName,
+            externalProductName: externalProductName,
+            erpProductId: similarComponent.id,
+            erpProductName: similarComponent.name,
+            confidence: 0.9,
+            isActive: true,
+            mappingType: 'automatic',
+            lastUsed: new Date(),
+            usageCount: 1
+          });
+          console.log(`✅ Створено автоматичне зіставлення: ${externalProductName} → ${similarComponent.name}`);
+        } catch (error) {
+          console.log(`⚠️ Помилка створення зіставлення: ${error}`);
+        }
 
         return {
           erpProductId: similarComponent.id,
@@ -9999,7 +9997,7 @@ export class DatabaseStorage implements IStorage {
         };
       }
 
-      console.log(`❌ Товар "${externalProductName}" не знайдено в жодній таблиці`);
+      console.log(`❌ Компонент "${externalProductName}" не знайдено в таблиці components`);
       return null;
     } catch (error) {
       console.error('Помилка пошуку товару за альтернативною назвою:', error);
