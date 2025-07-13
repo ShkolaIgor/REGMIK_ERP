@@ -9879,9 +9879,11 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Product Name Mapping methods
+  // Product Name Mapping methods - ПОКРАЩЕНА УНІВЕРСАЛЬНА ВЕРСІЯ
   async findProductByAlternativeName(externalProductName: string, systemName: string): Promise<{ erpProductId: number; erpProductName: string } | null> {
     try {
+      console.log(`🔍 УНІВЕРСАЛЬНИЙ ПОШУК товару: "${externalProductName}" в системі "${systemName}"`);
+      
       // 1. Спочатку шукаємо точне зіставлення в таблиці productNameMappings
       const mapping = await this.db.select({
         erpProductId: productNameMappings.erpProductId,
@@ -9896,6 +9898,8 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
 
       if (mapping.length > 0 && mapping[0].erpProductId) {
+        console.log(`✅ Знайдено в зіставленнях: товар ID ${mapping[0].erpProductId}`);
+        
         // Оновлюємо статистику використання
         await this.db.update(productNameMappings)
           .set({
@@ -9913,32 +9917,105 @@ export class DatabaseStorage implements IStorage {
         };
       }
 
-      // 2. Якщо точне зіставлення не знайдено, шукаємо схожі компоненти
+      // 2. Шукаємо в таблиці products (ДОДАНО НОВИЙ ПОШУК)
+      console.log(`🔍 Пошук в таблиці products...`);
+      const similarProduct = await this.findSimilarProduct(externalProductName);
+      if (similarProduct) {
+        console.log(`✅ Знайдено товар в products: ${similarProduct.name} (ID: ${similarProduct.id})`);
+        
+        // ТИМЧАСОВЕ РІШЕННЯ: Не створюємо зіставлення через foreign key constraint
+        // TODO: Виправити схему БД для підтримки посилань на products AND components
+        console.log(`⚠️ Пропускаємо створення зіставлення через foreign key constraint на components`);
+
+        return {
+          erpProductId: similarProduct.id,
+          erpProductName: similarProduct.name
+        };
+      }
+
+      // 3. Якщо в products не знайдено, шукаємо в компонентах
+      console.log(`🔍 Пошук в таблиці components...`);
       const similarComponent = await this.findSimilarComponent(externalProductName);
       if (similarComponent) {
-        // Автоматично створюємо зіставлення для знайденого схожого компонента
-        await this.createProductNameMapping({
-          externalSystemName: systemName,
-          externalProductName: externalProductName,
-          erpProductId: similarComponent.id,
-          erpProductName: similarComponent.name,
-          mappingType: 'automatic',
-          confidence: 0.85, // Нижча впевненість для схожих назв
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        });
-
+        console.log(`✅ Знайдено компонент: ${similarComponent.name} (ID: ${similarComponent.id})`);
         
+        // ТИМЧАСОВЕ РІШЕННЯ: Не створюємо зіставлення через foreign key constraint
+        // TODO: Виправити схему БД для підтримки посилань на products AND components
+        console.log(`⚠️ Пропускаємо створення зіставлення для компонента через foreign key constraint`);
+
         return {
           erpProductId: similarComponent.id,
           erpProductName: similarComponent.name
         };
       }
 
+      console.log(`❌ Товар "${externalProductName}" не знайдено в жодній таблиці`);
       return null;
     } catch (error) {
       console.error('Помилка пошуку товару за альтернативною назвою:', error);
+      return null;
+    }
+  }
+
+  // Функція для пошуку схожих товарів в таблиці products - НОВИЙ МЕТОД
+  private async findSimilarProduct(externalProductName: string): Promise<{ id: number; name: string } | null> {
+    try {
+      console.log(`🔍 Пошук схожого товару в products для: "${externalProductName}"`);
+      
+      // Спочатку точний пошук
+      const exactMatch = await this.db.select().from(products)
+        .where(or(
+          eq(products.name, externalProductName),
+          eq(products.sku, externalProductName),
+          ilike(products.name, externalProductName),
+          ilike(products.sku, externalProductName)
+        ))
+        .limit(1);
+      
+      if (exactMatch.length > 0) {
+        console.log(`✅ ТОЧНИЙ збіг в products: "${exactMatch[0].name}" (ID: ${exactMatch[0].id})`);
+        return { id: exactMatch[0].id, name: exactMatch[0].name };
+      }
+
+      // Нормалізуємо назву для пошуку
+      const normalizedExternal = this.normalizeProductName(externalProductName);
+      console.log(`📝 Нормалізована назва: "${normalizedExternal}"`);
+      
+      // Отримуємо всі товари для порівняння
+      const allProducts = await this.db.select().from(products);
+      
+      for (const product of allProducts) {
+        const normalizedProduct = this.normalizeProductName(product.name);
+        const normalizedSku = this.normalizeProductName(product.sku || '');
+        
+        // КРОК 1: Перевіряємо точну відповідність після нормалізації
+        if (normalizedExternal === normalizedProduct || normalizedExternal === normalizedSku) {
+          console.log(`✅ ТОЧНИЙ збіг після нормалізації: "${externalProductName}" = "${product.name}"`);
+          return { id: product.id, name: product.name };
+        }
+        
+        // КРОК 2: Перевіряємо включення
+        if (normalizedExternal.includes(normalizedProduct) || normalizedProduct.includes(normalizedExternal) ||
+            normalizedExternal.includes(normalizedSku) || normalizedSku.includes(normalizedExternal)) {
+          console.log(`🎯 ВКЛЮЧЕННЯ збіг в products: "${externalProductName}" ↔ "${product.name}"`);
+          return { id: product.id, name: product.name };
+        }
+        
+        // КРОК 3: Перевіряємо схожість за спільними символами
+        const commonLength = Math.max(
+          this.getCommonPartLength(normalizedExternal, normalizedProduct),
+          this.getCommonPartLength(normalizedExternal, normalizedSku)
+        );
+        if (commonLength >= 6) {
+          console.log(`🔗 СХОЖІСТЬ збіг в products: "${externalProductName}" ↔ "${product.name}" (спільних символів: ${commonLength})`);
+          return { id: product.id, name: product.name };
+        }
+      }
+      
+      console.log(`❌ Схожий товар в products не знайдено для: "${externalProductName}"`);
+      return null;
+    } catch (error) {
+      console.error('Помилка пошуку схожих товарів в products:', error);
       return null;
     }
   }
@@ -11028,15 +11105,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Допоміжні методи для нормалізації та пошуку товарів
-  private normalizeProductName(name: string): string {
-    if (!name) return '';
-    
-    return name
-      .toLowerCase()
-      .replace(/[^a-zA-Zа-яїієґ0-9]/g, '') // Видаляємо всі спецсимволи, залишаємо літери та цифри
-      .replace(/[іїієґ]/g, 'i') // Транслітерація українських літер
-      .trim();
-  }
 
   private calculateSimilarityScore(str1: string, str2: string): number {
     if (!str1 || !str2) return 0;

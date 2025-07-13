@@ -6227,13 +6227,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             erpProductId: mapping.erpProductId,
             erpProductName: mapping.erpProductName
           },
-          message: `Знайдено товар в ERP: ${mapping.erpProductName} (ID: ${mapping.erpProductId})`
+          message: `✅ УСПІШНО ЗНАЙДЕНО: ${mapping.erpProductName} (ID: ${mapping.erpProductId}) в ERP системі`
         });
       } else {
         res.json({
           success: true,
           found: false,
-          message: `Товар "${productName}" не знайдено в зіставленнях`
+          message: `❌ Товар "${productName}" не знайдено ні в products, ні в components`
         });
       }
     } catch (error) {
