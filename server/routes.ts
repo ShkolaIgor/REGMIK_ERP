@@ -27,7 +27,7 @@ import {
   insertLocalUserSchema, insertRoleSchema, insertSystemModuleSchema, changePasswordSchema,
   insertEmailSettingsSchema, insertClientSchema, insertClientContactSchema, insertClientMailSchema, insertMailRegistrySchema, insertEnvelopePrintSettingsSchema,
   insertRepairSchema, insertRepairPartSchema, insertRepairStatusHistorySchema, insertRepairDocumentSchema,
-  clientTypes, insertClientTypeSchema, insertOrderStatusSchema
+  clientTypes, insertClientTypeSchema, insertOrderStatusSchema, orders
 } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -11485,6 +11485,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: 'Критична помилка діагностики',
         error: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // TEST endpoint for order number generation
+  app.get('/api/test-order-number', isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log(`🧪 ТЕСТ: Перевіряємо generateOrderNumber...`);
+      const orderNumber = await storage.generateOrderNumber();
+      console.log(`🧪 ТЕСТ РЕЗУЛЬТАТ: orderNumber = "${orderNumber}" (type: ${typeof orderNumber})`);
+      
+      res.json({
+        success: true,
+        orderNumber: orderNumber,
+        type: typeof orderNumber,
+        message: `Order number generated successfully: ${orderNumber}`
+      });
+    } catch (error) {
+      console.error(`❌ ТЕСТ ПОМИЛКА:`, error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+    }
+  });
+
+  // TEST endpoint for storage order creation
+  app.post('/api/test-storage-order', isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log(`🧪 ТЕСТ STORAGE: Створюємо замовлення через storage...`);
+      
+      const testOrderData = {
+        orderNumber: "STORAGE-TEST-" + Date.now(),
+        status: "pending" as const,
+        totalAmount: 1000,
+        clientId: 126,
+        invoiceNumber: "TEST-STORAGE"
+      };
+      
+      console.log(`🧪 STORAGE TEST DATA:`, JSON.stringify(testOrderData, null, 2));
+      
+      const newOrder = await storage.createOrder(testOrderData);
+      console.log(`🧪 STORAGE RESULT:`, JSON.stringify(newOrder, null, 2));
+      
+      res.json({
+        success: true,
+        order: newOrder,
+        message: "Storage order created successfully"
+      });
+    } catch (error) {
+      console.error(`❌ STORAGE ТЕСТ ПОМИЛКА:`, error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
       });
     }
   });

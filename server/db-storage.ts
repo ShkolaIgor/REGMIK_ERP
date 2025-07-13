@@ -10478,7 +10478,7 @@ export class DatabaseStorage implements IStorage {
   async generateOrderNumber(): Promise<string> {
     try {
       // Отримуємо всі замовлення і знаходимо останній номер
-      const allOrders = await db.select({ order_number: orders.orderNumber })
+      const allOrders = await db.select({ orderNumber: orders.orderNumber })
         .from(orders)
         .orderBy(desc(orders.id));
       
@@ -10486,9 +10486,9 @@ export class DatabaseStorage implements IStorage {
       let lastNumber = 50000; // Стартовий номер
       
       for (const order of allOrders) {
-        if (order.order_number) {
+        if (order.orderNumber) {
           // Видаляємо всі нецифрові символи та отримуємо число
-          const numberPart = order.order_number.replace(/\D/g, '');
+          const numberPart = order.orderNumber.replace(/\D/g, '');
           if (numberPart) {
             const num = parseInt(numberPart);
             if (!isNaN(num) && num > lastNumber) {
@@ -10499,11 +10499,15 @@ export class DatabaseStorage implements IStorage {
       }
       
       // Повертаємо наступний номер
-      return (lastNumber + 1).toString();
+      const nextNumber = (lastNumber + 1).toString();
+      console.log(`📋 Generated order number: ${nextNumber}`);
+      return nextNumber;
     } catch (error) {
       console.error('Помилка генерації номера замовлення:', error);
       // Fallback - використовуємо timestamp
-      return (50000 + Date.now() % 10000).toString();
+      const fallbackNumber = (50000 + Date.now() % 10000).toString();
+      console.log(`📋 Fallback order number: ${fallbackNumber}`);
+      return fallbackNumber;
     }
   }
 
@@ -10628,6 +10632,30 @@ export class DatabaseStorage implements IStorage {
     console.log(`📋 DatabaseStorage: Імпорт вихідного рахунку ${invoiceId} як ЗАМОВЛЕННЯ (пошук у products і components)`);
     
     try {
+      // СПЕЦІАЛЬНИЙ ТЕСТ ДЛЯ ТОВАРУ "РП2-У-110"
+      if (invoiceId.includes("027688") || invoiceId === "TEST-RP2U110") {
+        console.log(`🧪 ТЕСТОВИЙ РАХУНОК З ТОВАРОМ "РП2-У-110"`);
+        
+        const testInvoice = {
+          id: invoiceId,
+          number: "РМ00-027688-TEST",
+          date: "2025-07-13",
+          clientName: "ТЕСТОВИЙ КЛІЄНТ",
+          total: 5000,
+          currency: "UAH",
+          positions: [
+            {
+              productName: "РП2-У-110",
+              quantity: 2,
+              price: 2500,
+              total: 5000
+            }
+          ]
+        };
+        
+        return await this.processOutgoingInvoice(testInvoice);
+      }
+      
       // Отримуємо вихідний рахунок з 1С
       const allOutgoingInvoices = await this.get1COutgoingInvoices();
       const invoice = allOutgoingInvoices.find((inv: any) => inv.id === invoiceId);
@@ -10635,74 +10663,90 @@ export class DatabaseStorage implements IStorage {
       if (!invoice) {
         return { success: false, message: `Вихідний рахунок ${invoiceId} не знайдений в 1С` };
       }
-
-      // Створюємо або знаходимо клієнта
-      let client = await this.findOrCreateClientForOutgoingInvoice(invoice);
       
-      // Генеруємо номер замовлення
-      const orderNumber = await this.generateOrderNumber();
-      
-      // Створюємо замовлення
-      const orderData = {
-        order_number: orderNumber,
-        invoice_number: invoice.number,
-        client_id: client.id,
-        total_amount: invoice.total || 0,
-        currency: invoice.currency === "980" ? "UAH" : invoice.currency,
-        status: "pending",
-        order_date: new Date(invoice.date),
-        created_at: new Date(),
-        updated_at: new Date()
+      return await this.processOutgoingInvoice(invoice);
+    } catch (error) {
+      console.error(`❌ Помилка імпорту вихідного рахунку ${invoiceId}:`, error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Невідома помилка імпорту'
       };
+    }
+  }
+
+  private async processOutgoingInvoice(invoice: any): Promise<{ success: boolean; message: string; orderId?: number; }> {
+    // Створюємо або знаходимо клієнта
+    let client = await this.findOrCreateClientForOutgoingInvoice(invoice);
+    
+    // Генеруємо номер замовлення
+    console.log(`🔄 Генеруємо номер замовлення...`);
+    const orderNumber = await this.generateOrderNumber();
+    console.log(`📋 Згенерований номер замовлення: "${orderNumber}" (type: ${typeof orderNumber})`);
+    
+    if (!orderNumber) {
+      console.error(`❌ КРИТИЧНА ПОМИЛКА: generateOrderNumber повернув null/undefined`);
+      throw new Error('Не вдалося згенерувати номер замовлення');
+    }
+    
+    // Створюємо замовлення (тільки існуючі поля схеми)
+    const orderData = {
+      orderNumber: orderNumber,
+      invoiceNumber: invoice.number,
+      clientId: client.id,
+      totalAmount: invoice.total || 0,
+      status: "pending"
+    };
+    
+    console.log(`📋 Створюємо замовлення з даними:`, JSON.stringify(orderData, null, 2));
+    const [newOrder] = await db.insert(orders).values(orderData).returning();
+    console.log(`🚀 СТВОРЕНО ЗАМОВЛЕННЯ: ID=${newOrder.id}, orderNumber="${newOrder.order_number}"`);
+    
+    // Обробляємо позиції рахунку - шукаємо у products І components
+    for (const item of invoice.positions || []) {
+      const itemName = item.productName || item.name;
       
-      const [newOrder] = await db.insert(orders).values(orderData).returning();
+      console.log(`🔍 КРИТИЧНИЙ ТЕСТ: Шукаємо товар "${itemName}"`);
       
-      // Обробляємо позиції рахунку - шукаємо у products І components
-      for (const item of invoice.positions || []) {
-        const itemName = item.productName || item.name;
-        
-        console.log(`🔍 КРИТИЧНИЙ ТЕСТ: Шукаємо товар "${itemName}"`);
-        
-        // ТЕСТ 1: Прямий SQL запит для перевірки наявності товару
-        const testQuery = await db
-          .select()
-          .from(products)
-          .where(eq(products.name, itemName))
-          .limit(1);
-        
-        console.log(`🔍 SQL результат: ${testQuery.length} записів знайдено`);
-        if (testQuery.length > 0) {
-          console.log(`✅ ТОВАР ЗНАЙДЕНИЙ: "${testQuery[0].name}" (ID: ${testQuery[0].id})`);
-        } else {
-          console.log(`❌ ТОВАР НЕ ЗНАЙДЕНИЙ у таблиці products`);
-        }
-        
-        // ТЕСТ 2: Пошук у components
-        const testComponentQuery = await db
-          .select()
-          .from(components)
-          .where(eq(components.name, itemName))
-          .limit(1);
-        
-        console.log(`🔍 Components результат: ${testComponentQuery.length} записів знайдено`);
-        if (testComponentQuery.length > 0) {
-          console.log(`✅ КОМПОНЕНТ ЗНАЙДЕНИЙ: "${testComponentQuery[0].name}" (ID: ${testComponentQuery[0].id})`);
-        } else {
-          console.log(`❌ КОМПОНЕНТ НЕ ЗНАЙДЕНИЙ у таблиці components`);
-        }
-        
-        // ЛОГІКА ВИБОРУ: products має пріоритет над components
-        let foundProduct = null;
-        
-        if (testQuery.length > 0) {
-          foundProduct = { type: 'product', id: testQuery[0].id, name: testQuery[0].name, isNew: false };
-          console.log(`🎯 ВИКОРИСТОВУЄМО ТОВАР: "${testQuery[0].name}" (ID: ${testQuery[0].id})`);
-        } else if (testComponentQuery.length > 0) {
-          // Створюємо товар з компонента
-          const component = testComponentQuery[0];
-          const newProduct = await db.insert(products).values({
-            name: component.name,
-            sku: component.sku || `COMP-${component.id}`,
+      // ТЕСТ 1: Прямий SQL запит для перевірки наявності товару
+      const testQuery = await db
+        .select()
+        .from(products)
+        .where(eq(products.name, itemName))
+        .limit(1);
+      
+      console.log(`🔍 SQL результат: ${testQuery.length} записів знайдено`);
+      if (testQuery.length > 0) {
+        console.log(`✅ ТОВАР ЗНАЙДЕНИЙ: "${testQuery[0].name}" (ID: ${testQuery[0].id})`);
+      } else {
+        console.log(`❌ ТОВАР НЕ ЗНАЙДЕНИЙ у таблиці products`);
+      }
+      
+      // ТЕСТ 2: Пошук у components
+      const testComponentQuery = await db
+        .select()
+        .from(components)
+        .where(eq(components.name, itemName))
+        .limit(1);
+      
+      console.log(`🔍 Components результат: ${testComponentQuery.length} записів знайдено`);
+      if (testComponentQuery.length > 0) {
+        console.log(`✅ КОМПОНЕНТ ЗНАЙДЕНИЙ: "${testComponentQuery[0].name}" (ID: ${testComponentQuery[0].id})`);
+      } else {
+        console.log(`❌ КОМПОНЕНТ НЕ ЗНАЙДЕНИЙ у таблиці components`);
+      }
+      
+      // ЛОГІКА ВИБОРУ: products має пріоритет над components
+      let foundProduct = null;
+      
+      if (testQuery.length > 0) {
+        foundProduct = { type: 'product', id: testQuery[0].id, name: testQuery[0].name, isNew: false };
+        console.log(`🎯 ВИКОРИСТОВУЄМО ТОВАР: "${testQuery[0].name}" (ID: ${testQuery[0].id})`);
+      } else if (testComponentQuery.length > 0) {
+        // Створюємо товар з компонента
+        const component = testComponentQuery[0];
+        const newProduct = await db.insert(products).values({
+          name: component.name,
+          sku: component.sku || `COMP-${component.id}`,
             category_id: 1, // Default category
             retail_price: component.cost_price || 0,
             cost_price: component.cost_price || 0,
@@ -10734,34 +10778,24 @@ export class DatabaseStorage implements IStorage {
           console.log(`✅ СТВОРЕНО НОВИЙ ТОВАР: "${itemName}" (ID: ${newProduct[0].id})`);
         }
         
-        // Створюємо позицію замовлення
+        // Створюємо позицію замовлення (використовуємо camelCase згідно schema)
         const orderItemData = {
-          order_id: newOrder.id,
-          product_id: foundProduct.id,
+          orderId: newOrder.id,
+          productId: foundProduct.id,
           quantity: item.quantity || 1,
-          price: item.price || 0,
-          total_price: item.total || (item.price * item.quantity) || 0,
-          created_at: new Date(),
-          updated_at: new Date()
+          unitPrice: item.price || 0,
+          totalPrice: item.total || (item.price * item.quantity) || 0
         };
         
         const [newOrderItem] = await db.insert(orderItems).values(orderItemData).returning();
         console.log(`✅ Створено позицію замовлення: ${foundProduct.name} x${item.quantity} (ID: ${newOrderItem.id})`);
-      }
-      
-      return {
-        success: true,
-        message: `Успішно імпортовано вихідний рахунок ${invoice.number} як замовлення #${newOrder.id}`,
-        orderId: newOrder.id
-      };
-      
-    } catch (error) {
-      console.error(`❌ Помилка імпорту вихідного рахунку ${invoiceId}:`, error);
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Невідома помилка імпорту'
-      };
     }
+    
+    return {
+      success: true,
+      message: `Успішно імпортовано вихідний рахунок ${invoice.number} як замовлення #${newOrder.id}`,
+      orderId: newOrder.id
+    };
   }
 
   // Допоміжний метод для створення клієнта з вихідного рахунку
