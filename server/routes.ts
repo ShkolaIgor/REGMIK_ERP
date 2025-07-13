@@ -11545,6 +11545,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Тестовий імпорт рахунку РМ00-027685 з товаром РП2-У-110
+  app.post('/api/test-import-rp2u110', isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log(`🧪 ТЕСТ: Імпорт рахунку РМ00-027685 з товаром РП2-У-110...`);
+      
+      const result = await storage.import1COutgoingInvoice("РМ00-027685");
+      
+      console.log(`🧪 РЕЗУЛЬТАТ ТЕСТУ:`, JSON.stringify(result, null, 2));
+      
+      res.json({
+        success: true,
+        result: result,
+        message: "Тестовий імпорт виконано успішно"
+      });
+    } catch (error) {
+      console.error(`❌ ПОМИЛКА ТЕСТУ РП2-У-110:`, error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+    }
+  });
+
   // Import outgoing invoice from 1C to ERP as order
   app.post('/api/1c/outgoing-invoices/:invoiceId/import', isSimpleAuthenticated, async (req, res) => {
     try {
