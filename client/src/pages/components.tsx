@@ -10,6 +10,7 @@ import { DataTable } from "@/components/DataTable/DataTable";
 import { SearchFilters } from "@/components/SearchFilters";
 import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ComponentForm } from "@/components/ComponentForm";
 
 // Interfaces
 interface Component {
@@ -437,6 +438,41 @@ export default function Components() {
             />
           </div>
         </main>
+
+        {/* Create Component Dialog */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Додати новий компонент</DialogTitle>
+              <DialogDescription>
+                Створіть новий компонент для складу
+              </DialogDescription>
+            </DialogHeader>
+            <ComponentForm 
+              onSubmit={async (data: any) => {
+                try {
+                  await apiRequest('/api/components', {
+                    method: 'POST',
+                    body: data
+                  });
+                  queryClient.invalidateQueries({ queryKey: ["/api/components"] });
+                  setIsCreateDialogOpen(false);
+                  toast({
+                    title: "Успішно",
+                    description: "Компонент додано до складу"
+                  });
+                } catch (error) {
+                  toast({
+                    title: "Помилка", 
+                    description: "Не вдалося створити компонент",
+                    variant: "destructive"
+                  });
+                }
+              }}
+              isLoading={false}
+            />
+          </DialogContent>
+        </Dialog>
 
         {/* Import XML Dialog */}
         <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
