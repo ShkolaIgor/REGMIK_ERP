@@ -252,6 +252,33 @@ export function Import1CInvoices() {
     }
   });
 
+  // Мутація для імпорту окремої накладної
+  const importSingleInvoiceMutation = useMutation({
+    mutationFn: async (invoice: Invoice1C) => {
+      const result = await apiRequest('/api/1c/invoices/import', {
+        method: 'POST',
+        body: JSON.stringify(invoice),
+      });
+      return result;
+    },
+    onSuccess: (result) => {
+      toast({
+        title: "Успіх",
+        description: `Накладна успішно імпортована. ${result.message || ''}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/components"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
+      setShowPreview(null); // Закриваємо діалог після успішного імпорту
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка імпорту",
+        description: error.message || 'Не вдалося імпортувати накладну',
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       const availableInvoices = invoices1C.filter((inv: Invoice1C) => !inv.exists).map((inv: Invoice1C) => inv.id);
@@ -497,9 +524,30 @@ export function Import1CInvoices() {
 
       {/* Діалог перегляду накладної */}
       <Dialog open={!!showPreview} onOpenChange={() => setShowPreview(null)}>
-        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
           <DialogHeader className="flex-shrink-0">
-            <DialogTitle>Перегляд накладної {showPreview?.number}</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>Перегляд накладної {showPreview?.number}</DialogTitle>
+              {showPreview && !showPreview.exists && (
+                <Button
+                  onClick={() => importSingleInvoiceMutation.mutate(showPreview)}
+                  disabled={importSingleInvoiceMutation.isPending}
+                  className="ml-4"
+                >
+                  {importSingleInvoiceMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Імпортую...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Імпортувати накладну
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </DialogHeader>
           
           {showPreview && (
@@ -542,33 +590,32 @@ export function Import1CInvoices() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 overflow-hidden p-0">
-                  <div className="h-[400px] overflow-y-auto border-t">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead className="sticky top-0 bg-white border-b z-10">
-                          <tr>
-                            <th className="text-left p-2 bg-gray-50">Найменування з 1С</th>
-                            <th className="text-left p-2 bg-gray-50">Зіставлення ERP</th>
-                            <th className="text-right p-2 bg-gray-50">Кількість</th>
-                            <th className="text-left p-2 bg-gray-50">Од. вим.</th>
-                            <th className="text-right p-2 bg-gray-50">Ціна</th>
-                            <th className="text-right p-2 bg-gray-50">Сума</th>
-                          </tr>
-                        </thead>
-                        <tbody>
+                  <div className="flex-1 overflow-y-auto border-t" style={{ maxHeight: 'calc(90vh - 320px)' }}>
+                    <table className="w-full text-sm">
+                      <thead className="sticky top-0 bg-white border-b z-10 shadow-sm">
+                        <tr>
+                          <th className="text-left p-3 bg-gray-50 font-semibold">Найменування з 1С</th>
+                          <th className="text-left p-3 bg-gray-50 font-semibold">Зіставлення ERP</th>
+                          <th className="text-right p-3 bg-gray-50 font-semibold">Кількість</th>
+                          <th className="text-left p-3 bg-gray-50 font-semibold">Од. вим.</th>
+                          <th className="text-right p-3 bg-gray-50 font-semibold">Ціна</th>
+                          <th className="text-right p-3 bg-gray-50 font-semibold">Сума</th>
+                        </tr>
+                      </thead>
+                      <tbody>
                         {showPreview.items.map((item, idx) => (
-                          <tr key={idx} className="border-b">
-                            <td className="p-2">
+                          <tr key={idx} className="border-b hover:bg-gray-50 transition-colors">
+                            <td className="p-3 max-w-xs">
                               <div className="font-medium text-sm">
                                 {item.nameFrom1C || item.originalName || item.name}
                               </div>
                               {item.sku && (
-                                <div className="text-xs text-gray-500 font-mono">
+                                <div className="text-xs text-gray-500 font-mono mt-1">
                                   SKU: {item.sku}
                                 </div>
                               )}
                             </td>
-                            <td className="p-2">
+                            <td className="p-3 max-w-xs">
                               <ComponentMappingCell 
                                 item={item} 
                                 onMappingChange={(mappedComponent) => {
@@ -579,15 +626,14 @@ export function Import1CInvoices() {
                                 }}
                               />
                             </td>
-                            <td className="p-2 text-right">{item.quantity}</td>
-                            <td className="p-2">{item.unit}</td>
-                            <td className="p-2 text-right">{item.price.toLocaleString('uk-UA')}</td>
-                            <td className="p-2 text-right font-medium">{item.total.toLocaleString('uk-UA')}</td>
+                            <td className="p-3 text-right font-medium">{item.quantity}</td>
+                            <td className="p-3 text-gray-600">{item.unit}</td>
+                            <td className="p-3 text-right font-medium">{item.price.toLocaleString('uk-UA')} грн</td>
+                            <td className="p-3 text-right font-bold text-blue-600">{item.total.toLocaleString('uk-UA')} грн</td>
                           </tr>
                         ))}
-                        </tbody>
-                      </table>
-                    </div>
+                      </tbody>
+                    </table>
                   </div>
                 </CardContent>
               </Card>
