@@ -591,6 +591,9 @@ export interface IStorage {
     debugCount: number;
     recentErrors: SystemLog[];
   }>;
+
+  // Product Name Mapping - жорстке зіставлення для рахунків
+  findProductByExactName(externalProductName: string): Promise<{ erpProductId: number; erpProductName: string } | null>;
 }
 
 export class MemStorage implements IStorage {

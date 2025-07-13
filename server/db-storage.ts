@@ -9880,6 +9880,56 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Product Name Mapping methods - ПОКРАЩЕНА УНІВЕРСАЛЬНА ВЕРСІЯ
+  // Функція для жорсткого зіставлення - тільки точні збіги назв (для імпорту рахунків)
+  async findProductByExactName(externalProductName: string): Promise<{ erpProductId: number; erpProductName: string } | null> {
+    try {
+      console.log(`🔍 ЖОРСТКЕ ЗІСТАВЛЕННЯ товару: "${externalProductName}" (тільки точні збіги)`);
+      
+      // 1. Спочатку шукаємо ТОЧНИЙ збіг в таблиці products
+      console.log(`🔍 Пошук точного збігу в таблиці products...`);
+      const exactProductMatch = await db.select({
+        id: products.id,
+        name: products.name,
+      })
+      .from(products)
+      .where(eq(products.name, externalProductName))
+      .limit(1);
+
+      if (exactProductMatch.length > 0) {
+        console.log(`✅ ТОЧНИЙ збіг в products: "${externalProductName}" (ID: ${exactProductMatch[0].id})`);
+        return {
+          erpProductId: exactProductMatch[0].id,
+          erpProductName: exactProductMatch[0].name
+        };
+      }
+
+      // 2. Якщо не знайдено в products, шукаємо ТОЧНИЙ збіг в таблиці components
+      console.log(`🔍 Пошук точного збігу в таблиці components...`);
+      const exactComponentMatch = await db.select({
+        id: components.id,
+        name: components.name,
+      })
+      .from(components)
+      .where(eq(components.name, externalProductName))
+      .limit(1);
+
+      if (exactComponentMatch.length > 0) {
+        console.log(`✅ ТОЧНИЙ збіг в components: "${externalProductName}" (ID: ${exactComponentMatch[0].id})`);
+        return {
+          erpProductId: exactComponentMatch[0].id,
+          erpProductName: exactComponentMatch[0].name
+        };
+      }
+
+      console.log(`❌ ТОЧНИЙ збіг НЕ ЗНАЙДЕНО для: "${externalProductName}"`);
+      return null;
+      
+    } catch (error) {
+      console.error('Помилка жорсткого зіставлення товару:', error);
+      return null;
+    }
+  }
+
   async findProductByAlternativeName(externalProductName: string, systemName: string): Promise<{ erpProductId: number; erpProductName: string } | null> {
     try {
       console.log(`🔍 УНІВЕРСАЛЬНИЙ ПОШУК товару: "${externalProductName}" в системі "${systemName}"`);

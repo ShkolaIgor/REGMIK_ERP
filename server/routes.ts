@@ -11410,18 +11410,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             
             try {
-              // Шукаємо товар в ERP системі
-              const mapping = await storage.findProductByAlternativeName(position.productName, "1C");
+              // Використовуємо ЖОРСТКЕ зіставлення - тільки точні збіги назв для рахунків
+              const mapping = await storage.findProductByExactName(position.productName);
               if (mapping) {
                 position.erpEquivalent = mapping.erpProductName;
                 position.erpProductId = mapping.erpProductId;
                 foundProducts++;
-                console.log(`✅ Знайдено ERP еквівалент для "${position.productName}": ${mapping.erpProductName} (ID: ${mapping.erpProductId})`);
+                console.log(`✅ Знайдено ТОЧНИЙ збіг для "${position.productName}": ${mapping.erpProductName} (ID: ${mapping.erpProductId})`);
               } else {
-                console.log(`❌ ERP еквівалент не знайдено для "${position.productName}"`);
+                console.log(`❌ ТОЧНИЙ збіг не знайдено для "${position.productName}"`);
               }
             } catch (error) {
-              console.error(`❌ Помилка пошуку товару "${position.productName}":`, error);
+              console.error(`❌ Помилка жорсткого зіставлення товару "${position.productName}":`, error);
             }
           }
         }
@@ -11813,6 +11813,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         message: 'Не вдалося очистити старі логи',
         error: error instanceof Error ? error.message : 'Невідома помилка'
+      });
+    }
+  });
+
+  // Test endpoint for exact product matching (без авторизації для тестування)
+  app.get('/api/test-exact-match/:productName', async (req, res) => {
+    try {
+      const productName = decodeURIComponent(req.params.productName);
+      console.log(`🔍 ТЕСТ ЖОРСТКОГО ЗІСТАВЛЕННЯ: "${productName}"`);
+      
+      const result = await storage.findProductByExactName(productName);
+      
+      if (result) {
+        console.log(`✅ ТОЧНИЙ збіг знайдено: ${result.erpProductName} (ID: ${result.erpProductId})`);
+        res.json({
+          success: true,
+          found: true,
+          productName: productName,
+          erpProduct: result
+        });
+      } else {
+        console.log(`❌ ТОЧНИЙ збіг не знайдено для "${productName}"`);
+        res.json({
+          success: true,
+          found: false,
+          productName: productName,
+          message: "Точний збіг не знайдено"
+        });
+      }
+    } catch (error) {
+      console.error('❌ Помилка тесту жорсткого зіставлення:', error);
+      res.status(500).json({ 
+        success: false,
+        error: error instanceof Error ? error.message : 'Невідома помилка' 
       });
     }
   });
