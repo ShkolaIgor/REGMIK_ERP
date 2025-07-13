@@ -60,7 +60,7 @@ export default function SystemLogs() {
   const [filters, setFilters] = useState({
     page: 1,
     limit: 50,
-    level: '',
+    level: 'all',
     category: '',
     module: '',
     startDate: '',
@@ -241,7 +241,7 @@ export default function SystemLogs() {
                   <SelectValue placeholder="Рівень" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Всі рівні</SelectItem>
+                  <SelectItem value="all">Всі рівні</SelectItem>
                   <SelectItem value="error">Помилки</SelectItem>
                   <SelectItem value="warn">Попередження</SelectItem>
                   <SelectItem value="info">Інформація</SelectItem>

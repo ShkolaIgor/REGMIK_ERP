@@ -11694,9 +11694,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const params = {
         page: parseInt(page as string),
         limit: Math.min(parseInt(limit as string), 1000), // Максимум 1000 записів
-        level: level as string,
-        category: category as string,
-        module: module as string,
+        level: (level && level !== 'all') ? level as string : undefined,
+        category: category as string || undefined,
+        module: module as string || undefined,
         userId: userId ? parseInt(userId as string) : undefined,
         startDate: startDate ? new Date(startDate as string) : undefined,
         endDate: endDate ? new Date(endDate as string) : undefined,
