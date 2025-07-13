@@ -1562,10 +1562,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/components", async (req, res) => {
     try {
+      console.log("POST /api/components - Request body:", req.body);
       const data = insertComponentSchema.parse(req.body);
+      console.log("POST /api/components - Parsed data:", data);
       const component = await storage.createComponent(data);
+      console.log("POST /api/components - Created component:", component);
       res.status(201).json(component);
     } catch (error) {
+      console.error("POST /api/components - Error:", error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: "Invalid component data", details: error.errors });
       } else {

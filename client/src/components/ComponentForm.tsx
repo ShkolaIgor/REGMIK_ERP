@@ -14,12 +14,11 @@ const componentFormSchema = z.object({
   sku: z.string().min(1, "SKU обов'язковий"),
   description: z.string().optional(),
   categoryId: z.number().nullable().optional(),
-  supplierId: z.number().nullable().optional(), 
-  unitPrice: z.string().min(1, "Ціна обов'язкова"),
-  unit: z.string().min(1, "Одиниця виміру обов'язкова"),
+  supplier: z.string().optional(),
+  costPrice: z.string().min(1, "Ціна обов'язкова"),
+  unitId: z.number().default(1),
   minStock: z.number().nullable().optional(),
   maxStock: z.number().nullable().optional(),
-  currentStock: z.number().default(0),
   isActive: z.boolean().default(true)
 });
 
@@ -39,12 +38,11 @@ export function ComponentForm({ defaultValues, onSubmit, isLoading }: ComponentF
       sku: "",
       description: "",
       categoryId: null,
-      supplierId: null,
-      unitPrice: "",
-      unit: "шт",
+      supplier: "",
+      costPrice: "",
+      unitId: 1,
       minStock: null,
       maxStock: null,
-      currentStock: 0,
       isActive: true,
       ...defaultValues
     }
@@ -52,10 +50,6 @@ export function ComponentForm({ defaultValues, onSubmit, isLoading }: ComponentF
 
   const { data: categories = [] } = useQuery({
     queryKey: ["/api/component-categories"],
-  });
-
-  const { data: suppliers = [] } = useQuery({
-    queryKey: ["/api/suppliers"],
   });
 
   return (
@@ -120,27 +114,13 @@ export function ComponentForm({ defaultValues, onSubmit, isLoading }: ComponentF
 
           <FormField
             control={form.control}
-            name="supplierId"
+            name="supplier"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Постачальник</FormLabel>
-                <Select 
-                  onValueChange={(value) => field.onChange(value ? parseInt(value) : null)} 
-                  value={field.value?.toString() || ""}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Оберіть постачальника" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {suppliers.map((supplier: any) => (
-                      <SelectItem key={supplier.id} value={supplier.id.toString()}>
-                        {supplier.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <Input placeholder="Назва постачальника" {...field} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -148,7 +128,7 @@ export function ComponentForm({ defaultValues, onSubmit, isLoading }: ComponentF
 
           <FormField
             control={form.control}
-            name="unitPrice"
+            name="costPrice"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Ціна за одиницю *</FormLabel>
@@ -162,47 +142,27 @@ export function ComponentForm({ defaultValues, onSubmit, isLoading }: ComponentF
 
           <FormField
             control={form.control}
-            name="unit"
+            name="unitId"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Одиниця виміру *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="шт">шт</SelectItem>
-                    <SelectItem value="кг">кг</SelectItem>
-                    <SelectItem value="л">л</SelectItem>
-                    <SelectItem value="м">м</SelectItem>
-                    <SelectItem value="м²">м²</SelectItem>
-                    <SelectItem value="м³">м³</SelectItem>
-                    <SelectItem value="т">т</SelectItem>
-                    <SelectItem value="пач">пач</SelectItem>
+                    <SelectItem value="1">шт</SelectItem>
+                    <SelectItem value="2">кг</SelectItem>
+                    <SelectItem value="3">л</SelectItem>
+                    <SelectItem value="4">м</SelectItem>
+                    <SelectItem value="5">м²</SelectItem>
+                    <SelectItem value="6">м³</SelectItem>
+                    <SelectItem value="7">т</SelectItem>
+                    <SelectItem value="8">пач</SelectItem>
                   </SelectContent>
                 </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="currentStock"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Поточний запас</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    step="0.01" 
-                    placeholder="0" 
-                    {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                  />
-                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -219,8 +179,7 @@ export function ComponentForm({ defaultValues, onSubmit, isLoading }: ComponentF
                     type="number" 
                     step="0.01" 
                     placeholder="0" 
-                    {...field}
-                    value={field.value || ""}
+                    value={field.value?.toString() || ""}
                     onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
                   />
                 </FormControl>
@@ -240,8 +199,7 @@ export function ComponentForm({ defaultValues, onSubmit, isLoading }: ComponentF
                     type="number" 
                     step="0.01" 
                     placeholder="0" 
-                    {...field}
-                    value={field.value || ""}
+                    value={field.value?.toString() || ""}
                     onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
                   />
                 </FormControl>
