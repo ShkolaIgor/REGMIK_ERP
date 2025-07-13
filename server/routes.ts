@@ -11755,6 +11755,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // TEST ENDPOINT: Перевірка зіставлення позицій накладних з компонентами
+  // GET endpoint для перевірки зіставлення компонентів
+  app.get('/api/1c/invoices/check-mapping/:productName', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const productName = decodeURIComponent(req.params.productName);
+      console.log(`🔍 Перевірка зіставлення для: "${productName}"`);
+      
+      const result = await storage.findProductByAlternativeName(productName, '1C');
+      
+      if (result) {
+        res.json({
+          found: true,
+          component: {
+            id: result.erpProductId,
+            name: result.erpProductName
+          }
+        });
+      } else {
+        res.json({
+          found: false,
+          component: null
+        });
+      }
+    } catch (error) {
+      console.error('Помилка перевірки зіставлення:', error);
+      res.status(500).json({ error: 'Помилка сервера' });
+    }
+  });
+
   app.post('/api/1c/invoices/check-mapping', async (req, res) => {
     try {
       const { itemName } = req.body;

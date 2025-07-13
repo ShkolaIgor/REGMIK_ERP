@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Upload, Eye, Check, X, FileText, Building2, Calendar, DollarSign, AlertCircle, RefreshCw } from "lucide-react";
+import { Loader2, Upload, Eye, Check, X, FileText, Building2, Calendar, DollarSign, AlertCircle, RefreshCw, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ProcessedInvoice1C } from "@shared/schema";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Тип для накладних згідно з реальним кодом 1С
 type Invoice1C = ProcessedInvoice1C;
@@ -19,6 +21,143 @@ interface ImportProgress {
   succeeded: number;
   failed: number;
   errors: string[];
+}
+
+// Компонент для зіставлення компонентів
+function ComponentMappingCell({ item, onMappingChange }: { 
+  item: any, 
+  onMappingChange: (component: string) => void 
+}) {
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [foundComponents, setFoundComponents] = useState<any[]>([]);
+  const [selectedComponent, setSelectedComponent] = useState(item.erpEquivalent || '');
+  const [autoMappingAttempted, setAutoMappingAttempted] = useState(false);
+
+  // Автоматичне зіставлення при першому завантаженні
+  useEffect(() => {
+    if (!autoMappingAttempted && !item.erpEquivalent) {
+      setAutoMappingAttempted(true);
+      performAutoMapping();
+    }
+  }, []);
+
+  const performAutoMapping = async () => {
+    try {
+      setIsSearching(true);
+      const response = await apiRequest(`/api/1c/invoices/check-mapping/${encodeURIComponent(item.name || item.originalName)}`);
+      if (response.found && response.component) {
+        setSelectedComponent(response.component.name);
+        onMappingChange(response.component.name);
+        console.log(`✅ Автоматично зіставлено: ${item.name || item.originalName} → ${response.component.name}`);
+      } else {
+        console.log(`❌ Автоматичне зіставлення не знайдено для: ${item.name || item.originalName}`);
+      }
+    } catch (error) {
+      console.error('Помилка автоматичного зіставлення:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const searchComponents = async (query: string) => {
+    if (!query.trim()) {
+      setFoundComponents([]);
+      return;
+    }
+    
+    try {
+      setIsSearching(true);
+      const response = await apiRequest(`/api/components?search=${encodeURIComponent(query)}`);
+      setFoundComponents(response.slice(0, 5)); // Обмежуємо до 5 результатів
+    } catch (error) {
+      console.error('Component search failed:', error);
+      setFoundComponents([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleManualMapping = (componentName: string) => {
+    setSelectedComponent(componentName);
+    onMappingChange(componentName);
+    setSearchTerm('');
+    setFoundComponents([]);
+  };
+
+  if (selectedComponent) {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <span className="text-sm font-medium text-green-700">{selectedComponent}</span>
+        </div>
+        <Badge className="bg-green-100 text-green-800 text-xs px-2 py-0.5">
+          знайдено
+        </Badge>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setSelectedComponent('');
+            onMappingChange('');
+          }}
+          className="h-6 w-6 p-0"
+        >
+          <X className="h-3 w-3" />
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+          <span className="text-sm text-gray-600 italic">
+            {isSearching ? 'шукаю...' : 'буде створено'}
+          </span>
+        </div>
+        <Badge className="bg-orange-100 text-orange-800 text-xs px-2 py-0.5">
+          {isSearching ? 'пошук' : 'новий'}
+        </Badge>
+      </div>
+      
+      {/* Ручний пошук */}
+      <div className="relative">
+        <Input
+          placeholder="Пошук компонентів..."
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            searchComponents(e.target.value);
+          }}
+          className="text-xs h-8"
+          disabled={isSearching}
+        />
+        <Search className="absolute right-2 top-2 h-4 w-4 text-gray-400" />
+        
+        {/* Результати пошуку */}
+        {foundComponents.length > 0 && (
+          <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-40 overflow-y-auto">
+            {foundComponents.map((component, idx) => (
+              <div
+                key={idx}
+                className="p-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                onClick={() => handleManualMapping(component.name)}
+              >
+                <div className="text-sm font-medium">{component.name}</div>
+                {component.sku && (
+                  <div className="text-xs text-gray-500">SKU: {component.sku}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export function Import1CInvoices() {
@@ -403,7 +542,7 @@ export function Import1CInvoices() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 overflow-hidden p-0">
-                  <div className="h-full overflow-y-auto p-4">
+                  <div className="h-[400px] overflow-y-auto border-t">
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead className="sticky top-0 bg-white border-b z-10">
@@ -430,27 +569,15 @@ export function Import1CInvoices() {
                               )}
                             </td>
                             <td className="p-2">
-                              {item.erpEquivalent ? (
-                                <div className="flex items-center gap-2">
-                                  <div className="flex items-center gap-1">
-                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                    <span className="text-sm font-medium text-green-700">{item.erpEquivalent}</span>
-                                  </div>
-                                  <Badge className="bg-green-100 text-green-800 text-xs px-2 py-0.5">
-                                    знайдено
-                                  </Badge>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-2">
-                                  <div className="flex items-center gap-1">
-                                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                                    <span className="text-sm text-gray-600 italic">буде створено</span>
-                                  </div>
-                                  <Badge className="bg-orange-100 text-orange-800 text-xs px-2 py-0.5">
-                                    новий
-                                  </Badge>
-                                </div>
-                              )}
+                              <ComponentMappingCell 
+                                item={item} 
+                                onMappingChange={(mappedComponent) => {
+                                  const updatedItems = showPreview.items.map(i => 
+                                    i === item ? { ...i, erpEquivalent: mappedComponent, isMapped: true } : i
+                                  );
+                                  setShowPreview({ ...showPreview, items: updatedItems });
+                                }}
+                              />
                             </td>
                             <td className="p-2 text-right">{item.quantity}</td>
                             <td className="p-2">{item.unit}</td>
