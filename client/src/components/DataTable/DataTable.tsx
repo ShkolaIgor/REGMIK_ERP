@@ -129,7 +129,7 @@ const defaultColumnSettings: ColumnSettings = {
 };
 
 const defaultSettings: DataTableSettings = {
-  pageSize: 10,
+  pageSize: 100,
   columnOrder: [],
   columnWidths: {},
   columnSettings: {},
@@ -170,10 +170,10 @@ export function DataTable({
     try {
       const saved = localStorage.getItem(`datatable-${storageKey}`);
       const loadedSettings = saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
-      // Force pageSize to 10 for better pagination visibility
-      return { ...loadedSettings, pageSize: 10 };
+      // Force pageSize to 100 for showing more components at once
+      return { ...loadedSettings, pageSize: 100 };
     } catch {
-      return { ...defaultSettings, pageSize: 10 };
+      return { ...defaultSettings, pageSize: 100 };
     }
   });
 
@@ -231,8 +231,8 @@ export function DataTable({
   
   // Reduce default page size for large datasets
   useEffect(() => {
-    if (data.length > 10000 && settings.pageSize > 50) {
-      setSettings(prev => ({ ...prev, pageSize: 25 }));
+    if (data.length > 10000 && settings.pageSize > 200) {
+      setSettings(prev => ({ ...prev, pageSize: 100 }));
     }
   }, [data.length, settings.pageSize]);
 
@@ -964,12 +964,12 @@ export function DataTable({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">1</SelectItem>
-                  <SelectItem value="8">8</SelectItem>
-                  <SelectItem value="12">12</SelectItem>
-                  <SelectItem value="24">24</SelectItem>
-                  <SelectItem value="48">48</SelectItem>
-                  <SelectItem value="96">96</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                  <SelectItem value="250">250</SelectItem>
+                  <SelectItem value="500">500</SelectItem>
+                  <SelectItem value="1000">1000</SelectItem>
                 </SelectContent>
               </Select>
             </div>
