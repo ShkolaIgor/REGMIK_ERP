@@ -11390,8 +11390,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         itemsCount: invoice.itemsCount || (invoice.positions || []).length
       }));
       
-      console.log(`✅ DIRECT 1C OUTGOING: Обробмено ${processedInvoices?.length || 0} вихідних рахунків`);
-      res.json(processedInvoices || []);
+      // Додаємо перевірку існування товарів для кожної позиції в кожному рахунку
+      console.log(`🔍 Перевіряємо існування товарів у позиціях рахунків... (знайдено ${processedInvoices.length} рахунків)`);
+      
+      let totalPositions = 0;
+      let foundProducts = 0;
+      
+      for (const invoice of processedInvoices) {
+        if (invoice.positions && invoice.positions.length > 0) {
+          console.log(`📋 Обробляємо рахунок ${invoice.number} з ${invoice.positions.length} позиціями`);
+          
+          for (const position of invoice.positions) {
+            totalPositions++;
+            console.log(`🔍 Перевіряємо товар: "${position.productName}"`);
+            
+            // Додаємо nameFrom1C якщо відсутнє
+            if (!position.nameFrom1C) {
+              position.nameFrom1C = position.productName;
+            }
+            
+            try {
+              // Шукаємо товар в ERP системі
+              const mapping = await storage.findProductByAlternativeName(position.productName, "1C");
+              if (mapping) {
+                position.erpEquivalent = mapping.erpProductName;
+                position.erpProductId = mapping.erpProductId;
+                foundProducts++;
+                console.log(`✅ Знайдено ERP еквівалент для "${position.productName}": ${mapping.erpProductName} (ID: ${mapping.erpProductId})`);
+              } else {
+                console.log(`❌ ERP еквівалент не знайдено для "${position.productName}"`);
+              }
+            } catch (error) {
+              console.error(`❌ Помилка пошуку товару "${position.productName}":`, error);
+            }
+          }
+        }
+      }
+      
+      console.log(`📊 Підсумок: оброблено ${totalPositions} позицій, знайдено ${foundProducts} товарів у ERP`);
+      
+      console.log(`✅ DIRECT 1C OUTGOING: Обробмено ${processedInvoices?.length || 0} вихідних рахунків з перевіркою товарів`);
+      
+      // Відправляємо відповідь після завершення всіх операцій
+      res.json(processedInvoices);
       
     } catch (error) {
       console.error('❌ DIRECT 1C OUTGOING ERROR:', error);

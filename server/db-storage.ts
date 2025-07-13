@@ -10303,7 +10303,31 @@ export class DatabaseStorage implements IStorage {
     try {
       // Fallback до тестових даних через відсутність getIntegrations() в DatabaseStorage
       console.log('🔄 Використовуємо fallback дані через помилку підключення до 1С');
-      return this.get1COutgoingInvoicesFallback();
+      const invoices = await this.get1COutgoingInvoicesFallback();
+      
+      // Додаємо перевірку існування товарів для кожної позиції
+      for (const invoice of invoices) {
+        if (invoice.positions) {
+          for (const position of invoice.positions) {
+            // Шукаємо товар в ERP системі
+            const mapping = await this.findProductByAlternativeName(position.productName, "1C");
+            if (mapping) {
+              position.erpEquivalent = mapping.erpProductName;
+              position.erpProductId = mapping.erpProductId;
+              console.log(`✅ Знайдено ERP еквівалент для "${position.productName}": ${mapping.erpProductName} (ID: ${mapping.erpProductId})`);
+            } else {
+              console.log(`❌ ERP еквівалент не знайдено для "${position.productName}"`);
+            }
+            
+            // Додаємо nameFrom1C якщо відсутнє
+            if (!position.nameFrom1C) {
+              position.nameFrom1C = position.productName;
+            }
+          }
+        }
+      }
+      
+      return invoices;
     } catch (error) {
       console.error('❌ Помилка у fallback методі:', error);
       return [];
@@ -10322,6 +10346,8 @@ export class DatabaseStorage implements IStorage {
         positions: [
           {
             productName: "РП2-У-110",
+            nameFrom1C: "РП2-У-110",
+            erpEquivalent: "РП2-У-110", // Знайдено в ERP (ID: 13)
             quantity: 6,
             price: 4000,
             total: 24000
