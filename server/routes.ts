@@ -11675,5 +11675,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // СИСТЕМА ЛОГУВАННЯ API
+
+  // Отримати список логів з фільтрацією
+  app.get('/api/system-logs', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const {
+        page = '1',
+        limit = '50',
+        level,
+        category,
+        module,
+        userId,
+        startDate,
+        endDate
+      } = req.query;
+
+      const params = {
+        page: parseInt(page as string),
+        limit: Math.min(parseInt(limit as string), 1000), // Максимум 1000 записів
+        level: level as string,
+        category: category as string,
+        module: module as string,
+        userId: userId ? parseInt(userId as string) : undefined,
+        startDate: startDate ? new Date(startDate as string) : undefined,
+        endDate: endDate ? new Date(endDate as string) : undefined,
+      };
+
+      const result = await storage.getSystemLogs(params);
+      res.json(result);
+    } catch (error) {
+      console.error('Error getting system logs:', error);
+      res.status(500).json({ 
+        message: 'Не вдалося отримати системні логи',
+        error: error instanceof Error ? error.message : 'Невідома помилка'
+      });
+    }
+  });
+
+  // Отримати статистику логів
+  app.get('/api/system-logs/stats', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const stats = await storage.getLogStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error getting log stats:', error);
+      res.status(500).json({ 
+        message: 'Не вдалося отримати статистику логів',
+        error: error instanceof Error ? error.message : 'Невідома помилка'
+      });
+    }
+  });
+
+  // Створити новий лог (для внутрішнього використання)
+  app.post('/api/system-logs', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const logData = {
+        ...req.body,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        sessionId: req.sessionID
+      };
+
+      const log = await storage.createSystemLog(logData);
+      res.json(log);
+    } catch (error) {
+      console.error('Error creating system log:', error);
+      res.status(500).json({ 
+        message: 'Не вдалося створити лог',
+        error: error instanceof Error ? error.message : 'Невідома помилка'
+      });
+    }
+  });
+
+  // Видалити старі логи
+  app.delete('/api/system-logs/cleanup', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { olderThanDays = '90' } = req.query;
+      const deletedCount = await storage.deleteOldLogs(parseInt(olderThanDays as string));
+      
+      // Записати лог про очищення
+      await storage.createSystemLog({
+        level: 'info',
+        category: 'system',
+        module: 'logs',
+        message: `Видалено старі логи (${deletedCount} записів)`,
+        details: { olderThanDays: parseInt(olderThanDays as string), deletedCount },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        sessionId: req.sessionID
+      });
+
+      res.json({ deletedCount });
+    } catch (error) {
+      console.error('Error cleaning up logs:', error);
+      res.status(500).json({ 
+        message: 'Не вдалося очистити старі логи',
+        error: error instanceof Error ? error.message : 'Невідома помилка'
+      });
+    }
+  });
+
   return httpServer;
 }

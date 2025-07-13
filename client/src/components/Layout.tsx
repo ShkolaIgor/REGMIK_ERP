@@ -155,6 +155,7 @@ const navigationItems = [
       { name: "Компанії", href: "/companies", icon: Building2 },
       { name: "Налаштування email", href: "/email-settings", icon: Mail },
       { name: "Інтеграції", href: "/integrations", icon: Cog },
+      { name: "Системні логи", href: "/system-logs", icon: FileText },
       { name: "Налаштування серійних номерів", href: "/serial-number-settings", icon: Cog }
     ]
   }

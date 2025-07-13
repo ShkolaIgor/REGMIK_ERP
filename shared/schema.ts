@@ -2599,6 +2599,38 @@ export type InsertCurrencyRate = z.infer<typeof insertCurrencyRateSchema>;
 export type CurrencyUpdateSettings = typeof currencyUpdateSettings.$inferSelect;
 export type InsertCurrencyUpdateSettings = z.infer<typeof insertCurrencyUpdateSettingsSchema>;
 
+// Система логування
+export const systemLogs = pgTable("system_logs", {
+  id: serial("id").primaryKey(),
+  level: varchar("level", { length: 20 }).notNull(), // info, warn, error, debug
+  category: varchar("category", { length: 100 }).notNull(), // 1c_integration, order_processing, auth, system
+  module: varchar("module", { length: 100 }).notNull(), // orders, products, auth, 1c
+  message: text("message").notNull(),
+  details: jsonb("details"), // Додаткові дані у JSON форматі
+  userId: integer("user_id").references(() => users.id),
+  sessionId: varchar("session_id", { length: 255 }),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  requestId: varchar("request_id", { length: 100 }),
+  stack: text("stack"), // Stack trace для помилок
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("system_logs_level_idx").on(table.level),
+  index("system_logs_category_idx").on(table.category),
+  index("system_logs_module_idx").on(table.module),
+  index("system_logs_created_at_idx").on(table.createdAt),
+  index("system_logs_user_id_idx").on(table.userId),
+]);
+
+// Схеми для логування
+export const insertSystemLogSchema = createInsertSchema(systemLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type SystemLog = typeof systemLogs.$inferSelect;
+export type InsertSystemLog = z.infer<typeof insertSystemLogSchema>;
+
 // Релації для системи ролей та дозволів
 export const rolesRelations = relations(roles, ({ many }) => ({
   users: many(users),

@@ -69,6 +69,7 @@ import Integrations from "@/pages/integrations";
 import Profile from "@/pages/profile";
 import DateTest from "@/pages/date-test";
 import Test1CDebug from "@/pages/test-1c-debug";
+import SystemLogs from "@/pages/system-logs";
 
 import NotFound from "@/pages/not-found";
 
@@ -241,6 +242,7 @@ function Router() {
         <Route path="/currency-rates" component={CurrencyRates} />
         <Route path="/date-test" component={DateTest} />
         <Route path="/test-1c-debug" component={Test1CDebug} />
+        <Route path="/system-logs" component={SystemLogs} />
 
         <Route path="/users" component={Users} />
         <Route path="/roles" component={Roles} />

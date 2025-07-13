@@ -58,6 +58,7 @@ import {
   type EntityMapping, type InsertEntityMapping,
   type SyncQueue, type InsertSyncQueue,
   type FieldMapping, type InsertFieldMapping,
+  type SystemLog, type InsertSystemLog,
   departments
 } from "@shared/schema";
 import { db } from "./db";
@@ -568,6 +569,28 @@ export interface IStorage {
   // 1C Integration - Order Import  
   import1COutgoingInvoice(invoiceId: string): Promise<{ success: boolean; message: string; orderId?: number; }>;
   get1COutgoingInvoices(): Promise<any[]>;
+  
+  // System Logging
+  createSystemLog(logData: InsertSystemLog): Promise<SystemLog>;
+  getSystemLogs(params?: {
+    page?: number;
+    limit?: number;
+    level?: string;
+    category?: string;
+    module?: string;
+    userId?: number;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<{ logs: SystemLog[]; total: number }>;
+  deleteOldLogs(olderThanDays?: number): Promise<number>;
+  getLogStats(): Promise<{
+    totalLogs: number;
+    errorCount: number;
+    warnCount: number;
+    infoCount: number;
+    debugCount: number;
+    recentErrors: SystemLog[];
+  }>;
 }
 
 export class MemStorage implements IStorage {
@@ -2074,6 +2097,46 @@ export class MemStorage implements IStorage {
 
   async get1CInvoices(): Promise<any[]> {
     return [];
+  }
+
+  // 1C Integration - Order Import
+  async import1COutgoingInvoice(invoiceId: string): Promise<{ success: boolean; message: string; orderId?: number; }> {
+    return { success: false, message: "MemStorage не підтримує 1C інтеграцію" };
+  }
+
+  async get1COutgoingInvoices(): Promise<any[]> {
+    return [];
+  }
+
+  // System Logging
+  async createSystemLog(logData: InsertSystemLog): Promise<SystemLog> {
+    throw new Error("MemStorage не підтримує системне логування");
+  }
+
+  async getSystemLogs(params: any = {}): Promise<{ logs: SystemLog[]; total: number }> {
+    return { logs: [], total: 0 };
+  }
+
+  async deleteOldLogs(olderThanDays: number = 90): Promise<number> {
+    return 0;
+  }
+
+  async getLogStats(): Promise<{
+    totalLogs: number;
+    errorCount: number;
+    warnCount: number;
+    infoCount: number;
+    debugCount: number;
+    recentErrors: SystemLog[];
+  }> {
+    return {
+      totalLogs: 0,
+      errorCount: 0,
+      warnCount: 0,
+      infoCount: 0,
+      debugCount: 0,
+      recentErrors: []
+    };
   }
 }
 

@@ -15,7 +15,7 @@ import {
   clientMail, mailRegistry, envelopePrintSettings, companies, syncLogs, userSortPreferences,
   integrationConfigs, entityMappings, syncQueue, fieldMappings, productNameMappings,
   repairs, repairParts, repairStatusHistory, repairDocuments, orderItemSerialNumbers, novaPoshtaCities, novaPoshtaWarehouses,
-  bankPaymentNotifications, orderPayments,
+  bankPaymentNotifications, orderPayments, systemLogs,
  type LocalUser, type InsertLocalUser,
   type Permission, type InsertPermission,
   type RolePermission, type InsertRolePermission, type UserPermission, type InsertUserPermission,
@@ -72,6 +72,7 @@ import {
   type ClientNovaPoshtaSettings, type InsertClientNovaPoshtaSettings,
   type ClientNovaPoshtaApiSettings, type InsertClientNovaPoshtaApiSettings,
   type UserSortPreference, type InsertUserSortPreference,
+  type SystemLog, type InsertSystemLog,
   type Repair, type InsertRepair,
   type RepairPart, type InsertRepairPart,
   type RepairStatusHistory, type InsertRepairStatusHistory,
@@ -10801,7 +10802,177 @@ export class DatabaseStorage implements IStorage {
     return client;
   }
 
+  // МЕТОДИ ЛОГУВАННЯ
 
+  async createSystemLog(logData: InsertSystemLog): Promise<SystemLog> {
+    try {
+      const [created] = await db
+        .insert(systemLogs)
+        .values(logData)
+        .returning();
+      return created;
+    } catch (error) {
+      console.error('Error creating system log:', error);
+      throw error;
+    }
+  }
+
+  async getSystemLogs(params: {
+    page?: number;
+    limit?: number;
+    level?: string;
+    category?: string;
+    module?: string;
+    userId?: number;
+    startDate?: Date;
+    endDate?: Date;
+  } = {}): Promise<{ logs: SystemLog[]; total: number }> {
+    try {
+      const { 
+        page = 1, 
+        limit = 50, 
+        level, 
+        category, 
+        module, 
+        userId, 
+        startDate, 
+        endDate 
+      } = params;
+
+      const offset = (page - 1) * limit;
+      const conditions = [];
+
+      if (level) conditions.push(eq(systemLogs.level, level));
+      if (category) conditions.push(eq(systemLogs.category, category));
+      if (module) conditions.push(eq(systemLogs.module, module));
+      if (userId) conditions.push(eq(systemLogs.userId, userId));
+      if (startDate) conditions.push(gte(systemLogs.createdAt, startDate));
+      if (endDate) conditions.push(lte(systemLogs.createdAt, endDate));
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      // Отримання логів
+      const logs = await db
+        .select({
+          id: systemLogs.id,
+          level: systemLogs.level,
+          category: systemLogs.category,
+          module: systemLogs.module,
+          message: systemLogs.message,
+          details: systemLogs.details,
+          userId: systemLogs.userId,
+          sessionId: systemLogs.sessionId,
+          ipAddress: systemLogs.ipAddress,
+          userAgent: systemLogs.userAgent,
+          requestId: systemLogs.requestId,
+          stack: systemLogs.stack,
+          createdAt: systemLogs.createdAt,
+          user: {
+            id: users.id,
+            username: users.username,
+            firstName: users.firstName,
+            lastName: users.lastName
+          }
+        })
+        .from(systemLogs)
+        .leftJoin(users, eq(systemLogs.userId, users.id))
+        .where(whereClause)
+        .orderBy(desc(systemLogs.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      // Підрахунок загальної кількості
+      const [{ count }] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(systemLogs)
+        .where(whereClause);
+
+      return {
+        logs: logs.map(log => ({
+          ...log,
+          user: log.user?.id ? log.user : undefined
+        })),
+        total: count
+      };
+    } catch (error) {
+      console.error('Error getting system logs:', error);
+      throw error;
+    }
+  }
+
+  async deleteOldLogs(olderThanDays: number = 90): Promise<number> {
+    try {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
+
+      const result = await db
+        .delete(systemLogs)
+        .where(lt(systemLogs.createdAt, cutoffDate));
+
+      return result.rowCount || 0;
+    } catch (error) {
+      console.error('Error deleting old logs:', error);
+      throw error;
+    }
+  }
+
+  async getLogStats(): Promise<{
+    totalLogs: number;
+    errorCount: number;
+    warnCount: number;
+    infoCount: number;
+    debugCount: number;
+    recentErrors: SystemLog[];
+  }> {
+    try {
+      // Загальна кількість логів
+      const [{ totalLogs }] = await db
+        .select({ totalLogs: sql<number>`count(*)` })
+        .from(systemLogs);
+
+      // Кількість за рівнями
+      const levelCounts = await db
+        .select({
+          level: systemLogs.level,
+          count: sql<number>`count(*)`
+        })
+        .from(systemLogs)
+        .groupBy(systemLogs.level);
+
+      const counts = {
+        errorCount: 0,
+        warnCount: 0,
+        infoCount: 0,
+        debugCount: 0
+      };
+
+      levelCounts.forEach(({ level, count }) => {
+        switch (level) {
+          case 'error': counts.errorCount = count; break;
+          case 'warn': counts.warnCount = count; break;
+          case 'info': counts.infoCount = count; break;
+          case 'debug': counts.debugCount = count; break;
+        }
+      });
+
+      // Останні помилки
+      const recentErrors = await db
+        .select()
+        .from(systemLogs)
+        .where(eq(systemLogs.level, 'error'))
+        .orderBy(desc(systemLogs.createdAt))
+        .limit(5);
+
+      return {
+        totalLogs,
+        ...counts,
+        recentErrors
+      };
+    } catch (error) {
+      console.error('Error getting log stats:', error);
+      throw error;
+    }
+  }
 
 }
 
