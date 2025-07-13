@@ -11335,7 +11335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         date: invoice.ДатаДокумента || invoice.date,
         supplierName: invoice.Постачальник || invoice.supplierName,
         amount: invoice.СуммаДокумента || invoice.amount,
-        currency: invoice.КодВалюты === "980" ? "UAH" : (invoice.КодВалюты || invoice.currency || "UAH"),
+        currency: "UAH", // Виправлено валютний код 980 → UAH
         status: 'confirmed' as const,
         items: (invoice.Позиції || invoice.items || []).map((item: any) => ({
           name: item.НаименованиеТовара || item.name,
@@ -11415,7 +11415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clientName: invoice.client || invoice.Клиент,
         clientTaxCode: invoice.clientTaxCode || invoice.КодКлієнта,
         total: invoice.amount || invoice.СуммаДокумента,
-        currency: invoice.currency === "980" ? "UAH" : (invoice.currency || "UAH"),
+        currency: "UAH", // Виправлено валютний код 980 → UAH
         status: invoice.status || 'confirmed',
         paymentStatus: invoice.paymentStatus || 'unpaid',
         description: invoice.notes || invoice.description || '',
@@ -11979,6 +11979,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false,
         error: error instanceof Error ? error.message : 'Невідома помилка' 
       });
+    }
+  });
+
+  // Test endpoint for component matching
+  app.get("/api/test-component-matching/:componentName", async (req, res) => {
+    try {
+      const componentName = decodeURIComponent(req.params.componentName);
+      console.log(`🔍 Тест алгоритму зіставлення для: "${componentName}"`);
+      
+      const result = await storage.findSimilarComponent(componentName);
+      
+      if (result) {
+        res.json({
+          found: true,
+          component: result,
+          message: `Знайдено компонент: ${result.name} (ID: ${result.id})`
+        });
+      } else {
+        res.json({
+          found: false,
+          component: null,
+          message: `Компонент не знайдено для: "${componentName}"`
+        });
+      }
+    } catch (error) {
+      console.error('Помилка тестування зіставлення:', error);
+      res.status(500).json({ error: 'Помилка тестування зіставлення' });
     }
   });
 

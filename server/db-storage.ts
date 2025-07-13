@@ -10110,20 +10110,47 @@ export class DatabaseStorage implements IStorage {
         }
         
         // КРОК 3.5: Спеціальний алгоритм для компонентів з додатковими символами
-        // Наприклад: "Кнопка SWT-3 L-3.85mm" повинна знаходити "Кнопка SWT-3"
-        if (normalizedExternal.length > normalizedComponent.length) {
-          const words = normalizedExternal.split(/\s+/);
-          const componentWords = normalizedComponent.split(/\s+/);
-          
-          // Перевіряємо, чи всі слова з короткої назви містяться в довгій
-          const allWordsMatch = componentWords.every(word => 
-            words.some(externalWord => externalWord.includes(word) || word.includes(externalWord))
-          );
-          
-          if (allWordsMatch && componentWords.length > 1) {
-            const partialScore = normalizedComponent.length * 50; // Високий пріоритет для часткового збігу
-            if (!bestMatch || partialScore > bestMatch.score) {
-              bestMatch = { component, score: partialScore, type: "ЧАСТКОВИЙ_ЗБІГ" };
+        // Наприклад: "Кнопка SWT-3 L-3.85mm" повинна знаходити "SWT-3 угловая 3.85mm"
+        const externalWords = normalizedExternal.split(/\s+/);
+        const componentWords = normalizedComponent.split(/\s+/);
+        
+        // Перевіряємо збіг ключових слів (числа, коди, технічні параметри)
+        const keyMatches = componentWords.filter(word => 
+          externalWords.some(externalWord => {
+            // Точний збіг слів
+            if (word === externalWord) return true;
+            // Збіг числових значень (напр. "3.85" та "3.85mm")
+            if (word.match(/\d+\.?\d*/) && externalWord.match(/\d+\.?\d*/)) {
+              const num1 = word.match(/\d+\.?\d*/)?.[0];
+              const num2 = externalWord.match(/\d+\.?\d*/)?.[0];
+              return num1 === num2;
+            }
+            // Збіг основних кодів (напр. "swt3" та "swt3")
+            if (word.length > 3 && externalWord.length > 3) {
+              return word.includes(externalWord) || externalWord.includes(word);
+            }
+            return false;
+          })
+        );
+        
+        if (keyMatches.length > 0) {
+          const keyScore = keyMatches.length * 100 + normalizedComponent.length * 10; // Високий пріоритет для ключових збігів
+          if (!bestMatch || keyScore > bestMatch.score) {
+            bestMatch = { component, score: keyScore, type: "КЛЮЧОВИЙ_ЗБІГ" };
+          }
+        }
+        
+        // КРОК 3.6: Пошук числових параметрів (3.85mm → 3.85mm)
+        const numberMatches = normalizedExternal.match(/\d+\.?\d*/g) || [];
+        const componentNumbers = normalizedComponent.match(/\d+\.?\d*/g) || [];
+        
+        if (numberMatches.length > 0 && componentNumbers.length > 0) {
+          const commonNumbers = numberMatches.filter(num => componentNumbers.includes(num));
+          if (commonNumbers.length > 0) {
+            // Віддаємо пріоритет довшим назвам з числовими збігами
+            const numberScore = commonNumbers.length * 150 + normalizedComponent.length * 20; // Пріоритет для довших і детальніших назв
+            if (!bestMatch || numberScore > bestMatch.score) {
+              bestMatch = { component, score: numberScore, type: "ЧИСЛОВИЙ_ЗБІГ" };
             }
           }
         }
@@ -10385,7 +10412,7 @@ export class DatabaseStorage implements IStorage {
         date: "2025-07-08",
         supplierName: "РС ГРУП КОМПАНІ",
         amount: 4632,
-        currency: this.convertCurrencyCode("980"), // ВИПРАВЛЕНО ВАЛЮТНИЙ КОД
+        currency: "UAH", // ВИПРАВЛЕНО ВАЛЮТНИЙ КОД з 980 на UAH
         status: "confirmed",
         items: [
           {
@@ -10409,7 +10436,7 @@ export class DatabaseStorage implements IStorage {
         date: "2025-07-07",
         supplierName: "ВД МАІС",
         amount: 2176.8,
-        currency: this.convertCurrencyCode("980"), // ВИПРАВЛЕНО ВАЛЮТНИЙ КОД
+        currency: "UAH", // ВИПРАВЛЕНО ВАЛЮТНИЙ КОД з 980 на UAH
         status: "confirmed",
         items: [
           {
