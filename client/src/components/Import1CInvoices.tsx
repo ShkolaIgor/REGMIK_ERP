@@ -395,14 +395,18 @@ export function Import1CInvoices() {
               
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm">Позиції накладної</CardTitle>
+                  <CardTitle className="text-sm">Позиції накладної з зіставленням компонентів</CardTitle>
+                  <CardDescription>
+                    Відображено зіставлення назв товарів з 1С з компонентами в ERP системі
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b">
-                          <th className="text-left p-2">Найменування</th>
+                          <th className="text-left p-2">Найменування з 1С</th>
+                          <th className="text-left p-2">Зіставлення ERP</th>
                           <th className="text-right p-2">Кількість</th>
                           <th className="text-left p-2">Од. вим.</th>
                           <th className="text-right p-2">Ціна</th>
@@ -413,28 +417,37 @@ export function Import1CInvoices() {
                         {showPreview.items.map((item, idx) => (
                           <tr key={idx} className="border-b">
                             <td className="p-2">
-                              <div className="space-y-1">
-                                {/* Назва з 1С */}
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs text-blue-600 font-medium">1С:</span>
-                                  <span className="text-sm">{item.nameFrom1C || item.originalName || item.name}</span>
-                                </div>
-                                
-                                {/* ERP еквівалент */}
-                                {item.erpEquivalent ? (
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs text-green-600 font-medium">ERP:</span>
-                                    <span className="text-sm text-green-700">{item.erpEquivalent}</span>
-                                    <span className="text-xs bg-green-100 text-green-800 px-1 rounded">знайдено</span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs text-orange-600 font-medium">ERP:</span>
-                                    <span className="text-sm text-gray-500 italic">компонент буде створено</span>
-                                    <span className="text-xs bg-orange-100 text-orange-800 px-1 rounded">новий</span>
-                                  </div>
-                                )}
+                              <div className="font-medium text-sm">
+                                {item.nameFrom1C || item.originalName || item.name}
                               </div>
+                              {item.sku && (
+                                <div className="text-xs text-gray-500 font-mono">
+                                  SKU: {item.sku}
+                                </div>
+                              )}
+                            </td>
+                            <td className="p-2">
+                              {item.erpEquivalent ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-1">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    <span className="text-sm font-medium text-green-700">{item.erpEquivalent}</span>
+                                  </div>
+                                  <Badge className="bg-green-100 text-green-800 text-xs px-2 py-0.5">
+                                    знайдено
+                                  </Badge>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-1">
+                                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                    <span className="text-sm text-gray-600 italic">буде створено</span>
+                                  </div>
+                                  <Badge className="bg-orange-100 text-orange-800 text-xs px-2 py-0.5">
+                                    новий
+                                  </Badge>
+                                </div>
+                              )}
                             </td>
                             <td className="p-2 text-right">{item.quantity}</td>
                             <td className="p-2">{item.unit}</td>

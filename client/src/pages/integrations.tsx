@@ -55,6 +55,7 @@ export default function Integrations() {
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedIntegration, setSelectedIntegration] = useState<IntegrationConfig | null>(null);
+  const [mappingResults, setMappingResults] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: "",
     displayName: "",
@@ -237,6 +238,34 @@ export default function Integrations() {
       syncMethods: [],
     });
     setSelectedIntegration(null);
+  };
+
+  const testComponentMapping = async () => {
+    const testProducts = ["РП2-У-110", "DF10S", "Стабілітрон BZX84C3V3"];
+    const results = [];
+    
+    for (const productName of testProducts) {
+      try {
+        const response = await apiRequest(`/api/test-component-matching/${encodeURIComponent(productName)}`, "GET");
+        results.push({
+          name: productName,
+          result: response,
+          success: true
+        });
+      } catch (error) {
+        results.push({
+          name: productName,
+          error: error.message,
+          success: false
+        });
+      }
+    }
+    
+    setMappingResults(results);
+    toast({
+      title: "Тест зіставлення завершено",
+      description: `Протестовано ${results.length} компонентів`,
+    });
   };
 
   const handleSubmit = () => {
@@ -460,6 +489,57 @@ export default function Integrations() {
         </TabsList>
 
         <TabsContent value="configs" className="space-y-4">
+          {mappingResults && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Результати тестування зіставлення компонентів</CardTitle>
+                <CardDescription>
+                  Перевірка алгоритму зіставлення 1С назв з компонентами ERP
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {mappingResults.map((result, idx) => (
+                    <div key={idx} className="p-4 border rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-medium">{result.name}</div>
+                        <Badge variant={result.success ? "default" : "destructive"}>
+                          {result.success ? "Успішно" : "Помилка"}
+                        </Badge>
+                      </div>
+                      {result.success ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">Знайдено:</span>
+                            <span className="text-sm text-green-600">{result.result.found ? "Так" : "Ні"}</span>
+                          </div>
+                          {result.result.found && (
+                            <>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">Компонент:</span>
+                                <span className="text-sm">{result.result.component?.name}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">Метод:</span>
+                                <span className="text-sm">{result.result.method}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">Впевненість:</span>
+                                <span className="text-sm">{(result.result.confidence * 100).toFixed(1)}%</span>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-red-600">{result.error}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
           {integrationsLoading ? (
             <div>Завантаження...</div>
           ) : (
@@ -513,6 +593,15 @@ export default function Integrations() {
                           <>
                             <Import1CInvoices />
                             <Import1COutgoingInvoices />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => testComponentMapping()}
+                              className="text-blue-600 hover:bg-blue-50"
+                            >
+                              <TestTube className="mr-2 h-4 w-4" />
+                              Тест зіставлення
+                            </Button>
                           </>
                         )}
                         <Button

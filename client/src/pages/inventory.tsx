@@ -201,9 +201,13 @@ export default function Inventory() {
               </Button>
                 <Button 
                   className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
-                  onClick={() => setShowProductForm(true)}>
+                  onClick={() => {
+                    setEditingProduct(null);
+                    setIsViewMode(false);
+                    setShowProductForm(true);
+                  }}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Додати товар
+                  Новий товар
                 </Button>
               </div>
             </div>
