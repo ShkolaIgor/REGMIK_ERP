@@ -10968,7 +10968,7 @@ export class DatabaseStorage implements IStorage {
           .select()
           .from(products)
           .where(ilike(products.name, `%${normalizedName}%`))
-          .limit(5); // Більше записів для вибору найкращого збігу
+          .limit(100); // Збільшено ліміт для повного пошуку
           
         console.log(`🔍 Нормалізований пошук "${normalizedName}": ${foundProducts.length} записів`);
         
@@ -11005,7 +11005,7 @@ export class DatabaseStorage implements IStorage {
           .select()
           .from(components)
           .where(ilike(components.name, `%${itemName}%`))
-          .limit(1);
+          .limit(100); // Збільшено ліміт для повного пошуку компонентів
         console.log(`🔍 Components пошук: ${foundComponents.length} записів`);
       }
       
