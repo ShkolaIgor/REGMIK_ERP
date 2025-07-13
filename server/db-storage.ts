@@ -10079,6 +10079,9 @@ export class DatabaseStorage implements IStorage {
       
       let bestMatch: { component: any; score: number; type: string } | null = null;
       
+      // DEBUGGING: Тимчасове логування для діагностики (вимкнено для production)
+      const isDebugTarget = false; // externalProductName.includes('IDC-16');
+      
       for (const component of allComponents) {
         const normalizedComponent = this.normalizeProductName(component.name);
         
@@ -10099,9 +10102,28 @@ export class DatabaseStorage implements IStorage {
         }
         
         // КРОК 3: Перевіряємо, чи містить одна назва іншу (третій пріоритет)
-        // Додаємо валідацію релевантності для уникнення неправильних збігів
         if (normalizedExternal.includes(normalizedComponent) || normalizedComponent.includes(normalizedExternal)) {
-          // Перевіряємо, чи справді релевантні категорії компонентів
+          // БЛОКУЄМО неправильні категорії на етапі включення
+          const isConnector = normalizedExternal.includes('rozyem') || normalizedExternal.includes('idc');
+          const isCapacitor = normalizedComponent.includes('kohdehcatop') || normalizedComponent.includes('kondehcatop');
+          const isResistor = normalizedComponent.includes('pecictop');
+          const isInductor = normalizedComponent.includes('dpocel');
+          
+          // DEBUGGING: Логування для включення
+          if (isDebugTarget) {
+            console.log(`🔍 DEBUG: КРОК 3 - Перевірка включення для "${component.name}"`);
+            console.log(`🔍 DEBUG: isConnector=${isConnector}, isCapacitor=${isCapacitor}, isResistor=${isResistor}, isInductor=${isInductor}`);
+          }
+          
+          if (isConnector && (isCapacitor || isResistor || isInductor)) {
+            // DEBUGGING: Логування блокування
+            if (isDebugTarget) {
+              console.log(`🚫 DEBUG: КРОК 3 - Блокую включення "${component.name}" - роз'єм не може бути ${isCapacitor ? 'конденсатором' : isResistor ? 'резистором' : 'індуктивністю'}`);
+            }
+            continue; // блокуємо роз'єми від електронних компонентів
+          }
+          
+          // Перевіряємо категорійну сумісність
           if (this.areComponentCategoriesCompatible(normalizedExternal, normalizedComponent)) {
             const includeScore = Math.min(normalizedExternal.length, normalizedComponent.length) * 10;
             if (!bestMatch || includeScore > bestMatch.score) {
@@ -10135,6 +10157,16 @@ export class DatabaseStorage implements IStorage {
         );
         
         if (keyMatches.length > 0) {
+          // БЛОКУЄМО неправильні категорії на етапі ключових збігів
+          const isConnector = normalizedExternal.includes('rozyem') || normalizedExternal.includes('idc');
+          const isCapacitor = normalizedComponent.includes('kondehcatop');
+          const isResistor = normalizedComponent.includes('pecictop');
+          const isInductor = normalizedComponent.includes('dpocel');
+          
+          if (isConnector && (isCapacitor || isResistor || isInductor)) {
+            continue; // блокуємо роз'єми від електронних компонентів
+          }
+          
           // Перевіряємо сумісність категорій перед додаванням ключового збігу
           if (this.areComponentCategoriesCompatible(normalizedExternal, normalizedComponent)) {
             const keyScore = keyMatches.length * 100 + normalizedComponent.length * 10; // Високий пріоритет для ключових збігів
@@ -10151,18 +10183,67 @@ export class DatabaseStorage implements IStorage {
         if (numberMatches.length > 0 && componentNumbers.length > 0) {
           const commonNumbers = numberMatches.filter(num => componentNumbers.includes(num));
           if (commonNumbers.length > 0) {
-            // БЛОКУЄМО неправильні збіги: клемник НЕ може бути метчиком
+            // DEBUGGING: Логування входу в блок числових збігів
+            if (isDebugTarget) {
+              console.log(`🔍 DEBUG: Входимо в блок числових збігів для "${component.name}"`);
+            }
+            
+            // БЛОКУЄМО неправильні збіги різних категорій компонентів
+            const isConnector = normalizedExternal.includes('rozyem') || normalizedExternal.includes('idc');
+            const isCapacitor = normalizedComponent.includes('kohdehcatop') || normalizedComponent.includes('kondehcatop');
             const isTerminalBlock = normalizedExternal.includes('klemhik');
             const isThreadingTap = normalizedComponent.includes('metchik');
+            const isResistor = normalizedComponent.includes('pecictop');
+            const isInductor = normalizedComponent.includes('dpocel');
             
+            // DEBUGGING: Логування перевірки категорій
+            if (isDebugTarget) {
+              console.log(`🔍 DEBUG: Перевірка категорій - external: "${normalizedExternal}", component: "${normalizedComponent}"`);
+              console.log(`🔍 DEBUG: isConnector: ${isConnector}, isCapacitor: ${isCapacitor}, isTerminalBlock: ${isTerminalBlock}, isThreadingTap: ${isThreadingTap}`);
+            }
+            
+            // Роз'єми не можуть бути конденсаторами, резисторами або індуктивностями
+            if (isConnector && (isCapacitor || isResistor || isInductor)) {
+              // DEBUGGING: Логування блокування
+              if (isDebugTarget) {
+                console.log(`🚫 DEBUG: Блокую числовий збіг "${component.name}" - роз'єм не може бути ${isCapacitor ? 'конденсатором' : isResistor ? 'резистором' : 'індуктивністю'}`);
+              }
+              continue; // блокуємо неправильні збіги
+            }
+            
+            // Клемники не можуть бути метчиками
             if (isTerminalBlock && isThreadingTap) {
-              continue; // пропускаємо цей компонент - блокуємо неправильні збіги
+              // DEBUGGING: Логування блокування
+              if (isDebugTarget) {
+                console.log(`🚫 DEBUG: Блокую числовий збіг "${component.name}" - клемник не може бути метчиком`);
+              }
+              continue; // блокуємо неправильні збіги
+            }
+            
+            // Перевіряємо категорійну сумісність
+            const isCompatible = this.areComponentCategoriesCompatible(normalizedExternal, normalizedComponent);
+            if (!isCompatible) {
+              // DEBUGGING: Логування блокування
+              if (isDebugTarget) {
+                console.log(`🚫 DEBUG: Блокую числовий збіг "${component.name}" - несумісні категорії (external: "${normalizedExternal}", component: "${normalizedComponent}")`);
+              }
+              continue; // блокуємо неправильні збіги
+            }
+            
+            // DEBUGGING: Логування про сумісність
+            if (isDebugTarget) {
+              console.log(`✅ DEBUG: Категорії сумісні для "${component.name}" (external: "${normalizedExternal}", component: "${normalizedComponent}")`);
             }
             
             // Віддаємо пріоритет довшим назвам з числовими збігами
             const numberScore = commonNumbers.length * 150 + normalizedComponent.length * 20;
             if (!bestMatch || numberScore > bestMatch.score) {
               bestMatch = { component, score: numberScore, type: "ЧИСЛОВИЙ_ЗБІГ" };
+              
+              // DEBUGGING: Логування для діагностики
+              if (isDebugTarget) {
+                console.log(`🔢 DEBUG: Числовий збіг з "${component.name}" (score: ${numberScore}, числа: ${commonNumbers.join(', ')})`);
+              }
             }
           }
         }
@@ -10191,6 +10272,11 @@ export class DatabaseStorage implements IStorage {
           return null;
         }
         
+        // DEBUGGING: Логування фінального результату
+        if (isDebugTarget) {
+          console.log(`✅ DEBUG: Знайдено збіг "${bestMatch.component.name}" (тип: ${bestMatch.type}, score: ${bestMatch.score})`);
+        }
+        
         return { id: bestMatch.component.id, name: bestMatch.component.name };
       }
       
@@ -10205,25 +10291,39 @@ export class DatabaseStorage implements IStorage {
   private areComponentCategoriesCompatible(external: string, component: string): boolean {
     // Категорії компонентів, які НЕ можуть бути змішані
     const incompatiblePairs = [
+      // Роз'єми vs електронні компоненти
+      ['rozyem', 'kohdehcatop'], // роз'єм vs конденсатор
+      ['rozyem', 'kondehcatop'], // роз'єм vs конденсатор (альтернатива)
+      ['rozyem', 'pecictop'], // роз'єм vs резистор  
+      ['rozyem', 'dpocel'], // роз'єм vs дросель/індуктивність
+      ['idc', 'kohdehcatop'], // IDC роз'єм vs конденсатор
+      ['idc', 'kondehcatop'], // IDC роз'єм vs конденсатор (альтернатива)
+      ['idc', 'pecictop'], // IDC роз'єм vs резистор
+      ['idc', 'dpocel'], // IDC роз'єм vs дросель
       // Електронні vs механічні
-      ['mikpocxema', 'metchik'], // мікросхема vs метчик (виправлено написання)
+      ['mikpocxema', 'metchik'], // мікросхема vs метчик
       ['mikpocxema', 'myfta'], // мікросхема vs муфта
       ['mikpocxema', 'kleika'], // мікросхема vs клейка стрічка
-      ['kondehcatop', 'myfta'], // конденсатор vs муфта
-      ['kondehcatop', 'metchik'], // конденсатор vs метчик (виправлено написання)
-      ['klemhik', 'metchik'], // клемник vs метчик (виправлено написання)
+      ['kohdehcatop', 'myfta'], // конденсатор vs муфта
+      ['kondehcatop', 'myfta'], // конденсатор vs муфта (альтернатива)
+      ['kohdehcatop', 'metchik'], // конденсатор vs метчик
+      ['kondehcatop', 'metchik'], // конденсатор vs метчик (альтернатива)
+      ['klemhik', 'metchik'], // клемник vs метчик
       ['klemhik', 'myfta'], // клемник vs муфта
       // Механічні vs допоміжні матеріали
-      ['metchik', 'kleika'], // метчик vs клейка стрічка (виправлено написання)
+      ['metchik', 'kleika'], // метчик vs клейка стрічка
       ['myfta', 'kleika'], // муфта vs клейка стрічка
       // Інструменти vs електроніка
-      ['metchik', 'klemhik'], // метчик vs клемник - СИМЕТРИЧНИЙ (виправлено написання)
-      ['metchik', 'mikpocxema'], // метчик vs мікросхема (виправлено написання)
-      ['metchik', 'kondehcatop'], // метчик vs конденсатор (виправлено написання)
+      ['metchik', 'klemhik'], // метчик vs клемник
+      ['metchik', 'mikpocxema'], // метчик vs мікросхема
+      ['metchik', 'kohdehcatop'], // метчик vs конденсатор
+      ['metchik', 'kondehcatop'], // метчик vs конденсатор (альтернатива)
+      ['metchik', 'rozyem'], // метчик vs роз'єм
       // Допоміжні матеріали vs будь-що конкретне
-      ['kleika', 'metchik'], // клейка стрічка vs метчик (виправлено написання)
+      ['kleika', 'metchik'], // клейка стрічка vs метчик
       ['kleika', 'klemhik'], // клейка стрічка vs клемник
       ['kleika', 'mikpocxema'], // клейка стрічка vs мікросхема
+      ['kleika', 'rozyem'], // клейка стрічка vs роз'єм
     ];
 
     // Перевіряємо, чи не є пара несумісною
