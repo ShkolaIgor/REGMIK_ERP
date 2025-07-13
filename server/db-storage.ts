@@ -11320,21 +11320,21 @@ export class DatabaseStorage implements IStorage {
     
     try {
       // Пошук 1С інтеграції
-      const integrations = await db.select()
+      const integration1C = await db.select()
         .from(integrations)
         .where(eq(integrations.type, '1c'))
         .limit(1);
 
-      if (integrations.length === 0) {
+      if (integration1C.length === 0) {
         console.log('❌ 1С інтеграція не знайдена');
         return [];
       }
 
-      const integration = integrations[0];
+      const integration = integration1C[0];
       const config = integration.config as any;
 
       // Формуємо URL для запиту накладних з рахунком 202
-      const url = `${config.baseUrl}/hs/erp/invoices-202`;
+      const url = `${config.baseUrl}/hs/erp/invoices`;
       
       console.log(`🔗 Запит накладних 202 до: ${url}`);
 
