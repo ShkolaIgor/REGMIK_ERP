@@ -1,0 +1,53 @@
+[Log] Frontend: Making GET request to: /api/system-logs?page=1&limit=50 (index-Cdojdx4K.js, line 48)
+[Log] Frontend: Request headers: – Object (index-Cdojdx4K.js, line 48)
+Object
+[Log] Frontend: Request body: – undefined (index-Cdojdx4K.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-Cdojdx4K.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Error] Error: A <Select.Item /> must have a value prop that is not an empty string. This is because the Select value can be set to an empty string to clear the selection and show the placeholder.
+(anonymous function) — index-Cdojdx4K.js:764:68413
+HD — index-Cdojdx4K.js:38:17033
+jR — index-Cdojdx4K.js:40:1578
+pY — index-Cdojdx4K.js:40:39825
+Kpe — index-Cdojdx4K.js:40:39751
+CS — index-Cdojdx4K.js:40:39602
+Z3 — index-Cdojdx4K.js:40:35963
+DR — index-Cdojdx4K.js:40:36768
+If — index-Cdojdx4K.js:38:3290
+(anonymous function) — index-Cdojdx4K.js:40:34289
+
+	B3 (index-Cdojdx4K.js:40:167)
+	(anonymous function) (index-Cdojdx4K.js:40:391)
+	fR (index-Cdojdx4K.js:38:15561)
+	kR (index-Cdojdx4K.js:40:32081)
+	uY (index-Cdojdx4K.js:40:31500)
+	Upe (index-Cdojdx4K.js:40:31050)
+	Qpe (index-Cdojdx4K.js:40:40963)
+	Sm (index-Cdojdx4K.js:40:40316)
+	DR (index-Cdojdx4K.js:40:36916)
+	If (index-Cdojdx4K.js:38:3290)
+	(anonymous function) (index-Cdojdx4K.js:40:34289)
+[Error] Error: A <Select.Item /> must have a value prop that is not an empty string. This is because the Select value can be set to an empty string to clear the selection and show the placeholder.
+	If (index-Cdojdx4K.js:38:3381)
+	(anonymous function) (index-Cdojdx4K.js:40:34289)
+[Log] Frontend: Response status: 200 for GET /api/system-logs?page=1&limit=50 (index-Cdojdx4K.js, line 48)
+[Log] Frontend: Response headers: (index-Cdojdx4K.js, line 48)
+Object
+
+content-length: "23"
+
+content-type: "application/json; charset=utf-8"
+
+date: "Sun, 13 Jul 2025 07:02:12 GMT"
+
+server: "nginx/1.29.0"
+
+strict-transport-security: "max-age=63072000; includeSubdomains; preload"
+
+x-content-type-options: "nosniff"
+
+x-powered-by: "Express"
+
+x-xss-protection: "1; mode=block"
+
+Object Prototype

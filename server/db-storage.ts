@@ -10664,41 +10664,94 @@ export class DatabaseStorage implements IStorage {
       
       console.log(`🔍 КРИТИЧНИЙ ТЕСТ: Шукаємо товар "${itemName}"`);
       
-      // ТЕСТ 1: Прямий SQL запит для перевірки наявності товару
-      const testQuery = await db
+      // ПОКРАЩЕНИЙ ПОШУК ТОВАРІВ: точний збіг, ILIKE пошук, SKU пошук
+      console.log(`🔍 ПОКРАЩЕНИЙ ПОШУК для "${itemName}"`);
+      
+      // 1. Точний пошук за назвою
+      let foundProducts = await db
         .select()
         .from(products)
         .where(eq(products.name, itemName))
         .limit(1);
       
-      console.log(`🔍 SQL результат: ${testQuery.length} записів знайдено`);
-      if (testQuery.length > 0) {
-        console.log(`✅ ТОВАР ЗНАЙДЕНИЙ: "${testQuery[0].name}" (ID: ${testQuery[0].id})`);
-      } else {
-        console.log(`❌ ТОВАР НЕ ЗНАЙДЕНИЙ у таблиці products`);
+      console.log(`🔍 Точний пошук: ${foundProducts.length} записів`);
+      
+      // 2. Якщо не знайдено, ILIKE пошук за назвою
+      if (foundProducts.length === 0) {
+        foundProducts = await db
+          .select()
+          .from(products)
+          .where(ilike(products.name, `%${itemName}%`))
+          .limit(1);
+        console.log(`🔍 ILIKE пошук: ${foundProducts.length} записів`);
       }
       
-      // ТЕСТ 2: Пошук у components
-      const testComponentQuery = await db
-        .select()
-        .from(components)
-        .where(eq(components.name, itemName))
-        .limit(1);
+      // 3. Якщо не знайдено, пошук за SKU
+      if (foundProducts.length === 0) {
+        foundProducts = await db
+          .select()
+          .from(products)
+          .where(ilike(products.sku, `%${itemName}%`))
+          .limit(1);
+        console.log(`🔍 SKU пошук: ${foundProducts.length} записів`);
+      }
       
-      console.log(`🔍 Components результат: ${testComponentQuery.length} записів знайдено`);
-      if (testComponentQuery.length > 0) {
-        console.log(`✅ КОМПОНЕНТ ЗНАЙДЕНИЙ: "${testComponentQuery[0].name}" (ID: ${testComponentQuery[0].id})`);
-      } else {
-        console.log(`❌ КОМПОНЕНТ НЕ ЗНАЙДЕНИЙ у таблиці components`);
+      // 4. Пошук за нормалізованою назвою
+      if (foundProducts.length === 0) {
+        const normalizedName = this.normalizeProductName(itemName);
+        foundProducts = await db
+          .select()
+          .from(products)
+          .where(ilike(products.name, `%${normalizedName}%`))
+          .limit(5); // Більше записів для вибору найкращого збігу
+          
+        console.log(`🔍 Нормалізований пошук "${normalizedName}": ${foundProducts.length} записів`);
+        
+        if (foundProducts.length > 0) {
+          // Шукаємо найближчий збіг
+          let bestMatch = foundProducts[0];
+          let bestScore = 0;
+          
+          for (const product of foundProducts) {
+            const normalizedProductName = this.normalizeProductName(product.name);
+            const score = this.calculateSimilarityScore(normalizedName, normalizedProductName);
+            console.log(`🔍 Товар "${product.name}" (нормалізовано: "${normalizedProductName}") має схожість ${score}`);
+            
+            if (score > bestScore) {
+              bestScore = score;
+              bestMatch = product;
+            }
+          }
+          
+          if (bestScore > 0.7) {
+            foundProducts = [bestMatch];
+            console.log(`✅ КРАЩИЙ ЗБІГ: "${bestMatch.name}" (схожість: ${bestScore})`);
+          } else {
+            foundProducts = [];
+            console.log(`❌ Недостатня схожість (${bestScore} < 0.7)`);
+          }
+        }
+      }
+      
+      // ТЕСТ: Пошук у components (якщо товар не знайдений)
+      let foundComponents = [];
+      if (foundProducts.length === 0) {
+        foundComponents = await db
+          .select()
+          .from(components)
+          .where(ilike(components.name, `%${itemName}%`))
+          .limit(1);
+        console.log(`🔍 Components пошук: ${foundComponents.length} записів`);
       }
       
       // ЛОГІКА ВИБОРУ: products має пріоритет над components
       let foundProduct = null;
       
-      if (testQuery.length > 0) {
-        foundProduct = { type: 'product', id: testQuery[0].id, name: testQuery[0].name, isNew: false };
-        console.log(`🎯 ВИКОРИСТОВУЄМО ТОВАР: "${testQuery[0].name}" (ID: ${testQuery[0].id})`);
-      } else if (testComponentQuery.length > 0) {
+      if (foundProducts.length > 0) {
+        const product = foundProducts[0];
+        foundProduct = { type: 'product', id: product.id, name: product.name, isNew: false };
+        console.log(`🎯 ВИКОРИСТОВУЄМО ІСНУЮЧИЙ ТОВАР: "${product.name}" (ID: ${product.id})`);
+      } else if (foundComponents.length > 0) {
         // Створюємо товар з компонента
         const component = testComponentQuery[0];
         const newProduct = await db.insert(products).values({
@@ -10972,6 +11025,37 @@ export class DatabaseStorage implements IStorage {
       console.error('Error getting log stats:', error);
       throw error;
     }
+  }
+
+  // Допоміжні методи для нормалізації та пошуку товарів
+  private normalizeProductName(name: string): string {
+    if (!name) return '';
+    
+    return name
+      .toLowerCase()
+      .replace(/[^a-zA-Zа-яїієґ0-9]/g, '') // Видаляємо всі спецсимволи, залишаємо літери та цифри
+      .replace(/[іїієґ]/g, 'i') // Транслітерація українських літер
+      .trim();
+  }
+
+  private calculateSimilarityScore(str1: string, str2: string): number {
+    if (!str1 || !str2) return 0;
+    if (str1 === str2) return 1;
+    
+    const longer = str1.length > str2.length ? str1 : str2;
+    const shorter = str1.length > str2.length ? str2 : str1;
+    
+    if (longer.length === 0) return 1;
+    
+    // Підрахунок спільних символів
+    let commonChars = 0;
+    for (let i = 0; i < shorter.length; i++) {
+      if (longer.includes(shorter[i])) {
+        commonChars++;
+      }
+    }
+    
+    return commonChars / longer.length;
   }
 
 }
