@@ -1551,8 +1551,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Components routes
   app.get("/api/components", async (req, res) => {
     try {
+      const search = req.query.search as string;
       const components = await storage.getComponents();
-      res.json(components);
+      
+      // Фільтруємо компоненти за search параметром
+      if (search) {
+        const filteredComponents = components.filter(component => 
+          component.name.toLowerCase().includes(search.toLowerCase()) ||
+          component.sku.toLowerCase().includes(search.toLowerCase()) ||
+          (component.description && component.description.toLowerCase().includes(search.toLowerCase()))
+        );
+        res.json(filteredComponents);
+      } else {
+        res.json(components);
+      }
     } catch (error) {
       console.error("Error fetching components:", error);
       res.status(500).json({ error: "Failed to fetch components", details: error.message });

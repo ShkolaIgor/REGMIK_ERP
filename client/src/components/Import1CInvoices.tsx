@@ -69,7 +69,7 @@ function ComponentMappingCell({ item, onMappingChange }: {
     try {
       setIsSearching(true);
       const response = await apiRequest(`/api/components?search=${encodeURIComponent(query)}`);
-      setFoundComponents(response.slice(0, 5)); // Обмежуємо до 5 результатів
+      setFoundComponents(response.slice(0, 50)); // Збільшено ліміт до 50 результатів
     } catch (error) {
       console.error('Component search failed:', error);
       setFoundComponents([]);
