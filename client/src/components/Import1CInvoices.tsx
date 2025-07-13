@@ -319,7 +319,7 @@ export function Import1CInvoices() {
       <DialogTrigger asChild>
         <Button variant="outline" className="flex items-center gap-2">
           <Upload className="w-4 h-4" />
-          Імпорт з 1C
+          Імпорт накладних
         </Button>
       </DialogTrigger>
       
