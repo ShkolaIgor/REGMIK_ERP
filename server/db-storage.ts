@@ -10329,42 +10329,107 @@ export class DatabaseStorage implements IStorage {
 
   // 1C Integration methods  
   async get1CInvoices(): Promise<any[]> {
-    console.log('🔗 DatabaseStorage: get1CInvoices - повертаємо тестові дані для імпорту компонентів');
+    console.log('🔗 DatabaseStorage: get1CInvoices - швидке повернення тестових даних без блокування');
     
-    // Простий fallback без складних запитів для усунення помилки require
-    return [
+    // Тестові дані для демонстрації алгоритму зіставлення
+    const testInvoices = [
       {
-        id: "test-1c-invoice-1",
-        number: "ПТУ-000001",
-        date: "2025-01-12",
-        supplierName: "ТОВ \"Компонент-Постач\"",
-        amount: 15000,
+        id: `1c-${Date.now()}-${Math.random()}`,
+        number: "РМ00-000620",
+        date: "2025-07-08",
+        supplierName: "РС ГРУП КОМПАНІ",
+        amount: 4632,
         currency: "UAH",
         status: "confirmed",
         items: [
           {
-            name: "Датчик температури ТСП-002",
-            nameFrom1C: "ТСП-002 Pt100-В3 D8 L150-40 G1/2 (-40..500)",
-            originalName: "ТСП-002 Pt100-В3 D8 L150-40 G1/2 (-40..500)",
-            quantity: 10,
+            name: "Накінечник 10-5-5",
+            originalName: "Накінечник 10-5-5",
+            quantity: 200,
+            price: 19.3,
+            total: 3860,
             unit: "шт",
-            price: 850.00,
-            total: 8500,
-            sku: "TSP-002-PT100"
+            codeTovara: "00-00006263",
+            nomerStroki: 1,
+            isMapped: false // Буде оновлено асинхронно
+          }
+        ],
+        exists: false,
+        kilkistTovariv: 1
+      },
+      {
+        id: `1c-${Date.now()}-${Math.random()}`,
+        number: "РМ00-000602",
+        date: "2025-07-07",
+        supplierName: "ВД МАІС",
+        amount: 2176.8,
+        currency: "UAH",
+        status: "confirmed",
+        items: [
+          {
+            name: "Роз'єм IDC-16",
+            originalName: "Роз'єм IDC-16",
+            quantity: 400,
+            price: 2.81,
+            total: 1124,
+            unit: "шт",
+            codeTovara: "00000016267",
+            nomerStroki: 1,
+            isMapped: false
           },
           {
-            name: "Реле проміжне РП2-У-110",
-            nameFrom1C: "РП2-У-110В 50Гц 2НО+2НЗ контакти",
-            originalName: "РП2-У-110В 50Гц 2НО+2НЗ контакти",
-            quantity: 25,
-            unit: "шт", 
-            price: 185.50,
-            total: 4637.50,
-            sku: "RP2-U-110"
+            name: "Стабілітрон BZX84C3V3",
+            originalName: "Стабілітрон BZX84C3V3",
+            quantity: 1000,
+            price: 0.69,
+            total: 690,
+            unit: "шт",
+            codeTovara: "00000011198",
+            nomerStroki: 2,
+            isMapped: false
+          },
+          {
+            name: "Мікроконтролер STM32F107VCT6", 
+            originalName: "Мікроконтролер STM32F107VCT6",
+            quantity: 5,
+            price: 72.56,
+            total: 362.8,
+            unit: "шт",
+            codeTovara: "00000012345",
+            nomerStroki: 3,
+            isMapped: false
           }
-        ]
+        ],
+        exists: false,
+        kilkistTovariv: 3
       }
     ];
+
+    return testInvoices;
+  }
+
+  // Новий метод для асинхронної перевірки зіставлення конкретної позиції
+  async checkItemMapping(itemName: string): Promise<{ isMapped: boolean; mappedComponentId?: number; mappedComponentName?: string }> {
+    try {
+      console.log(`🔍 Перевіряємо зіставлення для: "${itemName}"`);
+      
+      const componentMatch = await this.findSimilarComponent(itemName);
+      
+      if (componentMatch) {
+        console.log(`✅ Знайдено зіставлення: "${itemName}" → "${componentMatch.name}" (ID: ${componentMatch.id})`);
+        return {
+          isMapped: true,
+          mappedComponentId: componentMatch.id,
+          mappedComponentName: componentMatch.name
+        };
+      } else {
+        console.log(`❌ Зіставлення не знайдено для: "${itemName}"`);
+        return { isMapped: false };
+      }
+    } catch (error) {
+      console.error(`❌ Помилка перевірки зіставлення для "${itemName}":`, error);
+      return { isMapped: false };
+    }
   }
 
   async get1COutgoingInvoices() {

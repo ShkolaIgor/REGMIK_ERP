@@ -11614,6 +11614,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Асинхронна перевірка зіставлення позиції накладної з компонентами
+  app.post('/api/1c/check-item-mapping', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { itemName } = req.body;
+      
+      if (!itemName || typeof itemName !== 'string') {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Назва товару обов'язкова" 
+        });
+      }
+
+      console.log(`🔍 API: Перевіряємо зіставлення для: "${itemName}"`);
+      
+      const mappingResult = await storage.checkItemMapping(itemName);
+      
+      res.json({
+        success: true,
+        itemName: itemName,
+        ...mappingResult,
+        message: mappingResult.isMapped 
+          ? `Товар зіставлено з компонентом "${mappingResult.mappedComponentName}"` 
+          : "Зіставлення не знайдено"
+      });
+    } catch (error) {
+      console.error(`❌ Помилка перевірки зіставлення для "${req.body?.itemName}":`, error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : String(error),
+        itemName: req.body?.itemName || 'Unknown'
+      });
+    }
+  });
+
   // Import outgoing invoice from 1C to ERP as order
   app.post('/api/1c/outgoing-invoices/:invoiceId/import', isSimpleAuthenticated, async (req, res) => {
     try {
