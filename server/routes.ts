@@ -11754,6 +11754,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // TEST ENDPOINT: Перевірка зіставлення позицій накладних з компонентами
+  app.post('/api/1c/invoices/check-mapping', async (req, res) => {
+    try {
+      const { itemName } = req.body;
+      
+      if (!itemName) {
+        return res.status(400).json({ 
+          error: 'Назва товару (itemName) обов\'язкова для перевірки зіставлення' 
+        });
+      }
+      
+      console.log(`🔍 ТЕСТ ЗІСТАВЛЕННЯ: Перевіряємо "${itemName}"`);
+      
+      const result = await storage.checkItemMapping(itemName);
+      
+      console.log(`📊 РЕЗУЛЬТАТ: ${result.isMapped ? 'ЗНАЙДЕНО' : 'НЕ ЗНАЙДЕНО'}`);
+      if (result.isMapped) {
+        console.log(`   → ${result.mappedComponentName} (ID: ${result.mappedComponentId})`);
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error('❌ ПОМИЛКА тестування зіставлення:', error);
+      res.status(500).json({ 
+        isMapped: false,
+        error: error instanceof Error ? error.message : 'Невідома помилка тестування'
+      });
+    }
+  });
+
   // СИСТЕМА ЛОГУВАННЯ API
 
   // Отримати список логів з фільтрацією

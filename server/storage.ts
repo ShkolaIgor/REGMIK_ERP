@@ -594,6 +594,9 @@ export interface IStorage {
 
   // Product Name Mapping - жорстке зіставлення для рахунків
   findProductByExactName(externalProductName: string): Promise<{ erpProductId: number; erpProductName: string } | null>;
+  
+  // Component Item Mapping - перевірка зіставлення позицій накладних
+  checkItemMapping(itemName: string): Promise<{ isMapped: boolean; mappedComponentId?: number; mappedComponentName?: string }>;
 }
 
 export class MemStorage implements IStorage {
