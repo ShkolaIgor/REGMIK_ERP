@@ -12039,5 +12039,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug endpoint для детального аналізу проблеми XTR111
+  app.get("/api/debug-xtr111-matching", async (req, res) => {
+    try {
+      const componentName = "Мікросхема XTR111";
+      console.log(`🔍 DEBUG: Детальний аналіз зіставлення для: "${componentName}"`);
+      
+      // 1. Перевірити існуючі зіставлення
+      const existingMappings = await storage.getProductNameMappings();
+      const xtrMappings = existingMappings.filter(m => 
+        m.externalProductName.toLowerCase().includes('xtr') || 
+        m.erpProductName.toLowerCase().includes('xtr')
+      );
+      
+      // 2. Перевірити компоненти з XTR або XL
+      const components = await storage.getComponents();
+      const relevantComponents = components.filter(c => 
+        c.name.toLowerCase().includes('xtr') || 
+        c.name.toLowerCase().includes('xl2596')
+      );
+      
+      // 3. Тест прямого алгоритму
+      const directResult = await storage.findSimilarComponent(componentName);
+      
+      // 4. Тест через повний алгоритм накладних
+      const fullResult = await storage.findProductByAlternativeName(componentName, "1C");
+      
+      res.json({
+        componentName,
+        existingMappings: xtrMappings,
+        relevantComponents,
+        directAlgorithmResult: directResult ? { id: directResult.id, name: directResult.name } : null,
+        fullAlgorithmResult: fullResult ? { id: fullResult.erpProductId, name: fullResult.erpProductName, type: fullResult.type } : null,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error in XTR111 debug:", error);
+      res.status(500).json({ error: "Failed to debug XTR111 matching" });
+    }
+  });
+
   return httpServer;
 }
