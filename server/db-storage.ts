@@ -10064,8 +10064,8 @@ export class DatabaseStorage implements IStorage {
       
       let bestMatch: { component: any; score: number; type: string } | null = null;
       
-      // DEBUGGING: Вимкнено для production
-      const isDebugTarget = false;
+      // DEBUGGING: Увімкнено для діагностики неправильних зіставлень
+      const isDebugTarget = externalProductName.includes('LD1117S33TR') || externalProductName.includes('IDC-16');
       
       if (isDebugTarget) {
         console.log(`🔍 =======  ПОЧАТОК DEBUG СЕСІЇ =======`);
@@ -10383,7 +10383,18 @@ export class DatabaseStorage implements IStorage {
       
       if (bestMatch) {
         // Додаткова перевірка релевантності перед поверненням результату
-        if (bestMatch.type === "СХОЖІСТЬ" && bestMatch.score < 8) {
+        if (bestMatch.type === "СХОЖІСТЬ" && bestMatch.score < 25) {
+          if (isDebugTarget) {
+            console.log(`🚫 DEBUG: Відкидаю результат "${bestMatch.component.name}" - дуже низький score ${bestMatch.score} для типу ${bestMatch.type}`);
+          }
+          return null;
+        }
+        
+        // Додаткова перевірка для загальних низьких score
+        if (bestMatch.score < 50) {
+          if (isDebugTarget) {
+            console.log(`🚫 DEBUG: Відкидаю результат "${bestMatch.component.name}" - загалом дуже низький score ${bestMatch.score}`);
+          }
           return null;
         }
         
