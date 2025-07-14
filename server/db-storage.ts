@@ -10079,18 +10079,20 @@ export class DatabaseStorage implements IStorage {
       
       let bestMatch: { component: any; score: number; type: string } | null = null;
       
-      // DEBUGGING: Тимчасове логування для діагностики
-      const isDebugTarget = externalProductName.includes('XTR');
+      // DEBUGGING: Вимкнено для production
+      const isDebugTarget = false;
       
       if (isDebugTarget) {
+        console.log(`🔍 =======  ПОЧАТОК DEBUG СЕСІЇ =======`);
         console.log(`🔍 DEBUG: Пошук для "${externalProductName}" серед ${allComponents.length} компонентів`);
         console.log(`🔍 DEBUG: Нормалізовано як: "${normalizedExternal}"`);
+        console.log(`🔍 =======  ПОЧАТОК ПЕРЕБОРУ КОМПОНЕНТІВ =======`);
       }
       
       for (const component of allComponents) {
         const normalizedComponent = this.normalizeProductName(component.name);
         
-        if (isDebugTarget && component.name.includes('XTR')) {
+        if (isDebugTarget && (component.name.includes('XTR') || component.name.includes('BAT54') || component.name.includes('Regmik54'))) {
           console.log(`🔍 DEBUG: Перевіряємо компонент "${component.name}" (нормалізовано: "${normalizedComponent}")`);
         }
         
@@ -10115,6 +10117,11 @@ export class DatabaseStorage implements IStorage {
         const externalCodes = normalizedExternal.match(/[a-z]+\d+|\d+[a-z]+/g) || [];
         const componentCodes = normalizedComponent.match(/[a-z]+\d+|\d+[a-z]+/g) || [];
         
+        if (isDebugTarget && (component.name.includes('XTR') || component.name.includes('BAT54') || component.name.includes('Regmik54'))) {
+          console.log(`🔍 DEBUG: КРОК 2.5 - Коди в зовнішній назві: [${externalCodes.join(', ')}]`);
+          console.log(`🔍 DEBUG: КРОК 2.5 - Коди в компоненті "${component.name}": [${componentCodes.join(', ')}]`);
+        }
+        
         if (externalCodes.length > 0 && componentCodes.length > 0) {
           // Шукаємо точні збіги кодів
           const exactCodeMatches = externalCodes.filter(code => 
@@ -10123,12 +10130,52 @@ export class DatabaseStorage implements IStorage {
                               compCode.includes(code))
           );
           
+          if (isDebugTarget && (component.name.includes('XTR') || component.name.includes('BAT54') || component.name.includes('Regmik54'))) {
+            console.log(`🔍 DEBUG: КРОК 2.5 - Точні збіги кодів: [${exactCodeMatches.join(', ')}]`);
+          }
+          
           if (exactCodeMatches.length > 0) {
             // Перевіряємо категорійну сумісність
             if (this.areComponentCategoriesCompatible(normalizedExternal, normalizedComponent)) {
-              const codeScore = exactCodeMatches.length * 120 + exactCodeMatches[0].length * 10;
+              // ПОКРАЩЕНА ЛОГІКА: Визначаємо якість збігу кодів
+              // Перевіряємо чи один код є частиною іншого (правильна стратегія для "dodbat54" vs "bat54")
+              const hasHighQualityMatch = exactCodeMatches.some(externalCode => {
+                return componentCodes.some(componentCode => {
+                  // Якщо код компонента є частиною зовнішнього коду (напр. "bat54" входить в "dodbat54cw")
+                  const componentInExternal = externalCode.includes(componentCode);
+                  // Якщо зовнішній код є частиною коду компонента
+                  const externalInComponent = componentCode.includes(externalCode);
+                  
+                  if (isDebugTarget && (component.name.includes('XTR') || component.name.includes('BAT54') || component.name.includes('Regmik54'))) {
+                    console.log(`🔍 DEBUG: Порівняння кодів: "${externalCode}" vs "${componentCode}"`);
+                    console.log(`🔍 DEBUG: componentInExternal: ${componentInExternal}, externalInComponent: ${externalInComponent}`);
+                  }
+                  
+                  return componentInExternal || externalInComponent;
+                });
+              });
+              
+              let codeScore;
+              if (hasHighQualityMatch) {
+                // Якщо є високоякісний збіг коду, даємо максимальний пріоритет
+                codeScore = exactCodeMatches.length * 1000 + exactCodeMatches[0].length * 100;
+              } else {
+                // Інакше - стандартний score
+                codeScore = exactCodeMatches.length * 120 + exactCodeMatches[0].length * 10;
+              }
+              
+              if (isDebugTarget && (component.name.includes('XTR') || component.name.includes('BAT54') || component.name.includes('Regmik54'))) {
+                console.log(`🔍 DEBUG: КРОК 2.5 - Код збіг для "${component.name}", score: ${codeScore} (високоякісний збіг: ${hasHighQualityMatch}), категорійно сумісний`);
+              }
               if (!bestMatch || codeScore > bestMatch.score) {
                 bestMatch = { component, score: codeScore, type: "КОД_МОДЕЛІ" };
+                if (isDebugTarget) {
+                  console.log(`🎯 DEBUG: КРОК 2.5 - НОВИЙ КРАЩИЙ ЗБІГ: "${component.name}" з score ${codeScore}`);
+                }
+              }
+            } else {
+              if (isDebugTarget && (component.name.includes('XTR') || component.name.includes('BAT54') || component.name.includes('Regmik54'))) {
+                console.log(`🚫 DEBUG: КРОК 2.5 - Код збіг для "${component.name}", але категорійно НЕ сумісний`);
               }
             }
           }
@@ -10216,6 +10263,17 @@ export class DatabaseStorage implements IStorage {
         if (numberMatches.length > 0 && componentNumbers.length > 0) {
           const commonNumbers = numberMatches.filter(num => componentNumbers.includes(num));
           if (commonNumbers.length > 0) {
+            // СПЕЦІАЛЬНА ПЕРЕВІРКА: Блокуємо збіги за короткими числами (1-2 цифри) якщо компоненти різних типів
+            const hasShortNumbers = commonNumbers.some(num => num.length <= 2);
+            const isDiode = normalizedExternal.includes('diod') || normalizedExternal.includes('dod');
+            const isMultiplexer = normalizedComponent.includes('multiplexer') || normalizedComponent.includes('mux');
+            
+            if (hasShortNumbers && isDiode && isMultiplexer) {
+              if (isDebugTarget) {
+                console.log(`🚫 DEBUG: БЛОКУЮ числовий збіг "${component.name}" - діод не може бути мультиплексором за коротким числом (${commonNumbers.join(', ')})`);
+              }
+              continue; // блокуємо помилкові збіги за короткими числами
+            }
             // DEBUGGING: Логування входу в блок числових збігів
             if (isDebugTarget) {
               console.log(`🔍 DEBUG: Входимо в блок числових збігів для "${component.name}"`);
@@ -10299,15 +10357,21 @@ export class DatabaseStorage implements IStorage {
         }
       }
       
+      // DEBUGGING: Логування фінального результату
+      if (isDebugTarget) {
+        console.log(`🔍 =======  КІНЕЦЬ ПЕРЕБОРУ КОМПОНЕНТІВ =======`);
+        if (bestMatch) {
+          console.log(`✅ DEBUG: Знайдено збіг "${bestMatch.component.name}" (тип: ${bestMatch.type}, score: ${bestMatch.score})`);
+        } else {
+          console.log(`❌ DEBUG: Жодного збігу не знайдено для "${externalProductName}"`);
+        }
+        console.log(`🔍 =======  КІНЕЦЬ DEBUG СЕСІЇ =======`);
+      }
+      
       if (bestMatch) {
         // Додаткова перевірка релевантності перед поверненням результату
         if (bestMatch.type === "СХОЖІСТЬ" && bestMatch.score < 8) {
           return null;
-        }
-        
-        // DEBUGGING: Логування фінального результату
-        if (isDebugTarget) {
-          console.log(`✅ DEBUG: Знайдено збіг "${bestMatch.component.name}" (тип: ${bestMatch.type}, score: ${bestMatch.score})`);
         }
         
         return { id: bestMatch.component.id, name: bestMatch.component.name };
