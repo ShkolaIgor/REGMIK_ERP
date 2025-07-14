@@ -12039,6 +12039,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Special endpoint для тестування ТОЧНО ТОГО, що відбувається в production при імпорті накладних
+  app.get("/api/simulate-production-xtr111", async (req, res) => {
+    try {
+      console.log(`🔥 СИМУЛЯЦІЯ PRODUCTION: тестування XTR111 зіставлення при імпорті накладної`);
+      
+      // Симулюємо те саме що робиться в імпорті накладних
+      const invoicePosition = {
+        productName: "Мікросхема XTR111",
+        quantity: 1,
+        price: 25.50
+      };
+      
+      console.log(`🔥 ІМІТАЦІЯ: Обробляємо позицію накладної:`, invoicePosition);
+      
+      // Використовуємо ТОЧНО ТОЙ САМИЙ алгоритм що і при імпорті
+      const result = await storage.findProductByAlternativeName(invoicePosition.productName, "1C");
+      
+      if (result) {
+        console.log(`🔥 РЕЗУЛЬТАТ production алгоритму:`, result);
+        
+        res.json({
+          success: true,
+          productName: invoicePosition.productName,
+          foundComponent: {
+            id: result.erpProductId,
+            name: result.erpProductName,
+            type: result.type
+          },
+          productionAlgorithmResult: result,
+          message: `Production алгоритм знайшов: ${result.erpProductName} (ID: ${result.erpProductId})`
+        });
+      } else {
+        console.log(`🔥 РЕЗУЛЬТАТ: Production алгоритм НЕ ЗНАЙШОВ збіг для "${invoicePosition.productName}"`);
+        
+        res.json({
+          success: false,
+          productName: invoicePosition.productName,
+          foundComponent: null,
+          productionAlgorithmResult: null,
+          message: `Production алгоритм НЕ ЗНАЙШОВ збіг для "${invoicePosition.productName}"`
+        });
+      }
+    } catch (error) {
+      console.error("Error in production XTR111 simulation:", error);
+      res.status(500).json({ error: "Failed to simulate production XTR111 matching" });
+    }
+  });
+
+  // Production診斷 endpoint - дозволяє перевірити стан бази та алгоритму в production
+  app.get("/api/production-diagnostics", async (req, res) => {
+    try {
+      console.log(`🔧 PRODUCTION ДІАГНОСТИКА: перевірка стану системи`);
+      
+      // 1. Перевірити всі XTR/XL компоненти
+      const components = await storage.getComponents();
+      const xtrComponents = components.filter(c => 
+        c.name.toLowerCase().includes('xtr') || 
+        c.name.toLowerCase().includes('xl2596')
+      );
+      
+      // 2. Перевірити зіставлення XTR
+      const mappings = await storage.getProductNameMappings();
+      const xtrMappings = mappings.filter(m => 
+        m.externalProductName.toLowerCase().includes('xtr')
+      );
+      
+      // 3. Тест алгоритму з тимчасовим debug
+      const testComponentName = "Мікросхема XTR111";
+      
+      // Видалити зіставлення для чистого тесту
+      try {
+        await pool.query("DELETE FROM product_name_mappings WHERE external_product_name = 'Мікросхема XTR111'");
+      } catch (e) {
+        console.log('Зіставлення уже відсутнє');
+      }
+      
+      // Тестувати алгоритм
+      const directResult = await storage.findSimilarComponent(testComponentName);
+      const fullResult = await storage.findProductByAlternativeName(testComponentName, "1C");
+      
+      res.json({
+        timestamp: new Date().toISOString(),
+        environment: "production",
+        xtrComponents,
+        existingMappings: xtrMappings,
+        algorithmTests: {
+          testComponent: testComponentName,
+          directResult: directResult ? { id: directResult.id, name: directResult.name } : null,
+          fullResult: fullResult ? { id: fullResult.erpProductId, name: fullResult.erpProductName, type: fullResult.type } : null
+        },
+        databaseStats: {
+          totalComponents: components.length,
+          totalMappings: mappings.length
+        }
+      });
+    } catch (error) {
+      console.error("Error in production diagnostics:", error);
+      res.status(500).json({ error: "Failed to run production diagnostics" });
+    }
+  });
+
   // Debug endpoint для детального аналізу проблеми XTR111
   app.get("/api/debug-xtr111-matching", async (req, res) => {
     try {
