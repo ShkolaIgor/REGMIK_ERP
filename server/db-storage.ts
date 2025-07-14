@@ -10065,7 +10065,11 @@ export class DatabaseStorage implements IStorage {
       let bestMatch: { component: any; score: number; type: string } | null = null;
       
       // DEBUGGING: Увімкнено для діагностики неправильних зіставлень
-      const isDebugTarget = externalProductName.includes('LD1117S33TR') || externalProductName.includes('IDC-16');
+      const isDebugTarget = externalProductName.includes('LD1117S33TR') || 
+                           externalProductName.includes('IDC-16') ||
+                           externalProductName.includes('Фреза') ||
+                           externalProductName.includes('XTR111') ||
+                           externalProductName.includes('HF32F');
       
       if (isDebugTarget) {
         console.log(`🔍 =======  ПОЧАТОК DEBUG СЕСІЇ =======`);
@@ -10383,17 +10387,28 @@ export class DatabaseStorage implements IStorage {
       
       if (bestMatch) {
         // Додаткова перевірка релевантності перед поверненням результату
-        if (bestMatch.type === "СХОЖІСТЬ" && bestMatch.score < 25) {
+        if (bestMatch.type === "СХОЖІСТЬ" && bestMatch.score < 100) {
           if (isDebugTarget) {
             console.log(`🚫 DEBUG: Відкидаю результат "${bestMatch.component.name}" - дуже низький score ${bestMatch.score} для типу ${bestMatch.type}`);
           }
           return null;
         }
         
-        // Додаткова перевірка для загальних низьких score
-        if (bestMatch.score < 50) {
+        // Додаткова перевірка для загальних низьких score - підвищено до 200
+        if (bestMatch.score < 200) {
           if (isDebugTarget) {
             console.log(`🚫 DEBUG: Відкидаю результат "${bestMatch.component.name}" - загалом дуже низький score ${bestMatch.score}`);
+          }
+          return null;
+        }
+        
+        // Додаткова перевірка категорійної сумісності
+        const externalNormalized = this.normalizeProductName(externalProductName);
+        const componentNormalized = this.normalizeProductName(bestMatch.component.name);
+        
+        if (!this.areComponentCategoriesCompatible(externalNormalized, componentNormalized)) {
+          if (isDebugTarget) {
+            console.log(`🚫 DEBUG: Відкидаю результат "${bestMatch.component.name}" - несумісні категорії`);
           }
           return null;
         }

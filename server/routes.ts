@@ -10,7 +10,7 @@ import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./si
 import { novaPoshtaApi } from "./nova-poshta-api";
 import { novaPoshtaCache } from "./nova-poshta-cache";
 import { pool, db } from "./db";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import { productComponents, components, productNameMappings } from "@shared/schema";
 import { 
   insertProductSchema, insertOrderSchemaForm, insertRecipeSchema,
@@ -11790,28 +11790,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // TEST ENDPOINT: Перевірка зіставлення позицій накладних з компонентами
-  // GET endpoint для перевірки зіставлення компонентів
+  // GET endpoint для перевірки зіставлення компонентів - ТІЛЬКИ ДЛЯ ПЕРЕГЛЯДУ!
   app.get('/api/1c/invoices/check-mapping/:productName', isSimpleAuthenticated, async (req, res) => {
     try {
       const productName = decodeURIComponent(req.params.productName);
       console.log(`🔍 Перевірка зіставлення для: "${productName}"`);
       
-      const result = await storage.findProductByAlternativeName(productName, '1C');
-      
-      if (result) {
-        res.json({
+      // 1. Спочатку перевіряємо чи є готове зіставлення
+      const existingMapping = await storage.db.select({
+        erpProductId: productNameMappings.erpProductId,
+        erpProductName: productNameMappings.erpProductName,
+      })
+      .from(productNameMappings)
+      .where(and(
+        eq(productNameMappings.externalSystemName, '1C'),
+        eq(productNameMappings.externalProductName, productName),
+        eq(productNameMappings.isActive, true)
+      ))
+      .limit(1);
+
+      if (existingMapping.length > 0) {
+        console.log(`✅ Знайдено готове зіставлення: ${productName} → ${existingMapping[0].erpProductName}`);
+        return res.json({
           found: true,
           component: {
-            id: result.erpProductId,
-            name: result.erpProductName
+            id: existingMapping[0].erpProductId,
+            name: existingMapping[0].erpProductName
           }
         });
-      } else {
-        res.json({
-          found: false,
-          component: null
-        });
       }
+      
+      // 2. ТІЛЬКИ ДЛЯ ПЕРЕГЛЯДУ - НЕ СТВОРЮЄМО ЗІСТАВЛЕННЯ!
+      console.log(`❌ Готове зіставлення НЕ знайдено для: "${productName}"`);
+      res.json({
+        found: false,
+        component: null
+      });
+      
     } catch (error) {
       console.error('Помилка перевірки зіставлення:', error);
       res.status(500).json({ error: 'Помилка сервера' });
