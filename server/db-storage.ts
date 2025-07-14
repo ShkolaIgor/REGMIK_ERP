@@ -10079,24 +10079,57 @@ export class DatabaseStorage implements IStorage {
       
       let bestMatch: { component: any; score: number; type: string } | null = null;
       
-      // DEBUGGING: Тимчасове логування для діагностики (вимкнено для production)
-      const isDebugTarget = false; // externalProductName.includes('IDC-16');
+      // DEBUGGING: Тимчасове логування для діагностики
+      const isDebugTarget = externalProductName.includes('XTR');
+      
+      if (isDebugTarget) {
+        console.log(`🔍 DEBUG: Пошук для "${externalProductName}" серед ${allComponents.length} компонентів`);
+        console.log(`🔍 DEBUG: Нормалізовано як: "${normalizedExternal}"`);
+      }
       
       for (const component of allComponents) {
         const normalizedComponent = this.normalizeProductName(component.name);
+        
+        if (isDebugTarget && component.name.includes('XTR')) {
+          console.log(`🔍 DEBUG: Перевіряємо компонент "${component.name}" (нормалізовано: "${normalizedComponent}")`);
+        }
         
         // КРОК 1: Перевіряємо точну відповідність після нормалізації (найвищий пріоритет)
         if (normalizedExternal === normalizedComponent) {
           return { id: component.id, name: component.name };
         }
         
-        // КРОК 2: Спеціальна логіка для компонентів з довгими назвами (другий пріоритет)
+        // КРОК 2: Спеціальна логіка для компонентів з довгими назвами та спільних моделей (другий пріоритет)
         // Перевіряємо, чи містить зовнішня назва точний код компонента
         if (normalizedExternal.length > normalizedComponent.length && normalizedComponent.length >= 8) {
           if (normalizedExternal.includes(normalizedComponent)) {
             const exactScore = normalizedComponent.length * 100; // Найвищий бал за точне включення
             if (!bestMatch || exactScore > bestMatch.score) {
               bestMatch = { component, score: exactScore, type: "ТОЧНЕ_ВКЛЮЧЕННЯ" };
+            }
+          }
+        }
+        
+        // КРОК 2.5: Пошук спільних числових та літерних кодів в назвах (для випадків типу XTR111)
+        // Витягуємо літерно-числові коди (букви + цифри, мінімум 4 символи)
+        const externalCodes = normalizedExternal.match(/[a-z]+\d+|\d+[a-z]+/g) || [];
+        const componentCodes = normalizedComponent.match(/[a-z]+\d+|\d+[a-z]+/g) || [];
+        
+        if (externalCodes.length > 0 && componentCodes.length > 0) {
+          // Шукаємо точні збіги кодів
+          const exactCodeMatches = externalCodes.filter(code => 
+            componentCodes.some(compCode => code === compCode || 
+                              code.includes(compCode) || 
+                              compCode.includes(code))
+          );
+          
+          if (exactCodeMatches.length > 0) {
+            // Перевіряємо категорійну сумісність
+            if (this.areComponentCategoriesCompatible(normalizedExternal, normalizedComponent)) {
+              const codeScore = exactCodeMatches.length * 120 + exactCodeMatches[0].length * 10;
+              if (!bestMatch || codeScore > bestMatch.score) {
+                bestMatch = { component, score: codeScore, type: "КОД_МОДЕЛІ" };
+              }
             }
           }
         }

@@ -11982,7 +11982,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test endpoint for component matching
+  // Test endpoint for component matching (direct algorithm)
   app.get("/api/test-component-matching/:componentName", async (req, res) => {
     try {
       const componentName = decodeURIComponent(req.params.componentName);
@@ -12006,6 +12006,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Помилка тестування зіставлення:', error);
       res.status(500).json({ error: 'Помилка тестування зіставлення' });
+    }
+  });
+
+  // Test endpoint for full invoice matching (how invoices actually work)
+  app.get("/api/test-invoice-matching/:componentName", async (req, res) => {
+    try {
+      const componentName = decodeURIComponent(req.params.componentName);
+      console.log(`🔍 Тест повного алгоритму накладних для: "${componentName}"`);
+      
+      const result = await storage.findProductByAlternativeName(componentName, "1C");
+      
+      if (result) {
+        res.json({
+          found: true,
+          component: {
+            id: result.erpProductId,
+            name: result.erpProductName
+          },
+          message: `Знайдено компонент через повний алгоритм: ${result.erpProductName} (ID: ${result.erpProductId})`
+        });
+      } else {
+        res.json({
+          found: false,
+          component: null,
+          message: `Компонент не знайдено через повний алгоритм для: "${componentName}"`
+        });
+      }
+    } catch (error) {
+      console.error('Помилка тестування повного алгоритму:', error);
+      res.status(500).json({ error: 'Помилка тестування повного алгоритму' });
     }
   });
 
