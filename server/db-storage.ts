@@ -10054,7 +10054,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Функція для пошуку схожих компонентів за назвою (для накладних) - ПОКРАЩЕНА
-  private async findSimilarComponent(externalProductName: string): Promise<{ id: number; name: string } | null> {
+  private async findSimilarComponent(externalProductName: string): Promise<{ id: number; name: string; score: number } | null> {
     try {
       // Нормалізуємо назву для пошуку
       const normalizedExternal = this.normalizeProductName(externalProductName);
@@ -10087,7 +10087,7 @@ export class DatabaseStorage implements IStorage {
         
         // КРОК 1: Перевіряємо точну відповідність після нормалізації (найвищий пріоритет)
         if (normalizedExternal === normalizedComponent) {
-          return { id: component.id, name: component.name };
+          return { id: component.id, name: component.name, score: 1000 }; // Максимальний score для точного збігу
         }
         
         // КРОК 2: Спеціальна логіка для компонентів з довгими назвами та спільних моделей (другий пріоритет)
@@ -10413,7 +10413,7 @@ export class DatabaseStorage implements IStorage {
           return null;
         }
         
-        return { id: bestMatch.component.id, name: bestMatch.component.name };
+        return { id: bestMatch.component.id, name: bestMatch.component.name, score: bestMatch.score };
       }
       
       return null;

@@ -11790,7 +11790,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // TEST ENDPOINT: Перевірка зіставлення позицій накладних з компонентами
-  // GET endpoint для перевірки зіставлення компонентів - ТІЛЬКИ ДЛЯ ПЕРЕГЛЯДУ!
+  // GET endpoint для перевірки зіставлення компонентів - БЕЗПЕЧНИЙ РЕЖИМ
   app.get('/api/1c/invoices/check-mapping/:productName', isSimpleAuthenticated, async (req, res) => {
     try {
       const productName = decodeURIComponent(req.params.productName);
@@ -11820,8 +11820,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // 2. ТІЛЬКИ ДЛЯ ПЕРЕГЛЯДУ - НЕ СТВОРЮЄМО ЗІСТАВЛЕННЯ!
-      console.log(`❌ Готове зіставлення НЕ знайдено для: "${productName}"`);
+      // 2. Пошук компонента БЕЗ СТВОРЕННЯ ЗІСТАВЛЕННЯ (тільки для preview)
+      const foundComponent = await storage.findSimilarComponent(productName);
+      console.log(`🔍 DEBUG: foundComponent = ${foundComponent ? foundComponent.name + ' (score: ' + foundComponent.score + ')' : 'null'}`);
+      
+      if (foundComponent && foundComponent.score >= 25) {
+        console.log(`🔍 DEBUG: Компонент пройшов поріг >= 25: ${foundComponent.name} (score: ${foundComponent.score})`);
+        
+        // Простий блокатор проблемних категорій
+        const externalLower = productName.toLowerCase();
+        const componentLower = foundComponent.name.toLowerCase();
+        
+        // Блокуємо різні категорії компонентів
+        const isFrezaToMetchik = externalLower.includes('фреза') && componentLower.includes('метчик');
+        const isConnectorToCapacitor = externalLower.includes('роз\'єм') && componentLower.includes('конденсатор');
+        const isDiodeToMultiplexer = externalLower.includes('діод') && componentLower.includes('multiplexer');
+        
+        console.log(`🔍 DEBUG: Перевірки категорій - фреза→метчик:${isFrezaToMetchik}, роз'єм→конденсатор:${isConnectorToCapacitor}, діод→multiplexer:${isDiodeToMultiplexer}`);
+        
+        if (isFrezaToMetchik || isConnectorToCapacitor || isDiodeToMultiplexer) {
+          console.log(`❌ Категорійний конфлікт блоковано: ${productName} → ${foundComponent.name} (score: ${foundComponent.score})`);
+        } else {
+          console.log(`🔍 Знайдено компонент для preview: ${productName} → ${foundComponent.name} (score: ${foundComponent.score})`);
+          return res.json({
+            found: true,
+            component: {
+              id: foundComponent.id,
+              name: foundComponent.name
+            },
+            preview: true // Позначаємо що це тільки preview
+          });
+        }
+      } else {
+        console.log(`🔍 DEBUG: Компонент НЕ пройшов поріг або не знайдено`);
+      }
+      
+      console.log(`❌ Компонент НЕ знайдено для: "${productName}"`);
       res.json({
         found: false,
         component: null

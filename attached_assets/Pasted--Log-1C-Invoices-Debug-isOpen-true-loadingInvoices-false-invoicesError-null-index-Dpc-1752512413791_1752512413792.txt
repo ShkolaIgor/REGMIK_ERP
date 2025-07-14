@@ -1,0 +1,131 @@
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-DpcUKce4.js, line 1453)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 131}Object
+[Log] Frontend: Making GET request to: /api/1c/invoices/check-mapping/%D0%A1%D0%B8%D0%BC%D1%96%D1%81%D1%82%D0%BE%D1%80%20BTA16-800B%20BW%20RG (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request headers: – {} (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request body: – undefined (index-DpcUKce4.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-DpcUKce4.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-DpcUKce4.js, line 747)
+[Log] Frontend: Response status: 200 for GET /api/1c/invoices/check-mapping/%D0%A1%D0%B8%D0%BC%D1%96%D1%81%D1%82%D0%BE%D1%80%20BTA16-800B%20BW%20RG (index-DpcUKce4.js, line 48)
+[Log] Frontend: Response headers: – {content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:37 GMT", …} (index-DpcUKce4.js, line 48)
+{content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:37 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] ❌ Автоматичне зіставлення не знайдено для: Симістор BTA16-800B BW RG (index-DpcUKce4.js, line 1453)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-DpcUKce4.js, line 1453)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 131}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-DpcUKce4.js, line 1453)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 131}Object
+[Log] Frontend: Making GET request to: /api/1c/invoices/check-mapping/%D0%94%D1%96%D0%BE%D0%B4%D0%BD%D0%B8%D0%B9%20%D0%BC%D1%96%D1%81%D1%82%20DF10S (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request headers: – {} (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request body: – undefined (index-DpcUKce4.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-DpcUKce4.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] Frontend: Making GET request to: /api/1c/invoices/check-mapping/%D0%9C%D0%B8%D0%BA%D1%80%D0%BE%D1%81%D1%85%D0%B5%D0%BC%D0%B0%20LD1117S33TR (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request headers: – {} (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request body: – undefined (index-DpcUKce4.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-DpcUKce4.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] Frontend: Making GET request to: /api/1c/invoices/check-mapping/%D0%9A%D0%BB%D0%B5%D0%BC%D0%BD%D0%B8%D0%BA%20DG301-5.0-2P-12mm (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request headers: – {} (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request body: – undefined (index-DpcUKce4.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-DpcUKce4.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] Frontend: Making GET request to: /api/1c/invoices/check-mapping/%D0%9A%D0%BB%D0%B5%D0%BC%D0%BD%D0%B8%D0%BA%20DG381-3.81-02P-14 (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request headers: – {} (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request body: – undefined (index-DpcUKce4.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-DpcUKce4.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] Frontend: Making GET request to: /api/1c/invoices/check-mapping/%D0%9A%D0%BB%D0%B5%D0%BC%D0%BD%D0%B8%D0%BA%20DG381-3.81-03P-14 (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request headers: – {} (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request body: – undefined (index-DpcUKce4.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-DpcUKce4.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] Frontend: Making GET request to: /api/1c/invoices/check-mapping/%D0%A1%D0%B2%D1%96%D1%82%D0%BB%D0%BE%D0%B4%D1%96%D0%BE%D0%B4%203%D0%BC%D0%BC%20(%D0%B6%D0%BE%D0%B2%D1%82%D0%B8%D0%B9) (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request headers: – {} (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request body: – undefined (index-DpcUKce4.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-DpcUKce4.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-DpcUKce4.js, line 747)
+[Log] Frontend: Response status: 200 for GET /api/1c/invoices/check-mapping/%D0%94%D1%96%D0%BE%D0%B4%D0%BD%D0%B8%D0%B9%20%D0%BC%D1%96%D1%81%D1%82%20DF10S (index-DpcUKce4.js, line 48)
+[Log] Frontend: Response headers: – {content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:48 GMT", …} (index-DpcUKce4.js, line 48)
+{content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:48 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] Frontend: Response status: 200 for GET /api/1c/invoices/check-mapping/%D0%A1%D0%B2%D1%96%D1%82%D0%BB%D0%BE%D0%B4%D1%96%D0%BE%D0%B4%203%D0%BC%D0%BC%20(%D0%B6%D0%BE%D0%B2%D1%82%D0%B8%D0%B9) (index-DpcUKce4.js, line 48)
+[Log] Frontend: Response headers: – {content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:48 GMT", …} (index-DpcUKce4.js, line 48)
+{content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:48 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] ❌ Автоматичне зіставлення не знайдено для: Діодний міст DF10S (index-DpcUKce4.js, line 1453)
+[Log] ❌ Автоматичне зіставлення не знайдено для: Світлодіод 3мм (жовтий) (index-DpcUKce4.js, line 1453)
+[Log] Frontend: Response status: 200 for GET /api/1c/invoices/check-mapping/%D0%9A%D0%BB%D0%B5%D0%BC%D0%BD%D0%B8%D0%BA%20DG381-3.81-02P-14 (index-DpcUKce4.js, line 48)
+[Log] Frontend: Response headers: – {content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:48 GMT", …} (index-DpcUKce4.js, line 48)
+{content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:48 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] Frontend: Response status: 200 for GET /api/1c/invoices/check-mapping/%D0%9C%D0%B8%D0%BA%D1%80%D0%BE%D1%81%D1%85%D0%B5%D0%BC%D0%B0%20LD1117S33TR (index-DpcUKce4.js, line 48)
+[Log] Frontend: Response headers: – {content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:48 GMT", …} (index-DpcUKce4.js, line 48)
+{content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:48 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] ❌ Автоматичне зіставлення не знайдено для: Клемник DG381-3.81-02P-14 (index-DpcUKce4.js, line 1453)
+[Log] ❌ Автоматичне зіставлення не знайдено для: Микросхема LD1117S33TR (index-DpcUKce4.js, line 1453)
+[Log] Frontend: Response status: 200 for GET /api/1c/invoices/check-mapping/%D0%9A%D0%BB%D0%B5%D0%BC%D0%BD%D0%B8%D0%BA%20DG301-5.0-2P-12mm (index-DpcUKce4.js, line 48)
+[Log] Frontend: Response headers: – {content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:48 GMT", …} (index-DpcUKce4.js, line 48)
+{content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:48 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] ❌ Автоматичне зіставлення не знайдено для: Клемник DG301-5.0-2P-12mm (index-DpcUKce4.js, line 1453)
+[Log] Frontend: Response status: 200 for GET /api/1c/invoices/check-mapping/%D0%9A%D0%BB%D0%B5%D0%BC%D0%BD%D0%B8%D0%BA%20DG381-3.81-03P-14 (index-DpcUKce4.js, line 48)
+[Log] Frontend: Response headers: – {content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:48 GMT", …} (index-DpcUKce4.js, line 48)
+{content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:48 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] ❌ Автоматичне зіставлення не знайдено для: Клемник DG381-3.81-03P-14 (index-DpcUKce4.js, line 1453)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-DpcUKce4.js, line 1453)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 131}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-DpcUKce4.js, line 1453)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 131}Object
+[Log] Frontend: Making GET request to: /api/1c/invoices/check-mapping/%D0%97%D0%B0%D0%B3%D0%BB%D1%83%D1%88%D0%BA%D0%B0%20DIN%20Dn%2050 (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request headers: – {} (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request body: – undefined (index-DpcUKce4.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-DpcUKce4.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-DpcUKce4.js, line 747)
+[Log] Frontend: Response status: 200 for GET /api/1c/invoices/check-mapping/%D0%97%D0%B0%D0%B3%D0%BB%D1%83%D1%88%D0%BA%D0%B0%20DIN%20Dn%2050 (index-DpcUKce4.js, line 48)
+[Log] Frontend: Response headers: – {content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:53 GMT", …} (index-DpcUKce4.js, line 48)
+{content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:53 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] ❌ Автоматичне зіставлення не знайдено для: Заглушка DIN Dn 50 (index-DpcUKce4.js, line 1453)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-DpcUKce4.js, line 1453)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 131}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-DpcUKce4.js, line 1453)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 131}Object
+[Log] Frontend: Making GET request to: /api/1c/invoices/check-mapping/%D0%9C%D1%96%D0%BA%D1%80%D0%BE%D1%81%D1%85%D0%B5%D0%BC%D0%B0%20XTR111 (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request headers: – {} (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request body: – undefined (index-DpcUKce4.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-DpcUKce4.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] Frontend: Making GET request to: /api/1c/invoices/check-mapping/%D0%A0%D0%B5%D0%BB%D0%B5%20HF32F%2F005-ZS%20(%20LJ-5) (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request headers: – {} (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request body: – undefined (index-DpcUKce4.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-DpcUKce4.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-DpcUKce4.js, line 747)
+[Log] Frontend: Response status: 200 for GET /api/1c/invoices/check-mapping/%D0%9C%D1%96%D0%BA%D1%80%D0%BE%D1%81%D1%85%D0%B5%D0%BC%D0%B0%20XTR111 (index-DpcUKce4.js, line 48)
+[Log] Frontend: Response headers: – {content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:59 GMT", …} (index-DpcUKce4.js, line 48)
+{content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:59 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] ❌ Автоматичне зіставлення не знайдено для: Мікросхема XTR111 (index-DpcUKce4.js, line 1453)
+[Log] Frontend: Response status: 200 for GET /api/1c/invoices/check-mapping/%D0%A0%D0%B5%D0%BB%D0%B5%20HF32F%2F005-ZS%20(%20LJ-5) (index-DpcUKce4.js, line 48)
+[Log] Frontend: Response headers: – {content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:59 GMT", …} (index-DpcUKce4.js, line 48)
+{content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 16:59:59 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] ❌ Автоматичне зіставлення не знайдено для: Реле HF32F/005-ZS ( LJ-5) (index-DpcUKce4.js, line 1453)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-DpcUKce4.js, line 1453)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 131}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-DpcUKce4.js, line 1453)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 131}Object
+[Log] Frontend: Making GET request to: /api/1c/invoices/check-mapping/%D0%9F%D0%BE%D0%BB%D1%96%D1%81%D0%B2%D1%96%D1%87%20FSMD001-0603-R (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request headers: – {} (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request body: – undefined (index-DpcUKce4.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-DpcUKce4.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] Frontend: Making GET request to: /api/1c/invoices/check-mapping/%D0%A0%D0%B5%D0%BB%D0%B5%20HF3FF%2F005-1ZS (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request headers: – {} (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request body: – undefined (index-DpcUKce4.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-DpcUKce4.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (index-DpcUKce4.js, line 747)
+[Log] Frontend: Response status: 200 for GET /api/1c/invoices/check-mapping/%D0%9F%D0%BE%D0%BB%D1%96%D1%81%D0%B2%D1%96%D1%87%20FSMD001-0603-R (index-DpcUKce4.js, line 48)
+[Log] Frontend: Response headers: – {content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 17:00:05 GMT", …} (index-DpcUKce4.js, line 48)
+{content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 17:00:05 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] Frontend: Response status: 200 for GET /api/1c/invoices/check-mapping/%D0%A0%D0%B5%D0%BB%D0%B5%20HF3FF%2F005-1ZS (index-DpcUKce4.js, line 48)
+[Log] Frontend: Response headers: – {content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 17:00:05 GMT", …} (index-DpcUKce4.js, line 48)
+{content-length: "32", content-type: "application/json; charset=utf-8", date: "Mon, 14 Jul 2025 17:00:05 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] ❌ Автоматичне зіставлення не знайдено для: Полісвіч FSMD001-0603-R (index-DpcUKce4.js, line 1453)
+[Log] ❌ Автоматичне зіставлення не знайдено для: Реле HF3FF/005-1ZS (index-DpcUKce4.js, line 1453)
