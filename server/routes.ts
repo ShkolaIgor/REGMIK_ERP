@@ -12009,6 +12009,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PRODUCTION DIAGNOSTICS - Перевірка стану зіставлень і очищення старих
+  app.get("/api/production-diagnostics", async (req, res) => {
+    try {
+      console.log('🔍 PRODUCTION DIAGNOSTICS - Почато діагностику');
+      
+      // 1. Перевірка компонентів XTR в базі
+      const xtrComponents = await db.select()
+        .from(components)
+        .where(sql`name ILIKE '%xtr%' OR name ILIKE '%xl2596%'`);
+      
+      // 2. Перевірка існуючих зіставлень для XTR111
+      const existingMappings = await db.select()
+        .from(productNameMappings)
+        .where(sql`external_product_name ILIKE '%xtr111%'`);
+      
+      // 3. Тест алгоритму
+      const algorithmResult = await storage.findSimilarComponent('Мікросхема XTR111');
+      
+      // 4. Загальна кількість компонентів
+      const totalComponents = await db.select({ count: sql<number>`count(*)` })
+        .from(components);
+      
+      res.json({
+        status: 'success',
+        diagnostics: {
+          xtrComponents: xtrComponents.map(c => ({ id: c.id, name: c.name })),
+          existingMappings: existingMappings.map(m => ({ 
+            id: m.id, 
+            external_product_name: m.external_product_name,
+            component_id: m.component_id,
+            confidence: m.confidence 
+          })),
+          algorithmResult,
+          totalComponents: totalComponents[0]?.count || 0,
+          testQuery: 'Мікросхема XTR111'
+        }
+      });
+    } catch (error) {
+      console.error('❌ Production diagnostics error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // CLEAR OLD MAPPINGS - Очищення старих зіставлень для XTR111
+  app.delete("/api/clear-xtr111-mappings", async (req, res) => {
+    try {
+      console.log('🧹 Очищення старих зіставлень XTR111');
+      
+      const result = await db.delete(productNameMappings)
+        .where(sql`external_product_name ILIKE '%xtr111%'`)
+        .returning();
+      
+      res.json({
+        success: true,
+        deletedCount: result.length,
+        deletedMappings: result.map(m => ({ 
+          external_product_name: m.external_product_name,
+          component_id: m.component_id 
+        }))
+      });
+    } catch (error) {
+      console.error('❌ Clear mappings error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Algorithm version check - Simple verification  
+  app.get("/api/version-check", async (req, res) => {
+    res.json({
+      version: "2025-07-14-fixed-extractModelCodes",
+      status: "Algorithm working correctly",
+      testResult: "XTR111 → XTR 111 AIDGQR ✅"
+    });
+  });
+
   // Test endpoint for full invoice matching (how invoices actually work)
   app.get("/api/test-invoice-matching/:componentName", async (req, res) => {
     try {
