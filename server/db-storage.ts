@@ -9973,24 +9973,9 @@ export class DatabaseStorage implements IStorage {
       if (similarComponent) {
         console.log(`✅ Знайдено компонент: ${similarComponent.name} (ID: ${similarComponent.id})`);
         
-        // Автоматично створюємо зіставлення для майбутніх використань
-        try {
-          await this.db.insert(productNameMappings).values({
-            externalSystemName: systemName,
-            externalProductName: externalProductName,
-            erpProductId: similarComponent.id,
-            erpProductName: similarComponent.name,
-            confidence: 0.9,
-            isActive: true,
-            mappingType: 'automatic',
-            lastUsed: new Date(),
-            usageCount: 1
-          });
-          console.log(`✅ Створено автоматичне зіставлення: ${externalProductName} → ${similarComponent.name}`);
-        } catch (error) {
-          console.log(`⚠️ Помилка створення зіставлення: ${error}`);
-        }
-
+        // НЕ СТВОРЮЄМО ЗІСТАВЛЕННЯ ПІД ЧАС ПЕРЕГЛЯДУ!
+        // Зіставлення записуються тільки при фактичному імпорті в import1CInvoice()
+        
         return {
           erpProductId: similarComponent.id,
           erpProductName: similarComponent.name
