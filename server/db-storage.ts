@@ -10113,9 +10113,37 @@ export class DatabaseStorage implements IStorage {
         }
         
         // КРОК 2.5: Пошук спільних числових та літерних кодів в назвах (для випадків типу XTR111)
-        // Витягуємо літерно-числові коди (букви + цифри, мінімум 4 символи)
-        const externalCodes = normalizedExternal.match(/[a-z]+\d+|\d+[a-z]+/g) || [];
-        const componentCodes = normalizedComponent.match(/[a-z]+\d+|\d+[a-z]+/g) || [];
+        // ВИПРАВЛЕННЯ: Розділяємо слова перед нормалізацією для правильного витягування кодів
+        const extractModelCodes = (text: string): string[] => {
+          // Спочатку розділяємо на слова
+          const words = text.toLowerCase().split(/[\s\-_,.()]+/);
+          const codes: string[] = [];
+          
+          words.forEach(word => {
+            // Нормалізуємо кожне слово окремо
+            const normalized = word
+              .replace(/[а-яёії]/g, (char) => {
+                const map = {
+                  'а': 'a', 'в': 'b', 'с': 'c', 'е': 'e', 'н': 'h', 'к': 'k', 'м': 'm', 'о': 'o', 'р': 'p', 'т': 't', 'у': 'y', 'х': 'x', 'ф': 'f', 'і': 'i', 'ї': 'i', 'є': 'e', 'ґ': 'g'
+              };
+              return map[char] || char;
+            })
+            .replace(/[^\w]/g, '');
+            
+            // Якщо слово містить і літери і цифри - це код моделі
+            if (/[a-z]/.test(normalized) && /\d/.test(normalized)) {
+              codes.push(normalized);
+              // Також витягуємо підкоди
+              const subCodes = normalized.match(/[a-z]+\d+[a-z]*|\d+[a-z]+/g) || [];
+              codes.push(...subCodes);
+            }
+          });
+          
+          return [...new Set(codes)]; // Видаляємо дублікати
+        };
+        
+        const externalCodes = extractModelCodes(externalProductName);
+        const componentCodes = extractModelCodes(component.name);
         
         if (isDebugTarget && (component.name.includes('XTR') || component.name.includes('BAT54') || component.name.includes('Regmik54'))) {
           console.log(`🔍 DEBUG: КРОК 2.5 - Коди в зовнішній назві: [${externalCodes.join(', ')}]`);
