@@ -10069,7 +10069,10 @@ export class DatabaseStorage implements IStorage {
                            externalProductName.includes('IDC-16') ||
                            externalProductName.includes('Фреза') ||
                            externalProductName.includes('XTR111') ||
-                           externalProductName.includes('HF32F');
+                           externalProductName.includes('HF32F') ||
+                           externalProductName.includes('TNY274') ||
+                           externalProductName.includes('0603') ||
+                           externalProductName.includes('4,7');
       
       if (isDebugTarget) {
         console.log(`🔍 =======  ПОЧАТОК DEBUG СЕСІЇ =======`);
@@ -10085,7 +10088,39 @@ export class DatabaseStorage implements IStorage {
           console.log(`🔍 DEBUG: Перевіряємо компонент "${component.name}" (нормалізовано: "${normalizedComponent}")`);
         }
         
-        // КРОК 1: Перевіряємо точну відповідність після нормалізації (найвищий пріоритет)
+        // КРОК 1А: СПЕЦІАЛЬНА ЛОГІКА ДЛЯ РЕЗИСТОРІВ - перевіряємо збіг номіналів резисторів
+        const isExternalResistor = /(\d{4}|R\d{4})\s*\d+[,.]?\d*\s*(k?[OΩ]m|%)/i.test(externalProductName);
+        const isComponentResistor = /(\d{4}|R\d{4})\s*\d+[,.]?\d*\s*(k?[OΩ]m|%)/i.test(component.name);
+        
+        if (isExternalResistor && isComponentResistor) {
+          if (this.matchResistorValues(externalProductName, component.name)) {
+            if (isDebugTarget) {
+              console.log(`🎯 DEBUG: ЗБІГ НОМІНАЛУ РЕЗИСТОРА "${component.name}" з "${externalProductName}"`);
+            }
+            return { id: component.id, name: component.name, score: 2000 }; // Найвищий пріоритет для резисторів
+          }
+        }
+
+        // КРОК 1Б: СПЕЦІАЛЬНА ЛОГІКА ДЛЯ МІКРОСХЕМ - порівняння англійських частин
+        const externalSmart = this.normalizeProductNameSmart(externalProductName);
+        const componentSmart = this.normalizeProductNameSmart(component.name);
+        
+        if (externalSmart.hasEnglish && componentSmart.hasEnglish) {
+          // Точні збіги англійських частин (для випадків "Мікросхема TNY274GN-TL" → "TNY274GN-TL")
+          const exactEnglishMatches = externalSmart.englishParts.filter(extPart =>
+            componentSmart.englishParts.some(compPart => extPart === compPart)
+          );
+
+          if (exactEnglishMatches.length > 0) {
+            const englishScore = exactEnglishMatches.length * 2100 + exactEnglishMatches[0].length * 100;
+            if (isDebugTarget) {
+              console.log(`🎯 DEBUG: ТОЧНИЙ збіг англійських частин з "${component.name}" (score: ${englishScore}, збіги: ${exactEnglishMatches.join(', ')})`);
+            }
+            return { id: component.id, name: component.name, score: englishScore };
+          }
+        }
+
+        // КРОК 1: Перевіряємо точну відповідність після нормалізації (високий пріоритет)
         if (normalizedExternal === normalizedComponent) {
           return { id: component.id, name: component.name, score: 1000 }; // Максимальний score для точного збігу
         }
@@ -10538,9 +10573,65 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  // Функція для нормалізації назви товару (ПОКРАЩЕНА + КИРИЛИЧНО-ЛАТИНСЬКЕ ЗІСТАВЛЕННЯ)
-  private normalizeProductName(name: string): string {
+  // НОВА функція для витягування англійських частин з змішаних назв
+  private extractEnglishParts(name: string): string[] {
+    // Знаходимо всі послідовності англійських букв та цифр
+    const englishParts = name.match(/[A-Za-z0-9\-]+/g) || [];
+    
+    // Фільтруємо тільки значущі англійські частини (довжина >= 3)
+    return englishParts
+      .filter(part => part.length >= 3 && /[A-Za-z]/.test(part)) // має містити хоча б одну букву
+      .map(part => part.toLowerCase().replace(/[\-_]/g, ''));
+  }
+
+  // НОВА функція для нормалізації номіналів резисторів
+  private normalizeResistorValue(name: string): string {
+    // Видаляємо префікси R, RES тощо та нормалізуємо номінали
     return name
+      .toLowerCase()
+      .replace(/^r(es)?[-_\s]*/i, '') // видаляємо префікси R, RES
+      .replace(/[\s\-_]/g, '') // видаляємо пробіли та розділювачі
+      .replace(/ohm/g, 'om') // нормалізуємо ohm -> om
+      .replace(/ω/g, 'om') // символ ома -> om
+      .replace(/kom/g, 'kom') // зберігаємо kom
+      .replace(/mom/g, 'mom') // зберігаємо mom (мегаом)
+      .replace(/([0-9]+)[,.]([0-9]+)/g, '$1$2') // видаляємо десяткові роздільники
+      .trim();
+  }
+
+  // ФУНКЦІЯ для перевірки збігу номіналів резисторів
+  private matchResistorValues(external: string, component: string): boolean {
+    const normalizedExternal = this.normalizeResistorValue(external);
+    const normalizedComponent = this.normalizeResistorValue(component);
+    
+    // Точний збіг після нормалізації
+    if (normalizedExternal === normalizedComponent) {
+      return true;
+    }
+    
+    // Перевіряємо часткові збіги номіналів
+    const extractValue = (str: string) => {
+      // Витягуємо основний номінал (напр. "47kom1" -> "47kom")
+      const match = str.match(/(\d+[,.]?\d*)(kom|mom|om)?(\d+%?)?/);
+      return match ? match[1] + (match[2] || '') : str;
+    };
+    
+    const externalValue = extractValue(normalizedExternal);
+    const componentValue = extractValue(normalizedComponent);
+    
+    return externalValue === componentValue;
+  }
+
+  // ПОКРАЩЕНА функція для нормалізації з підтримкою англійських частин
+  private normalizeProductNameSmart(name: string): { 
+    normalized: string; 
+    englishParts: string[];
+    hasEnglish: boolean;
+  } {
+    const englishParts = this.extractEnglishParts(name);
+    const hasEnglish = englishParts.length > 0;
+    
+    const normalized = name
       .toLowerCase()
       // КРОК 1: Конвертуємо схожі кирилично-латинські символи ПЕРЕД загальною нормалізацією
       .replace(/[АВЕКМНОРСТУХФавекмнорстухф]/g, (match) => {
@@ -10570,6 +10661,13 @@ export class DatabaseStorage implements IStorage {
       })
       .replace(/[^a-z0-9]/g, '') // Залишаємо тільки латинські літери та цифри
       .trim();
+      
+    return { normalized, englishParts, hasEnglish };
+  }
+
+  // Функція для нормалізації назви товару (ПОКРАЩЕНА + КИРИЛИЧНО-ЛАТИНСЬКЕ ЗІСТАВЛЕННЯ)
+  private normalizeProductName(name: string): string {
+    return this.normalizeProductNameSmart(name).normalized;
   }
 
   async createProductNameMapping(mapping: InsertProductNameMapping): Promise<ProductNameMapping> {
