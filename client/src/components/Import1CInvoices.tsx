@@ -210,8 +210,16 @@ export function Import1CInvoices() {
       for (let i = 0; i < invoiceIds.length; i++) {
         const invoiceId = invoiceIds[i];
         try {
-          const result = await apiRequest(`/api/1c/invoices/${invoiceId}/import`, {
-            method: 'POST'
+          // Знаходимо накладну за ID
+          const invoice = invoices1C.find((inv: Invoice1C) => inv.id === invoiceId);
+          if (!invoice) {
+            throw new Error(`Накладна з ID ${invoiceId} не знайдена`);
+          }
+          
+          // Використовуємо той самий endpoint що й для окремого імпорту
+          const result = await apiRequest('/api/1c/invoices/import', {
+            method: 'POST',
+            body: invoice,
           });
           results.push({ success: true, invoiceId, result });
           setImportProgress(prev => prev ? {
@@ -238,6 +246,18 @@ export function Import1CInvoices() {
       const succeeded = results.filter(r => r.success).length;
       const failed = results.filter(r => !r.success).length;
       
+      // Оновлюємо локальний статус успішно імпортованих накладних
+      const successfulInvoiceIds = results.filter(r => r.success).map(r => r.invoiceId);
+      if (successfulInvoiceIds.length > 0 && invoices1C) {
+        const updatedInvoices = invoices1C.map((invoice: Invoice1C) => 
+          successfulInvoiceIds.includes(invoice.id) 
+            ? { ...invoice, exists: true }
+            : invoice
+        );
+        // Викликаємо refetch для оновлення з сервера
+        refetchInvoices();
+      }
+      
       toast({
         title: "Імпорт завершено",
         description: `Успішно імпортовано: ${succeeded}, помилок: ${failed}`,
@@ -245,7 +265,6 @@ export function Import1CInvoices() {
       });
       
       queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
-      refetchInvoices();
       setSelectedInvoices(new Set());
     },
     onError: (error) => {
@@ -274,7 +293,7 @@ export function Import1CInvoices() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/components"] });
       queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
-      refetchInvoices(); // Оновлюємо список накладних
+      refetchInvoices(); // Оновлюємо список накладних з новими статусами
       setShowPreview(null); // Закриваємо діалог після успішного імпорту
     },
     onError: (error: any) => {
