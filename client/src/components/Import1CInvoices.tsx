@@ -166,6 +166,12 @@ export function Import1CInvoices() {
   const [showPreview, setShowPreview] = useState<Invoice1C | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
+  const [showOnlyMissing, setShowOnlyMissing] = useState(true); // За замовчуванням показувати тільки відсутні
+  
+  // Очищення вибору при зміні фільтра
+  useEffect(() => {
+    setSelectedInvoices(new Set());
+  }, [showOnlyMissing]);
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -281,8 +287,8 @@ export function Import1CInvoices() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const availableInvoices = invoices1C.filter((inv: Invoice1C) => !inv.exists).map((inv: Invoice1C) => inv.id);
-      setSelectedInvoices(new Set(availableInvoices));
+      const availableDisplayedInvoices = displayedInvoices.filter((inv: Invoice1C) => !inv.exists).map((inv: Invoice1C) => inv.id);
+      setSelectedInvoices(new Set(availableDisplayedInvoices));
     } else {
       setSelectedInvoices(new Set());
     }
@@ -313,6 +319,9 @@ export function Import1CInvoices() {
 
   const availableInvoices = invoices1C.filter((inv: Invoice1C) => !inv.exists);
   const existingInvoices = invoices1C.filter((inv: Invoice1C) => inv.exists);
+  
+  // Фільтруємо накладні для відображення
+  const displayedInvoices = showOnlyMissing ? availableInvoices : invoices1C;
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -413,12 +422,24 @@ export function Import1CInvoices() {
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="select-all"
-                checked={selectedInvoices.size === availableInvoices.length && availableInvoices.length > 0}
+                checked={selectedInvoices.size === displayedInvoices.filter(inv => !inv.exists).length && displayedInvoices.filter(inv => !inv.exists).length > 0}
                 onCheckedChange={handleSelectAll}
-                disabled={availableInvoices.length === 0 || isImporting}
+                disabled={displayedInvoices.filter(inv => !inv.exists).length === 0 || isImporting}
               />
               <label htmlFor="select-all" className="text-sm font-medium">
-                Вибрати всі доступні ({availableInvoices.length})
+                Вибрати всі доступні ({displayedInvoices.filter(inv => !inv.exists).length})
+              </label>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="show-only-missing"
+                checked={showOnlyMissing}
+                onCheckedChange={setShowOnlyMissing}
+                disabled={isImporting}
+              />
+              <label htmlFor="show-only-missing" className="text-sm font-medium">
+                Тільки відсутні
               </label>
             </div>
             
@@ -451,13 +472,13 @@ export function Import1CInvoices() {
                   Спробувати знову
                 </Button>
               </div>
-            ) : invoices1C.length === 0 ? (
+            ) : displayedInvoices.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                Не знайдено накладних в 1C
+                {showOnlyMissing ? 'Всі накладні вже імпортовані в ERP' : 'Не знайдено накладних в 1C'}
               </div>
             ) : (
               <div className="space-y-2">
-                {invoices1C.map((invoice: Invoice1C) => (
+                {displayedInvoices.map((invoice: Invoice1C) => (
                   <Card key={invoice.id} className={`transition-all ${invoice.exists ? 'opacity-50 bg-gray-50' : ''}`}>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-4">
