@@ -10880,6 +10880,19 @@ export class DatabaseStorage implements IStorage {
       }
     ];
 
+    // Перевіряємо які накладні вже імпортовані
+    const importedNumbers = await db
+      .select({ number: supplierReceipts.supplierDocumentNumber })
+      .from(supplierReceipts)
+      .where(isNotNull(supplierReceipts.supplierDocumentNumber));
+    
+    const importedSet = new Set(importedNumbers.map(r => r.number));
+    
+    // Позначаємо існуючі накладні
+    testInvoices.forEach(invoice => {
+      invoice.exists = importedSet.has(invoice.number);
+    });
+
     return testInvoices;
   }
 
@@ -11177,6 +11190,20 @@ export class DatabaseStorage implements IStorage {
         return { success: false, message: `Накладна ${invoiceId} не знайдена в 1С` };
       }
 
+      // Перевіряємо чи не існує вже прихід з таким номером документу
+      const [existingReceipt] = await db
+        .select()
+        .from(supplierReceipts)
+        .where(eq(supplierReceipts.supplierDocumentNumber, invoice.number))
+        .limit(1);
+      
+      if (existingReceipt) {
+        return { 
+          success: false, 
+          message: `Накладна ${invoice.number} вже імпортована (Прихід #${existingReceipt.id})` 
+        };
+      }
+
       // Знаходимо або створюємо постачальника
       let supplier;
       if (invoice.supplierTaxCode) {
@@ -11372,6 +11399,20 @@ export class DatabaseStorage implements IStorage {
     try {
       if (!invoiceData || !invoiceData.items) {
         return { success: false, message: `Некоректні дані накладної` };
+      }
+
+      // Перевіряємо чи не існує вже прихід з таким номером документу
+      const [existingReceipt] = await db
+        .select()
+        .from(supplierReceipts)
+        .where(eq(supplierReceipts.supplierDocumentNumber, invoiceData.number))
+        .limit(1);
+      
+      if (existingReceipt) {
+        return { 
+          success: false, 
+          message: `Накладна ${invoiceData.number} вже імпортована (Прихід #${existingReceipt.id})` 
+        };
       }
 
       // Знаходимо або створюємо постачальника
