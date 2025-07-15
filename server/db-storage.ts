@@ -10809,7 +10809,7 @@ export class DatabaseStorage implements IStorage {
     // Тестові дані для демонстрації алгоритму зіставлення
     const testInvoices = [
       {
-        id: `1c-${Date.now()}-${Math.random()}`,
+        id: "1c-test-rm00-000620",
         number: "РМ00-000620",
         date: "2025-07-08",
         supplierName: "РС ГРУП КОМПАНІ",
@@ -10833,7 +10833,7 @@ export class DatabaseStorage implements IStorage {
         kilkistTovariv: 1
       },
       {
-        id: `1c-${Date.now()}-${Math.random()}`,
+        id: "1c-test-rm00-000602",
         number: "РМ00-000602",
         date: "2025-07-07",
         supplierName: "ВД МАІС",
@@ -10877,6 +10877,41 @@ export class DatabaseStorage implements IStorage {
         ],
         exists: false,
         kilkistTovariv: 3
+      },
+      {
+        id: "1c-test-rm00-000630",
+        number: "РМ00-000630",
+        date: "2025-07-15",
+        supplierName: "ТЕСТ ПОСТАЧАЛЬНИК ТОВ",
+        amount: 1500.00,
+        currency: "UAH",
+        status: "confirmed",
+        items: [
+          {
+            name: "Резистор R0603 10k",
+            originalName: "Резистор R0603 10k",
+            quantity: 100,
+            price: 0.5,
+            total: 50,
+            unit: "шт",
+            codeTovara: "00-00001234",
+            nomerStroki: 1,
+            isMapped: false
+          },
+          {
+            name: "Конденсатор C0805 100nF",
+            originalName: "Конденсатор C0805 100nF",
+            quantity: 200,
+            price: 0.75,
+            total: 150,
+            unit: "шт",
+            codeTovara: "00-00005678",
+            nomerStroki: 2,
+            isMapped: false
+          }
+        ],
+        exists: false,
+        kilkistTovariv: 2
       }
     ];
 

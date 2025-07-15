@@ -274,6 +274,7 @@ export function Import1CInvoices() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/components"] });
       queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
+      refetchInvoices(); // Оновлюємо список накладних
       setShowPreview(null); // Закриваємо діалог після успішного імпорту
     },
     onError: (error: any) => {
