@@ -16,7 +16,7 @@ import {
   integrationConfigs, entityMappings, syncQueue, fieldMappings, productNameMappings,
   repairs, repairParts, repairStatusHistory, repairDocuments, orderItemSerialNumbers, novaPoshtaCities, novaPoshtaWarehouses,
   bankPaymentNotifications, orderPayments, systemLogs,
-  supplierReceipts, supplierReceiptItems,
+  supplierReceipts, supplierReceiptItems, supplierDocumentTypes,
  type LocalUser, type InsertLocalUser,
   type Permission, type InsertPermission,
   type RolePermission, type InsertRolePermission, type UserPermission, type InsertUserPermission,
@@ -8811,17 +8811,28 @@ export class DatabaseStorage implements IStorage {
   // Supplier Receipts methods
   async getSupplierReceipts() {
     try {
-      const result = await pool.query(`
-        SELECT 
-          sr.*,
-          s.name as supplier_name,
-          sdt.name as document_type_name
-        FROM supplier_receipts sr
-        LEFT JOIN suppliers s ON sr.supplier_id = s.id
-        LEFT JOIN supplier_document_types sdt ON sr.document_type_id = sdt.id
-        ORDER BY sr.created_at DESC
-      `);
-      return result.rows;
+      const result = await db.select({
+        id: supplierReceipts.id,
+        receiptDate: supplierReceipts.receiptDate,
+        supplierId: supplierReceipts.supplierId,
+        documentTypeId: supplierReceipts.documentTypeId,
+        supplierDocumentDate: supplierReceipts.supplierDocumentDate,
+        supplierDocumentNumber: supplierReceipts.supplierDocumentNumber,
+        totalAmount: supplierReceipts.totalAmount,
+        comment: supplierReceipts.comment,
+        createdAt: supplierReceipts.createdAt,
+        updatedAt: supplierReceipts.updatedAt,
+        purchaseOrderId: supplierReceipts.purchaseOrderId,
+        externalId: supplierReceipts.externalId,
+        supplierName: suppliers.name,
+        documentTypeName: supplierDocumentTypes.name
+      })
+      .from(supplierReceipts)
+      .leftJoin(suppliers, eq(supplierReceipts.supplierId, suppliers.id))
+      .leftJoin(supplierDocumentTypes, eq(supplierReceipts.documentTypeId, supplierDocumentTypes.id))
+      .orderBy(desc(supplierReceipts.createdAt));
+      
+      return result;
     } catch (error) {
       console.error('Error fetching supplier receipts:', error);
       throw error;

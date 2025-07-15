@@ -11329,14 +11329,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rawInvoicesData = JSON.parse(responseText);
       
       // Перевіряємо які накладні вже імпортовані в supplier_receipts
-      const importedNumbers = await storage.getSupplierReceipts();
+      const importedReceipts = await storage.getSupplierReceipts();
       const importedSet = new Set(
-        importedNumbers
+        importedReceipts
           .filter(receipt => receipt.supplierDocumentNumber)
           .map(receipt => receipt.supplierDocumentNumber)
       );
       
-      console.log(`📋 Імпортовані накладні в БД: [${Array.from(importedSet).join(', ')}]`);
+      // Логування для діагностики (можна прибрати в production)
+      // console.log(`📋 Всього приходів: ${importedReceipts.length}`);
+      // console.log(`📋 Імпортовані накладні в БД: [${Array.from(importedSet).join(', ')}]`);
       
       // Конвертуємо сирі дані з 1С до формату ERP
       const processedInvoices = rawInvoicesData.map((invoice: any) => {

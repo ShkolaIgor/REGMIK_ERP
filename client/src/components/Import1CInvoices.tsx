@@ -248,14 +248,11 @@ export function Import1CInvoices() {
       
       // Оновлюємо локальний статус успішно імпортованих накладних
       const successfulInvoiceIds = results.filter(r => r.success).map(r => r.invoiceId);
-      if (successfulInvoiceIds.length > 0 && invoices1C) {
-        const updatedInvoices = invoices1C.map((invoice: Invoice1C) => 
-          successfulInvoiceIds.includes(invoice.id) 
-            ? { ...invoice, exists: true }
-            : invoice
-        );
+      if (successfulInvoiceIds.length > 0) {
+        // Інвалідуємо кеш накладних 1С для оновлення статусів
+        queryClient.invalidateQueries({ queryKey: ["/api/1c/invoices"] });
         // Викликаємо refetch для оновлення з сервера
-        refetchInvoices();
+        setTimeout(() => refetchInvoices(), 500); // Невелика затримка для обробки даних на сервері
       }
       
       toast({
@@ -264,7 +261,9 @@ export function Import1CInvoices() {
         variant: succeeded > 0 ? "default" : "destructive",
       });
       
+      // Оновлюємо всі пов'язані кеші
       queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/components"] });
       setSelectedInvoices(new Set());
     },
     onError: (error) => {
@@ -291,9 +290,12 @@ export function Import1CInvoices() {
         title: "Успіх",
         description: `Накладна імпортована як прихід постачальника! Перейдіть у розділ "Приходи постачальників" для перегляду. ${result.message || ''}`,
       });
+      // Оновлюємо всі пов'язані кеші
       queryClient.invalidateQueries({ queryKey: ["/api/components"] });
       queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
-      refetchInvoices(); // Оновлюємо список накладних з новими статусами
+      queryClient.invalidateQueries({ queryKey: ["/api/1c/invoices"] });
+      // Викликаємо refetch з затримкою для оновлення статусів
+      setTimeout(() => refetchInvoices(), 500);
       setShowPreview(null); // Закриваємо діалог після успішного імпорту
     },
     onError: (error: any) => {
