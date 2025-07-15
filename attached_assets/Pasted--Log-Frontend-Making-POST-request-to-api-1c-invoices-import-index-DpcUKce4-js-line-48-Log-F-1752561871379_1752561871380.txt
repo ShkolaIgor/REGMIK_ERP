@@ -1,0 +1,39 @@
+[Log] Frontend: Making POST request to: /api/1c/invoices/import (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request headers: – {Content-Type: "application/json"} (index-DpcUKce4.js, line 48)
+[Log] Frontend: Request body: – "\"{\\\"id\\\":\\\"1c-1752561779579-0.17444384976745364\\\",\\\"number\\\":\\\"РМ00-000603\\\",\\\"date\\\":\\\"2025-06-27\\\",\\\"supplierName\\\":\\\"В…" (index-DpcUKce4.js, line 48)
+"\"{\\\"id\\\":\\\"1c-1752561779579-0.17444384976745364\\\",\\\"number\\\":\\\"РМ00-000603\\\",\\\"date\\\":\\\"2025-06-27\\\",\\\"supplierName\\\":\\\"ВД МАІС\\\",\\\"amount\\\":1052.04,\\\"currency\\\":\\\"UAH\\\",\\\"status\\\":\\\"confirmed\\\",\\\"items\\\":[{\\\"name\\\":\\\"Флюс для паяння олов\\\\\\\"яним припоєм NC264-5 не требующий отмывки\\\",\\\"originalName\\\":\\\"Флюс для паяння олов\\\\\\\"яним припоєм NC264-5 не требующий отмывки\\\",\\\"quantity\\\":2,\\\"price\\\":438.35,\\\"total\\\":876.7,\\\"unit\\\":\\\"шт\\\",\\\"isMapped\\\":true,\\\"erpEquivalent\\\":\\\"Флюс NC264-5 для паяння олов яним припоєм\\\"}],\\\"exists\\\":false}\""
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-DpcUKce4.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-DpcUKce4.js, line 1453)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 135}Object
+[Error] Failed to load resource: the server responded with a status of 400 () (import, line 0)
+[Log] Frontend: Response status: 400 for POST /api/1c/invoices/import (index-DpcUKce4.js, line 48)
+[Log] Frontend: Response headers: – {content-length: "78", content-type: "application/json; charset=utf-8", date: "Tue, 15 Jul 2025 06:44:09 GMT", …} (index-DpcUKce4.js, line 48)
+{content-length: "78", content-type: "application/json; charset=utf-8", date: "Tue, 15 Jul 2025 06:44:09 GMT", server: "nginx/1.29.0", x-powered-by: "Express"}Object
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-DpcUKce4.js, line 1453)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 135}Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-DpcUKce4.js, line 1453)
+[Log] 1C Invoices Debug: – {isOpen: true, loadingInvoices: false, invoicesError: null, …} (index-DpcUKce4.js, line 1453)
+{isOpen: true, loadingInvoices: false, invoicesError: null, invoices1C: Array, invoicesCount: 135}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: (index-DpcUKce4.js, line 1453)
+Object
+
+displayDataCount: 0
+
+errorMessage: null
+
+firstDisplayInvoice: null
+
+firstRealInvoice: null
+
+hasError: false
+
+isOpen: false
+
+loadingInvoices: false
+
+realDataCount: 0
+
+usingFallback: false
+
+Object Prototype
