@@ -264,7 +264,7 @@ export function Import1CInvoices() {
     onSuccess: (result) => {
       toast({
         title: "Успіх",
-        description: `Накладна імпортована як замовлення! Перейдіть у розділ "Замовлення" для перегляду. ${result.message || ''}`,
+        description: `Накладна імпортована як прихід постачальника! Перейдіть у розділ "Приходи постачальників" для перегляду. ${result.message || ''}`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/components"] });
       queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
@@ -320,7 +320,7 @@ export function Import1CInvoices() {
         <Button 
           variant="outline" 
           className="flex items-center gap-2"
-          title="Імпорт накладних з 1С як замовлення в ERP"
+          title="Імпорт накладних з 1С як приходи постачальників в ERP"
         >
           <Upload className="w-4 h-4" />
           Імпорт накладних
@@ -331,10 +331,10 @@ export function Import1CInvoices() {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            Імпорт товарів з 1C накладних
+            Імпорт накладних з 1C
           </DialogTitle>
           <p className="text-sm text-muted-foreground mt-2">
-            Імпортовані накладні створюються як замовлення. Після імпорту перейдіть у розділ "Замовлення" для перегляду.
+            Імпортовані накладні створюються як приходи постачальників. Після імпорту перейдіть у розділ "Приходи постачальників" для перегляду.
           </p>
         </DialogHeader>
 

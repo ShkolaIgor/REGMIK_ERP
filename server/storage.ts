@@ -2098,11 +2098,11 @@ export class MemStorage implements IStorage {
   getUserAccessibleModules(userId: number): Promise<SystemModule[]>;
 
   // 1C Integration - Component Import
-  async import1CInvoice(invoiceId: string): Promise<{ success: boolean; message: string; componentIds?: number[]; }> {
+  async import1CInvoice(invoiceId: string): Promise<{ success: boolean; message: string; receiptId?: number; }> {
     return { success: false, message: "MemStorage не підтримує 1C інтеграцію" };
   }
 
-  async import1CInvoiceFromData(invoiceData: any): Promise<{ success: boolean; message: string; componentIds?: number[]; }> {
+  async import1CInvoiceFromData(invoiceData: any): Promise<{ success: boolean; message: string; receiptId?: number; }> {
     return { success: false, message: "MemStorage не підтримує 1C інтеграцію" };
   }
 

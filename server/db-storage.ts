@@ -16,6 +16,7 @@ import {
   integrationConfigs, entityMappings, syncQueue, fieldMappings, productNameMappings,
   repairs, repairParts, repairStatusHistory, repairDocuments, orderItemSerialNumbers, novaPoshtaCities, novaPoshtaWarehouses,
   bankPaymentNotifications, orderPayments, systemLogs,
+  supplierReceipts, supplierReceiptItems,
  type LocalUser, type InsertLocalUser,
   type Permission, type InsertPermission,
   type RolePermission, type InsertRolePermission, type UserPermission, type InsertUserPermission,
@@ -53,6 +54,8 @@ import {
   type MaterialShortage, type InsertMaterialShortage,
   type SupplierOrder, type InsertSupplierOrder,
   type SupplierOrderItem, type InsertSupplierOrderItem,
+  type SupplierReceipt, type InsertSupplierReceipt,
+  type SupplierReceiptItem, type InsertSupplierReceiptItem,
   type InventoryAudit, type InsertInventoryAudit,
   type InventoryAuditItem, type InsertInventoryAuditItem,
   type AssemblyOperation, type InsertAssemblyOperation,
@@ -11161,9 +11164,9 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // 1C Integration - Component Import (НАКЛАДНІ МІСТЯТЬ КОМПОНЕНТИ)
-  async import1CInvoice(invoiceId: string): Promise<{ success: boolean; message: string; componentIds?: number[]; }> {
-    console.log(`🔧 DatabaseStorage: Імпорт накладної ${invoiceId} як КОМПОНЕНТІВ для виробництва`);
+  // 1C Integration - Supplier Receipt Import (НАКЛАДНІ ЦЕ ПРИХОДИ ПОСТАЧАЛЬНИКІВ)
+  async import1CInvoice(invoiceId: string): Promise<{ success: boolean; message: string; receiptId?: number; }> {
+    console.log(`🔧 DatabaseStorage: Імпорт накладної ${invoiceId} як ПРИХОДУ ПОСТАЧАЛЬНИКА`);
     
     try {
       // Отримуємо накладну з 1С
@@ -11174,9 +11177,78 @@ export class DatabaseStorage implements IStorage {
         return { success: false, message: `Накладна ${invoiceId} не знайдена в 1С` };
       }
 
+      // Знаходимо або створюємо постачальника
+      let supplier;
+      if (invoice.supplierTaxCode) {
+        // Шукаємо постачальника за ЄДРПОУ
+        const [existingSupplier] = await db
+          .select()
+          .from(suppliers)
+          .where(eq(suppliers.taxCode, invoice.supplierTaxCode))
+          .limit(1);
+        
+        if (existingSupplier) {
+          supplier = existingSupplier;
+          console.log(`📋 Знайдено постачальника: ${supplier.name} (ID: ${supplier.id})`);
+        } else {
+          // Створюємо нового постачальника
+          const [newSupplier] = await db
+            .insert(suppliers)
+            .values({
+              name: invoice.supplierName || 'Невідомий постачальник',
+              fullName: invoice.supplierName,
+              taxCode: invoice.supplierTaxCode,
+              clientTypeId: 1, // За замовчуванням перший тип
+              isActive: true
+            })
+            .returning();
+          supplier = newSupplier;
+          console.log(`✅ Створено постачальника: ${supplier.name} (ID: ${supplier.id})`);
+        }
+      } else {
+        // Шукаємо за назвою або створюємо з назвою
+        const [existingSupplier] = await db
+          .select()
+          .from(suppliers)
+          .where(eq(suppliers.name, invoice.supplierName || 'Невідомий постачальник'))
+          .limit(1);
+        
+        if (existingSupplier) {
+          supplier = existingSupplier;
+        } else {
+          const [newSupplier] = await db
+            .insert(suppliers)
+            .values({
+              name: invoice.supplierName || 'Невідомий постачальник',
+              fullName: invoice.supplierName,
+              clientTypeId: 1,
+              isActive: true
+            })
+            .returning();
+          supplier = newSupplier;
+          console.log(`✅ Створено постачальника: ${supplier.name} (ID: ${supplier.id})`);
+        }
+      }
+
+      // Створюємо прихід постачальника
+      const [receipt] = await db
+        .insert(supplierReceipts)
+        .values({
+          receiptDate: new Date(invoice.date),
+          supplierId: supplier.id,
+          documentTypeId: 1, // За замовчуванням перший тип документу
+          supplierDocumentDate: new Date(invoice.date),
+          supplierDocumentNumber: invoice.number,
+          totalAmount: invoice.amount.toString(),
+          comment: `Імпортовано з 1С накладної ${invoice.number}`
+        })
+        .returning();
+      
+      console.log(`📋 Створено прихід постачальника: ${receipt.id}`);
+
       const componentIds: number[] = [];
       
-      // Обробляємо кожну позицію накладної як компонент
+      // Обробляємо кожну позицію накладної як позицію приходу
       for (const item of invoice.items || []) {
         const componentName = item.nameFrom1C || item.originalName || item.name;
         
@@ -11214,7 +11286,7 @@ export class DatabaseStorage implements IStorage {
             name: componentName,
             sku: item.sku || `1C-${invoiceId}-${Math.random().toString(36).substr(2, 9)}`,
             description: `Імпортовано з 1С накладної ${invoice.number}`,
-            supplier: item.supplier || 'Невідомий постачальник',
+            supplier: supplier.name || 'Невідомий постачальник',
             costPrice: item.price || 0,
             isActive: true
           } as const;
@@ -11239,6 +11311,7 @@ export class DatabaseStorage implements IStorage {
             console.log(`🔗 Створено автоматичне зіставлення: "${componentName}" → "${newComponent.name}" (ID: ${newComponent.id})`);
           }
           
+          existingComponent = newComponent;
           componentIds.push(newComponent.id);
           console.log(`✅ Створено компонент: ${componentName} (ID: ${newComponent.id})`);
         } else {
@@ -11260,12 +11333,27 @@ export class DatabaseStorage implements IStorage {
           componentIds.push(existingComponent.id);
           console.log(`✅ Знайдено існуючий компонент: ${componentName} (ID: ${existingComponent.id})`);
         }
+        
+        // Створюємо позицію приходу
+        const receiptItem = await db
+          .insert(supplierReceiptItems)
+          .values({
+            receiptId: receipt.id,
+            componentId: existingComponent.id,
+            quantity: item.quantity ? item.quantity.toString() : "1",
+            unitPrice: item.price ? item.price.toString() : "0",
+            totalPrice: item.total ? item.total.toString() : (item.price * (item.quantity || 1)).toString(),
+            supplierComponentName: componentName
+          })
+          .returning();
+        
+        console.log(`📦 Створено позицію приходу: ${componentName} (кількість: ${item.quantity || 1})`);
       }
 
       return {
         success: true,
-        message: `Успішно імпортовано ${componentIds.length} компонентів з накладної ${invoice.number}`,
-        componentIds
+        message: `Успішно імпортовано прихід постачальника ${invoice.number} з ${componentIds.length} позиціями`,
+        receiptId: receipt.id
       };
       
     } catch (error) {
@@ -11278,13 +11366,76 @@ export class DatabaseStorage implements IStorage {
   }
 
   // 1C Integration - Import Invoice from Data (for mass import)
-  async import1CInvoiceFromData(invoiceData: any): Promise<{ success: boolean; message: string; componentIds?: number[]; }> {
-    console.log(`🔧 DatabaseStorage: Імпорт накладної з даних ${invoiceData.number} як КОМПОНЕНТІВ для виробництва`);
+  async import1CInvoiceFromData(invoiceData: any): Promise<{ success: boolean; message: string; receiptId?: number; }> {
+    console.log(`🔧 DatabaseStorage: Імпорт накладної з даних ${invoiceData.number} як ПРИХОДУ ПОСТАЧАЛЬНИКА`);
     
     try {
       if (!invoiceData || !invoiceData.items) {
         return { success: false, message: `Некоректні дані накладної` };
       }
+
+      // Знаходимо або створюємо постачальника
+      let supplier;
+      if (invoiceData.supplierTaxCode) {
+        // Шукаємо постачальника за ЄДРПОУ
+        const [existingSupplier] = await db
+          .select()
+          .from(suppliers)
+          .where(eq(suppliers.taxCode, invoiceData.supplierTaxCode))
+          .limit(1);
+        
+        if (existingSupplier) {
+          supplier = existingSupplier;
+        } else {
+          const [newSupplier] = await db
+            .insert(suppliers)
+            .values({
+              name: invoiceData.supplierName || 'Невідомий постачальник',
+              fullName: invoiceData.supplierName,
+              taxCode: invoiceData.supplierTaxCode,
+              clientTypeId: 1,
+              isActive: true
+            })
+            .returning();
+          supplier = newSupplier;
+        }
+      } else {
+        // Шукаємо за назвою або створюємо
+        const [existingSupplier] = await db
+          .select()
+          .from(suppliers)
+          .where(eq(suppliers.name, invoiceData.supplierName || 'Невідомий постачальник'))
+          .limit(1);
+        
+        if (existingSupplier) {
+          supplier = existingSupplier;
+        } else {
+          const [newSupplier] = await db
+            .insert(suppliers)
+            .values({
+              name: invoiceData.supplierName || 'Невідомий постачальник',
+              fullName: invoiceData.supplierName,
+              clientTypeId: 1,
+              isActive: true
+            })
+            .returning();
+          supplier = newSupplier;
+        }
+      }
+
+      // Створюємо прихід постачальника
+      const [receipt] = await db
+        .insert(supplierReceipts)
+        .values({
+          receiptDate: new Date(invoiceData.date),
+          supplierId: supplier.id,
+          documentTypeId: 1,
+          supplierDocumentDate: new Date(invoiceData.date),
+          supplierDocumentNumber: invoiceData.number,
+          totalAmount: invoiceData.amount?.toString() || "0",
+          comment: `Імпортовано з 1С накладної ${invoiceData.number}`
+        })
+        .returning();
 
       const componentIds: number[] = [];
       
@@ -11320,7 +11471,9 @@ export class DatabaseStorage implements IStorage {
           existingComponent = directComponent;
         }
         
-        if (!existingComponent) {
+        let currentComponent = existingComponent;
+        
+        if (!currentComponent) {
           // Створюємо новий компонент
           const newComponentData = {
             name: componentName,
@@ -11335,6 +11488,8 @@ export class DatabaseStorage implements IStorage {
             .insert(components)
             .values(newComponentData)
             .returning();
+          
+          currentComponent = newComponent;
           
           // Автоматично створюємо зіставлення для нового компонента
           if (!mapping) {
@@ -11359,25 +11514,40 @@ export class DatabaseStorage implements IStorage {
             await this.createProductNameMapping({
               externalSystemName: "1C",
               externalProductName: componentName,
-              erpProductId: existingComponent.id,
-              erpProductName: existingComponent.name,
+              erpProductId: currentComponent.id,
+              erpProductName: currentComponent.name,
               confidence: 0.9,
               isActive: true,
               mappingType: "automatic",
               createdAt: new Date()
             });
-            console.log(`🔗 Створено зіставлення для існуючого компонента: "${componentName}" → "${existingComponent.name}" (ID: ${existingComponent.id})`);
+            console.log(`🔗 Створено зіставлення для існуючого компонента: "${componentName}" → "${currentComponent.name}" (ID: ${currentComponent.id})`);
           }
           
-          componentIds.push(existingComponent.id);
-          console.log(`✅ Знайдено існуючий компонент: ${componentName} (ID: ${existingComponent.id})`);
+          componentIds.push(currentComponent.id);
+          console.log(`✅ Знайдено існуючий компонент: ${componentName} (ID: ${currentComponent.id})`);
         }
+        
+        // Створюємо позицію приходу
+        const receiptItem = await db
+          .insert(supplierReceiptItems)
+          .values({
+            receiptId: receipt.id,
+            componentId: currentComponent.id,
+            quantity: item.quantity ? item.quantity.toString() : "1",
+            unitPrice: item.price ? item.price.toString() : "0",
+            totalPrice: item.total ? item.total.toString() : (item.price * (item.quantity || 1)).toString(),
+            supplierComponentName: componentName
+          })
+          .returning();
+        
+        console.log(`📦 Створено позицію приходу: ${componentName} (кількість: ${item.quantity || 1})`);
       }
 
       return {
         success: true,
-        message: `Успішно імпортовано ${componentIds.length} компонентів з накладної ${invoiceData.number}`,
-        componentIds
+        message: `Успішно імпортовано прихід постачальника ${invoiceData.number} з ${componentIds.length} позиціями`,
+        receiptId: receipt.id
       };
       
     } catch (error) {
