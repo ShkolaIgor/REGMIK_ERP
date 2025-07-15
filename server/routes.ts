@@ -11328,32 +11328,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const responseText = await response.text();
       const rawInvoicesData = JSON.parse(responseText);
       
-      // Конвертуємо сирі дані з 1С до формату ERP
-      const processedInvoices = rawInvoicesData.map((invoice: any) => ({
-        id: `1c-${Date.now()}-${Math.random()}`,
-        number: invoice.НомерДокумента || invoice.number,
-        date: invoice.ДатаДокумента || invoice.date,
-        supplierName: invoice.Постачальник || invoice.supplierName,
-        amount: invoice.СуммаДокумента || invoice.amount,
-        currency: "UAH", // Виправлено валютний код 980 → UAH
-        status: 'confirmed' as const,
-        items: (invoice.Позиції || invoice.items || []).map((item: any) => ({
-          name: item.НаименованиеТовара || item.name,
-          originalName: item.НаименованиеТовара || item.name,
-          quantity: item.Количество || item.quantity || 0,
-          price: item.Цена || item.price || 0,
-          total: item.Сумма || item.total || 0,
-          unit: item.ЕдиницаИзмерения || item.unit || "шт",
-          codeTovara: item.КодТовара || item.codeTovara,
-          nomerStroki: item.НомерСтроки || item.nomerStroki,
-          isMapped: false,
-          erpProductId: undefined
-        })),
-        exists: false,
-        kilkistTovariv: invoice.КількістьТоварів || invoice.itemsCount
-      }));
+      // Перевіряємо які накладні вже імпортовані в supplier_receipts
+      const importedNumbers = await storage.getSupplierReceipts();
+      const importedSet = new Set(
+        importedNumbers
+          .filter(receipt => receipt.supplierDocumentNumber)
+          .map(receipt => receipt.supplierDocumentNumber)
+      );
       
-      console.log(`✅ DIRECT 1C: Обробмено ${processedInvoices?.length || 0} накладних`);
+      console.log(`📋 Імпортовані накладні в БД: [${Array.from(importedSet).join(', ')}]`);
+      
+      // Конвертуємо сирі дані з 1С до формату ERP
+      const processedInvoices = rawInvoicesData.map((invoice: any) => {
+        const invoiceNumber = invoice.НомерДокумента || invoice.number;
+        return {
+          id: `1c-${invoiceNumber}-${Date.now()}`, // Використовуємо номер накладної замість рандому
+          number: invoiceNumber,
+          date: invoice.ДатаДокумента || invoice.date,
+          supplierName: invoice.Постачальник || invoice.supplierName,
+          amount: invoice.СуммаДокумента || invoice.amount,
+          currency: "UAH", // Виправлено валютний код 980 → UAH
+          status: 'confirmed' as const,
+          items: (invoice.Позиції || invoice.items || []).map((item: any) => ({
+            name: item.НаименованиеТовара || item.name,
+            originalName: item.НаименованиеТовара || item.name,
+            quantity: item.Количество || item.quantity || 0,
+            price: item.Цена || item.price || 0,
+            total: item.Сумма || item.total || 0,
+            unit: item.ЕдиницаИзмерения || item.unit || "шт",
+            codeTovara: item.КодТовара || item.codeTovara,
+            nomerStroki: item.НомерСтроки || item.nomerStroki,
+            isMapped: false,
+            erpProductId: undefined
+          })),
+          exists: importedSet.has(invoiceNumber), // Перевіряємо реальний стан імпорту
+          kilkistTovariv: invoice.КількістьТоварів || invoice.itemsCount
+        };
+      });
+      
+      // Логування для діагностики
+      const existsCount = processedInvoices.filter(inv => inv.exists).length;
+      const newCount = processedInvoices.filter(inv => !inv.exists).length;
+      console.log(`✅ DIRECT 1C: Обробмено ${processedInvoices?.length || 0} накладних (вже імпортовано: ${existsCount}, нових: ${newCount})`);
       res.json(processedInvoices || []);
       
     } catch (error) {
