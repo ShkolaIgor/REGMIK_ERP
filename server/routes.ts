@@ -11756,6 +11756,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mass import 1C invoices
+  app.post('/api/1c/invoices/import', isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log('🚀 Масовий імпорт накладних з 1C - початок');
+      console.log('📋 Request body type:', typeof req.body);
+      console.log('📋 Request body raw:', req.body);
+      
+      let invoicesData;
+      
+      // Перевіряємо, чи тіло запиту є строкою (подвійно закодованою)
+      if (typeof req.body === 'string') {
+        try {
+          // Спочатку парсимо зовнішній JSON
+          const parsed = JSON.parse(req.body);
+          
+          // Перевіряємо, чи результат також є строкою
+          if (typeof parsed === 'string') {
+            // Парсимо внутрішній JSON
+            invoicesData = JSON.parse(parsed);
+          } else {
+            invoicesData = parsed;
+          }
+        } catch (parseError) {
+          console.error('❌ Помилка парсингу JSON:', parseError);
+          return res.status(400).json({ 
+            error: 'Invalid JSON format',
+            message: 'Не вдалося розпарсити дані накладних'
+          });
+        }
+      } else {
+        invoicesData = req.body;
+      }
+      
+      console.log('📋 Parsed invoices data:', invoicesData);
+      
+      // Перевіряємо структуру даних
+      if (!invoicesData || typeof invoicesData !== 'object') {
+        return res.status(400).json({ 
+          error: 'Invalid invoices data structure',
+          message: 'Дані накладних мають неправильний формат'
+        });
+      }
+      
+      // Якщо це окрема накладна
+      if (invoicesData.id && invoicesData.number) {
+        console.log(`🔍 Імпорт однієї накладної: ${invoicesData.number}`);
+        const result = await storage.import1CInvoiceFromData(invoicesData);
+        console.log(`✅ Успішно імпортовано накладну ${invoicesData.number}`);
+        return res.json(result);
+      }
+      
+      // Якщо це масив накладних
+      if (Array.isArray(invoicesData)) {
+        console.log(`🚀 Масовий імпорт ${invoicesData.length} накладних з 1C...`);
+        
+        const results = [];
+        for (const invoice of invoicesData) {
+          try {
+            const result = await storage.import1CInvoiceFromData(invoice);
+            results.push({ success: true, invoiceNumber: invoice.number, result });
+            console.log(`✅ Імпортовано накладну ${invoice.number}`);
+          } catch (error) {
+            console.error(`❌ Помилка імпорту накладної ${invoice.number}:`, error);
+            results.push({ 
+              success: false, 
+              invoiceNumber: invoice.number, 
+              error: error instanceof Error ? error.message : 'Невідома помилка'
+            });
+          }
+        }
+        
+        const successful = results.filter(r => r.success).length;
+        const failed = results.filter(r => !r.success).length;
+        
+        console.log(`📊 Імпорт завершено: ${successful} успішно, ${failed} з помилками`);
+        
+        return res.json({
+          success: true,
+          total: invoicesData.length,
+          successful,
+          failed,
+          results
+        });
+      }
+      
+      return res.status(400).json({ 
+        error: 'Invalid data format',
+        message: 'Неочікуваний формат даних для імпорту'
+      });
+      
+    } catch (error) {
+      console.error('❌ КРИТИЧНА ПОМИЛКА масового імпорту накладних:', error);
+      res.status(500).json({ 
+        message: 'Не вдалося імпортувати накладні з 1С',
+        error: error instanceof Error ? error.message : 'Невідома помилка',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+    }
+  });
+
   app.post('/api/1c/invoices/:id/import', isSimpleAuthenticated, async (req, res) => {
     try {
       console.log(`🔍 Імпорт 1C накладної ${req.params.id} - початок`);

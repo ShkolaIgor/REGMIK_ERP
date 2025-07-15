@@ -11277,6 +11277,118 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // 1C Integration - Import Invoice from Data (for mass import)
+  async import1CInvoiceFromData(invoiceData: any): Promise<{ success: boolean; message: string; componentIds?: number[]; }> {
+    console.log(`🔧 DatabaseStorage: Імпорт накладної з даних ${invoiceData.number} як КОМПОНЕНТІВ для виробництва`);
+    
+    try {
+      if (!invoiceData || !invoiceData.items) {
+        return { success: false, message: `Некоректні дані накладної` };
+      }
+
+      const componentIds: number[] = [];
+      
+      // Обробляємо кожну позицію накладної як компонент
+      for (const item of invoiceData.items || []) {
+        const componentName = item.nameFrom1C || item.originalName || item.name;
+        
+        // Спочатку шукаємо зіставлення з 1С в таблиці компонентів
+        const mapping = await this.findProductByAlternativeName(componentName, "1C");
+        
+        let existingComponent = null;
+        if (mapping) {
+          // Якщо знайдено зіставлення, шукаємо компонент за ERP ID
+          const [mappedComponent] = await db
+            .select()
+            .from(components)
+            .where(eq(components.id, mapping.erpProductId))
+            .limit(1);
+          existingComponent = mappedComponent;
+          console.log(`🔗 Знайдено зіставлення: "${componentName}" → "${mapping.erpProductName}" (ID: ${mapping.erpProductId})`);
+        } else {
+          // Якщо зіставлення не знайдено, шукаємо за назвою або SKU в таблиці components
+          const [directComponent] = await db
+            .select()
+            .from(components)
+            .where(
+              or(
+                eq(components.name, componentName),
+                eq(components.sku, item.sku || '')
+              )
+            )
+            .limit(1);
+          existingComponent = directComponent;
+        }
+        
+        if (!existingComponent) {
+          // Створюємо новий компонент
+          const newComponentData = {
+            name: componentName,
+            sku: item.sku || `1C-${invoiceData.number}-${Math.random().toString(36).substr(2, 9)}`,
+            description: `Імпортовано з 1С накладної ${invoiceData.number}`,
+            supplier: item.supplier || invoiceData.supplierName || 'Невідомий постачальник',
+            costPrice: item.price || 0,
+            isActive: true
+          } as const;
+          
+          const [newComponent] = await db
+            .insert(components)
+            .values(newComponentData)
+            .returning();
+          
+          // Автоматично створюємо зіставлення для нового компонента
+          if (!mapping) {
+            await this.createProductNameMapping({
+              externalSystemName: "1C",
+              externalProductName: componentName,
+              erpProductId: newComponent.id,
+              erpProductName: newComponent.name,
+              confidence: 1.0,
+              isActive: true,
+              mappingType: "automatic",
+              createdAt: new Date()
+            });
+            console.log(`🔗 Створено автоматичне зіставлення: "${componentName}" → "${newComponent.name}" (ID: ${newComponent.id})`);
+          }
+          
+          componentIds.push(newComponent.id);
+          console.log(`✅ Створено компонент: ${componentName} (ID: ${newComponent.id})`);
+        } else {
+          // Якщо компонент знайдено, але зіставлення не було, створюємо його
+          if (!mapping) {
+            await this.createProductNameMapping({
+              externalSystemName: "1C",
+              externalProductName: componentName,
+              erpProductId: existingComponent.id,
+              erpProductName: existingComponent.name,
+              confidence: 0.9,
+              isActive: true,
+              mappingType: "automatic",
+              createdAt: new Date()
+            });
+            console.log(`🔗 Створено зіставлення для існуючого компонента: "${componentName}" → "${existingComponent.name}" (ID: ${existingComponent.id})`);
+          }
+          
+          componentIds.push(existingComponent.id);
+          console.log(`✅ Знайдено існуючий компонент: ${componentName} (ID: ${existingComponent.id})`);
+        }
+      }
+
+      return {
+        success: true,
+        message: `Успішно імпортовано ${componentIds.length} компонентів з накладної ${invoiceData.number}`,
+        componentIds
+      };
+      
+    } catch (error) {
+      console.error(`❌ Помилка імпорту накладної ${invoiceData.number}:`, error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Невідома помилка імпорту'
+      };
+    }
+  }
+
   // 1C Integration - Order Import (ВИХІДНІ РАХУНКИ МІСТЯТЬ ТОВАРИ АБО КОМПОНЕНТИ)
   async import1COutgoingInvoice(invoiceId: string): Promise<{ success: boolean; message: string; orderId?: number; }> {
     console.log(`📋 DatabaseStorage: Імпорт вихідного рахунку ${invoiceId} як ЗАМОВЛЕННЯ (пошук у products і components)`);

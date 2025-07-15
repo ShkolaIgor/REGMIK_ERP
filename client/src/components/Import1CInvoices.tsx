@@ -257,7 +257,7 @@ export function Import1CInvoices() {
     mutationFn: async (invoice: Invoice1C) => {
       const result = await apiRequest('/api/1c/invoices/import', {
         method: 'POST',
-        body: JSON.stringify(invoice),
+        body: invoice, // apiRequest вже робить JSON.stringify, не потрібно подвійне кодування
       });
       return result;
     },

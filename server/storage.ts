@@ -564,6 +564,7 @@ export interface IStorage {
 
   // 1C Integration - Component Import
   import1CInvoice(invoiceId: string): Promise<{ success: boolean; message: string; componentIds?: number[]; }>;
+  import1CInvoiceFromData(invoiceData: any): Promise<{ success: boolean; message: string; componentIds?: number[]; }>;
   get1CInvoices(): Promise<any[]>;
   
   // 1C Integration - Order Import  
@@ -2098,6 +2099,10 @@ export class MemStorage implements IStorage {
 
   // 1C Integration - Component Import
   async import1CInvoice(invoiceId: string): Promise<{ success: boolean; message: string; componentIds?: number[]; }> {
+    return { success: false, message: "MemStorage не підтримує 1C інтеграцію" };
+  }
+
+  async import1CInvoiceFromData(invoiceData: any): Promise<{ success: boolean; message: string; componentIds?: number[]; }> {
     return { success: false, message: "MemStorage не підтримує 1C інтеграцію" };
   }
 
