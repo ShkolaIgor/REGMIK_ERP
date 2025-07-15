@@ -74,6 +74,11 @@ export default function Components() {
       key: 'category',
       label: 'Категорія',
       sortable: true,
+      render: (value: string | null, row: Component) => {
+        if (!row.categoryId) return '-';
+        const category = categories.find((cat: any) => cat.id === row.categoryId);
+        return category ? category.name : '-';
+      }
     },
     {
       key: 'supplier',
@@ -545,6 +550,24 @@ export default function Components() {
                     />
                   </div>
                   <div className="space-y-2">
+                    <label className="text-sm font-medium">Категорія</label>
+                    <select
+                      value={editingComponent.categoryId || ''}
+                      onChange={(e) => setEditingComponent({
+                        ...editingComponent, 
+                        categoryId: e.target.value ? parseInt(e.target.value) : null
+                      })}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">Оберіть категорію</option>
+                      {categories.map((category: any) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
                     <label className="text-sm font-medium">Ціна за одиницю</label>
                     <input
                       type="number"
@@ -616,6 +639,7 @@ export default function Components() {
                             name: editingComponent.name,
                             sku: editingComponent.sku,
                             description: editingComponent.description,
+                            categoryId: editingComponent.categoryId,
                             unitPrice: editingComponent.unitPrice,
                             unit: editingComponent.unit,
                             minStock: editingComponent.minStock,
