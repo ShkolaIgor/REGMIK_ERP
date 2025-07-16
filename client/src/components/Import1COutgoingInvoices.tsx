@@ -97,20 +97,20 @@ export function Import1COutgoingInvoices() {
 
   // Створюємо Set номерів існуючих замовлень для швидкого пошуку
   const existingOrderNumbers = new Set(
-    existingOrders
-      .filter(order => order.supplierInvoiceNumber) 
+    (existingOrders || [])
+      .filter(order => order?.supplierInvoiceNumber) 
       .map(order => order.supplierInvoiceNumber)
   );
 
   // Фільтруємо рахунки відповідно до налаштування "Тільки відсутні"
   const filteredInvoices = showOnlyMissing 
-    ? outgoingInvoices.filter(invoice => !existingOrderNumbers.has(invoice.number))
-    : outgoingInvoices;
+    ? (outgoingInvoices || []).filter(invoice => !existingOrderNumbers.has(invoice?.number))
+    : (outgoingInvoices || []);
 
   // Додаємо інформацію про існування рахунку в ERP
   const displayInvoices = filteredInvoices.map(invoice => ({
     ...invoice,
-    exists: existingOrderNumbers.has(invoice.number)
+    exists: existingOrderNumbers.has(invoice?.number)
   }));
   
   const isUsingFallback = false;

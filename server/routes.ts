@@ -10,7 +10,7 @@ import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./si
 import { novaPoshtaApi } from "./nova-poshta-api";
 import { novaPoshtaCache } from "./nova-poshta-cache";
 import { pool, db } from "./db";
-import { eq, sql, and } from "drizzle-orm";
+import { eq, sql, and, isNotNull } from "drizzle-orm";
 import { productComponents, components, productNameMappings } from "@shared/schema";
 import { 
   insertProductSchema, insertOrderSchemaForm, insertRecipeSchema,
@@ -11424,17 +11424,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`📋 1C OUTGOING ARRAY LENGTH: ${invoicesArray.length}`);
       
+      // Отримуємо список існуючих замовлень для перевірки
+      const existingOrders = await db.select({
+        supplierInvoiceNumber: orders.supplierInvoiceNumber
+      })
+      .from(orders)
+      .where(isNotNull(orders.supplierInvoiceNumber));
+      
+      const importedSet = new Set(existingOrders.map(order => order.supplierInvoiceNumber));
+      
       // Конвертуємо сирі дані з 1С до формату ERP для вихідних рахунків
       // Структура з curl: {invoiceNumber, date, client, amount, currency, status, positions}
-      const processedInvoices = invoicesArray.map((invoice: any) => ({
-        id: `1c-out-${Date.now()}-${Math.random()}`,
-        number: invoice.invoiceNumber || invoice.НомерДокумента,
-        date: invoice.date || invoice.ДатаДокумента,
-        clientName: invoice.client || invoice.Клиент,
-        clientTaxCode: invoice.clientTaxCode || invoice.КодКлієнта,
-        total: invoice.amount || invoice.СуммаДокумента,
-        currency: "UAH", // Виправлено валютний код 980 → UAH
-        status: invoice.status || 'confirmed',
+      const processedInvoices = invoicesArray.map((invoice: any) => {
+        const invoiceNumber = invoice.invoiceNumber || invoice.НомерДокумента;
+        return {
+          id: `1c-out-${Date.now()}-${Math.random()}`,
+          number: invoiceNumber,
+          date: invoice.date || invoice.ДатаДокумента,
+          clientName: invoice.client || invoice.Клиент,
+          clientTaxCode: invoice.clientTaxCode || invoice.КодКлієнта,
+          total: invoice.amount || invoice.СуммаДокумента,
+          currency: "UAH", // Виправлено валютний код 980 → UAH
+          status: invoice.status || 'confirmed',
         paymentStatus: invoice.paymentStatus || 'unpaid',
         description: invoice.notes || invoice.description || '',
         managerName: invoice.manager || invoice.Менеджер,
@@ -11444,8 +11455,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           price: item.price || item.Цена || 0,
           total: item.total || item.Сумма || 0
         })),
-        itemsCount: invoice.itemsCount || (invoice.positions || []).length
-      }));
+        itemsCount: invoice.itemsCount || (invoice.positions || []).length,
+        exists: importedSet.has(invoiceNumber) // Перевіряємо реальний стан імпорту
+      };
+      });
       
       // Додаємо перевірку існування товарів для кожної позиції в кожному рахунку
       console.log(`🔍 Перевіряємо існування товарів у позиціях рахунків... (знайдено ${processedInvoices.length} рахунків)`);
@@ -11486,10 +11499,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`📊 Підсумок: оброблено ${totalPositions} позицій, знайдено ${foundProducts} товарів у ERP`);
       
-      console.log(`✅ DIRECT 1C OUTGOING: Обробмено ${processedInvoices?.length || 0} вихідних рахунків з перевіркою товарів`);
+      // Логування для діагностики
+      const existsCount = processedInvoices.filter(inv => inv.exists).length;
+      const newCount = processedInvoices.filter(inv => !inv.exists).length;
+      console.log(`✅ DIRECT 1C OUTGOING: Обробмено ${processedInvoices?.length || 0} вихідних рахунків (вже імпортовано: ${existsCount}, нових: ${newCount})`);
       
       // Відправляємо відповідь після завершення всіх операцій
-      res.json(processedInvoices);
+      res.json(processedInvoices || []);
       
     } catch (error) {
       console.error('❌ DIRECT 1C OUTGOING ERROR:', error);
