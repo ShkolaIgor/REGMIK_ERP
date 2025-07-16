@@ -78,11 +78,41 @@ function ComponentMappingCell({ item, onMappingChange }: {
     }
   };
 
-  const handleManualMapping = (componentName: string) => {
+  const handleManualMapping = async (componentName: string) => {
     setSelectedComponent(componentName);
     onMappingChange(componentName);
     setSearchTerm('');
     setFoundComponents([]);
+    
+    // Зберігаємо зіставлення в product_name_mappings для майбутнього використання
+    try {
+      const originalName = item.name || item.originalName;
+      if (originalName && componentName) {
+        console.log(`💾 Зберігаю зіставлення: "${originalName}" → "${componentName}"`);
+        
+        // Знаходимо компонент за назвою щоб отримати його ID
+        const foundComponent = foundComponents.find(comp => comp.name === componentName);
+        
+        await apiRequest('/api/product-name-mappings', {
+          method: 'POST',
+          body: {
+            externalSystemName: '1c',
+            externalProductName: originalName,
+            erpProductId: foundComponent?.id || null, // ID компонента для прямого зв'язку
+            erpProductName: componentName,
+            mappingType: 'manual',
+            confidence: 1.0,
+            isActive: true,
+            notes: 'Ручне зіставлення під час імпорту накладних',
+            createdBy: 'import_user'
+          }
+        });
+        console.log(`✅ Зіставлення збережено в базу даних`);
+      }
+    } catch (error) {
+      console.error('❌ Помилка збереження зіставлення:', error);
+      // Не блокуємо процес, якщо не вдалося зберегти зіставлення
+    }
   };
 
   if (selectedComponent) {
