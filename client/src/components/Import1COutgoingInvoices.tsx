@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,9 +59,22 @@ export function Import1COutgoingInvoices() {
   const [showPreview, setShowPreview] = useState<OutgoingInvoice1C | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
+  const [showOnlyMissing, setShowOnlyMissing] = useState(true); // За замовчуванням показувати тільки відсутні
+  
+  // Очищення вибору при зміні фільтра
+  useEffect(() => {
+    setSelectedInvoices(new Set());
+  }, [showOnlyMissing]);
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Завантаження існуючих замовлень для фільтрації
+  const { data: existingOrders = [] } = useQuery({
+    queryKey: ["/api/orders"],
+    enabled: isOpen,
+    retry: false
+  });
 
   // Завантаження доступних вихідних рахунків з 1C
   const { data: outgoingInvoices = [], isLoading: loadingInvoices, error: invoicesError, refetch: refetchInvoices } = useQuery({
@@ -82,8 +95,24 @@ export function Import1COutgoingInvoices() {
     }
   });
 
-  // Дані отримуються тільки з реальної 1С системи
-  const displayInvoices = outgoingInvoices || [];
+  // Створюємо Set номерів існуючих замовлень для швидкого пошуку
+  const existingOrderNumbers = new Set(
+    existingOrders
+      .filter(order => order.supplierInvoiceNumber) 
+      .map(order => order.supplierInvoiceNumber)
+  );
+
+  // Фільтруємо рахунки відповідно до налаштування "Тільки відсутні"
+  const filteredInvoices = showOnlyMissing 
+    ? outgoingInvoices.filter(invoice => !existingOrderNumbers.has(invoice.number))
+    : outgoingInvoices;
+
+  // Додаємо інформацію про існування рахунку в ERP
+  const displayInvoices = filteredInvoices.map(invoice => ({
+    ...invoice,
+    exists: existingOrderNumbers.has(invoice.number)
+  }));
+  
   const isUsingFallback = false;
 
   // Додаємо логування для дебагу
@@ -299,7 +328,12 @@ export function Import1COutgoingInvoices() {
               <Card className="mb-4">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base flex items-center gap-2">
-                    Знайдено рахунків: {displayInvoices.length}
+                    Рахунки з 1С: {outgoingInvoices.length} (показано: {displayInvoices.length})
+                    {showOnlyMissing && (
+                      <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full font-normal">
+                        тільки нові
+                      </span>
+                    )}
                     {(isUsingFallback || displayInvoices?.some(inv => inv.clientName?.includes('(демо)'))) && (
                       <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full font-normal">
                         демо режим - 1С недоступна
@@ -320,8 +354,18 @@ export function Import1COutgoingInvoices() {
                           Вибрати всі
                         </label>
                       </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="show-only-missing"
+                          checked={showOnlyMissing}
+                          onCheckedChange={setShowOnlyMissing}
+                        />
+                        <label htmlFor="show-only-missing" className="text-sm font-medium">
+                          Тільки відсутні
+                        </label>
+                      </div>
                       <span className="text-sm text-muted-foreground">
-                        Вибрано: {selectedInvoices.size}
+                        Вибрано: {selectedInvoices.size} | Показано: {displayInvoices.length}
                       </span>
                     </div>
                     <Button
