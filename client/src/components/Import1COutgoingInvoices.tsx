@@ -297,7 +297,7 @@ export function Import1COutgoingInvoices() {
                         тільки нові
                       </span>
                     )}
-                    {(isUsingFallback || displayInvoices?.some(inv => inv.clientName?.includes('(демо)'))) && (
+                    {displayInvoices?.some(inv => inv.clientName?.includes('(демо)') || inv.id?.includes('fallback')) && (
                       <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full font-normal">
                         демо режим - 1С недоступна
                       </span>

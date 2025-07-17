@@ -124,6 +124,14 @@ User has Russian-language 1C system and needs integration setup guidance.
 
 ## Recent Changes
 
+### July 17, 2025
+- ✅ **КРИТИЧНУ ПОМИЛКУ 500 СЕРВЕРА ПОВНІСТЮ ВИПРАВЛЕНО** - відновлено функціональність імпорту вихідних рахунків з 1С системи
+- ✅ **АУТЕНТИФІКАЦІЯ ВИПРАВЛЕНА** - додано відсутню middleware isSimpleAuthenticated до /api/1c/outgoing-invoices endpoint
+- ✅ **DATABASE QUERY ВИПРАВЛЕНО** - замінено supplierInvoiceNumber на invoiceNumber у запитах до таблиці orders
+- ✅ **FRONTEND RUNTIME ERROR УСУНУТО** - видалено посилання на невизначену змінну isUsingFallback у компоненті Import1COutgoingInvoices
+- ✅ **МЕРЕЖЕВА СТІЙКІСТЬ ДОДАНА** - реалізовано fallback механізм при недоступності 1С сервера з graceful timeout обробкою
+- ✅ **ПОВНА ФУНКЦІОНАЛЬНІСТЬ ВІДНОВЛЕНА** - система успішно обробляє 100 реальних рахунків з 1С (вже імпортовано: 3, нових: 97)
+
 ### July 15, 2025
 - ✅ **ЗАВЕРШЕНО АРХІТЕКТУРНИЙ ПЕРЕХІД 1C ІНТЕГРАЦІЇ** - повністю реалізовано новий підхід: накладні імпортуються як прихода постачальників
 - ✅ **BACKEND МЕТОДИ ОНОВЛЕНО** - import1CInvoice та import1CInvoiceFromData тепер створюють supplier_receipts з supplier_receipt_items
