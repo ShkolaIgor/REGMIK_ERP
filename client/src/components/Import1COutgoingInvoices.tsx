@@ -419,7 +419,7 @@ export function Import1COutgoingInvoices() {
                                 <div>
                                   <div className="font-medium text-sm">
                                     <DollarSign className="w-3 h-3 inline mr-1" />
-                                    {invoice.total.toLocaleString('uk-UA')} {invoice.currency}
+                                    {(invoice.total || 0).toLocaleString('uk-UA')} {invoice.currency}
                                   </div>
                                 </div>
                                 
@@ -501,7 +501,7 @@ export function Import1COutgoingInvoices() {
                       </div>
                       <div>
                         <label className="text-sm font-medium">Сума</label>
-                        <p className="text-sm">{showPreview.total.toLocaleString('uk-UA')} {showPreview.currency}</p>
+                        <p className="text-sm">{(showPreview.total || 0).toLocaleString('uk-UA')} {showPreview.currency}</p>
                       </div>
                       <div>
                         <label className="text-sm font-medium">Статус</label>
@@ -561,8 +561,8 @@ export function Import1COutgoingInvoices() {
                               {/* Кількість та ціни */}
                               <div className="flex justify-between items-center text-sm text-muted-foreground">
                                 <span>Кількість: {position.quantity}</span>
-                                <span>Ціна: {position.price.toLocaleString('uk-UA')} {showPreview.currency}</span>
-                                <span className="font-medium">Сума: {position.total.toLocaleString('uk-UA')} {showPreview.currency}</span>
+                                <span>Ціна: {(position.price || 0).toLocaleString('uk-UA')} {showPreview.currency}</span>
+                                <span className="font-medium">Сума: {(position.total || 0).toLocaleString('uk-UA')} {showPreview.currency}</span>
                               </div>
                             </div>
                           </div>

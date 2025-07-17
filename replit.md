@@ -130,6 +130,10 @@ User has Russian-language 1C system and needs integration setup guidance.
 - ✅ **ПІДТВЕРДЖЕНО КОРІНЬ ПРОБЛЕМИ ISO ДАТ** - ERP відправляє "2025-07-13" формат, але 1С не може фільтрувати дані через проблему парсингу дат
 - ✅ **ДОДАНО ДЕТАЛЬНЕ ЛОГУВАННЯ 1С ВІДПОВІДІ** - тепер видно повну структуру rawInvoicesData для діагностики
 - ✅ **НЕОБХІДНО ОНОВИТИ КОД 1С** - потрібно застосувати ПреобразоватьИЗОДатуВДату() функцію з 1C_DATE_PARAMETER_UPDATE.md до вихідних рахунків
+- ✅ **ВИПРАВЛЕНО FRONTEND RUNTIME ERROR** - усунуто помилку "undefined is not an object (evaluating 'invoice.total.toLocaleString')"
+- ✅ **ДОДАНО NULL CHECKS** - всі поля total, price тепер мають перевірку (value || 0) перед викликом toLocaleString()
+- ✅ **1С ІНТЕГРАЦІЯ ЧАСТКОВО ПРАЦЮЄ** - система успішно отримує та відображає 7 вихідних рахунків з 26 позиціями товарів
+- ✅ **ПІДТВЕРДЖЕНО ОТРИМАННЯ ДАНИХ** - 1С формує та передає рахунки, але дати все ще потребують конвертації в коді 1С
 - ✅ **АУТЕНТИФІКАЦІЯ ВИПРАВЛЕНА** - додано відсутню middleware isSimpleAuthenticated до /api/1c/outgoing-invoices endpoint
 - ✅ **DATABASE QUERY ВИПРАВЛЕНО** - замінено supplierInvoiceNumber на invoiceNumber у запитах до таблиці orders
 - ✅ **FRONTEND RUNTIME ERROR УСУНУТО** - видалено посилання на невизначену змінну isUsingFallback у компоненті Import1COutgoingInvoices
