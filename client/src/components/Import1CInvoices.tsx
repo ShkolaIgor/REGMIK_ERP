@@ -198,7 +198,7 @@ export function Import1CInvoices() {
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
   const [showOnlyMissing, setShowOnlyMissing] = useState(true); // За замовчуванням показувати тільки відсутні
-  const [dateFilter, setDateFilter] = useState<DateFilterParams>({ period: 'last5days' });
+  const [dateFilter, setDateFilter] = useState<DateFilterParams>({});
   
   // Очищення вибору при зміні фільтра
   useEffect(() => {
@@ -227,7 +227,7 @@ export function Import1CInvoices() {
   const { data: invoices1C = [], isLoading: loadingInvoices, error: invoicesError, refetch: refetchInvoices } = useQuery({
     queryKey: ["/api/1c/invoices", dateFilter],
     queryFn: () => apiRequest(buildInvoicesUrl()),
-    enabled: isOpen,
+    enabled: isOpen && (dateFilter.period || dateFilter.dateFrom), // Завантаження тільки після вибору дат
     retry: false,
     onError: (error) => {
       console.error("1C Invoices API Error:", error);
@@ -463,7 +463,6 @@ export function Import1CInvoices() {
               setDateFilter(newFilter);
               console.log('📅 Змінено фільтр дат для накладних:', newFilter);
             }}
-            defaultPeriod="last5days"
           />
 
           {/* Прогрес імпорту */}
@@ -534,7 +533,14 @@ export function Import1CInvoices() {
 
           {/* Список накладних */}
           <div className="flex-1 overflow-y-auto">
-            {loadingInvoices ? (
+            {!dateFilter.period && !dateFilter.dateFrom ? (
+              <div className="flex items-center justify-center h-32">
+                <div className="text-center">
+                  <Calendar className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                  <p className="text-gray-600">Оберіть період дат вище для завантаження накладних з 1С</p>
+                </div>
+              </div>
+            ) : loadingInvoices ? (
               <div className="flex items-center justify-center h-32">
                 <Loader2 className="w-6 h-6 animate-spin" />
                 <span className="ml-2">Завантаження накладних з 1C...</span>

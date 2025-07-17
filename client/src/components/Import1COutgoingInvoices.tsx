@@ -62,7 +62,7 @@ export function Import1COutgoingInvoices() {
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
   const [showOnlyMissing, setShowOnlyMissing] = useState(true); // За замовчуванням показувати тільки відсутні
-  const [dateFilter, setDateFilter] = useState<DateFilterParams>({ period: 'last5days' });
+  const [dateFilter, setDateFilter] = useState<DateFilterParams>({});
   
   // Очищення вибору при зміні фільтра
   useEffect(() => {
@@ -91,7 +91,7 @@ export function Import1COutgoingInvoices() {
   const { data: outgoingInvoices = [], isLoading: loadingInvoices, error: invoicesError, refetch: refetchInvoices } = useQuery({
     queryKey: ["/api/1c/outgoing-invoices", dateFilter],
     queryFn: () => apiRequest(buildOutgoingInvoicesUrl()),
-    enabled: isOpen,
+    enabled: isOpen && (dateFilter.period || dateFilter.dateFrom), // Завантаження тільки після вибору дат
     retry: false,
     onError: (error) => {
       console.error("1C Outgoing Invoices API Error:", error);
@@ -308,11 +308,19 @@ export function Import1COutgoingInvoices() {
               setDateFilter(newFilter);
               console.log('📅 Змінено фільтр дат для вихідних рахунків:', newFilter);
             }}
-            defaultPeriod="last5days"
           />
 
           {/* Основний контент */}
-          {!loadingInvoices && displayInvoices.length > 0 && (
+          {!dateFilter.period && !dateFilter.dateFrom ? (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <Calendar className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                  <p className="text-gray-600">Оберіть період дат вище для завантаження вихідних рахунків з 1С</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : !loadingInvoices && displayInvoices.length > 0 && (
             <>
               {/* Заголовок зі статистикою */}
               <Card className="mb-4">
