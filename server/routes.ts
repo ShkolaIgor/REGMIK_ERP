@@ -11618,27 +11618,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Конвертуємо сирі дані з 1С до формату ERP для вихідних рахунків
       // Структура з curl: {invoiceNumber, date, client, amount, currency, status, positions}
-      const processedInvoices = invoicesArray.map((invoice: any) => {
-        const invoiceNumber = invoice.invoiceNumber || invoice.НомерДокумента;
+      const processedInvoices = invoicesArray.map((invoice: any, index) => {
+        console.log(`🔍 PROCESSING INVOICE ${index}:`, JSON.stringify(invoice, null, 2).substring(0, 500));
+        
+        // Пробуємо всі можливі варіанти полів
+        const invoiceNumber = invoice.invoiceNumber || invoice.НомерДокумента || invoice.number || invoice.Number;
+        const invoiceDate = invoice.date || invoice.ДатаДокумента || invoice.Date || invoice.invoiceDate;
+        const clientName = invoice.client || invoice.Клиент || invoice.clientName || invoice.Client || invoice.Покупатель;
+        const invoiceAmount = invoice.amount || invoice.СуммаДокумента || invoice.total || invoice.Total || invoice.Сумма;
+        
+        console.log(`📋 MAPPED FIELDS: number=${invoiceNumber}, date=${invoiceDate}, client=${clientName}, amount=${invoiceAmount}`);
+        
         return {
           id: `1c-out-${Date.now()}-${Math.random()}`,
           number: invoiceNumber,
-          date: invoice.date || invoice.ДатаДокумента,
-          clientName: invoice.client || invoice.Клиент,
+          date: invoiceDate,
+          clientName: clientName,
           clientTaxCode: invoice.clientTaxCode || invoice.КодКлієнта,
-          total: invoice.amount || invoice.СуммаДокумента,
+          total: invoiceAmount,
           currency: "UAH", // Виправлено валютний код 980 → UAH
           status: invoice.status || 'confirmed',
         paymentStatus: invoice.paymentStatus || 'unpaid',
         description: invoice.notes || invoice.description || '',
         managerName: invoice.manager || invoice.Менеджер,
-        positions: (invoice.positions || []).map((item: any) => ({
-          productName: item.productName || item.НаименованиеТовара,
+        positions: (invoice.positions || invoice.Positions || invoice.Товары || []).map((item: any) => ({
+          productName: item.productName || item.НаименованиеТовара || item.productName || item.name,
           quantity: item.quantity || item.Количество || 0,
           price: item.price || item.Цена || 0,
           total: item.total || item.Сумма || 0
         })),
-        itemsCount: invoice.itemsCount || (invoice.positions || []).length,
+        itemsCount: invoice.itemsCount || (invoice.positions || invoice.Positions || invoice.Товары || []).length,
         exists: importedSet.has(invoiceNumber) // Перевіряємо реальний стан імпорту
       };
       });
