@@ -11567,12 +11567,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log(`📋 1C OUTGOING DATA TYPE: ${typeof rawInvoicesData}`);
-      console.log(`📋 1C OUTGOING RAW STRUCTURE:`, JSON.stringify(rawInvoicesData, null, 2).substring(0, 1000));
+      console.log(`📋 1C OUTGOING RAW STRUCTURE:`, JSON.stringify(rawInvoicesData, null, 2).substring(0, 2000));
+      console.log(`📋 1C OUTGOING KEYS:`, Object.keys(rawInvoicesData || {}));
       
-      // Обробляємо відповідь з 1С (структура: {invoices: [...], total: X})
-      const invoicesArray = rawInvoicesData?.invoices || rawInvoicesData || [];
+      // Спробуємо різні варіанти структури відповіді з 1С
+      let invoicesArray = [];
       
-      console.log(`📋 1C OUTGOING ARRAY LENGTH: ${invoicesArray.length}`);
+      if (Array.isArray(rawInvoicesData)) {
+        // Якщо 1С повертає масив напряму
+        invoicesArray = rawInvoicesData;
+        console.log(`📋 1C повертає масив напряму, довжина: ${invoicesArray.length}`);
+      } else if (rawInvoicesData?.invoices && Array.isArray(rawInvoicesData.invoices)) {
+        // Якщо структура {invoices: [...]}
+        invoicesArray = rawInvoicesData.invoices;
+        console.log(`📋 1C повертає структуру з invoices, довжина: ${invoicesArray.length}`);
+      } else if (rawInvoicesData?.data && Array.isArray(rawInvoicesData.data)) {
+        // Якщо структура {data: [...]}
+        invoicesArray = rawInvoicesData.data;
+        console.log(`📋 1C повертає структуру з data, довжина: ${invoicesArray.length}`);
+      } else if (rawInvoicesData?.result && Array.isArray(rawInvoicesData.result)) {
+        // Якщо структура {result: [...]}
+        invoicesArray = rawInvoicesData.result;
+        console.log(`📋 1C повертає структуру з result, довжина: ${invoicesArray.length}`);
+      } else {
+        // Спробуємо знайти будь-який масив у відповіді
+        for (const key of Object.keys(rawInvoicesData || {})) {
+          if (Array.isArray(rawInvoicesData[key])) {
+            invoicesArray = rawInvoicesData[key];
+            console.log(`📋 1C повертає масив у ключі "${key}", довжина: ${invoicesArray.length}`);
+            break;
+          }
+        }
+      }
+      
+      console.log(`📋 1C OUTGOING FINAL ARRAY LENGTH: ${invoicesArray.length}`);
       
       // Отримуємо список існуючих замовлень для перевірки (тимчасово відключено для діагностики)
       let importedSet = new Set();

@@ -1,0 +1,109 @@
+[Log] 📅 Змінено фільтр дат для вихідних рахунків: – {period: "custom", dateFrom: "2025-07-06", dateTo: "2025-07-15"} (Import1COutgoingInvoices.tsx, line 406)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: true, hasError: false, …} (Import1COutgoingInvoices.tsx, line 83)
+{isOpen: true, loadingInvoices: true, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] Frontend: Making GET request to: /api/1c/outgoing-invoices?period=custom&dateFrom=2025-07-06&dateTo=2025-07-15 (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – {} (queryClient.ts, line 49)
+[Log] Frontend: Request body: – undefined (queryClient.ts, line 50)
+[Log] Frontend: Document cookies: – "" (queryClient.ts, line 51)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: true, hasError: false, …} (Import1COutgoingInvoices.tsx, line 83)
+{isOpen: true, loadingInvoices: true, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] Frontend: Response status: 200 for GET /api/1c/outgoing-invoices?period=custom&dateFrom=2025-07-06&dateTo=2025-07-15 (queryClient.ts, line 66)
+[Log] Frontend: Response headers: – {content-length: "2", content-type: "application/json; charset=utf-8", date: "Thu, 17 Jul 2025 19:39:25 GMT", …} (queryClient.ts, line 67)
+{content-length: "2", content-type: "application/json; charset=utf-8", date: "Thu, 17 Jul 2025 19:39:25 GMT", replit-cluster: "picard", x-powered-by: "Express", …}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: false, …} (Import1COutgoingInvoices.tsx, line 83)
+{isOpen: true, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] 📅 Змінено фільтр дат для вихідних рахунків: – {period: "custom", dateFrom: "2025-07-06", dateTo: "2025-07-15"} (Import1COutgoingInvoices.tsx, line 406)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: false, …} (Import1COutgoingInvoices.tsx, line 83)
+{isOpen: true, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: false, hasError: false, …} (Import1COutgoingInvoices.tsx, line 83)
+{isOpen: true, loadingInvoices: false, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] 📅 Змінено фільтр дат для вихідних рахунків: – {period: "custom", dateFrom: "2025-07-13", dateTo: "2025-07-15"} (Import1COutgoingInvoices.tsx, line 406)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: true, hasError: false, …} (Import1COutgoingInvoices.tsx, line 83)
+{isOpen: true, loadingInvoices: true, hasError: false, errorMessage: null, realDataCount: 0, …}Object
+[Log] Frontend: Making GET request to: /api/1c/outgoing-invoices?period=custom&dateFrom=2025-07-13&dateTo=2025-07-15 (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – {} (queryClient.ts, line 49)
+[Log] Frontend: Request body: – undefined (queryClient.ts, line 50)
+[Log] Frontend: Document cookies: – "" (queryClient.ts, line 51)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – {isOpen: true, loadingInvoices: true, hasError: false, …} (Import1COutgoingInvoices.tsx, line 83)
+{isOpen: true, loadingInvoices: true, hasError: false, errorMessage: null, realDataCount: 0, …}ObjectdisplayDataCount: 0errorMessage: nullfirstDisplayInvoice: nullfirstRealInvoice: nullhasError: falseisOpen: trueloadingInvoices: truerealDataCount: 0Object Prototype
+[Log] Frontend: Response status: 200 for GET /api/1c/outgoing-invoices?period=custom&dateFrom=2025-07-13&dateTo=2025-07-15 (queryClient.ts, line 66)
+[Log] Frontend: Response headers: (queryClient.ts, line 67)
+Object
+
+content-length: "2"
+
+content-type: "application/json; charset=utf-8"
+
+date: "Thu, 17 Jul 2025 19:39:30 GMT"
+
+replit-cluster: "picard"
+
+x-powered-by: "Express"
+
+x-robots-tag: "none, noindex, noarchive, nofollow, nositelinkssearchbox, noimageindex, none, noindex, noarchive, nofollow, nositelinkssearchbox…"
+
+Object Prototype
+
+__defineGetter__(propertyName, getterFunction)
+
+__defineSetter__(propertyName, setterFunction)
+
+__lookupGetter__(propertyName)
+
+__lookupSetter__(propertyName)
+
+constructor: function()
+
+hasOwnProperty(propertyName)
+
+isPrototypeOf(property)
+
+propertyIsEnumerable(propertyName)
+
+toLocaleString()
+
+toString()
+
+valueOf()
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: (Import1COutgoingInvoices.tsx, line 83)
+Object
+
+displayDataCount: 0
+
+errorMessage: null
+
+firstDisplayInvoice: null
+
+firstRealInvoice: null
+
+hasError: false
+
+isOpen: true
+
+loadingInvoices: false
+
+realDataCount: 0
+
+Object Prototype
+
+__defineGetter__(propertyName, getterFunction)
+
+__defineSetter__(propertyName, setterFunction)
+
+__lookupGetter__(propertyName)
+
+__lookupSetter__(propertyName)
+
+constructor: function()
+
+hasOwnProperty(propertyName)
+
+isPrototypeOf(property)
+
+propertyIsEnumerable(propertyName)
+
+toLocaleString()
+
+toString()
+
+valueOf()
