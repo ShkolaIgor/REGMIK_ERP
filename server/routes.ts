@@ -11567,9 +11567,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log(`📋 1C OUTGOING DATA TYPE: ${typeof rawInvoicesData}`);
+      console.log(`📋 1C OUTGOING RAW STRUCTURE:`, JSON.stringify(rawInvoicesData, null, 2).substring(0, 1000));
       
       // Обробляємо відповідь з 1С (структура: {invoices: [...], total: X})
-      const invoicesArray = rawInvoicesData?.invoices || [];
+      const invoicesArray = rawInvoicesData?.invoices || rawInvoicesData || [];
       
       console.log(`📋 1C OUTGOING ARRAY LENGTH: ${invoicesArray.length}`);
       
