@@ -91,7 +91,7 @@ export function Import1COutgoingInvoices() {
   const { data: outgoingInvoices = [], isLoading: loadingInvoices, error: invoicesError, refetch: refetchInvoices } = useQuery({
     queryKey: ["/api/1c/outgoing-invoices", dateFilter],
     queryFn: () => apiRequest(buildOutgoingInvoicesUrl()),
-    enabled: isOpen && (dateFilter.period || dateFilter.dateFrom), // Завантаження тільки після вибору дат
+    enabled: Boolean(isOpen && (dateFilter.period || dateFilter.dateFrom)), // Завантаження тільки після вибору дат
     retry: false,
     onError: (error) => {
       console.error("1C Outgoing Invoices API Error:", error);

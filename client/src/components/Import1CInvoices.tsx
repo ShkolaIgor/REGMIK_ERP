@@ -227,7 +227,7 @@ export function Import1CInvoices() {
   const { data: invoices1C = [], isLoading: loadingInvoices, error: invoicesError, refetch: refetchInvoices } = useQuery({
     queryKey: ["/api/1c/invoices", dateFilter],
     queryFn: () => apiRequest(buildInvoicesUrl()),
-    enabled: isOpen && (dateFilter.period || dateFilter.dateFrom), // Завантаження тільки після вибору дат
+    enabled: Boolean(isOpen && (dateFilter.period || dateFilter.dateFrom)), // Завантаження тільки після вибору дат
     retry: false,
     onError: (error) => {
       console.error("1C Invoices API Error:", error);
