@@ -11,6 +11,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { ProcessedInvoice1C } from "@shared/schema";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePeriodFilter, DateFilterParams } from "@/components/DatePeriodFilter";
 
 // Тип для накладних згідно з реальним кодом 1С
 type Invoice1C = ProcessedInvoice1C;
@@ -197,18 +198,35 @@ export function Import1CInvoices() {
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
   const [showOnlyMissing, setShowOnlyMissing] = useState(true); // За замовчуванням показувати тільки відсутні
+  const [dateFilter, setDateFilter] = useState<DateFilterParams>({ period: 'last5days' });
   
   // Очищення вибору при зміні фільтра
   useEffect(() => {
     setSelectedInvoices(new Set());
-  }, [showOnlyMissing]);
+  }, [showOnlyMissing, dateFilter]);
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Формуємо URL для запиту з параметрами дати
+  const buildInvoicesUrl = () => {
+    const params = new URLSearchParams();
+    if (dateFilter.period) {
+      params.set('period', dateFilter.period);
+    }
+    if (dateFilter.dateFrom) {
+      params.set('dateFrom', dateFilter.dateFrom);
+    }
+    if (dateFilter.dateTo) {
+      params.set('dateTo', dateFilter.dateTo);
+    }
+    return `/api/1c/invoices${params.toString() ? '?' + params.toString() : ''}`;
+  };
+
   // Завантаження доступних накладних з 1C
   const { data: invoices1C = [], isLoading: loadingInvoices, error: invoicesError, refetch: refetchInvoices } = useQuery({
-    queryKey: ["/api/1c/invoices"],
+    queryKey: ["/api/1c/invoices", dateFilter],
+    queryFn: () => apiRequest(buildInvoicesUrl()),
     enabled: isOpen,
     retry: false,
     onError: (error) => {
@@ -438,6 +456,15 @@ export function Import1CInvoices() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Фільтр періоду */}
+          <DatePeriodFilter
+            onFilterChange={(newFilter) => {
+              setDateFilter(newFilter);
+              console.log('📅 Змінено фільтр дат для накладних:', newFilter);
+            }}
+            defaultPeriod="last5days"
+          />
 
           {/* Прогрес імпорту */}
           {importProgress && (

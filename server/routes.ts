@@ -11377,6 +11377,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('🚀 DIRECT 1C API: Прямий запит до 1С без storage layer');
       
+      // Отримуємо параметри дати з запиту
+      const { dateFrom, dateTo, period } = req.query;
+      
+      // Обчислюємо діапазон дат на основі параметрів
+      let startDate, endDate;
+      const now = new Date();
+      
+      if (period === 'today') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      } else if (period === 'last5days') {
+        startDate = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+        endDate = new Date();
+      } else if (dateFrom) {
+        startDate = new Date(dateFrom as string);
+        endDate = dateTo ? new Date(dateTo as string) : new Date();
+      } else {
+        // За замовчуванням останні 30 днів
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        endDate = new Date();
+      }
+      
+      // Форматуємо дати для 1С (формат YYYY-MM-DD)
+      const formatDate = (date: Date) => date.toISOString().split('T')[0];
+      const dateFromStr = formatDate(startDate);
+      const dateToStr = formatDate(endDate);
+      
+      console.log(`📅 Період імпорту накладних: ${dateFromStr} - ${dateToStr}`);
+      
       // Прямий API запит до 1С (обходимо storage layer)
       const authHeader = Buffer.from('Школа І.М.:1').toString('base64');
       
@@ -11389,7 +11418,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         body: JSON.stringify({
           action: "getInvoices",
-          limit: 100
+          limit: 100,
+          dateFrom: dateFromStr,
+          dateTo: dateToStr
         }),
         signal: AbortSignal.timeout(15000)
       });
@@ -11461,15 +11492,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('🚀 DIRECT 1C OUTGOING API: Прямий запит до 1С вихідних рахунків через curl');
       
+      // Отримуємо параметри дати з запиту
+      const { dateFrom, dateTo, period } = req.query;
+      
+      // Обчислюємо діапазон дат на основі параметрів
+      let startDate, endDate;
+      const now = new Date();
+      
+      if (period === 'today') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      } else if (period === 'last5days') {
+        startDate = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+        endDate = new Date();
+      } else if (dateFrom) {
+        startDate = new Date(dateFrom as string);
+        endDate = dateTo ? new Date(dateTo as string) : new Date();
+      } else {
+        // За замовчуванням останні 30 днів
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        endDate = new Date();
+      }
+      
+      // Форматуємо дати для 1С (формат YYYY-MM-DD)
+      const formatDate = (date: Date) => date.toISOString().split('T')[0];
+      const dateFromStr = formatDate(startDate);
+      const dateToStr = formatDate(endDate);
+      
+      console.log(`📅 Період імпорту вихідних рахунків: ${dateFromStr} - ${dateToStr}`);
+      
       const { exec } = await import('child_process');
       const { promisify } = await import('util');
       const execAsync = promisify(exec);
       
       // Виконуємо curl запит оскільки Node.js fetch має проблеми з цим endpoint
+      const requestData = JSON.stringify({
+        action: "getOutgoingInvoices",
+        limit: 100,
+        dateFrom: dateFromStr,
+        dateTo: dateToStr
+      });
+      
       const curlCommand = `curl -X POST "http://baf.regmik.ua/bitrix/hs/erp/outgoing-invoices" \
         -H "Authorization: Basic $(echo -n 'Школа І.М.:1' | base64)" \
         -H "Content-Type: application/json" \
-        -d '{"action":"getOutgoingInvoices","limit":100}' \
+        -d '${requestData}' \
         --max-time 10 --connect-timeout 5`;
       
       let stdout, stderr;

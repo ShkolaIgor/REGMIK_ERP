@@ -23,6 +23,7 @@ import {
   Building2,
   RefreshCw
 } from "lucide-react";
+import { DatePeriodFilter, DateFilterParams } from "@/components/DatePeriodFilter";
 
 interface OutgoingInvoice1C {
   id: string;
@@ -61,18 +62,35 @@ export function Import1COutgoingInvoices() {
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
   const [showOnlyMissing, setShowOnlyMissing] = useState(true); // За замовчуванням показувати тільки відсутні
+  const [dateFilter, setDateFilter] = useState<DateFilterParams>({ period: 'last5days' });
   
   // Очищення вибору при зміні фільтра
   useEffect(() => {
     setSelectedInvoices(new Set());
-  }, [showOnlyMissing]);
+  }, [showOnlyMissing, dateFilter]);
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Формуємо URL для запиту з параметрами дати
+  const buildOutgoingInvoicesUrl = () => {
+    const params = new URLSearchParams();
+    if (dateFilter.period) {
+      params.set('period', dateFilter.period);
+    }
+    if (dateFilter.dateFrom) {
+      params.set('dateFrom', dateFilter.dateFrom);
+    }
+    if (dateFilter.dateTo) {
+      params.set('dateTo', dateFilter.dateTo);
+    }
+    return `/api/1c/outgoing-invoices${params.toString() ? '?' + params.toString() : ''}`;
+  };
+
   // Завантаження вихідних рахунків з 1C (backend вже додає exists property)
   const { data: outgoingInvoices = [], isLoading: loadingInvoices, error: invoicesError, refetch: refetchInvoices } = useQuery({
-    queryKey: ["/api/1c/outgoing-invoices"],
+    queryKey: ["/api/1c/outgoing-invoices", dateFilter],
+    queryFn: () => apiRequest(buildOutgoingInvoicesUrl()),
     enabled: isOpen,
     retry: false,
     onError: (error) => {
@@ -283,6 +301,15 @@ export function Import1COutgoingInvoices() {
               </CardContent>
             </Card>
           )}
+
+          {/* Фільтр періоду */}
+          <DatePeriodFilter
+            onFilterChange={(newFilter) => {
+              setDateFilter(newFilter);
+              console.log('📅 Змінено фільтр дат для вихідних рахунків:', newFilter);
+            }}
+            defaultPeriod="last5days"
+          />
 
           {/* Основний контент */}
           {!loadingInvoices && displayInvoices.length > 0 && (
