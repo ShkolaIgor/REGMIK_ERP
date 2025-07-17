@@ -37,6 +37,7 @@ interface OutgoingInvoice1C {
   clientTaxCode?: string;
   itemsCount?: number;
   managerName?: string;
+  exists?: boolean;
   positions: Array<{
     productName: string;
     quantity: number;
@@ -69,52 +70,26 @@ export function Import1COutgoingInvoices() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Завантаження існуючих замовлень для фільтрації
-  const { data: existingOrders = [] } = useQuery({
-    queryKey: ["/api/orders"],
-    enabled: isOpen,
-    retry: false
-  });
-
-  // Завантаження доступних вихідних рахунків з 1C
+  // Завантаження вихідних рахунків з 1C (backend вже додає exists property)
   const { data: outgoingInvoices = [], isLoading: loadingInvoices, error: invoicesError, refetch: refetchInvoices } = useQuery({
     queryKey: ["/api/1c/outgoing-invoices"],
     enabled: isOpen,
     retry: false,
-    onSuccess: (data) => {
-      console.log('🎯 FRONTEND: Отримано дані з API:');
-      console.log('- Кількість рахунків:', data?.length || 0);
-      if (data?.length > 0) {
-        console.log('- Перший рахунок:', data[0]);
-        console.log('- Номер першого рахунку:', data[0]?.number);
-        console.log('- Це реальні дані з 1С?', !data[0]?.number?.startsWith('РП-000'));
-      }
-    },
     onError: (error) => {
-      console.log('❌ FRONTEND: Помилка API:', error);
+      console.error("1C Outgoing Invoices API Error:", error);
+      toast({
+        title: "Помилка завантаження",
+        description: "Не вдалося завантажити вихідні рахунки з 1С. Перевірте підключення.",
+        variant: "destructive",
+      });
     }
   });
 
-  // Створюємо Set номерів існуючих замовлень для швидкого пошуку
-  const existingOrderNumbers = new Set(
-    (existingOrders || [])
-      .filter(order => order?.supplierInvoiceNumber) 
-      .map(order => order.supplierInvoiceNumber)
-  );
-
-  // Фільтруємо рахунки відповідно до налаштування "Тільки відсутні"
-  const filteredInvoices = showOnlyMissing 
-    ? (outgoingInvoices || []).filter(invoice => !existingOrderNumbers.has(invoice?.number))
+  // Фільтруємо рахунки відповідно до налаштування "Тільки відсутні" (використовуємо exists з backend)
+  const displayInvoices = showOnlyMissing 
+    ? (outgoingInvoices || []).filter((invoice: OutgoingInvoice1C & { exists?: boolean }) => !invoice.exists)
     : (outgoingInvoices || []);
-
-  // Додаємо інформацію про існування рахунку в ERP
-  const displayInvoices = filteredInvoices.map(invoice => ({
-    ...invoice,
-    exists: existingOrderNumbers.has(invoice?.number)
-  }));
   
-  const isUsingFallback = false;
-
   // Додаємо логування для дебагу
   console.log("🔧 1C Outgoing Invoices Frontend Debug:", {
     isOpen,
@@ -123,23 +98,9 @@ export function Import1COutgoingInvoices() {
     errorMessage: invoicesError?.message || null,
     realDataCount: outgoingInvoices?.length || 0,
     displayDataCount: displayInvoices?.length || 0,
-    usingFallback: isUsingFallback,
     firstRealInvoice: outgoingInvoices?.[0] || null,
     firstDisplayInvoice: displayInvoices?.[0] || null
   });
-
-  // Сповіщення при помилці завантаження
-  if (invoicesError && isOpen) {
-    console.error("❌ 1C Outgoing Invoices fetch error:", invoicesError);
-    // Показуємо toast тільки один раз при відкритті
-    if (!loadingInvoices) {
-      toast({
-        title: "Помилка завантаження",
-        description: "Не вдалося завантажити вихідні рахунки з 1С. Перевірте з'єднання з сервером.",
-        variant: "destructive",
-      });
-    }
-  }
 
   // Мутація для імпорту вибраних рахунків
   const importMutation = useMutation({
@@ -181,7 +142,9 @@ export function Import1COutgoingInvoices() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedInvoices(new Set(displayInvoices.map((inv: OutgoingInvoice1C) => inv.id)));
+      // Вибираємо тільки рахунки, які ще не існують в ERP
+      const availableInvoices = displayInvoices.filter((inv: OutgoingInvoice1C) => !inv.exists);
+      setSelectedInvoices(new Set(availableInvoices.map((inv: OutgoingInvoice1C) => inv.id)));
     } else {
       setSelectedInvoices(new Set());
     }
