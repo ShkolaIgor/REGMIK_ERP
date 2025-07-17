@@ -57,23 +57,25 @@ export function DatePeriodFilter({ onFilterChange, defaultPeriod = 'last5days' }
           Період імпорту
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="period-select">Оберіть період</Label>
-          <Select value={selectedPeriod} onValueChange={handlePeriodChange}>
-            <SelectTrigger id="period-select">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">Сьогодні</SelectItem>
-              <SelectItem value="last5days">Останні 5 днів</SelectItem>
-              <SelectItem value="custom">Вказати дати</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Колонка 1: Вибір періоду */}
+          <div className="space-y-2">
+            <Label htmlFor="period-select">Оберіть період</Label>
+            <Select value={selectedPeriod} onValueChange={handlePeriodChange}>
+              <SelectTrigger id="period-select">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">Сьогодні</SelectItem>
+                <SelectItem value="last5days">Останні 5 днів</SelectItem>
+                <SelectItem value="custom">Вказати дати</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        {selectedPeriod === 'custom' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Колонка 2: Дата початку (тільки для custom) */}
+          {selectedPeriod === 'custom' && (
             <div className="space-y-2">
               <Label>Дата початку</Label>
               <Popover>
@@ -104,9 +106,12 @@ export function DatePeriodFilter({ onFilterChange, defaultPeriod = 'last5days' }
                 </PopoverContent>
               </Popover>
             </div>
+          )}
 
+          {/* Колонка 3: Дата закінчення (тільки для custom) */}
+          {selectedPeriod === 'custom' && (
             <div className="space-y-2">
-              <Label>Дата закінчення (опціонально)</Label>
+              <Label>Дата закінчення</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -136,10 +141,10 @@ export function DatePeriodFilter({ onFilterChange, defaultPeriod = 'last5days' }
                 </PopoverContent>
               </Popover>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        <div className="text-xs text-muted-foreground">
+        {/*<div className="text-xs text-muted-foreground">
           {selectedPeriod === 'today' && 'Будуть завантажені документи, створені сьогодні'}
           {selectedPeriod === 'last5days' && 'Будуть завантажені документи за останні 5 днів'}
           {selectedPeriod === 'custom' && customStartDate && (
@@ -147,7 +152,7 @@ export function DatePeriodFilter({ onFilterChange, defaultPeriod = 'last5days' }
               customEndDate ? ` по ${format(customEndDate, "dd.MM.yyyy", { locale: uk })}` : ' до сьогодні'
             }`
           )}
-        </div>
+        </div>*/}
       </CardContent>
     </Card>
   );
