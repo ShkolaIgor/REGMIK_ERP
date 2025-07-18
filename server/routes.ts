@@ -11490,8 +11490,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 1C Outgoing Invoices endpoint - прямий запит до 1С через curl
   app.get('/api/1c/outgoing-invoices', isSimpleAuthenticated, async (req, res) => {
     try {
-      console.log('🚀 DIRECT 1C OUTGOING API: Прямий запит до 1С вихідних рахунків через curl');
-      
       // Отримуємо параметри дати з запиту
       const { dateFrom, dateTo, period } = req.query;
       
@@ -11519,7 +11517,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const dateFromStr = formatDate(startDate);
       const dateToStr = formatDate(endDate);
       
-      console.log(`📅 Період імпорту вихідних рахунків: ${dateFromStr} - ${dateToStr}`);
+
       
       const { exec } = await import('child_process');
       const { promisify } = await import('util');
@@ -11545,69 +11543,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         stdout = result.stdout;
         stderr = result.stderr;
       } catch (curlError) {
-        console.warn('⚠️ 1C сервер недоступний, використовуємо fallback дані:', curlError.message);
         return res.json(await getFallbackOutgoingInvoices());
       }
       
       if (stderr && !stdout) {
-        console.warn('⚠️ 1C сервер повернув помилку, використовуємо fallback дані');
         return res.json(await getFallbackOutgoingInvoices());
       }
       
-      console.log(`📋 1C OUTGOING CURL RESPONSE (${stdout.length} chars): OK`);
+
       
       // Парсинг JSON з curl відповіді
       let rawInvoicesData;
       try {
         rawInvoicesData = JSON.parse(stdout);
       } catch (parseError) {
-        console.error('❌ JSON parsing error:', parseError);
-        console.error('Raw response:', stdout.substring(0, 1000));
-        
         // Якщо в 1С є синтаксична помилка, використовуємо fallback дані
         if (stdout.includes('Синтаксична помилка') || stdout.includes('ERROR:') || stdout.includes('Error:')) {
-          console.warn('⚠️ 1С повертає помилку синтаксису, використовуємо fallback дані');
           return res.json(await getFallbackOutgoingInvoices());
         }
         
         throw new Error('Помилка парсингу JSON відповіді з 1С');
       }
       
-      console.log(`📋 1C OUTGOING DATA TYPE: ${typeof rawInvoicesData}`);
-      console.log(`📋 1C OUTGOING RAW STRUCTURE:`, JSON.stringify(rawInvoicesData, null, 2).substring(0, 2000));
-      console.log(`📋 1C OUTGOING KEYS:`, Object.keys(rawInvoicesData || {}));
+
       
       // Спробуємо різні варіанти структури відповіді з 1С
       let invoicesArray = [];
       
       if (Array.isArray(rawInvoicesData)) {
-        // Якщо 1С повертає масив напряму
         invoicesArray = rawInvoicesData;
-        console.log(`📋 1C повертає масив напряму, довжина: ${invoicesArray.length}`);
       } else if (rawInvoicesData?.invoices && Array.isArray(rawInvoicesData.invoices)) {
-        // Якщо структура {invoices: [...]}
         invoicesArray = rawInvoicesData.invoices;
-        console.log(`📋 1C повертає структуру з invoices, довжина: ${invoicesArray.length}`);
       } else if (rawInvoicesData?.data && Array.isArray(rawInvoicesData.data)) {
-        // Якщо структура {data: [...]}
         invoicesArray = rawInvoicesData.data;
-        console.log(`📋 1C повертає структуру з data, довжина: ${invoicesArray.length}`);
       } else if (rawInvoicesData?.result && Array.isArray(rawInvoicesData.result)) {
-        // Якщо структура {result: [...]}
         invoicesArray = rawInvoicesData.result;
-        console.log(`📋 1C повертає структуру з result, довжина: ${invoicesArray.length}`);
       } else {
-        // Спробуємо знайти будь-який масив у відповіді
         for (const key of Object.keys(rawInvoicesData || {})) {
           if (Array.isArray(rawInvoicesData[key])) {
             invoicesArray = rawInvoicesData[key];
-            console.log(`📋 1C повертає масив у ключі "${key}", довжина: ${invoicesArray.length}`);
             break;
           }
         }
       }
-      
-      console.log(`📋 1C OUTGOING FINAL ARRAY LENGTH: ${invoicesArray.length}`);
       
       // Отримуємо список існуючих замовлень для перевірки (тимчасово відключено для діагностики)
       let importedSet = new Set();
@@ -11624,17 +11602,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Конвертуємо сирі дані з 1С до формату ERP для вихідних рахунків
-      // Структура з curl: {invoiceNumber, date, client, amount, currency, status, positions}
-      const processedInvoices = invoicesArray.map((invoice: any, index) => {
-        console.log(`🔍 PROCESSING INVOICE ${index}:`, JSON.stringify(invoice, null, 2).substring(0, 500));
-        
-        // Пробуємо всі можливі варіанти полів
+      const processedInvoices = invoicesArray.map((invoice: any) => {
         const invoiceNumber = invoice.invoiceNumber || invoice.НомерДокумента || invoice.number || invoice.Number;
         const invoiceDate = invoice.date || invoice.ДатаДокумента || invoice.Date || invoice.invoiceDate;
         const clientName = invoice.client || invoice.Клиент || invoice.clientName || invoice.Client || invoice.Покупатель;
         const invoiceAmount = invoice.amount || invoice.СуммаДокумента || invoice.total || invoice.Total || invoice.Сумма;
-        
-        console.log(`📋 MAPPED FIELDS: number=${invoiceNumber}, date=${invoiceDate}, client=${clientName}, amount=${invoiceAmount}`);
         
         return {
           id: `1c-out-${Date.now()}-${Math.random()}`,
@@ -11643,7 +11615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           clientName: clientName,
           clientTaxCode: invoice.clientTaxCode || invoice.КодКлієнта,
           total: invoiceAmount,
-          currency: "UAH", // Виправлено валютний код 980 → UAH
+          currency: "UAH",
           status: invoice.status || 'confirmed',
         paymentStatus: invoice.paymentStatus || 'unpaid',
         description: invoice.notes || invoice.description || '',
@@ -11655,7 +11627,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           total: item.total || item.Сумма || 0
         })),
         itemsCount: invoice.itemsCount || (invoice.positions || invoice.Positions || invoice.Товары || []).length,
-        exists: importedSet.has(invoiceNumber) // Перевіряємо реальний стан імпорту
+        exists: importedSet.has(invoiceNumber)
       };
       });
       
