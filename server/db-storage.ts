@@ -12803,18 +12803,22 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log('🔄 Webhook: Створення вихідного рахунку від 1С:', invoiceData);
       
+      // Convert currency code if needed
+      let currency = invoiceData.currency || invoiceData.КодВалюты || '980';
+      if (currency === '980') {
+        currency = 'UAH';
+      }
+      
       // Convert 1C outgoing invoice data to ERP format (order)
       const orderRecord = {
         clientId: invoiceData.clientId || 1, // Default client or find by name/tax code
         orderNumber: invoiceData.orderNumber || invoiceData.НомерДокумента || '',
-        orderDate: invoiceData.orderDate || invoiceData.ДатаДокумента || new Date(),
+        invoiceNumber: invoiceData.invoiceNumber || invoiceData.НомерДокумента || '',
         totalAmount: invoiceData.totalAmount || invoiceData.СуммаДокумента || 0,
-        currency: invoiceData.currency || invoiceData.КодВалюты || 'UAH',
+        currency: currency,
         status: 'pending',
-        orderType: 'sale',
-        externalId: invoiceData.externalId || invoiceData.СсылкаДокумента,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        notes: invoiceData.notes || invoiceData.Комментарий || '',
+        createdAt: new Date()
       };
       
       // Create order
@@ -12822,6 +12826,7 @@ export class DatabaseStorage implements IStorage {
       
       // Process invoice items if provided
       if (invoiceData.positions && Array.isArray(invoiceData.positions)) {
+        console.log(`📦 Webhook: Збереження ${invoiceData.positions.length} позицій товарів для замовлення ${order.id}`);
         for (const position of invoiceData.positions) {
           const itemRecord = {
             orderId: order.id,
@@ -12831,14 +12836,19 @@ export class DatabaseStorage implements IStorage {
             totalPrice: position.totalPrice || position.Сумма || 0,
             itemName: position.itemName || position.НаименованиеТовара || '',
             itemCode: position.itemCode || position.КодТовара || null,
-            createdAt: new Date(),
-            updatedAt: new Date()
+            unit: position.unit || position.ЕдиницаИзмерения || 'шт',
+            createdAt: new Date()
           };
           
-          await db.insert(orderItems).values(itemRecord);
+          console.log(`📦 Webhook: Збереження позиції:`, itemRecord);
+          const insertedItem = await db.insert(orderItems).values(itemRecord).returning();
+          console.log(`✅ Webhook: Позицію збережено з ID:`, insertedItem[0]?.id);
         }
+      } else {
+        console.log('📦 Webhook: Позиції товарів не надано або не є масивом');
       }
       
+      console.log('✅ Webhook: Вихідний рахунок створено:', order.id);
       return order;
     } catch (error) {
       console.error('❌ Webhook: Помилка створення вихідного рахунку:', error);
@@ -12850,26 +12860,34 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log('🔄 Webhook: Оновлення вихідного рахунку від 1С:', invoiceData);
       
-      const externalId = invoiceData.externalId || invoiceData.СсылкаДокумента;
-      if (!externalId) {
-        throw new Error('External ID is required for outgoing invoice updates');
+      const invoiceNumber = invoiceData.invoiceNumber || invoiceData.НомерДокумента;
+      if (!invoiceNumber) {
+        throw new Error('Invoice number is required for outgoing invoice updates');
       }
       
-      // Find existing order
+      // Find existing order by invoice number
       const [existingOrder] = await db
         .select()
         .from(orders)
-        .where(eq(orders.externalId, externalId));
+        .where(eq(orders.invoiceNumber, invoiceNumber));
       
       if (!existingOrder) {
-        throw new Error(`Outgoing invoice with external ID ${externalId} not found`);
+        console.log(`📝 Замовлення з номером рахунку ${invoiceNumber} не знайдено, створюємо нове`);
+        return await this.createOutgoingInvoiceFromWebhook(invoiceData);
+      }
+      
+      // Convert currency code if needed
+      let currency = invoiceData.currency || invoiceData.КодВалюты || '980';
+      if (currency === '980') {
+        currency = 'UAH';
       }
       
       // Update order
       const updatedFields = {
         totalAmount: invoiceData.totalAmount || invoiceData.СуммаДокумента || existingOrder.totalAmount,
-        currency: invoiceData.currency || invoiceData.КодВалюты || existingOrder.currency,
+        currency: currency,
         status: invoiceData.status || existingOrder.status,
+        notes: invoiceData.notes || invoiceData.Комментарий || existingOrder.notes,
         updatedAt: new Date()
       };
       
@@ -12879,6 +12897,38 @@ export class DatabaseStorage implements IStorage {
         .where(eq(orders.id, existingOrder.id))
         .returning();
       
+      // Update positions if provided
+      if (invoiceData.positions && Array.isArray(invoiceData.positions)) {
+        console.log(`📦 Webhook: Оновлення ${invoiceData.positions.length} позицій товарів для замовлення ${existingOrder.id}`);
+        
+        // Delete existing order items
+        const deleted = await db.delete(orderItems).where(eq(orderItems.orderId, existingOrder.id));
+        console.log(`🗑️ Webhook: Видалено існуючі позиції`);
+        
+        // Insert new order items
+        for (const position of invoiceData.positions) {
+          const itemRecord = {
+            orderId: existingOrder.id,
+            productId: position.productId || null,
+            quantity: position.quantity || position.Количество || 0,
+            unitPrice: position.unitPrice || position.Цена || 0,
+            totalPrice: position.totalPrice || position.Сумма || 0,
+            itemName: position.itemName || position.НаименованиеТовара || '',
+            itemCode: position.itemCode || position.КодТовара || null,
+            unit: position.unit || position.ЕдиницаИзмерения || 'шт',
+            createdAt: new Date()
+          };
+          
+          console.log(`📦 Webhook: Збереження оновленої позиції:`, itemRecord);
+          const insertedItem = await db.insert(orderItems).values(itemRecord).returning();
+          console.log(`✅ Webhook: Позицію оновлено з ID:`, insertedItem[0]?.id);
+        }
+        console.log(`✅ Webhook: Оновлено ${invoiceData.positions.length} позицій товарів`);
+      } else {
+        console.log('📦 Webhook: Позиції товарів не надано або не є масивом при оновленні');
+      }
+      
+      console.log('✅ Webhook: Замовлення оновлено:', updatedOrder.id);
       return updatedOrder;
     } catch (error) {
       console.error('❌ Webhook: Помилка оновлення вихідного рахунку:', error);
@@ -12890,19 +12940,19 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log('🔄 Webhook: Видалення вихідного рахунку від 1С:', invoiceData);
       
-      const externalId = invoiceData.externalId || invoiceData.СсылкаДокумента;
-      if (!externalId) {
-        throw new Error('External ID is required for outgoing invoice deletion');
+      const invoiceNumber = invoiceData.invoiceNumber || invoiceData.НомерДокумента;
+      if (!invoiceNumber) {
+        throw new Error('Invoice number is required for outgoing invoice deletion');
       }
       
-      // Find existing order
+      // Find existing order by invoice number
       const [existingOrder] = await db
         .select()
         .from(orders)
-        .where(eq(orders.externalId, externalId));
+        .where(eq(orders.invoiceNumber, invoiceNumber));
       
       if (!existingOrder) {
-        throw new Error(`Outgoing invoice with external ID ${externalId} not found`);
+        throw new Error(`Outgoing invoice with number ${invoiceNumber} not found`);
       }
       
       // Delete order items first
@@ -12911,6 +12961,7 @@ export class DatabaseStorage implements IStorage {
       // Delete order
       await db.delete(orders).where(eq(orders.id, existingOrder.id));
       
+      console.log('✅ Webhook: Замовлення видалено:', existingOrder.id);
       return { success: true, deletedId: existingOrder.id };
     } catch (error) {
       console.error('❌ Webhook: Помилка видалення вихідного рахунку:', error);

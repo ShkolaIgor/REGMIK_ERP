@@ -347,7 +347,7 @@ export const shipmentItems = pgTable("shipment_items", {
 export const orderItems = pgTable("order_items", {
   id: serial("id").primaryKey(),
   orderId: integer("order_id").references(() => orders.id).notNull(),
-  productId: integer("product_id").references(() => products.id).notNull(),
+  productId: integer("product_id").references(() => products.id), // made nullable for 1C webhook imports
   quantity: integer("quantity").notNull(),
   shippedQuantity: integer("shipped_quantity").notNull().default(0), // кількість вже відвантажена
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
@@ -356,6 +356,11 @@ export const orderItems = pgTable("order_items", {
   costPrice: decimal("cost_price", { precision: 10, scale: 2 }),
   serialNumbers: text("serial_numbers"),
   notes: text("notes"),
+  // Additional fields for 1C integration
+  itemName: text("item_name"), // назва товару з 1С
+  itemCode: text("item_code"), // код товару з 1С
+  unit: text("unit").default("шт"), // одиниця виміру
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const recipes = pgTable("recipes", {
