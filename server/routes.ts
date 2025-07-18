@@ -12831,6 +12831,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Діагностичний endpoint для конкретного клієнта з webhook
+  app.get("/api/debug-client-search/:taxCode/:clientName", async (req, res) => {
+    try {
+      const taxCode = req.params.taxCode;
+      const clientName = decodeURIComponent(req.params.clientName);
+      
+      console.log(`🔍 ДІАГНОСТИКА КЛІЄНТА: ЄДРПОУ="${taxCode}", назва="${clientName}"`);
+      
+      // 1. Пошук за ЄДРПОУ
+      const clientsByTaxCode = await db.select()
+        .from(clients)
+        .where(eq(clients.taxCode, taxCode));
+      
+      // 2. Пошук за точною назвою
+      const clientsByExactName = await db.select()
+        .from(clients)
+        .where(eq(clients.name, clientName));
+      
+      // 3. Пошук за частковою назвою (ILIKE)
+      const clientsByPartialName = await db.select()
+        .from(clients)
+        .where(sql`${clients.name} ILIKE ${`%${clientName}%`}`);
+      
+      // 4. Тест повного алгоритму
+      const algorithmResult = await storage.findClientByTaxCodeOrName(taxCode, clientName);
+      
+      // 5. Перевірити конкретного клієнта "Радіокомплект"
+      const radioClient = await db.select()
+        .from(clients)
+        .where(sql`${clients.name} ILIKE '%Радіокомплект%'`);
+      
+      res.json({
+        searchParams: { taxCode, clientName },
+        results: {
+          byTaxCode: clientsByTaxCode,
+          byExactName: clientsByExactName,
+          byPartialName: clientsByPartialName,
+          algorithmResult: algorithmResult ? {
+            id: algorithmResult.id,
+            name: algorithmResult.name,
+            taxCode: algorithmResult.taxCode
+          } : null,
+          radioClientCheck: radioClient
+        },
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error in client search debug:", error);
+      res.status(500).json({ error: "Failed to debug client search" });
+    }
+  });
+
   // Debug endpoint для детального аналізу проблеми XTR111
   app.get("/api/debug-xtr111-matching", async (req, res) => {
     try {
