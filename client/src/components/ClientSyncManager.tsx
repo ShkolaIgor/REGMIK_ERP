@@ -236,7 +236,7 @@ export function ClientSyncManager() {
                       <SelectValue placeholder="Всі статуси" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Всі статуси</SelectItem>
+                      <SelectItem value="all">Всі статуси</SelectItem>
                       <SelectItem value="success">Успішно</SelectItem>
                       <SelectItem value="error">Помилка</SelectItem>
                       <SelectItem value="pending">Очікування</SelectItem>
