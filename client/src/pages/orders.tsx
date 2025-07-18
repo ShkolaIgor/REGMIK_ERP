@@ -1248,15 +1248,17 @@ export default function Orders() {
     }, 100);
 
     // Заповнюємо товари замовлення
-    if (fullOrder.items) {
-      console.log("Order items:", fullOrder.items);
+    if (fullOrder.items && fullOrder.items.length > 0) {
+      console.log("Order items from server:", fullOrder.items);
       setOrderItems(fullOrder.items.map((item: any) => ({
-        productId: item.productId,
-        quantity: item.quantity.toString(),
-        unitPrice: item.unitPrice.toString(),
+        // Використовуємо productId тільки якщо він існує та не null, інакше 0
+        productId: item.productId || 0,
+        quantity: item.quantity ? item.quantity.toString() : "1",
+        unitPrice: item.unitPrice ? item.unitPrice.toString() : "0",
       })));
+      console.log(`Loaded ${fullOrder.items.length} items for order`);
     } else {
-      console.log("No items in order");
+      console.log("No items in order or items array is empty");
       setOrderItems([]);
     }
     
@@ -2075,9 +2077,26 @@ export default function Orders() {
                                   role="combobox"
                                   className="w-full justify-between"
                                 >
-                                  {item.productId > 0 && products
-                                    ? products.find((product: any) => product.id === item.productId)?.name || "Оберіть товар..."
-                                    : "Оберіть товар..."}
+                                  {(() => {
+                                    // Спочатку перевіряємо чи є прив'язаний товар з products
+                                    if (item.productId > 0 && products) {
+                                      const product = products.find((p: any) => p.id === item.productId);
+                                      if (product) return product.name;
+                                    }
+                                    
+                                    // Якщо прив'язаного товару немає, перевіряємо дані з замовлення
+                                    if (editingOrder?.items && editingOrder.items[index]) {
+                                      const orderItem = editingOrder.items[index];
+                                      if (orderItem.itemName) {
+                                        return `${orderItem.itemName} (з 1C)`;
+                                      }
+                                      if (orderItem.product?.name) {
+                                        return orderItem.product.name;
+                                      }
+                                    }
+                                    
+                                    return "Оберіть товар...";
+                                  })()}
                                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                               </PopoverTrigger>
