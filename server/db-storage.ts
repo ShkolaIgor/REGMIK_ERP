@@ -12854,9 +12854,120 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // ПОКРАЩЕНИЙ ПОШУК КЛІЄНТІВ ДЛЯ WEBHOOK ОБРОБКИ
+  async findClientByTaxCodeOrName(taxCode: string | null, clientName: string): Promise<Client | null> {
+    try {
+      console.log(`🔍 Пошук клієнта: ЄДРПОУ="${taxCode}", назва="${clientName}"`);
+      
+      // 1. Спочатку шукаємо за ЄДРПОУ (якщо вказано)
+      if (taxCode && taxCode.trim() !== '') {
+        const [clientByTaxCode] = await db
+          .select()
+          .from(clients)
+          .where(eq(clients.taxCode, taxCode.trim()))
+          .limit(1);
+        
+        if (clientByTaxCode) {
+          console.log(`✅ Знайдено клієнта за ЄДРПОУ: ${clientByTaxCode.name} (ID: ${clientByTaxCode.id})`);
+          return clientByTaxCode;
+        }
+      }
+      
+      // 2. Потім шукаємо за точною назвою
+      if (clientName && clientName.trim() !== '') {
+        const [clientByName] = await db
+          .select()
+          .from(clients)
+          .where(eq(clients.name, clientName.trim()))
+          .limit(1);
+        
+        if (clientByName) {
+          console.log(`✅ Знайдено клієнта за назвою: ${clientByName.name} (ID: ${clientByName.id})`);
+          return clientByName;
+        }
+      }
+      
+      // 3. Нарешті шукаємо ILIKE (часткове співпадіння)
+      if (clientName && clientName.trim() !== '') {
+        const [clientByPartialName] = await db
+          .select()
+          .from(clients)
+          .where(sql`${clients.name} ILIKE ${`%${clientName.trim()}%`}`)
+          .limit(1);
+        
+        if (clientByPartialName) {
+          console.log(`✅ Знайдено клієнта за частковою назвою: ${clientByPartialName.name} (ID: ${clientByPartialName.id})`);
+          return clientByPartialName;
+        }
+      }
+      
+      console.log(`❌ Клієнт не знайдений: ЄДРПОУ="${taxCode}", назва="${clientName}"`);
+      return null;
+    } catch (error) {
+      console.error('Помилка пошуку клієнта:', error);
+      return null;
+    }
+  }
+
+  async findOrCreateClientForWebhook(clientData: any): Promise<Client> {
+    try {
+      const taxCode = clientData.taxCode || clientData.ЄДРПОУ || clientData.КодЕДРПОУ;
+      const clientName = clientData.name || clientData.НазваКлієнта || clientData.clientName;
+      
+      // Спробуємо знайти існуючого клієнта
+      const existingClient = await this.findClientByTaxCodeOrName(taxCode, clientName);
+      if (existingClient) {
+        return existingClient;
+      }
+      
+      // Створюємо нового клієнта
+      console.log(`🆕 Створюємо нового клієнта: ${clientName}`);
+      const newClientData = {
+        name: clientName || 'Невідомий клієнт',
+        taxCode: taxCode || '',
+        clientTypeId: 1, // Юридична особа за замовчуванням
+        isActive: true,
+        isCustomer: true,
+        isSupplier: false,
+        source: 'webhook'
+      };
+      
+      const [newClient] = await db.insert(clients).values(newClientData).returning();
+      console.log(`✅ Створено нового клієнта: ${newClient.name} (ID: ${newClient.id})`);
+      return newClient;
+    } catch (error) {
+      console.error('Помилка створення клієнта:', error);
+      throw error;
+    }
+  }
+
   async createOutgoingInvoiceFromWebhook(invoiceData: any) {
     try {
       console.log('🔄 Webhook: Створення вихідного рахунку від 1С:', invoiceData);
+      
+      // ПОКРАЩЕНИЙ ПОШУК КЛІЄНТА: спочатку за ЄДРПОУ, потім за назвою
+      let clientId = 1; // Default fallback
+      
+      if (invoiceData.clientData) {
+        const client = await this.findOrCreateClientForWebhook(invoiceData.clientData);
+        clientId = client.id;
+        console.log(`📋 Webhook: Знайдено/створено клієнта: ${client.name} (ID: ${client.id})`);
+      } else if (invoiceData.clientName || invoiceData.НазваКлієнта) {
+        const clientName = invoiceData.clientName || invoiceData.НазваКлієнта;
+        const taxCode = invoiceData.clientTaxCode || invoiceData.КодЕДРПОУ || invoiceData.ЄДРПОУ;
+        
+        console.log(`🔍 Webhook: Шукаємо клієнта за назвою "${clientName}" та ЄДРПОУ "${taxCode}"`);
+        
+        const foundClient = await this.findClientByTaxCodeOrName(taxCode, clientName);
+        if (foundClient) {
+          clientId = foundClient.id;
+          console.log(`✅ Webhook: Знайдено існуючого клієнта: ${foundClient.name} (ID: ${foundClient.id})`);
+        } else {
+          console.log(`❌ Webhook: Клієнт "${clientName}" не знайдений, використовуємо дефолтний клієнт (ID: 1)`);
+        }
+      } else {
+        console.log(`⚠️ Webhook: Жодних даних клієнта не знайдено у invoiceData, використовуємо дефолтний клієнт (ID: 1)`);
+      }
       
       // Convert currency code if needed
       let currency = invoiceData.currency || invoiceData.КодВалюты || '980';
@@ -12866,7 +12977,7 @@ export class DatabaseStorage implements IStorage {
       
       // Convert 1C outgoing invoice data to ERP format (order)
       const orderRecord = {
-        clientId: invoiceData.clientId || 1, // Default client or find by name/tax code
+        clientId: clientId,
         orderNumber: invoiceData.orderNumber || invoiceData.НомерДокумента || '',
         invoiceNumber: invoiceData.invoiceNumber || invoiceData.НомерДокумента || '',
         totalAmount: invoiceData.totalAmount || invoiceData.СуммаДокумента || 0,
