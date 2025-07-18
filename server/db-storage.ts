@@ -12952,11 +12952,17 @@ export class DatabaseStorage implements IStorage {
         const client = await this.findOrCreateClientForWebhook(invoiceData.clientData);
         clientId = client.id;
         console.log(`📋 Webhook: Знайдено/створено клієнта: ${client.name} (ID: ${client.id})`);
-      } else if (invoiceData.clientName || invoiceData.НазваКлієнта) {
-        const clientName = invoiceData.clientName || invoiceData.НазваКлієнта;
-        const taxCode = invoiceData.clientTaxCode || invoiceData.КодЕДРПОУ || invoiceData.ЄДРПОУ;
+      } else if (invoiceData.Клиент || invoiceData.clientName) {
+        const clientName = invoiceData.Клиент || invoiceData.clientName || invoiceData.НазваКлієнта;
+        // ВИПРАВЛЕНО: використовуємо КодКлиента (00-000655), не ИННКлиента (347038417162)
+        const taxCode = invoiceData.КодКлиента || invoiceData.clientTaxCode || invoiceData.КодЕДРПОУ || invoiceData.ЄДРПОУ;
         
-        console.log(`🔍 Webhook: Шукаємо клієнта за назвою "${clientName}" та ЄДРПОУ "${taxCode}"`);
+        console.log(`🔍 Webhook: Шукаємо клієнта за назвою "${clientName}" та кодом "${taxCode}"`);
+        console.log(`📋 Webhook: Дані клієнта з 1С:`, {
+          Клиент: invoiceData.Клиент,
+          КодКлиента: invoiceData.КодКлиента, 
+          ИННКлиента: invoiceData.ИННКлиента
+        });
         
         const foundClient = await this.findClientByTaxCodeOrName(taxCode, clientName);
         if (foundClient) {
