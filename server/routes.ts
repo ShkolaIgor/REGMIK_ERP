@@ -11905,6 +11905,193 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Auto-sync management endpoints
+  app.get('/api/auto-sync/settings', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const settings = await storage.getAutoSyncSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error getting auto-sync settings:", error);
+      res.status(500).json({ error: "Failed to get auto-sync settings" });
+    }
+  });
+
+  app.put('/api/auto-sync/settings/:syncType', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { syncType } = req.params;
+      const { isEnabled, webhookUrl, syncFrequency } = req.body;
+      
+      const setting = await storage.updateAutoSyncSettings(syncType, {
+        isEnabled,
+        webhookUrl,
+        syncFrequency,
+        updatedAt: new Date(),
+      });
+      
+      res.json(setting);
+    } catch (error) {
+      console.error("Error updating auto-sync settings:", error);
+      res.status(500).json({ error: "Failed to update auto-sync settings" });
+    }
+  });
+
+  app.post('/api/auto-sync/test/:syncType', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { syncType } = req.params;
+      const result = await storage.testAutoSync(syncType);
+      res.json(result);
+    } catch (error) {
+      console.error("Error testing auto-sync:", error);
+      res.status(500).json({ 
+        success: false,
+        message: error instanceof Error ? error.message : "Test failed"
+      });
+    }
+  });
+
+  app.post('/api/auto-sync/run/:syncType', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { syncType } = req.params;
+      const result = await storage.runAutoSync(syncType);
+      res.json(result);
+    } catch (error) {
+      console.error("Error running auto-sync:", error);
+      res.status(500).json({ 
+        success: false,
+        message: error instanceof Error ? error.message : "Sync failed"
+      });
+    }
+  });
+
+  // Webhook endpoints for auto-sync from 1C
+  app.post('/api/webhook/1c/clients', async (req, res) => {
+    try {
+      console.log('📥 Webhook: Зміни клієнтів від 1С:', req.body);
+      
+      const { action, clientData } = req.body;
+      
+      // Validate webhook data
+      if (!action || !clientData) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'Invalid webhook data: action and clientData are required'
+        });
+      }
+      
+      // Process client change
+      let result;
+      switch (action) {
+        case 'create':
+          result = await storage.createClientFromWebhook(clientData);
+          break;
+        case 'update':
+          result = await storage.updateClientFromWebhook(clientData);
+          break;
+        case 'delete':
+          result = await storage.deleteClientFromWebhook(clientData);
+          break;
+        default:
+          return res.status(400).json({ 
+            success: false,
+            message: `Unknown action: ${action}`
+          });
+      }
+      
+      console.log('✅ Webhook: Клієнт оброблений:', result);
+      res.json({ success: true, result });
+    } catch (error) {
+      console.error('❌ Webhook: Помилка обробки клієнта:', error);
+      res.status(500).json({ 
+        success: false,
+        message: error instanceof Error ? error.message : 'Webhook processing failed'
+      });
+    }
+  });
+
+  app.post('/api/webhook/1c/invoices', async (req, res) => {
+    try {
+      console.log('📥 Webhook: Зміни накладних від 1С:', req.body);
+      
+      const { action, invoiceData } = req.body;
+      
+      if (!action || !invoiceData) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'Invalid webhook data: action and invoiceData are required'
+        });
+      }
+      
+      let result;
+      switch (action) {
+        case 'create':
+          result = await storage.createInvoiceFromWebhook(invoiceData);
+          break;
+        case 'update':
+          result = await storage.updateInvoiceFromWebhook(invoiceData);
+          break;
+        case 'delete':
+          result = await storage.deleteInvoiceFromWebhook(invoiceData);
+          break;
+        default:
+          return res.status(400).json({ 
+            success: false,
+            message: `Unknown action: ${action}`
+          });
+      }
+      
+      console.log('✅ Webhook: Накладна оброблена:', result);
+      res.json({ success: true, result });
+    } catch (error) {
+      console.error('❌ Webhook: Помилка обробки накладної:', error);
+      res.status(500).json({ 
+        success: false,
+        message: error instanceof Error ? error.message : 'Webhook processing failed'
+      });
+    }
+  });
+
+  app.post('/api/webhook/1c/outgoing-invoices', async (req, res) => {
+    try {
+      console.log('📥 Webhook: Зміни вихідних рахунків від 1С:', req.body);
+      
+      const { action, invoiceData } = req.body;
+      
+      if (!action || !invoiceData) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'Invalid webhook data: action and invoiceData are required'
+        });
+      }
+      
+      let result;
+      switch (action) {
+        case 'create':
+          result = await storage.createOutgoingInvoiceFromWebhook(invoiceData);
+          break;
+        case 'update':
+          result = await storage.updateOutgoingInvoiceFromWebhook(invoiceData);
+          break;
+        case 'delete':
+          result = await storage.deleteOutgoingInvoiceFromWebhook(invoiceData);
+          break;
+        default:
+          return res.status(400).json({ 
+            success: false,
+            message: `Unknown action: ${action}`
+          });
+      }
+      
+      console.log('✅ Webhook: Вихідний рахунок оброблений:', result);
+      res.json({ success: true, result });
+    } catch (error) {
+      console.error('❌ Webhook: Помилка обробки вихідного рахунку:', error);
+      res.status(500).json({ 
+        success: false,
+        message: error instanceof Error ? error.message : 'Webhook processing failed'
+      });
+    }
+  });
+
   // Client synchronization webhook from 1C
   app.post('/api/1c/clients/sync', async (req, res) => {
     try {

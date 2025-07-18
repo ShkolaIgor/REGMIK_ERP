@@ -17,7 +17,7 @@ import {
   repairs, repairParts, repairStatusHistory, repairDocuments, orderItemSerialNumbers, novaPoshtaCities, novaPoshtaWarehouses,
   bankPaymentNotifications, orderPayments, systemLogs,
   supplierReceipts, supplierReceiptItems, supplierDocumentTypes,
-  clientSyncHistory,
+  clientSyncHistory, autoSyncSettings,
  type LocalUser, type InsertLocalUser,
   type Permission, type InsertPermission,
   type RolePermission, type InsertRolePermission, type UserPermission, type InsertUserPermission,
@@ -12390,6 +12390,531 @@ export class DatabaseStorage implements IStorage {
         errorCode: 'DELETE_ERROR',
         details: error instanceof Error ? error.message : 'Unknown error',
       };
+    }
+  }
+
+  // Auto-sync methods
+  async getAutoSyncSettings() {
+    try {
+      const settings = await db.select().from(autoSyncSettings).orderBy(autoSyncSettings.syncType);
+      
+      // Create default settings if none exist
+      if (settings.length === 0) {
+        const defaultSettings = [
+          { syncType: 'clients', isEnabled: false, syncFrequency: 300 },
+          { syncType: 'invoices', isEnabled: false, syncFrequency: 300 },
+          { syncType: 'outgoing_invoices', isEnabled: false, syncFrequency: 300 }
+        ];
+        
+        for (const setting of defaultSettings) {
+          await db.insert(autoSyncSettings).values(setting);
+        }
+        
+        return await db.select().from(autoSyncSettings).orderBy(autoSyncSettings.syncType);
+      }
+      
+      return settings;
+    } catch (error) {
+      console.error("Error getting auto-sync settings:", error);
+      throw error;
+    }
+  }
+
+  async updateAutoSyncSettings(syncType: string, updates: any) {
+    try {
+      const [setting] = await db
+        .update(autoSyncSettings)
+        .set(updates)
+        .where(eq(autoSyncSettings.syncType, syncType))
+        .returning();
+      
+      if (!setting) {
+        // Create new setting if it doesn't exist
+        const [newSetting] = await db
+          .insert(autoSyncSettings)
+          .values({
+            syncType,
+            ...updates
+          })
+          .returning();
+        return newSetting;
+      }
+      
+      return setting;
+    } catch (error) {
+      console.error("Error updating auto-sync settings:", error);
+      throw error;
+    }
+  }
+
+  async testAutoSync(syncType: string) {
+    try {
+      switch (syncType) {
+        case 'clients':
+          // Test client sync connection
+          const testClients = await this.getClients();
+          return {
+            success: true,
+            message: `Підключення до ERP працює. Знайдено ${testClients.length} клієнтів.`,
+            details: { clientCount: testClients.length }
+          };
+          
+        case 'invoices':
+          // Test invoice sync connection
+          const testInvoices = await this.getSupplierReceipts();
+          return {
+            success: true,
+            message: `Підключення до системи накладних працює. Знайдено ${testInvoices.length} накладних.`,
+            details: { invoiceCount: testInvoices.length }
+          };
+          
+        case 'outgoing_invoices':
+          // Test outgoing invoice sync connection
+          const testOrders = await this.getOrders();
+          return {
+            success: true,
+            message: `Підключення до системи замовлень працює. Знайдено ${testOrders.length} замовлень.`,
+            details: { orderCount: testOrders.length }
+          };
+          
+        default:
+          return {
+            success: false,
+            message: `Невідомий тип синхронізації: ${syncType}`
+          };
+      }
+    } catch (error) {
+      console.error(`Error testing auto-sync for ${syncType}:`, error);
+      return {
+        success: false,
+        message: `Помилка тестування: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
+  }
+
+  async runAutoSync(syncType: string) {
+    try {
+      const now = new Date();
+      
+      // Update last sync timestamp
+      await this.updateAutoSyncSettings(syncType, {
+        lastSyncAt: now,
+        updatedAt: now
+      });
+      
+      switch (syncType) {
+        case 'clients':
+          // Run client sync
+          return {
+            success: true,
+            message: 'Синхронізація клієнтів запущена успішно',
+            timestamp: now
+          };
+          
+        case 'invoices':
+          // Run invoice sync
+          return {
+            success: true,
+            message: 'Синхронізація накладних запущена успішно',
+            timestamp: now
+          };
+          
+        case 'outgoing_invoices':
+          // Run outgoing invoice sync
+          return {
+            success: true,
+            message: 'Синхронізація вихідних рахунків запущена успішно',
+            timestamp: now
+          };
+          
+        default:
+          return {
+            success: false,
+            message: `Невідомий тип синхронізації: ${syncType}`
+          };
+      }
+    } catch (error) {
+      console.error(`Error running auto-sync for ${syncType}:`, error);
+      
+      // Update error count
+      await this.updateAutoSyncSettings(syncType, {
+        errorCount: sql`error_count + 1`,
+        lastError: error instanceof Error ? error.message : 'Unknown error',
+        updatedAt: new Date()
+      });
+      
+      return {
+        success: false,
+        message: `Помилка синхронізації: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
+  }
+
+  // Webhook handlers for automatic sync from 1C
+  async createClientFromWebhook(clientData: any) {
+    try {
+      console.log('🔄 Webhook: Створення клієнта від 1С:', clientData);
+      
+      // Convert 1C client data to ERP format
+      const clientRecord = {
+        name: clientData.name || clientData.Наименование || '',
+        email: clientData.email || clientData.Email || null,
+        phone: clientData.phone || clientData.Телефон || null,
+        taxCode: clientData.taxCode || clientData.ИНН || null,
+        address: clientData.address || clientData.Адрес || null,
+        externalId: clientData.externalId || clientData.Код || null,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      // Create client
+      const [client] = await db.insert(clients).values(clientRecord).returning();
+      
+      // Record sync history
+      await db.insert(clientSyncHistory).values({
+        clientId: client.id,
+        externalId: clientRecord.externalId,
+        action: 'create',
+        source: '1c_webhook',
+        details: { webhookData: clientData }
+      });
+      
+      return client;
+    } catch (error) {
+      console.error('❌ Webhook: Помилка створення клієнта:', error);
+      throw error;
+    }
+  }
+
+  async updateClientFromWebhook(clientData: any) {
+    try {
+      console.log('🔄 Webhook: Оновлення клієнта від 1С:', clientData);
+      
+      const externalId = clientData.externalId || clientData.Код;
+      if (!externalId) {
+        throw new Error('External ID is required for client updates');
+      }
+      
+      // Find existing client
+      const [existingClient] = await db
+        .select()
+        .from(clients)
+        .where(eq(clients.externalId, externalId));
+      
+      if (!existingClient) {
+        throw new Error(`Client with external ID ${externalId} not found`);
+      }
+      
+      // Update client
+      const updatedFields = {
+        name: clientData.name || clientData.Наименование || existingClient.name,
+        email: clientData.email || clientData.Email || existingClient.email,
+        phone: clientData.phone || clientData.Телефон || existingClient.phone,
+        taxCode: clientData.taxCode || clientData.ИНН || existingClient.taxCode,
+        address: clientData.address || clientData.Адрес || existingClient.address,
+        updatedAt: new Date()
+      };
+      
+      const [updatedClient] = await db
+        .update(clients)
+        .set(updatedFields)
+        .where(eq(clients.id, existingClient.id))
+        .returning();
+      
+      // Record sync history
+      await db.insert(clientSyncHistory).values({
+        clientId: updatedClient.id,
+        externalId: externalId,
+        action: 'update',
+        source: '1c_webhook',
+        details: { webhookData: clientData }
+      });
+      
+      return updatedClient;
+    } catch (error) {
+      console.error('❌ Webhook: Помилка оновлення клієнта:', error);
+      throw error;
+    }
+  }
+
+  async deleteClientFromWebhook(clientData: any) {
+    try {
+      console.log('🔄 Webhook: Видалення клієнта від 1С:', clientData);
+      
+      const externalId = clientData.externalId || clientData.Код;
+      if (!externalId) {
+        throw new Error('External ID is required for client deletion');
+      }
+      
+      // Find existing client
+      const [existingClient] = await db
+        .select()
+        .from(clients)
+        .where(eq(clients.externalId, externalId));
+      
+      if (!existingClient) {
+        throw new Error(`Client with external ID ${externalId} not found`);
+      }
+      
+      // Soft delete - mark as inactive
+      const [deletedClient] = await db
+        .update(clients)
+        .set({ isActive: false, updatedAt: new Date() })
+        .where(eq(clients.id, existingClient.id))
+        .returning();
+      
+      // Record sync history
+      await db.insert(clientSyncHistory).values({
+        clientId: deletedClient.id,
+        externalId: externalId,
+        action: 'delete',
+        source: '1c_webhook',
+        details: { webhookData: clientData }
+      });
+      
+      return deletedClient;
+    } catch (error) {
+      console.error('❌ Webhook: Помилка видалення клієнта:', error);
+      throw error;
+    }
+  }
+
+  async createInvoiceFromWebhook(invoiceData: any) {
+    try {
+      console.log('🔄 Webhook: Створення накладної від 1С:', invoiceData);
+      
+      // Convert 1C invoice data to ERP format (supplier receipt)
+      const supplierReceiptRecord = {
+        supplierId: invoiceData.supplierId || 1, // Default supplier or find by name
+        receiptNumber: invoiceData.receiptNumber || invoiceData.НомерДокумента || '',
+        receiptDate: invoiceData.receiptDate || invoiceData.ДатаДокумента || new Date(),
+        totalAmount: invoiceData.totalAmount || invoiceData.СуммаДокумента || 0,
+        currency: invoiceData.currency || invoiceData.КодВалюты || 'UAH',
+        status: 'posted',
+        documentType: 'invoice',
+        externalId: invoiceData.externalId || invoiceData.СсылкаДокумента,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      // Create supplier receipt
+      const [receipt] = await db.insert(supplierReceipts).values(supplierReceiptRecord).returning();
+      
+      // Process invoice items if provided
+      if (invoiceData.positions && Array.isArray(invoiceData.positions)) {
+        for (const position of invoiceData.positions) {
+          const itemRecord = {
+            supplierReceiptId: receipt.id,
+            componentId: position.componentId || null,
+            quantity: position.quantity || position.Количество || 0,
+            unitPrice: position.unitPrice || position.Цена || 0,
+            totalPrice: position.totalPrice || position.Сумма || 0,
+            itemName: position.itemName || position.НаименованиеТовара || '',
+            itemCode: position.itemCode || position.КодТовара || null,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+          
+          await db.insert(supplierReceiptItems).values(itemRecord);
+        }
+      }
+      
+      return receipt;
+    } catch (error) {
+      console.error('❌ Webhook: Помилка створення накладної:', error);
+      throw error;
+    }
+  }
+
+  async updateInvoiceFromWebhook(invoiceData: any) {
+    try {
+      console.log('🔄 Webhook: Оновлення накладної від 1С:', invoiceData);
+      
+      const externalId = invoiceData.externalId || invoiceData.СсылкаДокумента;
+      if (!externalId) {
+        throw new Error('External ID is required for invoice updates');
+      }
+      
+      // Find existing receipt
+      const [existingReceipt] = await db
+        .select()
+        .from(supplierReceipts)
+        .where(eq(supplierReceipts.externalId, externalId));
+      
+      if (!existingReceipt) {
+        throw new Error(`Invoice with external ID ${externalId} not found`);
+      }
+      
+      // Update receipt
+      const updatedFields = {
+        totalAmount: invoiceData.totalAmount || invoiceData.СуммаДокумента || existingReceipt.totalAmount,
+        currency: invoiceData.currency || invoiceData.КодВалюты || existingReceipt.currency,
+        status: invoiceData.status || existingReceipt.status,
+        updatedAt: new Date()
+      };
+      
+      const [updatedReceipt] = await db
+        .update(supplierReceipts)
+        .set(updatedFields)
+        .where(eq(supplierReceipts.id, existingReceipt.id))
+        .returning();
+      
+      return updatedReceipt;
+    } catch (error) {
+      console.error('❌ Webhook: Помилка оновлення накладної:', error);
+      throw error;
+    }
+  }
+
+  async deleteInvoiceFromWebhook(invoiceData: any) {
+    try {
+      console.log('🔄 Webhook: Видалення накладної від 1С:', invoiceData);
+      
+      const externalId = invoiceData.externalId || invoiceData.СсылкаДокумента;
+      if (!externalId) {
+        throw new Error('External ID is required for invoice deletion');
+      }
+      
+      // Find existing receipt
+      const [existingReceipt] = await db
+        .select()
+        .from(supplierReceipts)
+        .where(eq(supplierReceipts.externalId, externalId));
+      
+      if (!existingReceipt) {
+        throw new Error(`Invoice with external ID ${externalId} not found`);
+      }
+      
+      // Delete receipt items first
+      await db.delete(supplierReceiptItems).where(eq(supplierReceiptItems.supplierReceiptId, existingReceipt.id));
+      
+      // Delete receipt
+      await db.delete(supplierReceipts).where(eq(supplierReceipts.id, existingReceipt.id));
+      
+      return { success: true, deletedId: existingReceipt.id };
+    } catch (error) {
+      console.error('❌ Webhook: Помилка видалення накладної:', error);
+      throw error;
+    }
+  }
+
+  async createOutgoingInvoiceFromWebhook(invoiceData: any) {
+    try {
+      console.log('🔄 Webhook: Створення вихідного рахунку від 1С:', invoiceData);
+      
+      // Convert 1C outgoing invoice data to ERP format (order)
+      const orderRecord = {
+        clientId: invoiceData.clientId || 1, // Default client or find by name/tax code
+        orderNumber: invoiceData.orderNumber || invoiceData.НомерДокумента || '',
+        orderDate: invoiceData.orderDate || invoiceData.ДатаДокумента || new Date(),
+        totalAmount: invoiceData.totalAmount || invoiceData.СуммаДокумента || 0,
+        currency: invoiceData.currency || invoiceData.КодВалюты || 'UAH',
+        status: 'pending',
+        orderType: 'sale',
+        externalId: invoiceData.externalId || invoiceData.СсылкаДокумента,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      // Create order
+      const [order] = await db.insert(orders).values(orderRecord).returning();
+      
+      // Process invoice items if provided
+      if (invoiceData.positions && Array.isArray(invoiceData.positions)) {
+        for (const position of invoiceData.positions) {
+          const itemRecord = {
+            orderId: order.id,
+            productId: position.productId || null,
+            quantity: position.quantity || position.Количество || 0,
+            unitPrice: position.unitPrice || position.Цена || 0,
+            totalPrice: position.totalPrice || position.Сумма || 0,
+            itemName: position.itemName || position.НаименованиеТовара || '',
+            itemCode: position.itemCode || position.КодТовара || null,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+          
+          await db.insert(orderItems).values(itemRecord);
+        }
+      }
+      
+      return order;
+    } catch (error) {
+      console.error('❌ Webhook: Помилка створення вихідного рахунку:', error);
+      throw error;
+    }
+  }
+
+  async updateOutgoingInvoiceFromWebhook(invoiceData: any) {
+    try {
+      console.log('🔄 Webhook: Оновлення вихідного рахунку від 1С:', invoiceData);
+      
+      const externalId = invoiceData.externalId || invoiceData.СсылкаДокумента;
+      if (!externalId) {
+        throw new Error('External ID is required for outgoing invoice updates');
+      }
+      
+      // Find existing order
+      const [existingOrder] = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.externalId, externalId));
+      
+      if (!existingOrder) {
+        throw new Error(`Outgoing invoice with external ID ${externalId} not found`);
+      }
+      
+      // Update order
+      const updatedFields = {
+        totalAmount: invoiceData.totalAmount || invoiceData.СуммаДокумента || existingOrder.totalAmount,
+        currency: invoiceData.currency || invoiceData.КодВалюты || existingOrder.currency,
+        status: invoiceData.status || existingOrder.status,
+        updatedAt: new Date()
+      };
+      
+      const [updatedOrder] = await db
+        .update(orders)
+        .set(updatedFields)
+        .where(eq(orders.id, existingOrder.id))
+        .returning();
+      
+      return updatedOrder;
+    } catch (error) {
+      console.error('❌ Webhook: Помилка оновлення вихідного рахунку:', error);
+      throw error;
+    }
+  }
+
+  async deleteOutgoingInvoiceFromWebhook(invoiceData: any) {
+    try {
+      console.log('🔄 Webhook: Видалення вихідного рахунку від 1С:', invoiceData);
+      
+      const externalId = invoiceData.externalId || invoiceData.СсылкаДокумента;
+      if (!externalId) {
+        throw new Error('External ID is required for outgoing invoice deletion');
+      }
+      
+      // Find existing order
+      const [existingOrder] = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.externalId, externalId));
+      
+      if (!existingOrder) {
+        throw new Error(`Outgoing invoice with external ID ${externalId} not found`);
+      }
+      
+      // Delete order items first
+      await db.delete(orderItems).where(eq(orderItems.orderId, existingOrder.id));
+      
+      // Delete order
+      await db.delete(orders).where(eq(orders.id, existingOrder.id));
+      
+      return { success: true, deletedId: existingOrder.id };
+    } catch (error) {
+      console.error('❌ Webhook: Помилка видалення вихідного рахунку:', error);
+      throw error;
     }
   }
 

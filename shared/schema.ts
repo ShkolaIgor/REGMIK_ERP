@@ -2723,6 +2723,53 @@ export type RolePermission = typeof rolePermissions.$inferSelect;
 export type InsertRolePermission = z.infer<typeof insertRolePermissionSchema>;
 
 export type UserPermission = typeof userPermissions.$inferSelect;
+
+// Auto-sync settings table
+export const autoSyncSettings = pgTable("auto_sync_settings", {
+  id: serial("id").primaryKey(),
+  syncType: varchar("sync_type", { length: 50 }).notNull(), // 'clients', 'invoices', 'outgoing_invoices'
+  isEnabled: boolean("is_enabled").default(true),
+  webhookUrl: varchar("webhook_url", { length: 500 }),
+  syncFrequency: integer("sync_frequency").default(300), // секунди
+  lastSyncAt: timestamp("last_sync_at"),
+  errorCount: integer("error_count").default(0),
+  lastError: text("last_error"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Client sync history table
+export const clientSyncHistory = pgTable("client_sync_history", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").references(() => clients.id),
+  external1cId: varchar("external_1c_id", { length: 255 }).notNull(),
+  syncAction: varchar("sync_action", { length: 50 }).notNull(),
+  syncStatus: varchar("sync_status", { length: 50 }).notNull(),
+  syncDirection: varchar("sync_direction", { length: 50 }).notNull(),
+  changeData: jsonb("change_data"),
+  errorMessage: text("error_message"),
+  syncedAt: timestamp("synced_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Схеми для валідації
+export const insertAutoSyncSettingsSchema = createInsertSchema(autoSyncSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertClientSyncHistorySchema = createInsertSchema(clientSyncHistory).omit({
+  id: true,
+  createdAt: true,
+  syncedAt: true,
+});
+
+export type AutoSyncSettings = typeof autoSyncSettings.$inferSelect;
+export type InsertAutoSyncSettings = z.infer<typeof insertAutoSyncSettingsSchema>;
+
+export type ClientSyncHistory = typeof clientSyncHistory.$inferSelect;
+export type InsertClientSyncHistory = z.infer<typeof insertClientSyncHistorySchema>;
 export type InsertUserPermission = z.infer<typeof insertUserPermissionSchema>;
 
 // Оновлені типи користувачів з урахуванням ролей
@@ -2735,34 +2782,7 @@ export const insertUpdatedUserSchema = createInsertSchema(users).omit({
 
 export type InsertUpdatedUser = z.infer<typeof insertUpdatedUserSchema>;
 
-// Синхронізація клієнтів з 1С
-export const clientSyncHistory = pgTable("client_sync_history", {
-  id: serial("id").primaryKey(),
-  clientId: integer("client_id").references(() => clients.id),
-  external1cId: varchar("external_1c_id", { length: 100 }), // ID клієнта в 1С
-  syncAction: varchar("sync_action", { length: 50 }).notNull(), // create, update, delete
-  syncStatus: varchar("sync_status", { length: 50 }).notNull().default("pending"), // pending, success, error
-  syncDirection: varchar("sync_direction", { length: 20 }).notNull().default("from_1c"), // from_1c, to_1c, bidirectional
-  changeData: jsonb("change_data"), // Дані що змінилися
-  errorMessage: text("error_message"), // Повідомлення про помилку
-  syncedAt: timestamp("synced_at").defaultNow(),
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => [
-  index("client_sync_history_client_id_idx").on(table.clientId),
-  index("client_sync_history_external_1c_id_idx").on(table.external1cId),
-  index("client_sync_history_sync_status_idx").on(table.syncStatus),
-  index("client_sync_history_synced_at_idx").on(table.syncedAt),
-]);
 
-// Схема для синхронізації клієнтів
-export const insertClientSyncHistorySchema = createInsertSchema(clientSyncHistory).omit({
-  id: true,
-  createdAt: true,
-  syncedAt: true,
-});
-
-export type ClientSyncHistory = typeof clientSyncHistory.$inferSelect;
-export type InsertClientSyncHistory = z.infer<typeof insertClientSyncHistorySchema>;
 
 // Client Types schemas and types
 export const insertClientTypeSchema = createInsertSchema(clientTypes).omit({

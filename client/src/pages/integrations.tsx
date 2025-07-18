@@ -16,6 +16,7 @@ import { Plus, Settings, RefreshCw, TestTube, Trash2, Check, X, Clock, AlertCirc
 import { Import1CInvoices } from "@/components/Import1CInvoices";
 import { Import1COutgoingInvoices } from "@/components/Import1COutgoingInvoices";
 import { ClientSyncManager } from "@/components/ClientSyncManager";
+import { AutoSyncManager } from "@/components/AutoSyncManager";
 import { SimpleLogin } from "@/components/SimpleLogin";
 
 interface IntegrationConfig {
@@ -459,6 +460,7 @@ export default function Integrations() {
       <Tabs defaultValue="configs" className="space-y-4">
         <TabsList>
           <TabsTrigger value="configs">Конфігурації</TabsTrigger>
+          <TabsTrigger value="auto-sync">Авто-синхронізація</TabsTrigger>
           <TabsTrigger value="logs">Логи синхронізації</TabsTrigger>
         </TabsList>
 
@@ -615,6 +617,10 @@ export default function Integrations() {
               )}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="auto-sync" className="space-y-4">
+          <AutoSyncManager />
         </TabsContent>
 
         <TabsContent value="logs" className="space-y-4">
