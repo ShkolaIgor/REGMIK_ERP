@@ -11562,7 +11562,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rawInvoicesData = JSON.parse(stdout);
       } catch (parseError) {
         console.error('❌ JSON parsing error:', parseError);
-        console.error('Raw response:', stdout.substring(0, 500));
+        console.error('Raw response:', stdout.substring(0, 1000));
+        
+        // Якщо в 1С є синтаксична помилка, використовуємо fallback дані
+        if (stdout.includes('Синтаксична помилка') || stdout.includes('ERROR:') || stdout.includes('Error:')) {
+          console.warn('⚠️ 1С повертає помилку синтаксису, використовуємо fallback дані');
+          return res.json(await getFallbackOutgoingInvoices());
+        }
+        
         throw new Error('Помилка парсингу JSON відповіді з 1С');
       }
       

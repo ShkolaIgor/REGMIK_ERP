@@ -1,0 +1,205 @@
+[Debug] [vite] connecting... (client, line 495)
+[Debug] [vite] connected. (client, line 618)
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_import" – "Імпорт рахунків та накладних з 1С" (integrations.tsx, line 742)
+[Log] 1C Invoices Debug: – Object (Import1CInvoices.tsx, line 316)
+Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (Import1COutgoingInvoices.tsx, line 83)
+Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_import" – "Імпорт рахунків та накладних з 1С" (integrations.tsx, line 742)
+[Log] 1C Invoices Debug: – Object (Import1CInvoices.tsx, line 316)
+Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (Import1COutgoingInvoices.tsx, line 83)
+Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (Import1COutgoingInvoices.tsx, line 83)
+Object
+[Warning] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. (chunk-OWETAWFU.js, line 339)
+[Log] 📅 Змінено фільтр дат для вихідних рахунків: – Object (Import1COutgoingInvoices.tsx, line 406)
+Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (Import1COutgoingInvoices.tsx, line 83)
+Object
+[Log] Frontend: Making GET request to: /api/1c/outgoing-invoices?period=today (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – Object (queryClient.ts, line 49)
+Object
+[Log] Frontend: Request body: – undefined (queryClient.ts, line 50)
+[Log] Frontend: Document cookies: – "" (queryClient.ts, line 51)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (Import1COutgoingInvoices.tsx, line 83)
+Object
+[Error] Failed to load resource: the server responded with a status of 500 (Internal Server Error) (outgoing-invoices, line 0)
+[Log] Frontend: Response status: 500 for GET /api/1c/outgoing-invoices?period=today (queryClient.ts, line 66)
+[Log] Frontend: Response headers: – Object (queryClient.ts, line 67)
+Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (Import1COutgoingInvoices.tsx, line 83)
+Object
+[Log] Frontend: Making GET request to: /api/1c/outgoing-invoices?period=today (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – Object (queryClient.ts, line 49)
+Object
+[Log] Frontend: Request body: – undefined (queryClient.ts, line 50)
+[Log] Frontend: Document cookies: – "" (queryClient.ts, line 51)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (Import1COutgoingInvoices.tsx, line 83)
+Object
+[Error] Failed to load resource: the server responded with a status of 500 (Internal Server Error) (outgoing-invoices, line 0)
+[Log] Frontend: Response status: 500 for GET /api/1c/outgoing-invoices?period=today (queryClient.ts, line 66)
+[Log] Frontend: Response headers: – Object (queryClient.ts, line 67)
+Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (Import1COutgoingInvoices.tsx, line 83)
+Object
+[Log] Frontend: Making GET request to: /api/1c/outgoing-invoices?period=today (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – Object (queryClient.ts, line 49)
+Object
+[Log] Frontend: Request body: – undefined (queryClient.ts, line 50)
+[Log] Frontend: Document cookies: – "" (queryClient.ts, line 51)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (Import1COutgoingInvoices.tsx, line 83)
+Object
+[Error] Failed to load resource: the server responded with a status of 500 (Internal Server Error) (outgoing-invoices, line 0)
+[Log] Frontend: Response status: 500 for GET /api/1c/outgoing-invoices?period=today (queryClient.ts, line 66)
+[Log] Frontend: Response headers: – Object (queryClient.ts, line 67)
+Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (Import1COutgoingInvoices.tsx, line 83)
+Object
+[Log] 📅 Змінено фільтр дат для вихідних рахунків: – Object (Import1COutgoingInvoices.tsx, line 406)
+Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (Import1COutgoingInvoices.tsx, line 83)
+Object
+[Log] Frontend: Making GET request to: /api/1c/outgoing-invoices?period=last5days (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – Object (queryClient.ts, line 49)
+Object
+[Log] Frontend: Request body: – undefined (queryClient.ts, line 50)
+[Log] Frontend: Document cookies: – "" (queryClient.ts, line 51)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (Import1COutgoingInvoices.tsx, line 83)
+Object
+[Error] Failed to load resource: the server responded with a status of 500 (Internal Server Error) (outgoing-invoices, line 0)
+[Log] Frontend: Response status: 500 for GET /api/1c/outgoing-invoices?period=last5days (queryClient.ts, line 66)
+[Log] Frontend: Response headers: – Object (queryClient.ts, line 67)
+Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (Import1COutgoingInvoices.tsx, line 83)
+Object
+[Debug] [vite] hot updated: /src/components/Import1COutgoingInvoices.tsx (client, line 223)
+[Debug] [vite] hot updated: /src/index.css?v=c62GV4wF0WfButMz9mFM9 (client, line 223)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (Import1COutgoingInvoices.tsx, line 83)
+Object
+[Log] Frontend: Making GET request to: /api/1c/outgoing-invoices?period=last5days (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – Object (queryClient.ts, line 49)
+Object
+[Log] Frontend: Request body: – undefined (queryClient.ts, line 50)
+[Log] Frontend: Document cookies: – "" (queryClient.ts, line 51)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (Import1COutgoingInvoices.tsx, line 83)
+Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (Import1COutgoingInvoices.tsx, line 83)
+Object
+[Error] Failed to load resource: the server responded with a status of 500 (Internal Server Error) (outgoing-invoices, line 0)
+[Log] Frontend: Response status: 500 for GET /api/1c/outgoing-invoices?period=last5days (queryClient.ts, line 66)
+[Log] Frontend: Response headers: – Object (queryClient.ts, line 67)
+Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (Import1COutgoingInvoices.tsx, line 83)
+Object
+[Log] 📅 Змінено фільтр дат для вихідних рахунків: – Object (Import1COutgoingInvoices.tsx, line 406)
+Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (Import1COutgoingInvoices.tsx, line 83)
+Object
+[Log] Frontend: Making GET request to: /api/1c/outgoing-invoices?period=today (queryClient.ts, line 48)
+[Log] Frontend: Request headers: – Object (queryClient.ts, line 49)
+Object
+[Log] Frontend: Request body: – undefined (queryClient.ts, line 50)
+[Log] Frontend: Document cookies: – "" (queryClient.ts, line 51)
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: (Import1COutgoingInvoices.tsx, line 83)
+Object
+
+displayDataCount: 0
+
+errorMessage: null
+
+firstDisplayInvoice: null
+
+firstRealInvoice: null
+
+hasError: false
+
+isOpen: true
+
+loadingInvoices: true
+
+realDataCount: 0
+
+Object Prototype
+[Error] Failed to load resource: the server responded with a status of 500 (Internal Server Error) (outgoing-invoices, line 0)
+[Log] Frontend: Response status: 500 for GET /api/1c/outgoing-invoices?period=today (queryClient.ts, line 66)
+[Log] Frontend: Response headers: (queryClient.ts, line 67)
+Object
+
+content-length: "160"
+
+content-type: "application/json; charset=utf-8"
+
+date: "Fri, 18 Jul 2025 05:51:14 GMT"
+
+replit-cluster: "picard"
+
+x-powered-by: "Express"
+
+x-robots-tag: "none, noindex, noarchive, nofollow, nositelinkssearchbox, noimageindex, none, noindex, noarchive, nofollow, nositelinkssearchbox…"
+
+Object Prototype
+
+__defineGetter__(propertyName, getterFunction)
+
+__defineSetter__(propertyName, setterFunction)
+
+__lookupGetter__(propertyName)
+
+__lookupSetter__(propertyName)
+
+constructor: function()
+
+hasOwnProperty(propertyName)
+
+isPrototypeOf(property)
+
+propertyIsEnumerable(propertyName)
+
+toLocaleString()
+
+toString()
+
+valueOf()
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: (Import1COutgoingInvoices.tsx, line 83)
+Object
+
+displayDataCount: 0
+
+errorMessage: "500: Internal Server Error"
+
+firstDisplayInvoice: null
+
+firstRealInvoice: null
+
+hasError: true
+
+isOpen: true
+
+loadingInvoices: false
+
+realDataCount: 0
+
+Object Prototype
+
+__defineGetter__(propertyName, getterFunction)
+
+__defineSetter__(propertyName, setterFunction)
+
+__lookupGetter__(propertyName)
+
+__lookupSetter__(propertyName)
+
+constructor: function()
+
+hasOwnProperty(propertyName)
+
+isPrototypeOf(property)
+
+propertyIsEnumerable(propertyName)
+
+toLocaleString()
+
+toString()
+
+valueOf()
