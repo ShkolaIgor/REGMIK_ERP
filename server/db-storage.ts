@@ -528,22 +528,21 @@ export class DatabaseStorage implements IStorage {
     const { page, limit, search = '', statusFilter = '', paymentFilter = '', dateRangeFilter = '' } = params;
     const offset = (page - 1) * limit;
 
-    // Початковий запит для підрахунку та фільтрації
-    let baseQuery = db.select().from(orders);
+    // Початковий запит для підрахунку та фільтрації  
+    let baseQuery = db.select().from(orders)
+      .leftJoin(clients, eq(orders.clientId, clients.id))
+      .leftJoin(clientContacts, eq(orders.clientContactsId, clientContacts.id));
 
     // Застосування фільтрів
     const conditions = [];
 
-    // Пошук
+    // Пошук (спрощений варіант для тестування)
     if (search) {
       const searchLower = `%${search.toLowerCase()}%`;
       conditions.push(
         or(
           ilike(orders.orderNumber, searchLower),
-          ilike(clients.name, searchLower),
-          ilike(clientContacts.email, searchLower),
-          ilike(clientContacts.phone, searchLower),
-          sql`CAST(${orders.orderSequenceNumber} AS TEXT) ILIKE ${searchLower}`
+          ilike(orders.invoiceNumber, searchLower)
         )
       );
     }
@@ -594,18 +593,24 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Підрахунок загальної кількості
-    const countQuery = db.select({ count: sql<number>`COUNT(*)` }).from(orders);
+    let countQuery = db.select({ count: sql<number>`COUNT(DISTINCT orders.id)` }).from(orders)
+      .leftJoin(clients, eq(orders.clientId, clients.id))
+      .leftJoin(clientContacts, eq(orders.clientContactsId, clientContacts.id));
     if (conditions.length > 0) {
-      countQuery.where(and(...conditions));
+      countQuery = countQuery.where(and(...conditions));
     }
     const [{ count: total }] = await countQuery;
 
     // Отримання замовлень з пагінацією
+    let ordersQuery = db.select(orders).from(orders)
+      .leftJoin(clients, eq(orders.clientId, clients.id))
+      .leftJoin(clientContacts, eq(orders.clientContactsId, clientContacts.id));
+      
     if (conditions.length > 0) {
-      baseQuery = baseQuery.where(and(...conditions));
+      ordersQuery = ordersQuery.where(and(...conditions));
     }
     
-    const ordersResult = await baseQuery
+    const ordersResult = await ordersQuery
       .orderBy(desc(orders.orderSequenceNumber))
       .limit(limit)
       .offset(offset);
@@ -621,6 +626,9 @@ export class DatabaseStorage implements IStorage {
           quantity: orderItems.quantity,
           unitPrice: orderItems.unitPrice,
           totalPrice: orderItems.totalPrice,
+          itemName: orderItems.itemName,
+          itemCode: orderItems.itemCode,
+          unit: orderItems.unit,
           product: {
             id: products.id,
             name: products.name,
@@ -644,7 +652,29 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(products, eq(orderItems.productId, products.id))
         .where(eq(orderItems.orderId, order.id));
 
-        const filteredItems = itemsResult.filter(item => item.product !== null);
+        // Відображаємо ВСІ позиції - як з прив'язаними товарами, так і з webhook даними
+        const filteredItems = itemsResult.map(item => ({
+          ...item,
+          // Якщо товар не знайдено, створюємо віртуальний об'єкт з webhook даних
+          product: item.product || {
+            id: null,
+            name: item.itemName || 'Невідомий товар',
+            sku: item.itemCode || '',
+            description: null,
+            barcode: null,
+            categoryId: null,
+            companyId: null,
+            costPrice: null,
+            retailPrice: item.unitPrice,
+            photo: null,
+            productType: null,
+            unit: item.unit || 'шт',
+            minStock: null,
+            maxStock: null,
+            isActive: true,
+            createdAt: null
+          }
+        }));
 
         // Завантаження інформації про клієнта з таблиці clients
         let clientData = null;
@@ -747,13 +777,38 @@ export class DatabaseStorage implements IStorage {
         quantity: orderItems.quantity,
         unitPrice: orderItems.unitPrice,
         totalPrice: orderItems.totalPrice,
+        itemName: orderItems.itemName,
+        itemCode: orderItems.itemCode,
+        unit: orderItems.unit,
         product: products
       })
       .from(orderItems)
       .leftJoin(products, eq(orderItems.productId, products.id))
       .where(eq(orderItems.orderId, id));
 
-      const items = itemsResult.filter(item => item.product);
+      // Відображаємо ВСІ позиції - як з прив'язаними товарами, так і з webhook даних
+      const items = itemsResult.map(item => ({
+        ...item,
+        // Якщо товар не знайдено, створюємо віртуальний об'єкт з webhook даних
+        product: item.product || {
+          id: null,
+          name: item.itemName || 'Невідомий товар',
+          sku: item.itemCode || '',
+          description: null,
+          barcode: null,
+          categoryId: null,
+          companyId: null,
+          costPrice: null,
+          retailPrice: item.unitPrice,
+          photo: null,
+          productType: null,
+          unit: item.unit || 'шт',
+          minStock: null,
+          maxStock: null,
+          isActive: true,
+          createdAt: null
+        }
+      }));
 
       // Складаємо повний об'єкт замовлення
       const fullOrder = {
