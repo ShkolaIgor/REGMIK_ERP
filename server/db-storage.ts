@@ -12911,7 +12911,8 @@ export class DatabaseStorage implements IStorage {
 
   async findOrCreateClientForWebhook(clientData: any): Promise<Client> {
     try {
-      const taxCode = clientData.taxCode || clientData.ЄДРПОУ || clientData.КодЕДРПОУ;
+      // Використовуємо правильне поле ЄДРПОУ з 1С (Контрагент.КодПоЕДРПОУ)
+      const taxCode = clientData.ЄДРПОУ || clientData.taxCode || clientData.КодЕДРПОУ;
       const clientName = clientData.name || clientData.НазваКлієнта || clientData.clientName;
       
       // Спробуємо знайти існуючого клієнта
@@ -12954,8 +12955,10 @@ export class DatabaseStorage implements IStorage {
         console.log(`📋 Webhook: Знайдено/створено клієнта: ${client.name} (ID: ${client.id})`);
       } else if (invoiceData.Клиент || invoiceData.clientName) {
         const clientName = invoiceData.Клиент || invoiceData.clientName || invoiceData.НазваКлієнта;
-        // ВИПРАВЛЕНО: використовуємо КодКлиента (00-000655), не ИННКлиента (347038417162)
-        const taxCode = invoiceData.КодКлиента || invoiceData.clientTaxCode || invoiceData.КодЕДРПОУ || invoiceData.ЄДРПОУ;
+        // ВИПРАВЛЕНО: використовуємо правильні поля з 1С
+        // КодКлиента - внутрішній код клієнта в 1С
+        // ЄДРПОУ - код по ЄДРПОУ (Контрагент.КодПоЕДРПОУ в 1С)
+        const taxCode = invoiceData.ЄДРПОУ || invoiceData.КодКлиента || invoiceData.clientTaxCode || invoiceData.КодЕДРПОУ;
         
         console.log(`🔍 Webhook: Шукаємо клієнта за назвою "${clientName}" та кодом "${taxCode}"`);
         console.log(`📋 Webhook: Дані клієнта з 1С:`, {
