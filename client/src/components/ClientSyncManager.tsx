@@ -173,14 +173,7 @@ export function ClientSyncManager() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Синхронізація клієнтів з 1С</h2>
-          <p className="text-muted-foreground">
-            Управління синхронізацією клієнтів між 1С та ERP системою
-          </p>
-        </div>
+    <div className="space-y-4">
         <Button
           onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/1c/clients/sync-history'] })}
           variant="outline"
@@ -189,7 +182,6 @@ export function ClientSyncManager() {
           <RefreshCw className="h-4 w-4 mr-2" />
           Оновити
         </Button>
-      </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
         <TabsList className="grid w-full grid-cols-3">
