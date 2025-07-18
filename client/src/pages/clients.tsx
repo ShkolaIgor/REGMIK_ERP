@@ -854,7 +854,7 @@ export default function Clients() {
 
       {/* Dialog for creating/editing clients */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingClient ? "Редагувати клієнта" : "Додати клієнта"}
