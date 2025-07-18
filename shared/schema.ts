@@ -2733,8 +2733,36 @@ export const insertUpdatedUserSchema = createInsertSchema(users).omit({
   lastLoginAt: true,
 });
 
-
 export type InsertUpdatedUser = z.infer<typeof insertUpdatedUserSchema>;
+
+// Синхронізація клієнтів з 1С
+export const clientSyncHistory = pgTable("client_sync_history", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").references(() => clients.id),
+  external1cId: varchar("external_1c_id", { length: 100 }), // ID клієнта в 1С
+  syncAction: varchar("sync_action", { length: 50 }).notNull(), // create, update, delete
+  syncStatus: varchar("sync_status", { length: 50 }).notNull().default("pending"), // pending, success, error
+  syncDirection: varchar("sync_direction", { length: 20 }).notNull().default("from_1c"), // from_1c, to_1c, bidirectional
+  changeData: jsonb("change_data"), // Дані що змінилися
+  errorMessage: text("error_message"), // Повідомлення про помилку
+  syncedAt: timestamp("synced_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("client_sync_history_client_id_idx").on(table.clientId),
+  index("client_sync_history_external_1c_id_idx").on(table.external1cId),
+  index("client_sync_history_sync_status_idx").on(table.syncStatus),
+  index("client_sync_history_synced_at_idx").on(table.syncedAt),
+]);
+
+// Схема для синхронізації клієнтів
+export const insertClientSyncHistorySchema = createInsertSchema(clientSyncHistory).omit({
+  id: true,
+  createdAt: true,
+  syncedAt: true,
+});
+
+export type ClientSyncHistory = typeof clientSyncHistory.$inferSelect;
+export type InsertClientSyncHistory = z.infer<typeof insertClientSyncHistorySchema>;
 
 // Client Types schemas and types
 export const insertClientTypeSchema = createInsertSchema(clientTypes).omit({
@@ -2795,6 +2823,55 @@ export interface OutgoingInvoice1C {
 export interface ProcessedInvoiceItem {
   name: string; // Назва товару для ERP
   erpProductId?: number; // ID товару в ERP (якщо знайдено)
+}
+
+// ===============================
+// 1C CLIENT SYNC TYPES - Синхронізація клієнтів з 1С
+// ===============================
+
+// Дані клієнта від 1С
+export interface Client1CData {
+  id: string; // ID клієнта в 1С
+  name: string; // Скорочена назва
+  fullName?: string; // Повна назва
+  taxCode?: string; // ЄДРПОУ
+  vatNumber?: string; // ПДВ номер
+  legalAddress?: string; // Юридична адреса
+  physicalAddress?: string; // Фактична адреса
+  phone?: string; // Телефон
+  email?: string; // Email
+  isActive?: boolean; // Активний
+  isCustomer?: boolean; // Клієнт
+  isSupplier?: boolean; // Постачальник
+  discount?: number; // Знижка
+  notes?: string; // Примітки
+  contactPersons?: Array<{
+    fullName: string;
+    position?: string;
+    phone?: string;
+    email?: string;
+  }>;
+}
+
+// Webhook дані для синхронізації клієнтів
+export interface ClientSyncWebhookData {
+  action: 'create' | 'update' | 'delete'; // Дія
+  clientId: string; // ID клієнта в 1С
+  clientData?: Client1CData; // Дані клієнта (для create/update)
+  timestamp: string; // Час зміни
+  changeDescription?: string; // Опис змін
+}
+
+// Відповідь на webhook синхронізації
+export interface ClientSyncResponse {
+  success: boolean;
+  message: string;
+  erpClientId?: number; // ID створеного/оновленого клієнта в ERP
+  errorCode?: string;
+  details?: any;
+}
+
+export interface ProcessedInvoiceItem {
   originalName: string; // Оригінальна назва з 1С
   isMapped: boolean; // Чи знайдено відповідність в ERP
   quantity: number; // Кількість

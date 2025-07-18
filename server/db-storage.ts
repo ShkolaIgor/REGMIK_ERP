@@ -17,6 +17,7 @@ import {
   repairs, repairParts, repairStatusHistory, repairDocuments, orderItemSerialNumbers, novaPoshtaCities, novaPoshtaWarehouses,
   bankPaymentNotifications, orderPayments, systemLogs,
   supplierReceipts, supplierReceiptItems, supplierDocumentTypes,
+  clientSyncHistory,
  type LocalUser, type InsertLocalUser,
   type Permission, type InsertPermission,
   type RolePermission, type InsertRolePermission, type UserPermission, type InsertUserPermission,
@@ -87,7 +88,8 @@ import {
   type EntityMapping, type InsertEntityMapping,
   type SyncQueue, type InsertSyncQueue,
   type FieldMapping, type InsertFieldMapping,
-
+  type ClientSyncHistory, type InsertClientSyncHistory,
+  type Client1CData, type ClientSyncWebhookData, type ClientSyncResponse,
 } from "@shared/schema";
 
 export class DatabaseStorage implements IStorage {
@@ -12124,6 +12126,271 @@ export class DatabaseStorage implements IStorage {
     }
     
     return commonChars / longer.length;
+  }
+
+  // Client Sync History methods
+  async createClientSyncHistory(syncHistory: InsertClientSyncHistory): Promise<ClientSyncHistory> {
+    try {
+      const [created] = await db
+        .insert(clientSyncHistory)
+        .values(syncHistory)
+        .returning();
+      return created;
+    } catch (error) {
+      console.error("Error creating client sync history:", error);
+      throw error;
+    }
+  }
+
+  async getClientSyncHistory(filters?: {
+    clientId?: number;
+    external1cId?: string;
+    syncStatus?: string;
+    fromDate?: Date;
+    toDate?: Date;
+  }): Promise<ClientSyncHistory[]> {
+    try {
+      let query = db.select().from(clientSyncHistory);
+      
+      const conditions = [];
+      if (filters?.clientId) {
+        conditions.push(eq(clientSyncHistory.clientId, filters.clientId));
+      }
+      if (filters?.external1cId) {
+        conditions.push(eq(clientSyncHistory.external1cId, filters.external1cId));
+      }
+      if (filters?.syncStatus) {
+        conditions.push(eq(clientSyncHistory.syncStatus, filters.syncStatus));
+      }
+      if (filters?.fromDate) {
+        conditions.push(gte(clientSyncHistory.syncedAt, filters.fromDate));
+      }
+      if (filters?.toDate) {
+        conditions.push(lte(clientSyncHistory.syncedAt, filters.toDate));
+      }
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+      
+      const result = await query.orderBy(desc(clientSyncHistory.syncedAt));
+      return result;
+    } catch (error) {
+      console.error("Error getting client sync history:", error);
+      throw error;
+    }
+  }
+
+  async updateClientSyncHistory(id: number, updates: Partial<ClientSyncHistory>): Promise<ClientSyncHistory | undefined> {
+    try {
+      const [updated] = await db
+        .update(clientSyncHistory)
+        .set(updates)
+        .where(eq(clientSyncHistory.id, id))
+        .returning();
+      return updated;
+    } catch (error) {
+      console.error("Error updating client sync history:", error);
+      throw error;
+    }
+  }
+
+  // Client synchronization methods
+  async findClientByExternal1CId(external1cId: string): Promise<Client | undefined> {
+    try {
+      const [client] = await db
+        .select()
+        .from(clients)
+        .where(eq(clients.externalId, external1cId));
+      return client;
+    } catch (error) {
+      console.error("Error finding client by 1C ID:", error);
+      throw error;
+    }
+  }
+
+  async findClientByTaxCode(taxCode: string): Promise<Client | undefined> {
+    try {
+      const [client] = await db
+        .select()
+        .from(clients)
+        .where(eq(clients.taxCode, taxCode));
+      return client;
+    } catch (error) {
+      console.error("Error finding client by tax code:", error);
+      throw error;
+    }
+  }
+
+  async syncClientFrom1C(clientData: Client1CData): Promise<ClientSyncResponse> {
+    try {
+      // Шукаємо існуючого клієнта за ID 1С або ЄДРПОУ
+      let existingClient = await this.findClientByExternal1CId(clientData.id);
+      
+      if (!existingClient && clientData.taxCode) {
+        existingClient = await this.findClientByTaxCode(clientData.taxCode);
+      }
+
+      // Підготовка даних для ERP
+      const clientTypeId = 1; // Стандартний тип клієнта
+      const clientErpData: InsertClient = {
+        name: clientData.name,
+        fullName: clientData.fullName || clientData.name,
+        taxCode: clientData.taxCode,
+        clientTypeId,
+        legalAddress: clientData.legalAddress,
+        physicalAddress: clientData.physicalAddress,
+        addressesMatch: clientData.legalAddress === clientData.physicalAddress,
+        discount: clientData.discount ? clientData.discount.toString() : "0.00",
+        notes: clientData.notes,
+        externalId: clientData.id,
+        source: "1c",
+        isActive: clientData.isActive !== false,
+        isCustomer: clientData.isCustomer !== false,
+        isSupplier: clientData.isSupplier === true,
+      };
+
+      let resultClient: Client;
+      let syncAction: string;
+
+      if (existingClient) {
+        // Оновлюємо існуючого клієнта
+        const [updated] = await db
+          .update(clients)
+          .set({
+            ...clientErpData,
+            updatedAt: new Date(),
+          })
+          .where(eq(clients.id, existingClient.id))
+          .returning();
+        resultClient = updated;
+        syncAction = 'update';
+      } else {
+        // Створюємо нового клієнта
+        const [created] = await db
+          .insert(clients)
+          .values(clientErpData)
+          .returning();
+        resultClient = created;
+        syncAction = 'create';
+      }
+
+      // Синхронізуємо контактні особи
+      if (clientData.contactPersons && clientData.contactPersons.length > 0) {
+        // Видаляємо старі контакти
+        await db
+          .delete(clientContacts)
+          .where(eq(clientContacts.clientId, resultClient.id));
+
+        // Додаємо нові контакти
+        const contactsToInsert = clientData.contactPersons.map(contact => ({
+          clientId: resultClient.id,
+          fullName: contact.fullName,
+          position: contact.position,
+          email: contact.email,
+          primaryPhone: contact.phone,
+          primaryPhoneType: 'mobile' as const,
+          isActive: true,
+          isPrimary: false,
+        }));
+
+        await db.insert(clientContacts).values(contactsToInsert);
+      }
+
+      // Записуємо історію синхронізації
+      await this.createClientSyncHistory({
+        clientId: resultClient.id,
+        external1cId: clientData.id,
+        syncAction,
+        syncStatus: 'success',
+        syncDirection: 'from_1c',
+        changeData: clientData,
+      });
+
+      return {
+        success: true,
+        message: `Клієнт успішно ${syncAction === 'create' ? 'створений' : 'оновлений'}`,
+        erpClientId: resultClient.id,
+      };
+
+    } catch (error) {
+      console.error("Error syncing client from 1C:", error);
+      
+      // Записуємо помилку в історію
+      await this.createClientSyncHistory({
+        external1cId: clientData.id,
+        syncAction: 'create',
+        syncStatus: 'error',
+        syncDirection: 'from_1c',
+        changeData: clientData,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
+
+      return {
+        success: false,
+        message: 'Помилка при синхронізації клієнта',
+        errorCode: 'SYNC_ERROR',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  async deleteClientFrom1C(external1cId: string): Promise<ClientSyncResponse> {
+    try {
+      const client = await this.findClientByExternal1CId(external1cId);
+      
+      if (!client) {
+        return {
+          success: false,
+          message: 'Клієнт не знайдений',
+          errorCode: 'CLIENT_NOT_FOUND',
+        };
+      }
+
+      // Замість видалення, позначаємо клієнта як неактивний
+      const [updated] = await db
+        .update(clients)
+        .set({
+          isActive: false,
+          updatedAt: new Date(),
+        })
+        .where(eq(clients.id, client.id))
+        .returning();
+
+      // Записуємо історію синхронізації
+      await this.createClientSyncHistory({
+        clientId: client.id,
+        external1cId,
+        syncAction: 'delete',
+        syncStatus: 'success',
+        syncDirection: 'from_1c',
+      });
+
+      return {
+        success: true,
+        message: 'Клієнт успішно деактивований',
+        erpClientId: client.id,
+      };
+
+    } catch (error) {
+      console.error("Error deleting client from 1C:", error);
+      
+      // Записуємо помилку в історію
+      await this.createClientSyncHistory({
+        external1cId,
+        syncAction: 'delete',
+        syncStatus: 'error',
+        syncDirection: 'from_1c',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
+
+      return {
+        success: false,
+        message: 'Помилка при видаленні клієнта',
+        errorCode: 'DELETE_ERROR',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 
 }

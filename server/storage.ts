@@ -598,6 +598,14 @@ export interface IStorage {
   
   // Component Item Mapping - перевірка зіставлення позицій накладних
   checkItemMapping(itemName: string): Promise<{ isMapped: boolean; mappedComponentId?: number; mappedComponentName?: string }>;
+  
+  // Client Sync Methods
+  createClientSyncHistory(syncData: any): Promise<any>;
+  updateClientSyncHistory(id: number, syncData: any): Promise<any>;
+  getClientSyncHistories(params?: any): Promise<{ histories: any[]; total: number }>;
+  create1CClient(clientData: any): Promise<any>;
+  update1CClient(external1cId: string, clientData: any): Promise<any>;
+  delete1CClient(external1cId: string): Promise<any>;
 }
 
 export class MemStorage implements IStorage {
@@ -2148,6 +2156,31 @@ export class MemStorage implements IStorage {
       debugCount: 0,
       recentErrors: []
     };
+  }
+
+  // Client Sync Methods
+  async createClientSyncHistory(syncData: any): Promise<any> {
+    throw new Error("MemStorage не підтримує синхронізацію клієнтів");
+  }
+
+  async updateClientSyncHistory(id: number, syncData: any): Promise<any> {
+    throw new Error("MemStorage не підтримує синхронізацію клієнтів");
+  }
+
+  async getClientSyncHistories(params?: any): Promise<{ histories: any[]; total: number }> {
+    return { histories: [], total: 0 };
+  }
+
+  async create1CClient(clientData: any): Promise<any> {
+    throw new Error("MemStorage не підтримує синхронізацію клієнтів");
+  }
+
+  async update1CClient(external1cId: string, clientData: any): Promise<any> {
+    throw new Error("MemStorage не підтримує синхронізацію клієнтів");
+  }
+
+  async delete1CClient(external1cId: string): Promise<any> {
+    throw new Error("MemStorage не підтримує синхронізацію клієнтів");
   }
 }
 

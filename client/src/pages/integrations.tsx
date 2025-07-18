@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Settings, RefreshCw, TestTube, Trash2, Check, X, Clock, AlertCircle, Workflow } from "lucide-react";
 import { Import1CInvoices } from "@/components/Import1CInvoices";
 import { Import1COutgoingInvoices } from "@/components/Import1COutgoingInvoices";
+import { ClientSyncManager } from "@/components/ClientSyncManager";
 import { SimpleLogin } from "@/components/SimpleLogin";
 
 interface IntegrationConfig {
@@ -515,6 +516,23 @@ export default function Integrations() {
                           <>
                             <Import1CInvoices />
                             <Import1COutgoingInvoices />
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  <Workflow className="mr-2 h-4 w-4" />
+                                  Синхронізація клієнтів
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-6xl h-[80vh] overflow-auto">
+                                <DialogHeader>
+                                  <DialogTitle>Синхронізація клієнтів з 1С</DialogTitle>
+                                  <DialogDescription>
+                                    Управління синхронізацією клієнтів між 1С та ERP системою
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <ClientSyncManager />
+                              </DialogContent>
+                            </Dialog>
                           </>
                         )}
                         <Button

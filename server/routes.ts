@@ -11905,6 +11905,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Client synchronization webhook from 1C
+  app.post('/api/1c/clients/sync', async (req, res) => {
+    try {
+      const webhookData = req.body as import("@shared/schema").ClientSyncWebhookData;
+      
+      if (!webhookData || !webhookData.action || !webhookData.clientId) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid webhook data",
+          errorCode: "INVALID_REQUEST"
+        });
+      }
+
+      console.log(`🔄 1C Client Sync: ${webhookData.action} for client ${webhookData.clientId}`);
+      
+      let result: import("@shared/schema").ClientSyncResponse;
+      
+      switch (webhookData.action) {
+        case 'create':
+        case 'update':
+          if (!webhookData.clientData) {
+            return res.status(400).json({ 
+              success: false, 
+              message: "Client data required for create/update",
+              errorCode: "MISSING_CLIENT_DATA"
+            });
+          }
+          result = await storage.syncClientFrom1C(webhookData.clientData);
+          break;
+          
+        case 'delete':
+          result = await storage.deleteClientFrom1C(webhookData.clientId);
+          break;
+          
+        default:
+          return res.status(400).json({ 
+            success: false, 
+            message: "Unknown action",
+            errorCode: "UNKNOWN_ACTION"
+          });
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('❌ Client sync webhook error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Internal server error',
+        errorCode: 'INTERNAL_ERROR',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Get client sync history
+  app.get('/api/1c/clients/sync-history', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const filters = {
+        external1cId: req.query.external1cId as string,
+        syncStatus: req.query.syncStatus as string,
+        fromDate: req.query.fromDate ? new Date(req.query.fromDate as string) : undefined,
+        toDate: req.query.toDate ? new Date(req.query.toDate as string) : undefined,
+      };
+
+      const history = await storage.getClientSyncHistory(filters);
+      res.json(history);
+    } catch (error) {
+      console.error('Error getting client sync history:', error);
+      res.status(500).json({ 
+        error: 'Failed to get sync history',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Mass import 1C outgoing invoices
   app.post('/api/1c/outgoing-invoices/import', isSimpleAuthenticated, async (req, res) => {
     try {
