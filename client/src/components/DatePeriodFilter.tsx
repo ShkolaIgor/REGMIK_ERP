@@ -20,7 +20,7 @@ interface DatePeriodFilterProps {
   defaultPeriod?: string;
 }
 
-export function DatePeriodFilter({ onFilterChange, defaultPeriod = 'last5days' }: DatePeriodFilterProps) {
+export function DatePeriodFilter({ onFilterChange, defaultPeriod = 'select' }: DatePeriodFilterProps) {
   const [selectedPeriod, setSelectedPeriod] = useState(defaultPeriod);
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
   const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
@@ -67,6 +67,7 @@ export function DatePeriodFilter({ onFilterChange, defaultPeriod = 'last5days' }
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="select">Оберіть період</SelectItem>
                   <SelectItem value="today">Сьогодні</SelectItem>
                   <SelectItem value="last5days">Останні 5 днів</SelectItem>
                   <SelectItem value="custom">Вказати дати</SelectItem>
