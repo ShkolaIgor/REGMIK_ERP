@@ -815,10 +815,10 @@ export default function Orders() {
 
   // Мутація для оновлення статусу
   const updateStatusMutation = useMutation({
-    mutationFn: (params: { id: number; status: string }) => {
+    mutationFn: (params: { id: number; statusId: number }) => {
       console.log("Frontend: Updating order status - params:", params);
-      console.log("Frontend: Updating order status - id:", params.id, "status:", params.status);
-      const requestData = { status: params.status };
+      console.log("Frontend: Updating order status - id:", params.id, "statusId:", params.statusId);
+      const requestData = { statusId: params.statusId };
       console.log("Frontend: Request data being sent:", requestData);
       return apiRequest(`/api/orders/${params.id}/status`, { method: "PUT", body: requestData });
     },

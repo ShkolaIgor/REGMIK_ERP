@@ -143,6 +143,7 @@ export interface IStorage {
   createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order>;
   updateOrder(id: number, order: InsertOrder, items: InsertOrderItem[]): Promise<Order | undefined>;
   updateOrderStatus(id: number, status: string): Promise<Order | undefined>;
+  updateOrderStatusId(id: number, statusId: number): Promise<Order | undefined>;
   updateOrderPaymentDate(id: number, paymentDate: string | null): Promise<Order | undefined>;
   updateOrderDueDate(id: number, dueDate: string | null): Promise<Order | undefined>;
   updateOrderTrackingNumber(id: number, trackingNumber: string): Promise<boolean>;
@@ -1022,6 +1023,15 @@ export class MemStorage implements IStorage {
     if (!order) return undefined;
 
     const updatedOrder = { ...order, status };
+    this.orders.set(id, updatedOrder);
+    return updatedOrder;
+  }
+
+  async updateOrderStatusId(id: number, statusId: number): Promise<Order | undefined> {
+    const order = this.orders.get(id);
+    if (!order) return undefined;
+
+    const updatedOrder = { ...order, statusId };
     this.orders.set(id, updatedOrder);
     return updatedOrder;
   }

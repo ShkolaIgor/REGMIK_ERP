@@ -949,16 +949,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("UPDATE ORDER STATUS - Body type:", typeof req.body);
       console.log("UPDATE ORDER STATUS - Body stringified:", JSON.stringify(req.body));
       
-      const { status } = req.body;
-      console.log("UPDATE ORDER STATUS - Extracted status:", status);
-      console.log("UPDATE ORDER STATUS - Status type:", typeof status);
+      const { statusId } = req.body;
+      console.log("UPDATE ORDER STATUS - Extracted statusId:", statusId);
+      console.log("UPDATE ORDER STATUS - StatusId type:", typeof statusId);
       
-      if (!status) {
-        console.log("UPDATE ORDER STATUS - Status is missing!");
-        return res.status(400).json({ error: "Status is required" });
+      if (!statusId) {
+        console.log("UPDATE ORDER STATUS - StatusId is missing!");
+        return res.status(400).json({ error: "StatusId is required" });
       }
       
-      const order = await storage.updateOrderStatus(id, status);
+      const order = await storage.updateOrderStatusId(id, statusId);
       console.log("UPDATE ORDER STATUS - Storage result:", order);
       if (!order) {
         return res.status(404).json({ error: "Order not found" });

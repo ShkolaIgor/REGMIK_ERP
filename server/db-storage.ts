@@ -1046,6 +1046,14 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async updateOrderStatusId(id: number, statusId: number): Promise<Order | undefined> {
+    const result = await db.update(orders)
+      .set({ statusId })
+      .where(eq(orders.id, id))
+      .returning();
+    return result[0];
+  }
+
   async updateOrderTrackingNumber(id: number, trackingNumber: string): Promise<boolean> {
     try {
       const result = await db.update(orders)
