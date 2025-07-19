@@ -94,6 +94,40 @@
 
 ## Тестування
 
+### Тест webhook'а для клієнтів з даними компанії:
+```bash
+curl -X POST http://localhost:5000/api/webhook/1c/clients \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "create",
+    "clientData": {
+      "Код": "TEST-001",
+      "Наименование": "Тестовий клієнт",
+      "ИНН": "1234567890",
+      "ЄДРПОУ": "12345678",
+      "НашаКомпанія": "ТОВ РЕГМІК",
+      "КомпаніяЄДРПОУ": "87654321"
+    }
+  }'
+```
+
+### Тест webhook'а для накладних з даними компанії:
+```bash
+curl -X POST http://localhost:5000/api/webhook/1c/invoices \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "create",
+    "invoiceData": {
+      "НомерДокумента": "TEST-INV-001",
+      "Постачальник": "Тестовий постачальник",
+      "СуммаДокумента": 5000,
+      "НашаКомпанія": "ТОВ РЕГМІК",
+      "КомпаніяЄДРПОУ": "87654321"
+    }
+  }'
+```
+
+### Тест webhook'а для вихідних рахунків з даними компанії:
 ```bash
 curl -X POST http://localhost:5000/api/webhook/1c/outgoing-invoices \
   -H "Content-Type: application/json" \
@@ -104,7 +138,7 @@ curl -X POST http://localhost:5000/api/webhook/1c/outgoing-invoices \
       "Клиент": "Тестовий клієнт",
       "ЄДРПОУ": "12345678",
       "НашаКомпанія": "ТОВ РЕГМІК",
-      "КомпаніяЄДРПОУ": "12345678",
+      "КомпаніяЄДРПОУ": "87654321",
       "СуммаДокумента": 1000
     }
   }'
