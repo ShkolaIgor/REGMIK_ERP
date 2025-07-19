@@ -12625,26 +12625,56 @@ export class DatabaseStorage implements IStorage {
       // Convert 1C client data to ERP format
       const clientRecord = {
         name: clientData.name || clientData.Наименование || '',
-        email: clientData.email || clientData.Email || null,
-        phone: clientData.phone || clientData.Телефон || null,
-        taxCode: clientData.taxCode || clientData.ИНН || null,
-        address: clientData.address || clientData.Адрес || null,
+        taxCode: clientData.taxCode || clientData.ЄДРПОУ || clientData.ИНН || null,
+        legalAddress: clientData.address || clientData.Адрес || null,
         externalId: clientData.externalId || clientData.Код || null,
+        clientTypeId: 1, // Default client type - you may want to make this configurable
         isActive: true,
+        isCustomer: true,
         createdAt: new Date(),
         updatedAt: new Date()
       };
       
+      console.log(`📝 Webhook: Створюємо клієнта з даними:`, {
+        name: clientRecord.name,
+        taxCode: clientRecord.taxCode,
+        legalAddress: clientRecord.legalAddress
+      });
+      
       // Create client
       const [client] = await db.insert(clients).values(clientRecord).returning();
+      
+      console.log(`✅ Webhook: Створено клієнта: ${client.name} (ID: ${client.id})`);
+      
+      // Create contact if phone or email is provided
+      const phone = clientData.phone || clientData.Телефон;
+      const email = clientData.email || clientData.Email;
+      
+      if (phone || email) {
+        const contactRecord = {
+          clientId: client.id,
+          fullName: "Основний контакт", // Default contact name
+          primaryPhone: phone || null,
+          email: email || null,
+          isPrimary: true,
+          isActive: true,
+          source: '1c_webhook',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        const [contact] = await db.insert(clientContacts).values(contactRecord).returning();
+        console.log(`📞 Webhook: Створено контакт для клієнта (ID: ${contact.id})`);
+      }
       
       // Record sync history
       await db.insert(clientSyncHistory).values({
         clientId: client.id,
-        externalId: clientRecord.externalId,
-        action: 'create',
-        source: '1c_webhook',
-        details: { webhookData: clientData }
+        external1cId: clientRecord.externalId || clientRecord.taxCode || 'webhook_generated',
+        syncAction: 'create',
+        syncStatus: 'success',
+        syncDirection: 'from_1c',
+        changeData: { webhookData: clientData }
       });
       
       return client;
@@ -12670,28 +12700,65 @@ export class DatabaseStorage implements IStorage {
         console.log(`⚠️ Webhook: Дані компанії 1С НЕ ПЕРЕДАНО для оновлення клієнта`);
       }
       
+      // Try to find client by ЄДРПОУ first, then by external ID, then by INN
+      const searchTaxCode = clientData.ЄДРПОУ || clientData.taxCode || clientData.ИНН;
       const externalId = clientData.externalId || clientData.Код;
-      if (!externalId) {
-        throw new Error('External ID is required for client updates');
+      
+      console.log(`🔍 Webhook: Оновлення - шукаємо клієнта за ЄДРПОУ "${searchTaxCode}" або кодом "${externalId}"`);
+      
+      let existingClient = null;
+      
+      // Search by tax code (ЄДРПОУ/ИНН) first
+      if (searchTaxCode) {
+        [existingClient] = await db
+          .select()
+          .from(clients)
+          .where(eq(clients.taxCode, searchTaxCode));
+        
+        if (existingClient) {
+          console.log(`✅ Знайдено клієнта за ЄДРПОУ: ${existingClient.name} (ID: ${existingClient.id})`);
+        }
       }
       
-      // Find existing client
-      const [existingClient] = await db
-        .select()
-        .from(clients)
-        .where(eq(clients.externalId, externalId));
+      // If not found by tax code, try by external ID
+      if (!existingClient && externalId) {
+        [existingClient] = await db
+          .select()
+          .from(clients)
+          .where(eq(clients.externalId, externalId));
+        
+        if (existingClient) {
+          console.log(`✅ Знайдено клієнта за зовнішнім кодом: ${existingClient.name} (ID: ${existingClient.id})`);
+        }
+      }
+      
+      // If still not found, try to find by name
+      if (!existingClient) {
+        const clientName = clientData.Наименование || clientData.name;
+        if (clientName) {
+          [existingClient] = await db
+            .select()
+            .from(clients)
+            .where(eq(clients.name, clientName));
+          
+          if (existingClient) {
+            console.log(`✅ Знайдено клієнта за назвою: ${existingClient.name} (ID: ${existingClient.id})`);
+          }
+        }
+      }
       
       if (!existingClient) {
-        throw new Error(`Client with external ID ${externalId} not found`);
+        // Create new client if not found
+        console.log(`📝 Webhook: Клієнт не знайдений, створюємо нового`);
+        return await this.createClientFromWebhook(clientData);
       }
       
       // Update client
       const updatedFields = {
         name: clientData.name || clientData.Наименование || existingClient.name,
-        email: clientData.email || clientData.Email || existingClient.email,
-        phone: clientData.phone || clientData.Телефон || existingClient.phone,
-        taxCode: clientData.taxCode || clientData.ИНН || existingClient.taxCode,
-        address: clientData.address || clientData.Адрес || existingClient.address,
+        taxCode: clientData.taxCode || clientData.ЄДРПОУ || clientData.ИНН || existingClient.taxCode,
+        legalAddress: clientData.address || clientData.Адрес || existingClient.legalAddress || null,
+        externalId: externalId || existingClient.externalId,
         updatedAt: new Date()
       };
       
@@ -12701,13 +12768,16 @@ export class DatabaseStorage implements IStorage {
         .where(eq(clients.id, existingClient.id))
         .returning();
       
+      console.log(`✅ Webhook: Оновлено клієнта: ${updatedClient.name} (ID: ${updatedClient.id})`);
+      
       // Record sync history
       await db.insert(clientSyncHistory).values({
         clientId: updatedClient.id,
-        externalId: externalId,
-        action: 'update',
-        source: '1c_webhook',
-        details: { webhookData: clientData }
+        external1cId: searchTaxCode || externalId || 'webhook_generated',
+        syncAction: 'update',
+        syncStatus: 'success',
+        syncDirection: 'from_1c',
+        changeData: { webhookData: clientData }
       });
       
       return updatedClient;
