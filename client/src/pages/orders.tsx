@@ -1155,21 +1155,12 @@ export default function Orders() {
     form.reset();
   };
 
-  // Функція для початку редагування замовлення
-  const handleEditOrder = async (order: any) => {
+  // Функція для початку редагування замовлення - ОПТИМІЗОВАНА
+  const handleEditOrder = (order: any) => {
     console.log('Starting to edit order:', order);
     
-    // Отримуємо повні дані замовлення з сервера
-    const fullOrder = await fetch(`/api/orders/${order.id}`)
-      .then(res => res.json())
-      .catch(err => {
-        console.error('Failed to fetch full order:', err);
-        return order; // fallback to original order data
-      });
-    
-    console.log('Full order data received:', fullOrder);
-    
-    setEditingOrder(fullOrder);
+    // Використовуємо існуючі дані замовлення без додаткового запиту
+    setEditingOrder(order);
     setIsEditMode(true);
     
     // Функція для конвертації дати в формат datetime-local
@@ -1179,84 +1170,67 @@ export default function Orders() {
       return date.toISOString().slice(0, 16);
     };
     
-    // Заповнюємо форму даними замовлення
+    // Заповнюємо форму даними замовлення - ШВИДКО БЕЗ ЗАТРИМОК
     form.reset({
-      clientId: fullOrder.clientId ? fullOrder.clientId.toString() : "",
-      clientContactsId: fullOrder.clientContactsId ? fullOrder.clientContactsId.toString() : "",
-      companyId: fullOrder.companyId ? fullOrder.companyId.toString() : "",
-      orderNumber: fullOrder.orderNumber || "",
-      totalAmount: fullOrder.totalAmount || "",
-      status: fullOrder.status,
-      notes: fullOrder.notes || "",
-      paymentDate: formatDateForInput(fullOrder.paymentDate),
-      paymentType: fullOrder.paymentType || "full",
-      paidAmount: fullOrder.paidAmount || "0",
-      dueDate: formatDateForInput(fullOrder.dueDate),
-      shippedDate: formatDateForInput(fullOrder.shippedDate),
-      trackingNumber: fullOrder.trackingNumber || "",
-      invoiceNumber: fullOrder.invoiceNumber || "",
-      carrierId: fullOrder.carrierId || null,
-      statusId: fullOrder.statusId || undefined,
-      productionApproved: fullOrder.productionApproved || false,
-      productionApprovedBy: fullOrder.productionApprovedBy || "",
-      productionApprovedAt: formatDateForInput(fullOrder.productionApprovedAt),
+      clientId: order.clientId ? order.clientId.toString() : "",
+      clientContactsId: order.clientContactsId ? order.clientContactsId.toString() : "",
+      companyId: order.companyId ? order.companyId.toString() : "",
+      orderNumber: order.orderNumber || "",
+      totalAmount: order.totalAmount || "",
+      status: order.status,
+      notes: order.notes || "",
+      paymentDate: formatDateForInput(order.paymentDate),
+      paymentType: order.paymentType || "full",
+      paidAmount: order.paidAmount || "0",
+      dueDate: formatDateForInput(order.dueDate),
+      shippedDate: formatDateForInput(order.shippedDate),
+      trackingNumber: order.trackingNumber || "",
+      invoiceNumber: order.invoiceNumber || "",
+      carrierId: order.carrierId || null,
+      statusId: order.statusId || undefined,
+      productionApproved: order.productionApproved || false,
+      productionApprovedBy: order.productionApprovedBy || "",
+      productionApprovedAt: formatDateForInput(order.productionApprovedAt),
     });
 
-    // Встановлюємо вибраного клієнта для оновлення контактів
-    if (fullOrder.clientId) {
-      setSelectedClientId(fullOrder.clientId.toString());
+    // Встановлюємо вибраного клієнта СИНХРОННО
+    if (order.clientId) {
+      setSelectedClientId(order.clientId.toString());
       
-      // Встановлюємо назву клієнта для відображення в полі пошуку
-      if (fullOrder.clientName) {
-        console.log(`Setting client name from fullOrder: ${fullOrder.clientName}`);
-        // Додаємо затримку для синхронізації станів
-        setTimeout(() => {
-          setClientSearchValue(fullOrder.clientName);
-        }, 50);
+      // Встановлюємо назву клієнта ВІДРАЗУ без setTimeout
+      if (order.clientName) {
+        setClientSearchValue(order.clientName);
       } else {
-        console.log('No clientName in fullOrder, searching in allClients');
         // Якщо немає clientName в замовленні, пробуємо знайти в списку клієнтів
-        const client = Array.isArray(allClients) ? allClients.find((c: any) => c.id === fullOrder.clientId) : null;
+        const client = Array.isArray(allClients) ? allClients.find((c: any) => c.id === order.clientId) : null;
         if (client) {
-          console.log(`Found client in allClients: ${client.name}`);
-          setTimeout(() => {
-            setClientSearchValue(client.name);
-          }, 50);
+          setClientSearchValue(client.name);
         } else {
-          console.log('Client not found in allClients, will try with delay');
-          setTimeout(() => {
-            const delayedClient = Array.isArray(allClients) ? allClients.find((c: any) => c.id === fullOrder.clientId) : null;
-            if (delayedClient) {
-              setClientSearchValue(delayedClient.name);
-            }
-          }, 500);
+          console.log('Client not found in allClients, clear search');
+          setClientSearchValue('');
         }
       }
     }
 
     // Встановлюємо компанію
-    if (fullOrder.companyId) {
-      setSelectedCompanyId(fullOrder.companyId.toString());
+    if (order.companyId) {
+      setSelectedCompanyId(order.companyId.toString());
     }
 
-    // Встановлюємо контактну особу після оновлення клієнта
-    setTimeout(() => {
-      if (fullOrder.clientContactsId) {
-        setSelectedContactId(fullOrder.clientContactsId.toString());
-        form.setValue("clientContactsId", fullOrder.clientContactsId.toString());
-      }
-    }, 100);
+    // Встановлюємо контактну особу ВІДРАЗУ
+    if (order.clientContactsId) {
+      setSelectedContactId(order.clientContactsId.toString());
+    }
 
-    // Заповнюємо товари замовлення
-    if (fullOrder.items && fullOrder.items.length > 0) {
-      console.log("Order items from server:", fullOrder.items);
-      setOrderItems(fullOrder.items.map((item: any) => ({
-        // Використовуємо productId тільки якщо він існує та не null, інакше 0
+    // Заповнюємо товари замовлення якщо є
+    if (order.items && order.items.length > 0) {
+      console.log("Order items from order:", order.items);
+      setOrderItems(order.items.map((item: any) => ({
         productId: item.productId || 0,
         quantity: item.quantity ? item.quantity.toString() : "1",
         unitPrice: item.unitPrice ? item.unitPrice.toString() : "0",
       })));
-      console.log(`Loaded ${fullOrder.items.length} items for order`);
+      console.log(`Loaded ${order.items.length} items for order`);
     } else {
       console.log("No items in order or items array is empty");
       setOrderItems([]);
