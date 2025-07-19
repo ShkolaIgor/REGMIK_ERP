@@ -8463,10 +8463,17 @@ export class DatabaseStorage implements IStorage {
               });
             }
 
-            // Шукаємо існуюче замовлення за номером
+            // Шукаємо існуюче замовлення за номером, датою створення та номером рахунку
+            // Дублікатом вважається тільки якщо ВСІ три поля співпадають
             const existingOrder = await db.select({ id: orders.id })
               .from(orders)
-              .where(eq(orders.orderNumber, orderData.orderNumber))
+              .where(
+                and(
+                  eq(orders.orderNumber, orderData.orderNumber),
+                  eq(orders.invoiceNumber, orderData.invoiceNumber || ''),
+                  sql`DATE(${orders.createdAt}) = DATE(${orderData.createdAt || new Date()})`
+                )
+              )
               .limit(1);
 
             if (existingOrder.length > 0) {
@@ -8477,7 +8484,7 @@ export class DatabaseStorage implements IStorage {
               
               result.warnings.push({
                 row: rowNumber,
-                warning: `Замовлення ${orderData.orderNumber} оновлено`,
+                warning: `Замовлення ${orderData.orderNumber} оновлено (співпали номер, дата та рахунок)`,
                 data: row
               });
             } else {
@@ -8716,10 +8723,17 @@ export class DatabaseStorage implements IStorage {
             });
           }
 
-          // Шукаємо існуюче замовлення за номером
+          // Шукаємо існуюче замовлення за номером, датою створення та номером рахунку
+          // Дублікатом вважається тільки якщо ВСІ три поля співпадають
           const existingOrder = await db.select({ id: orders.id })
             .from(orders)
-            .where(eq(orders.orderNumber, orderData.orderNumber))
+            .where(
+              and(
+                eq(orders.orderNumber, orderData.orderNumber),
+                eq(orders.invoiceNumber, orderData.invoiceNumber || ''),
+                sql`DATE(${orders.createdAt}) = DATE(${orderData.createdAt || new Date()})`
+              )
+            )
             .limit(1);
 
           if (existingOrder.length > 0) {
@@ -8730,7 +8744,7 @@ export class DatabaseStorage implements IStorage {
             
             result.warnings.push({
               row: rowNumber,
-              warning: `Замовлення ${orderData.orderNumber} оновлено`,
+              warning: `Замовлення ${orderData.orderNumber} оновлено (співпали номер, дата та рахунок)`,
               data: row
             });
           } else {
@@ -13258,10 +13272,16 @@ export class DatabaseStorage implements IStorage {
         createdAt: new Date()
       };
       
-      // Перевіряємо чи вже існує замовлення з таким номером рахунку
+      // Перевіряємо чи вже існує замовлення з таким номером рахунку та датою
+      // Дублікатом вважається тільки якщо номер рахунку ТА дата співпадають
       const existingOrder = await db.select({ id: orders.id })
         .from(orders)
-        .where(eq(orders.invoiceNumber, orderRecord.invoiceNumber))
+        .where(
+          and(
+            eq(orders.invoiceNumber, orderRecord.invoiceNumber),
+            sql`DATE(${orders.createdAt}) = DATE(${orderRecord.createdAt})`
+          )
+        )
         .limit(1);
 
       let order: any;
@@ -13272,7 +13292,7 @@ export class DatabaseStorage implements IStorage {
           .where(eq(orders.id, existingOrder[0].id))
           .returning();
         
-        console.log(`🔄 Webhook: Оновлено існуюче замовлення з номером рахунку ${orderRecord.invoiceNumber}`);
+        console.log(`🔄 Webhook: Оновлено існуюче замовлення з номером рахунку ${orderRecord.invoiceNumber} та датою`);
       } else {
         // Створюємо нове замовлення
         [order] = await db.insert(orders).values(orderRecord).returning();

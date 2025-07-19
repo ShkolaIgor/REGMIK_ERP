@@ -544,11 +544,14 @@ export async function sendInvoiceToERPWebhook(invoiceData: BitrixInvoiceData): P
       notes: `Синхронізовано з Бітрікс24 через webhook (ID: ${invoiceData.ID}, рахунок: ${invoiceData.ACCOUNT_NUMBER})`
     };
 
-    // Перевіряємо чи вже існує замовлення з таким номером рахунку Бітрікс24
+    // Перевіряємо чи вже існує замовлення з таким номером рахунку та датою
+    // Дублікатом вважається тільки якщо номер рахунку ТА дата співпадають
     const existingOrders = await storage.getOrders();
+    const invoiceDate = new Date(invoiceData.DATE);
     const existingOrder = existingOrders.find(o => 
-      o.invoiceNumber === invoiceData.ACCOUNT_NUMBER || 
-      o.notes?.includes(`ID: ${invoiceData.ID}`)
+      o.invoiceNumber === invoiceData.ACCOUNT_NUMBER && 
+      o.createdAt && 
+      new Date(o.createdAt).toDateString() === invoiceDate.toDateString()
     );
     
     let order: any;
