@@ -13006,7 +13006,8 @@ export class DatabaseStorage implements IStorage {
         // ВИПРАВЛЕНО: використовуємо правильні поля з 1С
         // КодКлиента - внутрішній код клієнта в 1С
         // ЄДРПОУ - код по ЄДРПОУ (Контрагент.КодПоЕДРПОУ в 1С)
-        const taxCode = invoiceData.ЄДРПОУ || invoiceData.КодКлиента || invoiceData.clientTaxCode || invoiceData.КодЕДРПОУ;
+        // ВИПРАВЛЕНО: додано КодКлієнта (український) та ИННКлиента
+        const taxCode = invoiceData.ЄДРПОУ || invoiceData.КодКлієнта || invoiceData.КодКлиента || invoiceData.ИННКлиента || invoiceData.clientTaxCode || invoiceData.КодЕДРПОУ;
         
         console.log(`🔍 Webhook: Шукаємо клієнта за назвою "${clientName}" та кодом "${taxCode}"`);
         console.log(`📋 Webhook: Дані клієнта з 1С:`, {
@@ -13045,12 +13046,39 @@ export class DatabaseStorage implements IStorage {
         currency = 'UAH';
       }
       
+      // ЗНАХОДИМО КОМПАНІЮ ПО ЄДРПОУ
+      let companyId = null;
+      
+      if (invoiceData.КомпаніяЄДРПОУ) {
+        const companyTaxCode = invoiceData.КомпаніяЄДРПОУ;
+        const companyName = invoiceData.НашаКомпанія || 'Unknown';
+        
+        console.log(`🏢 Webhook: Пошук компанії "${companyName}" з ЄДРПОУ "${companyTaxCode}"`);
+        
+        try {
+          const result = await pool.query('SELECT id, name FROM companies WHERE tax_code = $1', [companyTaxCode]);
+          
+          if (result.rows.length > 0) {
+            const foundCompany = result.rows[0];
+            companyId = foundCompany.id;
+            console.log(`✅ Webhook: Знайдено компанію: ${foundCompany.name} (ID: ${foundCompany.id})`);
+          } else {
+            console.log(`❌ Webhook: Компанію з ЄДРПОУ "${companyTaxCode}" не знайдено`);
+          }
+        } catch (error) {
+          console.error(`❌ Webhook: Помилка пошуку компанії:`, error);
+        }
+      } else {
+        console.log(`⚠️ Webhook: КомпаніяЄДРПОУ не передано`);
+      }
+
       // Generate proper order number
       const orderNumber = await this.generateOrderNumber();
       
       // Convert 1C outgoing invoice data to ERP format (order)
       const orderRecord = {
         clientId: clientId,
+        companyId: companyId, // ДОДАНО КОМПАНІЮ
         orderNumber: orderNumber,
         invoiceNumber: invoiceData.invoiceNumber || invoiceData.НомерДокумента || '',
         totalAmount: invoiceData.totalAmount || invoiceData.СуммаДокумента || 0,
@@ -13120,9 +13148,11 @@ export class DatabaseStorage implements IStorage {
       
       if (invoiceData.Клиент || invoiceData.clientName) {
         const clientName = invoiceData.Клиент || invoiceData.clientName || invoiceData.НазваКлієнта;
-        const taxCode = invoiceData.ЄДРПОУ || invoiceData.КодКлиента || invoiceData.clientTaxCode || invoiceData.КодЕДРПОУ;
+        // ВИПРАВЛЕНО: додано КодКлієнта (український) та ИННКлиента 
+        const taxCode = invoiceData.ЄДРПОУ || invoiceData.КодКлієнта || invoiceData.КодКлиента || invoiceData.ИННКлиента || invoiceData.clientTaxCode || invoiceData.КодЕДРПОУ;
         
         console.log(`🔍 Webhook: Оновлення - шукаємо клієнта за назвою "${clientName}" та кодом "${taxCode}"`);
+        console.log(`📋 Webhook: Дані клієнта - ЄДРПОУ: ${invoiceData.ЄДРПОУ}, КодКлієнта: ${invoiceData.КодКлієнта}, ИННКлиента: ${invoiceData.ИННКлиента}`);
         
         const foundClient = await this.findClientByTaxCodeOrName(taxCode, clientName);
         if (foundClient) {
@@ -13139,9 +13169,37 @@ export class DatabaseStorage implements IStorage {
         currency = 'UAH';
       }
       
+      // ЗНАХОДИМО КОМПАНІЮ ПО ЄДРПОУ
+      let companyId = existingOrder.companyId; // Fallback до існуючої компанії
+      
+      if (invoiceData.КомпаніяЄДРПОУ || invoiceData.НашаКомпанія) {
+        const companyTaxCode = invoiceData.КомпаніяЄДРПОУ;
+        const companyName = invoiceData.НашаКомпанія;
+        
+        console.log(`🏢 Webhook: Оновлення - шукаємо компанію "${companyName}" з ЄДРПОУ "${companyTaxCode}"`);
+        
+        if (companyTaxCode) {
+          try {
+            const result = await pool.query('SELECT id, name FROM companies WHERE tax_code = $1', [companyTaxCode]);
+            
+            if (result.rows.length > 0) {
+              const foundCompany = result.rows[0];
+              companyId = foundCompany.id;
+              console.log(`✅ Webhook: Знайдено компанію: ${foundCompany.name} (ID: ${foundCompany.id})`);
+            } else {
+              console.log(`❌ Webhook: Компанію з ЄДРПОУ "${companyTaxCode}" не знайдено`);
+            }
+          } catch (error) {
+            console.error(`❌ Webhook: Помилка пошуку компанії при оновленні:`, error);
+            // Залишаємо companyId з existingOrder
+          }
+        }
+      }
+
       // Update order
       const updatedFields = {
         clientId: clientId,
+        companyId: companyId, // ДОДАНО ОНОВЛЕННЯ КОМПАНІЇ
         totalAmount: invoiceData.totalAmount || invoiceData.СуммаДокумента || existingOrder.totalAmount,
         currency: currency,
         status: invoiceData.status || existingOrder.status,
