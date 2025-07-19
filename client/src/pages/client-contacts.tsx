@@ -295,8 +295,34 @@ export default function ClientContacts() {
     }
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (contactId: number) => {
+      return await apiRequest(`/api/client-contacts/${contactId}`, {
+        method: "DELETE"
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/client-contacts"] });
+      toast({ title: "Контакт успішно видалено" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Помилка", 
+        description: error.message || "Не вдалося видалити контакт",
+        variant: "destructive" 
+      });
+    }
+  });
+
   const onSubmit = (data: FormData) => {
     createMutation.mutate(data);
+  };
+
+  const handleDelete = (contact: ClientContact) => {
+    if (confirm(`Ви впевнені, що хочете видалити контакт "${contact.fullName}"?`)) {
+      deleteMutation.mutate(contact.id);
+      setEditingContact(null);
+    }
   };
 
   if (isLoading) {
@@ -513,8 +539,9 @@ export default function ClientContacts() {
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      // TODO: Implement delete functionality
+                      handleDelete(contact);
                     }}
+                    disabled={deleteMutation.isPending}
                   >
                     <Trash className="w-3 h-3" />
                   </Button>
@@ -825,16 +852,11 @@ export default function ClientContacts() {
                 <div className="flex justify-between pt-4">
                   <Button 
                     variant="destructive"
-                    onClick={() => {
-                      if (confirm('Ви впевнені, що хочете видалити цю контактну особу?')) {
-                        // TODO: Implement delete functionality
-                        toast({ title: "Функція видалення в розробці" });
-                        setEditingContact(null);
-                      }
-                    }}
+                    onClick={() => handleDelete(editingContact)}
+                    disabled={deleteMutation.isPending}
                   >
                     <Trash className="w-4 h-4 mr-2" />
-                    Видалити контакт
+                    {deleteMutation.isPending ? "Видалення..." : "Видалити контакт"}
                   </Button>
 
                   <div className="flex space-x-2">
