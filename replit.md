@@ -31,13 +31,14 @@ REGMIK ERP is a comprehensive enterprise resource planning system designed speci
 ## Key Components
 
 ### Core Business Modules
-1. **Inventory Management**: Products, components, warehouses, stock tracking
+1. **Inventory Management**: Products, components, warehouses, stock tracking, XML import functionality
 2. **Production Management**: Manufacturing orders, recipes, tech cards, BOM
 3. **Order Management**: Sales orders, supplier orders, shipments
 4. **Client Management**: Customers, contacts, addresses, Nova Poshta integration
 5. **Financial Management**: Multi-currency support, cost calculations, pricing
 6. **User Management**: Role-based access control, permissions, audit logs
 7. **Reporting & Analytics**: Advanced reports, dashboards, KPI tracking
+8. **Data Import System**: XML import wizards for products, orders, clients with progress tracking
 
 ### Integration Capabilities
 - **Nova Poshta API**: Shipping integration with cities/warehouses cache
@@ -130,6 +131,13 @@ User has Russian-language 1C system and needs integration setup guidance.
 ## Recent Changes
 
 ### July 19, 2025
+- ✅ **РЕАЛІЗОВАНО ПОВНУ ФУНКЦІОНАЛЬНІСТЬ ІМПОРТУ ТОВАРІВ З XML** - створено ProductsXmlImport.tsx компонент з повною інтеграцією
+- ✅ **ДОДАНО API ENDPOINTS ДЛЯ ІМПОРТУ ТОВАРІВ** - POST /api/products/import-xml та GET /api/products/import-xml/:jobId/status
+- ✅ **РЕАЛІЗОВАНО АСИНХРОННУ ОБРОБКУ ІМПОРТУ** - система обробляє XML файли з полями ID_LISTARTICLE, NAME_ARTICLE, CENA у фоновому режимі
+- ✅ **ІНТЕГРОВАНО З IMPORTWIZARD** - додано підтримку типу 'products' з описом полів та валідацією
+- ✅ **ДОДАНО КНОПКУ НА СТОРІНКУ ТОВАРІВ** - замінено стару кнопку "Імпорт XML" на новий компонент ProductsXmlImport
+- ✅ **ПІДТРИМКА ОНОВЛЕННЯ ІСНУЮЧИХ ТОВАРІВ** - система автоматично оновлює товари з однаковими SKU або створює нові
+- ✅ **ДЕТАЛЬНЕ ВІДСТЕЖЕННЯ ПРОГРЕСУ** - показує кількість оброблених, імпортованих, пропущених товарів та помилки
 - ✅ **ВИПРАВЛЕНО ДИНАМІЧНИЙ ПОШУК ПЕРЕВІЗНИКІВ ЗАМІСТЬ СТАТИЧНОГО МАПУВАННЯ** - замість жорсткого мапування INDEX_TRANSPORT система тепер шукає перевізників за ID та назвою
 - ✅ **ОНОВЛЕНО importOrdersFromXml** - додано динамічний пошук перевізника: спочатку за ID, потім за назвою, за замовчуванням Нова Пошта (ID: 4)
 - ✅ **ОНОВЛЕНО importOrdersFromXmlWithProgress** - аналогічна логіка динамічного пошуку перевізників замість статичного мапування

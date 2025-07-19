@@ -1,6 +1,7 @@
 import { eq, sql, desc, and, gte, lte, lt, isNull, isNotNull, ne, or, not, inArray, ilike } from "drizzle-orm";
 import { db, pool } from "./db";
 import { IStorage } from "./storage";
+import * as xml2js from 'xml2js';
 import {
   users, localUsers, roles, systemModules, permissions, rolePermissions, userPermissions, userLoginHistory, categories, warehouses, units, products, inventory, orders, orderItems, orderStatuses,
   componentDeductions, componentDeductionAdjustments,
@@ -13611,7 +13612,6 @@ export class DatabaseStorage implements IStorage {
       (global as any).productImportJobs[jobId] = job;
       
       // Парсимо XML
-      const xml2js = require('xml2js');
       const parser = new xml2js.Parser();
       
       const result = await parser.parseStringPromise(xmlString);
