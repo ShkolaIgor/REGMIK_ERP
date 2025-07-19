@@ -8379,10 +8379,19 @@ export class DatabaseStorage implements IStorage {
 
             let clientId = 1;
             if (row.INDEX_PREDPR) {
-              const clientResult = await db.select({ id: clients.id })
+              // Спочатку шукаємо за INDEX_PREDPR
+              let clientResult = await db.select({ id: clients.id })
                 .from(clients)
                 .where(eq(clients.externalId, parseInt(row.INDEX_PREDPR)))
                 .limit(1);
+              
+              // Якщо не знайдено за INDEX_PREDPR, шукаємо за PREDPR
+              if (clientResult.length === 0 && row.PREDPR) {
+                clientResult = await db.select({ id: clients.id })
+                  .from(clients)
+                  .where(eq(clients.name, row.PREDPR))
+                  .limit(1);
+              }
               
               if (clientResult.length > 0) {
                 clientId = clientResult[0].id;
@@ -8390,7 +8399,7 @@ export class DatabaseStorage implements IStorage {
               } else {
                 result.warnings.push({
                   row: rowNumber,
-                  warning: `Клієнт з external_id=${row.INDEX_PREDPR} не знайдений`,
+                  warning: `Клієнт не знайдений ні за INDEX_PREDPR=${row.INDEX_PREDPR}, ні за PREDPR=${row.PREDPR}`,
                   data: row
                 });
               }
@@ -8600,13 +8609,22 @@ export class DatabaseStorage implements IStorage {
             orderData.createdAt = this.parseDate(row.DATE_CREATE);
           }
 
-          // Знаходимо клієнта за INDEX_PREDPR
+          // Знаходимо клієнта за INDEX_PREDPR або PREDPR
           let clientId = 1; // За замовчуванням перший клієнт
           if (row.INDEX_PREDPR) {
-            const clientResult = await db.select({ id: clients.id })
+            // Спочатку шукаємо за INDEX_PREDPR
+            let clientResult = await db.select({ id: clients.id })
               .from(clients)
               .where(eq(clients.externalId, parseInt(row.INDEX_PREDPR)))
               .limit(1);
+            
+            // Якщо не знайдено за INDEX_PREDPR, шукаємо за PREDPR
+            if (clientResult.length === 0 && row.PREDPR) {
+              clientResult = await db.select({ id: clients.id })
+                .from(clients)
+                .where(eq(clients.name, row.PREDPR))
+                .limit(1);
+            }
             
             if (clientResult.length > 0) {
               clientId = clientResult[0].id;
@@ -8614,7 +8632,7 @@ export class DatabaseStorage implements IStorage {
             } else {
               result.warnings.push({
                 row: rowNumber,
-                warning: `Клієнт з external_id=${row.INDEX_PREDPR} не знайдений, використано клієнта за замовчуванням`,
+                warning: `Клієнт не знайдений ні за INDEX_PREDPR=${row.INDEX_PREDPR}, ні за PREDPR=${row.PREDPR}`,
                 data: row
               });
             }
