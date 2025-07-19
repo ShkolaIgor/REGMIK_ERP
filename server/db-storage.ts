@@ -386,8 +386,8 @@ export class DatabaseStorage implements IStorage {
 
   // Products
   async getProducts(): Promise<Product[]> {
-    // Фільтруємо тільки товари, виключаємо компоненти
-    return await db.select().from(products).where(eq(products.productType, 'product'));
+    // Повертаємо всі активні товари
+    return await db.select().from(products);
   }
 
   async getProduct(id: number): Promise<Product | undefined> {
