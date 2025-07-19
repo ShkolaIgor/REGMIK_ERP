@@ -711,7 +711,7 @@ export default function Orders() {
       clientId: "",
       customerEmail: "",
       customerPhone: "",
-      status: "pending",
+      status: "Нове",
       notes: "",
     },
   });
@@ -1339,7 +1339,6 @@ export default function Orders() {
   const getStatusText = (status: string) => {
     const statusMap: { [key: string]: string } = {
       pending: "Нове",
-
       processing: "В обробці", 
       completed: "Завершено",
       cancelled: "Скасовано"
@@ -1560,7 +1559,7 @@ export default function Orders() {
                     companyId: defaultCompany ? defaultCompany.id.toString() : "",
                     clientId: "",
                     clientContactsId: "",
-                    status: "pending",
+                    status: "Нове",
                     notes: "",
                     paymentDate: "",
                     dueDate: "",
