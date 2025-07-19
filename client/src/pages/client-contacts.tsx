@@ -65,7 +65,7 @@ export default function ClientContacts() {
   });
 
   const { data: clientsData } = useQuery({
-    queryKey: ["/api/clients"],
+    queryKey: ["/api/clients/all"],
   });
 
   const clients = Array.isArray(clientsData?.clients) ? clientsData.clients : [];
