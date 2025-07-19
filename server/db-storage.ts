@@ -12963,6 +12963,7 @@ export class DatabaseStorage implements IStorage {
         console.log(`🔍 Webhook: Шукаємо клієнта за назвою "${clientName}" та кодом "${taxCode}"`);
         console.log(`📋 Webhook: Дані клієнта з 1С:`, {
           Клиент: invoiceData.Клиент,
+          ЄДРПОУ: invoiceData.ЄДРПОУ,
           КодКлиента: invoiceData.КодКлиента, 
           ИННКлиента: invoiceData.ИННКлиента
         });
@@ -12984,10 +12985,13 @@ export class DatabaseStorage implements IStorage {
         currency = 'UAH';
       }
       
+      // Generate proper order number
+      const orderNumber = await this.generateOrderNumber();
+      
       // Convert 1C outgoing invoice data to ERP format (order)
       const orderRecord = {
         clientId: clientId,
-        orderNumber: invoiceData.orderNumber || invoiceData.НомерДокумента || '',
+        orderNumber: orderNumber,
         invoiceNumber: invoiceData.invoiceNumber || invoiceData.НомерДокумента || '',
         totalAmount: invoiceData.totalAmount || invoiceData.СуммаДокумента || 0,
         currency: currency,
@@ -13051,6 +13055,24 @@ export class DatabaseStorage implements IStorage {
         return await this.createOutgoingInvoiceFromWebhook(invoiceData);
       }
       
+      // ПОКРАЩЕНИЙ ПОШУК КЛІЄНТА ДЛЯ ОНОВЛЕННЯ
+      let clientId = existingOrder.clientId; // Використовуємо існуючий клієнт як fallback
+      
+      if (invoiceData.Клиент || invoiceData.clientName) {
+        const clientName = invoiceData.Клиент || invoiceData.clientName || invoiceData.НазваКлієнта;
+        const taxCode = invoiceData.ЄДРПОУ || invoiceData.КодКлиента || invoiceData.clientTaxCode || invoiceData.КодЕДРПОУ;
+        
+        console.log(`🔍 Webhook: Оновлення - шукаємо клієнта за назвою "${clientName}" та кодом "${taxCode}"`);
+        
+        const foundClient = await this.findClientByTaxCodeOrName(taxCode, clientName);
+        if (foundClient) {
+          clientId = foundClient.id;
+          console.log(`✅ Webhook: Оновлено клієнта: ${foundClient.name} (ID: ${foundClient.id})`);
+        } else {
+          console.log(`❌ Webhook: Клієнт "${clientName}" не знайдений при оновленні, залишаємо існуючий клієнт (ID: ${clientId})`);
+        }
+      }
+      
       // Convert currency code if needed
       let currency = invoiceData.currency || invoiceData.КодВалюты || '980';
       if (currency === '980') {
@@ -13059,6 +13081,7 @@ export class DatabaseStorage implements IStorage {
       
       // Update order
       const updatedFields = {
+        clientId: clientId,
         totalAmount: invoiceData.totalAmount || invoiceData.СуммаДокумента || existingOrder.totalAmount,
         currency: currency,
         status: invoiceData.status || existingOrder.status,
