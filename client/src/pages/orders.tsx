@@ -597,6 +597,23 @@ export default function Orders() {
 
   const { data: allClients = [], isLoading: clientsLoading } = useQuery<any[]>({
     queryKey: ["/api/clients/search"],
+    queryFn: async () => {
+      const response = await fetch("/api/clients/search?limit=100");
+      if (!response.ok) throw new Error('Failed to fetch clients');
+      return response.json();
+    },
+  });
+
+  // Запит для конкретного клієнта при редагуванні замовлення
+  const { data: specificClientData } = useQuery({
+    queryKey: ["/api/clients/search", { clientId: selectedOrder?.clientId }],
+    queryFn: async () => {
+      if (!selectedOrder?.clientId) return null;
+      const response = await fetch(`/api/clients/search?clientId=${selectedOrder.clientId}`);
+      if (!response.ok) throw new Error('Failed to fetch specific client');
+      return response.json();
+    },
+    enabled: !!selectedOrder?.clientId && isEditMode,
   });
 
   const { data: allClientContacts = [] } = useQuery<any[]>({
@@ -665,7 +682,7 @@ export default function Orders() {
       if (debouncedSearchValue) {
         params.append('q', debouncedSearchValue);
       }
-      params.append('limit', '50');
+      params.append('limit', '100');
       
       const response = await fetch(`/api/clients/search?${params}`);
       if (!response.ok) throw new Error('Failed to search clients');
@@ -1197,19 +1214,25 @@ export default function Orders() {
     if (order.clientId) {
       setSelectedClientId(order.clientId.toString());
       
-      // Знаходимо клієнта в списку та встановлюємо назву
+      // Знаходимо клієнта в списку або використовуємо спеціальний запит
       console.log('Looking for client with ID:', order.clientId);
-      const clientsArray = allClients?.clients || allClients || [];
-      console.log('Available clients:', clientsArray.length);
-      console.log('AllClients structure:', allClients);
       
-      const client = clientsArray.find((c: any) => c.id === order.clientId);
-      console.log('Found client:', client?.name || 'NOT FOUND');
+      // Спочатку шукаємо в загальному списку
+      const clientsArray = allClients?.clients || allClients || [];
+      let client = clientsArray.find((c: any) => c.id === order.clientId);
+      
+      // Якщо не знайшли, використовуємо данні зі спеціального запиту
+      if (!client && specificClientData?.clients?.length > 0) {
+        client = specificClientData.clients[0];
+        console.log('Client found via specific query:', client.name);
+      }
+      
+      console.log('Final client:', client?.name || 'NOT FOUND');
       
       if (client) {
         setClientSearchValue(client.name);
       } else {
-        console.log('Client not found in allClients, clear search');
+        console.log('Client not found, clear search');
         setClientSearchValue('');
       }
     }

@@ -6174,6 +6174,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const search = req.query.q as string || '';
       const limit = parseInt(req.query.limit as string) || 50;
+      const clientId = req.query.clientId as string;
+      
+      // Якщо є clientId, шукаємо конкретного клієнта
+      if (clientId) {
+        const client = await storage.getClient(parseInt(clientId));
+        if (client) {
+          return res.json({ clients: [client] });
+        } else {
+          return res.json({ clients: [] });
+        }
+      }
       
       if (!search.trim()) {
         // Якщо немає пошукового запиту, повертаємо перші записи
