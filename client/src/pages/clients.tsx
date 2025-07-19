@@ -354,7 +354,7 @@ export default function Clients() {
       });
       setIsDialogOpen(false);
       setEditingClient(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/clients/all"] });
     } catch (error) {
       toast({
         title: "Помилка",
@@ -389,7 +389,7 @@ export default function Clients() {
       }
       setIsDialogOpen(false);
       setEditingClient(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/clients/all"] });
     } catch (error) {
       toast({
         title: "Помилка",
