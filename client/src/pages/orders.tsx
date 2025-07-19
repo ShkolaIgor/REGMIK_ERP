@@ -609,12 +609,9 @@ export default function Orders() {
     queryKey: ["/api/clients/search", "specific", selectedOrder?.clientId],
     queryFn: async () => {
       if (!selectedOrder?.clientId) return null;
-      console.log('Fetching specific client with ID:', selectedOrder.clientId);
       const response = await fetch(`/api/clients/search?clientId=${selectedOrder.clientId}`);
       if (!response.ok) throw new Error('Failed to fetch specific client');
-      const data = await response.json();
-      console.log('Specific client response:', data);
-      return data;
+      return response.json();
     },
     enabled: !!selectedOrder?.clientId && isEditMode,
   });
@@ -673,7 +670,7 @@ export default function Orders() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchValue(clientSearchValue);
-    }, 300); // 300мс затримка
+    }, 150); // 150мс затримка для швидшого пошуку
 
     return () => clearTimeout(timer);
   }, [clientSearchValue]);
@@ -1177,7 +1174,6 @@ export default function Orders() {
 
   // Функція для початку редагування замовлення - ОПТИМІЗОВАНА
   const handleEditOrder = (order: any) => {
-    console.log('Starting to edit order:', order);
     
     // Використовуємо існуючі дані замовлення без додаткового запиту
     setEditingOrder(order);
@@ -1218,14 +1214,11 @@ export default function Orders() {
       setSelectedClientId(order.clientId.toString());
       
       // Знаходимо клієнта - використовуємо дані з замовлення або шукаємо в списку
-      console.log('Looking for client with ID:', order.clientId);
-      
       let client = null;
       
       // Першочергово використовуємо дані клієнта з замовлення якщо є
       if (order.client && order.client.id === order.clientId) {
         client = order.client;
-        console.log('Client found from order data:', client.name);
       } else {
         // Якщо нема в замовленні, шукаємо в загальному списку
         const clientsArray = allClients?.clients || allClients || [];
@@ -1234,16 +1227,12 @@ export default function Orders() {
         // Якщо не знайшли, використовуємо данні зі спеціального запиту
         if (!client && specificClientData?.clients?.length > 0) {
           client = specificClientData.clients[0];
-          console.log('Client found via specific query:', client.name);
         }
       }
-      
-      console.log('Final client:', client?.name || 'NOT FOUND');
       
       if (client) {
         setClientSearchValue(client.name);
       } else {
-        console.log('Client not found, clear search');
         setClientSearchValue('');
       }
     }
@@ -1257,7 +1246,7 @@ export default function Orders() {
       if (company) {
         setCompanySearchValue(company.name);
       } else {
-        console.log('Company not found in companies list, clear search');
+
         setCompanySearchValue('');
       }
     }
@@ -1269,15 +1258,13 @@ export default function Orders() {
 
     // Заповнюємо товари замовлення якщо є
     if (order.items && order.items.length > 0) {
-      console.log("Order items from order:", order.items);
       setOrderItems(order.items.map((item: any) => ({
         productId: item.productId || 0,
         quantity: item.quantity ? item.quantity.toString() : "1",
         unitPrice: item.unitPrice ? item.unitPrice.toString() : "0",
       })));
-      console.log(`Loaded ${order.items.length} items for order`);
     } else {
-      console.log("No items in order or items array is empty");
+
       setOrderItems([]);
     }
     
@@ -1700,7 +1687,6 @@ export default function Orders() {
                         value={clientSearchValue}
                         onChange={(e) => {
                           const value = e.target.value;
-                          console.log('Client field onChange:', value);
                           setClientSearchValue(value);
                           
                           // Очищаємо обраний ID тільки якщо користувач щось міняв
@@ -1717,7 +1703,6 @@ export default function Orders() {
                           }
                         }}
                         onFocus={() => {
-                          console.log('Client field focused, current value:', clientSearchValue);
                           // Відкриваємо список для пошуку
                           setClientComboboxOpen(true);
                         }}
@@ -1734,7 +1719,6 @@ export default function Orders() {
                                 <div
                                   key={client.id}
                                   onClick={() => {
-                                    console.log("Clicking client:", client.name, "ID:", client.id);
                                     handleClientSelect(client.id.toString());
                                   }}
                                   className="px-3 py-2 cursor-pointer hover:bg-gray-100 flex items-center"
