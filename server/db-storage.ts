@@ -13629,15 +13629,52 @@ export class DatabaseStorage implements IStorage {
         const product = productRows[i].$;
         
         try {
+          // Мапування TYPE_IZDEL до category_id
+          let categoryId = 1; // Базова категорія за замовчуванням (Датчики)
+          if (product.TYPE_IZDEL) {
+            // Спочатку перевіряємо чи це число
+            const numericCategoryId = parseInt(product.TYPE_IZDEL);
+            if (!isNaN(numericCategoryId) && numericCategoryId > 0) {
+              categoryId = numericCategoryId;
+            } else {
+              // Якщо не число, мапимо текстові значення
+              switch (product.TYPE_IZDEL.toLowerCase()) {
+                case 'manufactured':
+                case 'виробництво':
+                  categoryId = 2; // Прилади
+                  break;
+                case 'assembly':
+                case 'збірка':
+                  categoryId = 3; // Гільзи
+                  break;
+                case 'semifinished':
+                case 'полуфабрикат':
+                  categoryId = 7; // Полуфабрикат
+                  break;
+                case 'sensor':
+                case 'датчик':
+                  categoryId = 1; // Датчики
+                  break;
+                case 'ers':
+                case 'ерс':
+                  categoryId = 6; // ЕРС
+                  break;
+                default:
+                  categoryId = 1; // За замовчуванням Датчики
+                  break;
+              }
+            }
+          }
+
           const productData = {
             sku: product.ID_LISTARTICLE || `PRODUCT_${Date.now()}_${i}`,
             name: product.NAME_ARTICLE || product.NAME_FUNCTION || 'Товар без назви',
             description: product.NAME_FUNCTION || '',
             retailPrice: (parseFloat(product.CENA || '0') || 0).toString(),
             costPrice: (parseFloat(product.CENA || '0') || 0).toString(),
-            categoryId: 1, // Базова категорія
+            categoryId: categoryId, // Використовуємо замапований category_id
             unit: 'шт', // Базова одиниця
-            productType: product.TYPE_IZDEL || 'product',
+            productType: 'product', // Залишаємо за замовчуванням 'product'
             isActive: product.ACTUAL === '1' || product.ACTUAL === 'true' || true
           };
           
@@ -13657,6 +13694,7 @@ export class DatabaseStorage implements IStorage {
                 description: productData.description,
                 retailPrice: productData.retailPrice,
                 costPrice: productData.costPrice,
+                categoryId: productData.categoryId,
                 productType: productData.productType,
                 isActive: productData.isActive
               })

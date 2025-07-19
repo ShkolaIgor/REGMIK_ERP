@@ -31,7 +31,7 @@ const IMPORT_CONFIGS: Record<string, ImportRequirements> = {
       'NAME_ARTICLE': 'Назва товару',
       'CENA': 'Ціна товару',
       'NAME_FUNCTION': 'Функціональна назва',
-      'TYPE_IZDEL': 'Тип виробу (manufactured, assembly, product)',
+      'TYPE_IZDEL': 'ID категорії товару (number) або тип (manufactured, assembly, sensor)',
     },
     validationRules: [
       'ID_LISTARTICLE не може бути пустим',
