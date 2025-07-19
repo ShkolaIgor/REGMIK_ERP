@@ -1656,7 +1656,9 @@ export default function Orders() {
                     <div className="relative">
                       <Input
                         placeholder="Почніть вводити назву клієнта..."
-                        value={clientSearchValue}
+                        value={form.watch("clientId") ? 
+                          allClients.find((c: any) => c.id.toString() === form.watch("clientId"))?.name || clientSearchValue 
+                          : clientSearchValue}
                         onChange={(e) => {
                           const value = e.target.value;
                           console.log('Client field onChange:', value);
@@ -1677,7 +1679,14 @@ export default function Orders() {
                         }}
                         onFocus={() => {
                           console.log('Client field focused, current value:', clientSearchValue);
-                          // При фокусі на поле, відкриваємо список для пошуку
+                          // При фокусі, якщо є обраний клієнт, очищаємо поле для редагування
+                          if (form.watch("clientId")) {
+                            const selectedClient = allClients.find((c: any) => c.id.toString() === form.watch("clientId"));
+                            setClientSearchValue(selectedClient?.name || "");
+                            form.setValue("clientId", "");
+                            setSelectedClientId("");
+                          }
+                          // Відкриваємо список для пошуку
                           setClientComboboxOpen(true);
                         }}
                         onBlur={() => setTimeout(() => setClientComboboxOpen(false), 200)}
