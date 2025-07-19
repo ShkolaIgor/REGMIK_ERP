@@ -1198,7 +1198,7 @@ export default function Orders() {
       setSelectedClientId(order.clientId.toString());
       
       // Знаходимо клієнта в списку та встановлюємо назву
-      const client = Array.isArray(allClients) ? allClients.find((c: any) => c.id === order.clientId) : null;
+      const client = (allClients?.clients || []).find((c: any) => c.id === order.clientId);
       if (client) {
         setClientSearchValue(client.name);
       } else {
@@ -1657,7 +1657,7 @@ export default function Orders() {
                       <Input
                         placeholder="Почніть вводити назву клієнта..."
                         value={form.watch("clientId") ? 
-                          allClients.find((c: any) => c.id.toString() === form.watch("clientId"))?.name || clientSearchValue 
+                          (allClients?.clients || []).find((c: any) => c.id.toString() === form.watch("clientId"))?.name || clientSearchValue 
                           : clientSearchValue}
                         onChange={(e) => {
                           const value = e.target.value;
@@ -1681,7 +1681,7 @@ export default function Orders() {
                           console.log('Client field focused, current value:', clientSearchValue);
                           // При фокусі, якщо є обраний клієнт, очищаємо поле для редагування
                           if (form.watch("clientId")) {
-                            const selectedClient = allClients.find((c: any) => c.id.toString() === form.watch("clientId"));
+                            const selectedClient = (allClients?.clients || []).find((c: any) => c.id.toString() === form.watch("clientId"));
                             setClientSearchValue(selectedClient?.name || "");
                             form.setValue("clientId", "");
                             setSelectedClientId("");
