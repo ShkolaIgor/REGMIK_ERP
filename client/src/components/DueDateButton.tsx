@@ -29,11 +29,22 @@ export default function DueDateButton({ order, onDueDateChange, isLoading }: Due
   };
 
   const isOverdue = () => {
-    if (!order.dueDate) return false;
+    // Прострочене замовлення має бути:
+    // 1. Оплачене (є paymentDate)
+    // 2. Термін виготовлення пройшов (dueDate < сьогодні)
+    // 3. НЕ відвантажене (немає shippedDate)
+    // 4. Останній день терміну НЕ є простроченням (dueDate < today, а не <=)
+    
+    if (!order.dueDate || !order.paymentDate || order.shippedDate) {
+      return false;
+    }
+    
     const dueDate = new Date(order.dueDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     dueDate.setHours(0, 0, 0, 0);
+    
+    // Прострочено тільки якщо термін вже пройшов (не включаючи останній день)
     return dueDate < today;
   };
 
