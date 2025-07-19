@@ -120,6 +120,11 @@ REGMIK ERP is a comprehensive enterprise resource planning system designed speci
 Preferred communication style: Simple, everyday language.
 User has Russian-language 1C system and needs integration setup guidance.
 
+**КРИТИЧНІ СПЕЦИФІКАЦІЇ ЄДРПОУ:**
+- Для юридичних осіб: ЄДРПОУ (8 цифр)
+- Для ФОП та фізосіб: ЄДРПОУ = ІПН (10 цифр)
+- Достатньо передавати тільки КодПоЕДРПОУ для компанії користувача
+
 ## Changelog
 
 ## Recent Changes
@@ -134,7 +139,7 @@ User has Russian-language 1C system and needs integration setup guidance.
 - ✅ **ПРОТЕСТОВАНО З РЕАЛЬНИМИ ДАНИМИ** - webhook успішно створює замовлення з правильними клієнтами та позиціями товарів
 - ✅ **ОНОВЛЕНО ДОКУМЕНТАЦІЮ 1С** - створено 1C_COMPANY_WEBHOOK_SETUP.md та оновлено 1C_WEBHOOK_AUTOSYNC_SETUP.md з кодом передачі даних компанії
 - ✅ **ВИПРАВЛЕНО СХЕМУ TAXCODE** - додано правильні коментарі про ЄДРПОУ (8 цифр для юридичних осіб, 10 для ФОП та фізичних осіб)
-- ✅ **ОНОВЛЕНО 1C_DOCUMENT_SYNC_SETUP.MD** - додано функції передачі даних компанії до накладних та вихідних рахунків з правильними коментарями
+- ✅ **ОНОВЛЕНО 1C_DOCUMENT_SYNC_SETUP.MD** - спрощено передачу даних компанії: тільки НашаКомпанія, КомпаніяЄДРПОУ, КомпаніяКод
 
 ### July 18, 2025
 - ✅ **КРИТИЧНУ ПРОБЛЕМУ ДЕФОЛТНОГО КЛІЄНТА ПОВНІСТЮ ВИПРАВЛЕНО** - виявлено та усунуто некоректне використання ІПН замість коду клієнта
