@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Upload, Edit2, Trash2, Package, CheckCircle, Grid3X3, DollarSign, Layers, Search, Scan, Printer, Download, AlertTriangle } from "lucide-react";
 import { DataTable } from "@/components/DataTable/DataTable";
 import { SearchFilters } from "@/components/SearchFilters";
+import { ProductsXmlImport } from "@/components/ProductsXmlImport";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Product {
@@ -163,14 +164,7 @@ export default function ProductsPage() {
                 </div>
               </div>
               <div className="flex gap-3">
-                <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  variant="outline"
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Імпорт XML
-                </Button>
+                <ProductsXmlImport />
                 <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300">

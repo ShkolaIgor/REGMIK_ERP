@@ -789,6 +789,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Імпорт товарів з XML
+  app.post('/api/products/import-xml', isSimpleAuthenticated, upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'XML файл не знайдено' });
+      }
+
+      const result = await storage.importProductsFromXml(req.file.buffer);
+      res.json({
+        success: true,
+        jobId: result.jobId,
+        message: `Імпорт розпочато, ID завдання: ${result.jobId}`
+      });
+    } catch (error) {
+      console.error('Products XML import error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Помилка імпорту товарів з XML' 
+      });
+    }
+  });
+
+  // Статус імпорту товарів з XML
+  app.get('/api/products/import-xml/:jobId/status', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { jobId } = req.params;
+      const jobStatus = await storage.getProductImportJobStatus(jobId);
+      
+      if (!jobStatus) {
+        return res.status(404).json({ 
+          success: false,
+          error: 'Завдання імпорту не знайдено' 
+        });
+      }
+
+      res.json({
+        success: true,
+        job: jobStatus
+      });
+    } catch (error) {
+      console.error('Error fetching import job status:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Помилка отримання статусу імпорту' 
+      });
+    }
+  });
+
   // Inventory
   app.get("/api/inventory", async (req, res) => {
     try {

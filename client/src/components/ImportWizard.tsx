@@ -8,7 +8,7 @@ import { CheckCircle, AlertCircle, Info, ArrowRight, ArrowLeft, Upload } from 'l
 import { useQuery } from '@tanstack/react-query';
 
 interface ImportWizardProps {
-  importType: 'orders' | 'order-items' | 'clients' | 'client-contacts' | 'component-categories' | 'components';
+  importType: 'orders' | 'order-items' | 'clients' | 'client-contacts' | 'component-categories' | 'components' | 'products';
   onProceedToImport: () => void;
 }
 
@@ -22,6 +22,28 @@ interface ImportRequirements {
 }
 
 const IMPORT_CONFIGS: Record<string, ImportRequirements> = {
+  'products': {
+    requiredFields: ['ID_LISTARTICLE', 'NAME_ARTICLE'],
+    optionalFields: ['CENA', 'NAME_FUNCTION', 'TYPE_IZDEL', 'ACTUAL', 'DATE_CREATE'],
+    dependencies: ['Категорії товарів повинні існувати'],
+    sampleData: {
+      'ID_LISTARTICLE': 'Унікальний код товару (SKU)',
+      'NAME_ARTICLE': 'Назва товару',
+      'CENA': 'Ціна товару',
+      'NAME_FUNCTION': 'Функціональна назва',
+      'TYPE_IZDEL': 'Тип виробу (1-товар, 2-компонент)',
+    },
+    validationRules: [
+      'ID_LISTARTICLE не може бути пустим',
+      'NAME_ARTICLE не може бути пустим',
+      'CENA повинна бути числом (якщо вказана)'
+    ],
+    commonIssues: [
+      'Дублікат SKU - товар з таким кодом вже існує',
+      'Невірний формат ціни',
+      'Порожня назва товару'
+    ]
+  },
   'orders': {
     requiredFields: ['PREDPR', 'NAME_PREDPR', 'DATA_ZAKAZ'],
     optionalFields: ['SUMMA', 'DATA_VIDPRAV', 'NAME_TRANSPORT', 'PRIMECH'],

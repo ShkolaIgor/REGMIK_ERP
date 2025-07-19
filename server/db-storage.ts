@@ -13562,6 +13562,171 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Product Import Methods
+  async importProductsFromXml(xmlBuffer: Buffer): Promise<{ jobId: string }> {
+    const jobId = `product_import_${Date.now()}`;
+    
+    // Створюємо завдання імпорту (асинхронно)
+    this.processProductImport(xmlBuffer, jobId).catch(error => {
+      console.error('Error in product import:', error);
+    });
+    
+    return { jobId };
+  }
+
+  async getProductImportJobStatus(jobId: string): Promise<any> {
+    // У реальній імплементації це має бути збереження в БД
+    // Поки що використовуємо memory storage для простоти
+    const job = (global as any).productImportJobs?.[jobId];
+    
+    if (!job) {
+      return null;
+    }
+    
+    return job;
+  }
+
+  private async processProductImport(xmlBuffer: Buffer, jobId: string) {
+    try {
+      const xmlString = xmlBuffer.toString('utf-8');
+      
+      // Ініціалізуємо global storage для jobs якщо потрібно
+      if (!(global as any).productImportJobs) {
+        (global as any).productImportJobs = {};
+      }
+      
+      const job = {
+        id: jobId,
+        status: 'processing',
+        progress: 0,
+        totalRows: 0,
+        processed: 0,
+        imported: 0,
+        skipped: 0,
+        errors: [],
+        details: [],
+        startTime: new Date().toISOString()
+      };
+      
+      (global as any).productImportJobs[jobId] = job;
+      
+      // Парсимо XML
+      const xml2js = require('xml2js');
+      const parser = new xml2js.Parser();
+      
+      const result = await parser.parseStringPromise(xmlString);
+      
+      let products = [];
+      if (result.DATAPACKET?.ROWDATA?.[0]?.ROW) {
+        products = result.DATAPACKET.ROWDATA[0].ROW;
+      }
+      
+      job.totalRows = products.length;
+      job.progress = 10;
+      (global as any).productImportJobs[jobId] = { ...job };
+      
+      for (let i = 0; i < products.length; i++) {
+        const product = products[i].$;
+        
+        try {
+          const productData = {
+            sku: product.ID_LISTARTICLE || `PRODUCT_${Date.now()}_${i}`,
+            name: product.NAME_ARTICLE || product.NAME_FUNCTION || 'Товар без назви',
+            description: product.NAME_FUNCTION || '',
+            retailPrice: parseFloat(product.CENA || '0') || 0,
+            costPrice: parseFloat(product.CENA || '0') || 0,
+            categoryId: 1, // Базова категорія
+            unitId: 1, // Базова одиниця
+            isActive: product.ACTUAL === '1' || product.ACTUAL === 'true' || true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+          
+          // Перевіряємо чи товар з таким SKU вже існує
+          const [existingProduct] = await db
+            .select()
+            .from(products)
+            .where(eq(products.sku, productData.sku))
+            .limit(1);
+          
+          if (existingProduct) {
+            // Оновлюємо існуючий товар
+            await db
+              .update(products)
+              .set({
+                name: productData.name,
+                description: productData.description,
+                retailPrice: productData.retailPrice,
+                costPrice: productData.costPrice,
+                isActive: productData.isActive,
+                updatedAt: new Date()
+              })
+              .where(eq(products.id, existingProduct.id));
+            
+            job.details.push({
+              productName: productData.name,
+              productSku: productData.sku,
+              status: 'updated',
+              message: 'Товар оновлено'
+            });
+            
+            job.processed++;
+          } else {
+            // Створюємо новий товар
+            await db.insert(products).values(productData);
+            
+            job.details.push({
+              productName: productData.name,
+              productSku: productData.sku,
+              status: 'imported',
+              message: 'Товар створено'
+            });
+            
+            job.imported++;
+            job.processed++;
+          }
+        } catch (error) {
+          console.error(`Error processing product ${i}:`, error);
+          
+          job.errors.push(`Помилка обробки товару ${i}: ${error.message}`);
+          job.details.push({
+            productName: product.NAME_ARTICLE || 'Невідомий товар',
+            productSku: product.ID_LISTARTICLE || 'Невідомий SKU',
+            status: 'error',
+            message: error.message
+          });
+        }
+        
+        // Оновлюємо прогрес
+        job.progress = Math.round(10 + (90 * (i + 1)) / products.length);
+        (global as any).productImportJobs[jobId] = { ...job };
+        
+        // Невелика затримка для демонстрації прогресу
+        if (i % 10 === 0) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      
+      job.status = 'completed';
+      job.progress = 100;
+      job.endTime = new Date().toISOString();
+      (global as any).productImportJobs[jobId] = { ...job };
+      
+      console.log(`✅ Product import completed: ${job.imported} imported, ${job.processed - job.imported} updated, ${job.errors.length} errors`);
+      
+    } catch (error) {
+      console.error('❌ Product import failed:', error);
+      
+      const job = (global as any).productImportJobs[jobId];
+      if (job) {
+        job.status = 'failed';
+        job.errors.push(`Критична помилка: ${error.message}`);
+        job.endTime = new Date().toISOString();
+        (global as any).productImportJobs[jobId] = { ...job };
+      }
+    }
+  }
+
 }
 
 export const storage = new DatabaseStorage();

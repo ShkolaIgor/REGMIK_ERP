@@ -130,6 +130,10 @@ export interface IStorage {
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: number): Promise<boolean>;
+  
+  // Product Import
+  importProductsFromXml(xmlBuffer: Buffer): Promise<{ jobId: string }>;
+  getProductImportJobStatus(jobId: string): Promise<any>;
 
   // Inventory
   getInventory(): Promise<(Inventory & { product: Product; warehouse: Warehouse })[]>;
