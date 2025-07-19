@@ -1197,18 +1197,13 @@ export default function Orders() {
     if (order.clientId) {
       setSelectedClientId(order.clientId.toString());
       
-      // Встановлюємо назву клієнта ВІДРАЗУ без setTimeout
-      if (order.clientName) {
-        setClientSearchValue(order.clientName);
+      // Знаходимо клієнта в списку та встановлюємо назву
+      const client = Array.isArray(allClients) ? allClients.find((c: any) => c.id === order.clientId) : null;
+      if (client) {
+        setClientSearchValue(client.name);
       } else {
-        // Якщо немає clientName в замовленні, пробуємо знайти в списку клієнтів
-        const client = Array.isArray(allClients) ? allClients.find((c: any) => c.id === order.clientId) : null;
-        if (client) {
-          setClientSearchValue(client.name);
-        } else {
-          console.log('Client not found in allClients, clear search');
-          setClientSearchValue('');
-        }
+        console.log('Client not found in allClients, clear search');
+        setClientSearchValue('');
       }
     }
 
@@ -1216,18 +1211,13 @@ export default function Orders() {
     if (order.companyId) {
       setSelectedCompanyId(order.companyId.toString());
       
-      // Встановлюємо назву компанії ВІДРАЗУ без setTimeout
-      if (order.companyName) {
-        setCompanySearchValue(order.companyName);
+      // Знаходимо компанію в списку та встановлюємо назву
+      const company = Array.isArray(companies) ? companies.find((c: any) => c.id === order.companyId) : null;
+      if (company) {
+        setCompanySearchValue(company.name);
       } else {
-        // Якщо немає companyName в замовленні, пробуємо знайти в списку компаній
-        const company = Array.isArray(companies) ? companies.find((c: any) => c.id === order.companyId) : null;
-        if (company) {
-          setCompanySearchValue(company.name);
-        } else {
-          console.log('Company not found in companies list, clear search');
-          setCompanySearchValue('');
-        }
+        console.log('Company not found in companies list, clear search');
+        setCompanySearchValue('');
       }
     }
 
@@ -1586,28 +1576,30 @@ export default function Orders() {
                   <div className="relative">
                     <Input
                       placeholder="Почніть вводити назву компанії..."
-                      value={companySearchValue || (form.watch("companyId") ? 
-                        companies.find((c: Company) => c.id.toString() === form.watch("companyId"))?.name || ""
-                        : "")}
+                      value={form.watch("companyId") ? 
+                        companies.find((c: Company) => c.id.toString() === form.watch("companyId"))?.name || companySearchValue 
+                        : companySearchValue}
                       onChange={(e) => {
-                        const value = e.target.value;
-                        setCompanySearchValue(value);
-                        
-                        // Скидаємо обрану компанію тільки якщо користувач реально редагує
-                        if (form.watch("companyId") && value !== companies.find((c: Company) => c.id.toString() === form.watch("companyId"))?.name) {
+                        // Якщо є обрана компанія і користувач редагує, скидаємо вибір
+                        if (form.watch("companyId")) {
                           form.setValue("companyId", "");
                         }
-                        
+                        setCompanySearchValue(e.target.value);
                         // Відкриваємо список тільки якщо є текст для пошуку (мінімум 2 символи)
-                        if (value.trim().length >= 2) {
+                        if (e.target.value.trim().length >= 2) {
                           setCompanyComboboxOpen(true);
                         } else {
                           setCompanyComboboxOpen(false);
                         }
                       }}
                       onFocus={() => {
-                        // При фокусі НЕ очищаємо обрану компанію при перегляді
-                        // Тільки відкриваємо список якщо користувач почне вводити
+                        // При фокусі, якщо є обрана компанія, очищаємо поле для редагування
+                        if (form.watch("companyId")) {
+                          const selectedCompany = companies.find((c: Company) => c.id.toString() === form.watch("companyId"));
+                          setCompanySearchValue(selectedCompany?.name || "");
+                          form.setValue("companyId", "");
+                        }
+                        // НЕ відкриваємо список автоматично при фокусі
                       }}
                       onBlur={() => setTimeout(() => setCompanyComboboxOpen(false), 200)}
                       className={form.formState.errors.companyId ? "border-red-500" : ""}

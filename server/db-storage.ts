@@ -729,40 +729,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Simple method for imports that loads ALL orders without pagination  
-  async getOrders(): Promise<(Order & { items: (OrderItem & { product: Product })[], clientName?: string, companyName?: string })[]> {
-    // Get orders with client and company names
-    const allOrders = await db.select({
-      id: orders.id,
-      orderSequenceNumber: orders.orderSequenceNumber,
-      clientId: orders.clientId,
-      companyId: orders.companyId,
-      clientContactsId: orders.clientContactsId,
-      orderNumber: orders.orderNumber,
-      totalAmount: orders.totalAmount,
-      status: orders.status,
-      notes: orders.notes,
-      createdAt: orders.createdAt,
-      updatedAt: orders.updatedAt,
-      paymentDate: orders.paymentDate,
-      paymentType: orders.paymentType,
-      paidAmount: orders.paidAmount,
-      dueDate: orders.dueDate,
-      shippedDate: orders.shippedDate,
-      trackingNumber: orders.trackingNumber,
-      invoiceNumber: orders.invoiceNumber,
-      carrierId: orders.carrierId,
-      statusId: orders.statusId,
-      productionApproved: orders.productionApproved,
-      productionApprovedBy: orders.productionApprovedBy,
-      productionApprovedAt: orders.productionApprovedAt,
-      
-      // JOIN з назвами клієнта та компанії
-      clientName: clients.name,
-      companyName: companies.name
-    })
-    .from(orders)
-    .leftJoin(clients, eq(orders.clientId, clients.id))
-    .leftJoin(companies, eq(orders.companyId, companies.id));
+  async getOrders(): Promise<(Order & { items: (OrderItem & { product: Product })[] })[]> {
+    // Get all orders first
+    const allOrders = await db.select().from(orders);
     
     // Return them with empty items arrays - import doesn't need items, just order lookup
     return allOrders.map(order => ({
