@@ -314,6 +314,27 @@ export default function ClientContacts() {
     }
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async (data: { id: number; updates: Partial<ClientContact> }) => {
+      return await apiRequest(`/api/client-contacts/${data.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data.updates)
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/client-contacts"] });
+      setEditingContact(null);
+      toast({ title: "Контакт успішно оновлено" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Помилка", 
+        description: error.message || "Не вдалося оновити контакт",
+        variant: "destructive" 
+      });
+    }
+  });
+
   const onSubmit = (data: FormData) => {
     createMutation.mutate(data);
   };
@@ -323,6 +344,32 @@ export default function ClientContacts() {
       deleteMutation.mutate(contact.id);
       setEditingContact(null);
     }
+  };
+
+  const handleSave = () => {
+    if (!editingContact) return;
+    
+    // Збираємо дані з форми редагування
+    const formElement = document.getElementById('edit-contact-form') as HTMLFormElement;
+    if (!formElement) return;
+    
+    const formData = new FormData(formElement);
+    const updates: Partial<ClientContact> = {
+      fullName: formData.get('fullName') as string,
+      position: formData.get('position') as string || undefined,
+      email: formData.get('email') as string || undefined,
+      primaryPhone: formData.get('primaryPhone') as string || undefined,
+      primaryPhoneType: formData.get('primaryPhoneType') as 'mobile' | 'office' | 'home',
+      secondaryPhone: formData.get('secondaryPhone') as string || undefined,
+      secondaryPhoneType: formData.get('secondaryPhoneType') as 'mobile' | 'office' | 'home' | 'fax',
+      tertiaryPhone: formData.get('tertiaryPhone') as string || undefined,
+      tertiaryPhoneType: formData.get('tertiaryPhoneType') as 'mobile' | 'office' | 'home' | 'fax',
+      notes: formData.get('notes') as string || undefined,
+      isPrimary: formData.get('isPrimary') === 'on',
+      isActive: formData.get('isActive') === 'on'
+    };
+
+    updateMutation.mutate({ id: editingContact.id, updates });
   };
 
   if (isLoading) {
@@ -739,11 +786,12 @@ export default function ClientContacts() {
               </DialogDescription>
             </DialogHeader>
             {editingContact && (
-              <div className="space-y-4">
+              <form id="edit-contact-form" className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2 md:col-span-2">
                     <label className="text-sm font-medium">Клієнт</label>
                     <select 
+                      name="clientId"
                       defaultValue={editingContact.clientId.toString()}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                     >
@@ -758,6 +806,7 @@ export default function ClientContacts() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Повне ім'я *</label>
                     <input
+                      name="fullName"
                       type="text"
                       defaultValue={editingContact.fullName}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
@@ -767,6 +816,7 @@ export default function ClientContacts() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Посада</label>
                     <input
+                      name="position"
                       type="text"
                       defaultValue={editingContact.position || ''}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
@@ -776,6 +826,7 @@ export default function ClientContacts() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Email</label>
                     <input
+                      name="email"
                       type="email"
                       defaultValue={editingContact.email || ''}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
@@ -785,6 +836,7 @@ export default function ClientContacts() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Основний телефон</label>
                     <input
+                      name="primaryPhone"
                       type="text"
                       defaultValue={editingContact.primaryPhone || ''}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
@@ -794,6 +846,7 @@ export default function ClientContacts() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Тип основного телефону</label>
                     <select 
+                      name="primaryPhoneType"
                       defaultValue={editingContact.primaryPhoneType}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                     >
@@ -808,6 +861,7 @@ export default function ClientContacts() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Додатковий телефон</label>
                     <input
+                      name="secondaryPhone"
                       type="text"
                       defaultValue={editingContact.secondaryPhone || ''}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
@@ -817,6 +871,7 @@ export default function ClientContacts() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Тип додаткового телефону</label>
                     <select 
+                      name="secondaryPhoneType"
                       defaultValue={editingContact.secondaryPhoneType}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                     >
@@ -828,9 +883,45 @@ export default function ClientContacts() {
                     </select>
                   </div>
 
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Третій телефон</label>
+                    <input
+                      name="tertiaryPhone"
+                      type="text"
+                      defaultValue={editingContact.tertiaryPhone || ''}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Тип третього телефону</label>
+                    <select 
+                      name="tertiaryPhoneType"
+                      defaultValue={editingContact.tertiaryPhoneType}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    >
+                      {Object.entries(phoneTypeLabels).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium">Примітки</label>
+                    <textarea
+                      name="notes"
+                      defaultValue={editingContact.notes || ''}
+                      rows={3}
+                      className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background resize-none"
+                    />
+                  </div>
+
                   <div className="flex items-center space-x-4 md:col-span-2">
                     <div className="flex items-center space-x-2">
                       <input 
+                        name="isPrimary"
                         type="checkbox" 
                         defaultChecked={editingContact.isPrimary}
                         className="h-4 w-4 rounded border border-input"
@@ -840,6 +931,7 @@ export default function ClientContacts() {
 
                     <div className="flex items-center space-x-2">
                       <input 
+                        name="isActive"
                         type="checkbox" 
                         defaultChecked={editingContact.isActive}
                         className="h-4 w-4 rounded border border-input"
@@ -868,17 +960,14 @@ export default function ClientContacts() {
                     </Button>
                     <Button 
                       className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
-                      onClick={() => {
-                        // TODO: Implement save functionality
-                        toast({ title: "Функція збереження в розробці" });
-                        setEditingContact(null);
-                      }}
+                      onClick={handleSave}
+                      disabled={updateMutation.isPending}
                     >
-                      Зберегти зміни
+                      {updateMutation.isPending ? "Збереження..." : "Зберегти зміни"}
                     </Button>
                   </div>
                 </div>
-              </div>
+              </form>
             )}
           </DialogContent>
         </Dialog>
