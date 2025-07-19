@@ -11863,6 +11863,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Універсальний метод для пошуку та створення клієнтів
+  // Функція валідації ЄДРПОУ (8 цифр для юридичних осіб, 10 цифр для ФОП та фізичних осіб)
+  private isValidTaxCode(taxCode: string | null | undefined): boolean {
+    if (!taxCode || typeof taxCode !== 'string') return false;
+    const cleaned = taxCode.trim().replace(/\D/g, ''); // Залишаємо тільки цифри
+    return cleaned.length === 8 || cleaned.length === 10;
+  }
+
   async findOrCreateClient(data: {
     name?: string;
     taxCode?: string;
@@ -11874,40 +11881,45 @@ export class DatabaseStorage implements IStorage {
   }) {
     let client = null;
     
-    // Спочатку шукаємо існуючого клієнта за ЄДРПОУ (найнадійніший критерій)
-    if (data.taxCode) {
+    // Валідуємо ЄДРПОУ
+    const isValidTaxCode = this.isValidTaxCode(data.taxCode);
+    
+    // Якщо ЄДРПОУ коректний (8 або 10 цифр), шукаємо за ним спочатку
+    if (isValidTaxCode && data.taxCode) {
+      const cleanedTaxCode = data.taxCode.trim().replace(/\D/g, '');
       const [existingClient] = await db
         .select()
         .from(clients)
-        .where(eq(clients.taxCode, data.taxCode))
+        .where(eq(clients.taxCode, cleanedTaxCode))
         .limit(1);
       
       if (existingClient) {
         client = existingClient;
-        console.log(`👤 Знайдено клієнта за ЄДРПОУ ${data.taxCode}: "${client.name}" (ID: ${client.id})`);
+        console.log(`👤 Знайдено клієнта за валідним ЄДРПОУ ${cleanedTaxCode}: "${client.name}" (ID: ${client.id})`);
         return client;
       }
     }
     
-    // Якщо за ЄДРПОУ не знайдено, шукаємо за назвою
+    // Якщо ЄДРПОУ невалідний або за ним нічого не знайдено, шукаємо за точною назвою
     if (!client && data.name) {
       const [existingClient] = await db
         .select()
         .from(clients)
-        .where(eq(clients.name, data.name))
+        .where(eq(clients.name, data.name.trim()))
         .limit(1);
       
       if (existingClient) {
         client = existingClient;
-        console.log(`👤 Знайдено клієнта за назвою: "${client.name}" (ID: ${client.id})`);
+        console.log(`👤 Знайдено клієнта за точною назвою: "${client.name}" (ID: ${client.id})`);
         
-        // Оновлюємо ЄДРПОУ якщо його не було
-        if (data.taxCode && !client.taxCode) {
+        // Оновлюємо ЄДРПОУ якщо він валідний і його не було раніше
+        if (isValidTaxCode && data.taxCode && !client.taxCode) {
+          const cleanedTaxCode = data.taxCode.trim().replace(/\D/g, '');
           await db
             .update(clients)
-            .set({ taxCode: data.taxCode, updatedAt: new Date() })
+            .set({ taxCode: cleanedTaxCode, updatedAt: new Date() })
             .where(eq(clients.id, client.id));
-          console.log(`👤 Оновлено ЄДРПОУ для клієнта ${client.name}: ${data.taxCode}`);
+          console.log(`👤 Оновлено ЄДРПОУ для клієнта ${client.name}: ${cleanedTaxCode}`);
         }
         
         return client;
@@ -11916,9 +11928,12 @@ export class DatabaseStorage implements IStorage {
     
     // Якщо клієнт не знайдений, створюємо нового
     if (!client) {
+      const cleanedTaxCode = isValidTaxCode && data.taxCode ? 
+        data.taxCode.trim().replace(/\D/g, '') : null;
+      
       const clientData = {
         name: data.name || 'Невідомий клієнт',
-        taxCode: data.taxCode || null,
+        taxCode: cleanedTaxCode,
         email: data.email || null,
         phone: data.phone || null,
         legalAddress: data.address || null,
@@ -11930,7 +11945,15 @@ export class DatabaseStorage implements IStorage {
       
       const [newClient] = await db.insert(clients).values(clientData).returning();
       client = newClient;
-      console.log(`✅ Створено нового клієнта: "${data.name}" (ЄДРПОУ: ${data.taxCode}, ID: ${client.id})`);
+      
+      if (isValidTaxCode) {
+        console.log(`✅ Створено нового клієнта: "${data.name}" (ЄДРПОУ: ${cleanedTaxCode}, ID: ${client.id})`);
+      } else {
+        console.log(`✅ Створено нового клієнта: "${data.name}" (без валідного ЄДРПОУ, ID: ${client.id})`);
+        if (data.taxCode) {
+          console.log(`⚠️ Невалідний ЄДРПОУ "${data.taxCode}" - повинен містити 8 або 10 цифр`);
+        }
+      }
     }
     
     return client;
@@ -13008,21 +13031,27 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`🔍 Пошук клієнта: ЄДРПОУ="${taxCode}", назва="${clientName}"`);
       
-      // 1. Спочатку шукаємо за ЄДРПОУ (якщо вказано)
-      if (taxCode && taxCode.trim() !== '') {
+      // Валідуємо ЄДРПОУ
+      const isValidTaxCode = this.isValidTaxCode(taxCode);
+      
+      // 1. Якщо ЄДРПОУ валідний (8 або 10 цифр), шукаємо за ним спочатку
+      if (isValidTaxCode && taxCode) {
+        const cleanedTaxCode = taxCode.trim().replace(/\D/g, '');
         const [clientByTaxCode] = await db
           .select()
           .from(clients)
-          .where(eq(clients.taxCode, taxCode.trim()))
+          .where(eq(clients.taxCode, cleanedTaxCode))
           .limit(1);
         
         if (clientByTaxCode) {
-          console.log(`✅ Знайдено клієнта за ЄДРПОУ: ${clientByTaxCode.name} (ID: ${clientByTaxCode.id})`);
+          console.log(`✅ Знайдено клієнта за валідним ЄДРПОУ: ${clientByTaxCode.name} (ID: ${clientByTaxCode.id})`);
           return clientByTaxCode;
         }
+      } else if (taxCode && taxCode.trim() !== '') {
+        console.log(`⚠️ Невалідний ЄДРПОУ "${taxCode}" - повинен містити 8 або 10 цифр. Шукаємо за назвою.`);
       }
       
-      // 2. Потім шукаємо за точною назвою
+      // 2. Якщо ЄДРПОУ невалідний або не знайдено, шукаємо за точною назвою
       if (clientName && clientName.trim() !== '') {
         const [clientByName] = await db
           .select()
@@ -13031,13 +13060,13 @@ export class DatabaseStorage implements IStorage {
           .limit(1);
         
         if (clientByName) {
-          console.log(`✅ Знайдено клієнта за назвою: ${clientByName.name} (ID: ${clientByName.id})`);
+          console.log(`✅ Знайдено клієнта за точною назвою: ${clientByName.name} (ID: ${clientByName.id})`);
           return clientByName;
         }
       }
       
-      // 3. Нарешті шукаємо ILIKE (часткове співпадіння)
-      if (clientName && clientName.trim() !== '') {
+      // 3. Нарешті шукаємо ILIKE (часткове співпадіння) тільки якщо було валідне ЄДРПОУ
+      if (isValidTaxCode && clientName && clientName.trim() !== '') {
         const [clientByPartialName] = await db
           .select()
           .from(clients)
@@ -13050,7 +13079,7 @@ export class DatabaseStorage implements IStorage {
         }
       }
       
-      console.log(`❌ Клієнт не знайдений: ЄДРПОУ="${taxCode}", назва="${clientName}"`);
+      console.log(`❌ Клієнт не знайдений: ЄДРПОУ="${taxCode}" (валідний: ${isValidTaxCode}), назва="${clientName}"`);
       return null;
     } catch (error) {
       console.error('Помилка пошуку клієнта:', error);

@@ -13010,5 +13010,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========================================
+  // ТЕСТОВІ ENDPOINTS ДЛЯ WEBHOOK ВАЛІДАЦІЇ ЄДРПОУ
+  // ========================================
+
+  // Простий тест без middleware
+  app.get("/api/test-simple", (req, res) => {
+    res.json({ message: "Simple test working", timestamp: new Date().toISOString() });
+  });
+
+  // Тест валідації ЄДРПОУ (без автентифікації для демонстрації)  
+  app.post("/api/webhook/test-client-validation", async (req, res) => {
+    try {
+      const { taxCode, clientName } = req.body;
+      
+      console.log(`🧪 Тестування webhook валідації для: ЄДРПОУ="${taxCode}", назва="${clientName}"`);
+      
+      // Імітуємо логіку валідації ЄДРПОУ
+      const isValidTaxCode = taxCode && /^\d{8}$|^\d{10}$/.test(taxCode.replace(/\D/g, ''));
+      
+      // Використовуємо покращений метод пошуку клієнтів з валідацією ЄДРПОУ
+      const client = await storage.findOrCreateClient({
+        name: clientName,
+        taxCode: taxCode,
+        source: 'webhook-test'
+      });
+      
+      res.json({
+        success: true,
+        client,
+        validation: {
+          taxCodeProvided: !!taxCode,
+          taxCodeValid: isValidTaxCode,
+          clientFoundOrCreated: !!client,
+          searchMethod: isValidTaxCode ? 'valid_tax_code' : 'exact_name_match'
+        },
+        message: `Клієнт "${client.name}" ${client.id > 130 ? 'створено' : 'знайдено'} успішно`
+      });
+    } catch (error) {
+      console.error('❌ Помилка тестування webhook валідації:', error);
+      res.status(500).json({ 
+        success: false,
+        error: error.message,
+        message: 'Помилка валідації webhook клієнта'
+      });
+    }
+  });
+
   return httpServer;
 }

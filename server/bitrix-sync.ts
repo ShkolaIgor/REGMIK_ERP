@@ -441,22 +441,28 @@ export async function sendCompanyDataToERPWebhook(companyId: string, requisiteId
       isSupplier: false
     };
 
-    // Спочатку спробуємо знайти клієнта за ЄДРПОУ або ІПН
-    let existingClient = null;
-    if (requisite.RQ_EDRPOU) {
-      const clients = await storage.getClients();
-      existingClient = clients.find(c => c.taxCode === requisite.RQ_EDRPOU);
-    }
+    // Використовуємо універсальний метод з валідацією ЄДРПОУ
+    const client = await storage.findOrCreateClient({
+      name: companyData.TITLE || requisite.RQ_COMPANY_FULL_NAME,
+      taxCode: requisite.RQ_EDRPOU || requisite.RQ_INN,
+      email: companyData.EMAIL?.[0]?.VALUE,
+      phone: companyData.PHONE?.[0]?.VALUE,
+      address: address,
+      clientTypeId: requisite.PRESET_ID === 2 ? 2 : 1,
+      source: 'bitrix24'
+    });
     
-    let client;
-    if (existingClient) {
-      // Оновлюємо існуючого клієнта
-      client = await storage.updateClient(existingClient.id, clientData);
-      console.log(`[WEBHOOK ERP] Оновлено клієнта в ERP: ${client.name} (ID: ${client.id})`);
-    } else {
-      // Створюємо нового клієнта
-      client = await storage.createClient(clientData);
-      console.log(`[WEBHOOK ERP] Створено нового клієнта в ERP: ${client.name} (ID: ${client.id})`);
+    console.log(`[WEBHOOK ERP] Клієнт оброблений в ERP: ${client.name} (ID: ${client.id})`);
+    
+    // Оновлюємо додаткові поля якщо потрібно
+    if (client.id) {
+      await storage.updateClient(client.id, {
+        fullName: requisite.RQ_COMPANY_FULL_NAME,
+        externalId: companyId,
+        isCustomer: true,
+        isSupplier: false,
+        notes: `Синхронізовано з Бітрікс24 через webhook (ID: ${companyId})`
+      });
     }
 
     // Тепер відправляємо дані в зовнішню ERP систему (аналогічно до sendCompanyInfoTo1C)

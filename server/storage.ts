@@ -416,6 +416,15 @@ export interface IStorage {
   createClient(client: InsertClient): Promise<Client>;
   updateClient(id: number, client: Partial<InsertClient>): Promise<Client | undefined>;
   deleteClient(id: number): Promise<boolean>;
+  findOrCreateClient(data: {
+    name?: string;
+    taxCode?: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+    clientTypeId?: number;
+    source?: string;
+  }): Promise<Client>;
   getClientByExternalId(externalId: string): Promise<Client | undefined>;
   getClientByTaxCode(taxCode: string): Promise<Client | undefined>;
 
