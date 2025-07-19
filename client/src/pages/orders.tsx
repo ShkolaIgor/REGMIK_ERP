@@ -1316,15 +1316,13 @@ export default function Orders() {
   // Допоміжні функції для таблиці
   // Функція для перевірки чи замовлення прострочене
   const isOrderOverdue = (order: any) => {
-    // Прострочене замовлення: оплачено + термін виготовлення минув + не відвантажено
-    if (!order.paymentDate || !order.dueDate || order.shippedDate) return false;
+    if (!order.dueDate || order.shippedDate) return false;
     
     const dueDate = new Date(order.dueDate);
     const today = new Date();
-    today.setHours(23, 59, 59, 999); // Кінець поточного дня
-    dueDate.setHours(23, 59, 59, 999); // Кінець дня дедлайну
+    today.setHours(0, 0, 0, 0);
+    dueDate.setHours(0, 0, 0, 0);
     
-    // Прострочено тільки ПІСЛЯ закінчення дня дедлайну (останній день не є простроченням)
     return today > dueDate;
   };
 
@@ -2422,7 +2420,7 @@ export default function Orders() {
                     <p className="text-sm text-emerald-700 font-medium">Загальний дохід</p>
                   </div>
                   <p className="text-3xl font-bold text-emerald-900 mb-1">{formatCurrency(orders.reduce((sum: number, o: any) => sum + parseFloat(o.totalAmount), 0))}</p>
-                  <p className="text-xs text-emerald-600">Загальна сума</p>
+                  <p className="text-xs text-emerald-600">Загальна сума, грн.</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
                   <DollarSign className="w-8 h-8 text-white" />

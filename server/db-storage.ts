@@ -13637,7 +13637,7 @@ export class DatabaseStorage implements IStorage {
             costPrice: (parseFloat(product.CENA || '0') || 0).toString(),
             categoryId: 1, // Базова категорія
             unit: 'шт', // Базова одиниця
-            productType: 'product',
+            productType: product.TYPE_IZDEL || 'product',
             isActive: product.ACTUAL === '1' || product.ACTUAL === 'true' || true
           };
           
@@ -13657,6 +13657,7 @@ export class DatabaseStorage implements IStorage {
                 description: productData.description,
                 retailPrice: productData.retailPrice,
                 costPrice: productData.costPrice,
+                productType: productData.productType,
                 isActive: productData.isActive
               })
               .where(eq(products.id, existingProduct.id));
