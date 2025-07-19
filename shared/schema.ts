@@ -204,6 +204,10 @@ export const products = pgTable("products", {
   unit: text("unit").notNull().default("шт"), // одиниця виміру
   minStock: integer("min_stock").default(0),
   maxStock: integer("max_stock").default(1000),
+  manufacturingStrategy: varchar("manufacturing_strategy", { length: 50 }),
+  preferredSupplyMethod: varchar("preferred_supply_method", { length: 50 }),
+  leadTimeDays: integer("lead_time_days"),
+  isSelectable: boolean("is_selectable"),
   isActive: boolean("is_active").default(true), // статус активності товару
   createdAt: timestamp("created_at").defaultNow(),
 });

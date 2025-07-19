@@ -13616,30 +13616,29 @@ export class DatabaseStorage implements IStorage {
       
       const result = await parser.parseStringPromise(xmlString);
       
-      let products = [];
+      let productRows = [];
       if (result.DATAPACKET?.ROWDATA?.[0]?.ROW) {
-        products = result.DATAPACKET.ROWDATA[0].ROW;
+        productRows = result.DATAPACKET.ROWDATA[0].ROW;
       }
       
-      job.totalRows = products.length;
+      job.totalRows = productRows.length;
       job.progress = 10;
       (global as any).productImportJobs[jobId] = { ...job };
       
-      for (let i = 0; i < products.length; i++) {
-        const product = products[i].$;
+      for (let i = 0; i < productRows.length; i++) {
+        const product = productRows[i].$;
         
         try {
           const productData = {
             sku: product.ID_LISTARTICLE || `PRODUCT_${Date.now()}_${i}`,
             name: product.NAME_ARTICLE || product.NAME_FUNCTION || 'Товар без назви',
             description: product.NAME_FUNCTION || '',
-            retailPrice: parseFloat(product.CENA || '0') || 0,
-            costPrice: parseFloat(product.CENA || '0') || 0,
+            retailPrice: (parseFloat(product.CENA || '0') || 0).toString(),
+            costPrice: (parseFloat(product.CENA || '0') || 0).toString(),
             categoryId: 1, // Базова категорія
-            unitId: 1, // Базова одиниця
-            isActive: product.ACTUAL === '1' || product.ACTUAL === 'true' || true,
-            createdAt: new Date(),
-            updatedAt: new Date()
+            unit: 'шт', // Базова одиниця
+            productType: 'product',
+            isActive: product.ACTUAL === '1' || product.ACTUAL === 'true' || true
           };
           
           // Перевіряємо чи товар з таким SKU вже існує
@@ -13658,8 +13657,7 @@ export class DatabaseStorage implements IStorage {
                 description: productData.description,
                 retailPrice: productData.retailPrice,
                 costPrice: productData.costPrice,
-                isActive: productData.isActive,
-                updatedAt: new Date()
+                isActive: productData.isActive
               })
               .where(eq(products.id, existingProduct.id));
             
@@ -13698,7 +13696,7 @@ export class DatabaseStorage implements IStorage {
         }
         
         // Оновлюємо прогрес
-        job.progress = Math.round(10 + (90 * (i + 1)) / products.length);
+        job.progress = Math.round(10 + (90 * (i + 1)) / productRows.length);
         (global as any).productImportJobs[jobId] = { ...job };
         
         // Невелика затримка для демонстрації прогресу
