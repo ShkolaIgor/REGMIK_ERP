@@ -595,7 +595,7 @@ export default function Orders() {
     queryKey: ["/api/order-statuses"],
   });
 
-  const { data: allClients = [] } = useQuery<any[]>({
+  const { data: allClients = [], isLoading: clientsLoading } = useQuery<any[]>({
     queryKey: ["/api/clients/search"],
   });
 
@@ -736,9 +736,9 @@ export default function Orders() {
     queryKey: ["/api/carriers"],
   });
 
-  const { data: companies = [] } = useQuery({
+  const { data: companies = [], isLoading: companiesLoading } = useQuery({
     queryKey: ["/api/companies"],
-  }) as { data: Company[] };
+  }) as { data: Company[]; isLoading: boolean };
 
   // Ініціалізуємо поле компанії з компанією за замовчуванням
   useEffect(() => {
@@ -1199,9 +1199,11 @@ export default function Orders() {
       
       // Знаходимо клієнта в списку та встановлюємо назву
       console.log('Looking for client with ID:', order.clientId);
-      console.log('Available clients:', allClients?.clients?.length || 0);
+      const clientsArray = allClients?.clients || allClients || [];
+      console.log('Available clients:', clientsArray.length);
+      console.log('AllClients structure:', allClients);
       
-      const client = (allClients?.clients || []).find((c: any) => c.id === order.clientId);
+      const client = clientsArray.find((c: any) => c.id === order.clientId);
       console.log('Found client:', client?.name || 'NOT FOUND');
       
       if (client) {
@@ -1663,9 +1665,11 @@ export default function Orders() {
                         placeholder="Почніть вводити назву клієнта..."
                         value={(() => {
                           const clientId = form.watch("clientId");
-                          if (!clientId || !allClients?.clients) return clientSearchValue;
+                          if (!clientId) return clientSearchValue;
                           
-                          const client = allClients.clients.find((c: any) => c.id.toString() === clientId);
+                          // allClients має структуру {clients: [...]} в production
+                          const clientsArray = allClients?.clients || allClients || [];
+                          const client = clientsArray.find((c: any) => c.id.toString() === clientId);
                           return client?.name || clientSearchValue;
                         })()}
                         onChange={(e) => {
@@ -1690,7 +1694,8 @@ export default function Orders() {
                           console.log('Client field focused, current value:', clientSearchValue);
                           // При фокусі, якщо є обраний клієнт, очищаємо поле для редагування
                           if (form.watch("clientId")) {
-                            const selectedClient = (allClients?.clients || []).find((c: any) => c.id.toString() === form.watch("clientId"));
+                            const clientsArray = allClients?.clients || allClients || [];
+                            const selectedClient = clientsArray.find((c: any) => c.id.toString() === form.watch("clientId"));
                             console.log('Found selected client on focus:', selectedClient?.name);
                             setClientSearchValue(selectedClient?.name || "");
                             form.setValue("clientId", "");
