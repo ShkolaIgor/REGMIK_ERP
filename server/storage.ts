@@ -572,6 +572,27 @@ export interface IStorage {
   import1COutgoingInvoice(invoiceId: string): Promise<{ success: boolean; message: string; orderId?: number; }>;
   get1COutgoingInvoices(): Promise<any[]>;
   
+  // Універсальні методи для створення клієнтів та постачальників
+  findOrCreateClient(data: {
+    name?: string;
+    taxCode?: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+    clientTypeId?: number;
+    source?: string;
+  }): Promise<any>;
+  
+  findOrCreateSupplier(data: {
+    name?: string;
+    taxCode?: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+    clientTypeId?: number;
+    source?: string;
+  }): Promise<any>;
+  
   // System Logging
   createSystemLog(logData: InsertSystemLog): Promise<SystemLog>;
   getSystemLogs(params?: {
@@ -2122,6 +2143,31 @@ export class MemStorage implements IStorage {
 
   async import1CInvoiceFromData(invoiceData: any): Promise<{ success: boolean; message: string; receiptId?: number; }> {
     return { success: false, message: "MemStorage не підтримує 1C інтеграцію" };
+  }
+
+  // Універсальні методи для створення клієнтів та постачальників
+  async findOrCreateClient(data: {
+    name?: string;
+    taxCode?: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+    clientTypeId?: number;
+    source?: string;
+  }): Promise<any> {
+    return { success: false, message: "MemStorage не підтримує автоматичне створення клієнтів" };
+  }
+
+  async findOrCreateSupplier(data: {
+    name?: string;
+    taxCode?: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+    clientTypeId?: number;
+    source?: string;
+  }): Promise<any> {
+    return { success: false, message: "MemStorage не підтримує автоматичне створення постачальників" };
   }
 
   async get1CInvoices(): Promise<any[]> {

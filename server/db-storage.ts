@@ -11316,57 +11316,11 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Знаходимо або створюємо постачальника
-      let supplier;
-      if (invoice.supplierTaxCode) {
-        // Шукаємо постачальника за ЄДРПОУ
-        const [existingSupplier] = await db
-          .select()
-          .from(suppliers)
-          .where(eq(suppliers.taxCode, invoice.supplierTaxCode))
-          .limit(1);
-        
-        if (existingSupplier) {
-          supplier = existingSupplier;
-          console.log(`📋 Знайдено постачальника: ${supplier.name} (ID: ${supplier.id})`);
-        } else {
-          // Створюємо нового постачальника
-          const [newSupplier] = await db
-            .insert(suppliers)
-            .values({
-              name: invoice.supplierName || 'Невідомий постачальник',
-              fullName: invoice.supplierName,
-              taxCode: invoice.supplierTaxCode,
-              clientTypeId: 1, // За замовчуванням перший тип
-              isActive: true
-            })
-            .returning();
-          supplier = newSupplier;
-          console.log(`✅ Створено постачальника: ${supplier.name} (ID: ${supplier.id})`);
-        }
-      } else {
-        // Шукаємо за назвою або створюємо з назвою
-        const [existingSupplier] = await db
-          .select()
-          .from(suppliers)
-          .where(eq(suppliers.name, invoice.supplierName || 'Невідомий постачальник'))
-          .limit(1);
-        
-        if (existingSupplier) {
-          supplier = existingSupplier;
-        } else {
-          const [newSupplier] = await db
-            .insert(suppliers)
-            .values({
-              name: invoice.supplierName || 'Невідомий постачальник',
-              fullName: invoice.supplierName,
-              clientTypeId: 1,
-              isActive: true
-            })
-            .returning();
-          supplier = newSupplier;
-          console.log(`✅ Створено постачальника: ${supplier.name} (ID: ${supplier.id})`);
-        }
-      }
+      const supplier = await this.findOrCreateSupplier({
+        name: invoice.supplierName,
+        taxCode: invoice.supplierTaxCode,
+        source: '1C'
+      });
 
       // Створюємо прихід постачальника
       const [receipt] = await db
@@ -11527,53 +11481,11 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Знаходимо або створюємо постачальника
-      let supplier;
-      if (invoiceData.supplierTaxCode) {
-        // Шукаємо постачальника за ЄДРПОУ
-        const [existingSupplier] = await db
-          .select()
-          .from(suppliers)
-          .where(eq(suppliers.taxCode, invoiceData.supplierTaxCode))
-          .limit(1);
-        
-        if (existingSupplier) {
-          supplier = existingSupplier;
-        } else {
-          const [newSupplier] = await db
-            .insert(suppliers)
-            .values({
-              name: invoiceData.supplierName || 'Невідомий постачальник',
-              fullName: invoiceData.supplierName,
-              taxCode: invoiceData.supplierTaxCode,
-              clientTypeId: 1,
-              isActive: true
-            })
-            .returning();
-          supplier = newSupplier;
-        }
-      } else {
-        // Шукаємо за назвою або створюємо
-        const [existingSupplier] = await db
-          .select()
-          .from(suppliers)
-          .where(eq(suppliers.name, invoiceData.supplierName || 'Невідомий постачальник'))
-          .limit(1);
-        
-        if (existingSupplier) {
-          supplier = existingSupplier;
-        } else {
-          const [newSupplier] = await db
-            .insert(suppliers)
-            .values({
-              name: invoiceData.supplierName || 'Невідомий постачальник',
-              fullName: invoiceData.supplierName,
-              clientTypeId: 1,
-              isActive: true
-            })
-            .returning();
-          supplier = newSupplier;
-        }
-      }
+      const supplier = await this.findOrCreateSupplier({
+        name: invoiceData.supplierName,
+        taxCode: invoiceData.supplierTaxCode,
+        source: '1C'
+      });
 
       // Створюємо прихід постачальника
       const [receipt] = await db
@@ -11950,51 +11862,162 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  // Допоміжний метод для створення клієнта з вихідного рахунку
-  private async findOrCreateClientForOutgoingInvoice(invoice: any) {
-    // Спочатку шукаємо існуючого клієнта за назвою або податковим кодом
+  // Універсальний метод для пошуку та створення клієнтів
+  async findOrCreateClient(data: {
+    name?: string;
+    taxCode?: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+    clientTypeId?: number;
+    source?: string;
+  }) {
     let client = null;
     
-    if (invoice.clientTaxCode) {
+    // Спочатку шукаємо існуючого клієнта за ЄДРПОУ (найнадійніший критерій)
+    if (data.taxCode) {
       const [existingClient] = await db
         .select()
         .from(clients)
-        .where(eq(clients.taxCode, invoice.clientTaxCode))
+        .where(eq(clients.taxCode, data.taxCode))
         .limit(1);
-      client = existingClient;
+      
+      if (existingClient) {
+        client = existingClient;
+        console.log(`👤 Знайдено клієнта за ЄДРПОУ ${data.taxCode}: "${client.name}" (ID: ${client.id})`);
+        return client;
+      }
     }
     
-    if (!client && invoice.clientName) {
+    // Якщо за ЄДРПОУ не знайдено, шукаємо за назвою
+    if (!client && data.name) {
       const [existingClient] = await db
         .select()
         .from(clients)
-        .where(eq(clients.name, invoice.clientName))
+        .where(eq(clients.name, data.name))
         .limit(1);
-      client = existingClient;
+      
+      if (existingClient) {
+        client = existingClient;
+        console.log(`👤 Знайдено клієнта за назвою: "${client.name}" (ID: ${client.id})`);
+        
+        // Оновлюємо ЄДРПОУ якщо його не було
+        if (data.taxCode && !client.taxCode) {
+          await db
+            .update(clients)
+            .set({ taxCode: data.taxCode, updatedAt: new Date() })
+            .where(eq(clients.id, client.id));
+          console.log(`👤 Оновлено ЄДРПОУ для клієнта ${client.name}: ${data.taxCode}`);
+        }
+        
+        return client;
+      }
     }
     
     // Якщо клієнт не знайдений, створюємо нового
     if (!client) {
       const clientData = {
-        name: invoice.clientName || 'Невідомий клієнт',
-        taxCode: invoice.clientTaxCode || null,
-        email: null,
-        phone: null,
-        address: null,
-        clientTypeId: 1, // припускаємо стандартний тип клієнта
+        name: data.name || 'Невідомий клієнт',
+        taxCode: data.taxCode || null,
+        email: data.email || null,
+        phone: data.phone || null,
+        legalAddress: data.address || null,
+        clientTypeId: data.clientTypeId || 1,
         isActive: true,
-        created_at: new Date(),
-        updated_at: new Date()
+        source: data.source || 'import',
+        notes: data.source ? `Автоматично створено з ${data.source}` : null
       };
       
       const [newClient] = await db.insert(clients).values(clientData).returning();
       client = newClient;
-      console.log(`👤 Створено нового клієнта: "${invoice.clientName}" (ID: ${client.id})`);
-    } else {
-      console.log(`👤 Знайдено існуючого клієнта: "${client.name}" (ID: ${client.id})`);
+      console.log(`✅ Створено нового клієнта: "${data.name}" (ЄДРПОУ: ${data.taxCode}, ID: ${client.id})`);
     }
     
     return client;
+  }
+
+  // Допоміжний метод для створення клієнта з вихідного рахунку
+  private async findOrCreateClientForOutgoingInvoice(invoice: any) {
+    return await this.findOrCreateClient({
+      name: invoice.clientName,
+      taxCode: invoice.clientTaxCode,
+      source: '1C'
+    });
+  }
+
+  // Універсальний метод для пошуку та створення постачальників
+  async findOrCreateSupplier(data: {
+    name?: string;
+    taxCode?: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+    clientTypeId?: number;
+    source?: string;
+  }) {
+    let supplier = null;
+    
+    // Спочатку шукаємо існуючого постачальника за ЄДРПОУ
+    if (data.taxCode) {
+      const [existingSupplier] = await db
+        .select()
+        .from(suppliers)
+        .where(eq(suppliers.taxCode, data.taxCode))
+        .limit(1);
+      
+      if (existingSupplier) {
+        supplier = existingSupplier;
+        console.log(`🏭 Знайдено постачальника за ЄДРПОУ ${data.taxCode}: "${supplier.name}" (ID: ${supplier.id})`);
+        return supplier;
+      }
+    }
+    
+    // Якщо за ЄДРПОУ не знайдено, шукаємо за назвою
+    if (!supplier && data.name) {
+      const [existingSupplier] = await db
+        .select()
+        .from(suppliers)
+        .where(eq(suppliers.name, data.name))
+        .limit(1);
+      
+      if (existingSupplier) {
+        supplier = existingSupplier;
+        console.log(`🏭 Знайдено постачальника за назвою: "${supplier.name}" (ID: ${supplier.id})`);
+        
+        // Оновлюємо ЄДРПОУ якщо його не було
+        if (data.taxCode && !supplier.taxCode) {
+          await db
+            .update(suppliers)
+            .set({ taxCode: data.taxCode, updatedAt: new Date() })
+            .where(eq(suppliers.id, supplier.id));
+          console.log(`🏭 Оновлено ЄДРПОУ для постачальника ${supplier.name}: ${data.taxCode}`);
+        }
+        
+        return supplier;
+      }
+    }
+    
+    // Якщо постачальник не знайдений, створюємо нового
+    if (!supplier) {
+      const supplierData = {
+        name: data.name || 'Невідомий постачальник',
+        fullName: data.name,
+        taxCode: data.taxCode || null,
+        email: data.email || null,
+        phone: data.phone || null,
+        legalAddress: data.address || null,
+        clientTypeId: data.clientTypeId || 1,
+        isActive: true,
+        source: data.source || 'import',
+        notes: data.source ? `Автоматично створено з ${data.source}` : null
+      };
+      
+      const [newSupplier] = await db.insert(suppliers).values(supplierData).returning();
+      supplier = newSupplier;
+      console.log(`✅ Створено нового постачальника: "${data.name}" (ЄДРПОУ: ${data.taxCode}, ID: ${supplier.id})`);
+    }
+    
+    return supplier;
   }
 
   // МЕТОДИ ЛОГУВАННЯ

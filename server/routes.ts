@@ -12934,5 +12934,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // TEST ENDPOINTS FOR findOrCreateClient AND findOrCreateSupplier
+
+  // Тестування створення/пошуку клієнта
+  app.post('/api/test/find-or-create-client', isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log('🧪 Тестування findOrCreateClient з даними:', JSON.stringify(req.body, null, 2));
+      const client = await storage.findOrCreateClient(req.body);
+      console.log('✅ Результат findOrCreateClient:', client);
+      res.json({
+        success: true,
+        client,
+        message: `Клієнт ${client.id} успішно знайдений/створений`
+      });
+    } catch (error) {
+      console.error('❌ Помилка тестування findOrCreateClient:', error);
+      res.status(500).json({ 
+        success: false,
+        error: error.message,
+        message: 'Помилка створення/пошуку клієнта'
+      });
+    }
+  });
+
+  // Тестування створення/пошуку постачальника
+  app.post('/api/test/find-or-create-supplier', isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log('🧪 Тестування findOrCreateSupplier з даними:', JSON.stringify(req.body, null, 2));
+      const supplier = await storage.findOrCreateSupplier(req.body);
+      console.log('✅ Результат findOrCreateSupplier:', supplier);
+      res.json({
+        success: true,
+        supplier,
+        message: `Постачальник ${supplier.id} успішно знайдений/створений`
+      });
+    } catch (error) {
+      console.error('❌ Помилка тестування findOrCreateSupplier:', error);
+      res.status(500).json({ 
+        success: false,
+        error: error.message,
+        message: 'Помилка створення/пошуку постачальника'
+      });
+    }
+  });
+
+  // Тестування імпорту з автоматичним створенням сутностей
+  app.post('/api/test/import-with-auto-create', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { type, data } = req.body;
+      console.log(`🧪 Тестування імпорту типу "${type}" з автоматичним створенням:`);
+      console.log(JSON.stringify(data, null, 2));
+      
+      let result;
+      if (type === 'invoice') {
+        result = await storage.import1CInvoiceFromData(data);
+      } else if (type === 'outgoing_invoice') {
+        result = await storage.import1COutgoingInvoice(data.id || 'test-invoice');
+      } else {
+        throw new Error(`Невідомий тип імпорту: ${type}`);
+      }
+      
+      console.log('✅ Результат імпорту:', result);
+      res.json({
+        success: true,
+        result,
+        message: `Імпорт типу "${type}" успішно завершено`
+      });
+    } catch (error) {
+      console.error('❌ Помилка тестування імпорту:', error);
+      res.status(500).json({ 
+        success: false,
+        error: error.message,
+        message: 'Помилка імпорту з автоматичним створенням'
+      });
+    }
+  });
+
   return httpServer;
 }
