@@ -731,6 +731,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint для отримання замовлених товарів (оплачені але не відвантажені)
+  app.get("/api/products/ordered", async (req, res) => {
+    try {
+      const orderedProducts = await storage.getOrderedProducts();
+      res.json(orderedProducts);
+    } catch (error) {
+      console.error("Error fetching ordered products:", error);
+      res.status(500).json({ error: "Failed to fetch ordered products" });
+    }
+  });
+
   app.get("/api/products/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);

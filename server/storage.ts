@@ -167,6 +167,9 @@ export interface IStorage {
   // Ordered Products Info
   getOrderedProductsInfo(): Promise<any[]>;
   createProductionTaskFromOrder(productId: number, quantity: number, notes?: string): Promise<ProductionTask>;
+  
+  // Ordered Products (paid but not shipped)
+  getOrderedProducts(): Promise<any[]>;
 
   // Suppliers
   getSuppliers(): Promise<Supplier[]>;
@@ -2250,6 +2253,10 @@ export class MemStorage implements IStorage {
 
   async delete1CClient(external1cId: string): Promise<any> {
     throw new Error("MemStorage не підтримує синхронізацію клієнтів");
+  }
+
+  async getOrderedProducts(): Promise<any[]> {
+    return [];
   }
 }
 

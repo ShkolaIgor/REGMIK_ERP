@@ -66,6 +66,7 @@ export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [showOrderedProducts, setShowOrderedProducts] = useState(false);
   
   const { data: products = [], isLoading, isError } = useQuery({
     queryKey: ['/api/products'],
@@ -73,6 +74,11 @@ export default function ProductsPage() {
 
   const { data: categories = [] } = useQuery({
     queryKey: ['/api/categories'],
+  });
+
+  const { data: orderedProducts = [], isLoading: orderedLoading } = useQuery({
+    queryKey: ['/api/products/ordered'],
+    enabled: showOrderedProducts, // Завантажуємо тільки коли потрібно
   });
 
   // Фільтрування товарів
@@ -300,6 +306,17 @@ export default function ProductsPage() {
 
                 <div className="flex items-center space-x-3">
                   <Button 
+                    variant={showOrderedProducts ? "default" : "outline"}
+                    onClick={() => setShowOrderedProducts(!showOrderedProducts)}
+                    className={showOrderedProducts ? 
+                      "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700" : 
+                      "border-green-200 text-green-600 hover:bg-green-50"
+                    }
+                  >
+                    <Layers className="w-4 h-4 mr-2" />
+                    {showOrderedProducts ? "Всі товари" : "Замовлені товари"}
+                  </Button>
+                  <Button 
                     variant="outline" 
                     onClick={() => setIsImportDialogOpen(true)}
                     className={`border-blue-200 text-blue-600 hover:bg-blue-50 ${!isAuthenticated ? 'opacity-50' : ''}`}
@@ -328,8 +345,96 @@ export default function ProductsPage() {
           </Card>
         </div>
 
-        {/* DataTable компонент */}
-        <DataTable
+        {/* Conditional content based on view */}
+        {showOrderedProducts ? (
+          // Замовлені товари (оплачені але не відвантажені)
+          <Card className="bg-white/80 backdrop-blur-sm border-green-200 shadow-xl">
+            <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-200/50">
+              <CardTitle className="text-green-800 flex items-center gap-2">
+                <Layers className="w-5 h-5" />
+                Замовлені товари у виробництві
+              </CardTitle>
+              <CardDescription className="text-green-600">
+                Оплачені товари, що знаходяться у виробництві (не відвантажені)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              {orderedLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                  <span className="ml-3 text-green-600">Завантаження замовлених товарів...</span>
+                </div>
+              ) : orderedProducts.length === 0 ? (
+                <div className="text-center py-12">
+                  <Package className="w-16 h-16 text-green-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-green-800 mb-2">Немає замовлених товарів</h3>
+                  <p className="text-green-600">Наразі немає оплачених товарів у виробництві</p>
+                </div>
+              ) : (
+                <DataTable
+                  data={orderedProducts}
+                  columns={[
+                    {
+                      key: 'orderNumber',
+                      label: 'Замовлення',
+                      sortable: true,
+                      width: '140px'
+                    },
+                    {
+                      key: 'productName',
+                      label: 'Товар',
+                      sortable: true,
+                      render: (value, row) => (
+                        <div>
+                          <div className="font-medium">{value}</div>
+                          <div className="text-sm text-gray-500">{row.productSku}</div>
+                        </div>
+                      )
+                    },
+                    {
+                      key: 'orderedQuantity',
+                      label: 'К-сть',
+                      sortable: true,
+                      width: '80px',
+                      render: (value) => `${value} шт.`
+                    },
+                    {
+                      key: 'unitPrice',
+                      label: 'Ціна',
+                      sortable: true,
+                      width: '100px',
+                      render: (value) => `${parseFloat(value).toLocaleString()} ₴`
+                    },
+                    {
+                      key: 'totalItemPrice',
+                      label: 'Сума',
+                      sortable: true,
+                      width: '120px',
+                      render: (value) => `${parseFloat(value).toLocaleString()} ₴`
+                    },
+                    {
+                      key: 'clientName',
+                      label: 'Клієнт',
+                      sortable: true,
+                      render: (value) => value || 'Невідомий клієнт'
+                    },
+                    {
+                      key: 'paymentDate',
+                      label: 'Дата оплати',
+                      sortable: true,
+                      width: '120px',
+                      render: (value) => value ? new Date(value).toLocaleDateString('uk-UA') : '-'
+                    }
+                  ]}
+                  rowClassName="hover:bg-green-50"
+                  pageSize={25}
+                />
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          // Звичайна таблиця товарів
+          <DataTable
           data={filteredProducts}
           onRowClick={handleEdit}
           columns={[
@@ -487,6 +592,7 @@ export default function ProductsPage() {
             </div>
           )}
         />
+        )}
 
         {/* Діалог редагування товару */}
         <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>

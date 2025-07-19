@@ -4671,6 +4671,46 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getOrderedProducts(): Promise<any[]> {
+    try {
+      // Отримуємо товари з оплачених замовлень у статусі "Виробництво" (не відвантажені)
+      const orderedProducts = await db
+      .select({
+        orderId: orders.id,
+        orderNumber: orders.orderNumber,
+        orderDate: orders.createdAt,
+        paymentDate: orders.paymentDate,
+        paidAmount: orders.paidAmount,
+        totalAmount: orders.totalAmount,
+        status: orders.status,
+        productId: orderItems.productId,
+        productName: products.name,
+        productSku: products.sku,
+        orderedQuantity: orderItems.quantity,
+        unitPrice: orderItems.price,
+        totalItemPrice: sql<number>`${orderItems.quantity} * ${orderItems.price}`,
+        clientId: orders.clientId,
+        clientName: sql<string>`COALESCE(${clients.name}, 'Не вказано')`,
+        notes: orders.notes
+      })
+      .from(orders)
+      .innerJoin(orderItems, eq(orders.id, orderItems.orderId))
+      .innerJoin(products, eq(orderItems.productId, products.id))
+      .leftJoin(clients, eq(orders.clientId, clients.id))
+      .where(and(
+        eq(orders.status, 'Виробництво'), // Замовлення у виробництві
+        sql`${orders.paidAmount} > 0`, // Оплачене
+        isNotNull(orders.paymentDate) // Є дата оплати
+      ))
+      .orderBy(orders.paymentDate, orders.orderNumber);
+
+      return orderedProducts;
+    } catch (error) {
+      console.error("Error getting ordered products:", error);
+      return [];
+    }
+  }
+
   async createProductionTaskFromOrder(productId: number, quantity: number, notes?: string): Promise<any> {
     try {
       // Знаходимо продукт та його рецепт
