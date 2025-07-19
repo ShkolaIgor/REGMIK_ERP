@@ -1697,22 +1697,14 @@ export default function Orders() {
                     <div className="relative">
                       <Input
                         placeholder="Почніть вводити назву клієнта..."
-                        value={(() => {
-                          const clientId = form.watch("clientId");
-                          if (!clientId) return clientSearchValue;
-                          
-                          // allClients має структуру {clients: [...]} в production
-                          const clientsArray = allClients?.clients || allClients || [];
-                          const client = clientsArray.find((c: any) => c.id.toString() === clientId);
-                          return client?.name || clientSearchValue;
-                        })()}
+                        value={clientSearchValue}
                         onChange={(e) => {
                           const value = e.target.value;
                           console.log('Client field onChange:', value);
                           setClientSearchValue(value);
                           
-                          // Очищаємо обраний ID при зміні тексту пошуку
-                          if (form.watch("clientId")) {
+                          // Очищаємо обраний ID тільки якщо користувач щось міняв
+                          if (value !== clientSearchValue && form.watch("clientId")) {
                             form.setValue("clientId", "");
                             setSelectedClientId("");
                           }
@@ -1726,15 +1718,6 @@ export default function Orders() {
                         }}
                         onFocus={() => {
                           console.log('Client field focused, current value:', clientSearchValue);
-                          // При фокусі, якщо є обраний клієнт, очищаємо поле для редагування
-                          if (form.watch("clientId")) {
-                            const clientsArray = allClients?.clients || allClients || [];
-                            const selectedClient = clientsArray.find((c: any) => c.id.toString() === form.watch("clientId"));
-                            console.log('Found selected client on focus:', selectedClient?.name);
-                            setClientSearchValue(selectedClient?.name || "");
-                            form.setValue("clientId", "");
-                            setSelectedClientId("");
-                          }
                           // Відкриваємо список для пошуку
                           setClientComboboxOpen(true);
                         }}
