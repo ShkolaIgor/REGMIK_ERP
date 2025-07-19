@@ -1174,30 +1174,6 @@ export default function Orders() {
 
   // Функція для початку редагування замовлення - ОПТИМІЗОВАНА
   const handleEditOrder = (order: any) => {
-    console.log("Starting to edit order:", order);
-    console.log("Looking for client with ID:", order.clientId);
-    console.log("Available clients:", allClients?.clients?.length || 0);
-    console.log("AllClients structure:", allClients);
-    
-    // Перевіряємо чи існує клієнт з таким ID
-    const clientsArray = allClients?.clients || allClients || [];
-    const foundClient = clientsArray.find((c: any) => c.id === order.clientId);
-    
-    console.log("Found client:", foundClient ? foundClient.name : "NOT FOUND");
-    
-    if (!foundClient && order.clientId) {
-      console.log("Client not found in allClients, clear search");
-      // Клієнт не знайдений - можливо застарілі дані
-      toast({
-        title: "Попередження",
-        description: `Клієнт з ID ${order.clientId} не знайдений. Можливо дані застаріли.`,
-        variant: "destructive",
-      });
-      // Примусово оновлюємо дані клієнтів та замовлень
-      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      return;
-    }
     
     // Використовуємо існуючі дані замовлення без додаткового запиту
     setEditingOrder(order);
