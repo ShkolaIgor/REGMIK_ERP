@@ -8463,7 +8463,28 @@ export class DatabaseStorage implements IStorage {
               });
             }
 
-            await db.insert(orders).values(orderData);
+            // Шукаємо існуюче замовлення за номером
+            const existingOrder = await db.select({ id: orders.id })
+              .from(orders)
+              .where(eq(orders.orderNumber, orderData.orderNumber))
+              .limit(1);
+
+            if (existingOrder.length > 0) {
+              // Оновлюємо існуюче замовлення
+              await db.update(orders)
+                .set(orderData)
+                .where(eq(orders.id, existingOrder[0].id));
+              
+              result.warnings.push({
+                row: rowNumber,
+                warning: `Замовлення ${orderData.orderNumber} оновлено`,
+                data: row
+              });
+            } else {
+              // Створюємо нове замовлення
+              await db.insert(orders).values(orderData);
+            }
+            
             result.success++;
 
           } catch (error) {
@@ -8695,10 +8716,29 @@ export class DatabaseStorage implements IStorage {
             });
           }
 
-          // Створюємо замовлення
-          const [createdOrder] = await db.insert(orders)
-            .values(orderData)
-            .returning();
+          // Шукаємо існуюче замовлення за номером
+          const existingOrder = await db.select({ id: orders.id })
+            .from(orders)
+            .where(eq(orders.orderNumber, orderData.orderNumber))
+            .limit(1);
+
+          if (existingOrder.length > 0) {
+            // Оновлюємо існуюче замовлення
+            await db.update(orders)
+              .set(orderData)
+              .where(eq(orders.id, existingOrder[0].id));
+            
+            result.warnings.push({
+              row: rowNumber,
+              warning: `Замовлення ${orderData.orderNumber} оновлено`,
+              data: row
+            });
+          } else {
+            // Створюємо нове замовлення
+            const [createdOrder] = await db.insert(orders)
+              .values(orderData)
+              .returning();
+          }
 
           result.success++;
 
@@ -13218,11 +13258,35 @@ export class DatabaseStorage implements IStorage {
         createdAt: new Date()
       };
       
-      // Create order
-      const [order] = await db.insert(orders).values(orderRecord).returning();
+      // Перевіряємо чи вже існує замовлення з таким номером рахунку
+      const existingOrder = await db.select({ id: orders.id })
+        .from(orders)
+        .where(eq(orders.invoiceNumber, orderRecord.invoiceNumber))
+        .limit(1);
+
+      let order: any;
+      if (existingOrder.length > 0) {
+        // Оновлюємо існуюче замовлення
+        [order] = await db.update(orders)
+          .set(orderRecord)
+          .where(eq(orders.id, existingOrder[0].id))
+          .returning();
+        
+        console.log(`🔄 Webhook: Оновлено існуюче замовлення з номером рахунку ${orderRecord.invoiceNumber}`);
+      } else {
+        // Створюємо нове замовлення
+        [order] = await db.insert(orders).values(orderRecord).returning();
+        console.log(`✅ Webhook: Створено нове замовлення з номером рахунку ${orderRecord.invoiceNumber}`);
+      }
       
       // Process invoice items if provided
       if (invoiceData.positions && Array.isArray(invoiceData.positions)) {
+        // Якщо це оновлення існуючого замовлення, видаляємо старі позиції
+        if (existingOrder.length > 0) {
+          await db.delete(orderItems).where(eq(orderItems.orderId, order.id));
+          console.log(`🗑️ Webhook: Видалено старі позиції для замовлення ${order.id}`);
+        }
+        
         console.log(`📦 Webhook: Збереження ${invoiceData.positions.length} позицій товарів для замовлення ${order.id}`);
         for (const position of invoiceData.positions) {
           const itemRecord = {

@@ -540,12 +540,27 @@ export async function sendInvoiceToERPWebhook(invoiceData: BitrixInvoiceData): P
       clientId: clientSync.clientId,
       status: mapBitrixStatusToERP(invoiceData.STATUS),
       totalAmount: invoiceData.PRICE.toString(),
+      invoiceNumber: invoiceData.ACCOUNT_NUMBER,
       notes: `Синхронізовано з Бітрікс24 через webhook (ID: ${invoiceData.ID}, рахунок: ${invoiceData.ACCOUNT_NUMBER})`
     };
 
-    // Створюємо нове замовлення
-    const order = await storage.createOrder(orderData);
-    console.log(`[WEBHOOK ERP] Створено нове замовлення в ERP: ${order.orderNumber} (ID: ${order.id})`);
+    // Перевіряємо чи вже існує замовлення з таким номером рахунку Бітрікс24
+    const existingOrders = await storage.getOrders();
+    const existingOrder = existingOrders.find(o => 
+      o.invoiceNumber === invoiceData.ACCOUNT_NUMBER || 
+      o.notes?.includes(`ID: ${invoiceData.ID}`)
+    );
+    
+    let order: any;
+    if (existingOrder) {
+      // Оновлюємо існуюче замовлення
+      order = await storage.updateOrder(existingOrder.id, orderData);
+      console.log(`[WEBHOOK ERP] Оновлено існуюче замовлення в ERP: ${order.orderNumber} (ID: ${order.id})`);
+    } else {
+      // Створюємо нове замовлення
+      order = await storage.createOrder(orderData);
+      console.log(`[WEBHOOK ERP] Створено нове замовлення в ERP: ${order.orderNumber} (ID: ${order.id})`);
+    }
 
     // Отримуємо позиції рахунку з Бітрікс24
     const invoiceItems = await getOrderItemsFromBitrix(invoiceData.ID);
