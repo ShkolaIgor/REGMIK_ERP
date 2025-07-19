@@ -1347,6 +1347,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // TEST ENDPOINT - Тестування динамічного пошуку перевізників
+  app.get("/api/test-carrier-mapping/:transportIndex", async (req, res) => {
+    try {
+      const transportIndex = req.params.transportIndex;
+      console.log(`🚚 CARRIER MAPPING TEST: INDEX_TRANSPORT="${transportIndex}"`);
+      
+      // Спочатку пробуємо знайти перевізника за ID
+      const transportId = parseInt(transportIndex);
+      let carrierResult = await db.select({ id: carriers.id, name: carriers.name })
+        .from(carriers)
+        .where(eq(carriers.id, transportId))
+        .limit(1);
+
+      if (carrierResult.length > 0) {
+        res.json({
+          indexTransport: transportIndex,
+          foundCarrier: carrierResult[0],
+          searchMethod: "by_id",
+          success: true,
+          message: `Знайдено перевізника за ID: ${carrierResult[0].name} (ID: ${carrierResult[0].id})`
+        });
+        return;
+      }
+
+      // Якщо за ID не знайдено, пробуємо за назвою
+      carrierResult = await db.select({ id: carriers.id, name: carriers.name })
+        .from(carriers)
+        .where(eq(carriers.name, transportIndex))
+        .limit(1);
+
+      if (carrierResult.length > 0) {
+        res.json({
+          indexTransport: transportIndex,
+          foundCarrier: carrierResult[0],
+          searchMethod: "by_name",
+          success: true,
+          message: `Знайдено перевізника за назвою: ${carrierResult[0].name} (ID: ${carrierResult[0].id})`
+        });
+        return;
+      }
+
+      // Якщо не знайдено - використовуємо fallback
+      res.json({
+        indexTransport: transportIndex,
+        foundCarrier: { id: 4, name: "Нова пошта" },
+        searchMethod: "fallback",
+        success: false,
+        message: `Перевізник з INDEX_TRANSPORT=${transportIndex} не знайдений, використано Нова Пошта за замовчуванням`
+      });
+
+    } catch (error) {
+      console.error('❌ Carrier mapping test error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Get status for components XML import job
   app.get("/api/components/import-xml/:jobId/status", (req, res) => {
     const jobId = req.params.jobId;

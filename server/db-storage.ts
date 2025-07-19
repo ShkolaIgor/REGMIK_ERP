@@ -8417,11 +8417,44 @@ export class DatabaseStorage implements IStorage {
             }
 
             if (row.INDEX_TRANSPORT) {
-              const transportIndex = parseInt(row.INDEX_TRANSPORT);
-              const transportMapping: { [key: number]: number } = {
-                1: 4, 2: 5, 3: 4, 4: 4, 5: 4, 6: 6, 7: 7, 8: 8, 9: 4, 10: 4,
-              };
-              orderData.carrierId = transportMapping[transportIndex] || 4;
+              try {
+                // Спочатку пробуємо знайти перевізника за ID
+                const transportId = parseInt(row.INDEX_TRANSPORT);
+                let carrierResult = await db.select({ id: carriers.id })
+                  .from(carriers)
+                  .where(eq(carriers.id, transportId))
+                  .limit(1);
+
+                if (carrierResult.length > 0) {
+                  orderData.carrierId = carrierResult[0].id;
+                } else {
+                  // Якщо за ID не знайдено, пробуємо за назвою
+                  carrierResult = await db.select({ id: carriers.id })
+                    .from(carriers)
+                    .where(eq(carriers.name, row.INDEX_TRANSPORT))
+                    .limit(1);
+
+                  if (carrierResult.length > 0) {
+                    orderData.carrierId = carrierResult[0].id;
+                  } else {
+                    // За замовчуванням використовуємо Нова Пошта (ID: 4)
+                    orderData.carrierId = 4;
+                    result.warnings.push({
+                      row: rowNumber,
+                      warning: `Перевізник з INDEX_TRANSPORT=${row.INDEX_TRANSPORT} не знайдений, використано Нова Пошта`,
+                      data: row
+                    });
+                  }
+                }
+              } catch (error) {
+                // За замовчуванням Нова Пошта
+                orderData.carrierId = 4;
+                result.warnings.push({
+                  row: rowNumber,
+                  warning: `Помилка обробки INDEX_TRANSPORT=${row.INDEX_TRANSPORT}: ${error.message}`,
+                  data: row
+                });
+              }
             }
 
             if (row.INDEX_ZAKAZCHIK && clientId) {
@@ -8656,31 +8689,43 @@ export class DatabaseStorage implements IStorage {
             }
           }
 
-          // Обробляємо INDEX_TRANSPORT для carrier_id з мапуванням
+          // Обробляємо INDEX_TRANSPORT для carrier_id з динамічним пошуком
           if (row.INDEX_TRANSPORT) {
-            const transportIndex = parseInt(row.INDEX_TRANSPORT);
-            // Мапування INDEX_TRANSPORT -> carrier_id
-            const transportMapping: { [key: number]: number } = {
-              1: 4,  // Нова пошта
-              2: 5,  // Міст
-              3: 4,  // Нова пошта
-              4: 4,  // Нова пошта
-              5: 4,  // Нова пошта
-              6: 6,  // Nova Poshta
-              7: 7,  // Нова Пошта 1
-              8: 8,  // Нова Пошта
-              9: 4,  // Нова пошта (за замовчуванням)
-              10: 4, // Нова пошта (за замовчуванням)
-              // Для всіх інших значень використовуємо Нову пошту
-            };
-            
-            const mappedCarrierId = transportMapping[transportIndex] || 4; // За замовчуванням Нова пошта
-            orderData.carrierId = mappedCarrierId;
-            
-            if (!transportMapping[transportIndex]) {
+            try {
+              // Спочатку пробуємо знайти перевізника за ID
+              const transportId = parseInt(row.INDEX_TRANSPORT);
+              let carrierResult = await db.select({ id: carriers.id })
+                .from(carriers)
+                .where(eq(carriers.id, transportId))
+                .limit(1);
+
+              if (carrierResult.length > 0) {
+                orderData.carrierId = carrierResult[0].id;
+              } else {
+                // Якщо за ID не знайдено, пробуємо за назвою
+                carrierResult = await db.select({ id: carriers.id })
+                  .from(carriers)
+                  .where(eq(carriers.name, row.INDEX_TRANSPORT))
+                  .limit(1);
+
+                if (carrierResult.length > 0) {
+                  orderData.carrierId = carrierResult[0].id;
+                } else {
+                  // За замовчуванням використовуємо Нова Пошта (ID: 4)
+                  orderData.carrierId = 4;
+                  result.warnings.push({
+                    row: rowNumber,
+                    warning: `Перевізник з INDEX_TRANSPORT=${row.INDEX_TRANSPORT} не знайдений, використано Нова Пошта`,
+                    data: row
+                  });
+                }
+              }
+            } catch (error) {
+              // За замовчуванням Нова Пошта
+              orderData.carrierId = 4;
               result.warnings.push({
                 row: rowNumber,
-                warning: `INDEX_TRANSPORT=${transportIndex} не має прямого мапування, використано Нову пошту`,
+                warning: `Помилка обробки INDEX_TRANSPORT=${row.INDEX_TRANSPORT}: ${error.message}`,
                 data: row
               });
             }
