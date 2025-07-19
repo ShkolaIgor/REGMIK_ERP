@@ -1316,13 +1316,15 @@ export default function Orders() {
   // Допоміжні функції для таблиці
   // Функція для перевірки чи замовлення прострочене
   const isOrderOverdue = (order: any) => {
-    if (!order.dueDate || order.shippedDate) return false;
+    // Прострочене замовлення: оплачено + термін виготовлення минув + не відвантажено
+    if (!order.paymentDate || !order.dueDate || order.shippedDate) return false;
     
     const dueDate = new Date(order.dueDate);
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    dueDate.setHours(0, 0, 0, 0);
+    today.setHours(23, 59, 59, 999); // Кінець поточного дня
+    dueDate.setHours(23, 59, 59, 999); // Кінець дня дедлайну
     
+    // Прострочено тільки ПІСЛЯ закінчення дня дедлайну (останній день не є простроченням)
     return today > dueDate;
   };
 
