@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -171,14 +171,31 @@ export default function SupplierReceipts() {
     return { totalReceipts, totalAmount, uniqueSuppliers, thisMonthReceipts };
   }, [filteredReceipts]);
 
+  // Функція для розрахунку загальної суми
+  const calculateTotalAmount = (): number => {
+    return receiptItems.reduce((sum, item) => {
+      const quantity = parseFloat(item.quantity || '0');
+      const unitPrice = parseFloat(item.unitPrice || '0');
+      return sum + (quantity * unitPrice);
+    }, 0);
+  };
+
+  // Оновлення загальної суми при зміні позицій
+  useEffect(() => {
+    const totalAmount = calculateTotalAmount();
+    form.setValue('total_amount', totalAmount.toFixed(2));
+  }, [receiptItems, form]);
+
   // Handlers
   const onSubmit = (data: SupplierReceiptFormData) => {
     const formattedData = {
       ...data,
+      receipt_date: data.receipt_date || new Date().toISOString().split('T')[0],
+      supplier_document_date: data.supplier_document_date || null,
       supplier_id: parseInt(data.supplier_id),
       document_type_id: parseInt(data.document_type_id),
       purchase_order_id: (data.purchase_order_id && data.purchase_order_id !== "none") ? parseInt(data.purchase_order_id) : null,
-      total_amount: parseFloat(data.total_amount),
+      total_amount: parseFloat(data.total_amount) || calculateTotalAmount(),
       items: receiptItems.map(item => ({
         componentId: item.componentId,
         quantity: parseInt(item.quantity),
@@ -197,12 +214,12 @@ export default function SupplierReceipts() {
   const handleEdit = async (receipt: any) => {
     setEditingReceipt(receipt);
     form.reset({
-      receipt_date: receipt.receiptDate?.split('T')[0] || '',
+      receipt_date: receipt.receiptDate?.split('T')[0] || new Date().toISOString().split('T')[0],
       supplier_id: receipt.supplierId?.toString() || '',
       document_type_id: receipt.documentTypeId?.toString() || '',
       supplier_document_date: receipt.supplierDocumentDate?.split('T')[0] || '',
       supplier_document_number: receipt.supplierDocumentNumber || '',
-      total_amount: receipt.totalAmount?.toString() || '',
+      total_amount: receipt.totalAmount?.toString() || '0',
       comment: receipt.comment || '',
       purchase_order_id: receipt.purchaseOrderId?.toString() || 'none',
     });
