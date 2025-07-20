@@ -757,11 +757,14 @@ export const supplierReceipts = pgTable("supplier_receipts", {
 export const supplierReceiptItems = pgTable("supplier_receipt_items", {
   id: serial("id").primaryKey(),
   receiptId: integer("receipt_id").references(() => supplierReceipts.id).notNull(),
-  componentId: integer("component_id").references(() => components.id).notNull(),
+  componentId: integer("component_id").references(() => components.id),
   quantity: decimal("quantity", { precision: 12, scale: 3 }).notNull().default("0"),
   unitPrice: decimal("unit_price", { precision: 12, scale: 2 }).notNull().default("0"),
   totalPrice: decimal("total_price", { precision: 12, scale: 2 }).notNull().default("0"),
   supplierComponentName: varchar("supplier_component_name", { length: 255 }),
+  itemName: varchar("item_name", { length: 255 }),
+  itemCode: varchar("item_code", { length: 100 }),
+  unit: varchar("unit", { length: 50 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

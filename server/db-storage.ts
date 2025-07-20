@@ -13145,13 +13145,14 @@ export class DatabaseStorage implements IStorage {
       if (invoiceData.positions && Array.isArray(invoiceData.positions)) {
         for (const position of invoiceData.positions) {
           const itemRecord = {
-            supplierReceiptId: receipt.id,
+            receiptId: receipt.id,
             componentId: position.componentId || null,
             quantity: position.quantity || position.Количество || 0,
             unitPrice: position.unitPrice || position.Цена || 0,
             totalPrice: position.totalPrice || position.Сумма || 0,
             itemName: position.itemName || position.НаименованиеТовара || '',
             itemCode: position.itemCode || position.КодТовара || null,
+            unit: position.unit || position.ЕдиницаИзмерения || 'шт',
             createdAt: new Date(),
             updatedAt: new Date()
           };
@@ -13226,18 +13227,19 @@ export class DatabaseStorage implements IStorage {
       // Update positions if provided
       if (invoiceData.positions && Array.isArray(invoiceData.positions)) {
         // Delete existing items
-        await db.delete(supplierReceiptItems).where(eq(supplierReceiptItems.supplierReceiptId, existingReceipt.id));
+        await db.delete(supplierReceiptItems).where(eq(supplierReceiptItems.receiptId, existingReceipt.id));
         
         // Insert new items
         for (const position of invoiceData.positions) {
           const itemRecord = {
-            supplierReceiptId: existingReceipt.id,
+            receiptId: existingReceipt.id,
             componentId: position.componentId || null,
             quantity: position.quantity || position.Количество || 0,
             unitPrice: position.unitPrice || position.Цена || 0,
             totalPrice: position.totalPrice || position.Сумма || 0,
             itemName: position.itemName || position.НаименованиеТовара || '',
             itemCode: position.itemCode || position.КодТовара || null,
+            unit: position.unit || position.ЕдиницаИзмерения || 'шт',
             createdAt: new Date(),
             updatedAt: new Date()
           };
@@ -13276,7 +13278,7 @@ export class DatabaseStorage implements IStorage {
       }
       
       // Delete receipt items first
-      await db.delete(supplierReceiptItems).where(eq(supplierReceiptItems.supplierReceiptId, existingReceipt.id));
+      await db.delete(supplierReceiptItems).where(eq(supplierReceiptItems.receiptId, existingReceipt.id));
       
       // Delete receipt
       await db.delete(supplierReceipts).where(eq(supplierReceipts.id, existingReceipt.id));
