@@ -212,15 +212,31 @@ export default function SupplierReceipts() {
 
   // Component for displaying receipt items
   const ReceiptItemsView = ({ receiptId }: { receiptId: number }) => {
-    const { data: items, isLoading: itemsLoading } = useQuery({
+    const { data: items, isLoading: itemsLoading, error } = useQuery({
       queryKey: [`/api/supplier-receipts/${receiptId}/items`],
       enabled: receiptId > 0,
+      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+      cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+      retry: false, // Don't retry failed requests
     });
 
     if (itemsLoading) {
       return (
         <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400">
-          <p className="text-blue-700 font-medium">Завантаження позицій...</p>
+          <div className="flex items-center gap-3">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+            <p className="text-blue-700 font-medium">Завантаження позицій приходу...</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="p-6 bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-400">
+          <p className="text-red-700 font-medium">
+            Помилка завантаження позицій: {error.message || 'Невідома помилка'}
+          </p>
         </div>
       );
     }
@@ -228,7 +244,7 @@ export default function SupplierReceipts() {
     if (!items || items.length === 0) {
       return (
         <div className="p-6 bg-gradient-to-r from-gray-50 to-slate-50 border-l-4 border-gray-400">
-          <p className="text-gray-600 font-medium">Позиції не знайдено</p>
+          <p className="text-gray-600 font-medium">Немає позицій для цього приходу</p>
         </div>
       );
     }
@@ -245,7 +261,12 @@ export default function SupplierReceipts() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
                 <div className="space-y-1">
                   <span className="font-medium text-green-700 block">Товар:</span>
-                  <span className="text-gray-900 font-semibold">{item.productName || 'Невідомо'}</span>
+                  <span className="text-gray-900 font-semibold">
+                    {item.component_name || item.supplier_component_name || item.productName || 'Невідомий компонент'}
+                  </span>
+                  {item.component_sku && (
+                    <span className="text-gray-500 text-xs block">SKU: {item.component_sku}</span>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <span className="font-medium text-green-700 block">Кількість:</span>
@@ -253,11 +274,15 @@ export default function SupplierReceipts() {
                 </div>
                 <div className="space-y-1">
                   <span className="font-medium text-green-700 block">Ціна за од.:</span>
-                  <span className="text-gray-900 font-semibold">{parseFloat(item.unitPrice || 0).toLocaleString('uk-UA', { maximumFractionDigits: 2 })} ₴</span>
+                  <span className="text-gray-900 font-semibold">
+                    {parseFloat(item.unit_price || item.unitPrice || 0).toLocaleString('uk-UA', { maximumFractionDigits: 2 })} ₴
+                  </span>
                 </div>
                 <div className="space-y-1">
                   <span className="font-medium text-green-700 block">Загальна сума:</span>
-                  <span className="text-gray-900 font-bold text-lg text-green-600">{parseFloat(item.totalPrice || 0).toLocaleString('uk-UA', { maximumFractionDigits: 2 })} ₴</span>
+                  <span className="text-gray-900 font-bold text-lg text-green-600">
+                    {parseFloat(item.total_price || item.totalPrice || 0).toLocaleString('uk-UA', { maximumFractionDigits: 2 })} ₴
+                  </span>
                 </div>
               </div>
             </div>

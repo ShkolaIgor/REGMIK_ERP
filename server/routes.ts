@@ -5235,6 +5235,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get supplier receipt items by receipt ID
+  app.get('/api/supplier-receipts/:id/items', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const receiptId = parseInt(req.params.id);
+      if (isNaN(receiptId)) {
+        return res.status(400).json({ message: 'Invalid receipt ID' });
+      }
+      
+      const items = await storage.getSupplierReceiptItems(receiptId);
+      res.json(items);
+    } catch (error) {
+      console.error('Error fetching supplier receipt items:', error);
+      res.status(500).json({ message: 'Failed to fetch supplier receipt items' });
+    }
+  });
+
   // Component Supplier Mapping Endpoints
   app.get('/api/component-supplier-mappings', isSimpleAuthenticated, async (req, res) => {
     try {
