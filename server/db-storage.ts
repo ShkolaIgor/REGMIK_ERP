@@ -8922,6 +8922,18 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  private formatDate(dateString: string | null): string | null {
+    if (!dateString) return null;
+    
+    try {
+      const parsedDate = this.parseDate(dateString);
+      return parsedDate ? parsedDate.toISOString().split('T')[0] : null;
+    } catch (error) {
+      console.warn('Date formatting failed for:', dateString, error);
+      return null;
+    }
+  }
+
   private parseDecimal(value: string): string | null {
     if (!value || value.trim() === '') return null;
     
