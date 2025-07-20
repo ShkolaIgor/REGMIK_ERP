@@ -1,0 +1,153 @@
+[Debug] [vite] connecting... (client, line 495)
+[Debug] [vite] connected. (client, line 618)
+[Log] 📊 Supplier Receipts Debug: (supplier-receipts.tsx, line 73)
+Object
+
+arrayLength: 0
+
+firstReceipt: undefined
+
+isLoading: true
+
+receiptsArray: [] (0)
+
+receiptsData: [] (0)
+
+Object Prototype
+[Log] 🔍 Filtering receipts: – {receiptsArray: [], length: 0} (supplier-receipts.tsx, line 129)
+[Log] 📊 Supplier Receipts Debug: (supplier-receipts.tsx, line 73)
+Object
+
+arrayLength: 13
+
+firstReceipt: {id: 18, receiptDate: "2025-07-11T00:00:00.000Z", supplierId: 27, documentTypeId: 1, supplierDocumentDate: "2025-07-11T00:00:00.000Z", …}
+
+isLoading: false
+
+receiptsArray: [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (13)
+
+receiptsData: [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (13)
+
+Object Prototype
+[Log] 🔍 Filtering receipts: (supplier-receipts.tsx, line 129)
+Object
+
+length: 13
+
+receiptsArray: [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (13)
+
+Object Prototype
+[Log] 📊 Supplier Receipts Debug: (supplier-receipts.tsx, line 73)
+Object
+
+arrayLength: 13
+
+firstReceipt: {id: 18, receiptDate: "2025-07-11T00:00:00.000Z", supplierId: 27, documentTypeId: 1, supplierDocumentDate: "2025-07-11T00:00:00.000Z", …}
+
+isLoading: false
+
+receiptsArray: [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (13)
+
+receiptsData: [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, …] (13)
+
+Object Prototype
+[Log] 📊 Supplier Receipts Debug: (supplier-receipts.tsx, line 73)
+Object
+
+arrayLength: 13
+
+firstReceipt: {id: 18, receiptDate: "2025-07-11T00:00:00.000Z", supplierId: 27, documentTypeId: 1, supplierDocumentDate: "2025-07-11T00:00:00.000Z", …}
+
+isLoading: false
+
+receiptsArray: Array (13)
+0
+{id: 18, receiptDate: "2025-07-11T00:00:00.000Z", supplierId: 27, documentTypeId: 1, supplierDocumentDate: "2025-07-11T00:00:00.000Z", …}
+1
+{id: 17, receiptDate: "2025-07-12T00:00:00.000Z", supplierId: 26, documentTypeId: 1, supplierDocumentDate: "2025-07-12T00:00:00.000Z", …}
+2
+{id: 13, receiptDate: "2025-07-15T00:00:00.000Z", supplierId: 25, documentTypeId: 1, supplierDocumentDate: "2025-07-15T00:00:00.000Z", …}
+3
+{id: 12, receiptDate: "2025-07-15T00:00:00.000Z", supplierId: 24, documentTypeId: 1, supplierDocumentDate: "2025-07-15T00:00:00.000Z", …}
+4
+{id: 11, receiptDate: "2025-07-15T00:00:00.000Z", supplierId: 24, documentTypeId: 1, supplierDocumentDate: "2025-07-15T00:00:00.000Z", …}
+5
+{id: 9, receiptDate: "2025-06-25T00:00:00.000Z", supplierId: 21, documentTypeId: 2, supplierDocumentDate: "2025-06-24T00:00:00.000Z", …}
+6
+{id: 8, receiptDate: "2024-06-01T00:00:00.000Z", supplierId: 1, documentTypeId: 1, supplierDocumentDate: null, …}
+7
+{id: 2, receiptDate: "2024-06-01T00:00:00.000Z", supplierId: 1, documentTypeId: 1, supplierDocumentDate: null, …}
+8
+{id: 7, receiptDate: "2024-07-18T00:00:00.000Z", supplierId: 1, documentTypeId: 1, supplierDocumentDate: "2012-07-18T00:00:00.000Z", …}
+9
+{id: 6, receiptDate: "2024-01-01T00:00:00.000Z", supplierId: 1, documentTypeId: 1, supplierDocumentDate: null, …}
+10
+Object
+
+comment: null
+
+createdAt: "2025-06-23T03:57:12.683Z"
+
+documentTypeId: 1
+
+documentTypeName: "Накладна"
+
+externalId: null
+
+id: 5
+
+purchaseOrderId: null
+
+receiptDate: "2024-01-01T00:00:00.000Z"
+
+supplierDocumentDate: null
+
+supplierDocumentNumber: null
+
+supplierId: 1
+
+supplierName: "ВІАКОМ"
+
+totalAmount: "100.00"
+
+updatedAt: "2025-06-23T03:57:12.683Z"
+
+Object Prototype
+11
+{id: 4, receiptDate: "2025-06-22T00:00:00.000Z", supplierId: 1, documentTypeId: 1, supplierDocumentDate: "2025-06-18T00:00:00.000Z", …}
+12
+{id: 1, receiptDate: "2025-06-22T00:00:00.000Z", supplierId: 1, documentTypeId: 1, supplierDocumentDate: "2025-06-13T00:00:00.000Z", …}
+
+Array Prototype
+
+receiptsData: Array (13)
+0
+{id: 18, receiptDate: "2025-07-11T00:00:00.000Z", supplierId: 27, documentTypeId: 1, supplierDocumentDate: "2025-07-11T00:00:00.000Z", …}
+1
+{id: 17, receiptDate: "2025-07-12T00:00:00.000Z", supplierId: 26, documentTypeId: 1, supplierDocumentDate: "2025-07-12T00:00:00.000Z", …}
+2
+{id: 13, receiptDate: "2025-07-15T00:00:00.000Z", supplierId: 25, documentTypeId: 1, supplierDocumentDate: "2025-07-15T00:00:00.000Z", …}
+3
+{id: 12, receiptDate: "2025-07-15T00:00:00.000Z", supplierId: 24, documentTypeId: 1, supplierDocumentDate: "2025-07-15T00:00:00.000Z", …}
+4
+{id: 11, receiptDate: "2025-07-15T00:00:00.000Z", supplierId: 24, documentTypeId: 1, supplierDocumentDate: "2025-07-15T00:00:00.000Z", …}
+5
+{id: 9, receiptDate: "2025-06-25T00:00:00.000Z", supplierId: 21, documentTypeId: 2, supplierDocumentDate: "2025-06-24T00:00:00.000Z", …}
+6
+{id: 8, receiptDate: "2024-06-01T00:00:00.000Z", supplierId: 1, documentTypeId: 1, supplierDocumentDate: null, …}
+7
+{id: 2, receiptDate: "2024-06-01T00:00:00.000Z", supplierId: 1, documentTypeId: 1, supplierDocumentDate: null, …}
+8
+{id: 7, receiptDate: "2024-07-18T00:00:00.000Z", supplierId: 1, documentTypeId: 1, supplierDocumentDate: "2012-07-18T00:00:00.000Z", …}
+9
+{id: 6, receiptDate: "2024-01-01T00:00:00.000Z", supplierId: 1, documentTypeId: 1, supplierDocumentDate: null, …}
+10
+{id: 5, receiptDate: "2024-01-01T00:00:00.000Z", supplierId: 1, documentTypeId: 1, supplierDocumentDate: null, …}
+11
+{id: 4, receiptDate: "2025-06-22T00:00:00.000Z", supplierId: 1, documentTypeId: 1, supplierDocumentDate: "2025-06-18T00:00:00.000Z", …}
+12
+{id: 1, receiptDate: "2025-06-22T00:00:00.000Z", supplierId: 1, documentTypeId: 1, supplierDocumentDate: "2025-06-13T00:00:00.000Z", …}
+
+Array Prototype
+
+Object Prototype

@@ -2926,4 +2926,15 @@ export interface ProcessedInvoice1C {
   kilkistTovariv?: number; // Кількість товарів з 1С
 }
 
+// Основні типи для таблиць
+export type SupplierReceipt = typeof supplierReceipts.$inferSelect;
+export type InsertSupplierReceipt = z.infer<typeof insertSupplierReceiptSchema>;
+
+// Розширений тип для SupplierReceipt з JOIN полями
+export interface SupplierReceiptWithJoins extends SupplierReceipt {
+  supplierName?: string;
+  documentTypeName?: string;
+  purchaseOrderNumber?: string;
+}
+
 

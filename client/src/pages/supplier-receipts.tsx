@@ -20,21 +20,10 @@ import { SearchFilters } from "@/components/SearchFilters";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
 import { useAuth } from "@/hooks/useAuth";
 
-// Interfaces
-interface SupplierReceipt {
-  id: number;
-  receipt_date: string;
-  supplier_id: number;
-  document_type_id: number;
-  supplier_document_date: string | null;
-  supplier_document_number: string | null;
-  total_amount: string;
-  comment: string | null;
-  purchase_order_id: number | null;
-  supplier_name?: string;
-  document_type_name?: string;
-  purchase_order_number?: string;
-}
+import { 
+  insertSupplierReceiptSchema, 
+  type SupplierReceiptWithJoins 
+} from "@/shared/schema";
 
 // Form schema
 const supplierReceiptSchema = z.object({
@@ -53,7 +42,7 @@ type SupplierReceiptFormData = z.infer<typeof supplierReceiptSchema>;
 export default function SupplierReceipts() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [editingReceipt, setEditingReceipt] = useState<SupplierReceipt | null>(null);
+  const [editingReceipt, setEditingReceipt] = useState<SupplierReceiptWithJoins | null>(null);
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [supplierFilter, setSupplierFilter] = useState("all");
@@ -81,15 +70,6 @@ export default function SupplierReceipts() {
   });
 
   const receiptsArray = Array.isArray(receiptsData) ? receiptsData : [];
-  
-  // Debug logging
-  console.log('📊 Supplier Receipts Debug:', {
-    receiptsData,
-    receiptsArray,
-    arrayLength: receiptsArray.length,
-    firstReceipt: receiptsArray[0],
-    isLoading
-  });
 
   // Form
   const form = useForm<SupplierReceiptFormData>({
@@ -147,7 +127,6 @@ export default function SupplierReceipts() {
 
   // Filter receipts based on search and filters
   const filteredReceipts = useMemo(() => {
-    console.log('🔍 Filtering receipts:', { receiptsArray, length: receiptsArray.length });
     return receiptsArray.filter((receipt: any) => {
       // Search filter
       const matchesSearch = searchQuery === "" || 
@@ -155,13 +134,13 @@ export default function SupplierReceipts() {
         receipt.documentTypeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         receipt.supplierDocumentNumber?.toLowerCase().includes(searchQuery.toLowerCase());
 
-      // Supplier filter
+      // Supplier filter  
       const matchesSupplier = supplierFilter === "all" || 
-        receipt.supplierId.toString() === supplierFilter;
+        receipt.supplierId?.toString() === supplierFilter;
 
       // Document type filter
       const matchesDocumentType = documentTypeFilter === "all" || 
-        receipt.documentTypeId.toString() === documentTypeFilter;
+        receipt.documentTypeId?.toString() === documentTypeFilter;
 
       return matchesSearch && matchesSupplier && matchesDocumentType;
     });
@@ -201,12 +180,12 @@ export default function SupplierReceipts() {
   const handleEdit = (receipt: any) => {
     setEditingReceipt(receipt);
     form.reset({
-      receipt_date: receipt.receiptDate.split('T')[0],
-      supplier_id: receipt.supplierId.toString(),
-      document_type_id: receipt.documentTypeId.toString(),
+      receipt_date: receipt.receiptDate?.split('T')[0] || '',
+      supplier_id: receipt.supplierId?.toString() || '',
+      document_type_id: receipt.documentTypeId?.toString() || '',
       supplier_document_date: receipt.supplierDocumentDate?.split('T')[0] || '',
       supplier_document_number: receipt.supplierDocumentNumber || '',
-      total_amount: receipt.totalAmount,
+      total_amount: receipt.totalAmount?.toString() || '',
       comment: receipt.comment || '',
       purchase_order_id: receipt.purchaseOrderId?.toString() || 'none',
     });
