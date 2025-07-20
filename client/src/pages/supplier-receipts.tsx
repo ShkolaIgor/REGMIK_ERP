@@ -473,7 +473,7 @@ export default function SupplierReceipts() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header Section */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
         <div className="w-full px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -488,14 +488,23 @@ export default function SupplierReceipts() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="outline" className="border-purple-200 text-purple-600 hover:bg-purple-50">
-                <Upload className="h-4 w-4 mr-2" />
+              <Button 
+                variant="outline" 
+                onClick={() => setIsImportDialogOpen(true)}
+                className={`order-purple-200 text-purple-600 hover:bg-purple-50 transition-all duration-300 hover:scale-105 hover:shadow-md ${!isAuthenticated ? 'opacity-50' : ''}`}
+                disabled={!isAuthenticated}
+                title={!isAuthenticated ? "Потрібна авторизація для імпорту" : ""}
+              >
+                <Upload className="w-4 h-4 mr-2 transition-transform duration-300 hover:scale-110" />
                 Імпорт XML
+                {!isAuthenticated && <AlertTriangle className="ml-2 h-4 w-4 text-orange-500" />}
               </Button>
+              
               <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
                 <Download className="h-4 w-4 mr-2" />
                 Експорт
               </Button>
+              
               <Button 
                 className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
                 onClick={() => {
@@ -679,21 +688,6 @@ export default function SupplierReceipts() {
                     </Button>
                   }
                 />
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsImportDialogOpen(true)}
-                  className={`border-blue-200 text-blue-600 hover:bg-blue-50 transition-all duration-300 hover:scale-105 hover:shadow-md ${!isAuthenticated ? 'opacity-50' : ''}`}
-                  disabled={!isAuthenticated}
-                  title={!isAuthenticated ? "Потрібна авторизація для імпорту" : ""}
-                >
-                  <Upload className="w-4 h-4 mr-2 transition-transform duration-300 hover:scale-110" />
-                  Імпорт XML
-                  {!isAuthenticated && <AlertTriangle className="ml-2 h-4 w-4 text-orange-500" />}
-                </Button>
-                <Button variant="outline" className="transition-all duration-300 hover:scale-105 hover:shadow-md hover:bg-green-50 hover:text-green-600 hover:border-green-200">
-                  <Download className="w-4 h-4 mr-2 transition-transform duration-300 hover:scale-110" />
-                  Експорт
-                </Button>
                 <Button variant="outline" disabled className="transition-all duration-300">
                   <Scan className="w-4 h-4 mr-2" />
                   Сканер штрих-кодів
