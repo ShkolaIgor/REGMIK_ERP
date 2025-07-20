@@ -12,6 +12,7 @@ import { SearchFilters } from "@/components/SearchFilters";
 export default function OrderedProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -58,10 +59,29 @@ export default function OrderedProductsPage() {
                 </div>
               <div className="flex items-center space-x-4">
                 <Button 
-                  onClick={() => window.location.reload()}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300">
+                  onClick={async () => {
+                    setIsRefreshing(true);
+                    try {
+                      await queryClient.invalidateQueries({ queryKey: ["/api/products/ordered"] });
+                      await queryClient.refetchQueries({ queryKey: ["/api/products/ordered"] });
+                      toast({
+                        title: "Сканування завершено",
+                        description: "Список замовлених товарів оновлено. Включено всі оплачені товари.",
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "Помилка сканування",
+                        description: "Не вдалося оновити список товарів",
+                        variant: "destructive",
+                      });
+                    } finally {
+                      setIsRefreshing(false);
+                    }
+                  }}
+                  disabled={isRefreshing}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50">
                   <Package className="mr-2 h-4 w-4" />
-                  Повторне сканування замовлених товарів
+                  {isRefreshing ? "Сканування..." : "Повторне сканування замовлених товарів"}
                 </Button>
               </div>
             </div>
