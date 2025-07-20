@@ -50,6 +50,7 @@ export default function SupplierReceipts() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -197,81 +198,79 @@ export default function SupplierReceipts() {
     setIsDialogOpen(true);
   };
 
+  const handleToggleExpand = (receiptId: string | number) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(receiptId as number)) {
+        newSet.delete(receiptId as number);
+      } else {
+        newSet.add(receiptId as number);
+      }
+      return newSet;
+    });
+  };
+
+  // Component for displaying receipt items
+  const ReceiptItemsView = ({ receiptId }: { receiptId: number }) => {
+    const { data: items, isLoading: itemsLoading } = useQuery({
+      queryKey: [`/api/supplier-receipts/${receiptId}/items`],
+      enabled: receiptId > 0,
+    });
+
+    if (itemsLoading) {
+      return (
+        <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400">
+          <p className="text-blue-700 font-medium">Завантаження позицій...</p>
+        </div>
+      );
+    }
+
+    if (!items || items.length === 0) {
+      return (
+        <div className="p-6 bg-gradient-to-r from-gray-50 to-slate-50 border-l-4 border-gray-400">
+          <p className="text-gray-600 font-medium">Позиції не знайдено</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-400">
+        <h4 className="text-green-800 font-bold mb-4 text-lg flex items-center gap-2">
+          <Package className="w-5 h-5" />
+          Позиції приходу ({items.length})
+        </h4>
+        <div className="grid gap-3">
+          {items.map((item: any, index: number) => (
+            <div key={index} className="bg-white p-4 rounded-lg border border-green-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
+                <div className="space-y-1">
+                  <span className="font-medium text-green-700 block">Товар:</span>
+                  <span className="text-gray-900 font-semibold">{item.productName || 'Невідомо'}</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="font-medium text-green-700 block">Кількість:</span>
+                  <span className="text-gray-900 font-semibold">{item.quantity || 0}</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="font-medium text-green-700 block">Ціна за од.:</span>
+                  <span className="text-gray-900 font-semibold">{parseFloat(item.unitPrice || 0).toLocaleString('uk-UA', { maximumFractionDigits: 2 })} ₴</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="font-medium text-green-700 block">Загальна сума:</span>
+                  <span className="text-gray-900 font-bold text-lg text-green-600">{parseFloat(item.totalPrice || 0).toLocaleString('uk-UA', { maximumFractionDigits: 2 })} ₴</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const handleDelete = (id: number) => {
     if (confirm('Ви впевнені, що хочете видалити цей прихід?')) {
       deleteMutation.mutate(id);
     }
-  };
-
-  // Receipt items component for expanded view
-  const ReceiptItemsView = ({ receiptId }: { receiptId: number }) => {
-    console.log('ReceiptItemsView called with receiptId:', receiptId);
-    
-    const { data: receiptItemsData = [], isLoading: itemsLoading, error } = useQuery({
-      queryKey: [`/api/supplier-receipt-items/${receiptId}`],
-      enabled: !!receiptId,
-    });
-    
-    console.log('Receipt items data:', receiptItemsData);
-    console.log('Loading:', itemsLoading);
-    console.log('Error:', error);
-    
-    const receiptItems = Array.isArray(receiptItemsData) ? receiptItemsData : [];
-
-    if (itemsLoading) {
-      return <div className="p-4 text-center">Завантаження позицій...</div>;
-    }
-
-    if (error) {
-      return <div className="p-4 text-center text-red-500">Помилка завантаження: {error.message}</div>;
-    }
-
-    if (!receiptItems.length) {
-      return <div className="p-4 text-center text-gray-500">Немає позицій для цього приходу</div>;
-    }
-
-    return (
-      <div className="border-t bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
-        <div className="bg-white rounded-lg shadow-sm border border-blue-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
-                <tr>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700 border-b">Компонент</th>
-                  <th className="text-center px-4 py-3 font-medium text-gray-700 border-b w-23">SKU</th>
-                  <th className="text-center px-4 py-3 font-medium text-gray-700 border-b w-23">Кількість</th>
-                  <th className="text-center px-4 py-3 font-medium text-gray-700 border-b w-23">Ціна за од.</th>
-                  <th className="text-center px-4 py-3 font-medium text-gray-700 border-b w-23">Сума</th>
-                </tr>
-              </thead>
-              <tbody>
-                {receiptItems.map((item: any, index: number) => (
-                  <tr key={index} className="hover:bg-blue-50 transition-colors border-b border-gray-100">
-                    <td className="px-4 py-3 text-sm">{item.component_name || 'Невідомий компонент'}</td>
-                    <td className="px-4 py-3 text-sm text-center text-gray-600">{item.component_sku || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-center font-medium">{item.quantity}</td>
-                    <td className="px-4 py-3 text-sm text-center">{parseFloat(item.unit_price || 0).toFixed(2)} ₴</td>
-                    <td className="px-4 py-3 text-sm text-center font-bold text-blue-600">
-                      {(parseFloat(item.quantity || 0) * parseFloat(item.unit_price || 0)).toFixed(2)} ₴
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot className="bg-gradient-to-r from-blue-50 to-indigo-50">
-                <tr>
-                  <td colSpan={4} className="px-4 py-3 text-right font-semibold text-gray-700">Загальна сума:</td>
-                  <td className="px-4 py-3 text-center font-bold text-blue-700 text-lg">
-                    {receiptItems.reduce((sum: number, item: any) => 
-                      sum + (parseFloat(item.quantity || 0) * parseFloat(item.unit_price || 0)), 0
-                    ).toFixed(2)} ₴
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </div>
-      </div>
-    );
   };
 
   // DataTable columns for modern table
@@ -555,6 +554,9 @@ export default function SupplierReceipts() {
                 title="Список приходів постачальників"
                 description="Оберіть прихід для перегляду та редагування деталей документу"
                 storageKey="supplier-receipts-table"
+                expandableContent={(receipt: any) => <ReceiptItemsView receiptId={receipt.id} />}
+                expandedItems={expandedItems}
+                onToggleExpand={handleToggleExpand}
               />
             </CardContent>
           </Card>
