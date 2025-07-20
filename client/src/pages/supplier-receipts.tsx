@@ -70,6 +70,11 @@ export default function SupplierReceipts() {
   });
 
   const receiptsArray = Array.isArray(receiptsData) ? receiptsData : [];
+  
+  // Debug logging
+  console.log('Debug - receiptsData:', receiptsData);
+  console.log('Debug - receiptsArray length:', receiptsArray.length);
+  console.log('Debug - receiptsArray[0]:', receiptsArray[0]);
 
   // Form
   const form = useForm<SupplierReceiptFormData>({
@@ -127,7 +132,8 @@ export default function SupplierReceipts() {
 
   // Filter receipts based on search and filters
   const filteredReceipts = useMemo(() => {
-    return receiptsArray.filter((receipt: any) => {
+    console.log('Debug - filtering receipts, receiptsArray:', receiptsArray);
+    const filtered = receiptsArray.filter((receipt: any) => {
       // Search filter
       const matchesSearch = searchQuery === "" || 
         receipt.supplierName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -144,6 +150,9 @@ export default function SupplierReceipts() {
 
       return matchesSearch && matchesSupplier && matchesDocumentType;
     });
+    console.log('Debug - filtered receipts:', filtered);
+    console.log('Debug - filtered length:', filtered.length);
+    return filtered;
   }, [receiptsArray, searchQuery, supplierFilter, documentTypeFilter]);
 
   // Statistics
@@ -270,6 +279,7 @@ export default function SupplierReceipts() {
   };
 
   // DataTable columns
+  console.log('Debug - filteredReceipts for DataTable:', filteredReceipts);
   const columns: DataTableColumn[] = [
     { key: 'id', label: 'ID', sortable: true },
     { 
@@ -491,14 +501,28 @@ export default function SupplierReceipts() {
               </Card>
               </div>
 
-        {/* DataTable */}
-        <DataTable
-          data={filteredReceipts}
-          columns={columns}
-          loading={isLoading}
-          title="Список приходів від постачальників"
-          description="Оберіть прихід для перегляду та редагування"
-          storageKey="supplier-receipts"
+        {/* DataTable Debug */}
+        <div className="p-4 bg-gray-100 mb-4">
+          <p>DEBUG: filteredReceipts.length = {filteredReceipts.length}</p>
+          <p>DEBUG: isLoading = {isLoading.toString()}</p>
+          <p>DEBUG: columns.length = {columns.length}</p>
+          <p>DEBUG: receiptsArray.length = {receiptsArray.length}</p>
+          {filteredReceipts.length > 0 && (
+            <div>
+              <p>DEBUG: First receipt keys: {Object.keys(filteredReceipts[0]).join(', ')}</p>
+              <p>DEBUG: First receipt supplierName: {filteredReceipts[0].supplierName}</p>
+              <p>DEBUG: First receipt documentTypeName: {filteredReceipts[0].documentTypeName}</p>
+            </div>
+          )}
+        </div>
+        {filteredReceipts.length > 0 ? (
+          <DataTable
+            data={filteredReceipts}
+            columns={columns}
+            loading={isLoading}
+            title="Список приходів від постачальників"
+            description="Оберіть прихід для перегляду та редагування"
+            storageKey="supplier-receipts"
           actions={(receipt) => (
             <div className="flex items-center gap-1">
               <Button
@@ -530,6 +554,43 @@ export default function SupplierReceipts() {
             });
           }}
         />
+        ) : (
+          <div className="p-4 bg-white rounded-lg border">
+            <h3 className="text-lg font-semibold mb-4">Список приходів (fallback)</h3>
+            {isLoading ? (
+              <p>Завантаження...</p>
+            ) : receiptsArray.length === 0 ? (
+              <p className="text-gray-500">Дані не знайдено</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-gray-200">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="border border-gray-200 px-4 py-2 text-left">ID</th>
+                      <th className="border border-gray-200 px-4 py-2 text-left">Дата приходу</th>
+                      <th className="border border-gray-200 px-4 py-2 text-left">Постачальник</th>
+                      <th className="border border-gray-200 px-4 py-2 text-left">Тип документу</th>
+                      <th className="border border-gray-200 px-4 py-2 text-left">Номер документу</th>
+                      <th className="border border-gray-200 px-4 py-2 text-left">Сума</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {receiptsArray.slice(0, 10).map((receipt: any) => (
+                      <tr key={receipt.id}>
+                        <td className="border border-gray-200 px-4 py-2">{receipt.id}</td>
+                        <td className="border border-gray-200 px-4 py-2">{receipt.receiptDate}</td>
+                        <td className="border border-gray-200 px-4 py-2">{receipt.supplierName || 'Невідомо'}</td>
+                        <td className="border border-gray-200 px-4 py-2">{receipt.documentTypeName || 'Невідомо'}</td>
+                        <td className="border border-gray-200 px-4 py-2">{receipt.supplierDocumentNumber || '-'}</td>
+                        <td className="border border-gray-200 px-4 py-2">{receipt.totalAmount} ₴</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Dialog for Create/Edit Receipt */}

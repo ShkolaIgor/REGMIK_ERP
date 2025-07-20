@@ -226,8 +226,13 @@ export function DataTable({
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * settings.pageSize;
     const end = start + settings.pageSize;
-    return sortedData.slice(start, end);
-  }, [sortedData, currentPage, settings.pageSize]);
+    const result = sortedData.slice(start, end);
+    console.log('DataTable DEBUG - data:', data.length);
+    console.log('DataTable DEBUG - sortedData:', sortedData.length);
+    console.log('DataTable DEBUG - paginatedData:', result.length);
+    console.log('DataTable DEBUG - first item:', result[0]);
+    return result;
+  }, [sortedData, currentPage, settings.pageSize, data]);
   
   // Reduce default page size for large datasets
   useEffect(() => {
