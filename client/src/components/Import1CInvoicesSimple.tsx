@@ -5,7 +5,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Upload, FileText, Building2, Calendar, DollarSign, AlertCircle, RefreshCw } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Loader2, Upload, FileText, Building2, Calendar, DollarSign, AlertCircle, RefreshCw, ChevronDown, ChevronRight, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ProcessedInvoice1C } from "@shared/schema";
@@ -36,10 +38,12 @@ export function Import1CInvoicesSimple() {
   const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
   const [showOnlyMissing, setShowOnlyMissing] = useState(true);
   const [dateFilter, setDateFilter] = useState<DateFilterParams>({});
+  const [expandedInvoices, setExpandedInvoices] = useState<Set<string>>(new Set());
   
-  // Очищення вибору при зміні фільтра
+  // Очищення вибору та розгортання при зміні фільтра
   useEffect(() => {
     setSelectedInvoices(new Set());
+    setExpandedInvoices(new Set());
   }, [showOnlyMissing, dateFilter]);
   
   const queryClient = useQueryClient();
@@ -170,6 +174,16 @@ export function Import1CInvoicesSimple() {
     }
     
     importMutation.mutate(Array.from(selectedInvoices));
+  };
+
+  const toggleInvoiceExpansion = (invoiceId: string) => {
+    const newExpanded = new Set(expandedInvoices);
+    if (newExpanded.has(invoiceId)) {
+      newExpanded.delete(invoiceId);
+    } else {
+      newExpanded.add(invoiceId);
+    }
+    setExpandedInvoices(newExpanded);
   };
 
   const availableInvoices = invoices1C.filter((inv: Invoice1C) => !inv.exists);
@@ -354,14 +368,14 @@ export function Import1CInvoicesSimple() {
                   <Card key={invoice.id} className={`${invoice.exists ? 'opacity-50' : ''}`}>
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-3 flex-1">
                           {!invoice.exists && (
                             <Checkbox
                               checked={selectedInvoices.has(invoice.id)}
                               onCheckedChange={(checked) => handleSelectInvoice(invoice.id, !!checked)}
                             />
                           )}
-                          <div>
+                          <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <span className="font-medium">{invoice.number}</span>
                               {invoice.exists && <Badge variant="secondary">Імпортовано</Badge>}
@@ -375,7 +389,90 @@ export function Import1CInvoicesSimple() {
                             </div>
                           </div>
                         </div>
+                        <div className="flex items-center space-x-2">
+                          {invoice.items && invoice.items.length > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleInvoiceExpansion(invoice.id)}
+                              className="text-gray-500 hover:text-gray-700"
+                            >
+                              {expandedInvoices.has(invoice.id) ? (
+                                <ChevronDown className="w-4 h-4" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4" />
+                              )}
+                              <Eye className="w-4 h-4 ml-1" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
+                      
+                      {/* Розгорнуті позиції накладної */}
+                      {expandedInvoices.has(invoice.id) && invoice.items && invoice.items.length > 0 && (
+                        <div className="mt-4 border-t pt-4">
+                          <h4 className="text-sm font-medium mb-3 text-gray-700">Позиції накладної:</h4>
+                          <div className="max-h-64 overflow-y-auto">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="text-xs">Назва товару</TableHead>
+                                  <TableHead className="text-xs text-center">Кількість</TableHead>
+                                  <TableHead className="text-xs text-center">Одиниця</TableHead>
+                                  <TableHead className="text-xs text-right">Ціна</TableHead>
+                                  <TableHead className="text-xs text-right">Сума</TableHead>
+                                  <TableHead className="text-xs text-center">Статус</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {invoice.items.map((item, index) => (
+                                  <TableRow key={index} className="text-xs">
+                                    <TableCell className="font-medium max-w-[200px]">
+                                      <div className="truncate" title={item.originalName}>
+                                        {item.originalName}
+                                      </div>
+                                      {item.codeTovara && (
+                                        <div className="text-gray-500 text-xs">
+                                          Код: {item.codeTovara}
+                                        </div>
+                                      )}
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                      {item.quantity.toLocaleString('uk-UA')}
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                      {item.unit || '—'}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      {item.price.toLocaleString('uk-UA', { 
+                                        minimumFractionDigits: 2, 
+                                        maximumFractionDigits: 2 
+                                      })} ₴
+                                    </TableCell>
+                                    <TableCell className="text-right font-medium">
+                                      {item.total.toLocaleString('uk-UA', { 
+                                        minimumFractionDigits: 2, 
+                                        maximumFractionDigits: 2 
+                                      })} ₴
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                      {item.isMapped ? (
+                                        <Badge variant="default" className="text-xs">
+                                          Зіставлено
+                                        </Badge>
+                                      ) : (
+                                        <Badge variant="outline" className="text-xs">
+                                          Новий товар
+                                        </Badge>
+                                      )}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
