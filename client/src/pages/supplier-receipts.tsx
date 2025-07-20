@@ -81,6 +81,16 @@ export default function SupplierReceipts() {
   });
 
   const receiptsArray = Array.isArray(receiptsData) ? receiptsData : [];
+  
+  // Debug logging
+  console.log('📊 Supplier Receipts Debug:', {
+    receiptsData,
+    receiptsArray,
+    arrayLength: receiptsArray.length,
+    firstReceipt: receiptsArray[0],
+    isLoading,
+    error
+  });
 
   // Form
   const form = useForm<SupplierReceiptFormData>({
@@ -138,6 +148,7 @@ export default function SupplierReceipts() {
 
   // Filter receipts based on search and filters
   const filteredReceipts = useMemo(() => {
+    console.log('🔍 Filtering receipts:', { receiptsArray, length: receiptsArray.length });
     return receiptsArray.filter((receipt: any) => {
       // Search filter
       const matchesSearch = searchQuery === "" || 
