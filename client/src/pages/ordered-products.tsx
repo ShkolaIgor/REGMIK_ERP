@@ -23,19 +23,19 @@ export default function OrderedProductsPage() {
     return <div className="p-6">Завантаження...</div>;
   }
 
-  // Статистичні дані для замовлених товарів
-  const totalOrders = (orderedProducts as any[])?.length || 0;
-  const uniqueProducts = new Set((orderedProducts as any[]).map((item: any) => item.productId)).size;
-  const totalQuantity = (orderedProducts as any[]).reduce((sum: number, item: any) => sum + (item.orderedQuantity || 0), 0);
-  const totalValue = (orderedProducts as any[]).reduce((sum: number, item: any) => sum + (item.totalItemPrice || 0), 0);
+  // Статистичні дані для згрупованих товарів
+  const uniqueProducts = (orderedProducts as any[])?.length || 0;
+  const totalOrders = (orderedProducts as any[]).reduce((sum: number, item: any) => sum + (item.ordersCount || 0), 0);
+  const totalQuantity = (orderedProducts as any[]).reduce((sum: number, item: any) => sum + (item.totalQuantityToShip || 0), 0);
+  const totalValue = (orderedProducts as any[]).reduce((sum: number, item: any) => sum + (item.totalValue || 0), 0);
 
   // Фільтровані дані
   const filteredProducts = (orderedProducts as any[]).filter((item: any) => {
     const matchesSearch = !searchQuery || 
       item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.productSku?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.orderNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.clientName?.toLowerCase().includes(searchQuery.toLowerCase());
+      item.orderNumbers?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.clientNames?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
 
@@ -78,10 +78,10 @@ export default function OrderedProductsPage() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <ShoppingCart className="w-4 h-4 text-amber-600" />
-                    <p className="text-sm text-amber-700 font-medium">Позицій товарів</p>
+                    <p className="text-sm text-amber-700 font-medium">Замовлень</p>
                   </div>
                   <p className="text-3xl font-bold text-amber-900 mb-1">{totalOrders}</p>
-                  <p className="text-xs text-amber-600">В замовленнях</p>
+                  <p className="text-xs text-amber-600">Містять товари</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-amber-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
                   <ShoppingCart className="w-8 h-8 text-white" />
@@ -97,10 +97,10 @@ export default function OrderedProductsPage() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <Package className="w-4 h-4 text-red-600" />
-                    <p className="text-sm text-red-700 font-medium">Унікальних товарів</p>
+                    <p className="text-sm text-red-700 font-medium">Типів товарів</p>
                   </div>
                   <p className="text-3xl font-bold text-red-900 mb-1">{uniqueProducts}</p>
-                  <p className="text-xs text-red-600">Різних виробів</p>
+                  <p className="text-xs text-red-600">Для виробництва</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
                   <AlertTriangle className="w-8 h-8 text-white" />
@@ -169,58 +169,112 @@ export default function OrderedProductsPage() {
                 Немає замовлених товарів для відображення
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {filteredProducts.map((item: any, index: number) => (
-                  <Card key={`${item.orderId}-${item.productId}-${index}`} className="p-4 border-l-4 border-l-green-500">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* Товар */}
-                      <div className="flex items-center space-x-3">
-                        <Package className="h-5 w-5 text-blue-600" />
+                  <Card key={`product-${item.productId}-${index}`} className="p-6 border-l-4 border-l-blue-500 shadow-lg">
+                    {/* Заголовок товару */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                          <Package className="h-6 w-6 text-white" />
+                        </div>
                         <div>
-                          <h3 className="font-semibold text-lg">{item.productName || "Товар"}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            SKU: {item.productSku || "Не вказано"}
-                          </p>
+                          <h3 className="text-xl font-bold text-gray-900">{item.productName || "Товар"}</h3>
+                          <p className="text-sm text-gray-500">SKU: {item.productSku || "Не вказано"}</p>
                         </div>
                       </div>
-
-                      {/* Замовлення */}
-                      <div className="flex items-center space-x-3">
-                        <ShoppingCart className="h-5 w-5 text-amber-600" />
-                        <div>
-                          <h4 className="font-medium">Замовлення: {item.orderNumber}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            Клієнт: {item.clientName || "Не вказано"}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Оплачено: {item.paymentDate ? new Date(item.paymentDate).toLocaleDateString('uk-UA') : "Дата невідома"}
-                          </p>
-                        </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-blue-600">{item.totalQuantityToShip || 0} шт</p>
+                        <p className="text-sm text-gray-500">До виробництва</p>
                       </div>
+                    </div>
 
-                      {/* Деталі */}
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium">
-                            Кількість: <span className="text-blue-600">{item.orderedQuantity || 0} од.</span>
-                          </p>
-                          <p className="text-sm font-medium">
-                            Ціна: <span className="text-green-600">{(item.unitPrice || 0).toLocaleString()} грн</span>
-                          </p>
-                          <p className="text-sm font-bold">
-                            Сума: <span className="text-orange-600">{(item.totalItemPrice || 0).toLocaleString()} грн</span>
-                          </p>
+                    {/* Основна інформація */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                      <div className="bg-amber-50 p-3 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1">
+                          <ShoppingCart className="h-4 w-4 text-amber-600" />
+                          <span className="text-sm font-medium text-amber-700">Замовлень</span>
                         </div>
-                        <div className="flex flex-col space-y-1">
-                          <Badge className="bg-green-100 text-green-800 text-center">
-                            {item.status || "Виробництво"}
-                          </Badge>
-                          <Badge className="bg-blue-100 text-blue-800 text-center">
-                            Оплачено
-                          </Badge>
+                        <p className="text-lg font-bold text-amber-900">{item.ordersCount || 0}</p>
+                      </div>
+                      
+                      <div className="bg-green-50 p-3 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Target className="h-4 w-4 text-green-600" />
+                          <span className="text-sm font-medium text-green-700">Сер. ціна</span>
+                        </div>
+                        <p className="text-lg font-bold text-green-900">{(item.averageUnitPrice || 0).toLocaleString()} грн</p>
+                      </div>
+                      
+                      <div className="bg-orange-50 p-3 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1">
+                          <CheckCircle className="h-4 w-4 text-orange-600" />
+                          <span className="text-sm font-medium text-orange-700">Загальна вартість</span>
+                        </div>
+                        <p className="text-lg font-bold text-orange-900">{(item.totalValue || 0).toLocaleString()} грн</p>
+                      </div>
+                      
+                      <div className="bg-purple-50 p-3 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Clock className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm font-medium text-purple-700">Статуси</span>
+                        </div>
+                        <p className="text-sm font-bold text-purple-900">{item.orderStatuses || "Не вказано"}</p>
+                      </div>
+                    </div>
+
+                    {/* Деталі замовлень */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Factory className="h-4 w-4 text-gray-600" />
+                        <span className="font-medium text-gray-700">Деталі замовлень:</span>
+                      </div>
+                      
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <span className="font-medium text-gray-600">Замовлення: </span>
+                            <span className="text-gray-900">{item.orderNumbers || "Не вказано"}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-600">Клієнти: </span>
+                            <span className="text-gray-900">{item.clientNames || "Не вказано"}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-600">Перша оплата: </span>
+                            <span className="text-gray-900">{item.earliestPaymentDate ? new Date(item.earliestPaymentDate).toLocaleDateString('uk-UA') : "Не вказано"}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-600">Остання оплата: </span>
+                            <span className="text-gray-900">{item.latestPaymentDate ? new Date(item.latestPaymentDate).toLocaleDateString('uk-UA') : "Не вказано"}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Деталізовані замовлення */}
+                    {item.orderDetails && item.orderDetails.length > 0 && (
+                      <div className="mt-4">
+                        <details className="group">
+                          <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-800">
+                            <ArrowRight className="h-4 w-4 transition-transform group-open:rotate-90" />
+                            Детальна розбивка по замовленнях ({item.orderDetails.length})
+                          </summary>
+                          <div className="mt-3 space-y-2">
+                            {item.orderDetails.map((detail: any, idx: number) => (
+                              <div key={idx} className="bg-white p-3 rounded border text-xs grid grid-cols-2 md:grid-cols-5 gap-2">
+                                <div><strong>№:</strong> {detail.orderNumber}</div>
+                                <div><strong>Клієнт:</strong> {detail.clientName}</div>
+                                <div><strong>Кількість:</strong> {detail.quantityToShip} шт</div>
+                                <div><strong>Ціна:</strong> {detail.unitPrice} грн</div>
+                                <div><strong>Статус:</strong> {detail.status}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      </div>
+                    )}
                   </Card>
                 ))}
               </div>

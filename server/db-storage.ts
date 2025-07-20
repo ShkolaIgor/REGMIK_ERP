@@ -4673,25 +4673,30 @@ export class DatabaseStorage implements IStorage {
 
   async getOrderedProducts(): Promise<any[]> {
     try {
-      // Використовуємо простий SQL запит для уникнення проблем з Drizzle ORM
+      // Групуємо однакові товари разом для виробництва
       const result = await db.execute(sql`
         SELECT 
-          o.id as "orderId",
-          o.order_number as "orderNumber", 
-          o.created_at as "orderDate",
-          o.payment_date as "paymentDate",
-          o.paid_amount as "paidAmount",
-          o.total_amount as "totalAmount",
-          o.status,
           oi.product_id as "productId",
           p.name as "productName",
           p.sku as "productSku", 
-          oi.quantity as "orderedQuantity",
-          oi.unit_price as "unitPrice",
-          (oi.quantity * oi.unit_price) as "totalItemPrice",
-          o.client_id as "clientId",
-          COALESCE(c.name, 'Не вказано') as "clientName",
-          o.notes
+          SUM(oi.quantity - COALESCE(oi.shipped_quantity, 0)) as "totalQuantityToShip",
+          COUNT(DISTINCT o.id) as "ordersCount",
+          STRING_AGG(DISTINCT o.order_number, ', ' ORDER BY o.order_number) as "orderNumbers",
+          STRING_AGG(DISTINCT COALESCE(c.name, 'Не вказано'), ', ') as "clientNames",
+          MIN(o.payment_date) as "earliestPaymentDate",
+          MAX(o.payment_date) as "latestPaymentDate",
+          AVG(oi.unit_price) as "averageUnitPrice",
+          SUM((oi.quantity - COALESCE(oi.shipped_quantity, 0)) * oi.unit_price) as "totalValue",
+          STRING_AGG(DISTINCT o.status, ', ') as "orderStatuses",
+          JSON_AGG(DISTINCT jsonb_build_object(
+            'orderId', o.id,
+            'orderNumber', o.order_number,
+            'clientName', COALESCE(c.name, 'Не вказано'),
+            'quantityToShip', oi.quantity - COALESCE(oi.shipped_quantity, 0),
+            'unitPrice', oi.unit_price,
+            'paymentDate', o.payment_date,
+            'status', o.status
+          )) as "orderDetails"
         FROM orders o
         INNER JOIN order_items oi ON o.id = oi.order_id
         INNER JOIN products p ON oi.product_id = p.id  
@@ -4699,10 +4704,12 @@ export class DatabaseStorage implements IStorage {
         WHERE o.paid_amount > 0 
           AND o.payment_date IS NOT NULL
           AND COALESCE(oi.shipped_quantity, 0) < oi.quantity
-        ORDER BY o.payment_date, o.order_number
+        GROUP BY oi.product_id, p.name, p.sku
+        HAVING SUM(oi.quantity - COALESCE(oi.shipped_quantity, 0)) > 0
+        ORDER BY SUM(oi.quantity - COALESCE(oi.shipped_quantity, 0)) DESC, p.name
       `);
 
-      console.log(`Found ${result.rows.length} ordered products`);
+      console.log(`Found ${result.rows.length} grouped products for production`);
       return result.rows;
     } catch (error) {
       console.error("Error getting ordered products:", error);
