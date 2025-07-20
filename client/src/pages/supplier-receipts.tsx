@@ -43,10 +43,13 @@ export default function SupplierReceipts() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [editingReceipt, setEditingReceipt] = useState<SupplierReceiptWithJoins | null>(null);
-  const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+
   const [searchQuery, setSearchQuery] = useState("");
   const [supplierFilter, setSupplierFilter] = useState("all");
   const [documentTypeFilter, setDocumentTypeFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -71,10 +74,7 @@ export default function SupplierReceipts() {
 
   const receiptsArray = Array.isArray(receiptsData) ? receiptsData : [];
   
-  // Debug logging
-  // DEBUG: Data state
-  // console.log('Debug - receiptsData:', receiptsData);
-  // console.log('Debug - receiptsArray length:', receiptsArray.length);
+
 
   // Form
   const form = useForm<SupplierReceiptFormData>({
@@ -132,8 +132,7 @@ export default function SupplierReceipts() {
 
   // Filter receipts based on search and filters
   const filteredReceipts = useMemo(() => {
-    console.log('Debug - filtering receipts, receiptsArray:', receiptsArray);
-    const filtered = receiptsArray.filter((receipt: any) => {
+    return receiptsArray.filter((receipt: any) => {
       // Search filter
       const matchesSearch = searchQuery === "" || 
         receipt.supplierName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -150,9 +149,6 @@ export default function SupplierReceipts() {
 
       return matchesSearch && matchesSupplier && matchesDocumentType;
     });
-    console.log('Debug - filtered receipts:', filtered);
-    console.log('Debug - filtered length:', filtered.length);
-    return filtered;
   }, [receiptsArray, searchQuery, supplierFilter, documentTypeFilter]);
 
   // Statistics
@@ -278,26 +274,74 @@ export default function SupplierReceipts() {
     );
   };
 
-  // DataTable columns (не використовується зараз)
-  // console.log('Debug - filteredReceipts for DataTable:', filteredReceipts);
+  // DataTable columns for modern table
   const columns: DataTableColumn[] = [
-    { key: 'id', label: 'ID', sortable: true },
+    { 
+      key: 'id', 
+      label: 'ID', 
+      sortable: true, 
+      width: 80,
+      type: 'number'
+    },
     { 
       key: 'receiptDate', 
       label: 'Дата приходу', 
       sortable: true,
+      type: 'date',
       render: (value: any) => <UkrainianDate date={value} format="short" />
     },
-    { key: 'supplierName', label: 'Постачальник', sortable: true },
-    { key: 'documentTypeName', label: 'Тип документу', sortable: true },
-    { key: 'supplierDocumentNumber', label: 'Номер документу', sortable: true },
+    { 
+      key: 'supplierName', 
+      label: 'Постачальник', 
+      sortable: true,
+      type: 'text',
+      minWidth: 150
+    },
+    { 
+      key: 'documentTypeName', 
+      label: 'Тип документу', 
+      sortable: true,
+      type: 'badge',
+      width: 120
+    },
+    { 
+      key: 'supplierDocumentNumber', 
+      label: 'Номер документу', 
+      sortable: true,
+      type: 'text',
+      width: 140
+    },
     { 
       key: 'totalAmount', 
       label: 'Сума', 
       sortable: true,
+      type: 'number',
+      width: 120,
       render: (value: any) => `${parseFloat(value || 0).toLocaleString('uk-UA', { maximumFractionDigits: 0 })} ₴`
     },
-    { key: 'purchaseOrderNumber', label: 'Замовлення', sortable: true },
+    { 
+      key: 'purchaseOrderNumber', 
+      label: 'Замовлення', 
+      sortable: true,
+      type: 'text',
+      width: 120
+    },
+    {
+      key: 'actions',
+      label: 'Дії',
+      width: 100,
+      render: (value: any, receipt: any) => (
+        <div className="flex gap-2">
+          <Button
+            variant="outline" 
+            size="sm"
+            onClick={() => handleEdit(receipt)}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        </div>
+      )
+    }
   ];
 
   return (
@@ -307,16 +351,14 @@ export default function SupplierReceipts() {
         <div className="w-full px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <HandPlatter className="w-6 h-6 text-white" />
-            </div>
-            <div >
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
-                Приходи постачальників
-              </h1>
-              <p className="text-gray-600 mt-1">Керування документами надходжень товарів та матеріалів</p>
-            </div>
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <HandPlatter className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                  Приходи постачальників
+                </h1>
+                <p className="text-gray-600 mt-1">Керування документами надходжень товарів та матеріалів</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -420,7 +462,7 @@ export default function SupplierReceipts() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <Calendar className="w-4 h-4 text-orange-600" />
-                    <p className="text-sm text-orange-700 font-medium">Приходи цього місяця</p>
+                    <p className="text-sm text-orange-700 font-medium">За цей місяць</p>
                   </div>
                   <p className="text-3xl font-bold text-orange-900 mb-1">{statistics.thisMonthReceipts}</p>
                   <p className="text-xs text-orange-600">За поточний місяць</p>
@@ -502,91 +544,21 @@ export default function SupplierReceipts() {
               </div>
 
 
-        {/* Використовуємо власну таблицю замість проблемної DataTable */}
-        {isLoading ? (
-          <div className="p-8 text-center">
-            <p>Завантаження даних...</p>
-          </div>
-        ) : filteredReceipts.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <p>Дані не знайдено</p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg border shadow-sm">
-            <div className="p-6 border-b">
-              <h3 className="text-lg font-semibold">Список приходів від постачальників</h3>
-              <p className="text-sm text-gray-600">Оберіть прихід для перегляду та редагування</p>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">ID</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Дата приходу</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Постачальник</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Тип документу</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Номер документу</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Сума</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Дії</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {filteredReceipts.map((receipt: any) => (
-                    <React.Fragment key={receipt.id}>
-                      <tr 
-                        className="hover:bg-gray-50 cursor-pointer"
-                        onClick={() => {
-                          const id = receipt.id;
-                          setExpandedItems(prev => {
-                            const newSet = new Set(prev);
-                            if (newSet.has(id)) {
-                              newSet.delete(id);
-                            } else {
-                              newSet.add(id);
-                            }
-                            return newSet;
-                          });
-                        }}
-                      >
-                        <td className="px-4 py-3 text-sm text-gray-900">{receipt.id}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          <UkrainianDate date={receipt.receiptDate} format="short" />
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{receipt.supplierName || 'Невідомо'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{receipt.documentTypeName || 'Невідомо'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{receipt.supplierDocumentNumber || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          {parseFloat(receipt.totalAmount || 0).toLocaleString('uk-UA', { maximumFractionDigits: 0 })} ₴
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEdit(receipt);
-                            }}
-                            className="h-8 w-8 p-0"
-                            title="Редагувати"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                      {expandedItems.has(receipt.id) && (
-                        <tr>
-                          <td colSpan={7} className="px-4 py-2 bg-gray-50">
-                            <ReceiptItemsView receiptId={receipt.id} />
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        {/* Main DataTable with full functionality */}
+        <div className="w-full">
+          <Card>
+            <CardContent className="p-0">
+              <DataTable
+                data={filteredReceipts}
+                columns={columns}
+                loading={isLoading}
+                title="Список приходів постачальників"
+                description="Оберіть прихід для перегляду та редагування деталей документу"
+                storageKey="supplier-receipts-table"
+              />
+            </CardContent>
+          </Card>
+        </div>
         
 
       </div>
