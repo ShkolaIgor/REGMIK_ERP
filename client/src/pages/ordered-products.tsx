@@ -16,24 +16,26 @@ export default function OrderedProductsPage() {
   const queryClient = useQueryClient();
 
   const { data: orderedProducts = [], isLoading } = useQuery({
-    queryKey: ["/api/ordered-products-info"],
+    queryKey: ["/api/products/ordered"],
   });
 
   if (isLoading) {
     return <div className="p-6">Завантаження...</div>;
   }
 
-  // Статистичні дані
-  const totalProducts = (orderedProducts as any[])?.length || 0;
-  const lowStockProducts = (orderedProducts as any[]).filter((p: any) => p.currentStock < p.minimumStock).length;
-  const outOfStockProducts = (orderedProducts as any[]).filter((p: any) => p.currentStock === 0).length;
-  const totalOrderQuantity = (orderedProducts as any[]).reduce((sum: number, p: any) => sum + (p.totalOrderQuantity || 0), 0);
+  // Статистичні дані для замовлених товарів
+  const totalOrders = (orderedProducts as any[])?.length || 0;
+  const uniqueProducts = new Set((orderedProducts as any[]).map((item: any) => item.productId)).size;
+  const totalQuantity = (orderedProducts as any[]).reduce((sum: number, item: any) => sum + (item.orderedQuantity || 0), 0);
+  const totalValue = (orderedProducts as any[]).reduce((sum: number, item: any) => sum + (item.totalItemPrice || 0), 0);
 
   // Фільтровані дані
-  const filteredProducts = (orderedProducts as any[]).filter((product: any) => {
+  const filteredProducts = (orderedProducts as any[]).filter((item: any) => {
     const matchesSearch = !searchQuery || 
-      product.product?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.product?.sku?.toLowerCase().includes(searchQuery.toLowerCase());
+      item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.productSku?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.orderNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.clientName?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
 
@@ -76,9 +78,9 @@ export default function OrderedProductsPage() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <ShoppingCart className="w-4 h-4 text-amber-600" />
-                    <p className="text-sm text-amber-700 font-medium">Всього товарів</p>
+                    <p className="text-sm text-amber-700 font-medium">Позицій товарів</p>
                   </div>
-                  <p className="text-3xl font-bold text-amber-900 mb-1">{totalProducts}</p>
+                  <p className="text-3xl font-bold text-amber-900 mb-1">{totalOrders}</p>
                   <p className="text-xs text-amber-600">В замовленнях</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-amber-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
@@ -94,11 +96,11 @@ export default function OrderedProductsPage() {
               <div className="flex items-center justify-between relative z-10">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <AlertTriangle className="w-4 h-4 text-red-600" />
-                    <p className="text-sm text-red-700 font-medium">Низький запас</p>
+                    <Package className="w-4 h-4 text-red-600" />
+                    <p className="text-sm text-red-700 font-medium">Унікальних товарів</p>
                   </div>
-                  <p className="text-3xl font-bold text-red-900 mb-1">{lowStockProducts}</p>
-                  <p className="text-xs text-red-600">Потребують поповнення</p>
+                  <p className="text-3xl font-bold text-red-900 mb-1">{uniqueProducts}</p>
+                  <p className="text-xs text-red-600">Різних виробів</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
                   <AlertTriangle className="w-8 h-8 text-white" />
@@ -113,11 +115,11 @@ export default function OrderedProductsPage() {
               <div className="flex items-center justify-between relative z-10">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <Package className="w-4 h-4 text-gray-600" />
-                    <p className="text-sm text-gray-700 font-medium">Закінчилися</p>
+                    <Target className="w-4 h-4 text-gray-600" />
+                    <p className="text-sm text-gray-700 font-medium">Загальна кількість</p>
                   </div>
-                  <p className="text-3xl font-bold text-gray-900 mb-1">{outOfStockProducts}</p>
-                  <p className="text-xs text-gray-600">Немає на складі</p>
+                  <p className="text-3xl font-bold text-gray-900 mb-1">{totalQuantity}</p>
+                  <p className="text-xs text-gray-600">Одиниць замовлено</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-gray-500 to-gray-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
                   <Package className="w-8 h-8 text-white" />
@@ -132,11 +134,11 @@ export default function OrderedProductsPage() {
               <div className="flex items-center justify-between relative z-10">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <Target className="w-4 h-4 text-blue-600" />
-                    <p className="text-sm text-blue-700 font-medium">Загальна кількість</p>
+                    <CheckCircle className="w-4 h-4 text-blue-600" />
+                    <p className="text-sm text-blue-700 font-medium">Загальна вартість</p>
                   </div>
-                  <p className="text-3xl font-bold text-blue-900 mb-1">{totalOrderQuantity}</p>
-                  <p className="text-xs text-blue-600">Одиниць замовлено</p>
+                  <p className="text-3xl font-bold text-blue-900 mb-1">{totalValue.toLocaleString()}</p>
+                  <p className="text-xs text-blue-600">Грн оплачено</p>
                 </div>
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
                   <Target className="w-8 h-8 text-white" />
@@ -168,31 +170,55 @@ export default function OrderedProductsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {filteredProducts.map((item: any) => (
-                  <Card key={item.productId} className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <ShoppingCart className="h-5 w-5 text-amber-600" />
+                {filteredProducts.map((item: any, index: number) => (
+                  <Card key={`${item.orderId}-${item.productId}-${index}`} className="p-4 border-l-4 border-l-green-500">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Товар */}
+                      <div className="flex items-center space-x-3">
+                        <Package className="h-5 w-5 text-blue-600" />
                         <div>
-                          <h3 className="font-semibold">{item.product?.name || "Товар"}</h3>
+                          <h3 className="font-semibold text-lg">{item.productName || "Товар"}</h3>
                           <p className="text-sm text-muted-foreground">
-                            SKU: {item.product?.sku || "Не вказано"} | 
-                            Запас: {item.currentStock || 0} | 
-                            Замовлено: {item.totalOrderQuantity || 0}
+                            SKU: {item.productSku || "Не вказано"}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        {item.currentStock === 0 ? (
-                          <Badge className="bg-red-100 text-red-800">Закінчився</Badge>
-                        ) : item.currentStock < item.minimumStock ? (
-                          <Badge className="bg-yellow-100 text-yellow-800">Низький запас</Badge>
-                        ) : (
-                          <Badge className="bg-green-100 text-green-800">В наявності</Badge>
-                        )}
-                        <Badge className="bg-blue-100 text-blue-800">
-                          {item.totalOrderQuantity || 0} од.
-                        </Badge>
+
+                      {/* Замовлення */}
+                      <div className="flex items-center space-x-3">
+                        <ShoppingCart className="h-5 w-5 text-amber-600" />
+                        <div>
+                          <h4 className="font-medium">Замовлення: {item.orderNumber}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Клієнт: {item.clientName || "Не вказано"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Оплачено: {item.paymentDate ? new Date(item.paymentDate).toLocaleDateString('uk-UA') : "Дата невідома"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Деталі */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">
+                            Кількість: <span className="text-blue-600">{item.orderedQuantity || 0} од.</span>
+                          </p>
+                          <p className="text-sm font-medium">
+                            Ціна: <span className="text-green-600">{(item.unitPrice || 0).toLocaleString()} грн</span>
+                          </p>
+                          <p className="text-sm font-bold">
+                            Сума: <span className="text-orange-600">{(item.totalItemPrice || 0).toLocaleString()} грн</span>
+                          </p>
+                        </div>
+                        <div className="flex flex-col space-y-1">
+                          <Badge className="bg-green-100 text-green-800 text-center">
+                            {item.status || "Виробництво"}
+                          </Badge>
+                          <Badge className="bg-blue-100 text-blue-800 text-center">
+                            Оплачено
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                   </Card>

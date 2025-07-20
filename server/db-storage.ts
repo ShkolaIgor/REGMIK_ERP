@@ -4673,38 +4673,36 @@ export class DatabaseStorage implements IStorage {
 
   async getOrderedProducts(): Promise<any[]> {
     try {
-      // Отримуємо товари з оплачених замовлень у статусі "Виробництво" (не відвантажені)
-      const orderedProducts = await db
-      .select({
-        orderId: orders.id,
-        orderNumber: orders.orderNumber,
-        orderDate: orders.createdAt,
-        paymentDate: orders.paymentDate,
-        paidAmount: orders.paidAmount,
-        totalAmount: orders.totalAmount,
-        status: orders.status,
-        productId: orderItems.productId,
-        productName: products.name,
-        productSku: products.sku,
-        orderedQuantity: orderItems.quantity,
-        unitPrice: orderItems.price,
-        totalItemPrice: sql<number>`${orderItems.quantity} * ${orderItems.price}`,
-        clientId: orders.clientId,
-        clientName: sql<string>`COALESCE(${clients.name}, 'Не вказано')`,
-        notes: orders.notes
-      })
-      .from(orders)
-      .innerJoin(orderItems, eq(orders.id, orderItems.orderId))
-      .innerJoin(products, eq(orderItems.productId, products.id))
-      .leftJoin(clients, eq(orders.clientId, clients.id))
-      .where(and(
-        eq(orders.status, 'Виробництво'), // Замовлення у виробництві
-        sql`${orders.paidAmount} > 0`, // Оплачене
-        isNotNull(orders.paymentDate) // Є дата оплати
-      ))
-      .orderBy(orders.paymentDate, orders.orderNumber);
+      // Використовуємо простий SQL запит для уникнення проблем з Drizzle ORM
+      const result = await db.execute(sql`
+        SELECT 
+          o.id as "orderId",
+          o.order_number as "orderNumber", 
+          o.created_at as "orderDate",
+          o.payment_date as "paymentDate",
+          o.paid_amount as "paidAmount",
+          o.total_amount as "totalAmount",
+          o.status,
+          oi.product_id as "productId",
+          p.name as "productName",
+          p.sku as "productSku", 
+          oi.quantity as "orderedQuantity",
+          oi.unit_price as "unitPrice",
+          (oi.quantity * oi.unit_price) as "totalItemPrice",
+          o.client_id as "clientId",
+          COALESCE(c.name, 'Не вказано') as "clientName",
+          o.notes
+        FROM orders o
+        INNER JOIN order_items oi ON o.id = oi.order_id
+        INNER JOIN products p ON oi.product_id = p.id  
+        LEFT JOIN clients c ON o.client_id = c.id
+        WHERE o.status = 'Виробництво' 
+          AND o.paid_amount > 0 
+          AND o.payment_date IS NOT NULL
+        ORDER BY o.payment_date, o.order_number
+      `);
 
-      return orderedProducts;
+      return result.rows;
     } catch (error) {
       console.error("Error getting ordered products:", error);
       return [];
