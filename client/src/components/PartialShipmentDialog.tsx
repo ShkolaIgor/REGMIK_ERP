@@ -230,6 +230,7 @@ export function PartialShipmentDialog({
         description: "Часткове відвантаження створено успішно",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products/ordered"] });
       queryClient.invalidateQueries({ queryKey: ["/api/shipments"] });
       onOpenChange(false);
       form.reset();

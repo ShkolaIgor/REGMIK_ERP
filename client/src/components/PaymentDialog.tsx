@@ -66,8 +66,8 @@ export function PaymentDialog({
         description: data.message,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products/ordered"] });
       queryClient.invalidateQueries({ queryKey: ["/api/manufacturing-orders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/ordered-products-info"] });
       setOpen(false);
     },
     onError: (error: any) => {
@@ -91,8 +91,8 @@ export function PaymentDialog({
         description: data.message || "Оплату скасовано",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products/ordered"] });
       queryClient.invalidateQueries({ queryKey: ["/api/manufacturing-orders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/ordered-products-info"] });
       setOpen(false);
     },
     onError: (error: any) => {

@@ -798,6 +798,7 @@ export default function Orders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products/ordered"] });
       handleCloseDialog();
       toast({
         title: "Успіх",
@@ -824,6 +825,7 @@ export default function Orders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products/ordered"] });
       toast({
         title: "Успіх",
         description: "Статус оновлено",
@@ -844,6 +846,7 @@ export default function Orders() {
     mutationFn: (id: number) => apiRequest(`/api/orders/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products/ordered"] });
       handleCloseDialog(); // Закриваємо форму після видалення
       toast({
         title: "Успіх",
@@ -869,6 +872,7 @@ export default function Orders() {
     onSuccess: (result) => {
       console.log("Order update success:", result);
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products/ordered"] });
       setIsDialogOpen(false);
       setIsEditMode(false);
       setEditingOrder(null);
@@ -899,6 +903,7 @@ export default function Orders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products/ordered"] });
       toast({
         title: "Успіх",
         description: "Дату оплати оновлено",
@@ -923,6 +928,7 @@ export default function Orders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products/ordered"] });
       toast({
         title: "Успіх",
         description: "Термін виконання оновлено",
@@ -948,6 +954,7 @@ export default function Orders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products/ordered"] });
       toast({
         title: "Успіх",
         description: "Замовлення відвантажено",
