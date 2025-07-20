@@ -72,9 +72,9 @@ export default function SupplierReceipts() {
   const receiptsArray = Array.isArray(receiptsData) ? receiptsData : [];
   
   // Debug logging
-  console.log('Debug - receiptsData:', receiptsData);
-  console.log('Debug - receiptsArray length:', receiptsArray.length);
-  console.log('Debug - receiptsArray[0]:', receiptsArray[0]);
+  // DEBUG: Data state
+  // console.log('Debug - receiptsData:', receiptsData);
+  // console.log('Debug - receiptsArray length:', receiptsArray.length);
 
   // Form
   const form = useForm<SupplierReceiptFormData>({
@@ -278,8 +278,8 @@ export default function SupplierReceipts() {
     );
   };
 
-  // DataTable columns
-  console.log('Debug - filteredReceipts for DataTable:', filteredReceipts);
+  // DataTable columns (не використовується зараз)
+  // console.log('Debug - filteredReceipts for DataTable:', filteredReceipts);
   const columns: DataTableColumn[] = [
     { key: 'id', label: 'ID', sortable: true },
     { 
@@ -501,96 +501,94 @@ export default function SupplierReceipts() {
               </Card>
               </div>
 
-        {/* DataTable Debug */}
-        <div className="p-4 bg-gray-100 mb-4">
-          <p>DEBUG: filteredReceipts.length = {filteredReceipts.length}</p>
-          <p>DEBUG: isLoading = {isLoading.toString()}</p>
-          <p>DEBUG: columns.length = {columns.length}</p>
-          <p>DEBUG: receiptsArray.length = {receiptsArray.length}</p>
-          {filteredReceipts.length > 0 && (
-            <div>
-              <p>DEBUG: First receipt keys: {Object.keys(filteredReceipts[0]).join(', ')}</p>
-              <p>DEBUG: First receipt supplierName: {filteredReceipts[0].supplierName}</p>
-              <p>DEBUG: First receipt documentTypeName: {filteredReceipts[0].documentTypeName}</p>
-            </div>
-          )}
-        </div>
-        {filteredReceipts.length > 0 ? (
-          <DataTable
-            data={filteredReceipts}
-            columns={columns}
-            loading={isLoading}
-            title="Список приходів від постачальників"
-            description="Оберіть прихід для перегляду та редагування"
-            storageKey="supplier-receipts"
-          actions={(receipt) => (
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleEdit(receipt);
-                }}
-                className="h-8 w-8 p-0"
-                title="Редагувати"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-          expandableContent={(receipt) => <ReceiptItemsView receiptId={receipt.id} />}
-          expandedItems={expandedItems}
-          onToggleExpand={(itemId) => {
-            const id = typeof itemId === 'string' ? parseInt(itemId) : itemId;
-            setExpandedItems(prev => {
-              const newSet = new Set(prev);
-              if (newSet.has(id)) {
-                newSet.delete(id);
-              } else {
-                newSet.add(id);
-              }
-              return newSet;
-            });
-          }}
-        />
+
+        {/* Використовуємо власну таблицю замість проблемної DataTable */}
+        {isLoading ? (
+          <div className="p-8 text-center">
+            <p>Завантаження даних...</p>
+          </div>
+        ) : filteredReceipts.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">
+            <p>Дані не знайдено</p>
+          </div>
         ) : (
-          <div className="p-4 bg-white rounded-lg border">
-            <h3 className="text-lg font-semibold mb-4">Список приходів (fallback)</h3>
-            {isLoading ? (
-              <p>Завантаження...</p>
-            ) : receiptsArray.length === 0 ? (
-              <p className="text-gray-500">Дані не знайдено</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-200">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <th className="border border-gray-200 px-4 py-2 text-left">ID</th>
-                      <th className="border border-gray-200 px-4 py-2 text-left">Дата приходу</th>
-                      <th className="border border-gray-200 px-4 py-2 text-left">Постачальник</th>
-                      <th className="border border-gray-200 px-4 py-2 text-left">Тип документу</th>
-                      <th className="border border-gray-200 px-4 py-2 text-left">Номер документу</th>
-                      <th className="border border-gray-200 px-4 py-2 text-left">Сума</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {receiptsArray.slice(0, 10).map((receipt: any) => (
-                      <tr key={receipt.id}>
-                        <td className="border border-gray-200 px-4 py-2">{receipt.id}</td>
-                        <td className="border border-gray-200 px-4 py-2">{receipt.receiptDate}</td>
-                        <td className="border border-gray-200 px-4 py-2">{receipt.supplierName || 'Невідомо'}</td>
-                        <td className="border border-gray-200 px-4 py-2">{receipt.documentTypeName || 'Невідомо'}</td>
-                        <td className="border border-gray-200 px-4 py-2">{receipt.supplierDocumentNumber || '-'}</td>
-                        <td className="border border-gray-200 px-4 py-2">{receipt.totalAmount} ₴</td>
+          <div className="bg-white rounded-lg border shadow-sm">
+            <div className="p-6 border-b">
+              <h3 className="text-lg font-semibold">Список приходів від постачальників</h3>
+              <p className="text-sm text-gray-600">Оберіть прихід для перегляду та редагування</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">ID</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Дата приходу</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Постачальник</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Тип документу</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Номер документу</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Сума</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Дії</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredReceipts.map((receipt: any) => (
+                    <React.Fragment key={receipt.id}>
+                      <tr 
+                        className="hover:bg-gray-50 cursor-pointer"
+                        onClick={() => {
+                          const id = receipt.id;
+                          setExpandedItems(prev => {
+                            const newSet = new Set(prev);
+                            if (newSet.has(id)) {
+                              newSet.delete(id);
+                            } else {
+                              newSet.add(id);
+                            }
+                            return newSet;
+                          });
+                        }}
+                      >
+                        <td className="px-4 py-3 text-sm text-gray-900">{receipt.id}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          <UkrainianDate date={receipt.receiptDate} format="short" />
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{receipt.supplierName || 'Невідомо'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{receipt.documentTypeName || 'Невідомо'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{receipt.supplierDocumentNumber || '-'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {parseFloat(receipt.totalAmount || 0).toLocaleString('uk-UA', { maximumFractionDigits: 0 })} ₴
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(receipt);
+                            }}
+                            className="h-8 w-8 p-0"
+                            title="Редагувати"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                      {expandedItems.has(receipt.id) && (
+                        <tr>
+                          <td colSpan={7} className="px-4 py-2 bg-gray-50">
+                            <ReceiptItemsView receiptId={receipt.id} />
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
+        
+
       </div>
 
       {/* Dialog for Create/Edit Receipt */}
