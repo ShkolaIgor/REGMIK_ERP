@@ -58,9 +58,10 @@ export default function OrderedProductsPage() {
                 </div>
               <div className="flex items-center space-x-4">
                 <Button 
+                  onClick={() => window.location.reload()}
                   className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300">
                   <Package className="mr-2 h-4 w-4" />
-                  Аналіз запасів
+                  Повторне сканування замовлених товарів
                 </Button>
               </div>
             </div>
