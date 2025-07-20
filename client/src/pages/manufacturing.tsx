@@ -24,7 +24,8 @@ import {
   Trash2,
   Calendar,
   Package,
-  User
+  User,
+  Loader2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -106,20 +107,25 @@ export default function Manufacturing() {
   const completedOrders = (orders as ManufacturingOrder[]).filter((order: ManufacturingOrder) => order.status === "completed").length;
   const pendingOrders = (orders as ManufacturingOrder[]).filter((order: ManufacturingOrder) => order.status === "pending").length;
 
+  // Запити для форми - завантажуються тільки при відкритті діалогу
   const { data: products = [] } = useQuery({
     queryKey: ["/api/products"],
+    enabled: isDialogOpen || isDetailsDialogOpen, // Завантажуємо тільки при відкритті форми
   });
 
   const { data: recipes = [] } = useQuery({
     queryKey: ["/api/recipes"],
+    enabled: isDialogOpen || isDetailsDialogOpen,
   });
 
   const { data: workers = [] } = useQuery({
     queryKey: ["/api/workers"],
+    enabled: isDialogOpen || isDetailsDialogOpen,
   });
 
   const { data: warehouses = [] } = useQuery({
     queryKey: ["/api/warehouses"],
+    enabled: isDialogOpen || isDetailsDialogOpen,
   });
 
   const { data: manufacturingSteps = [], refetch: refetchSteps } = useQuery({
@@ -843,7 +849,14 @@ export default function Manufacturing() {
               </DialogTitle>
             </DialogHeader>
             <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
-              <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Показуємо індикатор завантаження при першому відкритті */}
+              {(isDialogOpen && (products.length === 0 || recipes.length === 0 || workers.length === 0 || warehouses.length === 0)) ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  <span className="text-gray-600">Завантаження даних форми...</span>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="productId">Товар *</Label>
@@ -1017,6 +1030,7 @@ export default function Manufacturing() {
                   </Button>
                 </div>
               </form>
+              )}
             </div>
           </DialogContent>
         </Dialog>
