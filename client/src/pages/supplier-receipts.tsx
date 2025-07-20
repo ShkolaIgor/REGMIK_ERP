@@ -12,9 +12,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Plus, Package, FileText, TrendingUp, Calendar, Download, Upload, HandPlatter, Edit, Scan, Printer, AlertTriangle} from "lucide-react";
+import { Plus, Package, FileText, TrendingUp, Calendar, Download, Upload, HandPlatter, Edit, Scan, Printer, AlertTriangle, Trash2, ChevronsUpDown, Check} from "lucide-react";
 import { DataTable, DataTableColumn } from "@/components/DataTable";
 import { SearchFilters } from "@/components/SearchFilters";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
@@ -51,6 +54,7 @@ export default function SupplierReceipts() {
   const [pageSize, setPageSize] = useState(25);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+  const [receiptItems, setReceiptItems] = useState<any[]>([]);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -71,6 +75,10 @@ export default function SupplierReceipts() {
 
   const { data: purchaseOrders = [] } = useQuery({
     queryKey: ["/api/purchase-orders"],
+  });
+
+  const { data: components = [] } = useQuery({
+    queryKey: ["/api/components"],
   });
 
   const receiptsArray = Array.isArray(receiptsData) ? receiptsData : [];
@@ -97,8 +105,7 @@ export default function SupplierReceipts() {
     mutationFn: (data: any) => apiRequest("/api/supplier-receipts", "POST", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
-      setIsDialogOpen(false);
-      form.reset();
+      handleCloseDialog();
       toast({ title: "Прихід створено успішно" });
     },
     onError: (error: any) => {
@@ -110,9 +117,7 @@ export default function SupplierReceipts() {
     mutationFn: ({ id, ...data }: any) => apiRequest(`/api/supplier-receipts/${id}`, "PUT", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
-      setIsDialogOpen(false);
-      setEditingReceipt(null);
-      form.reset();
+      handleCloseDialog();
       toast({ title: "Прихід оновлено успішно" });
     },
     onError: (error: any) => {
@@ -174,6 +179,12 @@ export default function SupplierReceipts() {
       document_type_id: parseInt(data.document_type_id),
       purchase_order_id: (data.purchase_order_id && data.purchase_order_id !== "none") ? parseInt(data.purchase_order_id) : null,
       total_amount: parseFloat(data.total_amount),
+      items: receiptItems.map(item => ({
+        componentId: item.componentId,
+        quantity: parseInt(item.quantity),
+        unitPrice: parseFloat(item.unitPrice),
+        totalPrice: parseFloat(item.quantity) * parseFloat(item.unitPrice),
+      })),
     };
 
     if (editingReceipt) {
@@ -183,7 +194,7 @@ export default function SupplierReceipts() {
     }
   };
 
-  const handleEdit = (receipt: any) => {
+  const handleEdit = async (receipt: any) => {
     setEditingReceipt(receipt);
     form.reset({
       receipt_date: receipt.receiptDate?.split('T')[0] || '',
@@ -195,7 +206,60 @@ export default function SupplierReceipts() {
       comment: receipt.comment || '',
       purchase_order_id: receipt.purchaseOrderId?.toString() || 'none',
     });
+
+    // Завантажуємо позиції приходу для редагування
+    try {
+      const response = await fetch(`/api/supplier-receipts/${receipt.id}/items`);
+      if (response.ok) {
+        const items = await response.json();
+        setReceiptItems(items.map((item: any) => ({
+          componentId: item.component_id || 0,
+          quantity: item.quantity?.toString() || "",
+          unitPrice: item.unit_price?.toString() || "0",
+          componentName: item.component_name || "",
+        })));
+      } else {
+        setReceiptItems([]);
+      }
+    } catch (error) {
+      console.error('Error loading receipt items:', error);
+      setReceiptItems([]);
+    }
+
     setIsDialogOpen(true);
+  };
+
+  // Функції для управління позиціями приходу
+  const addReceiptItem = () => {
+    setReceiptItems([...receiptItems, { componentId: 0, quantity: "", unitPrice: "", componentName: "" }]);
+  };
+
+  const removeReceiptItem = (index: number) => {
+    setReceiptItems(receiptItems.filter((_, i) => i !== index));
+  };
+
+  const updateReceiptItem = (index: number, field: string, value: any) => {
+    const updated = [...receiptItems];
+    updated[index] = { ...updated[index], [field]: value };
+    
+    // Якщо обирається компонент, автоматично встановлюємо його назву та ціну
+    if (field === "componentId" && value > 0 && components) {
+      const selectedComponent = components.find((c: any) => c.id === value);
+      if (selectedComponent) {
+        updated[index].componentName = selectedComponent.name;
+        updated[index].unitPrice = selectedComponent.costPrice?.toString() || "0";
+      }
+    }
+    
+    setReceiptItems(updated);
+  };
+
+  // Функція закриття діалогу з очищенням даних
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingReceipt(null);
+    setReceiptItems([]);
+    form.reset();
   };
 
   const handleToggleExpand = (receiptId: string | number) => {
@@ -398,6 +462,7 @@ export default function SupplierReceipts() {
                 className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
                 onClick={() => {
                   setEditingReceipt(null);
+                  setReceiptItems([]);
                   form.reset({
                     receipt_date: new Date().toISOString().split('T')[0],
                     supplier_id: "",
@@ -591,7 +656,13 @@ export default function SupplierReceipts() {
       </div>
 
       {/* Dialog for Create/Edit Receipt */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          handleCloseDialog();
+        } else {
+          setIsDialogOpen(true);
+        }
+      }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
@@ -747,6 +818,114 @@ export default function SupplierReceipts() {
                   </FormItem>
                 )}
               />
+
+              {/* Позиції приходу */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <Label>Позиції приходу</Label>
+                  <Button type="button" onClick={addReceiptItem} variant="outline" size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Додати позицію
+                  </Button>
+                </div>
+
+                {receiptItems.length === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <Package className="w-12 h-12 mx-auto text-gray-400 mb-2" />
+                    <p className="text-gray-500">Додайте позиції до приходу</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-80 overflow-y-auto">
+                    {receiptItems.map((item, index) => (
+                      <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg bg-white">
+                        <div className="flex-1">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className="w-full justify-between"
+                              >
+                                {item.componentId > 0 && components ? 
+                                  components.find((c: any) => c.id === item.componentId)?.name || item.componentName || "Оберіть компонент..." 
+                                  : "Оберіть компонент..."
+                                }
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-full p-0">
+                              <Command>
+                                <CommandInput placeholder="Пошук компонентів..." />
+                                <CommandEmpty>Компонентів не знайдено.</CommandEmpty>
+                                <CommandGroup className="max-h-64 overflow-y-auto">
+                                  {components.map((component: any) => (
+                                    <CommandItem
+                                      key={component.id}
+                                      onSelect={() => updateReceiptItem(index, "componentId", component.id)}
+                                    >
+                                      <Check
+                                        className={`mr-2 h-4 w-4 ${
+                                          item.componentId === component.id ? "opacity-100" : "opacity-0"
+                                        }`}
+                                      />
+                                      <div className="flex-1">
+                                        <div className="font-medium">{component.name}</div>
+                                        {component.sku && (
+                                          <div className="text-xs text-gray-500">SKU: {component.sku}</div>
+                                        )}
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        <div className="w-24">
+                          <Input
+                            type="number"
+                            placeholder="Кільк."
+                            value={item.quantity}
+                            onChange={(e) => updateReceiptItem(index, "quantity", e.target.value)}
+                            className="text-sm"
+                          />
+                        </div>
+                        <div className="w-28">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="Ціна"
+                            value={item.unitPrice}
+                            onChange={(e) => updateReceiptItem(index, "unitPrice", e.target.value)}
+                            className="text-sm"
+                          />
+                        </div>
+                        <div className="w-32 text-right font-medium">
+                          {(parseFloat(item.quantity || "0") * parseFloat(item.unitPrice || "0")).toLocaleString('uk-UA', { maximumFractionDigits: 2 })} ₴
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeReceiptItem(index)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    {receiptItems.length > 0 && (
+                      <div className="flex justify-end pt-2 border-t">
+                        <div className="text-lg font-bold text-green-600">
+                          Всього: {receiptItems.reduce((sum, item) => 
+                            sum + (parseFloat(item.quantity || "0") * parseFloat(item.unitPrice || "0")), 0
+                          ).toLocaleString('uk-UA', { maximumFractionDigits: 2 })} ₴
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               <div className="flex justify-between">
                 <div>
                   {editingReceipt && (
@@ -760,7 +939,7 @@ export default function SupplierReceipts() {
                   )}
                 </div>
                 <div className="flex space-x-2">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  <Button type="button" variant="outline" onClick={handleCloseDialog}>
                     Скасувати
                   </Button>
                   <Button type="submit">
