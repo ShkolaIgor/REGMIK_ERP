@@ -99,37 +99,6 @@ export default function Manufacturing() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Фільтрація товарів для автокомпліту
-  const filteredProducts = React.useMemo(() => {
-    if (!productSearchTerm || !products) return [];
-    const term = productSearchTerm.toLowerCase();
-    return (products as any[]).filter((product: any) => 
-      product.name.toLowerCase().includes(term) || 
-      product.sku.toLowerCase().includes(term)
-    ).slice(0, 10); // Показуємо максимум 10 результатів
-  }, [productSearchTerm, products]);
-
-  // Закриття dropdown при кліку поза елементом
-  React.useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (showProductDropdown && !(event.target as Element).closest('.product-autocomplete')) {
-        setShowProductDropdown(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showProductDropdown]);
-
-  // Встановлення пошукового терміну при редагуванні або вибору товару
-  React.useEffect(() => {
-    if (formData.productId && products) {
-      const selectedProduct = (products as any[]).find(p => p.id.toString() === formData.productId);
-      if (selectedProduct && !productSearchTerm) {
-        setProductSearchTerm(`${selectedProduct.name} (${selectedProduct.sku})`);
-      }
-    }
-  }, [formData.productId, products, productSearchTerm]);
-
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["/api/manufacturing-orders"],
     staleTime: 0, // Дозволяємо оновлення даних
@@ -162,6 +131,37 @@ export default function Manufacturing() {
     queryKey: ["/api/warehouses"],
     enabled: isDialogOpen || isDetailsDialogOpen,
   });
+
+  // Фільтрація товарів для автокомпліту
+  const filteredProducts = React.useMemo(() => {
+    if (!productSearchTerm || !products) return [];
+    const term = productSearchTerm.toLowerCase();
+    return (products as any[]).filter((product: any) => 
+      product.name.toLowerCase().includes(term) || 
+      product.sku.toLowerCase().includes(term)
+    ).slice(0, 10); // Показуємо максимум 10 результатів
+  }, [productSearchTerm, products]);
+
+  // Закриття dropdown при кліку поза елементом
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (showProductDropdown && !(event.target as Element).closest('.product-autocomplete')) {
+        setShowProductDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showProductDropdown]);
+
+  // Встановлення пошукового терміну при редагуванні або вибору товару
+  React.useEffect(() => {
+    if (formData.productId && products) {
+      const selectedProduct = (products as any[]).find(p => p.id.toString() === formData.productId);
+      if (selectedProduct && !productSearchTerm) {
+        setProductSearchTerm(`${selectedProduct.name} (${selectedProduct.sku})`);
+      }
+    }
+  }, [formData.productId, products, productSearchTerm]);
 
   const { data: manufacturingSteps = [], refetch: refetchSteps } = useQuery({
     queryKey: ["/api/manufacturing-steps", selectedOrder?.id],
@@ -388,7 +388,7 @@ export default function Manufacturing() {
       assignedWorkerId: formData.assignedWorkerId ? parseInt(formData.assignedWorkerId) : undefined,
       warehouseId: formData.warehouseId ? parseInt(formData.warehouseId) : undefined,
       estimatedDuration: formData.estimatedDuration ? parseInt(formData.estimatedDuration) : undefined,
-      plannedEndDate: formData.plannedEndDate ? new Date(formData.plannedEndDate).toISOString() : undefined,
+      plannedEndDate: formData.plannedEndDate || undefined,
     };
     
     console.log("Submit data after transformation:", submitData);

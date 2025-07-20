@@ -1871,6 +1871,8 @@ export const insertManufacturingOrderSchema = createInsertSchema(manufacturingOr
   createdAt: true, 
   updatedAt: true,
   orderNumber: true 
+}).extend({
+  plannedEndDate: z.string().optional().transform(val => val ? new Date(val) : undefined),
 });
 
 export const insertManufacturingOrderMaterialSchema = createInsertSchema(manufacturingOrderMaterials).omit({ 
