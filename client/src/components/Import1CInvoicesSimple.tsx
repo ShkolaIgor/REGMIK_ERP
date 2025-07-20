@@ -5,20 +5,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Loader2, Upload, FileText, Building2, Calendar, DollarSign, AlertCircle, RefreshCw, ChevronDown, ChevronRight, Eye } from "lucide-react";
+import { Loader2, Upload, Eye, Check, X, FileText, Building2, Calendar, DollarSign, AlertCircle, RefreshCw, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ProcessedInvoice1C } from "@shared/schema";
-import { DatePeriodFilter } from "@/components/DatePeriodFilter";
-
-// Локальний тип для фільтрів дат
-interface DateFilterParams {
-  period?: string;
-  dateFrom?: string;
-  dateTo?: string;
-}
+import { Input } from "@/components/ui/input";
+import { DatePeriodFilter, DateFilterParams } from "@/components/DatePeriodFilter";
 
 // Тип для накладних згідно з реальним кодом 1С
 type Invoice1C = ProcessedInvoice1C;
@@ -29,6 +21,154 @@ interface ImportProgress {
   succeeded: number;
   failed: number;
   errors: string[];
+}
+
+// Компонент для зіставлення компонентів
+function ComponentMappingCell({ item, onMappingChange }: { 
+  item: any, 
+  onMappingChange: (component: string) => void 
+}) {
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [foundComponents, setFoundComponents] = useState<any[]>([]);
+  const [selectedComponent, setSelectedComponent] = useState(item.erpEquivalent || '');
+  const [autoMappingAttempted, setAutoMappingAttempted] = useState(false);
+
+  // Автоматичне зіставлення при першому завантаженні
+  useEffect(() => {
+    if (!autoMappingAttempted && !item.erpEquivalent) {
+      setAutoMappingAttempted(true);
+      performAutoMapping();
+    }
+  }, [autoMappingAttempted, item.erpEquivalent]);
+
+  const performAutoMapping = async () => {
+    try {
+      setIsSearching(true);
+      const response = await apiRequest(`/api/1c/invoices/check-mapping/${encodeURIComponent(item.name || item.originalName)}`);
+      if (response.found && response.component) {
+        setSelectedComponent(response.component.name);
+        onMappingChange(response.component.name);
+      }
+    } catch (error) {
+      console.error('Помилка автоматичного зіставлення:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const searchComponents = async (query: string) => {
+    if (!query.trim()) {
+      setFoundComponents([]);
+      return;
+    }
+    
+    try {
+      setIsSearching(true);
+      const response = await apiRequest(`/api/components?search=${encodeURIComponent(query)}`);
+      setFoundComponents(response.slice(0, 50));
+    } catch (error) {
+      console.error('Component search failed:', error);
+      setFoundComponents([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleManualMapping = async (componentName: string) => {
+    setSelectedComponent(componentName);
+    onMappingChange(componentName);
+    setSearchTerm('');
+    setFoundComponents([]);
+    
+    // Зберігаємо зіставлення
+    try {
+      const originalName = item.name || item.originalName;
+      if (originalName && componentName) {
+        const foundComponent = foundComponents.find(comp => comp.name === componentName);
+        
+        await apiRequest('/api/product-name-mappings', {
+          method: 'POST',
+          body: {
+            externalSystemName: '1c',
+            externalProductName: originalName,
+            erpProductId: foundComponent?.id || null,
+            erpProductName: componentName,
+            mappingType: 'manual',
+            confidence: 1.0,
+            isActive: true,
+            notes: 'Ручне зіставлення під час імпорту накладних',
+            createdBy: 'import_user'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Помилка збереження зіставлення:', error);
+    }
+  };
+
+  if (selectedComponent) {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <span className="text-sm font-medium text-green-700">{selectedComponent}</span>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setSelectedComponent('');
+            onMappingChange('');
+          }}
+          className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
+        >
+          <X className="w-3 h-3" />
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+        <span className="text-sm text-orange-600">Новий компонент</span>
+        {isSearching && <Loader2 className="w-3 h-3 animate-spin" />}
+      </div>
+      
+      <div className="relative">
+        <Input
+          type="text"
+          placeholder="Пошук компонента..."
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            searchComponents(e.target.value);
+          }}
+          className="text-xs h-8"
+        />
+        <Search className="absolute right-2 top-2 w-3 h-3 text-gray-400" />
+        
+        {foundComponents.length > 0 && (
+          <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-40 overflow-y-auto">
+            {foundComponents.map((component, idx) => (
+              <div
+                key={idx}
+                className="p-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                onClick={() => handleManualMapping(component.name)}
+              >
+                <div className="text-sm font-medium">{component.name}</div>
+                {component.sku && (
+                  <div className="text-xs text-gray-500">SKU: {component.sku}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export function Import1CInvoicesSimple() {
@@ -83,99 +223,89 @@ export function Import1CInvoicesSimple() {
         const invoiceId = invoiceIds[i];
         try {
           const invoice = invoices1C.find((inv: Invoice1C) => inv.id === invoiceId);
-          if (!invoice) {
-            throw new Error(`Накладна з ID ${invoiceId} не знайдена`);
-          }
+          if (!invoice) continue;
           
-          const result = await apiRequest('/api/1c/invoices/import', {
+          const result = await apiRequest(`/api/import/1c-invoice`, {
             method: 'POST',
-            body: invoice,
+            body: invoice
           });
-          results.push({ success: true, invoiceId, result });
-          setImportProgress(prev => prev ? {
-            ...prev,
-            processed: i + 1,
-            succeeded: prev.succeeded + 1
+          
+          results.push(result);
+          setImportProgress(prev => prev ? { 
+            ...prev, 
+            processed: i + 1, 
+            succeeded: prev.succeeded + 1 
           } : null);
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          results.push({ success: false, invoiceId, error: errorMessage });
-          setImportProgress(prev => prev ? {
-            ...prev,
-            processed: i + 1,
+          console.error(`Помилка імпорту накладної ${invoiceId}:`, error);
+          setImportProgress(prev => prev ? { 
+            ...prev, 
+            processed: i + 1, 
             failed: prev.failed + 1,
-            errors: [...prev.errors, `${invoiceId}: ${errorMessage}`]
+            errors: [...prev.errors, `${invoiceId}: ${error instanceof Error ? error.message : 'Невідома помилка'}`]
           } : null);
         }
       }
       
-      setIsImporting(false);
       return results;
     },
-    onSuccess: (results) => {
-      const succeeded = results.filter(r => r.success).length;
-      const failed = results.filter(r => !r.success).length;
-      
-      const successfulInvoiceIds = results.filter(r => r.success).map(r => r.invoiceId);
-      if (successfulInvoiceIds.length > 0) {
-        queryClient.invalidateQueries({ queryKey: ["/api/1c/invoices"] });
-        setTimeout(() => refetchInvoices(), 500);
-      }
-      
+    onSuccess: () => {
+      setIsImporting(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
       toast({
         title: "Імпорт завершено",
-        description: `Успішно імпортовано: ${succeeded}, помилок: ${failed}`,
-        variant: succeeded > 0 ? "default" : "destructive",
+        description: "Накладні успішно імпортовано як приходи постачальників"
       });
-      
-      // Оновлюємо кеш приходів постачальників
-      queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/components"] });
       setSelectedInvoices(new Set());
-      setIsOpen(false); // Закриваємо діалог після успішного імпорту
+      setIsOpen(false);
     },
     onError: (error) => {
+      setIsImporting(false);
       toast({
         title: "Помилка імпорту",
         description: error instanceof Error ? error.message : "Невідома помилка",
-        variant: "destructive",
+        variant: "destructive"
       });
-      setIsImporting(false);
     }
   });
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const availableDisplayedInvoices = displayedInvoices.filter((inv: Invoice1C) => !inv.exists).map((inv: Invoice1C) => inv.id);
-      setSelectedInvoices(new Set(availableDisplayedInvoices));
-    } else {
+  // Функції для роботи з вибором накладних
+  const handleSelectAll = () => {
+    if (selectedInvoices.size === filteredInvoices.length) {
       setSelectedInvoices(new Set());
+    } else {
+      setSelectedInvoices(new Set(filteredInvoices.map((inv: Invoice1C) => inv.id)));
     }
   };
 
-  const handleSelectInvoice = (invoiceId: string, checked: boolean) => {
+  const handleSelectInvoice = (invoiceId: string) => {
     const newSelected = new Set(selectedInvoices);
-    if (checked) {
-      newSelected.add(invoiceId);
-    } else {
+    if (newSelected.has(invoiceId)) {
       newSelected.delete(invoiceId);
+    } else {
+      newSelected.add(invoiceId);
     }
     setSelectedInvoices(newSelected);
   };
 
+  // Фільтрація накладних
+  const filteredInvoices = showOnlyMissing 
+    ? invoices1C.filter((invoice: Invoice1C) => !invoice.alreadyImported)
+    : invoices1C;
+
   const handleImport = () => {
     if (selectedInvoices.size === 0) {
       toast({
-        title: "Оберіть накладні",
-        description: "Будь ласка, оберіть хоча б одну накладну для імпорту",
-        variant: "destructive",
+        title: "Не вибрано накладних",
+        description: "Виберіть накладні для імпорту",
+        variant: "destructive"
       });
       return;
     }
-    
     importMutation.mutate(Array.from(selectedInvoices));
   };
 
+  // Обробка розгортання позицій накладних
   const toggleInvoiceExpansion = (invoiceId: string) => {
     const newExpanded = new Set(expandedInvoices);
     if (newExpanded.has(invoiceId)) {
@@ -186,322 +316,298 @@ export function Import1CInvoicesSimple() {
     setExpandedInvoices(newExpanded);
   };
 
-  const availableInvoices = invoices1C.filter((inv: Invoice1C) => !inv.exists);
-  const existingInvoices = invoices1C.filter((inv: Invoice1C) => inv.exists);
-  
-  // Фільтруємо накладні для відображення
-  const displayedInvoices = showOnlyMissing ? availableInvoices : invoices1C;
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button 
-          variant="outline" 
-          className="border-purple-200 text-purple-600 hover:bg-purple-50 duration-300 hover:scale-105 hover:shadow-md"
-          title="Імпорт накладних з 1С як приходи постачальників"
-        >
-          <Upload className="w-4 h-4 mr-2" />
+        <Button variant="outline" className="gap-2">
+          <Upload className="w-4 h-4" />
           Імпорт з 1С
         </Button>
       </DialogTrigger>
-      
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-6xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            Імпорт накладних з 1C
+            <Building2 className="w-5 h-5" />
+            Імпорт накладних з 1С
           </DialogTitle>
-          <p className="text-sm text-muted-foreground mt-2">
-            Імпортовані накладні створюються як приходи постачальників.
-          </p>
         </DialogHeader>
-
-        <div className="flex-1 overflow-hidden flex flex-col gap-4">
-          {/* Статистика */}
-          <div className="grid grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Всього в 1C</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{invoices1C.length}</div>
-                <p className="text-xs text-muted-foreground">накладних у 1С</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Доступно для імпорту</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{availableInvoices.length}</div>
-                <p className="text-xs text-muted-foreground">нових накладних</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Вже імпортовано</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{existingInvoices.length}</div>
-                <p className="text-xs text-muted-foreground">існуючих в ERP</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Обрано</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{selectedInvoices.size}</div>
-                <p className="text-xs text-muted-foreground">для імпорту</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Фільтр дат */}
-          <div className="flex gap-4 items-center">
-            <DatePeriodFilter 
-              onFilterChange={setDateFilter}
-              placeholder="Оберіть період для завантаження накладних"
+        
+        <div className="flex-1 flex flex-col space-y-4 overflow-hidden">
+          {/* Фільтри */}
+          <div className="flex gap-4 items-center flex-wrap">
+            <DatePeriodFilter
+              value={dateFilter}
+              onChange={setDateFilter}
+              className="flex-1 min-w-[300px]"
             />
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="showOnlyMissing"
+                checked={showOnlyMissing}
+                onCheckedChange={setShowOnlyMissing}
+              />
+              <label htmlFor="showOnlyMissing" className="text-sm">
+                Тільки не імпортовані
+              </label>
+            </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => refetchInvoices()}
               disabled={loadingInvoices}
             >
-              {loadingInvoices ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              <RefreshCw className={`w-4 h-4 ${loadingInvoices ? 'animate-spin' : ''}`} />
               Оновити
             </Button>
           </div>
 
+          {/* Стан завантаження та помилки */}
           {!dateFilter.period && !dateFilter.dateFrom && (
-            <div className="text-center py-8">
-              <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Оберіть період дат для завантаження накладних з 1С</p>
-            </div>
-          )}
-
-          {(dateFilter.period || dateFilter.dateFrom) && loadingInvoices && (
-            <div className="text-center py-8">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-              <p className="text-gray-500">Завантаження накладних з 1С...</p>
-            </div>
-          )}
-
-          {(dateFilter.period || dateFilter.dateFrom) && !loadingInvoices && invoicesError && (
-            <div className="text-center py-8">
-              <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-              <p className="text-red-500">Помилка завантаження накладних з 1С</p>
-              <p className="text-gray-500 text-sm mt-2">Перевірте підключення до сервера 1С</p>
-            </div>
-          )}
-
-          {(dateFilter.period || dateFilter.dateFrom) && !loadingInvoices && !invoicesError && displayedInvoices.length === 0 && (
-            <div className="text-center py-8">
-              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Немає накладних для відображення</p>
-              <p className="text-gray-400 text-sm mt-2">
-                {showOnlyMissing ? "Всі накладні вже імпортовані" : "Накладні не знайдені в обраному періоді"}
-              </p>
-            </div>
-          )}
-
-          {displayedInvoices.length > 0 && (
-            <>
-              {/* Контроли */}
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="select-all"
-                    checked={selectedInvoices.size === availableInvoices.length && availableInvoices.length > 0}
-                    onCheckedChange={handleSelectAll}
-                  />
-                  <label htmlFor="select-all" className="text-sm font-medium">
-                    Обрати всі доступні ({availableInvoices.length})
-                  </label>
+            <Card>
+              <CardContent className="flex items-center justify-center py-6">
+                <div className="text-center">
+                  <Calendar className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-500">
+                    Оберіть період дат для завантаження накладних з 1С
+                  </p>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="show-only-missing"
-                    checked={showOnlyMissing}
-                    onCheckedChange={(checked) => setShowOnlyMissing(!!checked)}
-                  />
-                  <label htmlFor="show-only-missing" className="text-sm">
-                    Тільки нові накладні
-                  </label>
+              </CardContent>
+            </Card>
+          )}
+
+          {loadingInvoices && (
+            <Card>
+              <CardContent className="flex items-center justify-center py-6">
+                <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                Завантаження накладних з 1С...
+              </CardContent>
+            </Card>
+          )}
+
+          {invoicesError && (
+            <Card>
+              <CardContent className="flex items-center justify-center py-6">
+                <div className="text-center">
+                  <AlertCircle className="w-8 h-8 mx-auto text-red-500 mb-2" />
+                  <p className="text-sm text-red-600">
+                    Помилка завантаження: {invoicesError instanceof Error ? invoicesError.message : "Невідома помилка"}
+                  </p>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Список накладних */}
+          {filteredInvoices.length > 0 && (
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSelectAll}
+                  >
+                    {selectedInvoices.size === filteredInvoices.length ? 'Скасувати вибір' : 'Вибрати всі'}
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    Вибрано: {selectedInvoices.size} з {filteredInvoices.length}
+                  </span>
+                </div>
+                <Button
+                  onClick={handleImport}
+                  disabled={selectedInvoices.size === 0 || isImporting}
+                  className="gap-2"
+                >
+                  {isImporting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4" />
+                  )}
+                  Імпортувати вибрані
+                </Button>
               </div>
 
-              {/* Прогрес імпорту */}
-              {isImporting && importProgress && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">Прогрес імпорту</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Прогрес: {importProgress.processed} з {importProgress.total}</span>
-                        <span>Успішно: {importProgress.succeeded} | Помилок: {importProgress.failed}</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full" 
-                          style={{ width: `${(importProgress.processed / importProgress.total) * 100}%` }}
+              <div className="flex-1 overflow-auto border rounded-lg">
+                <div className="space-y-2 p-4">
+                  {filteredInvoices.map((invoice: Invoice1C) => (
+                    <div key={invoice.id} className="border rounded-lg">
+                      <div className="flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <Checkbox
+                          checked={selectedInvoices.has(invoice.id)}
+                          onCheckedChange={() => handleSelectInvoice(invoice.id)}
                         />
+                        
+                        <div className="flex-1 grid grid-cols-4 gap-4 text-sm">
+                          <div>
+                            <div className="font-medium">{invoice.number}</div>
+                            <div className="text-gray-500">№ {invoice.number}</div>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {new Date(invoice.date).toLocaleDateString('uk-UA')}
+                            </div>
+                            <div className="text-gray-500">{invoice.supplierName}</div>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1">
+                              <DollarSign className="w-3 h-3" />
+                              {(invoice.amount || 0).toLocaleString('uk-UA', { 
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2 
+                              })} {invoice.currency || 'UAH'}
+                            </div>
+                            <div className="text-gray-500">
+                              {invoice.positions?.length || 0} позицій
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {invoice.alreadyImported ? (
+                              <Badge variant="secondary" className="gap-1">
+                                <Check className="w-3 h-3" />
+                                Імпортовано
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="gap-1">
+                                <FileText className="w-3 h-3" />
+                                Новий
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleInvoiceExpansion(invoice.id)}
+                          className="gap-1"
+                        >
+                          <Eye className="w-3 h-3" />
+                          {expandedInvoices.has(invoice.id) ? 'Сховати' : 'Позиції'}
+                        </Button>
                       </div>
-                      {importProgress.errors.length > 0 && (
-                        <div className="text-sm text-red-600 max-h-20 overflow-y-auto">
-                          {importProgress.errors.map((error, index) => (
-                            <div key={index}>• {error}</div>
-                          ))}
+
+                      {/* Розгорнуті позиції накладної */}
+                      {expandedInvoices.has(invoice.id) && invoice.positions && (
+                        <div className="border-t">
+                          <div className="p-4">
+                            <div className="text-sm font-medium mb-3">
+                              Позиції накладної ({invoice.positions.length})
+                            </div>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-xs">
+                                <thead>
+                                  <tr className="border-b bg-gray-50">
+                                    <th className="text-left p-2">Найменування з 1С</th>
+                                    <th className="text-left p-2">Зіставлення</th>
+                                    <th className="text-right p-2">Кількість</th>
+                                    <th className="text-right p-2">Ціна</th>
+                                    <th className="text-right p-2">Сума</th>
+                                    <th className="text-left p-2">Од. вим.</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {invoice.positions.map((position: any, idx: number) => (
+                                    <tr key={idx} className="border-b hover:bg-gray-50">
+                                      <td className="p-2">
+                                        <div className="font-medium">{position.name || position.originalName}</div>
+                                        {position.code && (
+                                          <div className="text-gray-500">Код: {position.code}</div>
+                                        )}
+                                      </td>
+                                      <td className="p-2">
+                                        <ComponentMappingCell 
+                                          item={position}
+                                          onMappingChange={(component) => {
+                                            position.erpEquivalent = component;
+                                          }}
+                                        />
+                                      </td>
+                                      <td className="text-right p-2">
+                                        {position.quantity?.toLocaleString('uk-UA') || '0'}
+                                      </td>
+                                      <td className="text-right p-2">
+                                        {(position.price || 0).toLocaleString('uk-UA', { 
+                                          minimumFractionDigits: 2,
+                                          maximumFractionDigits: 2 
+                                        })}
+                                      </td>
+                                      <td className="text-right p-2">
+                                        {(position.total || 0).toLocaleString('uk-UA', { 
+                                          minimumFractionDigits: 2,
+                                          maximumFractionDigits: 2 
+                                        })}
+                                      </td>
+                                      <td className="p-2">{position.unit || 'шт'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Список накладних */}
-              <div className="flex-1 overflow-y-auto space-y-2">
-                {displayedInvoices.map((invoice: Invoice1C) => (
-                  <Card key={invoice.id} className={`${invoice.exists ? 'opacity-50' : ''}`}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3 flex-1">
-                          {!invoice.exists && (
-                            <Checkbox
-                              checked={selectedInvoices.has(invoice.id)}
-                              onCheckedChange={(checked) => handleSelectInvoice(invoice.id, !!checked)}
-                            />
-                          )}
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{invoice.number}</span>
-                              {invoice.exists && <Badge variant="secondary">Імпортовано</Badge>}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {invoice.supplierName} • {new Date(invoice.date).toLocaleDateString('uk-UA')}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              Позицій: {invoice.items?.length || 0} • 
-                              Сума: {parseFloat(invoice.amount.toString() || '0').toLocaleString('uk-UA')} ₴
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {invoice.items && invoice.items.length > 0 && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toggleInvoiceExpansion(invoice.id)}
-                              className="text-gray-500 hover:text-gray-700"
-                            >
-                              {expandedInvoices.has(invoice.id) ? (
-                                <ChevronDown className="w-4 h-4" />
-                              ) : (
-                                <ChevronRight className="w-4 h-4" />
-                              )}
-                              <Eye className="w-4 h-4 ml-1" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {/* Розгорнуті позиції накладної */}
-                      {expandedInvoices.has(invoice.id) && invoice.items && invoice.items.length > 0 && (
-                        <div className="mt-4 border-t pt-4">
-                          <h4 className="text-sm font-medium mb-3 text-gray-700">Позиції накладної:</h4>
-                          <div className="max-h-64 overflow-y-auto">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead className="text-xs">Назва товару</TableHead>
-                                  <TableHead className="text-xs text-center">Кількість</TableHead>
-                                  <TableHead className="text-xs text-center">Одиниця</TableHead>
-                                  <TableHead className="text-xs text-right">Ціна</TableHead>
-                                  <TableHead className="text-xs text-right">Сума</TableHead>
-                                  <TableHead className="text-xs text-center">Статус</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {invoice.items.map((item, index) => (
-                                  <TableRow key={index} className="text-xs">
-                                    <TableCell className="font-medium max-w-[200px]">
-                                      <div className="truncate" title={item.originalName}>
-                                        {item.originalName}
-                                      </div>
-                                      {item.codeTovara && (
-                                        <div className="text-gray-500 text-xs">
-                                          Код: {item.codeTovara}
-                                        </div>
-                                      )}
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                      {item.quantity.toLocaleString('uk-UA')}
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                      {item.unit || '—'}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                      {item.price.toLocaleString('uk-UA', { 
-                                        minimumFractionDigits: 2, 
-                                        maximumFractionDigits: 2 
-                                      })} ₴
-                                    </TableCell>
-                                    <TableCell className="text-right font-medium">
-                                      {item.total.toLocaleString('uk-UA', { 
-                                        minimumFractionDigits: 2, 
-                                        maximumFractionDigits: 2 
-                                      })} ₴
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                      {item.isMapped ? (
-                                        <Badge variant="default" className="text-xs">
-                                          Зіставлено
-                                        </Badge>
-                                      ) : (
-                                        <Badge variant="outline" className="text-xs">
-                                          Новий товар
-                                        </Badge>
-                                      )}
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+                  ))}
+                </div>
               </div>
+            </div>
+          )}
 
-              {/* Кнопки дій */}
-              <div className="flex justify-end space-x-2 pt-4 border-t">
-                <Button variant="outline" onClick={() => setIsOpen(false)}>
-                  Скасувати
-                </Button>
-                <Button 
-                  onClick={handleImport}
-                  disabled={selectedInvoices.size === 0 || isImporting}
-                  className="min-w-[120px]"
-                >
-                  {isImporting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Імпорт...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4 mr-2" />
-                      Імпортувати ({selectedInvoices.size})
-                    </>
-                  )}
-                </Button>
-              </div>
-            </>
+          {/* Прогрес імпорту */}
+          {importProgress && (
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Прогрес імпорту</span>
+                  <span className="text-sm text-gray-500">
+                    {importProgress.processed} / {importProgress.total}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                    style={{ width: `${(importProgress.processed / importProgress.total) * 100}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-600">
+                  <span>Успішно: {importProgress.succeeded}</span>
+                  <span>Помилки: {importProgress.failed}</span>
+                </div>
+                {importProgress.errors.length > 0 && (
+                  <div className="mt-2 text-xs text-red-600">
+                    <details>
+                      <summary>Деталі помилок ({importProgress.errors.length})</summary>
+                      <ul className="mt-1 space-y-1">
+                        {importProgress.errors.map((error, idx) => (
+                          <li key={idx}>{error}</li>
+                        ))}
+                      </ul>
+                    </details>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Порожній стан */}
+          {filteredInvoices.length === 0 && !loadingInvoices && !invoicesError && (dateFilter.period || dateFilter.dateFrom) && (
+            <Card>
+              <CardContent className="flex items-center justify-center py-8">
+                <div className="text-center">
+                  <FileText className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Накладні не знайдено
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {showOnlyMissing 
+                      ? "Всі накладні за вибраний період вже імпортовані"
+                      : "За вибраний період накладні відсутні"
+                    }
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </div>
       </DialogContent>
