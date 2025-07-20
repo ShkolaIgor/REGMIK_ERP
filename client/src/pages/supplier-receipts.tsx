@@ -24,6 +24,7 @@ import { UkrainianDate } from "@/components/ui/ukrainian-date";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingOverlay, LoadingButton } from "@/components/ui/loading-overlay";
 import { LoadingState, TableLoadingState, DashboardCardLoading } from "@/components/ui/loading-state";
+import { Import1CInvoicesSimple } from "@/components/Import1CInvoicesSimple";
 
 import { 
   insertSupplierReceiptSchema, 
@@ -671,17 +672,7 @@ export default function SupplierReceipts() {
             ]}
           />
               <div className="flex items-center space-x-3">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsImportDialogOpen(true)}
-                  className={`border-blue-200 text-blue-600 hover:bg-blue-50 transition-all duration-300 hover:scale-105 hover:shadow-md ${!isAuthenticated ? 'opacity-50' : ''}`}
-                  disabled={!isAuthenticated}
-                  title={!isAuthenticated ? "Потрібна авторизація для імпорту" : ""}
-                >
-                  <Upload className="w-4 h-4 mr-2 transition-transform duration-300 hover:scale-110" />
-                  Імпорт з 1С
-                  {!isAuthenticated && <AlertTriangle className="ml-2 h-4 w-4 text-orange-500" />}
-                </Button>
+                <Import1CInvoicesSimple />
                 <Button variant="outline" disabled className="transition-all duration-300">
                   <Scan className="w-4 h-4 mr-2" />
                   Сканер штрих-кодів
