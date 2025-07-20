@@ -132,6 +132,12 @@ export default function SupplierReceipts() {
         return newData;
       });
       
+      // Інвалідуємо кеш для позицій приходу
+      queryClient.invalidateQueries({ queryKey: [`/api/supplier-receipts/${id}/items`] });
+      
+      // Оновлюємо стан позицій локально
+      setReceiptItems([]);
+      
       handleCloseDialog();
       toast({ title: "Прихід оновлено успішно" });
     },
@@ -241,20 +247,23 @@ export default function SupplierReceipts() {
       purchase_order_id: receipt.purchaseOrderId?.toString() || 'none',
     });
 
-    // Завантажуємо позиції приходу для редагування
+    // Завантажуємо позиції приходу для редагування через React Query
     try {
-      const response = await fetch(`/api/supplier-receipts/${receipt.id}/items`);
-      if (response.ok) {
-        const items = await response.json();
-        setReceiptItems(items.map((item: any) => ({
-          componentId: item.component_id || 0,
-          quantity: item.quantity?.toString() || "",
-          unitPrice: item.unit_price?.toString() || "0",
-          componentName: item.component_name || "",
-        })));
-      } else {
-        setReceiptItems([]);
-      }
+      // Спочатку інвалідуємо кеш для свіжих даних
+      await queryClient.invalidateQueries({ queryKey: [`/api/supplier-receipts/${receipt.id}/items`] });
+      
+      // Завантажуємо свіжі дані
+      const items = await queryClient.fetchQuery({
+        queryKey: [`/api/supplier-receipts/${receipt.id}/items`],
+        queryFn: () => fetch(`/api/supplier-receipts/${receipt.id}/items`).then(res => res.json())
+      });
+      
+      setReceiptItems(items.map((item: any) => ({
+        componentId: item.component_id || 0,
+        quantity: item.quantity?.toString() || "",
+        unitPrice: item.unit_price?.toString() || "0",
+        componentName: item.component_name || "",
+      })));
     } catch (error) {
       console.error('Error loading receipt items:', error);
       setReceiptItems([]);
