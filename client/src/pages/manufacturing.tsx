@@ -84,12 +84,8 @@ export default function Manufacturing() {
     warehouseId: "",
     plannedEndDate: "",
     estimatedDuration: "",
-    notes: "",
-    clientId: ""
+    notes: ""
   });
-  const [clientSearchValue, setClientSearchValue] = useState("");
-  const [clientComboboxOpen, setClientComboboxOpen] = useState(false);
-  const [selectedClientId, setSelectedClientId] = useState("");
   const [completeData, setCompleteData] = useState({
     producedQuantity: "",
     qualityRating: "good",
@@ -129,11 +125,6 @@ export default function Manufacturing() {
 
   const { data: warehouses = [] } = useQuery({
     queryKey: ["/api/warehouses"],
-    enabled: isDialogOpen || isDetailsDialogOpen,
-  });
-
-  const { data: clients = [] } = useQuery({
-    queryKey: ["/api/clients"],
     enabled: isDialogOpen || isDetailsDialogOpen,
   });
 
