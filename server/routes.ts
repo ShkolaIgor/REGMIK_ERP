@@ -5228,7 +5228,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      res.json(receipt);
+      // Convert response to camelCase format for frontend
+      const responseReceipt = {
+        id: receipt.id,
+        receiptDate: receipt.receipt_date || receipt.receiptDate,
+        supplierId: receipt.supplier_id || receipt.supplierId,
+        supplierName: receipt.supplierName || receipt.supplier_name,
+        documentTypeId: receipt.document_type_id || receipt.documentTypeId,
+        documentTypeName: receipt.documentTypeName || receipt.document_type_name,
+        supplierDocumentDate: receipt.supplier_document_date || receipt.supplierDocumentDate,
+        supplierDocumentNumber: receipt.supplier_document_number || receipt.supplierDocumentNumber,
+        totalAmount: receipt.total_amount || receipt.totalAmount,
+        comment: receipt.comment,
+        purchaseOrderId: receipt.purchase_order_id || receipt.purchaseOrderId,
+        externalId: receipt.external_id || receipt.externalId,
+        createdAt: receipt.created_at || receipt.createdAt,
+        updatedAt: receipt.updated_at || receipt.updatedAt
+      };
+      
+      res.json(responseReceipt);
     } catch (error) {
       console.error('Error updating supplier receipt:', error);
       res.status(500).json({ message: 'Failed to update supplier receipt' });
