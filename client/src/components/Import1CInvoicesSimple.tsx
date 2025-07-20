@@ -9,7 +9,14 @@ import { Loader2, Upload, FileText, Building2, Calendar, DollarSign, AlertCircle
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ProcessedInvoice1C } from "@shared/schema";
-import { DatePeriodFilter, DateFilterParams } from "@/components/DatePeriodFilter";
+import { DatePeriodFilter } from "@/components/DatePeriodFilter";
+
+// Локальний тип для фільтрів дат
+interface DateFilterParams {
+  period?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
 
 // Тип для накладних згідно з реальним кодом 1С
 type Invoice1C = ProcessedInvoice1C;
@@ -58,15 +65,7 @@ export function Import1CInvoicesSimple() {
     queryKey: ["/api/1c/invoices", dateFilter],
     queryFn: () => apiRequest(buildInvoicesUrl()),
     enabled: Boolean(isOpen && (dateFilter.period || dateFilter.dateFrom)),
-    retry: false,
-    onError: (error) => {
-      console.error("1C Invoices API Error:", error);
-      toast({
-        title: "Помилка завантаження",
-        description: "Не вдалося завантажити накладні з 1С. Перевірте підключення.",
-        variant: "destructive",
-      });
-    }
+    retry: false
   });
 
   // Мутація для імпорту вибраних накладних
@@ -247,8 +246,7 @@ export function Import1CInvoicesSimple() {
           {/* Фільтр дат */}
           <div className="flex gap-4 items-center">
             <DatePeriodFilter 
-              value={dateFilter} 
-              onChange={setDateFilter}
+              onFilterChange={setDateFilter}
               placeholder="Оберіть період для завантаження накладних"
             />
             <Button
@@ -312,7 +310,7 @@ export function Import1CInvoicesSimple() {
                   <Checkbox
                     id="show-only-missing"
                     checked={showOnlyMissing}
-                    onCheckedChange={setShowOnlyMissing}
+                    onCheckedChange={(checked) => setShowOnlyMissing(!!checked)}
                   />
                   <label htmlFor="show-only-missing" className="text-sm">
                     Тільки нові накладні
@@ -372,8 +370,8 @@ export function Import1CInvoicesSimple() {
                               {invoice.supplierName} • {new Date(invoice.date).toLocaleDateString('uk-UA')}
                             </div>
                             <div className="text-sm text-gray-600">
-                              Позицій: {invoice.positions?.length || 0} • 
-                              Сума: {parseFloat(invoice.totalAmount || '0').toLocaleString('uk-UA')} ₴
+                              Позицій: {invoice.items?.length || 0} • 
+                              Сума: {parseFloat(invoice.amount.toString() || '0').toLocaleString('uk-UA')} ₴
                             </div>
                           </div>
                         </div>
