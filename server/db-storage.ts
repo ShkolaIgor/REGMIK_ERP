@@ -101,6 +101,18 @@ export class DatabaseStorage implements IStorage {
     this.configureDatabase();
   }
 
+  // Helper method to generate hash from string (for external_id)
+  private hashCode(str: string): number {
+    let hash = 0;
+    if (str.length === 0) return hash;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash;
+  }
+
   private async configureDatabase() {
     try {
       // Налаштовуємо кодування UTF-8 для всіх підключень
@@ -13079,18 +13091,52 @@ export class DatabaseStorage implements IStorage {
         console.log(`⚠️ Webhook: Дані компанії 1С НЕ ПЕРЕДАНО для накладної`);
       }
       
+      // Find supplier by name or create default
+      let supplierId = 1; // Default supplier
+      if (invoiceData.Постачальник) {
+        try {
+          const supplierResult = await this.findOrCreateSupplier({
+            name: invoiceData.Постачальник,
+            taxCode: invoiceData.ЄДРПОУ ? invoiceData.ЄДРПОУ.trim() : null,
+            fullName: invoiceData.Постачальник
+          });
+          supplierId = supplierResult.id;
+        } catch (error) {
+          console.log('Supplier creation/lookup failed, using default:', error);
+        }
+      }
+
+      // Convert currency code
+      let currency = 'UAH';
+      if (invoiceData.КодВалюты === '980') {
+        currency = 'UAH';
+      }
+
+      // Parse date from 1C format
+      let receiptDate = new Date();
+      if (invoiceData.ДатаДокумента) {
+        try {
+          receiptDate = new Date(invoiceData.ДатаДокумента);
+        } catch (error) {
+          console.log('Date parsing failed, using current date:', error);
+        }
+      }
+
+      // Generate external_id hash from document reference instead of using it directly
+      const externalIdHash = invoiceData.СсылкаДокумента 
+        ? Math.abs(this.hashCode(invoiceData.СсылкаДокумента))
+        : null;
+
       // Convert 1C invoice data to ERP format (supplier receipt)
       const supplierReceiptRecord = {
-        supplierId: invoiceData.supplierId || 1, // Default supplier or find by name
-        receiptNumber: invoiceData.receiptNumber || invoiceData.НомерДокумента || '',
-        receiptDate: invoiceData.receiptDate || invoiceData.ДатаДокумента || new Date(),
-        totalAmount: invoiceData.totalAmount || invoiceData.СуммаДокумента || 0,
-        currency: invoiceData.currency || invoiceData.КодВалюты || 'UAH',
-        status: 'posted',
-        documentType: 'invoice',
-        externalId: invoiceData.externalId || invoiceData.СсылкаДокумента,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        supplierId: supplierId,
+        receiptDate: receiptDate,
+        documentTypeId: 1, // Default invoice type
+        supplierDocumentDate: receiptDate,
+        supplierDocumentNumber: invoiceData.НомерДокумента || '',
+        totalAmount: (parseFloat(invoiceData.СуммаДокумента) || 0).toFixed(2),
+        comment: `Імпортовано з 1С накладної ${invoiceData.НомерДокумента || ''}`,
+        externalId: externalIdHash
       };
       
       // Create supplier receipt
@@ -13138,19 +13184,23 @@ export class DatabaseStorage implements IStorage {
         console.log(`⚠️ Webhook: Дані компанії 1С НЕ ПЕРЕДАНО для оновлення накладної`);
       }
       
-      const externalId = invoiceData.externalId || invoiceData.СсылкаДокумента;
-      if (!externalId) {
-        throw new Error('External ID is required for invoice updates');
+      // Generate external_id hash from document reference
+      const externalIdHash = invoiceData.СсылкаДокумента 
+        ? Math.abs(this.hashCode(invoiceData.СсылкаДокумента))
+        : null;
+      
+      if (!externalIdHash) {
+        throw new Error('Document reference (СсылкаДокумента) is required for invoice updates');
       }
       
       // Find existing receipt
       const [existingReceipt] = await db
         .select()
         .from(supplierReceipts)
-        .where(eq(supplierReceipts.externalId, externalId));
+        .where(eq(supplierReceipts.externalId, externalIdHash));
       
       if (!existingReceipt) {
-        throw new Error(`Invoice with external ID ${externalId} not found`);
+        throw new Error(`Invoice with external ID ${externalIdHash} not found`);
       }
       
       // Update receipt
@@ -13178,19 +13228,23 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log('🔄 Webhook: Видалення накладної від 1С:', invoiceData);
       
-      const externalId = invoiceData.externalId || invoiceData.СсылкаДокумента;
-      if (!externalId) {
-        throw new Error('External ID is required for invoice deletion');
+      // Generate external_id hash from document reference
+      const externalIdHash = invoiceData.СсылкаДокумента 
+        ? Math.abs(this.hashCode(invoiceData.СсылкаДокумента))
+        : null;
+      
+      if (!externalIdHash) {
+        throw new Error('Document reference (СсылкаДокумента) is required for invoice deletion');
       }
       
       // Find existing receipt
       const [existingReceipt] = await db
         .select()
         .from(supplierReceipts)
-        .where(eq(supplierReceipts.externalId, externalId));
+        .where(eq(supplierReceipts.externalId, externalIdHash));
       
       if (!existingReceipt) {
-        throw new Error(`Invoice with external ID ${externalId} not found`);
+        throw new Error(`Invoice with external ID ${externalIdHash} not found`);
       }
       
       // Delete receipt items first
