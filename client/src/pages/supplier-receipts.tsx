@@ -88,8 +88,7 @@ export default function SupplierReceipts() {
     receiptsArray,
     arrayLength: receiptsArray.length,
     firstReceipt: receiptsArray[0],
-    isLoading,
-    error
+    isLoading
   });
 
   // Form
