@@ -92,8 +92,43 @@ export default function Manufacturing() {
     notes: ""
   });
 
+  // Стан для автокомпліту товарів
+  const [productSearchTerm, setProductSearchTerm] = useState("");
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Фільтрація товарів для автокомпліту
+  const filteredProducts = React.useMemo(() => {
+    if (!productSearchTerm || !products) return [];
+    const term = productSearchTerm.toLowerCase();
+    return (products as any[]).filter((product: any) => 
+      product.name.toLowerCase().includes(term) || 
+      product.sku.toLowerCase().includes(term)
+    ).slice(0, 10); // Показуємо максимум 10 результатів
+  }, [productSearchTerm, products]);
+
+  // Закриття dropdown при кліку поза елементом
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (showProductDropdown && !(event.target as Element).closest('.product-autocomplete')) {
+        setShowProductDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showProductDropdown]);
+
+  // Встановлення пошукового терміну при редагуванні або вибору товару
+  React.useEffect(() => {
+    if (formData.productId && products) {
+      const selectedProduct = (products as any[]).find(p => p.id.toString() === formData.productId);
+      if (selectedProduct && !productSearchTerm) {
+        setProductSearchTerm(`${selectedProduct.name} (${selectedProduct.sku})`);
+      }
+    }
+  }, [formData.productId, products, productSearchTerm]);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["/api/manufacturing-orders"],
@@ -328,6 +363,8 @@ export default function Manufacturing() {
       notes: ""
     });
     setEditingOrder(null);
+    setProductSearchTerm("");
+    setShowProductDropdown(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -859,22 +896,46 @@ export default function Manufacturing() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="productId">Товар *</Label>
-                    <Select 
-                      value={formData.productId} 
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, productId: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Оберіть товар" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(products as any[]).map((product: any) => (
-                          <SelectItem key={product.id} value={product.id.toString()}>
-                            {product.name} ({product.sku})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="productSearch">Товар *</Label>
+                    <div className="relative product-autocomplete">
+                      <Input
+                        id="productSearch"
+                        type="text"
+                        placeholder="Введіть назву або SKU товару..."
+                        value={productSearchTerm}
+                        onChange={(e) => setProductSearchTerm(e.target.value)}
+                        onFocus={() => setShowProductDropdown(true)}
+                        className="pr-8"
+                      />
+                      <Search className="absolute right-2 top-2.5 h-4 w-4 text-gray-400" />
+                      
+                      {/* Dropdown з результатами пошуку */}
+                      {showProductDropdown && filteredProducts.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                          {filteredProducts.map((product: any) => (
+                            <div
+                              key={product.id}
+                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                              onClick={() => {
+                                setFormData(prev => ({ ...prev, productId: product.id.toString() }));
+                                setProductSearchTerm(`${product.name} (${product.sku})`);
+                                setShowProductDropdown(false);
+                              }}
+                            >
+                              <div className="font-medium text-sm">{product.name}</div>
+                              <div className="text-xs text-gray-500">{product.sku}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Повідомлення коли нічого не знайдено */}
+                      {showProductDropdown && productSearchTerm.length > 0 && filteredProducts.length === 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-3">
+                          <div className="text-sm text-gray-500">Товар не знайдено</div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div>
