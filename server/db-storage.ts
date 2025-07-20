@@ -4696,12 +4696,13 @@ export class DatabaseStorage implements IStorage {
         INNER JOIN order_items oi ON o.id = oi.order_id
         INNER JOIN products p ON oi.product_id = p.id  
         LEFT JOIN clients c ON o.client_id = c.id
-        WHERE o.status = 'Виробництво' 
-          AND o.paid_amount > 0 
+        WHERE o.paid_amount > 0 
           AND o.payment_date IS NOT NULL
+          AND COALESCE(oi.shipped_quantity, 0) < oi.quantity
         ORDER BY o.payment_date, o.order_number
       `);
 
+      console.log(`Found ${result.rows.length} ordered products`);
       return result.rows;
     } catch (error) {
       console.error("Error getting ordered products:", error);
