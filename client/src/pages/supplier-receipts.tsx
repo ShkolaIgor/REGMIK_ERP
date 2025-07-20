@@ -116,19 +116,24 @@ export default function SupplierReceipts() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, ...data }: any) => apiRequest(`/api/supplier-receipts/${id}`, "PUT", data),
-    onSuccess: async (updatedReceipt, { id }) => {
-      console.log('Update successful, removing old cache...', updatedReceipt);
+    onSuccess: (updatedReceipt, { id }) => {
+      console.log('Update successful:', updatedReceipt);
+      console.log('Updating receipt with ID:', id);
       
-      // Повністю видаляємо кеш для цього ключа
-      queryClient.removeQueries({ queryKey: ["/api/supplier-receipts"] });
+      // Оптимістично оновлюємо дані в кеші
+      queryClient.setQueryData(["/api/supplier-receipts"], (oldData: any) => {
+        console.log('Current cached data:', oldData);
+        if (!Array.isArray(oldData)) return oldData;
+        
+        const newData = oldData.map((receipt: any) => 
+          receipt.id === id ? { ...receipt, ...updatedReceipt } : receipt
+        );
+        console.log('New cached data:', newData);
+        return newData;
+      });
       
-      // Примусово перезавантажуємо сторінку після короткої затримки
       handleCloseDialog();
       toast({ title: "Прихід оновлено успішно" });
-      
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
     },
     onError: (error: any) => {
       console.error('Update error:', error);
