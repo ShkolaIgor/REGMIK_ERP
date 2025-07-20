@@ -663,8 +663,8 @@ export default function SupplierReceipts() {
           setIsDialogOpen(true);
         }
       }}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>
               {editingReceipt ? 'Редагувати прихід' : 'Створити новий прихід'}
             </DialogTitle>
@@ -672,8 +672,9 @@ export default function SupplierReceipts() {
               {editingReceipt ? 'Внесіть зміни до інформації про прихід від постачальника' : 'Заповніть форму для створення нового приходу від постачальника'}
             </DialogDescription>
           </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="flex-1 overflow-y-auto p-1">
+            <Form {...form}>
+              <form id="receipt-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -820,9 +821,9 @@ export default function SupplierReceipts() {
               />
 
               {/* Позиції приходу */}
-              <div>
+              <div className="border rounded-lg p-4 bg-gray-50">
                 <div className="flex items-center justify-between mb-4">
-                  <Label>Позиції приходу</Label>
+                  <Label className="text-base font-semibold">Позиції приходу</Label>
                   <Button type="button" onClick={addReceiptItem} variant="outline" size="sm">
                     <Plus className="w-4 h-4 mr-2" />
                     Додати позицію
@@ -830,12 +831,12 @@ export default function SupplierReceipts() {
                 </div>
 
                 {receiptItems.length === 0 ? (
-                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <div className="text-center py-8 bg-white rounded-lg border-2 border-dashed border-gray-300">
                     <Package className="w-12 h-12 mx-auto text-gray-400 mb-2" />
                     <p className="text-gray-500">Додайте позиції до приходу</p>
                   </div>
                 ) : (
-                  <div className="space-y-3 max-h-80 overflow-y-auto">
+                  <div className="space-y-3 max-h-48 overflow-y-auto border bg-white rounded-lg p-2">
                     {receiptItems.map((item, index) => (
                       <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg bg-white">
                         <div className="flex-1">
@@ -926,29 +927,32 @@ export default function SupplierReceipts() {
                   </div>
                 )}
               </div>
-              <div className="flex justify-between">
-                <div>
-                  {editingReceipt && (
-                    <Button 
-                      type="button" 
-                      variant="destructive" 
-                      onClick={() => handleDelete(editingReceipt.id)}
-                    >
-                      Видалити
-                    </Button>
-                  )}
-                </div>
-                <div className="flex space-x-2">
-                  <Button type="button" variant="outline" onClick={handleCloseDialog}>
-                    Скасувати
+              </form>
+            </Form>
+          </div>
+          <div className="flex-shrink-0 border-t pt-4">
+            <div className="flex justify-between">
+              <div>
+                {editingReceipt && (
+                  <Button 
+                    type="button" 
+                    variant="destructive" 
+                    onClick={() => handleDelete(editingReceipt.id)}
+                  >
+                    Видалити
                   </Button>
-                  <Button type="submit">
-                    {editingReceipt ? 'Оновити' : 'Створити'}
-                  </Button>
-                </div>
+                )}
               </div>
-            </form>
-          </Form>
+              <div className="flex space-x-2">
+                <Button type="button" variant="outline" onClick={handleCloseDialog}>
+                  Скасувати
+                </Button>
+                <Button type="submit" form="receipt-form">
+                  {editingReceipt ? 'Оновити' : 'Створити'}
+                </Button>
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
