@@ -4680,6 +4680,8 @@ export class DatabaseStorage implements IStorage {
           p.name as "productName",
           p.sku as "productSku", 
           SUM(oi.quantity - COALESCE(oi.shipped_quantity, 0)) as "totalQuantityToShip",
+          COALESCE(SUM(inv.quantity), 0) as "stockQuantity",
+          GREATEST(0, SUM(oi.quantity - COALESCE(oi.shipped_quantity, 0)) - COALESCE(SUM(inv.quantity), 0)) as "quantityToProduce",
           COUNT(DISTINCT o.id) as "ordersCount",
           STRING_AGG(DISTINCT o.order_number, ', ' ORDER BY o.order_number) as "orderNumbers",
           STRING_AGG(DISTINCT COALESCE(c.name, 'Не вказано'), ', ') as "clientNames",
@@ -4701,6 +4703,7 @@ export class DatabaseStorage implements IStorage {
         INNER JOIN order_items oi ON o.id = oi.order_id
         INNER JOIN products p ON oi.product_id = p.id  
         LEFT JOIN clients c ON o.client_id = c.id
+        LEFT JOIN inventory inv ON oi.product_id = inv.product_id
         WHERE o.paid_amount > 0 
           AND o.payment_date IS NOT NULL
           AND COALESCE(oi.shipped_quantity, 0) < oi.quantity

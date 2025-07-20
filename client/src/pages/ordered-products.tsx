@@ -205,6 +205,11 @@ export default function OrderedProductsPage() {
                           <span className="text-sm font-medium text-green-700">Загальна кількість</span>
                         </div>
                         <p className="text-lg font-bold text-green-900">{item.totalQuantityToShip || 0} шт</p>
+                        {item.stockQuantity > 0 && (
+                          <p className="text-xs text-green-600 mt-1">
+                            На складі: {item.stockQuantity} шт
+                          </p>
+                        )}
                       </div>
                       
                       <div className="bg-orange-50 p-3 rounded-lg">
@@ -216,6 +221,16 @@ export default function OrderedProductsPage() {
                           {item.latestDueDate ? new Date(item.latestDueDate).toLocaleDateString('uk-UA') : "Не вказано"}
                         </p>
                       </div>
+                      
+                      {item.quantityToProduce > 0 && (
+                        <div className="bg-red-50 p-3 rounded-lg">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Factory className="h-4 w-4 text-red-600" />
+                            <span className="text-sm font-medium text-red-700">До виробництва</span>
+                          </div>
+                          <p className="text-lg font-bold text-red-900">{item.quantityToProduce} шт</p>
+                        </div>
+                      )}
                       
                       <div className="bg-purple-50 p-3 rounded-lg">
                         <div className="flex items-center gap-2 mb-1">
@@ -243,6 +258,15 @@ export default function OrderedProductsPage() {
                             <span className="font-medium text-gray-600">Перший термін: </span>
                             <span className="text-gray-900">{item.earliestDueDate ? new Date(item.earliestDueDate).toLocaleDateString('uk-UA') : "Не вказано"}</span>
                           </div>
+                          {item.stockQuantity > 0 && (
+                            <div>
+                              <span className="font-medium text-gray-600">Склад: </span>
+                              <span className="text-green-700 font-medium">{item.stockQuantity} шт наявно</span>
+                              {item.quantityToProduce > 0 && (
+                                <span className="text-red-700 font-medium ml-2">({item.quantityToProduce} шт виробити)</span>
+                              )}
+                            </div>
+                          )}
                           <div>
                             <span className="font-medium text-gray-600">Перша оплата: </span>
                             <span className="text-gray-900">{item.earliestPaymentDate ? new Date(item.earliestPaymentDate).toLocaleDateString('uk-UA') : "Не вказано"}</span>
