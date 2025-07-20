@@ -29,6 +29,7 @@ import {
   insertSupplierReceiptSchema, 
   type SupplierReceiptWithJoins 
 } from "@/shared/schema";
+import { Import1CInvoices } from "@/components/Import1CInvoices";
 
 // Form schema
 const supplierReceiptSchema = z.object({
@@ -664,6 +665,20 @@ export default function SupplierReceipts() {
             ]}
           />
               <div className="flex items-center space-x-3">
+                <Import1CInvoices 
+                  triggerComponent={
+                    <Button 
+                      variant="outline" 
+                      className={`border-green-200 text-green-600 hover:bg-green-50 transition-all duration-300 hover:scale-105 hover:shadow-md ${!isAuthenticated ? 'opacity-50' : ''}`}
+                      disabled={!isAuthenticated}
+                      title={!isAuthenticated ? "Потрібна авторизація для імпорту з 1С" : "Імпорт накладних з 1С системи"}
+                    >
+                      <Upload className="w-4 h-4 mr-2 transition-transform duration-300 hover:scale-110" />
+                      Імпорт з 1с
+                      {!isAuthenticated && <AlertTriangle className="ml-2 h-4 w-4 text-orange-500" />}
+                    </Button>
+                  }
+                />
                 <Button 
                   variant="outline" 
                   onClick={() => setIsImportDialogOpen(true)}
