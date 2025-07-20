@@ -184,13 +184,13 @@ export default function OrderedProductsPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-blue-600">{item.totalQuantityToShip || 0} шт</p>
+                        <p className="text-2xl font-bold text-blue-600">{item.quantityToProduce || 0} шт</p>
                         <p className="text-sm text-gray-500">До виробництва</p>
                       </div>
                     </div>
 
                     {/* Основна інформація */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
                       <div className="bg-amber-50 p-3 rounded-lg">
                         <div className="flex items-center gap-2 mb-1">
                           <ShoppingCart className="h-4 w-4 text-amber-600" />
@@ -212,25 +212,25 @@ export default function OrderedProductsPage() {
                         )}
                       </div>
                       
+                     {item.quantityToProduce > 0 && (
+                        <div className="bg-red-50 p-3 rounded-lg">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Factory className="h-4 w-4 text-orange-600" />
+                            <span className="text-sm font-medium text-orange-700">До виробництва</span>
+                          </div>
+                          <p className="text-lg font-bold text-orange-900">{item.quantityToProduce} шт</p>
+                        </div>
+                      )}
+                      
                       <div className="bg-orange-50 p-3 rounded-lg">
                         <div className="flex items-center gap-2 mb-1">
-                          <Clock className="h-4 w-4 text-orange-600" />
-                          <span className="text-sm font-medium text-orange-700">Крайній термін</span>
+                          <Clock className="h-4 w-4 text-red-600" />
+                          <span className="text-sm font-medium text-red-700">Крайній термін</span>
                         </div>
-                        <p className="text-lg font-bold text-orange-900">
+                        <p className="text-lg font-bold text-red-900">
                           {item.latestDueDate ? new Date(item.latestDueDate).toLocaleDateString('uk-UA') : "Не вказано"}
                         </p>
                       </div>
-                      
-                      {item.quantityToProduce > 0 && (
-                        <div className="bg-red-50 p-3 rounded-lg">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Factory className="h-4 w-4 text-red-600" />
-                            <span className="text-sm font-medium text-red-700">До виробництва</span>
-                          </div>
-                          <p className="text-lg font-bold text-red-900">{item.quantityToProduce} шт</p>
-                        </div>
-                      )}
                       
                       <div className="bg-purple-50 p-3 rounded-lg">
                         <div className="flex items-center gap-2 mb-1">
@@ -270,10 +270,6 @@ export default function OrderedProductsPage() {
                           <div>
                             <span className="font-medium text-gray-600">Перша оплата: </span>
                             <span className="text-gray-900">{item.earliestPaymentDate ? new Date(item.earliestPaymentDate).toLocaleDateString('uk-UA') : "Не вказано"}</span>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-600">Крайній термін: </span>
-                            <span className="text-gray-900">{item.latestDueDate ? new Date(item.latestDueDate).toLocaleDateString('uk-UA') : "Не вказано"}</span>
                           </div>
                         </div>
                       </div>
