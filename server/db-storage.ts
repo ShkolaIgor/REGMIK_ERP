@@ -4685,16 +4685,16 @@ export class DatabaseStorage implements IStorage {
           STRING_AGG(DISTINCT COALESCE(c.name, 'Не вказано'), ', ') as "clientNames",
           MIN(o.payment_date) as "earliestPaymentDate",
           MAX(o.payment_date) as "latestPaymentDate",
-          AVG(oi.unit_price) as "averageUnitPrice",
-          SUM((oi.quantity - COALESCE(oi.shipped_quantity, 0)) * oi.unit_price) as "totalValue",
+          MAX(COALESCE(o.due_date, o.created_at + INTERVAL '14 days')) as "latestDueDate",
+          MIN(COALESCE(o.due_date, o.created_at + INTERVAL '14 days')) as "earliestDueDate",
           STRING_AGG(DISTINCT o.status, ', ') as "orderStatuses",
           JSON_AGG(DISTINCT jsonb_build_object(
             'orderId', o.id,
             'orderNumber', o.order_number,
             'clientName', COALESCE(c.name, 'Не вказано'),
             'quantityToShip', oi.quantity - COALESCE(oi.shipped_quantity, 0),
-            'unitPrice', oi.unit_price,
             'paymentDate', o.payment_date,
+            'dueDate', COALESCE(o.due_date, o.created_at + INTERVAL '14 days'),
             'status', o.status
           )) as "orderDetails"
         FROM orders o

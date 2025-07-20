@@ -202,17 +202,19 @@ export default function OrderedProductsPage() {
                       <div className="bg-green-50 p-3 rounded-lg">
                         <div className="flex items-center gap-2 mb-1">
                           <Target className="h-4 w-4 text-green-600" />
-                          <span className="text-sm font-medium text-green-700">Сер. ціна</span>
+                          <span className="text-sm font-medium text-green-700">Загальна кількість</span>
                         </div>
-                        <p className="text-lg font-bold text-green-900">{(item.averageUnitPrice || 0).toLocaleString()} грн</p>
+                        <p className="text-lg font-bold text-green-900">{item.totalQuantityToShip || 0} шт</p>
                       </div>
                       
                       <div className="bg-orange-50 p-3 rounded-lg">
                         <div className="flex items-center gap-2 mb-1">
-                          <CheckCircle className="h-4 w-4 text-orange-600" />
-                          <span className="text-sm font-medium text-orange-700">Загальна вартість</span>
+                          <Clock className="h-4 w-4 text-orange-600" />
+                          <span className="text-sm font-medium text-orange-700">Крайній термін</span>
                         </div>
-                        <p className="text-lg font-bold text-orange-900">{(item.totalValue || 0).toLocaleString()} грн</p>
+                        <p className="text-lg font-bold text-orange-900">
+                          {item.latestDueDate ? new Date(item.latestDueDate).toLocaleDateString('uk-UA') : "Не вказано"}
+                        </p>
                       </div>
                       
                       <div className="bg-purple-50 p-3 rounded-lg">
@@ -238,16 +240,16 @@ export default function OrderedProductsPage() {
                             <span className="text-gray-900">{item.orderNumbers || "Не вказано"}</span>
                           </div>
                           <div>
-                            <span className="font-medium text-gray-600">Клієнти: </span>
-                            <span className="text-gray-900">{item.clientNames || "Не вказано"}</span>
+                            <span className="font-medium text-gray-600">Перший термін: </span>
+                            <span className="text-gray-900">{item.earliestDueDate ? new Date(item.earliestDueDate).toLocaleDateString('uk-UA') : "Не вказано"}</span>
                           </div>
                           <div>
                             <span className="font-medium text-gray-600">Перша оплата: </span>
                             <span className="text-gray-900">{item.earliestPaymentDate ? new Date(item.earliestPaymentDate).toLocaleDateString('uk-UA') : "Не вказано"}</span>
                           </div>
                           <div>
-                            <span className="font-medium text-gray-600">Остання оплата: </span>
-                            <span className="text-gray-900">{item.latestPaymentDate ? new Date(item.latestPaymentDate).toLocaleDateString('uk-UA') : "Не вказано"}</span>
+                            <span className="font-medium text-gray-600">Крайній термін: </span>
+                            <span className="text-gray-900">{item.latestDueDate ? new Date(item.latestDueDate).toLocaleDateString('uk-UA') : "Не вказано"}</span>
                           </div>
                         </div>
                       </div>
@@ -263,11 +265,10 @@ export default function OrderedProductsPage() {
                           </summary>
                           <div className="mt-3 space-y-2">
                             {item.orderDetails.map((detail: any, idx: number) => (
-                              <div key={idx} className="bg-white p-3 rounded border text-xs grid grid-cols-2 md:grid-cols-5 gap-2">
+                              <div key={idx} className="bg-white p-3 rounded border text-xs grid grid-cols-2 md:grid-cols-4 gap-2">
                                 <div><strong>№:</strong> {detail.orderNumber}</div>
-                                <div><strong>Клієнт:</strong> {detail.clientName}</div>
                                 <div><strong>Кількість:</strong> {detail.quantityToShip} шт</div>
-                                <div><strong>Ціна:</strong> {detail.unitPrice} грн</div>
+                                <div><strong>Термін:</strong> {detail.dueDate ? new Date(detail.dueDate).toLocaleDateString('uk-UA') : "Не вказано"}</div>
                                 <div><strong>Статус:</strong> {detail.status}</div>
                               </div>
                             ))}
