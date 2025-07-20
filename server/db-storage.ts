@@ -9132,10 +9132,10 @@ export class DatabaseStorage implements IStorage {
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
         [
           insertReceipt.externalId || null,
-          formatDate(insertReceipt.receiptDate),
+          this.formatDate(insertReceipt.receiptDate),
           insertReceipt.supplierId,
           insertReceipt.documentTypeId,
-          formatDate(insertReceipt.supplierDocumentDate),
+          this.formatDate(insertReceipt.supplierDocumentDate),
           insertReceipt.supplierDocumentNumber || null,
           insertReceipt.totalAmount,
           insertReceipt.comment || null,
@@ -9160,10 +9160,10 @@ export class DatabaseStorage implements IStorage {
          WHERE id = $1 RETURNING *`,
         [
           id,
-          formatDate(receiptData.receiptDate),
+          this.formatDate(receiptData.receiptDate),
           receiptData.supplierId,
           receiptData.documentTypeId,
-          formatDate(receiptData.supplierDocumentDate),
+          this.formatDate(receiptData.supplierDocumentDate),
           receiptData.supplierDocumentNumber || null,
           receiptData.totalAmount,
           receiptData.comment || null
