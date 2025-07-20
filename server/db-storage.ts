@@ -9152,6 +9152,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateSupplierReceipt(id: number, receiptData: any) {
     try {
+      console.log('Database updateSupplierReceipt, received data:', receiptData);
       const result = await pool.query(
         `UPDATE supplier_receipts 
          SET receipt_date = $2, supplier_id = $3, document_type_id = $4, supplier_document_date = $5, 
@@ -9159,10 +9160,10 @@ export class DatabaseStorage implements IStorage {
          WHERE id = $1 RETURNING *`,
         [
           id,
-          receiptData.receiptDate,
+          formatDate(receiptData.receiptDate),
           receiptData.supplierId,
           receiptData.documentTypeId,
-          receiptData.supplierDocumentDate || null,
+          formatDate(receiptData.supplierDocumentDate),
           receiptData.supplierDocumentNumber || null,
           receiptData.totalAmount,
           receiptData.comment || null

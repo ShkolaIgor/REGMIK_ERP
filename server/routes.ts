@@ -5193,7 +5193,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/supplier-receipts/:id', isSimpleAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { items, ...receiptData } = req.body;
+      const { items, ...requestData } = req.body;
+      console.log('Updating supplier receipt, received data:', requestData);
+      
+      // Convert camelCase to database format
+      const receiptData = {
+        receiptDate: requestData.receipt_date || requestData.receiptDate,
+        supplierId: requestData.supplier_id || requestData.supplierId,
+        documentTypeId: requestData.document_type_id || requestData.documentTypeId,
+        supplierDocumentDate: requestData.supplier_document_date || requestData.supplierDocumentDate || null,
+        supplierDocumentNumber: requestData.supplier_document_number || requestData.supplierDocumentNumber || null,
+        totalAmount: requestData.total_amount || requestData.totalAmount,
+        comment: requestData.comment || null
+      };
+      
+      console.log('Converted receipt data for update:', receiptData);
       
       const receipt = await storage.updateSupplierReceipt(id, receiptData);
       if (!receipt) {
