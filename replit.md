@@ -131,6 +131,11 @@ User has Russian-language 1C system and needs integration setup guidance.
 ## Recent Changes
 
 ### July 20, 2025
+- ✅ **КРИТИЧНУ ПРОБЛЕМУ 1С WEBHOOK ОСТАТОЧНО ВИПРАВЛЕНО** - усунуто помилку "invalid input syntax for type integer" при обробці СсылкаДокумента
+- ✅ **РЕАЛІЗОВАНО HASH-BASED EXTERNAL ID MAPPING** - додано hashCode() helper method для конвертації текстових посилань документів в integer hash
+- ✅ **ОНОВЛЕНО ВСІ WEBHOOK МЕТОДИ** - createInvoiceFromWebhook, updateInvoiceFromWebhook, deleteInvoiceFromWebhook тепер використовують безпечний підхід
+- ✅ **ПІДТРИМКА БЕЗ СсылкаДокумента** - система тепер працює з комбінацією НомерДокумента + ДатаДокумента для генерації унікального external_id
+- ✅ **FALLBACK МЕХАНІЗМ** - додано підтримку альтернативних полів (number, date) якщо основні поля відсутні
 - ✅ **ПОВНІСТЮ ВИРІШЕНО ПРОБЛЕМУ ОНОВЛЕННЯ UI ПРИХОДІВ ПОСТАЧАЛЬНИКІВ** - виправлено конфлікт форматів даних між API та frontend
 - ✅ **ВИПРАВЛЕНО ФОРМАТ ВІДПОВІДІ API** - PUT /api/supplier-receipts/:id тепер повертає дані в camelCase форматі замість snake_case
 - ✅ **РЕАЛІЗОВАНО ПРАВИЛЬНЕ КЕШУВАННЯ ПОЗИЦІЙ ПРИХОДУ** - замінено прямі fetch запити на React Query для синхронізації даних

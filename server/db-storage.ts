@@ -13122,10 +13122,9 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
-      // Generate external_id hash from document reference instead of using it directly
-      const externalIdHash = invoiceData.СсылкаДокумента 
-        ? Math.abs(this.hashCode(invoiceData.СсылкаДокумента))
-        : null;
+      // Generate external_id hash from document number and date
+      const documentKey = `${invoiceData.НомерДокумента || invoiceData.number || 'UNKNOWN'}_${invoiceData.ДатаДокумента || invoiceData.date || new Date().toISOString()}`;
+      const externalIdHash = Math.abs(this.hashCode(documentKey));
 
       // Convert 1C invoice data to ERP format (supplier receipt)
       const supplierReceiptRecord = {
@@ -13184,13 +13183,12 @@ export class DatabaseStorage implements IStorage {
         console.log(`⚠️ Webhook: Дані компанії 1С НЕ ПЕРЕДАНО для оновлення накладної`);
       }
       
-      // Generate external_id hash from document reference
-      const externalIdHash = invoiceData.СсылкаДокумента 
-        ? Math.abs(this.hashCode(invoiceData.СсылкаДокумента))
-        : null;
+      // Generate external_id hash from document number and date
+      const documentKey = `${invoiceData.НомерДокумента || invoiceData.number || 'UNKNOWN'}_${invoiceData.ДатаДокумента || invoiceData.date || new Date().toISOString()}`;
+      const externalIdHash = Math.abs(this.hashCode(documentKey));
       
-      if (!externalIdHash) {
-        throw new Error('Document reference (СсылкаДокумента) is required for invoice updates');
+      if (!documentKey || documentKey === 'UNKNOWN_') {
+        throw new Error('Document number and date are required for invoice updates');
       }
       
       // Find existing receipt
@@ -13228,13 +13226,12 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log('🔄 Webhook: Видалення накладної від 1С:', invoiceData);
       
-      // Generate external_id hash from document reference
-      const externalIdHash = invoiceData.СсылкаДокумента 
-        ? Math.abs(this.hashCode(invoiceData.СсылкаДокумента))
-        : null;
+      // Generate external_id hash from document number and date
+      const documentKey = `${invoiceData.НомерДокумента || invoiceData.number || 'UNKNOWN'}_${invoiceData.ДатаДокумента || invoiceData.date || new Date().toISOString()}`;
+      const externalIdHash = Math.abs(this.hashCode(documentKey));
       
-      if (!externalIdHash) {
-        throw new Error('Document reference (СсылкаДокумента) is required for invoice deletion');
+      if (!documentKey || documentKey === 'UNKNOWN_') {
+        throw new Error('Document number and date are required for invoice deletion');
       }
       
       // Find existing receipt
