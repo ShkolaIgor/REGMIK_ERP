@@ -103,8 +103,9 @@ export default function SupplierReceipts() {
   // Mutations
   const createMutation = useMutation({
     mutationFn: (data: any) => apiRequest("/api/supplier-receipts", "POST", data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/supplier-receipts"] });
       handleCloseDialog();
       toast({ title: "Прихід створено успішно" });
     },
@@ -115,8 +116,9 @@ export default function SupplierReceipts() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, ...data }: any) => apiRequest(`/api/supplier-receipts/${id}`, "PUT", data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/supplier-receipts"] });
       handleCloseDialog();
       toast({ title: "Прихід оновлено успішно" });
     },
@@ -127,8 +129,9 @@ export default function SupplierReceipts() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => apiRequest(`/api/supplier-receipts/${id}`, "DELETE"),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/supplier-receipts"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/supplier-receipts"] });
       toast({ title: "Прихід видалено успішно" });
     },
     onError: (error: any) => {
