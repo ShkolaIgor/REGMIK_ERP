@@ -141,17 +141,17 @@ export default function SupplierReceipts() {
     return receiptsArray.filter((receipt: any) => {
       // Search filter
       const matchesSearch = searchQuery === "" || 
-        receipt.supplier_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        receipt.document_type_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        receipt.supplier_document_number?.toLowerCase().includes(searchQuery.toLowerCase());
+        receipt.supplierName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        receipt.documentTypeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        receipt.supplierDocumentNumber?.toLowerCase().includes(searchQuery.toLowerCase());
 
       // Supplier filter
       const matchesSupplier = supplierFilter === "all" || 
-        receipt.supplier_id.toString() === supplierFilter;
+        receipt.supplierId.toString() === supplierFilter;
 
       // Document type filter
       const matchesDocumentType = documentTypeFilter === "all" || 
-        receipt.document_type_id.toString() === documentTypeFilter;
+        receipt.documentTypeId.toString() === documentTypeFilter;
 
       return matchesSearch && matchesSupplier && matchesDocumentType;
     });
@@ -160,10 +160,10 @@ export default function SupplierReceipts() {
   // Statistics
   const statistics = useMemo(() => {
     const totalReceipts = filteredReceipts.length;
-    const totalAmount = filteredReceipts.reduce((sum: number, receipt: any) => sum + parseFloat(receipt.total_amount || '0'), 0);
-    const uniqueSuppliers = new Set(filteredReceipts.map((r: any) => r.supplier_id)).size;
+    const totalAmount = filteredReceipts.reduce((sum: number, receipt: any) => sum + parseFloat(receipt.totalAmount || '0'), 0);
+    const uniqueSuppliers = new Set(filteredReceipts.map((r: any) => r.supplierId)).size;
     const thisMonthReceipts = filteredReceipts.filter((receipt: any) => {
-      const receiptDate = new Date(receipt.receipt_date);
+      const receiptDate = new Date(receipt.receiptDate);
       const now = new Date();
       return receiptDate.getMonth() === now.getMonth() && receiptDate.getFullYear() === now.getFullYear();
     }).length;
@@ -188,17 +188,17 @@ export default function SupplierReceipts() {
     }
   };
 
-  const handleEdit = (receipt: SupplierReceipt) => {
+  const handleEdit = (receipt: any) => {
     setEditingReceipt(receipt);
     form.reset({
-      receipt_date: receipt.receipt_date.split('T')[0],
-      supplier_id: receipt.supplier_id.toString(),
-      document_type_id: receipt.document_type_id.toString(),
-      supplier_document_date: receipt.supplier_document_date?.split('T')[0] || '',
-      supplier_document_number: receipt.supplier_document_number || '',
-      total_amount: receipt.total_amount,
+      receipt_date: receipt.receiptDate.split('T')[0],
+      supplier_id: receipt.supplierId.toString(),
+      document_type_id: receipt.documentTypeId.toString(),
+      supplier_document_date: receipt.supplierDocumentDate?.split('T')[0] || '',
+      supplier_document_number: receipt.supplierDocumentNumber || '',
+      total_amount: receipt.totalAmount,
       comment: receipt.comment || '',
-      purchase_order_id: receipt.purchase_order_id?.toString() || 'none',
+      purchase_order_id: receipt.purchaseOrderId?.toString() || 'none',
     });
     setIsDialogOpen(true);
   };
@@ -284,21 +284,21 @@ export default function SupplierReceipts() {
   const columns: DataTableColumn[] = [
     { key: 'id', label: 'ID', sortable: true },
     { 
-      key: 'receipt_date', 
+      key: 'receiptDate', 
       label: 'Дата приходу', 
       sortable: true,
       render: (value: any) => <UkrainianDate date={value} format="short" />
     },
-    { key: 'supplier_name', label: 'Постачальник', sortable: true },
-    { key: 'document_type_name', label: 'Тип документу', sortable: true },
-    { key: 'supplier_document_number', label: 'Номер документу', sortable: true },
+    { key: 'supplierName', label: 'Постачальник', sortable: true },
+    { key: 'documentTypeName', label: 'Тип документу', sortable: true },
+    { key: 'supplierDocumentNumber', label: 'Номер документу', sortable: true },
     { 
-      key: 'total_amount', 
+      key: 'totalAmount', 
       label: 'Сума', 
       sortable: true,
       render: (value: any) => `${parseFloat(value || 0).toLocaleString('uk-UA', { maximumFractionDigits: 0 })} ₴`
     },
-    { key: 'purchase_order_number', label: 'Замовлення', sortable: true },
+    { key: 'purchaseOrderNumber', label: 'Замовлення', sortable: true },
   ];
 
   return (
