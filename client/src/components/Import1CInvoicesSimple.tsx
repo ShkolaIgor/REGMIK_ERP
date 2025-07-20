@@ -290,7 +290,7 @@ export function Import1CInvoicesSimple() {
 
   // Фільтрація накладних
   const filteredInvoices = showOnlyMissing 
-    ? invoices1C.filter((invoice: Invoice1C) => !invoice.alreadyImported)
+    ? invoices1C.filter((invoice: Invoice1C) => !invoice.exists)
     : invoices1C;
 
   const handleImport = () => {
@@ -336,15 +336,14 @@ export function Import1CInvoicesSimple() {
           {/* Фільтри */}
           <div className="flex gap-4 items-center flex-wrap">
             <DatePeriodFilter
-              value={dateFilter}
-              onChange={setDateFilter}
-              className="flex-1 min-w-[300px]"
+              onFilterChange={setDateFilter}
+              defaultPeriod="select"
             />
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="showOnlyMissing"
                 checked={showOnlyMissing}
-                onCheckedChange={setShowOnlyMissing}
+                onCheckedChange={(checked) => setShowOnlyMissing(checked === true)}
               />
               <label htmlFor="showOnlyMissing" className="text-sm">
                 Тільки не імпортовані
@@ -458,11 +457,11 @@ export function Import1CInvoicesSimple() {
                               })} {invoice.currency || 'UAH'}
                             </div>
                             <div className="text-gray-500">
-                              {invoice.positions?.length || 0} позицій
+                              {invoice.items?.length || 0} позицій
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            {invoice.alreadyImported ? (
+                            {invoice.exists ? (
                               <Badge variant="secondary" className="gap-1">
                                 <Check className="w-3 h-3" />
                                 Імпортовано
@@ -488,11 +487,11 @@ export function Import1CInvoicesSimple() {
                       </div>
 
                       {/* Розгорнуті позиції накладної */}
-                      {expandedInvoices.has(invoice.id) && invoice.positions && (
+                      {expandedInvoices.has(invoice.id) && invoice.items && (
                         <div className="border-t">
                           <div className="p-4">
                             <div className="text-sm font-medium mb-3">
-                              Позиції накладної ({invoice.positions.length})
+                              Позиції накладної ({invoice.items.length})
                             </div>
                             <div className="overflow-x-auto">
                               <table className="w-full text-xs">
@@ -507,7 +506,7 @@ export function Import1CInvoicesSimple() {
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {invoice.positions.map((position: any, idx: number) => (
+                                  {invoice.items.map((position: any, idx: number) => (
                                     <tr key={idx} className="border-b hover:bg-gray-50">
                                       <td className="p-2">
                                         <div className="font-medium">{position.name || position.originalName}</div>
