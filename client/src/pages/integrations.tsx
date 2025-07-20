@@ -17,6 +17,7 @@ import { Import1CInvoices } from "@/components/Import1CInvoices";
 import { Import1COutgoingInvoices } from "@/components/Import1COutgoingInvoices";
 import { ClientSyncManager } from "@/components/ClientSyncManager";
 import { AutoSyncManager } from "@/components/AutoSyncManager";
+import { WebhookTest } from "@/components/WebhookTest";
 import { SimpleLogin } from "@/components/SimpleLogin";
 
 interface IntegrationConfig {
@@ -461,6 +462,7 @@ export default function Integrations() {
         <TabsList>
           <TabsTrigger value="configs">Конфігурації</TabsTrigger>
           <TabsTrigger value="auto-sync">Авто-синхронізація</TabsTrigger>
+          <TabsTrigger value="webhook-test">Тест Webhook</TabsTrigger>
           <TabsTrigger value="logs">Логи синхронізації</TabsTrigger>
         </TabsList>
 
@@ -621,6 +623,10 @@ export default function Integrations() {
 
         <TabsContent value="auto-sync" className="space-y-4">
           <AutoSyncManager />
+        </TabsContent>
+
+        <TabsContent value="webhook-test" className="space-y-4">
+          <WebhookTest />
         </TabsContent>
 
         <TabsContent value="logs" className="space-y-4">

@@ -3862,6 +3862,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Webhook test endpoint
+  app.post("/api/webhook/test-invoice", async (req, res) => {
+    try {
+      console.log('🧪 Тестовий webhook накладної:', req.body);
+      
+      const { action, invoiceData } = req.body;
+      
+      let result;
+      switch (action) {
+        case 'create':
+          result = await storage.createInvoiceFromWebhook(invoiceData);
+          break;
+        case 'update':
+          result = await storage.updateInvoiceFromWebhook(invoiceData);
+          break;
+        case 'delete':
+          result = await storage.deleteInvoiceFromWebhook(invoiceData);
+          break;
+        default:
+          throw new Error(`Unknown action: ${action}`);
+      }
+      
+      res.json({ 
+        success: true, 
+        action,
+        result,
+        message: `Invoice ${action} completed successfully`
+      });
+    } catch (error) {
+      console.error('❌ Помилка тестового webhook:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message 
+      });
+    }
+  });
+
   app.get("/api/nova-poshta/track/:trackingNumber", async (req, res) => {
     try {
       const { trackingNumber } = req.params;

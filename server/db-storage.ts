@@ -13198,13 +13198,21 @@ export class DatabaseStorage implements IStorage {
         .where(eq(supplierReceipts.externalId, externalIdHash));
       
       if (!existingReceipt) {
-        throw new Error(`Invoice with external ID ${externalIdHash} not found`);
+        console.log(`📝 Webhook: Накладна не знайдена, створюємо нову (external_id: ${externalIdHash})`);
+        // If receipt doesn't exist, create it instead of throwing error
+        return await this.createInvoiceFromWebhook(invoiceData);
+      }
+      
+      // Convert currency code
+      let currency = 'UAH';
+      if (invoiceData.КодВалюты === '980') {
+        currency = 'UAH';
       }
       
       // Update receipt
       const updatedFields = {
-        totalAmount: invoiceData.totalAmount || invoiceData.СуммаДокумента || existingReceipt.totalAmount,
-        currency: invoiceData.currency || invoiceData.КодВалюты || existingReceipt.currency,
+        totalAmount: (parseFloat(invoiceData.СуммаДокумента) || parseFloat(existingReceipt.totalAmount)).toFixed(2),
+        currency: currency,
         status: invoiceData.status || existingReceipt.status,
         updatedAt: new Date()
       };
@@ -13214,6 +13222,29 @@ export class DatabaseStorage implements IStorage {
         .set(updatedFields)
         .where(eq(supplierReceipts.id, existingReceipt.id))
         .returning();
+      
+      // Update positions if provided
+      if (invoiceData.positions && Array.isArray(invoiceData.positions)) {
+        // Delete existing items
+        await db.delete(supplierReceiptItems).where(eq(supplierReceiptItems.supplierReceiptId, existingReceipt.id));
+        
+        // Insert new items
+        for (const position of invoiceData.positions) {
+          const itemRecord = {
+            supplierReceiptId: existingReceipt.id,
+            componentId: position.componentId || null,
+            quantity: position.quantity || position.Количество || 0,
+            unitPrice: position.unitPrice || position.Цена || 0,
+            totalPrice: position.totalPrice || position.Сумма || 0,
+            itemName: position.itemName || position.НаименованиеТовара || '',
+            itemCode: position.itemCode || position.КодТовара || null,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+          
+          await db.insert(supplierReceiptItems).values(itemRecord);
+        }
+      }
       
       return updatedReceipt;
     } catch (error) {
