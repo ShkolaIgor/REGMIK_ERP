@@ -1,111 +1,152 @@
+import { cn } from "@/lib/utils";
 import { LoadingSpinner } from "./loading-spinner";
-import { Skeleton, ChartSkeleton, ListSkeleton, CardSkeleton } from "./skeleton";
-
-export { ChartSkeleton, ListSkeleton, CardSkeleton, Skeleton };
+import { Skeleton } from "./skeleton";
 
 interface LoadingStateProps {
-  type?: "spinner" | "skeleton" | "chart" | "list" | "card";
-  size?: "sm" | "md" | "lg" | "xl";
-  text?: string;
+  isLoading: boolean;
+  children: React.ReactNode;
+  loadingComponent?: React.ReactNode;
   className?: string;
-  items?: number;
-  columns?: number;
+  variant?: "overlay" | "skeleton" | "spinner" | "replace";
+  text?: string;
+  rows?: number;
+  shimmer?: boolean;
 }
 
-export function LoadingState({ 
-  type = "spinner",
-  size = "md",
-  text = "Завантаження...",
+export function LoadingState({
+  isLoading,
+  children,
+  loadingComponent,
   className,
-  items = 5,
-  columns = 4
+  variant = "overlay",
+  text = "Завантаження...",
+  rows = 5,
+  shimmer = true
 }: LoadingStateProps) {
-  switch (type) {
+  if (!isLoading) {
+    return <>{children}</>;
+  }
+
+  if (loadingComponent) {
+    return <div className={cn("animate-fade-in", className)}>{loadingComponent}</div>;
+  }
+
+  switch (variant) {
     case "skeleton":
-      return <Skeleton className={className} />;
-    case "chart":
-      return <ChartSkeleton />;
-    case "list":
-      return <ListSkeleton items={items} />;
-    case "card":
-      return <CardSkeleton />;
+      return (
+        <div className={cn("space-y-3 animate-fade-in", className)}>
+          {Array.from({ length: rows }).map((_, i) => (
+            <Skeleton
+              key={i}
+              className="h-12 w-full"
+              shimmer={shimmer}
+            />
+          ))}
+        </div>
+      );
+
     case "spinner":
+      return (
+        <div className={cn("flex items-center justify-center py-12 animate-fade-in", className)}>
+          <LoadingSpinner
+            text={text}
+            variant="spinner"
+            color="primary"
+            size="lg"
+          />
+        </div>
+      );
+
+    case "replace":
+      return (
+        <div className={cn("animate-scale-in", className)}>
+          <LoadingSpinner
+            text={text}
+            variant="dots"
+            color="primary"
+            size="md"
+          />
+        </div>
+      );
+
+    case "overlay":
     default:
       return (
-        <LoadingSpinner 
-          size={size} 
-          text={text} 
-          className={className}
-        />
+        <div className={cn("relative", className)}>
+          {children}
+          <div className="absolute inset-0 bg-background/90 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg animate-fade-in">
+            <div className="animate-scale-in">
+              <LoadingSpinner
+                text={text}
+                variant="spinner"
+                color="primary"
+                size="lg"
+              />
+            </div>
+          </div>
+        </div>
       );
   }
 }
 
-// Specific loading states for different sections
-export function DashboardLoadingState() {
+// Specialized loading components for common use cases
+export function TableLoadingState({ rows = 5, shimmer = true }: { rows?: number; shimmer?: boolean }) {
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <CardSkeleton key={i} />
-        ))}
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ChartSkeleton />
-        <ChartSkeleton />
+    <div className="space-y-2 animate-fade-in">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="flex space-x-4 items-center p-4 border rounded-lg">
+          <Skeleton className="h-4 w-8" shimmer={shimmer} />
+          <Skeleton className="h-4 flex-1" shimmer={shimmer} />
+          <Skeleton className="h-4 w-24" shimmer={shimmer} />
+          <Skeleton className="h-4 w-16" shimmer={shimmer} />
+          <Skeleton className="h-8 w-20" shimmer={shimmer} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function CardLoadingState({ shimmer = true }: { shimmer?: boolean }) {
+  return (
+    <div className="p-6 border rounded-lg space-y-4 animate-fade-in">
+      <Skeleton className="h-6 w-2/3" shimmer={shimmer} />
+      <Skeleton className="h-4 w-full" shimmer={shimmer} />
+      <Skeleton className="h-4 w-3/4" shimmer={shimmer} />
+      <div className="flex space-x-2 pt-2">
+        <Skeleton className="h-8 w-20" shimmer={shimmer} />
+        <Skeleton className="h-8 w-16" shimmer={shimmer} />
       </div>
     </div>
   );
 }
 
-export function TableLoadingState({ rows = 10, columns = 5 }: { rows?: number; columns?: number }) {
+export function FormLoadingState({ fields = 4, shimmer = true }: { fields?: number; shimmer?: boolean }) {
   return (
-    <div className="rounded-md border">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b">
-            {Array.from({ length: columns }).map((_, i) => (
-              <th key={i} className="p-4 text-left">
-                <Skeleton className="h-4 w-20" />
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: rows }).map((_, i) => (
-            <tr key={i} className="border-b">
-              {Array.from({ length: columns }).map((_, j) => (
-                <td key={j} className="p-4">
-                  <Skeleton className="h-4 w-full" />
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="space-y-6 animate-fade-in">
+      {Array.from({ length: fields }).map((_, i) => (
+        <div key={i} className="space-y-2">
+          <Skeleton className="h-4 w-24" shimmer={shimmer} />
+          <Skeleton className="h-10 w-full" shimmer={shimmer} />
+        </div>
+      ))}
+      <div className="flex space-x-2 pt-4">
+        <Skeleton className="h-10 w-20" shimmer={shimmer} />
+        <Skeleton className="h-10 w-20" shimmer={shimmer} />
+      </div>
     </div>
   );
 }
 
-export function FormLoadingState() {
+export function DashboardCardLoading({ shimmer = true }: { shimmer?: boolean }) {
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-20" />
-        <Skeleton className="h-10 w-full" />
+    <div className="p-6 bg-white rounded-lg border shadow-sm space-y-4 animate-fade-in">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-5 w-32" shimmer={shimmer} />
+        <Skeleton className="h-6 w-6 rounded-full" shimmer={shimmer} />
       </div>
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-10 w-full" />
-      </div>
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-28" />
-        <Skeleton className="h-20 w-full" />
-      </div>
-      <div className="flex gap-2">
-        <Skeleton className="h-10 w-20" />
-        <Skeleton className="h-10 w-20" />
-      </div>
+      <Skeleton className="h-8 w-20" shimmer={shimmer} />
+      <Skeleton className="h-3 w-full" shimmer={shimmer} />
     </div>
   );
 }
+

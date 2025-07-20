@@ -22,6 +22,8 @@ import { DataTable, DataTableColumn } from "@/components/DataTable";
 import { SearchFilters } from "@/components/SearchFilters";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
 import { useAuth } from "@/hooks/useAuth";
+import { LoadingOverlay, LoadingButton } from "@/components/ui/loading-overlay";
+import { LoadingState, TableLoadingState, DashboardCardLoading } from "@/components/ui/loading-state";
 
 import { 
   insertSupplierReceiptSchema, 
@@ -530,7 +532,12 @@ export default function SupplierReceipts() {
       {/* Statistics Cards */}
       <div className="w-full px-8 py-3">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+          <LoadingState 
+            isLoading={isLoading} 
+            variant="replace" 
+            loadingComponent={<DashboardCardLoading shimmer />}
+          >
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group animate-fade-in">
             <CardContent className="p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="flex items-center justify-between relative z-10">
@@ -548,8 +555,14 @@ export default function SupplierReceipts() {
               </div>
             </CardContent>
           </Card>
+          </LoadingState>
 
-          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+          <LoadingState 
+            isLoading={isLoading} 
+            variant="replace" 
+            loadingComponent={<DashboardCardLoading shimmer />}
+          >
+            <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group animate-fade-in" style={{ animationDelay: '0.1s' }}>
             <CardContent className="p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="flex items-center justify-between relative z-10">
@@ -567,8 +580,14 @@ export default function SupplierReceipts() {
               </div>
             </CardContent>
           </Card>
+          </LoadingState>
 
-          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+          <LoadingState 
+            isLoading={isLoading} 
+            variant="replace" 
+            loadingComponent={<DashboardCardLoading shimmer />}
+          >
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <CardContent className="p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="flex items-center justify-between relative z-10">
@@ -586,8 +605,14 @@ export default function SupplierReceipts() {
               </div>
             </CardContent>
           </Card>
+          </LoadingState>
 
-          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+          <LoadingState 
+            isLoading={isLoading} 
+            variant="replace" 
+            loadingComponent={<DashboardCardLoading shimmer />}
+          >
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group animate-fade-in" style={{ animationDelay: '0.3s' }}>
             <CardContent className="p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="flex items-center justify-between relative z-10">
@@ -605,6 +630,7 @@ export default function SupplierReceipts() {
               </div>
             </CardContent>
           </Card>
+          </LoadingState>
         </div>
 
         {/* Filters and Actions */}
@@ -649,24 +675,24 @@ export default function SupplierReceipts() {
                 <Button 
                   variant="outline" 
                   onClick={() => setIsImportDialogOpen(true)}
-                  className={`border-blue-200 text-blue-600 hover:bg-blue-50 ${!isAuthenticated ? 'opacity-50' : ''}`}
+                  className={`border-blue-200 text-blue-600 hover:bg-blue-50 transition-all duration-300 hover:scale-105 hover:shadow-md ${!isAuthenticated ? 'opacity-50' : ''}`}
                   disabled={!isAuthenticated}
                   title={!isAuthenticated ? "Потрібна авторизація для імпорту" : ""}
                 >
-                  <Upload className="w-4 h-4 mr-2" />
+                  <Upload className="w-4 h-4 mr-2 transition-transform duration-300 hover:scale-110" />
                   Імпорт XML
                   {!isAuthenticated && <AlertTriangle className="ml-2 h-4 w-4 text-orange-500" />}
                 </Button>
-                <Button variant="outline">
-                  <Download className="w-4 h-4 mr-2" />
+                <Button variant="outline" className="transition-all duration-300 hover:scale-105 hover:shadow-md hover:bg-green-50 hover:text-green-600 hover:border-green-200">
+                  <Download className="w-4 h-4 mr-2 transition-transform duration-300 hover:scale-110" />
                   Експорт
                 </Button>
-                <Button variant="outline" disabled>
+                <Button variant="outline" disabled className="transition-all duration-300">
                   <Scan className="w-4 h-4 mr-2" />
                   Сканер штрих-кодів
                 </Button>
-                <Button variant="outline">
-                  <Printer className="w-4 h-4 mr-2" />
+                <Button variant="outline" className="transition-all duration-300 hover:scale-105 hover:shadow-md hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200">
+                  <Printer className="w-4 h-4 mr-2 transition-transform duration-300 hover:scale-110" />
                   Друкувати етикетки
                 </Button>
               </div>
@@ -990,9 +1016,17 @@ export default function SupplierReceipts() {
                 <Button type="button" variant="outline" onClick={handleCloseDialog}>
                   Скасувати
                 </Button>
-                <Button type="submit" form="receipt-form">
+                <LoadingButton 
+                  type="submit" 
+                  form="receipt-form"
+                  isLoading={createMutation.isPending || updateMutation.isPending}
+                  loadingText={editingReceipt ? 'Оновлення...' : 'Створення...'}
+                  variant="dots"
+                  color="primary"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+                >
                   {editingReceipt ? 'Оновити' : 'Створити'}
-                </Button>
+                </LoadingButton>
               </div>
             </div>
           </div>

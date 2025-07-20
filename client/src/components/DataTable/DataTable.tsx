@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TableLoadingState, LoadingState } from '@/components/ui/loading-state';
 import { cn } from '@/lib/utils';
 
 // StarRating component for displaying rating
@@ -348,22 +349,26 @@ export function DataTable({
         <tbody>
           {loading ? (
             Array.from({ length: settings.pageSize }).map((_, rowIndex) => (
-              <tr key={rowIndex} className="border-b">
+              <tr key={rowIndex} className="border-b animate-fade-in" style={{ animationDelay: `${rowIndex * 0.05}s` }}>
                 {expandableContent && (
                   <td className="px-4 py-3 w-8">
-                    <Skeleton className="h-4 w-4" />
+                    <Skeleton className="h-4 w-4" shimmer />
                   </td>
                 )}
                 {visibleColumns.map((column, colIndex) => (
                   <td key={colIndex} className="px-4 py-3">
-                    <Skeleton className="h-4 w-full" />
+                    <Skeleton 
+                      className="h-4 w-full" 
+                      shimmer
+                      style={{ animationDelay: `${(rowIndex * visibleColumns.length + colIndex) * 0.02}s` }}
+                    />
                   </td>
                 ))}
                 {actions && (
                   <td className="px-4 py-3 w-20">
                     <div className="flex gap-1">
-                      <Skeleton className="h-6 w-6" />
-                      <Skeleton className="h-6 w-6" />
+                      <Skeleton className="h-6 w-6 rounded" shimmer />
+                      <Skeleton className="h-6 w-6 rounded" shimmer />
                     </div>
                   </td>
                 )}
@@ -480,30 +485,34 @@ export function DataTable({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {loading ? (
         Array.from({ length: settings.pageSize }).map((_, index) => (
-          <Card key={index} className="hover:shadow-md transition-shadow">
+          <Card 
+            key={index} 
+            className="hover:shadow-md transition-all duration-300 animate-fade-in" 
+            style={{ animationDelay: `${index * 0.1}s` }}
+          >
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
                 <div className="space-y-2 flex-1">
-                  <Skeleton className="h-5 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-5 w-3/4" shimmer />
+                  <Skeleton className="h-4 w-1/2" shimmer />
                 </div>
-                <Skeleton className="h-6 w-16" />
+                <Skeleton className="h-6 w-16" shimmer />
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-full" shimmer />
+              <Skeleton className="h-4 w-5/6" shimmer />
               <div className="space-y-2">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="flex justify-between">
-                    <Skeleton className="h-3 w-1/3" />
-                    <Skeleton className="h-3 w-1/4" />
+                    <Skeleton className="h-3 w-1/3" shimmer />
+                    <Skeleton className="h-3 w-1/4" shimmer />
                   </div>
                 ))}
               </div>
               <div className="flex gap-2 pt-2">
-                <Skeleton className="h-8 flex-1" />
-                <Skeleton className="h-8 w-8" />
+                <Skeleton className="h-8 flex-1 rounded" shimmer />
+                <Skeleton className="h-8 w-8 rounded" shimmer />
               </div>
             </CardContent>
           </Card>

@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart as RechartsPieChart, Cell } from "recharts";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { ChartSkeleton, CardSkeleton, TableLoadingState } from "@/components/ui/loading-state";
+import { CardSkeleton, TableLoadingState } from "@/components/ui/loading-state";
+import { ChartSkeleton } from "@/components/ui/skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#8DD1E1'];
