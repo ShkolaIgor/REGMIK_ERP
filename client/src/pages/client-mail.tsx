@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Client, InsertClientMail, ClientMail } from "@shared/schema";
 import { Plus, Printer, Users, Trash2, Download, Upload, FileText, Settings2, Move, Mail, Image as ImageIcon } from "lucide-react";
+import { ClientAutocomplete } from "@/components/ClientAutocomplete";
 import { toast } from "@/hooks/use-toast";
 
 type EnvelopeSize = 'c5' | 'c4' | 'dl' | 'c6';
@@ -77,6 +78,16 @@ export default function ClientMailPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [draggedElement, setDraggedElement] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  const handleClientToggle = (clientId: number, checked: boolean) => {
+    const newSelected = new Set(selectedClients);
+    if (checked) {
+      newSelected.add(clientId);
+    } else {
+      newSelected.delete(clientId);
+    }
+    setSelectedClients(newSelected);
+  };
 
   // Auto-save settings to localStorage
   useEffect(() => {
@@ -275,28 +286,11 @@ export default function ClientMailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 max-h-80 overflow-y-auto">
-              {clients.map(client => (
-                <div key={client.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`client-${client.id}`}
-                    checked={selectedClients.has(parseInt(client.id.toString()))}
-                    onCheckedChange={(checked) => {
-                      const newSelected = new Set(selectedClients);
-                      if (checked) {
-                        newSelected.add(parseInt(client.id.toString()));
-                      } else {
-                        newSelected.delete(parseInt(client.id.toString()));
-                      }
-                      setSelectedClients(newSelected);
-                    }}
-                  />
-                  <label htmlFor={`client-${client.id}`} className="text-sm font-medium">
-                    {client.name}
-                  </label>
-                </div>
-              ))}
-            </div>
+            <ClientAutocomplete
+              selectedClients={selectedClients}
+              onClientToggle={handleClientToggle}
+              placeholder="Шукайте клієнтів за назвою або ЄДРПОУ..."
+            />
 
             {selectedClients.size > 0 && (
               <div className="mt-4 space-y-2">
