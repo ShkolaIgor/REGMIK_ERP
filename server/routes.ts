@@ -10985,6 +10985,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API для перевірки оплат на пошті
+  app.post('/api/orders/:id/check-post-payment', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      
+      // Отримуємо замовлення
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Замовлення не знайдено" 
+        });
+      }
+
+      console.log(`🏦 Перевірка оплат для замовлення #${order.orderNumber} (ID: ${orderId})`);
+
+      // Запускаємо перевірку нових банківських повідомлень
+      const newEmails = await bankEmailService.checkForNewEmails();
+      console.log(`🏦 Знайдено нових email: ${newEmails.length}`);
+
+      // Шукаємо платежі за номером рахунку замовлення
+      let foundPayment = false;
+      if (order.orderNumber) {
+        const payments = await storage.getOrderPayments(orderId);
+        const newPaymentsCount = payments.filter(p => 
+          p.createdAt && new Date(p.createdAt) > new Date(Date.now() - 5 * 60 * 1000) // останні 5 хвилин
+        ).length;
+        
+        if (newPaymentsCount > 0) {
+          foundPayment = true;
+          console.log(`🏦 Знайдено нових платежів: ${newPaymentsCount}`);
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        message: foundPayment 
+          ? `Знайдено нових платежів для замовлення ${order.orderNumber}` 
+          : `Перевірку завершено. Нових платежів для замовлення ${order.orderNumber} не знайдено`,
+        newEmails: newEmails.length,
+        foundPayment
+      });
+      
+    } catch (error) {
+      console.error('🏦 Помилка перевірки оплат на пошті:', error);
+      res.status(500).json({ 
+        success: false,
+        message: "Помилка перевірки оплат на пошті",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   // Process Component Categories XML Import Async Function
   async function processComponentCategoriesXmlImportAsync(

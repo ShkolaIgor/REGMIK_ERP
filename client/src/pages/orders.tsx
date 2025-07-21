@@ -15,7 +15,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { formatCurrency, getStatusColor, cn } from "@/lib/utils";
 import { UkrainianDate } from "@/components/ui/ukrainian-date";
 import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
-import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X, Settings, Palette, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, HandPlatter, DollarSign, Clock, TrendingUp, Printer } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X, Settings, Palette, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, HandPlatter, DollarSign, Clock, TrendingUp, Printer, Mail } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
 import { useForm } from "react-hook-form";
@@ -553,6 +553,15 @@ export default function Orders() {
             >
               <Printer className="w-4 h-4" />
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => checkPostPaymentMutation.mutate(order.id)}
+              title="Перевірити оплати на пошті"
+              disabled={checkPostPaymentMutation.isPending}
+            >
+              <Mail className="w-4 h-4" />
+            </Button>
           </div>
         );
       
@@ -938,6 +947,29 @@ export default function Orders() {
       toast({
         title: "Помилка",
         description: error.message || "Не вдалося оновити термін виконання",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Мутація для перевірки оплат на пошті
+  const checkPostPaymentMutation = useMutation({
+    mutationFn: async (orderId: number) => {
+      return await apiRequest(`/api/orders/${orderId}/check-post-payment`, { 
+        method: "POST" 
+      });
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      toast({
+        title: "Перевірка завершена",
+        description: data.message || "Перевірку оплат на пошті виконано",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка перевірки",
+        description: error.message || "Не вдалося перевірити оплати на пошті",
         variant: "destructive",
       });
     },
