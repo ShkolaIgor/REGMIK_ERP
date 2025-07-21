@@ -37,6 +37,7 @@ export default function EmailSettings() {
       bankEmailUser: "",
       bankEmailPassword: "",
       bankEmailAddress: "",
+      bankEmailHost: "",
       bankMonitoringEnabled: false,
     },
   });
@@ -56,6 +57,7 @@ export default function EmailSettings() {
         bankEmailUser: emailSettings?.bankEmailUser || "",
         bankEmailPassword: emailSettings?.bankEmailPassword || "",
         bankEmailAddress: emailSettings?.bankEmailAddress || "",
+        bankEmailHost: emailSettings?.bankEmailHost || "",
         bankMonitoringEnabled: emailSettings?.bankMonitoringEnabled || false,
       });
     }
@@ -325,7 +327,24 @@ export default function EmailSettings() {
                 )}
               </div>
 
-              <div className="space-y-2 lg:col-span-2">
+              <div className="space-y-2">
+                <Label htmlFor="bankEmailHost">IMAP Хост банку</Label>
+                <Input
+                  id="bankEmailHost"
+                  placeholder="mail.regmik.ua"
+                  {...form.register("bankEmailHost")}
+                />
+                <p className="text-xs text-gray-500">
+                  IMAP сервер для читання банківських повідомлень (зазвичай mail.вашдомен.ua)
+                </p>
+                {form.formState.errors.bankEmailHost && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.bankEmailHost.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="bankEmailAddress">Адреса банківських повідомлень</Label>
                 <Input
                   id="bankEmailAddress"
