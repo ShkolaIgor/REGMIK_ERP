@@ -300,7 +300,7 @@ export default function ClientMailPage() {
             {selectedClients.size > 0 && (
               <div>
                 <Label className="text-sm font-medium">Обрані клієнти ({selectedClients.size})</Label>
-                <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
+                <div className="mt-2 space-y-2 max-h-48 overflow-y-auto border rounded-md p-2 bg-gray-50">
                   {Array.from(selectedClients).map(clientId => {
                     const client = clients.find(c => c.id === clientId);
                     if (!client) return null;
