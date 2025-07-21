@@ -22,7 +22,7 @@ export default function Inventory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  
+
   // Стейт для пагінації
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -72,9 +72,9 @@ export default function Inventory() {
   const filteredProducts = products.filter((product: any) => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          product.sku.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesCategory = !categoryFilter || categoryFilter === 'all' || product.categoryId?.toString() === categoryFilter;
-    
+
     const productInventory = getProductInventory(product.id);
     const stockStatus = productInventory ? getStockStatus(productInventory.quantity, productInventory.minStock) : 'out-of-stock';
     const matchesStatus = !statusFilter || statusFilter === 'all' || stockStatus === statusFilter;
@@ -342,7 +342,7 @@ export default function Inventory() {
                   {currentProducts.map((product: any) => {
                     const productInventory = getProductInventory(product.id);
                     const category = categories.find((c: any) => c.id === product.categoryId);
-                    
+
                     return (
                       <TableRow key={product.id} className="hover:bg-gray-50">
                         <TableCell>
