@@ -10987,12 +10987,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // API для перевірки оплат на пошті
   app.post('/api/orders/:id/check-post-payment', isSimpleAuthenticated, async (req, res) => {
+    const startTime = Date.now();
+    const orderId = parseInt(req.params.id);
+    const userAgent = req.get('User-Agent') || 'Unknown';
+    const ipAddress = req.ip || req.connection.remoteAddress || 'Unknown';
+    
+    // Логування початку запиту
+    await storage.logSystemEvent({
+      level: 'info',
+      event: 'bank_payment_check_start',
+      details: `Початок перевірки банківських оплат для замовлення ID: ${orderId}`,
+      metadata: {
+        orderId,
+        userAgent,
+        ipAddress,
+        timestamp: new Date().toISOString()
+      }
+    });
+
     try {
-      const orderId = parseInt(req.params.id);
-      
       // Отримуємо замовлення
       const order = await storage.getOrder(orderId);
       if (!order) {
+        await storage.logSystemEvent({
+          level: 'warning',
+          event: 'bank_payment_check_error',
+          details: `Замовлення з ID ${orderId} не знайдено`,
+          metadata: { orderId, ipAddress, userAgent }
+        });
+        
         return res.status(404).json({ 
           success: false, 
           message: "Замовлення не знайдено" 
@@ -11000,6 +11023,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`🏦 Перевірка оплат для замовлення #${order.orderNumber} (ID: ${orderId})`);
+      
+      await storage.logSystemEvent({
+        level: 'info',
+        event: 'bank_payment_check_processing',
+        details: `Перевірка оплат для замовлення #${order.orderNumber} (ID: ${orderId})`,
+        metadata: {
+          orderId,
+          orderNumber: order.orderNumber,
+          clientName: order.clientName,
+          totalAmount: order.totalAmount
+        }
+      });
 
       // Запускаємо перевірку нових банківських повідомлень
       await bankEmailService.checkForNewEmails();
@@ -11019,6 +11054,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      const duration = Date.now() - startTime;
+      
+      await storage.logSystemEvent({
+        level: foundPayment ? 'info' : 'info',
+        event: 'bank_payment_check_completed',
+        details: foundPayment 
+          ? `Знайдено нових платежів для замовлення ${order.orderNumber}` 
+          : `Перевірку завершено. Нових платежів для замовлення ${order.orderNumber} не знайдено`,
+        metadata: {
+          orderId,
+          orderNumber: order.orderNumber,
+          foundPayment,
+          duration,
+          ipAddress,
+          userAgent
+        }
+      });
+
       res.json({ 
         success: true, 
         message: foundPayment 
@@ -11028,11 +11081,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
     } catch (error) {
+      const duration = Date.now() - startTime;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      await storage.logSystemEvent({
+        level: 'error',
+        event: 'bank_payment_check_error',
+        details: `Помилка перевірки банківських оплат для замовлення ID: ${orderId} - ${errorMessage}`,
+        metadata: {
+          orderId,
+          error: errorMessage,
+          duration,
+          ipAddress,
+          userAgent,
+          stack: error instanceof Error ? error.stack : undefined
+        }
+      });
+      
       console.error('🏦 Помилка перевірки оплат на пошті:', error);
       res.status(500).json({ 
         success: false,
         message: "Помилка перевірки оплат на пошті",
-        error: error instanceof Error ? error.message : String(error)
+        error: errorMessage
       });
     }
   });
