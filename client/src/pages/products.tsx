@@ -463,6 +463,7 @@ export default function ProductsPage() {
               ) : (
                 <DataTable
                   data={orderedProducts}
+                  storageKey="ordered-products-table"
                   columns={[
                     {
                       key: 'orderNumber',
@@ -527,8 +528,7 @@ export default function ProductsPage() {
           <DataTable
           data={filteredProducts}
           onRowClick={handleEdit}
-          pageSize={50}
-          pageSizeOptions={[25, 50, 100, 250]}
+          storageKey="products-table"
           columns={[
             {
               key: 'name',
@@ -591,7 +591,6 @@ export default function ProductsPage() {
           ]}
           loading={isLoading}
           title="Список товарів"
-          storageKey="products"
           cardTemplate={(product) => (
             <Card className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">

@@ -130,7 +130,7 @@ const defaultColumnSettings: ColumnSettings = {
 };
 
 const defaultSettings: DataTableSettings = {
-  pageSize: 100,
+  pageSize: 25,
   columnOrder: [],
   columnWidths: {},
   columnSettings: {},
@@ -171,10 +171,9 @@ export function DataTable({
     try {
       const saved = localStorage.getItem(`datatable-${storageKey}`);
       const loadedSettings = saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
-      // Force pageSize to 100 for showing more components at once
-      return { ...loadedSettings, pageSize: 100 };
+      return loadedSettings;
     } catch {
-      return { ...defaultSettings, pageSize: 100 };
+      return defaultSettings;
     }
   });
 
@@ -227,13 +226,8 @@ export function DataTable({
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * settings.pageSize;
     const end = start + settings.pageSize;
-    const result = sortedData.slice(start, end);
-    console.log('DataTable DEBUG - data:', data.length);
-    console.log('DataTable DEBUG - sortedData:', sortedData.length);
-    console.log('DataTable DEBUG - paginatedData:', result.length);
-    console.log('DataTable DEBUG - first item:', result[0]);
-    return result;
-  }, [sortedData, currentPage, settings.pageSize, data]);
+    return sortedData.slice(start, end);
+  }, [sortedData, currentPage, settings.pageSize]);
   
   // Reduce default page size for large datasets
   useEffect(() => {
