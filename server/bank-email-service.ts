@@ -302,7 +302,7 @@ export class BankEmailService {
         password: bankEmailPassword,
         host: bankEmailHost,
         port: bankEmailPort,
-        tls: bankEmailPort === 993 || bankEmailPort === 587, // TLS для SSL портів
+        tls: bankEmailPort === 993, // TLS тільки для порту 993 (SSL), 587 використовує STARTTLS
         tlsOptions: {
           rejectUnauthorized: false
         }
