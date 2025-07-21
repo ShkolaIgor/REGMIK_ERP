@@ -27,7 +27,7 @@ export function ClientAutocomplete({
 
   const { data: clientsData, isLoading } = useQuery({
     queryKey: ["/api/clients/search"],
-    enabled: searchTerm.length >= 2 || isDropdownOpen
+    enabled: true
   });
   
   const clients: Client[] = Array.isArray(clientsData?.clients) ? clientsData.clients : [];
@@ -111,7 +111,7 @@ export function ClientAutocomplete({
               </div>
             ) : filteredClients.length === 0 ? (
               <div className="p-4 text-center text-gray-500">
-                {searchTerm.length < 2 ? 'Введіть мінімум 2 символи для пошуку' : 'Клієнтів не знайдено'}
+                {searchTerm.length === 0 ? 'Почніть вводити назву клієнта' : 'Клієнтів не знайдено'}
               </div>
             ) : (
               <div className="p-2">

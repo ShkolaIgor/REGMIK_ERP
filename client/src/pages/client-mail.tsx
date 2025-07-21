@@ -296,19 +296,19 @@ export default function ClientMailPage() {
               />
             </div>
 
-            {/* Список обраних клієнтів з чекбоксами */}
+            {/* Простий список обраних клієнтів */}
             {selectedClients.size > 0 && (
               <div>
                 <Label className="text-sm font-medium">Обрані клієнти ({selectedClients.size})</Label>
-                <div className="mt-2 space-y-2 max-h-60 overflow-y-auto border rounded-md p-2 bg-gray-50">
+                <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
                   {Array.from(selectedClients).map(clientId => {
                     const client = clients.find(c => c.id === clientId);
                     if (!client) return null;
                     
                     return (
-                      <div key={client.id} className="flex items-center space-x-2 p-1 hover:bg-white rounded">
+                      <div key={client.id} className="flex items-center space-x-2">
                         <Checkbox
-                          id={`selected-client-${client.id}`}
+                          id={`client-${client.id}`}
                           checked={true}
                           onCheckedChange={(checked) => {
                             if (!checked) {
@@ -316,10 +316,7 @@ export default function ClientMailPage() {
                             }
                           }}
                         />
-                        <label 
-                          htmlFor={`selected-client-${client.id}`} 
-                          className="text-sm font-medium cursor-pointer flex-1"
-                        >
+                        <label htmlFor={`client-${client.id}`} className="text-sm font-medium cursor-pointer">
                           {client.name}
                           {client.taxCode && (
                             <span className="text-xs text-gray-500 ml-2">({client.taxCode})</span>
