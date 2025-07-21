@@ -13674,10 +13674,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Process Unprocessed Bank Notifications - Direct Implementation
+  // Process Unprocessed Bank Notifications - Fixed version using proper payment processing
   app.post("/api/bank-email/process-unprocessed", isSimpleAuthenticated, async (req, res) => {
     try {
-      console.log("🏦 [DIRECT] Запуск обробки необроблених банківських повідомлень...");
+      console.log("🏦 [PAYMENT-FIXED] Запуск обробки необроблених банківських повідомлень з реальними платежами...");
       
       // Отримуємо необроблені повідомлення прямо з БД
       const allNotifications = await storage.getBankPaymentNotifications();
@@ -13709,10 +13709,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           console.log(`🏦 Обробка повідомлення ${notification.id}...`);
           
-          // Позначаємо як оброблене
-          await storage.markBankNotificationAsProcessed(notification.id);
-          processed++;
-          details.push(`✅ Повідомлення ${notification.id}: позначено як оброблене`);
+          // Реконструюємо дані з notification для processBankEmail
+          const emailContent = {
+            messageId: notification.messageId,
+            subject: notification.subject,
+            fromAddress: notification.fromAddress,
+            receivedAt: notification.receivedAt,
+            textContent: notification.rawEmailContent || ""
+          };
+          
+          console.log(`🏦 DEBUG: Викликаємо bankEmailService.processBankEmail для повідомлення ${notification.id}`);
+          // Викликаємо справжню обробку банківського email
+          const result = await bankEmailService.processBankEmail(emailContent);
+          
+          if (result.success) {
+            processed++;
+            details.push(`✅ Повідомлення ${notification.id}: успішно оброблено платіж`);
+          } else {
+            // Якщо обробка не вдалася, все одно позначаємо як оброблене щоб уникнути повторної обробки
+            await storage.markBankNotificationAsProcessed(notification.id);
+            processed++;
+            details.push(`⚠️ Повідомлення ${notification.id}: позначено як оброблене (${result.message})`);
+          }
           
         } catch (error) {
           failed++;

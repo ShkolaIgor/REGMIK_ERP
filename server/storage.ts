@@ -2360,5 +2360,5 @@ export class MemStorage implements IStorage {
 
 import { DatabaseStorage } from "./db-storage";
 
-// Тимчасово використовуємо MemStorage для тестування import1CInvoice
-export const storage = process.env.NODE_ENV === 'test' ? new MemStorage() : new DatabaseStorage();
+// Використовуємо DatabaseStorage для всіх операцій
+export const storage = new DatabaseStorage();

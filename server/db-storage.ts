@@ -4503,15 +4503,22 @@ export class DatabaseStorage implements IStorage {
 
   async updateOrderPaymentStatus(orderId: number, paymentAmount: number, paymentType: string = "bank_transfer", bankNotificationId?: number, bankAccount?: string, correspondent?: string): Promise<{ order: Order; payment: OrderPayment }> {
     try {
+      console.log(`🏦 DEBUG: updateOrderPaymentStatus(orderId=${orderId}, paymentAmount=${paymentAmount}, paymentType=${paymentType})`);
+      
       // Отримуємо замовлення
       const order = await this.getOrder(orderId);
       if (!order) {
+        console.error(`🏦 DEBUG: Order ${orderId} not found`);
         throw new Error("Order not found");
       }
+
+      console.log(`🏦 DEBUG: Found order ${orderId}: ${order.orderNumber}, totalAmount=${order.totalAmount}, currentPaid=${order.paidAmount}`);
 
       const orderTotal = parseFloat(order.totalAmount?.toString() || "0");
       const currentPaid = parseFloat(order.paidAmount?.toString() || "0");
       const newPaidAmount = currentPaid + paymentAmount;
+
+      console.log(`🏦 DEBUG: Payment calculation: ${currentPaid} + ${paymentAmount} = ${newPaidAmount}`);
 
       // Визначаємо новий статус оплати
       let paymentStatus = "none";
@@ -4522,33 +4529,38 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Оновлюємо замовлення
+      console.log(`🏦 DEBUG: Updating order ${orderId} with paidAmount=${newPaidAmount}, paymentType=${paymentType}`);
       const [updatedOrder] = await db
         .update(orders)
         .set({
           paidAmount: newPaidAmount.toString(),
-          paymentType: paymentType,
-          paymentStatus: paymentStatus,
-          updatedAt: new Date()
+          paymentType: paymentType
         })
         .where(eq(orders.id, orderId))
         .returning();
 
+      console.log(`🏦 DEBUG: Order updated successfully`);
+
       // Створюємо запис про платіж
-      const payment = await this.createOrderPayment({
+      const paymentData = {
         orderId: orderId,
         paymentAmount: paymentAmount.toString(),
         paymentDate: new Date(),
         paymentType: paymentType,
-        paymentStatus: "confirmed",
+        paymentStatus: "confirmed" as const,
         bankNotificationId: bankNotificationId,
         bankAccount: bankAccount,
         correspondent: correspondent,
         notes: `Автоматично створено з банківського повідомлення`
-      });
+      };
+      
+      console.log(`🏦 DEBUG: Creating payment record:`, paymentData);
+      const payment = await this.createOrderPayment(paymentData);
+      console.log(`🏦 DEBUG: Payment created successfully with ID=${payment.id}`);
 
       return { order: updatedOrder, payment };
     } catch (error) {
-      console.error("Error updating order payment status:", error);
+      console.error("🏦 ERROR updating order payment status:", error);
       throw error;
     }
   }
