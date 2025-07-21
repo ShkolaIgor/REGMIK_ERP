@@ -39,27 +39,27 @@ export default function Inventory() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: products = [], isLoading } = useQuery({
+  const { data: products = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/products"],
   });
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [] } = useQuery<any[]>({
     queryKey: ["/api/categories"],
   });
 
-  const { data: inventory = [] } = useQuery({
+  const { data: inventory = [] } = useQuery<any[]>({
     queryKey: ["/api/inventory"],
   });
 
-  const { data: warehouses = [] } = useQuery({
+  const { data: warehouses = [] } = useQuery<any[]>({
     queryKey: ["/api/warehouses"],
   });
 
-  const { data: authUser } = useQuery({
+  const { data: authUser } = useQuery<any>({
     queryKey: ["/api/auth/user"],
   });
 
-  const { data: session } = useQuery({
+  const { data: session } = useQuery<any>({
     queryKey: ["/api/user/session"],
   });
 
@@ -104,6 +104,17 @@ export default function Inventory() {
 
   const closeInventoryChangeDialog = () => {
     setInventoryChangeDialog({ isOpen: false });
+  };
+
+  // Обробники для кнопок редагування та перегляду
+  const handleEditProduct = (product: any) => {
+    setEditingProduct(product);
+    setIsViewMode(false);
+  };
+
+  const handleViewProduct = (product: any) => {
+    setEditingProduct(product);
+    setIsViewMode(true);
   };
 
   // Filter products based on search and filters
@@ -425,14 +436,16 @@ export default function Inventory() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              //onClick={() => handleEditProduct(product)}
+                              onClick={() => handleEditProduct(product)}
+                              title="Редагувати товар"
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
                             <Button 
                               size="sm" 
                               variant="ghost"
-                              //onClick={() => handleViewProduct(product)}
+                              onClick={() => handleViewProduct(product)}
+                              title="Переглянути товар"
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
@@ -550,15 +563,112 @@ export default function Inventory() {
       </div>
 
       {/* Діалог зміни кількості */}
-      {inventoryChangeDialog.isOpen && inventoryChangeDialog.product && inventoryChangeDialog.warehouse && authUser?.user && (
+      {inventoryChangeDialog.isOpen && (
         <InventoryChangeDialog
           isOpen={inventoryChangeDialog.isOpen}
           onClose={closeInventoryChangeDialog}
           product={inventoryChangeDialog.product}
           warehouse={inventoryChangeDialog.warehouse}
-          currentQuantity={inventoryChangeDialog.currentQuantity || 0}
-          userId={authUser.user.id}
+          currentQuantity={inventoryChangeDialog.currentQuantity}
+          userId={session?.user?.id || authUser?.id}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['/api/inventory'] });
+            toast({
+              title: "Успіх",
+              description: "Кількість товару оновлено успішно",
+            });
+          }}
         />
+      )}
+
+      {/* Діалог редагування/перегляду товару */}
+      {editingProduct && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">
+                {isViewMode ? 'Перегляд товару' : 'Редагування товару'}
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditingProduct(null)}
+              >
+                ✕
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Назва товару</label>
+                <div className="text-base">{editingProduct.name}</div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">SKU</label>
+                  <div className="text-base font-mono">{editingProduct.sku}</div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Штрих-код</label>
+                  <div className="text-base font-mono">{editingProduct.barcode || 'Не встановлено'}</div>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Опис</label>
+                <div className="text-base">{editingProduct.description || 'Опис відсутній'}</div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Собівартість</label>
+                  <div className="text-base">{formatCurrency(editingProduct.costPrice)}</div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Роздрібна ціна</label>
+                  <div className="text-base">{formatCurrency(editingProduct.retailPrice)}</div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Одиниця виміру</label>
+                  <div className="text-base">{editingProduct.unit}</div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Статус</label>
+                  <Badge variant={editingProduct.isActive ? "default" : "secondary"}>
+                    {editingProduct.isActive ? "Активний" : "Неактивний"}
+                  </Badge>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Кількість на складі</label>
+                <div className="text-base">
+                  {getProductInventory(editingProduct.id)?.quantity || 0} шт
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end mt-6 space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => setEditingProduct(null)}
+              >
+                Закрити
+              </Button>
+              {!isViewMode && (
+                <Button
+                  onClick={() => handleChangeQuantity(editingProduct)}
+                >
+                  Змінити кількість
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
