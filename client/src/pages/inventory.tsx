@@ -9,13 +9,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ProductForm } from "@/components/ProductForm";
 import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, getStockStatus } from "@/lib/utils";
-import { Search, Plus, Edit, Eye, Copy, Trash2, Scan, Download, Printer, DollarSign, AlertTriangle, Package, Barcode, SquareChartGantt, Upload } from "lucide-react";
+import { Search, Plus, Edit, Eye, Copy, Trash2, Scan, Download, Printer, DollarSign, AlertTriangle, Package, Barcode, SquareChartGantt } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScannerButton } from "@/components/BarcodeScanner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { TableLoadingState, CardSkeleton } from "@/components/ui/loading-state";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
-import { ProductsXmlImport } from "@/components/ProductsXmlImport";
 
 export default function Inventory() {
   const [showProductForm, setShowProductForm] = useState(false);
@@ -61,36 +60,6 @@ export default function Inventory() {
       toast({
         title: "Помилка",
         description: "Не вдалося видалити товар",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const copyProductMutation = useMutation({
-    mutationFn: async (product: any) => {
-      const newProduct = {
-        ...product,
-        name: `${product.name} (копія)`,
-        sku: `${product.sku}_copy_${Date.now()}`,
-        id: undefined,
-      };
-      delete newProduct.id;
-      return await apiRequest("/api/products", {
-        method: "POST",
-        body: JSON.stringify(newProduct),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      toast({
-        title: "Успіх",
-        description: "Товар успішно скопійовано",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Помилка",
-        description: "Не вдалося скопіювати товар",
         variant: "destructive",
       });
     },
@@ -142,7 +111,17 @@ export default function Inventory() {
   };
 
   const handleCopyProduct = (product: any) => {
-    copyProductMutation.mutate(product);
+    const copiedProduct = {
+      ...product,
+      name: `${product.name} (копія)`,
+      sku: `${product.sku}_COPY`,
+      barcode: "", // Очищуємо штрих-код для копії
+      id: undefined // Прибираємо ID для створення нового товару
+    };
+    console.log('Copying product:', copiedProduct);
+    setEditingProduct(copiedProduct);
+    setIsViewMode(false);
+    setShowProductForm(true);
   };
 
   const handleDeleteProduct = (id: number) => {
@@ -199,9 +178,9 @@ export default function Inventory() {
                   </div>
                   <div>
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
-                      Товари
+                      Товарний каталог
                     </h1>
-                    <p className="text-gray-500 mt-1">Склад товарів</p>
+                    <p className="text-gray-500 mt-1">Управління товарами</p>
                   </div>
               </div>
             <div className="flex items-center space-x-4">
@@ -216,7 +195,6 @@ export default function Inventory() {
                   }}
                 />
               </div>
-              <ProductsXmlImport />
               <Button variant="outline" className="border-blue-200 text-purple-600 hover:bg-blue-50">
                 <Download className="h-4 w-4 mr-2" />
                 Експорт

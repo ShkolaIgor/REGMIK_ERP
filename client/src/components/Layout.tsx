@@ -87,7 +87,7 @@ const navigationItems = [
   {
     title: "Модуль Склад",
     items: [
-      { name: "Товари", href: "/inventory", icon: Package },
+      { name: "Каталог товарів", href: "/inventory", icon: Package },
       { name: "Замовлені товари", href: "/ordered-products", icon: Package },
       { name: "Замовлення постачальникам", href: "/supplier-orders", icon: Package },
       { name: "Приходи від постачальників", href: "/supplier-receipts", icon: PackageOpen },
