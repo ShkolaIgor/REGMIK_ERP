@@ -1,0 +1,66 @@
+[Log] Frontend: Making POST request to: /api/orders/51684/check-post-payment (index-ml7_dfCf.js, line 48)
+[Log] Frontend: Request headers: – {} (index-ml7_dfCf.js, line 48)
+[Log] Frontend: Request body: – undefined (index-ml7_dfCf.js, line 48)
+[Log] Frontend: Document cookies: (index-ml7_dfCf.js, line 48)
+"sidebar_state=false; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Error] Failed to load resource: the server responded with a status of 500 () (check-post-payment, line 0)
+[Log] Frontend: Response status: 500 for POST /api/orders/51684/check-post-payment (index-ml7_dfCf.js, line 48)
+[Log] Frontend: Response headers: (index-ml7_dfCf.js, line 48)
+Object
+
+content-length: "143"
+
+content-type: "application/json; charset=utf-8"
+
+date: "Mon, 21 Jul 2025 20:39:37 GMT"
+
+server: "nginx/1.29.0"
+
+x-powered-by: "Express"
+
+Object Prototype
+[Log] Frontend: Making POST request to: /api/email-settings (index-ml7_dfCf.js, line 48)
+[Log] Frontend: Request headers: – {Content-Type: "application/json"} (index-ml7_dfCf.js, line 48)
+[Log] Frontend: Request body: – "{\"smtpHost\":\"mail.regmik.ua\",\"smtpPort\":587,\"smtpSecure\":false,\"smtpUser\":\"noreply@regmik.ua\",\"smtpPassword\":\"c1C76PfhAfvGZdG\",\"fromEmail\":\"…" (index-ml7_dfCf.js, line 48)
+"{\"smtpHost\":\"mail.regmik.ua\",\"smtpPort\":587,\"smtpSecure\":false,\"smtpUser\":\"noreply@regmik.ua\",\"smtpPassword\":\"c1C76PfhAfvGZdG\",\"fromEmail\":\"noreply@regmik.ua\",\"fromName\":\"REGMIK ERP\",\"isActive\":false,\"bankEmailUser\":\"ukrsib@regmik.ua\",\"bankEmailPassword\":\"nysta5-fysPuj-gev4iw\",\"bankEmailAddress\":\"online@ukrsibbank.com\",\"bankEmailHost\":\"mail.regmik.ua\",\"bankEmailPort\":587,\"bankMonitoringEnabled\":true}"
+[Log] Frontend: Document cookies: – "sidebar_state=false; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-ml7_dfCf.js, line 48)
+"sidebar_state=false; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] Frontend: Response status: 200 for POST /api/email-settings (index-ml7_dfCf.js, line 48)
+[Log] Frontend: Response headers: – {content-encoding: "gzip", content-type: "application/json; charset=utf-8", date: "Mon, 21 Jul 2025 20:39:55 GMT", …} (index-ml7_dfCf.js, line 48)
+{content-encoding: "gzip", content-type: "application/json; charset=utf-8", date: "Mon, 21 Jul 2025 20:39:55 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] Frontend: Making GET request to: /api/system-logs?page=1&limit=50&level=all&userId=all (index-ml7_dfCf.js, line 48)
+[Log] Frontend: Request headers: – {} (index-ml7_dfCf.js, line 48)
+[Log] Frontend: Request body: – undefined (index-ml7_dfCf.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=false; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-ml7_dfCf.js, line 48)
+"sidebar_state=false; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] Frontend: Response status: 200 for GET /api/system-logs?page=1&limit=50&level=all&userId=all (index-ml7_dfCf.js, line 48)
+[Log] Frontend: Response headers: – {content-encoding: "gzip", content-type: "application/json; charset=utf-8", date: "Mon, 21 Jul 2025 20:39:59 GMT", …} (index-ml7_dfCf.js, line 48)
+{content-encoding: "gzip", content-type: "application/json; charset=utf-8", date: "Mon, 21 Jul 2025 20:39:59 GMT", server: "nginx/1.29.0", strict-transport-security: "max-age=63072000; includeSubdomains; preload", …}Object
+[Log] Frontend: Making GET request to: /api/system-logs?page=1&limit=50&level=all&userId=all (index-ml7_dfCf.js, line 48)
+[Log] Frontend: Request headers: – {} (index-ml7_dfCf.js, line 48)
+[Log] Frontend: Request body: – undefined (index-ml7_dfCf.js, line 48)
+[Log] Frontend: Document cookies: (index-ml7_dfCf.js, line 48)
+"sidebar_state=false; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] Frontend: Response status: 200 for GET /api/system-logs?page=1&limit=50&level=all&userId=all (index-ml7_dfCf.js, line 48)
+[Log] Frontend: Response headers: (index-ml7_dfCf.js, line 48)
+Object
+
+content-encoding: "gzip"
+
+content-type: "application/json; charset=utf-8"
+
+date: "Mon, 21 Jul 2025 20:40:02 GMT"
+
+server: "nginx/1.29.0"
+
+strict-transport-security: "max-age=63072000; includeSubdomains; preload"
+
+vary: "Accept-Encoding"
+
+x-content-type-options: "nosniff"
+
+x-powered-by: "Express"
+
+x-xss-protection: "1; mode=block"
+
+Object Prototype

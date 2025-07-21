@@ -302,9 +302,12 @@ export class BankEmailService {
         password: bankEmailPassword,
         host: bankEmailHost,
         port: bankEmailPort,
-        tls: bankEmailPort === 993, // TLS тільки для порту 993 (SSL), 587 використовує STARTTLS
+        tls: bankEmailPort === 993, // TLS тільки для порту 993 (SSL)
+        authTimeout: 10000, // Таймаут автентифікації 10 секунд
+        connTimeout: 15000, // Таймаут підключення 15 секунд
         tlsOptions: {
-          rejectUnauthorized: false
+          rejectUnauthorized: false,
+          secureProtocol: 'TLSv1_2_method'
         }
       });
 
