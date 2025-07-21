@@ -12,18 +12,64 @@ export class BankEmailService {
   private isMonitoring = false;
 
   constructor() {
-    this.initializeMonitoring();
+    // Не викликаємо initializeMonitoring() тут, щоб уникнути проблем з БД
+    // Буде викликано з index.ts після ініціалізації сервера
   }
 
   /**
-   * Ініціалізація моніторингу банківських email
+   * Безпечна ініціалізація моніторингу банківських email
+   */
+  async initializeEmailMonitoring(): Promise<void> {
+    try {
+      console.log("🏦 Запуск ініціалізації банківського email моніторингу...");
+      
+      // Перевіряємо змінні оточення замість БД
+      const bankEmailHost = process.env.BANK_EMAIL_HOST;
+      const bankEmailUser = process.env.BANK_EMAIL_USER;
+      const bankEmailPassword = process.env.BANK_EMAIL_PASSWORD;
+      
+      if (!bankEmailHost || !bankEmailUser || !bankEmailPassword) {
+        console.log("🏦 Банківський email моніторинг не налаштовано - відсутні змінні оточення");
+        console.log("🏦 Потрібні змінні: BANK_EMAIL_HOST, BANK_EMAIL_USER, BANK_EMAIL_PASSWORD");
+        return;
+      }
+      
+      console.log("🏦 Знайдені налаштування email:", {
+        hasHost: !!bankEmailHost,
+        hasUser: !!bankEmailUser, 
+        hasPassword: !!bankEmailPassword,
+        host: bankEmailHost
+      });
+
+      // Запускаємо моніторинг з змінними оточення
+      if (!this.isMonitoring) {
+        this.startMonitoring();
+        console.log("🏦 Запущено періодичний моніторинг банківських email (кожні 5 хвилин)");
+      }
+
+      console.log("🏦 Банківський email моніторинг ініціалізовано");
+    } catch (error) {
+      console.error("❌ Помилка ініціалізації банківського моніторингу:", error);
+    }
+  }
+
+  /**
+   * Застаріла ініціалізація моніторингу банківських email (через БД)
    */
   async initializeMonitoring(): Promise<void> {
     try {
+      console.log("🏦 Запуск ініціалізації банківського email моніторингу...");
       const emailSettings = await storage.getEmailSettings();
       
+      console.log("🏦 Отримані налаштування email:", {
+        bankMonitoringEnabled: emailSettings?.bankMonitoringEnabled,
+        hasBankEmailUser: !!emailSettings?.bankEmailUser,
+        hasSmtpHost: !!emailSettings?.smtpHost,
+        smtpPort: emailSettings?.smtpPort
+      });
+      
       if (!emailSettings?.bankMonitoringEnabled || !emailSettings?.bankEmailUser) {
-        console.log("🏦 Банківський email моніторинг вимкнено або не налаштовано");
+        console.log("🏦 Банківський email моніторinг вимкнено або не налаштовано");
         return;
       }
 
@@ -41,9 +87,10 @@ export class BankEmailService {
       // Запускаємо моніторинг кожні 5 хвилин
       if (!this.isMonitoring) {
         this.startMonitoring();
+        console.log("🏦 Запущено періодичний моніторинг банківських email (кожні 5 хвилин)");
       }
 
-      console.log("🏦 Банківський email моніторинг ініціалізовано");
+      console.log("🏦 Банківський email моніторinг ініціалізовано");
     } catch (error) {
       console.error("❌ Помилка ініціалізації банківського моніторингу:", error);
     }

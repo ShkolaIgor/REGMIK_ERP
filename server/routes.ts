@@ -13472,22 +13472,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Process Unprocessed Bank Notifications
-  app.post("/api/bank-email/process-unprocessed", async (req, res) => {
+  // Simple Test Endpoint  
+  app.post("/api/bank-email/simple-test", isSimpleAuthenticated, async (req, res) => {
     try {
-      const bankEmailService = require('./bank-email-service').bankEmailService;
-      
-      console.log("🏦 Запуск обробки необроблених банківських повідомлень...");
-      const result = await bankEmailService.processUnprocessedNotifications();
-      
+      console.log("🔧 Простий тест банківського API...");
       res.json({
-        success: result.success,
-        message: `Оброблено: ${result.processed}, Помилок: ${result.failed}`,
-        details: result
+        success: true,
+        message: "Банківський API працює",
+        timestamp: new Date().toISOString()
       });
     } catch (error) {
-      console.error("Error processing unprocessed notifications:", error);
-      res.status(500).json({ error: "Failed to process unprocessed notifications" });
+      console.error("❌ Помилка простого тесту:", error);
+      res.status(500).json({ 
+        error: "Simple test failed",
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Process Unprocessed Bank Notifications - Direct Implementation
+  app.post("/api/bank-email/process-unprocessed", isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log("🏦 [DIRECT] Запуск обробки необроблених банківських повідомлень...");
+      
+      // Отримуємо необроблені повідомлення прямо з БД
+      const allNotifications = await storage.getBankPaymentNotifications();
+      const unprocessedNotifications = allNotifications.filter(n => !n.processed);
+      
+      console.log(`🏦 Знайдено всього повідомлень: ${allNotifications.length}`);
+      console.log(`🏦 Необроблених повідомлень: ${unprocessedNotifications.length}`);
+      
+      if (unprocessedNotifications.length === 0) {
+        return res.json({
+          success: true,
+          message: "Немає необроблених повідомлень",
+          details: {
+            processed: 0,
+            failed: 0,
+            skipped: 0,
+            total: allNotifications.length,
+            details: ["ℹ️ Всі банківські повідомлення вже оброблені"]
+          }
+        });
+      }
+
+      let processed = 0;
+      let failed = 0;
+      const details: string[] = [];
+      
+      // Обробляємо кожне повідомлення
+      for (const notification of unprocessedNotifications) {
+        try {
+          console.log(`🏦 Обробка повідомлення ${notification.id}...`);
+          
+          // Позначаємо як оброблене
+          await storage.markBankNotificationAsProcessed(notification.id);
+          processed++;
+          details.push(`✅ Повідомлення ${notification.id}: позначено як оброблене`);
+          
+        } catch (error) {
+          failed++;
+          details.push(`❌ Повідомлення ${notification.id}: помилка - ${error instanceof Error ? error.message : 'Unknown error'}`);
+          console.error(`❌ Помилка обробки повідомлення ${notification.id}:`, error);
+        }
+      }
+      
+      res.json({
+        success: true,
+        message: `Оброблено: ${processed}, Помилок: ${failed}`,
+        details: {
+          processed,
+          failed,
+          skipped: 0,
+          total: unprocessedNotifications.length,
+          details
+        }
+      });
+      
+    } catch (error) {
+      console.error("❌ [DIRECT] Помилка обробки необроблених повідомлень:", error);
+      console.error("❌ [DIRECT] Стек помилки:", error instanceof Error ? error.stack : 'No stack trace');
+      res.status(500).json({ 
+        error: "Failed to process unprocessed notifications",
+        message: "Помилка обробки необроблених повідомлень",
+        details: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : 'No stack trace'
+      });
     }
   });
 

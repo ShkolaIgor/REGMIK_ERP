@@ -4,11 +4,14 @@ import {
   components, productComponents, costCalculations, materialShortages, inventoryAudits, inventoryAuditItems, workers,
   packageTypes, solderingTypes, componentCategories, shipments, shipmentItems, carriers,
   customerAddresses, senderSettings, currencies, exchangeRateHistory, serialNumbers, emailSettings,
+  bankPaymentNotifications, orderPayments,
   clients, clientContacts, clientMail, mailRegistry, envelopePrintSettings,
   integrationConfigs, syncLogs, entityMappings, syncQueue, fieldMappings, userSortPreferences,
   type User, type UpsertUser, type LocalUser, type InsertLocalUser, type Role, type InsertRole,
   type SystemModule, type InsertSystemModule, type UserLoginHistory, type InsertUserLoginHistory,
   type EmailSettings, type InsertEmailSettings,
+  type BankPaymentNotification, type InsertBankPaymentNotification,
+  type OrderPayment, type InsertOrderPayment,
   type UserSortPreference, type InsertUserSortPreference,
   type Category, type InsertCategory,
   type Unit, type InsertUnit,
@@ -540,6 +543,21 @@ export interface IStorage {
   // Email Settings
   getEmailSettings(): Promise<EmailSettings | null>;
   updateEmailSettings(settings: InsertEmailSettings): Promise<EmailSettings>;
+
+  // Bank Payment Notifications
+  createBankPaymentNotification(notification: InsertBankPaymentNotification): Promise<BankPaymentNotification>;
+  getBankPaymentNotifications(filters?: {
+    processed?: boolean;
+    fromDate?: Date;
+    toDate?: Date;
+  }): Promise<BankPaymentNotification[]>;
+  updateBankPaymentNotification(id: number, updates: Partial<BankPaymentNotification>): Promise<BankPaymentNotification | undefined>;
+  markBankNotificationAsProcessed(notificationId: number, processed?: boolean, processingError?: string): Promise<boolean>;
+
+  // Order Payments
+  createOrderPayment(payment: InsertOrderPayment): Promise<OrderPayment>;
+  getOrderPayments(orderId?: number): Promise<OrderPayment[]>;
+  updateOrderPaymentStatus(orderId: number, paymentAmount: number, paymentType?: string, bankNotificationId?: number, bankAccount?: string, correspondent?: string): Promise<{ order: Order; payment: OrderPayment }>;
 
   // Analytics
   getSalesAnalytics(period: string): Promise<any[]>;
@@ -2302,6 +2320,41 @@ export class MemStorage implements IStorage {
 
   async getOrderedProducts(): Promise<any[]> {
     return [];
+  }
+
+  // Bank Payment Notifications methods for MemStorage
+  async createBankPaymentNotification(notification: InsertBankPaymentNotification): Promise<BankPaymentNotification> {
+    throw new Error("MemStorage не підтримує банківські повідомлення");
+  }
+
+  async getBankPaymentNotifications(filters?: {
+    processed?: boolean;
+    fromDate?: Date;
+    toDate?: Date;
+  }): Promise<BankPaymentNotification[]> {
+    return [];
+  }
+
+  async updateBankPaymentNotification(id: number, updates: Partial<BankPaymentNotification>): Promise<BankPaymentNotification | undefined> {
+    throw new Error("MemStorage не підтримує банківські повідомлення");
+  }
+
+  async markBankNotificationAsProcessed(notificationId: number, processed: boolean = true, processingError?: string): Promise<boolean> {
+    console.log(`MemStorage: markBankNotificationAsProcessed(${notificationId}, ${processed})`);
+    return true; // Always return success for testing
+  }
+
+  // Order Payments methods for MemStorage
+  async createOrderPayment(payment: InsertOrderPayment): Promise<OrderPayment> {
+    throw new Error("MemStorage не підтримує платежі замовлень");
+  }
+
+  async getOrderPayments(orderId?: number): Promise<OrderPayment[]> {
+    return [];
+  }
+
+  async updateOrderPaymentStatus(orderId: number, paymentAmount: number, paymentType: string = "bank_transfer", bankNotificationId?: number, bankAccount?: string, correspondent?: string): Promise<{ order: Order; payment: OrderPayment }> {
+    throw new Error("MemStorage не підтримує оновлення статусу платежів");
   }
 }
 

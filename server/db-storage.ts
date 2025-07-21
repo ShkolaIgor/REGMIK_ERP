@@ -4451,6 +4451,23 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async markBankNotificationAsProcessed(notificationId: number, processed: boolean = true, processingError?: string): Promise<boolean> {
+    try {
+      await db
+        .update(bankPaymentNotifications)
+        .set({ 
+          processed, 
+          processingError,
+          updatedAt: new Date()
+        })
+        .where(eq(bankPaymentNotifications.id, notificationId));
+      return true;
+    } catch (error) {
+      console.error(`Error marking bank notification ${notificationId} as processed:`, error);
+      throw error;
+    }
+  }
+
   // Order Payment methods
   async createOrderPayment(payment: InsertOrderPayment): Promise<OrderPayment> {
     try {

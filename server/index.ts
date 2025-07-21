@@ -104,7 +104,8 @@ app.use((req, res, next) => {
       await storage.initializeData();
       log("Database initialized successfully");
     } catch (error) {
-      log("Database initialization failed, continuing with server startup:", error);
+      log("Database initialization skipped due to connection issues:", error);
+      // Продовжуємо роботу сервера без бази даних
     }
     
     // Ініціалізація кешу Нової Пошти при старті сервера (тільки в development)
