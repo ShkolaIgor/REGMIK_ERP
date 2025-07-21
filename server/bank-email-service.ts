@@ -101,18 +101,25 @@ export class BankEmailService {
     try {
       const emailSettings = await storage.getEmailSettings();
       
-      if (!emailSettings?.bankMonitoringEnabled || !emailSettings?.bankEmailUser) {
-        console.log("🏦 Банківський моніторинг вимкнено");
+      // Використовуємо environment variables або дані з БД
+      const bankEmailUser = process.env.BANK_EMAIL_USER || emailSettings?.bankEmailUser;
+      const bankEmailPassword = process.env.BANK_EMAIL_PASSWORD || emailSettings?.bankEmailPassword;
+      const bankEmailHost = process.env.BANK_EMAIL_HOST || 'imap.gmail.com';
+      
+      if (!emailSettings?.bankMonitoringEnabled || !bankEmailUser || !bankEmailPassword) {
+        console.log("🏦 Банківський моніторинг вимкнено або не налаштовано");
         return;
       }
 
       console.log("🏦 Підключення до IMAP для перевірки нових банківських email...");
+      console.log("🏦 IMAP Host:", bankEmailHost);
+      console.log("🏦 IMAP User:", bankEmailUser);
 
       // Налаштування IMAP з'єднання
       const imap = new Imap({
-        user: emailSettings.bankEmailUser,
-        password: emailSettings.bankEmailPassword,
-        host: 'imap.gmail.com',
+        user: bankEmailUser,
+        password: bankEmailPassword,
+        host: bankEmailHost,
         port: 993,
         tls: true,
         tlsOptions: {
@@ -439,11 +446,11 @@ export class BankEmailService {
     try {
       console.log("🏦 Аналіз тексту email:", emailText.substring(0, 200) + "...");
       
-      // Шукаємо ключові фрази з прикладу користувача
+      // Покращені регекси для розпізнавання банківських повідомлень
       const accountMatch = emailText.match(/рух коштів по рахунку:\s*([A-Z0-9]+)/i);
-      const currencyMatch = emailText.match(/валюта:\s*([A-Z]{3})/i);
-      const operationMatch = emailText.match(/тип операції:\s*([^\n\r]+)/i);
-      const amountMatch = emailText.match(/сумма:\s*([\d,\.]+)/i);
+      const currencyMatch = emailText.match(/валюта:\s*([A-Z]{3})/i) || emailText.match(/(\d+[,\.]\d+)\s*(UAH|USD|EUR)/i);
+      const operationMatch = emailText.match(/(?:тип операції|операція):\s*([^\n\r]+)/i);
+      const amountMatch = emailText.match(/(?:сумма|сума):\s*([\d,\.]+)/i);
       const correspondentMatch = emailText.match(/корреспондент:\s*([^\n\r]+)/i);
       const purposeMatch = emailText.match(/призначення платежу:\s*([^\n\r]+)/i);
       
@@ -647,6 +654,110 @@ export class BankEmailService {
   async initializeEmailMonitoring(): Promise<void> {
     console.log("🏦 Запуск ініціалізації банківського email моніторингу...");
     await this.initializeMonitoring();
+  }
+
+  /**
+   * Обробка всіх необроблених банківських повідомлень  
+   */
+  async processUnprocessedNotifications(): Promise<{
+    success: boolean;
+    processed: number;
+    failed: number;
+    skipped: number;
+    details: string[];
+  }> {
+    try {
+      const unprocessedNotifications = await storage.getBankPaymentNotifications();
+      const toProcess = unprocessedNotifications.filter(n => !n.processed);
+      
+      console.log(`🏦 Знайдено ${toProcess.length} необроблених банківських повідомлень`);
+      
+      let processed = 0;
+      let failed = 0;
+      let skipped = 0;
+      const details: string[] = [];
+      
+      for (const notification of toProcess) {
+        try {
+          // Перевіряємо чи це повідомлення вже було оброблене
+          if (notification.processed) {
+            skipped++;
+            details.push(`⏭️ Повідомлення ${notification.id}: вже оброблено`);
+            continue;
+          }
+
+          // Безпечно отримуємо дані для обробки без спроби створити дублікат
+          const paymentData = await this.parseEmailContent(notification.rawEmailContent || '');
+          
+          if (!paymentData) {
+            await storage.markBankNotificationAsProcessed(notification.id);
+            failed++;
+            details.push(`❌ Повідомлення ${notification.id}: не вдалося розпізнати банківські дані`);
+            continue;
+          }
+
+          // Шукаємо замовлення за номером рахунку
+          const orders = await this.findOrdersByPaymentInfo(paymentData);
+          
+          if (orders.length > 0) {
+            for (const order of orders) {
+              await storage.createOrderPayment({
+                orderId: order.id,
+                amount: paymentData.amount,
+                currency: paymentData.currency,
+                paymentDate: new Date(notification.receivedAt),
+                paymentMethod: 'bank_transfer',
+                bankNotificationId: notification.id,
+                bankAccount: paymentData.bankAccount || '',
+                correspondent: paymentData.correspondent || '',
+                reference: paymentData.purpose || '',
+                createdBy: 1 // system user
+              });
+              
+              await storage.updateOrderPayment(order.id, paymentData.amount);
+            }
+            
+            await storage.markBankNotificationAsProcessed(notification.id);
+            processed++;
+            details.push(`✅ Повідомлення ${notification.id}: знайдено ${orders.length} замовлень, оплата записана`);
+          } else {
+            await storage.markBankNotificationAsProcessed(notification.id);
+            failed++;
+            details.push(`❌ Повідомлення ${notification.id}: не знайдено відповідних замовлень`);
+          }
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          
+          // Якщо це помилка дублікату - пропускаємо
+          if (errorMessage.includes('duplicate key value')) {
+            skipped++;
+            details.push(`⏭️ Повідомлення ${notification.id}: вже існує в системі`);
+            await storage.markBankNotificationAsProcessed(notification.id);
+          } else {
+            failed++;
+            details.push(`❌ Повідомлення ${notification.id}: помилка - ${errorMessage}`);
+          }
+        }
+      }
+      
+      return {
+        success: true,
+        processed,
+        failed,
+        skipped,
+        details
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("❌ Помилка обробки необроблених повідомлень:", errorMessage);
+      return {
+        success: false,
+        processed: 0,
+        failed: 0,
+        skipped: 0,
+        details: [`Помилка: ${errorMessage}`]
+      };
+    }
   }
 
   /**

@@ -8,19 +8,50 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
+interface BankEmailSettings {
+  bankMonitoringEnabled: boolean;
+  bankEmailAddress: string;
+  bankEmailUser: string;
+  smtpHost: string;
+  smtpPort: number;
+  hasPassword: boolean;
+}
+
+interface BankEmailStats {
+  total: number;
+  processed: number;
+  unprocessed: number;
+  lastWeek: number;
+}
+
+interface TestResult {
+  success: boolean;
+  message: string;
+  notification?: any;
+}
+
+interface ProcessResult {
+  success: boolean;
+  details?: {
+    processed: number;
+    failed: number;
+    skipped: number;
+  };
+}
+
 export default function BankEmailTest() {
   const [emailContent, setEmailContent] = useState("");
-  const [testResult, setTestResult] = useState(null);
+  const [testResult, setTestResult] = useState<TestResult | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   // Отримання налаштувань банківського email
-  const { data: settings, isLoading: settingsLoading } = useQuery({
+  const { data: settings, isLoading: settingsLoading } = useQuery<BankEmailSettings>({
     queryKey: ["/api/bank-email-settings"],
   });
 
   // Отримання статистики банківських повідомлень
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats, isLoading: statsLoading } = useQuery<BankEmailStats>({
     queryKey: ["/api/bank-email-stats"],
   });
 
@@ -50,6 +81,29 @@ export default function BankEmailTest() {
     onError: (error) => {
       toast({
         title: "Помилка тестування",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Обробка необроблених повідомлень
+  const processUnprocessedMutation = useMutation<ProcessResult>({
+    mutationFn: async () => {
+      return apiRequest("/api/bank-email/process-unprocessed", {
+        method: "POST",
+      });
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bank-email-stats"] });
+      toast({
+        title: "Обробка завершена",
+        description: `Оброблено: ${result.details?.processed || 0}, Помилок: ${result.details?.failed || 0}, Пропущено: ${result.details?.skipped || 0}`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Помилка обробки",
         description: error.message,
         variant: "destructive",
       });
@@ -162,6 +216,23 @@ export default function BankEmailTest() {
             </div>
           ) : (
             <p className="text-destructive">Помилка завантаження статистики</p>
+          )}
+          
+          {/* Кнопка для обробки необроблених повідомлень */}
+          {stats && stats.unprocessed > 0 && (
+            <div className="pt-4 border-t">
+              <Button 
+                onClick={() => processUnprocessedMutation.mutate()}
+                disabled={processUnprocessedMutation.isPending}
+                variant="default"
+                className="w-full"
+              >
+                {processUnprocessedMutation.isPending 
+                  ? "Обробка необроблених повідомлень..." 
+                  : `Обробити ${stats.unprocessed} необроблених повідомлень`
+                }
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>

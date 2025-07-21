@@ -13445,5 +13445,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bank Email Monitoring Test Endpoint
+  app.get("/api/bank-email/test", async (req, res) => {
+    try {
+      const bankEmailService = require('./bank-email-service').bankEmailService;
+      
+      // Перевіряємо статус моніторингу
+      const emailSettings = await storage.getEmailSettings();
+      const bankEmailUser = process.env.BANK_EMAIL_USER || emailSettings?.bankEmailUser;
+      const bankEmailPassword = process.env.BANK_EMAIL_PASSWORD || emailSettings?.bankEmailPassword;
+      const bankEmailHost = process.env.BANK_EMAIL_HOST || 'imap.gmail.com';
+      
+      res.json({
+        message: "Bank Email Monitoring Test",
+        bankMonitoringEnabled: emailSettings?.bankMonitoringEnabled || false,
+        bankEmailAddress: emailSettings?.bankEmailAddress || null,
+        bankEmailUser: bankEmailUser || null,
+        bankEmailHost: bankEmailHost,
+        hasPassword: !!bankEmailPassword,
+        isMonitoring: bankEmailService?.isMonitoring || false,
+        status: (emailSettings?.bankMonitoringEnabled && bankEmailUser && bankEmailPassword) ? "configured" : "not_configured"
+      });
+    } catch (error) {
+      console.error("Error testing bank email monitoring:", error);
+      res.status(500).json({ error: "Failed to test bank email monitoring" });
+    }
+  });
+
+  // Process Unprocessed Bank Notifications
+  app.post("/api/bank-email/process-unprocessed", async (req, res) => {
+    try {
+      const bankEmailService = require('./bank-email-service').bankEmailService;
+      
+      console.log("🏦 Запуск обробки необроблених банківських повідомлень...");
+      const result = await bankEmailService.processUnprocessedNotifications();
+      
+      res.json({
+        success: result.success,
+        message: `Оброблено: ${result.processed}, Помилок: ${result.failed}`,
+        details: result
+      });
+    } catch (error) {
+      console.error("Error processing unprocessed notifications:", error);
+      res.status(500).json({ error: "Failed to process unprocessed notifications" });
+    }
+  });
+
   return httpServer;
 }
