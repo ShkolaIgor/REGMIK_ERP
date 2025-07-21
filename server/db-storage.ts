@@ -18,7 +18,7 @@ import {
   repairs, repairParts, repairStatusHistory, repairDocuments, orderItemSerialNumbers, novaPoshtaCities, novaPoshtaWarehouses,
   bankPaymentNotifications, orderPayments, systemLogs,
   supplierReceipts, supplierReceiptItems, supplierDocumentTypes,
-  clientSyncHistory, autoSyncSettings,
+  clientSyncHistory, autoSyncSettings, userActionLogs,
  type LocalUser, type InsertLocalUser,
   type Permission, type InsertPermission,
   type RolePermission, type InsertRolePermission, type UserPermission, type InsertUserPermission,
@@ -91,6 +91,7 @@ import {
   type FieldMapping, type InsertFieldMapping,
   type ClientSyncHistory, type InsertClientSyncHistory,
   type Client1CData, type ClientSyncWebhookData, type ClientSyncResponse,
+  type UserActionLog, type InsertUserActionLog,
 } from "@shared/schema";
 
 export class DatabaseStorage implements IStorage {
@@ -499,6 +500,15 @@ export class DatabaseStorage implements IStorage {
     .where(eq(inventory.warehouseId, warehouseId));
 
     return result.filter(item => item.product) as (Inventory & { product: Product })[];
+  }
+
+  async getInventoryByProductAndWarehouse(productId: number, warehouseId: number): Promise<Inventory | undefined> {
+    const result = await db.select()
+      .from(inventory)
+      .where(and(eq(inventory.productId, productId), eq(inventory.warehouseId, warehouseId)))
+      .limit(1);
+
+    return result[0];
   }
 
   async updateInventory(productId: number, warehouseId: number, quantity: number): Promise<Inventory | undefined> {
@@ -13897,6 +13907,181 @@ export class DatabaseStorage implements IStorage {
         job.endTime = new Date().toISOString();
         (global as any).productImportJobs[jobId] = { ...job };
       }
+    }
+  }
+
+  // ============= USER ACTION LOGGING METHODS =============
+
+  async createUserActionLog(log: InsertUserActionLog): Promise<UserActionLog> {
+    try {
+      const [created] = await this.db.insert(userActionLogs).values(log).returning();
+      return created;
+    } catch (error) {
+      console.error('Error creating user action log:', error);
+      throw error;
+    }
+  }
+
+  async getUserActionLogs(
+    filters?: {
+      userId?: number;
+      action?: string;
+      entityType?: string;
+      module?: string;
+      severity?: string;
+      startDate?: Date;
+      endDate?: Date;
+      limit?: number;
+      offset?: number;
+    }
+  ): Promise<UserActionLog[]> {
+    try {
+      let query = this.db.select().from(userActionLogs);
+      
+      const conditions = [];
+      
+      if (filters?.userId) {
+        conditions.push(eq(userActionLogs.userId, filters.userId));
+      }
+      
+      if (filters?.action) {
+        conditions.push(eq(userActionLogs.action, filters.action));
+      }
+      
+      if (filters?.entityType) {
+        conditions.push(eq(userActionLogs.entityType, filters.entityType));
+      }
+      
+      if (filters?.module) {
+        conditions.push(eq(userActionLogs.module, filters.module));
+      }
+      
+      if (filters?.severity) {
+        conditions.push(eq(userActionLogs.severity, filters.severity));
+      }
+      
+      if (filters?.startDate) {
+        conditions.push(gte(userActionLogs.createdAt, filters.startDate));
+      }
+      
+      if (filters?.endDate) {
+        conditions.push(lte(userActionLogs.createdAt, filters.endDate));
+      }
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+      
+      query = query.orderBy(desc(userActionLogs.createdAt));
+      
+      if (filters?.limit) {
+        query = query.limit(filters.limit);
+      }
+      
+      if (filters?.offset) {
+        query = query.offset(filters.offset);
+      }
+      
+      return await query;
+    } catch (error) {
+      console.error('Error getting user action logs:', error);
+      throw error;
+    }
+  }
+
+  async updateInventoryWithLogging(
+    productId: number, 
+    warehouseId: number, 
+    newQuantity: number, 
+    userId: number,
+    reason: string,
+    userInfo?: { ipAddress?: string; userAgent?: string; sessionId?: string }
+  ): Promise<void> {
+    try {
+      // Отримуємо поточну кількість
+      const currentInventory = await this.db
+        .select()
+        .from(inventory)
+        .where(and(
+          eq(inventory.productId, productId),
+          eq(inventory.warehouseId, warehouseId)
+        ))
+        .limit(1);
+
+      const oldQuantity = currentInventory.length > 0 ? parseFloat(currentInventory[0].quantity) : 0;
+      
+      // Оновлюємо кількість
+      await this.db
+        .insert(inventory)
+        .values({
+          productId,
+          warehouseId,
+          quantity: newQuantity.toString()
+        })
+        .onConflictDoUpdate({
+          target: [inventory.productId, inventory.warehouseId],
+          set: {
+            quantity: newQuantity.toString(),
+            updatedAt: new Date()
+          }
+        });
+
+      // Логуємо дію
+      await this.createUserActionLog({
+        userId,
+        action: 'inventory_change',
+        entityType: 'inventory',
+        entityId: productId,
+        oldValues: { quantity: oldQuantity, warehouseId },
+        newValues: { quantity: newQuantity, warehouseId },
+        description: `Зміна кількості товару з ${oldQuantity} на ${newQuantity}. Причина: ${reason}`,
+        module: 'inventory',
+        severity: 'info',
+        ipAddress: userInfo?.ipAddress || null,
+        userAgent: userInfo?.userAgent || null,
+        sessionId: userInfo?.sessionId || null,
+        additionalData: {
+          quantityChange: newQuantity - oldQuantity,
+          reason,
+          warehouseId
+        }
+      });
+
+    } catch (error) {
+      console.error('Error updating inventory with logging:', error);
+      throw error;
+    }
+  }
+
+  // User Action Logging
+  async logUserAction(actionData: {
+    userId: number;
+    action: string;
+    targetType: string;
+    targetId: number;
+    details?: any;
+    ipAddress?: string;
+    userAgent?: string;
+  }): Promise<any> {
+    try {
+      const [created] = await db
+        .insert(userActionLogs)
+        .values({
+          userId: actionData.userId,
+          action: actionData.action,
+          targetType: actionData.targetType,
+          targetId: actionData.targetId,
+          details: actionData.details || {},
+          ipAddress: actionData.ipAddress,
+          userAgent: actionData.userAgent,
+          createdAt: new Date()
+        })
+        .returning();
+      
+      return created;
+    } catch (error) {
+      console.error('Error logging user action:', error);
+      throw error;
     }
   }
 

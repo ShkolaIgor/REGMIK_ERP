@@ -9,12 +9,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, getStockStatus } from "@/lib/utils";
-import { Search, Edit, Eye, Trash2, Scan, Download, Printer, DollarSign, AlertTriangle, Package, Barcode, SquareChartGantt } from "lucide-react";
+import { Search, Edit, Eye, Trash2, Scan, Download, Printer, DollarSign, AlertTriangle, Package, Barcode, SquareChartGantt, PlusCircle, MinusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScannerButton } from "@/components/BarcodeScanner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { TableLoadingState, CardSkeleton } from "@/components/ui/loading-state";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
+import { InventoryChangeDialog } from "@/components/InventoryChangeDialog";
 
 export default function Inventory() {
   const [editingProduct, setEditingProduct] = useState(null);
@@ -26,6 +27,14 @@ export default function Inventory() {
   // Стейт для пагінації
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+
+  // Стейт для діалогу зміни кількості
+  const [inventoryChangeDialog, setInventoryChangeDialog] = useState<{
+    isOpen: boolean;
+    product?: any;
+    warehouse?: any;
+    currentQuantity?: number;
+  }>({ isOpen: false });
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -40,6 +49,14 @@ export default function Inventory() {
 
   const { data: inventory = [] } = useQuery({
     queryKey: ["/api/inventory"],
+  });
+
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ["/api/warehouses"],
+  });
+
+  const { data: session } = useQuery({
+    queryKey: ["/api/user/session"],
   });
 
   const deleteProductMutation = useMutation({
@@ -66,6 +83,23 @@ export default function Inventory() {
   // Get inventory data for each product
   const getProductInventory = (productId: number) => {
     return inventory.find((inv: any) => inv.productId === productId);
+  };
+
+  // Обробники для діалогу зміни кількості
+  const handleChangeQuantity = (product: any) => {
+    const productInventory = getProductInventory(product.id);
+    const defaultWarehouse = warehouses.find((w: any) => w.isDefault) || warehouses[0];
+    
+    setInventoryChangeDialog({
+      isOpen: true,
+      product,
+      warehouse: defaultWarehouse,
+      currentQuantity: productInventory ? parseFloat(productInventory.quantity) : 0
+    });
+  };
+
+  const closeInventoryChangeDialog = () => {
+    setInventoryChangeDialog({ isOpen: false });
   };
 
   // Filter products based on search and filters
@@ -379,6 +413,14 @@ export default function Inventory() {
                             <Button
                               size="sm"
                               variant="ghost"
+                              onClick={() => handleChangeQuantity(product)}
+                              title="Змінити кількість"
+                            >
+                              <PlusCircle className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
                               //onClick={() => handleEditProduct(product)}
                             >
                               <Edit className="w-4 h-4" />
@@ -502,6 +544,18 @@ export default function Inventory() {
         )}
       </div>
       </div>
+
+      {/* Діалог зміни кількості */}
+      {inventoryChangeDialog.isOpen && inventoryChangeDialog.product && inventoryChangeDialog.warehouse && session?.user && (
+        <InventoryChangeDialog
+          isOpen={inventoryChangeDialog.isOpen}
+          onClose={closeInventoryChangeDialog}
+          product={inventoryChangeDialog.product}
+          warehouse={inventoryChangeDialog.warehouse}
+          currentQuantity={inventoryChangeDialog.currentQuantity || 0}
+          userId={session.user.id}
+        />
+      )}
     </div>
   );
 }

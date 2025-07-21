@@ -882,6 +882,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update inventory with logging
+  app.post("/api/inventory/update-with-logging", async (req, res) => {
+    try {
+      const { productId, warehouseId, newQuantity, userId, reason } = req.body;
+      
+      if (!productId || !warehouseId || newQuantity === undefined || !userId || !reason) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Get current inventory to compare
+      const currentInventory = await storage.getInventoryByProductAndWarehouse(productId, warehouseId);
+      const oldQuantity = currentInventory ? parseFloat(currentInventory.quantity.toString()) : 0;
+      const quantityChange = newQuantity - oldQuantity;
+
+      // Update inventory
+      const inventory = await storage.updateInventory(productId, warehouseId, newQuantity);
+
+      // Log the action
+      await storage.logUserAction({
+        userId,
+        action: 'INVENTORY_UPDATE',
+        targetType: 'INVENTORY',
+        targetId: productId,
+        details: {
+          productId,
+          warehouseId,
+          oldQuantity,
+          newQuantity,
+          quantityChange,
+          reason: reason.trim()
+        },
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent']
+      });
+
+      res.json({
+        success: true,
+        inventory,
+        message: `Кількість товару оновлено з ${oldQuantity} до ${newQuantity} (${quantityChange >= 0 ? '+' : ''}${quantityChange})`
+      });
+    } catch (error) {
+      console.error('Error updating inventory with logging:', error);
+      res.status(500).json({ error: "Failed to update inventory with logging" });
+    }
+  });
+
   // Orders with pagination
   app.get("/api/orders", async (req, res) => {
     try {
@@ -13254,6 +13300,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: error.message,
         message: 'Помилка валідації webhook клієнта'
       });
+    }
+  });
+
+  // ============= USER ACTION LOGGING ENDPOINTS =============
+
+  // Отримання логів дій користувачів
+  app.get("/api/user-action-logs", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { 
+        userId, 
+        action, 
+        entityType, 
+        module, 
+        severity, 
+        startDate, 
+        endDate, 
+        limit = 100, 
+        offset = 0 
+      } = req.query;
+
+      const filters: any = {};
+      
+      if (userId) filters.userId = parseInt(userId as string);
+      if (action) filters.action = action as string;
+      if (entityType) filters.entityType = entityType as string;
+      if (module) filters.module = module as string;
+      if (severity) filters.severity = severity as string;
+      if (startDate) filters.startDate = new Date(startDate as string);
+      if (endDate) filters.endDate = new Date(endDate as string);
+      if (limit) filters.limit = parseInt(limit as string);
+      if (offset) filters.offset = parseInt(offset as string);
+
+      const logs = await storage.getUserActionLogs(filters);
+      res.json(logs);
+    } catch (error) {
+      console.error('Error getting user action logs:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Створення логу дії користувача
+  app.post("/api/user-action-logs", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const log = await storage.createUserActionLog(req.body);
+      res.json(log);
+    } catch (error) {
+      console.error('Error creating user action log:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Оновлення кількості товару з логуванням
+  app.post("/api/inventory/update-with-logging", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { productId, warehouseId, newQuantity, userId, reason } = req.body;
+      
+      // Отримуємо інформацію про користувача з запиту
+      const userInfo = {
+        ipAddress: req.ip || req.connection?.remoteAddress || 'unknown',
+        userAgent: req.get('User-Agent') || 'unknown',
+        sessionId: req.sessionID || 'unknown'
+      };
+
+      await storage.updateInventoryWithLogging(
+        productId, 
+        warehouseId, 
+        newQuantity, 
+        userId,
+        reason,
+        userInfo
+      );
+
+      res.json({ 
+        success: true,
+        message: 'Кількість товару оновлено та дію зареєстровано'
+      });
+    } catch (error) {
+      console.error('Error updating inventory with logging:', error);
+      res.status(500).json({ error: error.message });
     }
   });
 

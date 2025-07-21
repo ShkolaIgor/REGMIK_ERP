@@ -707,6 +707,25 @@ export const costCalculations = pgTable("cost_calculations", {
   notes: text("notes"),
 });
 
+// Система логування дій користувачів
+export const userActionLogs = pgTable("user_action_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  action: varchar("action", { length: 100 }).notNull(), // create, update, delete, inventory_change
+  entityType: varchar("entity_type", { length: 50 }).notNull(), // product, order, inventory, etc.
+  entityId: integer("entity_id").notNull(), // ID об'єкта, на який виконувалась дія
+  oldValues: jsonb("old_values"), // Старі значення (для update)
+  newValues: jsonb("new_values"), // Нові значення (для create/update)
+  ipAddress: varchar("ip_address", { length: 45 }), // IPv4/IPv6 адреса
+  userAgent: text("user_agent"), // Інформація про браузер
+  description: text("description"), // Опис дії людською мовою
+  sessionId: varchar("session_id", { length: 255 }), // ID сесії
+  module: varchar("module", { length: 50 }).notNull(), // inventory, orders, products, etc.
+  severity: varchar("severity", { length: 20 }).default("info"), // info, warning, error, critical
+  additionalData: jsonb("additional_data"), // Додаткові дані
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Таблиця постачальників
 export const suppliers = pgTable("suppliers", {
   id: serial("id").primaryKey(),
@@ -2942,4 +2961,12 @@ export interface SupplierReceiptWithJoins extends SupplierReceipt {
   purchaseOrderNumber?: string;
 }
 
+// Schema для логування дій користувачів
+export const insertUserActionLogSchema = createInsertSchema(userActionLogs).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export type UserActionLog = typeof userActionLogs.$inferSelect;
+export type InsertUserActionLog = z.infer<typeof insertUserActionLogSchema>;
 

@@ -138,6 +138,7 @@ export interface IStorage {
   // Inventory
   getInventory(): Promise<(Inventory & { product: Product; warehouse: Warehouse })[]>;
   getInventoryByWarehouse(warehouseId: number): Promise<(Inventory & { product: Product })[]>;
+  getInventoryByProductAndWarehouse(productId: number, warehouseId: number): Promise<Inventory | undefined>;
   updateInventory(productId: number, warehouseId: number, quantity: number): Promise<Inventory | undefined>;
 
   // Orders
@@ -630,6 +631,17 @@ export interface IStorage {
     debugCount: number;
     recentErrors: SystemLog[];
   }>;
+
+  // User Action Logging
+  logUserAction(actionData: {
+    userId: number;
+    action: string;
+    targetType: string;
+    targetId: number;
+    details?: any;
+    ipAddress?: string;
+    userAgent?: string;
+  }): Promise<any>;
 
   // Product Name Mapping - жорстке зіставлення для рахунків
   findProductByExactName(externalProductName: string): Promise<{ erpProductId: number; erpProductName: string } | null>;
