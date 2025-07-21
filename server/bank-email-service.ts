@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import * as Imap from "imap";
 import { storage } from "./db-storage";
 import type { InsertBankPaymentNotification } from "@shared/schema";
 
@@ -94,13 +95,155 @@ export class BankEmailService {
   }
 
   /**
-   * Перевірка нових email повідомлень від банку
-   * (Тут буде IMAP логіка для читання email)
+   * Перевірка нових email повідомлень від банку через IMAP
    */
   private async checkNewEmails(): Promise<void> {
-    // TODO: Реалізувати IMAP з'єднання для читання email
-    // Поки що це заглушка, оскільки IMAP потребує додаткових бібліотек
-    console.log("🏦 Перевірка нових банківських email...");
+    try {
+      const emailSettings = await storage.getEmailSettings();
+      
+      if (!emailSettings?.bankMonitoringEnabled || !emailSettings?.bankEmailUser) {
+        console.log("🏦 Банківський моніторинг вимкнено");
+        return;
+      }
+
+      console.log("🏦 Підключення до IMAP для перевірки нових банківських email...");
+
+      // Налаштування IMAP з'єднання
+      const imap = new Imap({
+        user: emailSettings.bankEmailUser,
+        password: emailSettings.bankEmailPassword,
+        host: 'imap.gmail.com',
+        port: 993,
+        tls: true,
+        tlsOptions: {
+          rejectUnauthorized: false
+        }
+      });
+
+      return new Promise((resolve, reject) => {
+        imap.once('ready', () => {
+          console.log("🏦 IMAP з'єднання встановлено");
+          
+          imap.openBox('INBOX', false, (err, box) => {
+            if (err) {
+              console.error("❌ Помилка відкриття INBOX:", err);
+              imap.end();
+              reject(err);
+              return;
+            }
+
+            // Шукаємо нові email від банку за останні 24 години
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            imap.search([
+              'UNSEEN',
+              ['FROM', emailSettings.bankEmailAddress || 'noreply@ukrsib.com.ua'],
+              ['SINCE', yesterday]
+            ], (err, results) => {
+              if (err) {
+                console.error("❌ Помилка пошуку email:", err);
+                imap.end();
+                reject(err);
+                return;
+              }
+
+              if (!results || results.length === 0) {
+                console.log("🏦 Нових банківських email не знайдено");
+                imap.end();
+                resolve();
+                return;
+              }
+
+              console.log(`🏦 Знайдено ${results.length} нових банківських email`);
+
+              // Обробляємо кожен email
+              const fetch = imap.fetch(results, { bodies: '', markSeen: true });
+              let processedCount = 0;
+
+              fetch.on('message', (msg, seqno) => {
+                let emailContent = '';
+
+                msg.on('body', (stream, info) => {
+                  let buffer = '';
+                  stream.on('data', (chunk) => {
+                    buffer += chunk.toString('utf8');
+                  });
+                  
+                  stream.once('end', () => {
+                    emailContent = buffer;
+                  });
+                });
+
+                msg.once('end', async () => {
+                  try {
+                    const mockEmail = {
+                      messageId: `imap-${seqno}-${Date.now()}`,
+                      subject: 'Банківське повідомлення',
+                      fromAddress: emailSettings.bankEmailAddress || 'noreply@ukrsib.com.ua',
+                      receivedAt: new Date(),
+                      textContent: emailContent
+                    };
+
+                    const result = await this.processBankEmail(mockEmail);
+                    
+                    if (result.success) {
+                      console.log(`🏦✅ Email ${seqno} оброблено успішно`);
+                    } else {
+                      console.log(`🏦⚠️ Email ${seqno}: ${result.message}`);
+                    }
+
+                    processedCount++;
+                    
+                    if (processedCount === results.length) {
+                      console.log(`🏦 Обробка завершена: ${processedCount}/${results.length} email`);
+                      imap.end();
+                      resolve();
+                    }
+                  } catch (error) {
+                    console.error(`❌ Помилка обробки email ${seqno}:`, error);
+                    processedCount++;
+                    
+                    if (processedCount === results.length) {
+                      imap.end();
+                      resolve();
+                    }
+                  }
+                });
+              });
+
+              fetch.once('error', (err) => {
+                console.error("❌ Помилка отримання email:", err);
+                imap.end();
+                reject(err);
+              });
+            });
+          });
+        });
+
+        imap.once('error', (err) => {
+          console.error("❌ Помилка IMAP з'єднання:", err);
+          reject(err);
+        });
+
+        imap.connect();
+      });
+    } catch (error) {
+      console.error("❌ Помилка перевірки банківських email:", error);
+      
+      await storage.createSystemLog({
+        level: 'error',
+        category: 'bank-email',
+        module: 'imap-monitoring',
+        message: `Помилка IMAP перевірки: ${error instanceof Error ? error.message : String(error)}`,
+        details: { 
+          component: 'bank-email-service',
+          function: 'checkNewEmails',
+          error: error instanceof Error ? error.toString() : String(error) 
+        },
+        userId: null
+      });
+    }
   }
 
   /**
@@ -496,6 +639,14 @@ export class BankEmailService {
       console.error("❌ Помилка ручної обробки email:", errorMessage);
       return { success: false, message: `Помилка: ${errorMessage}` };
     }
+  }
+
+  /**
+   * Публічний метод для ініціалізації email моніторингу (викликається з сервера)
+   */
+  async initializeEmailMonitoring(): Promise<void> {
+    console.log("🏦 Запуск ініціалізації банківського email моніторингу...");
+    await this.initializeMonitoring();
   }
 
   /**

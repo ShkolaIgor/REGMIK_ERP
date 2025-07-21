@@ -138,5 +138,14 @@ app.use((req, res, next) => {
     } catch (error) {
       log("Помилка ініціалізації автоматичного оновлення Nova Poshta:", error);
     }
+
+    // Ініціалізація банківського email моніторингу
+    try {
+      const { bankEmailService } = await import("./bank-email-service");
+      await bankEmailService.initializeEmailMonitoring();
+      log("Банківський email моніторинг ініціалізовано");
+    } catch (error) {
+      log("Помилка ініціалізації банківського email моніторингу:", error);
+    }
   });
 })();
