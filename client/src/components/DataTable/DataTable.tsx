@@ -237,6 +237,16 @@ export function DataTable({
   }, [data.length, settings.pageSize]);
 
   const totalPages = Math.ceil(sortedData.length / settings.pageSize);
+  
+  // Debug logging for pagination
+  console.log('DataTable Pagination Debug:', {
+    totalData: data.length,
+    sortedDataLength: sortedData.length,
+    pageSize: settings.pageSize,
+    totalPages,
+    currentPage,
+    shouldShowPagination: totalPages > 1 || sortedData.length > settings.pageSize
+  });
 
   const handleSort = (columnKey: string) => {
     const newDirection = settings.sortField === columnKey && settings.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -952,8 +962,8 @@ export function DataTable({
       {/* Data Display */}
       {settings.viewMode === 'table' ? renderTableView() : renderCardView()}
 
-      {/* Pagination */}
-      {(totalPages > 1 || sortedData.length > settings.pageSize) && (
+      {/* Pagination - Show always for testing */}
+      {true && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t">
           <div className="flex items-center gap-4">
             <div className="text-sm text-gray-500">
