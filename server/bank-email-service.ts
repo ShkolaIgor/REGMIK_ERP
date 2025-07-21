@@ -278,7 +278,7 @@ export class BankEmailService {
       const bankEmailUser = emailSettings?.bankEmailUser || process.env.BANK_EMAIL_USER;
       const bankEmailPassword = emailSettings?.bankEmailPassword || process.env.BANK_EMAIL_PASSWORD;
       const bankEmailHost = emailSettings?.bankEmailHost || process.env.BANK_EMAIL_HOST || 'mail.regmik.ua';
-      const bankEmailPort = emailSettings?.bankEmailPort || parseInt(process.env.BANK_EMAIL_PORT || '993');
+      const bankEmailPort = emailSettings?.bankEmailPort || parseInt(process.env.BANK_EMAIL_PORT || '587');
       
       if (!bankEmailUser || !bankEmailPassword) {
         console.log("🏦 Банківський моніторинг не налаштовано - відсутні дані автентифікації");
@@ -302,7 +302,7 @@ export class BankEmailService {
         password: bankEmailPassword,
         host: bankEmailHost,
         port: bankEmailPort,
-        tls: bankEmailPort === 993, // TLS для порту 993 (SSL), plain для 143
+        tls: bankEmailPort === 993 || bankEmailPort === 587, // TLS для SSL портів
         tlsOptions: {
           rejectUnauthorized: false
         }

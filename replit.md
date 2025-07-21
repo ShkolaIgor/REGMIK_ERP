@@ -131,6 +131,12 @@ User has Russian-language 1C system and needs integration setup guidance.
 ## Recent Changes
 
 ### July 21, 2025
+- ✅ **ОСТАТОЧНО ВИРІШЕНО КРИТИЧНУ ПРОБЛЕМУ ПОРТУ 993 У ВСІХ ШАРАХ СИСТЕМИ** - повністю усунуто множинні fallback значення та default values
+- ✅ **ВИПРАВЛЕНО FRONTEND FALLBACKS** - видалено hardcoded 993 значення з email-settings.tsx (defaultValues та useEffect)  
+- ✅ **ВИПРАВЛЕНО BACKEND FALLBACKS** - замінено 993 на 587 у bank-email-service.ts environment fallback
+- ✅ **ВИПРАВЛЕНО DATABASE DEFAULTS** - видалено default(993) зі схеми bank_email_port колонки
+- ✅ **ВИПРАВЛЕНО API RESPONSE MAPPING** - додано bankEmailPort до getEmailSettings() методу в db-storage.ts
+- ✅ **СИСТЕМА ПОРТІВ ПОВНІСТЮ ФУНКЦІОНАЛЬНА** - користувач може встановити будь-який порт (587/993/143) без реверсій
 - ✅ **БАНКІВСЬКИЙ EMAIL МОНІТОРИНГ ПОВНІСТЮ ФУНКЦІОНАЛЬНИЙ** - система автоматично обробляє платежі з email повідомлень Укрсіббанку
 - ✅ **УНІВЕРСАЛЬНА ПІДТРИМКА МОВНИХ ФОРМАТІВ** - регекспи розпізнають українські ("тип операції:") та російські ("Тип операции:") повідомлення
 - ✅ **КРИТИЧНЕ ВИПРАВЛЕННЯ REGEX ПАРСИНГУ** - додано підтримку змішаних форматів банківських повідомлень
