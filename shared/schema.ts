@@ -946,7 +946,7 @@ export const emailSettings = pgTable("email_settings", {
   bankEmailPassword: varchar("bank_email_password", { length: 255 }), // SMTP пароль для банківської пошти
   bankEmailAddress: varchar("bank_email_address", { length: 255 }), // Адреса з якої приходять банківські повідомлення
   bankEmailHost: varchar("bank_email_host", { length: 255 }), // IMAP хост для банківської пошти
-  bankEmailPort: integer("bank_email_port").default(993), // IMAP порт для банківської пошти (993 SSL, 143 plain)
+  bankEmailPort: integer("bank_email_port"), // IMAP порт для банківської пошти (993 SSL, 143 plain)
   bankMonitoringEnabled: boolean("bank_monitoring_enabled").default(false), // Увімкнути моніторинг банківських email
   
   createdAt: timestamp("created_at").defaultNow(),
@@ -2952,9 +2952,7 @@ export interface ProcessedInvoice1C {
   kilkistTovariv?: number; // Кількість товарів з 1С
 }
 
-// Основні типи для таблиць
-export type SupplierReceipt = typeof supplierReceipts.$inferSelect;
-export type InsertSupplierReceipt = z.infer<typeof insertSupplierReceiptSchema>;
+// Основні типи для таблиць (видалено дублікат - типи вже визначені вище)
 
 // Розширений тип для SupplierReceipt з JOIN полями
 export interface SupplierReceiptWithJoins extends SupplierReceipt {

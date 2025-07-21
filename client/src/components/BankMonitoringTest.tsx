@@ -27,7 +27,9 @@ export function BankMonitoringTest() {
   // Тестування системи з реальним email зразком
   const testPresetMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("/api/bank-payments/test-monitoring", "POST");
+      return await apiRequest("/api/bank-payments/test-monitoring", {
+        method: "POST",
+      });
     },
     onSuccess: (data) => {
       if (data.success) {
@@ -57,8 +59,9 @@ export function BankMonitoringTest() {
   // Тестування з користувацьким email
   const testCustomMutation = useMutation({
     mutationFn: async (emailContent: string) => {
-      return await apiRequest("/api/bank-payments/process-manual", "POST", {
-        emailContent,
+      return await apiRequest("/api/bank-payments/process-manual", {
+        method: "POST",
+        body: { emailContent },
       });
     },
     onSuccess: (data) => {
