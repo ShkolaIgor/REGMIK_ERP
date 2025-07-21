@@ -94,28 +94,10 @@ export default function Inventory() {
     setCurrentPage(1);
   }, [searchQuery, categoryFilter, statusFilter]);
 
-  const handleEditProduct = (product: any) => {
-    // Перенаправляємо на сторінку товарів для редагування
-    window.location.href = `/products?edit=${product.id}`;
-  };
-
-  const handleViewProduct = (product: any) => {
-    // Перенаправляємо на сторінку товарів для перегляду
-    window.location.href = `/products?view=${product.id}`;
-  };
-
-
-
-  const handleDeleteProduct = (id: number) => {
-    if (confirm("Ви впевнені, що хочете видалити цей товар?")) {
-      deleteProductMutation.mutate(id);
-    }
-  };
-
   const handleBarcodeScanned = (barcode: string) => {
     const product = products.find((p: any) => p.barcode === barcode);
     if (product) {
-      handleEditProduct(product);
+      ;
     } else {
       toast({
         title: "Товар не знайдено",
@@ -162,11 +144,11 @@ export default function Inventory() {
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
                       Товарний каталог
                     </h1>
-                    <p className="text-gray-500 mt-1">Управління товарами</p>
+                    <p className="text-gray-500 mt-1">Управління товарами на складах</p>
                   </div>
               </div>
             <div className="flex items-center space-x-4">
-              <div className="flex gap-2">
+              <div className="border-blue-200 text-purple-600 hover:bg-blue-50 flex gap-2">
                 <ScannerButton
                   onScanResult={(barcode) => {
                     setSearchQuery(barcode);
@@ -180,6 +162,12 @@ export default function Inventory() {
               <Button variant="outline" className="border-blue-200 text-purple-600 hover:bg-blue-50">
                 <Download className="h-4 w-4 mr-2" />
                 Експорт
+              </Button>
+              <Button 
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                variant="outline">
+                <Printer className="w-4 h-4 mr-2" />
+                Друкувати етикетки
               </Button>
               </div>
             </div>
@@ -317,21 +305,6 @@ export default function Inventory() {
                   </Select>
                 </div>
               </div>
-
-              <div className="flex items-center space-x-3">
-                <Button variant="outline">
-                  <Download className="w-4 h-4 mr-2" />
-                  Експорт
-                </Button>
-                <Button variant="outline" disabled>
-                  <Scan className="w-4 h-4 mr-2" />
-                  Сканер штрих-кодів
-                </Button>
-                <Button variant="outline">
-                  <Printer className="w-4 h-4 mr-2" />
-                  Друкувати етикетки
-                </Button>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -406,25 +379,16 @@ export default function Inventory() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => handleEditProduct(product)}
+                              //onClick={() => handleEditProduct(product)}
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
                             <Button 
                               size="sm" 
                               variant="ghost"
-                              onClick={() => handleViewProduct(product)}
+                              //onClick={() => handleViewProduct(product)}
                             >
                               <Eye className="w-4 h-4" />
-                            </Button>
-
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleDeleteProduct(product.id)}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </TableCell>
@@ -537,9 +501,6 @@ export default function Inventory() {
           </div>
         )}
       </div>
-
-
-
       </div>
     </div>
   );
