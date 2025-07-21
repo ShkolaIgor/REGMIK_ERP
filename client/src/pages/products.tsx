@@ -189,6 +189,25 @@ export default function ProductsPage() {
                       Новий товар
                     </Button>
                   </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Новий товар</DialogTitle>
+                    </DialogHeader>
+                    <ProductEditForm 
+                      product={null}
+                      categories={categories}
+                      onSave={(data) => {
+                        // Тут буде логіка створення
+                        console.log('Creating product:', data);
+                        setIsCreateDialogOpen(false);
+                        toast({
+                          title: "Товар створено",
+                          description: "Новий товар успішно додано до системи",
+                        });
+                      }}
+                      onCancel={() => setIsCreateDialogOpen(false)}
+                    />
+                  </DialogContent>
                 </Dialog>
               </div>
             </div>
@@ -448,6 +467,7 @@ export default function ProductsPage() {
           <DataTable
           data={filteredProducts}
           onRowClick={handleEdit}
+          pageSize={50}
           columns={[
             {
               key: 'name',
@@ -561,6 +581,14 @@ export default function ProductsPage() {
                   >
                     <Edit2 className="h-4 w-4 mr-1" />
                     Редагувати
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleCopy(product)}
+                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                  >
+                    <Copy className="h-4 w-4" />
                   </Button>
                   <Button 
                     variant="outline" 
@@ -709,31 +737,31 @@ export default function ProductsPage() {
   );
 }
 
-// Компонент форми редагування товару
+// Компонент форми редагування/створення товару
 function ProductEditForm({ 
   product, 
   categories, 
   onSave, 
   onCancel 
 }: {
-  product: Product;
+  product: Product | null;
   categories: any[];
   onSave: (data: any) => void;
   onCancel: () => void;
 }) {
   const [formData, setFormData] = useState({
-    name: product.name,
-    sku: product.sku,
-    description: product.description || '',
-    barcode: product.barcode || '',
-    categoryId: product.categoryId?.toString() || '0',
-    costPrice: product.costPrice,
-    retailPrice: product.retailPrice,
-    productType: product.productType,
-    unit: product.unit,
-    minStock: product.minStock?.toString() || '',
-    maxStock: product.maxStock?.toString() || '',
-    isActive: product.isActive ?? true,
+    name: product?.name || '',
+    sku: product?.sku || '',
+    description: product?.description || '',
+    barcode: product?.barcode || '',
+    categoryId: product?.categoryId?.toString() || '0',
+    costPrice: product?.costPrice || '0',
+    retailPrice: product?.retailPrice || '0',
+    productType: product?.productType || 'product',
+    unit: product?.unit || 'шт',
+    minStock: product?.minStock?.toString() || '',
+    maxStock: product?.maxStock?.toString() || '',
+    isActive: product?.isActive ?? true,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
