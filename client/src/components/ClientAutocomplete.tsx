@@ -4,8 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import { Search, X, Users } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Client } from '@shared/schema';
 
 interface ClientAutocompleteProps {
@@ -71,7 +70,7 @@ export function ClientAutocomplete({
     }
   };
 
-  const selectedClientsArray = clients.filter(client => selectedClients.has(client.id));
+
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -149,34 +148,7 @@ export function ClientAutocomplete({
         )}
       </div>
 
-      {/* Обрані клієнти */}
-      {selectedClients.size > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-            <Users className="h-4 w-4" />
-            Обрано клієнтів: {selectedClients.size}
-          </div>
-          <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-            {selectedClientsArray.map(client => (
-              <Badge 
-                key={client.id}
-                variant="secondary"
-                className="flex items-center gap-1 px-2 py-1"
-              >
-                <span className="text-xs">{client.name}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 hover:bg-gray-200"
-                  onClick={() => onClientToggle(client.id, false)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }

@@ -285,15 +285,55 @@ export default function ClientMailPage() {
               Вибір клієнтів для друку
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <ClientAutocomplete
-              selectedClients={selectedClients}
-              onClientToggle={handleClientToggle}
-              placeholder="Шукайте клієнтів за назвою або ЄДРПОУ..."
-            />
+          <CardContent className="space-y-4">
+            {/* Автокомпліт для пошуку та додавання клієнтів */}
+            <div>
+              <Label className="text-sm font-medium">Пошук клієнтів</Label>
+              <ClientAutocomplete
+                selectedClients={selectedClients}
+                onClientToggle={handleClientToggle}
+                placeholder="Шукайте клієнтів за назвою або ЄДРПОУ..."
+              />
+            </div>
+
+            {/* Список обраних клієнтів з чекбоксами */}
+            {selectedClients.size > 0 && (
+              <div>
+                <Label className="text-sm font-medium">Обрані клієнти ({selectedClients.size})</Label>
+                <div className="mt-2 space-y-2 max-h-60 overflow-y-auto border rounded-md p-2 bg-gray-50">
+                  {Array.from(selectedClients).map(clientId => {
+                    const client = clients.find(c => c.id === clientId);
+                    if (!client) return null;
+                    
+                    return (
+                      <div key={client.id} className="flex items-center space-x-2 p-1 hover:bg-white rounded">
+                        <Checkbox
+                          id={`selected-client-${client.id}`}
+                          checked={true}
+                          onCheckedChange={(checked) => {
+                            if (!checked) {
+                              handleClientToggle(client.id, false);
+                            }
+                          }}
+                        />
+                        <label 
+                          htmlFor={`selected-client-${client.id}`} 
+                          className="text-sm font-medium cursor-pointer flex-1"
+                        >
+                          {client.name}
+                          {client.taxCode && (
+                            <span className="text-xs text-gray-500 ml-2">({client.taxCode})</span>
+                          )}
+                        </label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {selectedClients.size > 0 && (
-              <div className="mt-4 space-y-2">
+              <div className="space-y-2">
                 <Label>Назва партії</Label>
                 <Input
                   value={batchName}
