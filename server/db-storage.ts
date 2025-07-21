@@ -764,8 +764,108 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrderByInvoiceNumber(invoiceNumber: string): Promise<Order | undefined> {
-    const [order] = await db.select().from(orders).where(eq(orders.invoiceNumber, invoiceNumber));
-    return order;
+    // Спочатку пробуємо точний пошук
+    const [exactMatch] = await db.select().from(orders).where(eq(orders.invoiceNumber, invoiceNumber));
+    if (exactMatch) {
+      return exactMatch;
+    }
+
+    // Якщо не знайдено, пробуємо частковий пошук
+    // Видаляємо префікс РМ00- з номера для пошуку
+    const partialNumber = invoiceNumber.replace(/^РМ00-/, '');
+    
+    // Шукаємо замовлення, де номер рахунку містить частковий номер
+    const partialMatches = await db.select()
+      .from(orders)
+      .where(sql`${orders.invoiceNumber} LIKE ${'%' + partialNumber + '%'}`);
+    
+    if (partialMatches.length > 0) {
+      console.log(`🔍 Знайдено ${partialMatches.length} замовлень за частковим номером: ${partialNumber}`);
+      // Повертаємо перше знайдене замовлення
+      return partialMatches[0];
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Розширений пошук замовлень за номером рахунку, датою та клієнтом
+   */
+  async findOrdersByPaymentInfo(paymentInfo: {
+    invoiceNumber?: string;
+    partialInvoiceNumber?: string;
+    invoiceDate?: Date;
+    correspondent?: string;
+    amount?: number;
+  }): Promise<Order[]> {
+    let query = db.select().from(orders);
+    const conditions: any[] = [];
+
+    // Пошук за повним номером рахунку
+    if (paymentInfo.invoiceNumber) {
+      conditions.push(eq(orders.invoiceNumber, paymentInfo.invoiceNumber));
+    }
+
+    // Пошук за частковим номером рахунку
+    if (paymentInfo.partialInvoiceNumber) {
+      conditions.push(sql`${orders.invoiceNumber} LIKE ${'%' + paymentInfo.partialInvoiceNumber + '%'}`);
+    }
+
+    // Пошук за датою (±3 дні)
+    if (paymentInfo.invoiceDate) {
+      const startDate = new Date(paymentInfo.invoiceDate);
+      startDate.setDate(startDate.getDate() - 3);
+      const endDate = new Date(paymentInfo.invoiceDate);
+      endDate.setDate(endDate.getDate() + 3);
+      
+      conditions.push(sql`${orders.createdAt} BETWEEN ${startDate} AND ${endDate}`);
+    }
+
+    // Пошук за сумою (±5%)
+    if (paymentInfo.amount) {
+      const minAmount = paymentInfo.amount * 0.95;
+      const maxAmount = paymentInfo.amount * 1.05;
+      conditions.push(sql`${orders.totalAmount} BETWEEN ${minAmount} AND ${maxAmount}`);
+    }
+
+    // Пошук за клієнтом (якщо вказано кореспондента)
+    if (paymentInfo.correspondent) {
+      // Приєднуємо таблицю клієнтів для пошуку за назвою
+      const ordersWithClient = await db.select({
+        order: orders,
+        client: clients
+      })
+      .from(orders)
+      .leftJoin(clients, eq(orders.clientId, clients.id))
+      .where(sql`${clients.name} ILIKE ${'%' + paymentInfo.correspondent + '%'}`);
+
+      const clientOrders = ordersWithClient.map(row => row.order);
+      
+      if (conditions.length > 0) {
+        // Комбінуємо з іншими умовами - правильно з'єднуємо SQL умови
+        let whereClause = conditions[0];
+        for (let i = 1; i < conditions.length; i++) {
+          whereClause = sql`${whereClause} AND ${conditions[i]}`;
+        }
+        const filteredOrders = await query.where(whereClause);
+        return filteredOrders.filter(order => 
+          clientOrders.some(clientOrder => clientOrder.id === order.id)
+        );
+      } else {
+        return clientOrders;
+      }
+    }
+
+    if (conditions.length > 0) {
+      // Правильно з'єднуємо SQL умови
+      let whereClause = conditions[0];
+      for (let i = 1; i < conditions.length; i++) {
+        whereClause = sql`${whereClause} AND ${conditions[i]}`;
+      }
+      return await query.where(whereClause);
+    }
+
+    return [];
   }
 
   async getOrder(id: number): Promise<any> {

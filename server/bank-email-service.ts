@@ -301,8 +301,8 @@ export class BankEmailService {
       const currencyMatch = emailText.match(/валюта:\s*([A-Z]{3})/i);
       const operationMatch = emailText.match(/тип операції:\s*([^\n\r]+)/i);
       const amountMatch = emailText.match(/сумма:\s*([\d,\.]+)/i);
-      const correspondentMatch = emailText.match(/корреспондент:\s*([^,]+)/i);
-      const purposeMatch = emailText.match(/призначення платежу:\s*([^\.]+)/i);
+      const correspondentMatch = emailText.match(/корреспондент:\s*([^\n\r]+)/i);
+      const purposeMatch = emailText.match(/призначення платежу:\s*([^\n\r]+)/i);
       
       console.log("🏦 Результати пошуку регекспів:");
       console.log("  accountMatch:", accountMatch?.[1]);
@@ -312,14 +312,19 @@ export class BankEmailService {
       console.log("  correspondentMatch:", correspondentMatch?.[1]);
       console.log("  purposeMatch:", purposeMatch?.[1]);
       
-      // Шукаємо номер рахунку в призначенні платежу (РМ00-XXXXXX)
-      const invoiceMatch = emailText.match(/РМ00-(\d+)/i);
+      // Шукаємо номер рахунку в призначенні платежу (РМ00-XXXXXX або рах.№ XXXXX)
+      const invoiceMatch = emailText.match(/(?:РМ00-(\d+)|рах\.?\s*№?\s*(\d+))/i);
       
       // Шукаємо дату рахунку
       const dateMatch = emailText.match(/від\s*(\d{2}\.\d{2}\.\d{4})/i);
       
       // Шукаємо ПДВ
       const vatMatch = emailText.match(/ПДВ.*?(\d+[,\.]\d+)/i);
+      
+      console.log("🏦 Додаткові регекси:");
+      console.log("  invoiceMatch:", invoiceMatch);
+      console.log("  dateMatch:", dateMatch);
+      console.log("  vatMatch:", vatMatch);
 
       if (!accountMatch || !operationMatch || !amountMatch || !correspondentMatch) {
         console.log("🏦 Не вдалося розпізнати основні поля банківського повідомлення");
@@ -352,7 +357,7 @@ export class BankEmailService {
         amount: amount,
         correspondent: correspondentMatch[1].trim(),
         paymentPurpose: purposeMatch?.[1]?.trim() || "",
-        invoiceNumber: invoiceMatch ? `РМ00-${invoiceMatch[1]}` : undefined,
+        invoiceNumber: invoiceMatch ? `РМ00-${invoiceMatch[1] || invoiceMatch[2]}` : undefined,
         invoiceDate: invoiceDate,
         vatAmount: vatAmount,
       };
@@ -369,15 +374,61 @@ export class BankEmailService {
    */
   private async processPayment(notificationId: number, paymentInfo: any): Promise<{ success: boolean; message: string; orderId?: number }> {
     try {
-      if (!paymentInfo.invoiceNumber) {
-        return { success: false, message: "Номер рахунку не знайдено в повідомленні" };
+      let order = null;
+      let searchDetails = "";
+
+      // Спочатку пробуємо простий пошук за номером рахунку
+      if (paymentInfo.invoiceNumber) {
+        order = await storage.getOrderByInvoiceNumber(paymentInfo.invoiceNumber);
+        searchDetails += `Пошук за номером: ${paymentInfo.invoiceNumber}`;
       }
 
-      // Шукаємо замовлення за номером рахунку
-      const order = await storage.getOrderByInvoiceNumber(paymentInfo.invoiceNumber);
-      
+      // Якщо не знайдено, використовуємо розширений пошук
       if (!order) {
-        return { success: false, message: `Замовлення з номером рахунку ${paymentInfo.invoiceNumber} не знайдено` };
+        console.log("🔍 Розширений пошук замовлення за додатковими критеріями...");
+        
+        // Витягуємо частковий номер з призначення платежу
+        let partialInvoiceNumber = null;
+        if (paymentInfo.paymentPurpose) {
+          const partialMatch = paymentInfo.paymentPurpose.match(/№\s*(\d+)/);
+          if (partialMatch) {
+            partialInvoiceNumber = partialMatch[1];
+            console.log(`🔍 Знайдено частковий номер рахунку: ${partialInvoiceNumber}`);
+          }
+        }
+
+        // Створюємо об'єкт для розширеного пошуку
+        const searchCriteria: any = {};
+        
+        if (partialInvoiceNumber) {
+          searchCriteria.partialInvoiceNumber = partialInvoiceNumber;
+        }
+        
+        if (paymentInfo.invoiceDate) {
+          searchCriteria.invoiceDate = paymentInfo.invoiceDate;
+        }
+        
+        if (paymentInfo.correspondent) {
+          searchCriteria.correspondent = paymentInfo.correspondent;
+        }
+        
+        if (paymentInfo.amount) {
+          searchCriteria.amount = paymentInfo.amount;
+        }
+
+        const foundOrders = await storage.findOrdersByPaymentInfo(searchCriteria);
+        
+        if (foundOrders.length > 0) {
+          order = foundOrders[0]; // Беремо перше знайдене замовлення
+          console.log(`🔍 Знайдено ${foundOrders.length} замовлень за розширеним пошуком`);
+          searchDetails += `, розширений пошук: ${JSON.stringify(searchCriteria)}`;
+        }
+      }
+
+      if (!order) {
+        const errorMsg = `Замовлення не знайдено. ${searchDetails}`;
+        console.log(`🏦❌ ${errorMsg}`);
+        return { success: false, message: errorMsg };
       }
 
       // Оновлюємо статус оплати замовлення
@@ -390,11 +441,11 @@ export class BankEmailService {
         paymentInfo.correspondent
       );
 
-      console.log(`🏦✅ Платіж оброблено: Замовлення #${order.id} (${paymentInfo.invoiceNumber}) - ${paymentInfo.amount} UAH`);
+      console.log(`🏦✅ Платіж оброблено: Замовлення #${order.id} (${order.invoiceNumber}) - ${paymentInfo.amount} UAH`);
 
       return {
         success: true,
-        message: `Замовлення #${order.id} оновлено`,
+        message: `Замовлення #${order.id} оновлено (${order.invoiceNumber})`,
         orderId: order.id
       };
 

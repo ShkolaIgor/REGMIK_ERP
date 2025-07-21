@@ -144,6 +144,14 @@ export interface IStorage {
   // Orders
   getOrders(): Promise<(Order & { items: (OrderItem & { product: Product })[] })[]>;
   getOrder(id: number): Promise<(Order & { items: (OrderItem & { product: Product })[] }) | undefined>;
+  getOrderByInvoiceNumber(invoiceNumber: string): Promise<Order | undefined>;
+  findOrdersByPaymentInfo(paymentInfo: {
+    invoiceNumber?: string;
+    partialInvoiceNumber?: string;
+    invoiceDate?: Date;
+    correspondent?: string;
+    amount?: number;
+  }): Promise<Order[]>;
   getOrderProducts(orderId: number): Promise<any[]>;
   createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order>;
   updateOrder(id: number, order: InsertOrder, items: InsertOrderItem[]): Promise<Order | undefined>;
@@ -2265,6 +2273,31 @@ export class MemStorage implements IStorage {
 
   async delete1CClient(external1cId: string): Promise<any> {
     throw new Error("MemStorage не підтримує синхронізацію клієнтів");
+  }
+
+  async getOrderByInvoiceNumber(invoiceNumber: string): Promise<Order | undefined> {
+    return Array.from(this.orders.values()).find(order => order.invoiceNumber === invoiceNumber);
+  }
+
+  async findOrdersByPaymentInfo(paymentInfo: {
+    invoiceNumber?: string;
+    partialInvoiceNumber?: string;
+    invoiceDate?: Date;
+    correspondent?: string;
+    amount?: number;
+  }): Promise<Order[]> {
+    const allOrders = Array.from(this.orders.values());
+    
+    return allOrders.filter(order => {
+      // Простий фільтр для MemStorage
+      if (paymentInfo.invoiceNumber && order.invoiceNumber === paymentInfo.invoiceNumber) {
+        return true;
+      }
+      if (paymentInfo.partialInvoiceNumber && order.invoiceNumber?.includes(paymentInfo.partialInvoiceNumber)) {
+        return true;
+      }
+      return false;
+    });
   }
 
   async getOrderedProducts(): Promise<any[]> {

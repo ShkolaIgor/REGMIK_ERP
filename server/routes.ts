@@ -6166,8 +6166,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/bank-payments/test-monitoring", isSimpleAuthenticated, async (req, res) => {
     try {
-      // Тестовий email з реального прикладу користувача
-      const testEmailContent = `
+      const { emailContent } = req.body;
+      
+      // Якщо не надано email, використовуємо тестовий приклад
+      const testEmailContent = emailContent || `
 Щановний клієнте!
 
 Інформуємо Вас про рух коштів по рахунку: UA123456789012345678901234567890
