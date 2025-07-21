@@ -184,6 +184,92 @@ export class BankEmailService {
   }
 
   /**
+   * Тестування підключення до банківської пошти
+   */
+  async testBankEmailConnection(host: string, user: string, password: string): Promise<{success: boolean, message: string, error?: string}> {
+    return new Promise((resolve) => {
+      const Imap = require('imap');
+      
+      const imap = new Imap({
+        user: user,
+        password: password,
+        host: host,
+        port: 993,
+        tls: true,
+        tlsOptions: {
+          rejectUnauthorized: false
+        },
+        connTimeout: 10000, // 10 секунд таймаут
+        authTimeout: 15000, // 15 секунд для автентифікації
+      });
+
+      let resolved = false;
+
+      const cleanup = () => {
+        if (!resolved) {
+          resolved = true;
+          try {
+            imap.end();
+          } catch (e) {
+            // Ігноруємо помилки при закритті
+          }
+        }
+      };
+
+      // Таймаут для всієї операції
+      const timeout = setTimeout(() => {
+        if (!resolved) {
+          cleanup();
+          resolve({
+            success: false,
+            message: "Таймаут підключення до IMAP сервера",
+            error: "Connection timeout after 20 seconds"
+          });
+        }
+      }, 20000);
+
+      imap.once('ready', () => {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timeout);
+          cleanup();
+          resolve({
+            success: true,
+            message: "Підключення до банківської пошти успішне"
+          });
+        }
+      });
+
+      imap.once('error', (err: any) => {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timeout);
+          cleanup();
+          resolve({
+            success: false,
+            message: "Помилка підключення до банківської пошти",
+            error: err.message || err.toString()
+          });
+        }
+      });
+
+      try {
+        imap.connect();
+      } catch (error) {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timeout);
+          resolve({
+            success: false,
+            message: "Помилка ініціалізації IMAP підключення",
+            error: error instanceof Error ? error.message : String(error)
+          });
+        }
+      }
+    });
+  }
+
+  /**
    * Перевірка нових email повідомлень від банку через IMAP
    */
   private async checkNewEmails(): Promise<void> {

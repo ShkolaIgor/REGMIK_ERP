@@ -382,7 +382,36 @@ export default function EmailSettings() {
               </ul>
             </div>
 
-            <div className="pt-4 border-t border-gray-200">
+            <div className="pt-4 border-t border-gray-200 space-y-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={async () => {
+                  try {
+                    setIsTestingConnection(true);
+                    const response = await apiRequest("/api/bank-email/test-connection", {
+                      method: "POST",
+                    });
+                    toast({
+                      title: "Тест підключення успішний",
+                      description: response.message,
+                    });
+                  } catch (error: any) {
+                    toast({
+                      title: "Помилка підключення",
+                      description: error.message || "Не вдалося підключитися до банківської пошти",
+                      variant: "destructive",
+                    });
+                  } finally {
+                    setIsTestingConnection(false);
+                  }
+                }}
+                disabled={isTestingConnection}
+                className="w-full sm:w-auto"
+              >
+                {isTestingConnection ? "Тестування..." : "Тестувати підключення до банку"}
+              </Button>
+              
               <BankMonitoringTest />
             </div>
           </div>

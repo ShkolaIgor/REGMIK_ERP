@@ -10985,6 +10985,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Діагностичний ендпоінт для тестування банківського підключення
+  app.post("/api/bank-email/test-connection", isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log("🏦 Тестування підключення до банківської пошти...");
+      
+      const emailSettings = await storage.getEmailSettings();
+      
+      if (!emailSettings?.bankEmailUser || !emailSettings?.bankEmailPassword) {
+        return res.status(400).json({
+          success: false,
+          message: "Банківські email налаштування не знайдені",
+          details: {
+            hasBankEmailUser: !!emailSettings?.bankEmailUser,
+            hasBankEmailPassword: !!emailSettings?.bankEmailPassword,
+            bankEmailHost: emailSettings?.bankEmailHost || process.env.BANK_EMAIL_HOST
+          }
+        });
+      }
+
+      const bankEmailHost = emailSettings?.bankEmailHost || process.env.BANK_EMAIL_HOST || 'mail.regmik.ua';
+      
+      // Тестуємо підключення з коротким таймаутом
+      const testResult = await bankEmailService.testBankEmailConnection(bankEmailHost, emailSettings.bankEmailUser, emailSettings.bankEmailPassword);
+      
+      res.json({
+        success: testResult.success,
+        message: testResult.message,
+        details: {
+          host: bankEmailHost,
+          user: emailSettings.bankEmailUser,
+          connectionTest: testResult.success ? 'passed' : 'failed',
+          error: testResult.error
+        }
+      });
+      
+    } catch (error) {
+      console.error("❌ Помилка тестування підключення:", error);
+      res.status(500).json({
+        success: false,
+        message: "Помилка тестування підключення",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // API для перевірки оплат на пошті
   app.post('/api/orders/:id/check-post-payment', isSimpleAuthenticated, async (req, res) => {
     const startTime = Date.now();
