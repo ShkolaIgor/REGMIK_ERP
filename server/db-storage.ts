@@ -4915,7 +4915,9 @@ export class DatabaseStorage implements IStorage {
       // Створюємо відповідний production_task
       if (newOrder.recipeId) {
         const [newTask] = await db.insert(productionTasks).values({
+          orderId: newOrder.sourceOrderId, // використовуємо orderId замість order_id
           recipeId: newOrder.recipeId,
+          taskName: `Виробництво ${newOrder.orderNumber}`,
           quantity: parseInt(newOrder.plannedQuantity),
           unit: newOrder.unit,
           status: 'planned',
