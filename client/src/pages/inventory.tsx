@@ -6,10 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ProductForm } from "@/components/ProductForm";
+
 import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, getStockStatus } from "@/lib/utils";
-import { Search, Plus, Edit, Eye, Copy, Trash2, Scan, Download, Printer, DollarSign, AlertTriangle, Package, Barcode, SquareChartGantt } from "lucide-react";
+import { Search, Edit, Eye, Trash2, Scan, Download, Printer, DollarSign, AlertTriangle, Package, Barcode, SquareChartGantt } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScannerButton } from "@/components/BarcodeScanner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -17,8 +17,6 @@ import { TableLoadingState, CardSkeleton } from "@/components/ui/loading-state";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 export default function Inventory() {
-  const [showProductForm, setShowProductForm] = useState(false);
-
   const [editingProduct, setEditingProduct] = useState(null);
   const [isViewMode, setIsViewMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -97,32 +95,16 @@ export default function Inventory() {
   }, [searchQuery, categoryFilter, statusFilter]);
 
   const handleEditProduct = (product: any) => {
-    console.log('Editing product:', product);
-    setEditingProduct(product);
-    setIsViewMode(false);
-    setShowProductForm(true);
+    // Перенаправляємо на сторінку товарів для редагування
+    window.location.href = `/products?edit=${product.id}`;
   };
 
   const handleViewProduct = (product: any) => {
-    console.log('Viewing product:', product);
-    setEditingProduct(product);
-    setIsViewMode(true);
-    setShowProductForm(true);
+    // Перенаправляємо на сторінку товарів для перегляду
+    window.location.href = `/products?view=${product.id}`;
   };
 
-  const handleCopyProduct = (product: any) => {
-    const copiedProduct = {
-      ...product,
-      name: `${product.name} (копія)`,
-      sku: `${product.sku}_COPY`,
-      barcode: "", // Очищуємо штрих-код для копії
-      id: undefined // Прибираємо ID для створення нового товару
-    };
-    console.log('Copying product:', copiedProduct);
-    setEditingProduct(copiedProduct);
-    setIsViewMode(false);
-    setShowProductForm(true);
-  };
+
 
   const handleDeleteProduct = (id: number) => {
     if (confirm("Ви впевнені, що хочете видалити цей товар?")) {
@@ -199,16 +181,6 @@ export default function Inventory() {
                 <Download className="h-4 w-4 mr-2" />
                 Експорт
               </Button>
-                <Button 
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
-                  onClick={() => {
-                    setEditingProduct(null);
-                    setIsViewMode(false);
-                    setShowProductForm(true);
-                  }}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Новий товар
-                </Button>
               </div>
             </div>
           </div>       
@@ -445,14 +417,7 @@ export default function Inventory() {
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
-                            <Button 
-                              size="sm" 
-                              variant="ghost"
-                              onClick={() => handleCopyProduct(product)}
-                              title="Копіювати товар"
-                            >
-                              <Copy className="w-4 h-4" />
-                            </Button>
+
                             <Button
                               size="sm"
                               variant="ghost"
@@ -573,16 +538,7 @@ export default function Inventory() {
         )}
       </div>
 
-      <ProductForm
-        isOpen={showProductForm}
-        onClose={() => {
-          setShowProductForm(false);
-          setEditingProduct(null);
-          setIsViewMode(false);
-        }}
-        product={editingProduct}
-        isViewMode={isViewMode}
-      />
+
 
       </div>
     </div>

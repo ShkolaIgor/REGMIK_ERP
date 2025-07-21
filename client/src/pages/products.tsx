@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Upload, Edit2, Trash2, Package, CheckCircle, Grid3X3, DollarSign, Layers, Search, Scan, Printer, Download, AlertTriangle } from "lucide-react";
+import { Plus, Upload, Edit2, Trash2, Package, CheckCircle, Grid3X3, DollarSign, Layers, Search, Scan, Printer, Download, AlertTriangle, Copy } from "lucide-react";
 import { DataTable } from "@/components/DataTable/DataTable";
 import { SearchFilters } from "@/components/SearchFilters";
 import { ProductsXmlImport } from "@/components/ProductsXmlImport";
@@ -107,6 +107,17 @@ export default function ProductsPage() {
     setEditingProduct(product);
   };
 
+  const handleCopy = (product: Product) => {
+    const copiedProduct = {
+      ...product,
+      id: 0, // Новий товар матиме ID = 0
+      name: `${product.name} (копія)`,
+      sku: `${product.sku}_COPY`,
+      barcode: null, // Очищуємо штрих-код для копії
+    };
+    setEditingProduct(copiedProduct);
+  };
+
   const handleDelete = (product: Product) => {
     setProductToDelete(product);
     setShowDeleteAlert(true);
@@ -165,8 +176,8 @@ export default function ProductsPage() {
                   <Package className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Склад товарів</h1>
-                  <p className="text-gray-500 mt-1">Управління продуктами та категоріями</p>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Товари</h1>
+                  <p className="text-gray-500 mt-1">Створення та редагування товарів</p>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -576,6 +587,18 @@ export default function ProductsPage() {
                 title="Редагувати товар"
               >
                 <Edit2 className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCopy(product);
+                }}
+                className="h-8 w-8 p-0 hover:bg-green-50 hover:scale-110 transition-all duration-200 text-green-600 hover:text-green-700"
+                title="Копіювати товар"
+              >
+                <Copy className="h-4 w-4" />
               </Button>
               <Button 
                 variant="ghost" 
