@@ -945,6 +945,7 @@ export const emailSettings = pgTable("email_settings", {
   bankEmailUser: varchar("bank_email_user", { length: 255 }), // SMTP користувач для банківської пошти
   bankEmailPassword: varchar("bank_email_password", { length: 255 }), // SMTP пароль для банківської пошти
   bankEmailAddress: varchar("bank_email_address", { length: 255 }), // Адреса з якої приходять банківські повідомлення
+  bankEmailHost: varchar("bank_email_host", { length: 255 }), // IMAP хост для банківської пошти
   bankMonitoringEnabled: boolean("bank_monitoring_enabled").default(false), // Увімкнути моніторинг банківських email
   
   createdAt: timestamp("created_at").defaultNow(),

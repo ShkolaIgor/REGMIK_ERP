@@ -1,5 +1,6 @@
 import { DatabaseStorage } from "./db-storage";
 import { novaPoshtaCache } from "./nova-poshta-cache";
+import * as cron from "node-cron";
 
 interface NovaPoshtaUpdateSettings {
   autoUpdateEnabled: boolean;
@@ -89,9 +90,12 @@ class NovaPoshtaService {
       return;
     }
 
-    // Парсимо налаштування розкладу
-    const [hours, minutes] = novaPoshtaCarrier.updateTime.split(':').map(Number);
-    const updateDays = novaPoshtaCarrier.updateDays.split(',').map(d => parseInt(d.trim()));
+    // Парсимо налаштування розкладу з перевіркою null
+    const updateTime = novaPoshtaCarrier.updateTime || "06:00";
+    const updateDaysStr = novaPoshtaCarrier.updateDays || "1,2,3,4,5";
+    
+    const [hours, minutes] = updateTime.split(':').map(Number);
+    const updateDays = updateDaysStr.split(',').map(d => parseInt(d.trim()));
     const cronDays = updateDays.map(d => d === 7 ? 0 : d); // Конвертуємо неділю з 7 на 0
 
     // Створюємо cron pattern
