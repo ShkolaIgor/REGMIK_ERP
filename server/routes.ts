@@ -10993,27 +10993,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const ipAddress = req.ip || req.connection.remoteAddress || 'Unknown';
     
     // Логування початку запиту
-    await storage.logSystemEvent({
+    await storage.createSystemLog({
       level: 'info',
+      category: 'bank-payment',
+      module: 'payment-check',
       event: 'bank_payment_check_start',
-      details: `Початок перевірки банківських оплат для замовлення ID: ${orderId}`,
-      metadata: {
+      message: `Початок перевірки банківських оплат для замовлення ID: ${orderId}`,
+      details: {
         orderId,
         userAgent,
         ipAddress,
         timestamp: new Date().toISOString()
-      }
+      },
+      userId: null
     });
 
     try {
       // Отримуємо замовлення
       const order = await storage.getOrder(orderId);
       if (!order) {
-        await storage.logSystemEvent({
-          level: 'warning',
+        await storage.createSystemLog({
+          level: 'warn',
+          category: 'bank-payment',
+          module: 'payment-check',
           event: 'bank_payment_check_error',
-          details: `Замовлення з ID ${orderId} не знайдено`,
-          metadata: { orderId, ipAddress, userAgent }
+          message: `Замовлення з ID ${orderId} не знайдено`,
+          details: { orderId, ipAddress, userAgent },
+          userId: null
         });
         
         return res.status(404).json({ 
@@ -11024,16 +11030,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`🏦 Перевірка оплат для замовлення #${order.orderNumber} (ID: ${orderId})`);
       
-      await storage.logSystemEvent({
+      await storage.createSystemLog({
         level: 'info',
+        category: 'bank-payment',
+        module: 'payment-check',
         event: 'bank_payment_check_processing',
-        details: `Перевірка оплат для замовлення #${order.orderNumber} (ID: ${orderId})`,
-        metadata: {
+        message: `Перевірка оплат для замовлення #${order.orderNumber} (ID: ${orderId})`,
+        details: {
           orderId,
           orderNumber: order.orderNumber,
           clientName: order.clientName,
           totalAmount: order.totalAmount
-        }
+        },
+        userId: null
       });
 
       // Запускаємо перевірку нових банківських повідомлень
@@ -11056,20 +11065,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const duration = Date.now() - startTime;
       
-      await storage.logSystemEvent({
-        level: foundPayment ? 'info' : 'info',
+      await storage.createSystemLog({
+        level: 'info',
+        category: 'bank-payment',
+        module: 'payment-check',
         event: 'bank_payment_check_completed',
-        details: foundPayment 
+        message: foundPayment 
           ? `Знайдено нових платежів для замовлення ${order.orderNumber}` 
           : `Перевірку завершено. Нових платежів для замовлення ${order.orderNumber} не знайдено`,
-        metadata: {
+        details: {
           orderId,
           orderNumber: order.orderNumber,
           foundPayment,
           duration,
           ipAddress,
           userAgent
-        }
+        },
+        userId: null
       });
 
       res.json({ 
@@ -11084,18 +11096,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const duration = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
       
-      await storage.logSystemEvent({
+      await storage.createSystemLog({
         level: 'error',
+        category: 'bank-payment',
+        module: 'payment-check',
         event: 'bank_payment_check_error',
-        details: `Помилка перевірки банківських оплат для замовлення ID: ${orderId} - ${errorMessage}`,
-        metadata: {
+        message: `Помилка перевірки банківських оплат для замовлення ID: ${orderId} - ${errorMessage}`,
+        details: {
           orderId,
           error: errorMessage,
           duration,
           ipAddress,
           userAgent,
           stack: error instanceof Error ? error.stack : undefined
-        }
+        },
+        userId: null
       });
       
       console.error('🏦 Помилка перевірки оплат на пошті:', error);

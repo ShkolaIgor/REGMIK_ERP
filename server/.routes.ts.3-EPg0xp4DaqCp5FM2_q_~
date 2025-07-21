@@ -1,0 +1,864 @@
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./db-storage";
+import { registerSimpleIntegrationRoutes } from "./integrations-simple";
+import { registerSyncApiRoutes } from "./sync-api";
+import { sendCompanyDataToERP, sendInvoiceToERP, syncAllCompaniesFromBitrix, syncAllInvoicesFromBitrix, sendCompanyDataToERPWebhook, sendInvoiceToERPWebhook } from "./bitrix-sync";
+import { analyzeOrderProduction } from "./ai-production-service";
+import { generateMassProductionPlan, createProductionTasksFromPlan } from "./ai-mass-production-service";
+import { setupSimpleSession, setupSimpleAuth, isSimpleAuthenticated } from "./simple-auth";
+import { novaPoshtaApi } from "./nova-poshta-api";
+import { novaPoshtaCache } from "./nova-poshta-cache";
+import { pool, db } from "./db";
+import { eq, sql, and, isNotNull } from "drizzle-orm";
+import { productComponents, components, productNameMappings } from "@shared/schema";
+import { 
+  insertProductSchema, insertOrderSchemaForm, insertRecipeSchema,
+  insertProductionTaskSchema, insertCategorySchema, insertUnitSchema, insertWarehouseSchema,
+  insertSupplierSchema, insertInventorySchema, insertTechCardSchema, insertTechCardStepSchema, insertTechCardMaterialSchema,
+  insertComponentSchema, insertProductComponentSchema, insertCostCalculationSchema, insertMaterialShortageSchema,
+  insertAssemblyOperationSchema, insertAssemblyOperationItemSchema,
+  insertInventoryAuditSchema, insertInventoryAuditItemSchema,
+  insertWorkerSchema, insertProductionForecastSchema,
+  insertWarehouseTransferSchema, insertPositionSchema, insertDepartmentSchema,
+  insertPackageTypeSchema, insertSolderingTypeSchema, insertComponentAlternativeSchema, insertComponentCategorySchema,
+  insertShipmentSchema, insertManufacturingOrderSchema, insertManufacturingOrderMaterialSchema, insertManufacturingStepSchema,
+  insertCurrencySchema, insertSerialNumberSchema, insertSerialNumberSettingsSchema,
+  insertLocalUserSchema, insertRoleSchema, insertSystemModuleSchema, changePasswordSchema,
+  insertEmailSettingsSchema, insertClientSchema, insertClientContactSchema, insertClientMailSchema, insertMailRegistrySchema, insertEnvelopePrintSettingsSchema,
+  insertRepairSchema, insertRepairPartSchema, insertRepairStatusHistorySchema, insertRepairDocumentSchema,
+  clientTypes, insertClientTypeSchema, insertOrderStatusSchema, orders
+} from "@shared/schema";
+import bcrypt from "bcryptjs";
+import { z } from "zod";
+import crypto from "crypto";
+import { sendEmail } from "./email-service";
+import { bankEmailService } from "./bank-email-service";
+import multer from "multer";
+import xml2js from "xml2js";
+import { DOMParser } from "@xmldom/xmldom";
+
+// Helper function for fallback outgoing invoices data when 1C server is unavailable
+async function getFallbackOutgoingInvoices() {
+  try {
+    const existingOrders = await storage.getOrders();
+    const importedSet = new Set(
+      existingOrders
+        .filter(order => order.invoiceNumber)
+        .map(order => order.invoiceNumber)
+    );
+
+    const fallbackData = [
+      {
+        id: "fallback-out-1",
+        number: "РМ00-027688",
+        date: "2025-01-15",
+        clientName: "ВІКОРД ТОВ",
+        clientTaxCode: "12345678",
+        total: 15000.00,
+        currency: "UAH",
+        status: "confirmed",
+        paymentStatus: "paid",
+        description: "Fallback тестовий рахунок 1",
+        managerName: "Менеджер 1",
+        positions: [
+          {
+            productName: "ТСП-002",
+            quantity: 5,
+            price: 1500.00,
+            total: 7500.00
+          },
+          {
+            productName: "РП2-У-110",
+            quantity: 2,
+            price: 3750.00,
+            total: 7500.00
+          }
+        ],
+        itemsCount: 2,
+        exists: importedSet.has("РМ00-027688")
+      },
+      {
+        id: "fallback-out-2", 
+        number: "РМ00-027687",
+        date: "2025-01-14",
+        clientName: "УКРЕНЕРГО НЕК",
+        clientTaxCode: "87654321",
+        total: 8500.00,
+        currency: "UAH",
+        status: "confirmed",
+        paymentStatus: "unpaid",
+        description: "Fallback тестовий рахунок 2",
+        managerName: "Менеджер 2",
+        positions: [
+          {
+            productName: "ТСП-205",
+            quantity: 1,
+            price: 8500.00,
+            total: 8500.00
+          }
+        ],
+        itemsCount: 1,
+        exists: importedSet.has("РМ00-027687")
+      }
+    ];
+
+    console.log('📋 FALLBACK OUTGOING INVOICES: Повертаємо тестові дані з exists property');
+    return fallbackData;
+  } catch (error) {
+    console.error('Помилка створення fallback даних:', error);
+    return [];
+  }
+}
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Simple auth setup
+  setupSimpleSession(app);
+  setupSimpleAuth(app);
+
+  // Multer configuration for file uploads
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 100 * 1024 * 1024, // 100MB limit для великих XML файлів
+    },
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype === 'text/xml' || file.originalname.endsWith('.xml')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only XML files are allowed'));
+      }
+    },
+  });
+
+  // Multer configuration for logo uploads
+  const logoUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB limit for images
+    },
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only image files are allowed'));
+      }
+    },
+  });
+
+  // ВІДКЛЮЧЕНО: Register simple integration routes (конфліктує з БД маршрутами)
+  // registerSimpleIntegrationRoutes(app);
+  
+  // Register sync API routes
+  registerSyncApiRoutes(app);
+
+  // Dashboard stats
+  app.get("/api/dashboard/stats", async (req, res) => {
+    try {
+      const stats = await storage.getDashboardStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch dashboard stats" });
+    }
+  });
+
+  // Analytics API
+  app.get("/api/analytics/sales", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { period = 'month' } = req.query;
+      const salesData = await storage.getSalesAnalytics(period as string);
+      res.json(salesData);
+    } catch (error) {
+      console.error("Error fetching sales analytics:", error);
+      res.status(500).json({ error: "Failed to fetch sales analytics" });
+    }
+  });
+
+  app.get("/api/analytics/expenses", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { period = 'month' } = req.query;
+      const expensesData = await storage.getExpensesAnalytics(period as string);
+      res.json(expensesData);
+    } catch (error) {
+      console.error("Error fetching expenses analytics:", error);
+      res.status(500).json({ error: "Failed to fetch expenses analytics" });
+    }
+  });
+
+  app.get("/api/analytics/profit", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { period = 'month' } = req.query;
+      const profitData = await storage.getProfitAnalytics(period as string);
+      res.json(profitData);
+    } catch (error) {
+      console.error("Error fetching profit analytics:", error);
+      res.status(500).json({ error: "Failed to fetch profit analytics" });
+    }
+  });
+
+  // Product profitability analysis
+  app.get("/api/analytics/product-profitability", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { period = 'month' } = req.query;
+      const profitabilityData = await storage.getProductProfitability();
+      res.json(profitabilityData);
+    } catch (error) {
+      console.error("Error fetching product profitability:", error);
+      res.status(500).json({ error: "Failed to fetch product profitability" });
+    }
+  });
+
+  app.get("/api/analytics/top-profitable-products", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { limit = '10', period = 'month' } = req.query;
+      const topProducts = await storage.getTopProfitableProducts(parseInt(limit as string), period as string);
+      res.json(topProducts);
+    } catch (error) {
+      console.error("Error fetching top profitable products:", error);
+      res.status(500).json({ error: "Failed to fetch top profitable products" });
+    }
+  });
+
+  app.get("/api/analytics/product-trends/:productId", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { productId } = req.params;
+      const { months = '6' } = req.query;
+      const trends = await storage.getProductProfitabilityTrends(parseInt(productId), parseInt(months as string));
+      res.json(trends);
+    } catch (error) {
+      console.error("Error fetching product trends:", error);
+      res.status(500).json({ error: "Failed to fetch product trends" });
+    }
+  });
+
+  // Time tracking API
+  app.get("/api/time-entries", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const timeEntries = await storage.getTimeEntries();
+      res.json(timeEntries);
+    } catch (error) {
+      console.error("Error fetching time entries:", error);
+      res.status(500).json({ error: "Failed to fetch time entries" });
+    }
+  });
+
+  app.post("/api/time-entries", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const timeEntryData = req.body;
+      const timeEntry = await storage.createTimeEntry(timeEntryData);
+      res.status(201).json(timeEntry);
+    } catch (error) {
+      console.error("Error creating time entry:", error);
+      res.status(500).json({ error: "Failed to create time entry" });
+    }
+  });
+
+  app.patch("/api/time-entries/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = req.body;
+      const timeEntry = await storage.updateTimeEntry(id, updateData);
+      res.json(timeEntry);
+    } catch (error) {
+      console.error("Error updating time entry:", error);
+      res.status(500).json({ error: "Failed to update time entry" });
+    }
+  });
+
+  // Inventory alerts API
+  app.get("/api/inventory/alerts", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const alerts = await storage.getInventoryAlerts();
+      res.json(alerts);
+    } catch (error) {
+      console.error("Error fetching inventory alerts:", error);
+      res.status(500).json({ error: "Failed to fetch inventory alerts" });
+    }
+  });
+
+  app.post("/api/inventory/check-alerts", isSimpleAuthenticated, async (req, res) => {
+    try {
+      await storage.checkAndCreateInventoryAlerts();
+      res.json({ message: "Inventory alerts checked and updated" });
+    } catch (error) {
+      console.error("Error checking inventory alerts:", error);
+      res.status(500).json({ error: "Failed to check inventory alerts" });
+    }
+  });
+
+  // Password reset functionality
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email є обов'язковим" });
+      }
+
+      // Знайти користувача за email
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Не показуємо, що користувач не існує з міркувань безпеки
+        return res.json({ message: "Якщо email існує в системі, лист буде відправлено" });
+      }
+
+      // Генерувати токен скидання паролю
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetExpires = new Date(Date.now() + 3600000); // 1 година
+
+      // Зберегти токен в базі даних
+      const tokenSaved = await storage.savePasswordResetToken(user.id, resetToken, resetExpires);
+      
+      if (!tokenSaved) {
+        return res.status(500).json({ message: "Помилка збереження токену" });
+      }
+
+      // Отримати базову URL з заголовків
+      const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
+      const host = req.get('host') || req.get('x-forwarded-host');
+      
+      // Виправляємо формування URL - видаляємо зайві слеші
+      let baseUrl = `${protocol}://${host}`;
+      if (baseUrl.includes('\\')) {
+        baseUrl = baseUrl.replace(/\\/g, '');
+      }
+      
+      const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
+      
+      console.log("Protocol:", protocol);
+      console.log("Host:", host);
+      console.log("Base URL:", baseUrl);
+      console.log("Generated reset URL:", resetUrl);
+
+      // Відправити email через налаштований сервіс
+      console.log("Attempting to send email to:", email);
+      
+      // Перевірити налаштування email
+      const emailSettings = await storage.getEmailSettings();
+      console.log("Email settings loaded:", emailSettings ? "Yes" : "No");
+      
+      if (!emailSettings || !emailSettings.smtpHost) {
+        console.log("Email service not configured or inactive");
+        return res.status(500).json({ message: "Помилка відправки email - сервіс не налаштований" });
+      }
+      
+      // Використовуємо nodemailer напряму з налаштуваннями
+      const nodemailer = await import('nodemailer');
+      const transportConfig = {
+        host: emailSettings.smtpHost,
+        port: emailSettings.smtpPort || 587,
+        secure: emailSettings.smtpSecure || false,
+        auth: {
+          user: emailSettings.smtpUser,
+          pass: emailSettings.smtpPassword,
+        },
+      };
+      const transporter = nodemailer.createTransport(transportConfig as any);
+
+      try {
+        const emailResult = await transporter.sendMail({
+          from: emailSettings.fromEmail || "noreply@regmik-erp.com",
+          to: email,
+          subject: "Відновлення паролю - REGMIK ERP",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h1 style="color: #2563eb; margin: 0; text-align: center;">REGMIK: ERP</h1>
+                <p style="color: #6b7280; margin: 5px 0 0 0; text-align: center;">Система управління виробництвом</p>
+              </div>
+              
+              <h2 style="color: #374151;">Відновлення паролю</h2>
+              
+              <p style="color: #6b7280; line-height: 1.6;">
+                Ви отримали цей лист, оскільки для вашого облікового запису був запитаний скидання паролю.
+              </p>
+              
+              <p style="color: #6b7280; line-height: 1.6;">
+                Натисніть на кнопку нижче, щоб встановити новий пароль:
+              </p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${resetUrl}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                  Відновити пароль
+                </a>
+              </div>
+              
+              <p style="color: #6b7280; line-height: 1.6; font-size: 14px;">
+                Якщо кнопка не працює, скопіюйте та вставте це посилання у ваш браузер:
+              </p>
+              <p style="color: #2563eb; word-break: break-all; font-size: 14px;">
+                ${resetUrl}
+              </p>
+              
+              <p style="color: #6b7280; line-height: 1.6; font-size: 14px;">
+                Це посилання дійсне протягом 1 години. Якщо ви не запитували скидання паролю, проігноруйте цей лист.
+              </p>
+              
+              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+              
+              <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+                REGMIK ERP - Система управління виробництвом
+              </p>
+            </div>
+          `
+        });
+        
+        console.log("Email sent successfully:", emailResult.messageId);
+      } catch (emailError) {
+        console.error("Failed to send email:", emailError);
+        return res.status(500).json({ message: "Помилка відправки email - перевірте налаштування SMTP" });
+      }
+
+      res.json({ message: "Якщо email існує в системі, лист буде відправлено" });
+    } catch (error) {
+      console.error("Error in forgot password:", error);
+      res.status(500).json({ message: "Внутрішня помилка сервера" });
+    }
+  });
+
+  // Validate reset token
+  app.get("/api/auth/validate-reset-token", async (req, res) => {
+    try {
+      const { token } = req.query;
+      
+      if (!token) {
+        return res.status(400).json({ message: "Токен є обов'язковим" });
+      }
+
+      const user = await storage.getUserByResetToken(token as string);
+      
+      if (!user) {
+        return res.status(400).json({ message: "Недійсний або застарілий токен" });
+      }
+
+      res.json({ message: "Токен дійсний" });
+    } catch (error) {
+      console.error("Error validating reset token:", error);
+      res.status(500).json({ message: "Внутрішня помилка сервера" });
+    }
+  });
+
+  // Reset password with token
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { token, password } = req.body;
+      
+      if (!token || !password) {
+        return res.status(400).json({ message: "Токен та пароль є обов'язковими" });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Пароль повинен містити мінімум 6 символів" });
+      }
+
+      console.log("Looking for user with reset token:", token);
+      const user = await storage.getUserByResetToken(token);
+      console.log("User found by reset token:", user ? `ID ${user.id}` : "None");
+      
+      if (!user) {
+        return res.status(400).json({ message: "Недійсний або застарілий токен" });
+      }
+
+      // Хешувати новий пароль
+      const hashedPassword = await bcrypt.hash(password, 10);
+      console.log("Password hashed, updating for user ID:", user.id);
+
+      // Оновити пароль та очистити токен скидання
+      const success = await storage.confirmPasswordReset(user.id, hashedPassword);
+      console.log("Password reset result:", success);
+      
+      if (!success) {
+        return res.status(500).json({ message: "Помилка оновлення паролю" });
+      }
+
+      res.json({ message: "Пароль успішно оновлено" });
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ message: "Внутрішня помилка сервера" });
+    }
+  });
+
+  // Оновлення профілю користувача
+  app.patch("/api/auth/profile", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const sessionUser = (req.session as any)?.user;
+      if (!sessionUser?.id) {
+        return res.status(401).json({ message: "Користувач не авторизований" });
+      }
+
+      const { firstName, lastName, email, profileImageUrl } = req.body;
+      const userId = parseInt(sessionUser.id);
+      
+      // Отримуємо повні дані користувача
+      const fullUser = await storage.getLocalUserWithWorker(userId);
+      
+      // Оновлюємо дані користувача
+      await storage.updateLocalUser(userId, {
+        firstName,
+        lastName,
+        email,
+        profileImageUrl,
+        updatedAt: new Date()
+      });
+
+      // Якщо користувач пов'язаний з робітником, оновлюємо дані робітника
+      if (fullUser?.workerId) {
+        await storage.updateWorker(fullUser.workerId, {
+          firstName,
+          lastName,
+          email,
+          photo: profileImageUrl
+        });
+      }
+
+      // Оновлюємо дані в сесії
+      if (req.session) {
+        (req.session as any).user = {
+          ...(req.session as any).user,
+          firstName,
+          lastName,
+          email,
+          profileImageUrl
+        };
+      }
+
+      res.json({ message: "Профіль успішно оновлено" });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Помилка при оновленні профілю" });
+    }
+  });
+
+  // Production statistics by category
+  app.get("/api/production-stats/by-category", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const stats = await storage.getProductionStatsByCategory();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching production stats by category:", error);
+      res.status(500).json({ error: "Failed to fetch production stats by category" });
+    }
+  });
+
+  // Order statistics by period
+  app.get("/api/production-stats/by-period", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { period = 'month', startDate, endDate } = req.query;
+      const stats = await storage.getOrderStatsByPeriod(
+        period as string, 
+        startDate as string, 
+        endDate as string
+      );
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching order stats by period:", error);
+      res.status(500).json({ error: "Failed to fetch order stats by period" });
+    }
+  });
+
+  // Categories
+  app.get("/api/categories", async (req, res) => {
+    try {
+      const categories = await storage.getCategories();
+      res.json(categories);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch categories" });
+    }
+  });
+
+  app.post("/api/categories", async (req, res) => {
+    try {
+      const categoryData = insertCategorySchema.parse(req.body);
+      const category = await storage.createCategory(categoryData);
+      res.status(201).json(category);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid category data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create category" });
+      }
+    }
+  });
+
+  app.patch("/api/categories/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const categoryData = insertCategorySchema.partial().parse(req.body);
+      const category = await storage.updateCategory(id, categoryData);
+      if (!category) {
+        res.status(404).json({ error: "Category not found" });
+        return;
+      }
+      res.json(category);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid category data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update category" });
+      }
+    }
+  });
+
+  app.put("/api/categories/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      console.log(`PUT /api/categories/${id} received data:`, req.body);
+      const categoryData = insertCategorySchema.partial().parse(req.body);
+      console.log(`Parsed category data:`, categoryData);
+      const category = await storage.updateCategory(id, categoryData);
+      if (!category) {
+        console.log(`Category with ID ${id} not found`);
+        res.status(404).json({ error: "Category not found" });
+        return;
+      }
+      console.log(`Category updated successfully:`, category);
+      res.json(category);
+    } catch (error) {
+      console.error(`Error updating category ${id}:`, error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid category data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update category" });
+      }
+    }
+  });
+
+  app.delete("/api/categories/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteCategory(id);
+      if (!success) {
+        res.status(404).json({ error: "Category not found" });
+        return;
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete category" });
+    }
+  });
+
+  // Warehouses
+  app.get("/api/warehouses", async (req, res) => {
+    try {
+      const warehouses = await storage.getWarehouses();
+      res.json(warehouses);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch warehouses" });
+    }
+  });
+
+  app.post("/api/warehouses", async (req, res) => {
+    try {
+      console.log("Received warehouse data:", req.body);
+      const warehouseData = insertWarehouseSchema.parse(req.body);
+      console.log("Parsed warehouse data:", warehouseData);
+      const warehouse = await storage.createWarehouse(warehouseData);
+      console.log("Created warehouse:", warehouse);
+      res.status(201).json(warehouse);
+    } catch (error) {
+      console.error("Warehouse creation error:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid warehouse data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create warehouse", details: error instanceof Error ? error.message : String(error) });
+      }
+    }
+  });
+
+  app.put("/api/warehouses/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const warehouseData = insertWarehouseSchema.partial().parse(req.body);
+      const warehouse = await storage.updateWarehouse(id, warehouseData);
+      if (warehouse) {
+        res.json(warehouse);
+      } else {
+        res.status(404).json({ error: "Warehouse not found" });
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid warehouse data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update warehouse" });
+      }
+    }
+  });
+
+  app.patch("/api/warehouses/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const warehouseData = insertWarehouseSchema.partial().parse(req.body);
+      console.log("PATCH warehouse request for ID:", id, "with data:", warehouseData);
+      const warehouse = await storage.updateWarehouse(id, warehouseData);
+      if (warehouse) {
+        console.log("Warehouse updated successfully:", warehouse);
+        res.json(warehouse);
+      } else {
+        console.log("Warehouse not found for ID:", id);
+        res.status(404).json({ error: "Warehouse not found" });
+      }
+    } catch (error) {
+      console.error("PATCH warehouse error:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid warehouse data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update warehouse" });
+      }
+    }
+  });
+
+  app.delete("/api/warehouses/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteWarehouse(id);
+      if (!success) {
+        res.status(404).json({ error: "Warehouse not found" });
+        return;
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete warehouse" });
+    }
+  });
+
+  // Products
+  app.get("/api/products", async (req, res) => {
+    try {
+      const products = await storage.getProducts();
+      res.json(products);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch products" });
+    }
+  });
+
+  // Endpoint для отримання замовлених товарів (оплачені але не відвантажені)
+  app.get("/api/products/ordered", async (req, res) => {
+    try {
+      const orderedProducts = await storage.getOrderedProducts();
+      res.json(orderedProducts);
+    } catch (error) {
+      console.error("Error fetching ordered products:", error);
+      res.status(500).json({ error: "Failed to fetch ordered products" });
+    }
+  });
+
+  app.get("/api/products/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const product = await storage.getProduct(id);
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+      res.json(product);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch product" });
+    }
+  });
+
+  app.post("/api/products", async (req, res) => {
+    try {
+      const productData = insertProductSchema.parse(req.body);
+      const product = await storage.createProduct(productData);
+      res.status(201).json(product);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid product data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create product" });
+      }
+    }
+  });
+
+  app.put("/api/products/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const productData = insertProductSchema.partial().parse(req.body);
+      const product = await storage.updateProduct(id, productData);
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+      res.json(product);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid product data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update product" });
+      }
+    }
+  });
+
+  app.delete("/api/products/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteProduct(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete product" });
+    }
+  });
+
+  // Імпорт товарів з XML
+  app.post('/api/products/import-xml', isSimpleAuthenticated, upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'XML файл не знайдено' });
+      }
+
+      const result = await storage.importProductsFromXml(req.file.buffer);
+      res.json({
+        success: true,
+        jobId: result.jobId,
+        message: `Імпорт розпочато, ID завдання: ${result.jobId}`
+      });
+    } catch (error) {
+      console.error('Products XML import error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Помилка імпорту товарів з XML' 
+      });
+    }
+  });
+
+  // Статус імпорту товарів з XML
+  app.get('/api/products/import-xml/:jobId/status', isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { jobId } = req.params;
+      const jobStatus = await storage.getProductImportJobStatus(jobId);
+      
+      if (!jobStatus) {
+        return res.status(404).json({ 
+          success: false,
+          error: 'Завдання імпорту не знайдено' 
+        });
+      }
+
+      res.json({
+        success: true,
+        job: jobStatus
+      });
+    } catch (error) {
+      console.error('Error fetching import job status:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Помилка отримання статусу імпорту' 
+      });
+    }
+  });
+
+  // Inventory
+  app.get("/api/inventory", async (req, res) => {
+    try {
+      const inventory = await storage.getInventory();
+      res.json(inventory);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch inventory" });
+    }
+  });
+
+  app.get("/api/inventory/warehouse/:warehouseId", async (req, res) => {
+    try {
+      const warehouseId = parseInt(req.params.warehouseId);
+      const inventory = await storage.getInv
