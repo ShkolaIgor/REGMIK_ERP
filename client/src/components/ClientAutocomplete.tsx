@@ -26,7 +26,7 @@ export function ClientAutocomplete({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { data: clientsData, isLoading } = useQuery({
-    queryKey: ["/api/clients/search"],
+    queryKey: ["/api/clients/all"],
     enabled: true
   });
   
