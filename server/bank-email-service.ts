@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import * as Imap from "imap";
+import Imap from "imap";
 import { storage } from "./db-storage";
 import type { InsertBankPaymentNotification } from "@shared/schema";
 
@@ -178,7 +178,7 @@ export class BankEmailService {
         imap.once('ready', () => {
           console.log("🏦 IMAP з'єднання встановлено");
           
-          imap.openBox('INBOX', false, (err, box) => {
+          imap.openBox('INBOX', false, (err: any, box: any) => {
             if (err) {
               console.error("❌ Помилка відкриття INBOX:", err);
               imap.end();
@@ -194,7 +194,7 @@ export class BankEmailService {
               'UNSEEN',
               ['FROM', emailSettings.bankEmailAddress || 'noreply@ukrsib.com.ua'],
               ['SINCE', yesterday]
-            ], (err, results) => {
+            ], (err: any, results: any) => {
               if (err) {
                 console.error("❌ Помилка пошуку email:", err);
                 imap.end();
@@ -215,12 +215,12 @@ export class BankEmailService {
               const fetch = imap.fetch(results, { bodies: '', markSeen: true });
               let processedCount = 0;
 
-              fetch.on('message', (msg, seqno) => {
+              fetch.on('message', (msg: any, seqno: any) => {
                 let emailContent = '';
 
-                msg.on('body', (stream, info) => {
+                msg.on('body', (stream: any, info: any) => {
                   let buffer = '';
-                  stream.on('data', (chunk) => {
+                  stream.on('data', (chunk: any) => {
                     buffer += chunk.toString('utf8');
                   });
                   
@@ -266,7 +266,7 @@ export class BankEmailService {
                 });
               });
 
-              fetch.once('error', (err) => {
+              fetch.once('error', (err: any) => {
                 console.error("❌ Помилка отримання email:", err);
                 imap.end();
                 reject(err);
@@ -275,7 +275,7 @@ export class BankEmailService {
           });
         });
 
-        imap.once('error', (err) => {
+        imap.once('error', (err: any) => {
           console.error("❌ Помилка IMAP з'єднання:", err);
           reject(err);
         });
@@ -696,11 +696,40 @@ export class BankEmailService {
   }
 
   /**
-   * Публічний метод для ініціалізації email моніторингу (викликається з сервера)
+   * Парсинг контенту банківського email для витягування платіжних даних
    */
-  async initializeEmailMonitoring(): Promise<void> {
-    console.log("🏦 Запуск ініціалізації банківського email моніторингу...");
-    await this.initializeMonitoring();
+  private parseEmailContent(emailContent: string): { amount: number; currency: string; purpose?: string; correspondent?: string; bankAccount?: string } | null {
+    try {
+      // Пошук суми платежу
+      const amountMatch = emailContent.match(/(\d+(?:[.,]\d{2})?)\s*(UAH|грн|₴)/i);
+      if (!amountMatch) return null;
+
+      const amount = parseFloat(amountMatch[1].replace(',', '.'));
+      const currency = 'UAH';
+
+      // Пошук призначення платежу
+      const purposeMatch = emailContent.match(/(?:призначення|purpose|за рах[уо]нок|замовлення)\s*[:№]?\s*([^\n\r]+)/i);
+      const purpose = purposeMatch ? purposeMatch[1].trim() : '';
+
+      // Пошук кореспондента
+      const correspondentMatch = emailContent.match(/(?:кореспондент|від|from)\s*[:№]?\s*([^\n\r]+)/i);
+      const correspondent = correspondentMatch ? correspondentMatch[1].trim() : '';
+
+      // Пошук банківського рахунку
+      const accountMatch = emailContent.match(/(?:рах[уо]нок|account)\s*[:№]?\s*([^\n\r\s]+)/i);
+      const bankAccount = accountMatch ? accountMatch[1].trim() : '';
+
+      return {
+        amount,
+        currency,
+        purpose,
+        correspondent,
+        bankAccount
+      };
+    } catch (error) {
+      console.error('❌ Помилка парсингу банківського email:', error);
+      return null;
+    }
   }
 
   /**
@@ -734,7 +763,7 @@ export class BankEmailService {
           }
 
           // Безпечно отримуємо дані для обробки без спроби створити дублікат
-          const paymentData = await this.parseEmailContent(notification.rawEmailContent || '');
+          const paymentData = this.parseEmailContent(notification.rawEmailContent || '');
           
           if (!paymentData) {
             await storage.markBankNotificationAsProcessed(notification.id);
@@ -744,24 +773,21 @@ export class BankEmailService {
           }
 
           // Шукаємо замовлення за номером рахунку
-          const orders = await this.findOrdersByPaymentInfo(paymentData);
+          const orders = await storage.findOrdersByPaymentInfo(paymentData.purpose || '');
           
           if (orders.length > 0) {
             for (const order of orders) {
               await storage.createOrderPayment({
                 orderId: order.id,
-                amount: paymentData.amount,
-                currency: paymentData.currency,
                 paymentDate: new Date(notification.receivedAt),
-                paymentMethod: 'bank_transfer',
-                bankNotificationId: notification.id,
-                bankAccount: paymentData.bankAccount || '',
+                paymentAmount: paymentData.amount.toString(),
+                notes: `Автоматично: ${paymentData.purpose}`,
                 correspondent: paymentData.correspondent || '',
-                reference: paymentData.purpose || '',
-                createdBy: 1 // system user
+                bankAccount: paymentData.bankAccount || '',
+                createdBy: "1"
               });
               
-              await storage.updateOrderPayment(order.id, paymentData.amount);
+              await storage.updateOrderPaymentDate(order.id, new Date().toISOString());
             }
             
             await storage.markBankNotificationAsProcessed(notification.id);
