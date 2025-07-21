@@ -151,6 +151,72 @@ export default function ProductsPage() {
     },
   });
 
+  // Мутація для створення товару
+  const createMutation = useMutation({
+    mutationFn: async (productData: any) => {
+      const response = await fetch('/api/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(productData),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create product');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      setIsCreateDialogOpen(false);
+      toast({
+        title: "Товар створено",
+        description: "Новий товар успішно додано до системи",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Не вдалося створити товар",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Мутація для оновлення товару
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const response = await fetch(`/api/products/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update product');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      setEditingProduct(null);
+      toast({
+        title: "Товар оновлено",
+        description: "Дані товару успішно збережено",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Помилка",
+        description: error.message || "Не вдалося оновити товар",
+        variant: "destructive",
+      });
+    },
+  });
+
   if (isError) {
     return (
       <div className="min-h-screen w-full bg-gray-50/30">
@@ -195,15 +261,9 @@ export default function ProductsPage() {
                     </DialogHeader>
                     <ProductEditForm 
                       product={null}
-                      categories={categories}
+                      categories={categories as any[]}
                       onSave={(data) => {
-                        // Тут буде логіка створення
-                        console.log('Creating product:', data);
-                        setIsCreateDialogOpen(false);
-                        toast({
-                          title: "Товар створено",
-                          description: "Новий товар успішно додано до системи",
-                        });
+                        createMutation.mutate(data);
                       }}
                       onCancel={() => setIsCreateDialogOpen(false)}
                     />
@@ -468,6 +528,7 @@ export default function ProductsPage() {
           data={filteredProducts}
           onRowClick={handleEdit}
           pageSize={50}
+          pageSizeOptions={[25, 50, 100, 250]}
           columns={[
             {
               key: 'name',
@@ -654,15 +715,15 @@ export default function ProductsPage() {
             {editingProduct && (
               <ProductEditForm 
                 product={editingProduct} 
-                categories={categories}
+                categories={categories as any[]}
                 onSave={(data) => {
-                  // Тут буде логіка збереження
-                  console.log('Saving product:', data);
-                  setEditingProduct(null);
-                  toast({
-                    title: "Товар оновлено",
-                    description: "Дані товару успішно збережено",
-                  });
+                  if (editingProduct.id === 0) {
+                    // Це копія товару - створюємо новий
+                    createMutation.mutate(data);
+                  } else {
+                    // Оновлюємо існуючий товар
+                    updateMutation.mutate({ id: editingProduct.id, data });
+                  }
                 }}
                 onCancel={() => setEditingProduct(null)}
               />
@@ -681,12 +742,20 @@ export default function ProductsPage() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Скасувати</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => {
+                setShowDeleteAlert(false);
+                setProductToDelete(null);
+              }}>Скасувати</AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => productToDelete && deleteMutation.mutate(productToDelete.id)}
+                onClick={() => {
+                  if (productToDelete) {
+                    deleteMutation.mutate(productToDelete.id);
+                  }
+                }}
                 className="bg-red-600 hover:bg-red-700"
+                disabled={deleteMutation.isPending}
               >
-                Видалити
+                {deleteMutation.isPending ? "Видалення..." : "Видалити"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
