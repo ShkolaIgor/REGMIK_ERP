@@ -142,6 +142,20 @@ export class BankEmailService {
   }
 
   /**
+   * Публічний метод для ручної перевірки нових email повідомлень
+   */
+  async checkForNewEmails(): Promise<void> {
+    try {
+      console.log("🏦 Ручна перевірка нових банківських email...");
+      await this.checkNewEmails();
+      console.log("🏦 Ручна перевірка нових email завершена");
+    } catch (error) {
+      console.error("❌ Помилка ручної перевірки email:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Перевірка нових email повідомлень від банку через IMAP
    */
   private async checkNewEmails(): Promise<void> {

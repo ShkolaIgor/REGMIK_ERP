@@ -11002,8 +11002,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🏦 Перевірка оплат для замовлення #${order.orderNumber} (ID: ${orderId})`);
 
       // Запускаємо перевірку нових банківських повідомлень
-      const newEmails = await bankEmailService.checkForNewEmails();
-      console.log(`🏦 Знайдено нових email: ${newEmails.length}`);
+      await bankEmailService.checkForNewEmails();
+      console.log(`🏦 Перевірку нових email завершено`);
 
       // Шукаємо платежі за номером рахунку замовлення
       let foundPayment = false;
@@ -11024,7 +11024,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: foundPayment 
           ? `Знайдено нових платежів для замовлення ${order.orderNumber}` 
           : `Перевірку завершено. Нових платежів для замовлення ${order.orderNumber} не знайдено`,
-        newEmails: newEmails.length,
         foundPayment
       });
       
