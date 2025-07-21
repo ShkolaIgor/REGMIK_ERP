@@ -38,7 +38,7 @@ export default function EmailSettings() {
       bankEmailPassword: "",
       bankEmailAddress: "",
       bankEmailHost: "",
-      bankEmailPort: 993,
+      bankEmailPort: 587,
       bankMonitoringEnabled: false,
     },
   });
@@ -59,7 +59,7 @@ export default function EmailSettings() {
         bankEmailPassword: emailSettings?.bankEmailPassword || "",
         bankEmailAddress: emailSettings?.bankEmailAddress || "",
         bankEmailHost: emailSettings?.bankEmailHost || "",
-        bankEmailPort: emailSettings?.bankEmailPort || 993,
+        bankEmailPort: emailSettings?.bankEmailPort || 587,
         bankMonitoringEnabled: emailSettings?.bankMonitoringEnabled || false,
       });
     }
