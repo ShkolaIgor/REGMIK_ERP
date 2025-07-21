@@ -188,8 +188,6 @@ export class BankEmailService {
    */
   async testBankEmailConnection(host: string, user: string, password: string, port: number = 993): Promise<{success: boolean, message: string, error?: string}> {
     return new Promise((resolve) => {
-      const Imap = require('imap');
-      
       const imap = new Imap({
         user: user,
         password: password,
