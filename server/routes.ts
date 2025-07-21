@@ -11005,15 +11005,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const bankEmailHost = emailSettings?.bankEmailHost || process.env.BANK_EMAIL_HOST || 'mail.regmik.ua';
+      const bankEmailPort = emailSettings?.bankEmailPort || parseInt(process.env.BANK_EMAIL_PORT || '993');
       
       // Тестуємо підключення з коротким таймаутом
-      const testResult = await bankEmailService.testBankEmailConnection(bankEmailHost, emailSettings.bankEmailUser, emailSettings.bankEmailPassword);
+      const testResult = await bankEmailService.testBankEmailConnection(bankEmailHost, emailSettings.bankEmailUser, emailSettings.bankEmailPassword, bankEmailPort);
       
       res.json({
         success: testResult.success,
         message: testResult.message,
         details: {
           host: bankEmailHost,
+          port: bankEmailPort,
           user: emailSettings.bankEmailUser,
           connectionTest: testResult.success ? 'passed' : 'failed',
           error: testResult.error

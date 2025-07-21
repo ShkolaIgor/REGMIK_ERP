@@ -186,7 +186,7 @@ export class BankEmailService {
   /**
    * Тестування підключення до банківської пошти
    */
-  async testBankEmailConnection(host: string, user: string, password: string): Promise<{success: boolean, message: string, error?: string}> {
+  async testBankEmailConnection(host: string, user: string, password: string, port: number = 993): Promise<{success: boolean, message: string, error?: string}> {
     return new Promise((resolve) => {
       const Imap = require('imap');
       
@@ -194,8 +194,8 @@ export class BankEmailService {
         user: user,
         password: password,
         host: host,
-        port: 993,
-        tls: true,
+        port: port,
+        tls: port === 993, // TLS для порту 993 (SSL), plain для 143
         tlsOptions: {
           rejectUnauthorized: false
         },
@@ -280,6 +280,7 @@ export class BankEmailService {
       const bankEmailUser = emailSettings?.bankEmailUser || process.env.BANK_EMAIL_USER;
       const bankEmailPassword = emailSettings?.bankEmailPassword || process.env.BANK_EMAIL_PASSWORD;
       const bankEmailHost = emailSettings?.bankEmailHost || process.env.BANK_EMAIL_HOST || 'mail.regmik.ua';
+      const bankEmailPort = emailSettings?.bankEmailPort || parseInt(process.env.BANK_EMAIL_PORT || '993');
       
       if (!bankEmailUser || !bankEmailPassword) {
         console.log("🏦 Банківський моніторинг не налаштовано - відсутні дані автентифікації");
@@ -294,6 +295,7 @@ export class BankEmailService {
 
       console.log("🏦 Підключення до IMAP для перевірки нових банківських email...");
       console.log("🏦 IMAP Host:", bankEmailHost);
+      console.log("🏦 IMAP Port:", bankEmailPort);
       console.log("🏦 IMAP User:", bankEmailUser);
 
       // Налаштування IMAP з'єднання
@@ -301,8 +303,8 @@ export class BankEmailService {
         user: bankEmailUser,
         password: bankEmailPassword,
         host: bankEmailHost,
-        port: 993,
-        tls: true,
+        port: bankEmailPort,
+        tls: bankEmailPort === 993, // TLS для порту 993 (SSL), plain для 143
         tlsOptions: {
           rejectUnauthorized: false
         }

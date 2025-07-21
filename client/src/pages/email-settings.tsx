@@ -38,6 +38,7 @@ export default function EmailSettings() {
       bankEmailPassword: "",
       bankEmailAddress: "",
       bankEmailHost: "",
+      bankEmailPort: 993,
       bankMonitoringEnabled: false,
     },
   });
@@ -58,6 +59,7 @@ export default function EmailSettings() {
         bankEmailPassword: emailSettings?.bankEmailPassword || "",
         bankEmailAddress: emailSettings?.bankEmailAddress || "",
         bankEmailHost: emailSettings?.bankEmailHost || "",
+        bankEmailPort: emailSettings?.bankEmailPort || 993,
         bankMonitoringEnabled: emailSettings?.bankMonitoringEnabled || false,
       });
     }
@@ -340,6 +342,24 @@ export default function EmailSettings() {
                 {form.formState.errors.bankEmailHost && (
                   <p className="text-sm text-red-500">
                     {form.formState.errors.bankEmailHost.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bankEmailPort">IMAP Порт банку</Label>
+                <Input
+                  id="bankEmailPort"
+                  type="number"
+                  placeholder="993"
+                  {...form.register("bankEmailPort", { valueAsNumber: true })}
+                />
+                <p className="text-xs text-gray-500">
+                  IMAP порт (993 для SSL/TLS, 143 для plain text)
+                </p>
+                {form.formState.errors.bankEmailPort && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.bankEmailPort.message}
                   </p>
                 )}
               </div>
