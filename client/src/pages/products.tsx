@@ -68,18 +68,15 @@ export default function ProductsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [showOrderedProducts, setShowOrderedProducts] = useState(false);
   
-  const { data: products = [], isLoading, isError } = useQuery({
+  const { data: products = [], isLoading, isError } = useQuery<Product[]>({
     queryKey: ['/api/products'],
   });
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [] } = useQuery<any[]>({
     queryKey: ['/api/categories'],
   });
 
-  const { data: orderedProducts = [], isLoading: orderedLoading } = useQuery({
-    queryKey: ['/api/products/ordered'],
-    enabled: showOrderedProducts, // Завантажуємо тільки коли потрібно
-  });
+
 
   // Фільтрування товарів
   const filteredProducts = products.filter((product: Product) => {
@@ -454,7 +451,7 @@ export default function ProductsPage() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                   <span className="ml-3 text-green-600">Завантаження замовлених товарів...</span>
                 </div>
-              ) : orderedProducts.length === 0 ? (
+              ) : orderedProducts && orderedProducts.length === 0 ? (
                 <div className="text-center py-12">
                   <Package className="w-16 h-16 text-green-300 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-green-800 mb-2">Немає замовлених товарів</h3>
@@ -462,14 +459,14 @@ export default function ProductsPage() {
                 </div>
               ) : (
                 <DataTable
-                  data={orderedProducts}
+                  data={orderedProducts || []}
                   storageKey="ordered-products-table"
                   columns={[
                     {
                       key: 'orderNumber',
                       label: 'Замовлення',
                       sortable: true,
-                      width: '140px'
+                      width: 140
                     },
                     {
                       key: 'productName',
@@ -486,21 +483,21 @@ export default function ProductsPage() {
                       key: 'orderedQuantity',
                       label: 'К-сть',
                       sortable: true,
-                      width: '80px',
+                      width: 80,
                       render: (value) => `${value} шт.`
                     },
                     {
                       key: 'unitPrice',
                       label: 'Ціна',
                       sortable: true,
-                      width: '100px',
+                      width: 100,
                       render: (value) => `${parseFloat(value).toLocaleString()} ₴`
                     },
                     {
                       key: 'totalItemPrice',
                       label: 'Сума',
                       sortable: true,
-                      width: '120px',
+                      width: 120,
                       render: (value) => `${parseFloat(value).toLocaleString()} ₴`
                     },
                     {
@@ -513,7 +510,7 @@ export default function ProductsPage() {
                       key: 'paymentDate',
                       label: 'Дата оплати',
                       sortable: true,
-                      width: '120px',
+                      width: 120,
                       render: (value) => value ? new Date(value).toLocaleDateString('uk-UA') : '-'
                     }
                   ]}
@@ -547,33 +544,33 @@ export default function ProductsPage() {
               key: 'sku',
               label: 'SKU',
               sortable: true,
-              width: '150px'
+              width: 150
             },
             {
               key: 'costPrice',
               label: 'Собівартість',
               sortable: true,
-              width: '120px',
+              width: 120,
               render: (value) => `${value} ₴`
             },
             {
               key: 'retailPrice',
               label: 'Роздрібна ціна',
               sortable: true,
-              width: '120px',
+              width: 120,
               render: (value) => `${value} ₴`
             },
             {
               key: 'unit',
               label: 'Од. виміру',
               sortable: true,
-              width: '100px'
+              width: 100
             },
             {
               key: 'isActive',
               label: 'Статус',
               sortable: true,
-              width: '100px',
+              width: 100,
               type: 'badge',
               render: (value) => (
                 <Badge variant={value ? "default" : "secondary"}>
@@ -585,7 +582,7 @@ export default function ProductsPage() {
               key: 'createdAt',
               label: 'Дата створення',
               sortable: true,
-              width: '150px',
+              width: 150,
               render: (value) => new Date(value).toLocaleDateString('uk-UA')
             }
           ]}

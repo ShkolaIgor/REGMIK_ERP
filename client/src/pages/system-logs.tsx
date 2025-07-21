@@ -63,6 +63,7 @@ export default function SystemLogs() {
     level: 'all',
     category: '',
     module: '',
+    userId: 'all',
     startDate: '',
     endDate: ''
   });
@@ -73,6 +74,11 @@ export default function SystemLogs() {
   // Отримання статистики логів
   const { data: stats } = useQuery<LogStats>({
     queryKey: ['/api/system-logs/stats'],
+  });
+
+  // Отримання користувачів для фільтра
+  const { data: users = [] } = useQuery({
+    queryKey: ['/api/users'],
   });
 
   // Отримання логів з фільтрацією
@@ -235,7 +241,7 @@ export default function SystemLogs() {
             <CardTitle>Фільтри</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
               <Select value={filters.level} onValueChange={(value) => updateFilter('level', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Рівень" />
@@ -260,6 +266,22 @@ export default function SystemLogs() {
                 value={filters.module}
                 onChange={(e) => updateFilter('module', e.target.value)}
               />
+
+              <Select value={filters.userId} onValueChange={(value) => updateFilter('userId', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Користувач" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Всі користувачі</SelectItem>
+                  {users.map((user: any) => (
+                    <SelectItem key={user.id} value={user.id.toString()}>
+                      {user.firstName && user.lastName 
+                        ? `${user.firstName} ${user.lastName} (${user.username})`
+                        : user.username}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               <Input
                 type="date"

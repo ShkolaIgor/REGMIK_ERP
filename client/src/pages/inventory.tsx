@@ -13,7 +13,7 @@ import { Search, Edit, Eye, Trash2, Scan, Download, Printer, DollarSign, AlertTr
 import { useToast } from "@/hooks/use-toast";
 import { ScannerButton } from "@/components/BarcodeScanner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { TableLoadingState, CardSkeleton } from "@/components/ui/loading-state";
+import { TableLoadingState } from "@/components/ui/loading-state";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { InventoryChangeDialog } from "@/components/InventoryChangeDialog";
 
@@ -53,6 +53,10 @@ export default function Inventory() {
 
   const { data: warehouses = [] } = useQuery({
     queryKey: ["/api/warehouses"],
+  });
+
+  const { data: authUser } = useQuery({
+    queryKey: ["/api/auth/user"],
   });
 
   const { data: session } = useQuery({
@@ -546,14 +550,14 @@ export default function Inventory() {
       </div>
 
       {/* Діалог зміни кількості */}
-      {inventoryChangeDialog.isOpen && inventoryChangeDialog.product && inventoryChangeDialog.warehouse && session?.user && (
+      {inventoryChangeDialog.isOpen && inventoryChangeDialog.product && inventoryChangeDialog.warehouse && authUser?.user && (
         <InventoryChangeDialog
           isOpen={inventoryChangeDialog.isOpen}
           onClose={closeInventoryChangeDialog}
           product={inventoryChangeDialog.product}
           warehouse={inventoryChangeDialog.warehouse}
           currentQuantity={inventoryChangeDialog.currentQuantity || 0}
-          userId={session.user.id}
+          userId={authUser.user.id}
         />
       )}
     </div>
