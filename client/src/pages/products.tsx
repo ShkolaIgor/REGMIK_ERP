@@ -165,7 +165,7 @@ export default function ProductsPage() {
                   <Package className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Склад товарів</h1>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Товари</h1>
                   <p className="text-gray-500 mt-1">Управління продуктами та категоріями</p>
                 </div>
               </div>
