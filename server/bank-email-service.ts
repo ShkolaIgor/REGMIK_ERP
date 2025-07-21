@@ -23,31 +23,59 @@ export class BankEmailService {
     try {
       console.log("🏦 Запуск ініціалізації банківського email моніторингу...");
       
-      // Перевіряємо змінні оточення замість БД
+      // Спочатку перевіряємо налаштування в базі даних
+      let emailSettings;
+      try {
+        emailSettings = await storage.getEmailSettings();
+        console.log("🏦 Отримані налаштування з бази даних:", {
+          bankMonitoringEnabled: emailSettings?.bankMonitoringEnabled,
+          hasBankEmailUser: !!emailSettings?.bankEmailUser,
+          hasSmtpHost: !!emailSettings?.smtpHost,
+          bankEmailHost: emailSettings?.bankEmailHost
+        });
+      } catch (dbError) {
+        console.log("🏦 Помилка читання з БД, перевіряємо змінні оточення:", dbError);
+        emailSettings = null;
+      }
+      
+      // Якщо в БД є налаштування і моніторинг увімкнено - використовуємо їх
+      if (emailSettings?.bankMonitoringEnabled && emailSettings?.bankEmailUser && emailSettings?.bankEmailHost) {
+        console.log("🏦 Використовуємо налаштування з бази даних");
+        
+        if (!this.isMonitoring) {
+          this.startMonitoring();
+          console.log("🏦 Запущено періодичний моніторинг банківських email (кожні 5 хвилин)");
+        }
+        
+        console.log("🏦 Банківський email моніторинг ініціалізовано з налаштуваннями БД");
+        return;
+      }
+      
+      // Fallback на змінні оточення якщо в БД немає налаштувань
       const bankEmailHost = process.env.BANK_EMAIL_HOST;
       const bankEmailUser = process.env.BANK_EMAIL_USER;
       const bankEmailPassword = process.env.BANK_EMAIL_PASSWORD;
       
       if (!bankEmailHost || !bankEmailUser || !bankEmailPassword) {
-        console.log("🏦 Банківський email моніторинг не налаштовано - відсутні змінні оточення");
-        console.log("🏦 Потрібні змінні: BANK_EMAIL_HOST, BANK_EMAIL_USER, BANK_EMAIL_PASSWORD");
+        console.log("🏦 Банківський email моніторинг не налаштовано");
+        console.log("🏦 Налаштуйте через меню 'Налаштування Email' або додайте змінні оточення");
         return;
       }
       
-      console.log("🏦 Знайдені налаштування email:", {
+      console.log("🏦 Використовуємо налаштування зі змінних оточення:", {
         hasHost: !!bankEmailHost,
         hasUser: !!bankEmailUser, 
         hasPassword: !!bankEmailPassword,
         host: bankEmailHost
       });
 
-      // Запускаємо моніторинг з змінними оточення
+      // Запускаємо моніторинг зі змінними оточення
       if (!this.isMonitoring) {
         this.startMonitoring();
         console.log("🏦 Запущено періодичний моніторинг банківських email (кожні 5 хвилин)");
       }
 
-      console.log("🏦 Банківський email моніторинг ініціалізовано");
+      console.log("🏦 Банківський email моніторинг ініціалізовано зі змінними оточення");
     } catch (error) {
       console.error("❌ Помилка ініціалізації банківського моніторингу:", error);
     }
@@ -162,13 +190,19 @@ export class BankEmailService {
     try {
       const emailSettings = await storage.getEmailSettings();
       
-      // Використовуємо environment variables або дані з БД
-      const bankEmailUser = process.env.BANK_EMAIL_USER || emailSettings?.bankEmailUser;
-      const bankEmailPassword = process.env.BANK_EMAIL_PASSWORD || emailSettings?.bankEmailPassword;
-      const bankEmailHost = process.env.BANK_EMAIL_HOST || 'imap.gmail.com';
+      // Використовуємо дані з БД пріоритетно, fallback на environment variables
+      const bankEmailUser = emailSettings?.bankEmailUser || process.env.BANK_EMAIL_USER;
+      const bankEmailPassword = emailSettings?.bankEmailPassword || process.env.BANK_EMAIL_PASSWORD;
+      const bankEmailHost = emailSettings?.bankEmailHost || process.env.BANK_EMAIL_HOST || 'mail.regmik.ua';
       
-      if (!emailSettings?.bankMonitoringEnabled || !bankEmailUser || !bankEmailPassword) {
-        console.log("🏦 Банківський моніторинг вимкнено або не налаштовано");
+      if (!bankEmailUser || !bankEmailPassword) {
+        console.log("🏦 Банківський моніторинг не налаштовано - відсутні дані автентифікації");
+        console.log("🏦 Налаштуйте через меню 'Налаштування Email'");
+        return;
+      }
+      
+      if (emailSettings && !emailSettings.bankMonitoringEnabled) {
+        console.log("🏦 Банківський моніторинг вимкнено в налаштуваннях");
         return;
       }
 
