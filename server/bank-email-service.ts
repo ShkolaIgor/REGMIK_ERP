@@ -27,7 +27,7 @@ export class BankEmailService {
       }
 
       // Створюємо SMTP з'єднання для читання email
-      this.transporter = nodemailer.createTransporter({
+      this.transporter = nodemailer.createTransport({
         host: emailSettings.smtpHost,
         port: emailSettings.smtpPort,
         secure: emailSettings.smtpSecure,
@@ -59,9 +59,22 @@ export class BankEmailService {
     // Перевіряємо email кожні 5 хвилин
     this.monitoringInterval = setInterval(async () => {
       try {
+        console.log("🏦 Запуск перевірки нових банківських email...");
         await this.checkNewEmails();
       } catch (error) {
         console.error("❌ Помилка під час перевірки банківських email:", error);
+        // Логуємо в системні логи
+        await storage.createSystemLog({
+          level: 'error',
+          category: 'bank-email',
+          module: 'bank-monitoring',
+          message: `Помилка перевірки банківських email: ${error instanceof Error ? error.message : String(error)}`,
+          details: { 
+            component: 'bank-email-service',
+            error: error instanceof Error ? error.toString() : String(error) 
+          },
+          userId: null
+        });
       }
     }, 5 * 60 * 1000); // 5 хвилин
 
@@ -143,6 +156,23 @@ export class BankEmailService {
 
       const savedNotification = await storage.createBankPaymentNotification(notification);
 
+      // Логуємо в системні логи про отримання банківського повідомлення
+      await storage.createSystemLog({
+        level: 'info',
+        category: 'bank-email',
+        module: 'bank-monitoring',
+        message: `Отримано банківське повідомлення: ${paymentInfo.operationType} на суму ${paymentInfo.amount} UAH`,
+        details: { 
+          component: 'bank-email-service',
+          operationType: paymentInfo.operationType,
+          amount: paymentInfo.amount,
+          correspondent: paymentInfo.correspondent,
+          invoiceNumber: paymentInfo.invoiceNumber,
+          accountNumber: paymentInfo.accountNumber
+        },
+        userId: null
+      });
+
       // Якщо це зарахування коштів та знайдено номер рахунку - обробляємо платіж
       console.log("🏦 Перевірка умов для обробки платежу:");
       console.log("  operationType:", paymentInfo.operationType);
@@ -152,6 +182,22 @@ export class BankEmailService {
       
       if (paymentInfo.operationType === "зараховано" && paymentInfo.invoiceNumber) {
         console.log("🏦 Розпочинаю обробку платежу...");
+        
+        // Логуємо спробу обробки платежу
+        await storage.createSystemLog({
+          level: 'info',
+          category: 'bank-payment',
+          module: 'payment-processing',
+          message: `Спроба обробки платежу за рахунком ${paymentInfo.invoiceNumber}`,
+          details: { 
+            component: 'bank-email-service',
+            invoiceNumber: paymentInfo.invoiceNumber,
+            amount: paymentInfo.amount,
+            correspondent: paymentInfo.correspondent
+          },
+          userId: null
+        });
+        
         const paymentResult = await this.processPayment(savedNotification.id, paymentInfo);
         
         if (paymentResult.success) {
@@ -159,9 +205,39 @@ export class BankEmailService {
             processed: true,
             orderId: paymentResult.orderId,
           });
+          
+          // Логуємо успішну обробку платежу
+          await storage.createSystemLog({
+            level: 'info',
+            category: 'bank-payment',
+            module: 'payment-processing',
+            message: `Платіж успішно оброблено: ${paymentInfo.invoiceNumber}`,
+            details: { 
+              component: 'bank-email-service',
+              invoiceNumber: paymentInfo.invoiceNumber,
+              orderId: paymentResult.orderId,
+              amount: paymentInfo.amount
+            },
+            userId: null
+          });
         } else {
           await storage.updateBankPaymentNotification(savedNotification.id, {
             processingError: paymentResult.message,
+          });
+          
+          // Логуємо помилку обробки платежу
+          await storage.createSystemLog({
+            level: 'warn',
+            category: 'bank-payment',
+            module: 'payment-processing',
+            message: `Помилка обробки платежу: ${paymentResult.message}`,
+            details: { 
+              component: 'bank-email-service',
+              invoiceNumber: paymentInfo.invoiceNumber,
+              error: paymentResult.message,
+              amount: paymentInfo.amount
+            },
+            userId: null
           });
         }
 
@@ -181,8 +257,25 @@ export class BankEmailService {
       };
 
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       console.error("❌ Помилка обробки банківського email:", error);
-      return { success: false, message: `Помилка обробки: ${error.message}` };
+      
+      // Логуємо критичну помилку
+      await storage.createSystemLog({
+        level: 'error',
+        category: 'bank-email',
+        module: 'bank-monitoring',
+        message: `Критична помилка обробки банківського email: ${errorMessage}`,
+        details: { 
+          component: 'bank-email-service',
+          error: error instanceof Error ? error.toString() : String(error),
+          emailFrom: emailContent.fromAddress,
+          emailSubject: emailContent.subject
+        },
+        userId: null
+      });
+      
+      return { success: false, message: `Помилка обробки: ${errorMessage}` };
     }
   }
 
@@ -265,7 +358,8 @@ export class BankEmailService {
       };
 
     } catch (error) {
-      console.error("❌ Помилка аналізу банківського email:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("❌ Помилка аналізу банківського email:", errorMessage);
       return null;
     }
   }
@@ -305,15 +399,16 @@ export class BankEmailService {
       };
 
     } catch (error) {
-      console.error("❌ Помилка обробки платежу:", error);
-      return { success: false, message: error.message };
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("❌ Помилка обробки платежу:", errorMessage);
+      return { success: false, message: `Помилка обробки платежу: ${errorMessage}` };
     }
   }
 
   /**
    * Ручна обробка банківського повідомлення (для тестування)
    */
-  async manualProcessEmail(emailContent: string): Promise<{ success: boolean; message: string; details?: any }> {
+  async manualProcessEmail(emailContent: string): Promise<{ success: boolean; message: string; notification?: any; details?: any }> {
     try {
       const emailSettings = await storage.getEmailSettings();
       
@@ -328,10 +423,27 @@ export class BankEmailService {
         textContent: emailContent,
       };
 
-      return await this.processBankEmail(mockEmail);
+      console.log("🔍 Тестування банківського email:", emailContent.substring(0, 100) + "...");
+      
+      const result = await this.processBankEmail(mockEmail);
+      
+      // Додаємо більше інформації для тестування
+      if (result.success) {
+        return {
+          ...result,
+          details: {
+            emailLength: emailContent.length,
+            fromAddress: fromAddress,
+            processedAt: new Date().toISOString()
+          }
+        };
+      }
+      
+      return result;
     } catch (error) {
-      console.error("❌ Помилка ручної обробки email:", error);
-      return { success: false, message: `Помилка: ${error.message}` };
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("❌ Помилка ручної обробки email:", errorMessage);
+      return { success: false, message: `Помилка: ${errorMessage}` };
     }
   }
 

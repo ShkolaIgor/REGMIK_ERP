@@ -13382,5 +13382,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bank Email Testing routes
+  app.post("/api/test-bank-email", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const { emailContent } = req.body;
+      
+      if (!emailContent) {
+        return res.status(400).json({ error: "Email content is required" });
+      }
+
+      // Логуємо спробу тестування email
+      await storage.createSystemLog({
+        level: 'info',
+        component: 'bank-email-test',
+        message: 'Тестування банківського email',
+        metadata: { 
+          emailLength: emailContent.length,
+          userId: req.session?.user?.id 
+        },
+        userId: req.session?.user?.id || null
+      });
+
+      const result = await bankEmailService.manualProcessEmail(emailContent);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error testing bank email:", error);
+      res.status(500).json({ error: "Failed to test bank email" });
+    }
+  });
+
+  app.get("/api/bank-email-stats", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const stats = await bankEmailService.getBankEmailStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error getting bank email stats:", error);
+      res.status(500).json({ error: "Failed to get bank email statistics" });
+    }
+  });
+
+  // Endpoint для перевірки налаштувань банківського email
+  app.get("/api/bank-email-settings", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const settings = await storage.getEmailSettings();
+      
+      // Повертаємо тільки публічну інформацію (без паролів)
+      res.json({
+        bankMonitoringEnabled: settings?.bankMonitoringEnabled || false,
+        bankEmailAddress: settings?.bankEmailAddress || null,
+        bankEmailUser: settings?.bankEmailUser || null,
+        smtpHost: settings?.smtpHost || null,
+        smtpPort: settings?.smtpPort || null,
+        smtpSecure: settings?.smtpSecure || false,
+        hasPassword: !!settings?.bankEmailPassword
+      });
+    } catch (error) {
+      console.error("Error getting bank email settings:", error);
+      res.status(500).json({ error: "Failed to get bank email settings" });
+    }
+  });
+
   return httpServer;
 }
