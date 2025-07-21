@@ -195,10 +195,7 @@ export default function Orders() {
   
   // Стан для керування порядком стовпців
   const [columnOrder, setColumnOrder] = useState(() => {
-    // Очищуємо старі налаштування щоб застосувати новий порядок стовпців
-    localStorage.removeItem('orders-column-order');
-    const saved = localStorage.getItem('orders-column-order');
-    return saved ? JSON.parse(saved) : [
+    const defaultColumns = [
       'orderSequenceNumber',
       'orderNumber', 
       'clientName',
@@ -209,6 +206,23 @@ export default function Orders() {
       'status',
       'actions'
     ];
+    
+    const saved = localStorage.getItem('orders-column-order');
+    if (saved) {
+      try {
+        const parsedColumns = JSON.parse(saved);
+        // Переконуємося що колонка 'actions' завжди присутня
+        if (!parsedColumns.includes('actions')) {
+          parsedColumns.push('actions');
+        }
+        return parsedColumns;
+      } catch (e) {
+        console.error('Error parsing saved column order:', e);
+        return defaultColumns;
+      }
+    }
+    
+    return defaultColumns;
   });
   
   const { toast } = useToast();
