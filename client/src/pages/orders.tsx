@@ -411,9 +411,6 @@ export default function Orders() {
                         <Badge className="bg-green-100 text-green-800 border-green-300">
                           ✅ Повна оплата
                         </Badge>
-                        <div className="text-xs text-gray-600">
-                          {formatCurrency(paidAmount)} UAH
-                        </div>
                         <div className="text-xs text-green-700 font-medium flex items-center gap-1">
                           📅 <UkrainianDate date={order.lastPaymentDate} format="short" />
                         </div>
@@ -438,8 +435,8 @@ export default function Orders() {
                         <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">
                           🔸 Часткова ({percentage}%)
                         </Badge>
-                        <div className="text-xs text-gray-600">
-                          {formatCurrency(paidAmount)} з {formatCurrency(totalAmount)}
+                        <div className="text-xs text-red-600 font-medium">
+                          Не доплачено: {formatCurrency(totalAmount - paidAmount)} UAH
                         </div>
                         <div className="text-xs text-yellow-700 font-medium flex items-center gap-1">
                           📅 <UkrainianDate date={order.lastPaymentDate} format="short" />
@@ -490,9 +487,6 @@ export default function Orders() {
                         <Badge variant="secondary" className="bg-gray-100 text-gray-700 border-gray-300">
                           💰 Не оплачено
                         </Badge>
-                        <div className="text-xs text-gray-500">
-                          До оплати: {formatCurrency(totalAmount)} UAH
-                        </div>
                       </div>
                     }
                   />
