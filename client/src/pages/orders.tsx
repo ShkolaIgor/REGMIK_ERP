@@ -1956,7 +1956,7 @@ export default function Orders() {
                 variant="outline"
                 onClick={() => setIsStatusSettingsOpen(!isStatusSettingsOpen)}
               >
-                <Settings className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-3002" />
+                <Settings className="w-4 h-4 mr-2" />
                 Налаштування статусів
               </Button>
               <div className="flex gap-2">
@@ -3044,7 +3044,6 @@ export default function Orders() {
                       <p className="text-gray-500 text-sm">Замовлення не містить товарів</p>
                     )}
                     
-                    {/* Списання компонентів */}
                     <div className="mt-6 border-t pt-4">
                       <p className="text-sm text-gray-500">Деталі замовлення</p>
                     </div>
@@ -3056,7 +3055,6 @@ export default function Orders() {
             )}
           </CardContent>
         </Card>
-       {/* </main> */}
       </div>
 
 
@@ -3084,27 +3082,16 @@ export default function Orders() {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="flex-1 overflow-y-auto">
-            <OrderForm
-              order={editingOrder}
-              onSuccess={(orderId) => {
-                setIsDialogOpen(false);
-                setIsEditMode(false);
-                setEditingOrder(null);
-                setOrderItems([]);
-                form.reset();
-                
-                queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-                queryClient.invalidateQueries({ queryKey: ['/api/products/ordered'] });
-                
-                toast({
-                  title: editingOrder ? "Замовлення оновлено" : "Замовлення створено",
-                  description: editingOrder ? 
-                    `Замовлення ${editingOrder.orderNumber} успішно оновлено` :
-                    "Нове замовлення успішно створено",
-                });
-              }}
-            />
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="text-center">
+              <p className="text-gray-500">Форма редагування замовлень тимчасово недоступна</p>
+              <Button 
+                className="mt-4"
+                onClick={() => setIsDialogOpen(false)}
+              >
+                Закрити
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

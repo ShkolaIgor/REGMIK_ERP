@@ -2361,7 +2361,7 @@ export class MemStorage implements IStorage {
     return [];
   }
 
-  async updateOrderPaymentStatus(orderId: number, paymentAmount: number, paymentType: string = "bank_transfer", bankNotificationId?: number, bankAccount?: string, correspondent?: string): Promise<{ order: Order; payment: OrderPayment }> {
+  async updateOrderPaymentStatus(orderId: number, paymentAmount: number, paymentType: string = "bank_transfer", bankNotificationId?: number, bankAccount?: string, correspondent?: string, paymentDate?: Date): Promise<{ order: Order; payment: OrderPayment }> {
     throw new Error("MemStorage не підтримує оновлення статусу платежів");
   }
 
