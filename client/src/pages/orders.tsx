@@ -667,6 +667,8 @@ export default function Orders() {
   const { data: ordersResponse, isLoading } = useQuery({
     queryKey: ordersQueryKey,
     queryFn: fetchOrders,
+    refetchInterval: 30000, // Автоматичне оновлення кожні 30 секунд для синхронізації з банківськими платежами
+    refetchIntervalInBackground: true, // Оновлюється навіть коли вкладка неактивна
   });
 
   const allOrders = ordersResponse?.orders || [];
@@ -2645,8 +2647,12 @@ export default function Orders() {
             </div>
 
             {/* Results Count */}
-            <div className="mt-3 text-sm text-gray-600">
-              Знайдено: {totalServerRecords} замовлень (сторінка {serverPagination.page} з {totalServerPages})
+            <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
+              <span>Знайдено: {totalServerRecords} замовлень (сторінка {serverPagination.page} з {totalServerPages})</span>
+              <span className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                Автооновлення кожні 30с
+              </span>
             </div>
           </CardContent>
         </Card>

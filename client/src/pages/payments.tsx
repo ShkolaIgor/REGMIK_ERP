@@ -52,6 +52,8 @@ export default function Payments() {
   // Отримання статистики платежів
   const { data: stats, isLoading: statsLoading } = useQuery<PaymentStats>({
     queryKey: ["/api/payments/stats"],
+    refetchInterval: 30000, // Автоматичне оновлення кожні 30 секунд
+    refetchIntervalInBackground: true,
   });
 
   // Отримання списку платежів
@@ -65,6 +67,8 @@ export default function Payments() {
       
       return apiRequest(`/api/payments?${params.toString()}`);
     },
+    refetchInterval: 30000, // Автоматичне оновлення кожні 30 секунд для синхронізації з банківськими платежами
+    refetchIntervalInBackground: true, // Оновлюється навіть коли вкладка неактивна
   });
 
   // Видалення платежу
@@ -328,11 +332,17 @@ export default function Payments() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Платежі</h1>
-        <p className="text-muted-foreground">
-          Управління та відстеження платежів за замовленнями
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Платежі</h1>
+          <p className="text-muted-foreground">
+            Управління та відстеження платежів за замовленнями
+          </p>
+        </div>
+        <div className="flex items-center gap-1 text-sm text-gray-600">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          Автооновлення кожні 30с
+        </div>
       </div>
 
       {/* Статистика */}
@@ -444,7 +454,7 @@ export default function Payments() {
             <div>
               <CardTitle>Список платежів</CardTitle>
               <CardDescription>
-                Знайдено {filteredPayments.length} платежів
+                Знайдено {filteredPayments.length} платежів • Автооновлення активне
               </CardDescription>
             </div>
             <Button
