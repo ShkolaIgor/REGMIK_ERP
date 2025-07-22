@@ -158,22 +158,30 @@ type OrderFormData = z.infer<typeof orderSchema>;
 type OrderItemFormData = z.infer<typeof orderItemSchema>;
 type StatusFormData = z.infer<typeof statusSchema>;
 
-// Тимчасово вимкнений пошук через проблеми перезавантаження
-const SearchPlaceholder = () => {
+// Простий компонент пошуку (скопійовано з робочої сторінки клієнтів)
+function SearchInput({ value, onChange }: { 
+  value: string; 
+  onChange: (value: string) => void; 
+}) {
   return (
     <div className="relative flex-1">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-      <div className="flex h-10 w-full rounded-md border border-input bg-gray-50 px-3 py-2 text-sm text-gray-500 pl-10">
-        Пошук тимчасово вимкнений (проблеми з перезавантаженням)
-      </div>
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+      <Input
+        type="text"
+        placeholder="Пошук за номером замовлення, клієнтом, email або телефоном..."
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="pl-10"
+        autoComplete="off"
+      />
     </div>
   );
-};
+}
 
 export default function Orders() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
-  const [searchTerm, setSearchTerm] = useState(""); // Тимчасово вимкнений
+  const [searchTerm, setSearchTerm] = useState(""); // Пошук відновлено
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [paymentFilter, setPaymentFilter] = useState<string>("all");
@@ -243,10 +251,10 @@ export default function Orders() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Тимчасово вимкнений пошук
-  // const handleSearchChange = useCallback((value: string) => {
-  //   setSearchTerm(value);
-  // }, []);
+  // Обробник зміни пошуку (скопійовано з робочої сторінки клієнтів)
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value);
+  }, []);
 
   // Стабільні обробники фільтрів
   const handleStatusFilterChange = useCallback((value: string) => {
@@ -2590,8 +2598,11 @@ export default function Orders() {
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-col lg:flex-row gap-4 items-center">
-              {/* Search - Тимчасово вимкнений */}
-              <SearchPlaceholder />
+              {/* Search - Відновлено з робочої сторінки клієнтів */}
+              <SearchInput
+                value={searchTerm}
+                onChange={handleSearchChange}
+              />
 
               {/* Status Filter */}
               <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
