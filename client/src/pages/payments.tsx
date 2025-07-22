@@ -107,6 +107,32 @@ export default function Payments() {
     },
   });
 
+  // Мутація для видалення дублікатів платежів
+  const removeDuplicatesMutation = useMutation({
+    mutationFn: () => apiRequest("/api/payments/remove-duplicates", {
+      method: "POST",
+    }),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/payments/stats"] });
+      
+      if (response.success) {
+        toast({
+          title: "Дублікати видалено",
+          description: `Успішно видалено ${response.details.totalDeleted} дублікатів платежів`,
+        });
+      }
+    },
+    onError: (error: any) => {
+      console.error("Error removing duplicates:", error);
+      toast({
+        title: "Помилка видалення дублікатів",
+        description: error.message || "Не вдалося видалити дублікати платежів",
+        variant: "destructive",
+      });
+    },
+  });
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "confirmed": return <CheckCircle className="h-4 w-4 text-green-600" />;
@@ -367,9 +393,39 @@ export default function Payments() {
             Управління та відстеження платежів за замовленнями
           </p>
         </div>
-        <div className="flex items-center gap-1 text-sm text-gray-600">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          Автооновлення кожні 30с
+        <div className="flex items-center gap-4">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" className="text-red-600 hover:text-red-700" size="sm">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Видалити дублікати
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Підтвердити видалення дублікатів</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Ця операція знайде та видалить всі дублікати платежів (однакові замовлення, суми та кореспонденти).
+                  Перший платіж з групи дублікатів залишиться, решта будуть видалені.
+                  Цю дію неможливо скасувати.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Скасувати</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => removeDuplicatesMutation.mutate()}
+                  className="bg-red-600 hover:bg-red-700"
+                  disabled={removeDuplicatesMutation.isPending}
+                >
+                  {removeDuplicatesMutation.isPending ? "Видаляю..." : "Видалити дублікати"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <div className="flex items-center gap-1 text-sm text-gray-600">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            Автооновлення кожні 30с
+          </div>
         </div>
       </div>
 

@@ -14277,5 +14277,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Тимчасова функція для видалення дублікатів платежів
+  app.post("/api/payments/remove-duplicates", isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log("🗑️ Початок видалення дублікатів платежів...");
+      
+      // Знаходимо дублікати платежів (однаковий order_id, payment_amount, correspondent)
+      const duplicatesQuery = `
+        WITH duplicated_payments AS (
+          SELECT 
+            order_id, 
+            payment_amount, 
+            correspondent,
+            COUNT(*) as count,
+            array_agg(id ORDER BY created_at ASC) as payment_ids,
+            array_agg(created_at ORDER BY created_at ASC) as created_dates
+          FROM order_payments 
+          GROUP BY order_id, payment_amount, correspondent
+          HAVING COUNT(*) > 1
+        )
+        SELECT * FROM duplicated_payments ORDER BY order_id
+      `;
+      
+      const result = await storage.query(duplicatesQuery);
+      console.log(`🗑️ Знайдено ${result.rows.length} груп дублікатів`);
+      
+      let totalDeleted = 0;
+      let deletionDetails = [];
+      
+      for (const row of result.rows) {
+        const paymentIds = row.payment_ids;
+        const orderid = row.order_id;
+        const amount = row.payment_amount;
+        const count = row.count;
+        
+        // Залишаємо перший платіж, видаляємо решту
+        const idsToDelete = paymentIds.slice(1); // Всі крім першого
+        
+        console.log(`🗑️ Замовлення #${orderid}: ${count} дублікатів платежу ${amount}. Видаляємо ${idsToDelete.length} записів`);
+        
+        for (const idToDelete of idsToDelete) {
+          await storage.deletePayment(idToDelete);
+          totalDeleted++;
+        }
+        
+        deletionDetails.push({
+          orderId: orderid,
+          paymentAmount: amount,
+          totalDuplicates: count,
+          deletedCount: idsToDelete.length,
+          remainingId: paymentIds[0]
+        });
+      }
+      
+      // Перерахунок сум оплат для всіх замовлень
+      console.log("🔄 Перерахунок сум оплат замовлень...");
+      const affectedOrders = [...new Set(result.rows.map(r => r.order_id))];
+      
+      for (const orderId of affectedOrders) {
+        const payments = await storage.getOrderPayments(orderId);
+        const totalPaid = payments.reduce((sum, p) => sum + parseFloat(p.paymentAmount || '0'), 0);
+        
+        await storage.updateOrder(orderId, {
+          paidAmount: totalPaid.toFixed(2)
+        });
+        
+        console.log(`🔄 Замовлення #${orderId}: оновлено paidAmount = ${totalPaid.toFixed(2)}`);
+      }
+      
+      console.log(`🗑️ Видалення дублікатів завершено: ${totalDeleted} платежів видалено`);
+      
+      res.json({
+        success: true,
+        message: `Успішно видалено ${totalDeleted} дублікатів платежів`,
+        details: {
+          totalDeleted,
+          duplicateGroups: result.rows.length,
+          affectedOrders: affectedOrders.length,
+          deletionDetails
+        }
+      });
+      
+    } catch (error) {
+      console.error("❌ Помилка видалення дублікатів:", error);
+      res.status(500).json({ 
+        error: "Помилка видалення дублікатів платежів",
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   return httpServer;
 }
