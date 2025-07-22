@@ -436,7 +436,7 @@ export default function Orders() {
                           🔸 Часткова ({percentage}%)
                         </Badge>
                         <div className="text-xs text-red-600 font-medium">
-                          Не доплачено: {formatCurrency(totalAmount - paidAmount)} UAH
+                          Борг: {formatCurrency(totalAmount - paidAmount)}
                         </div>
                         <div className="text-xs text-yellow-700 font-medium flex items-center gap-1">
                           📅 <UkrainianDate date={order.lastPaymentDate} format="short" />
