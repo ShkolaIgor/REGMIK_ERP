@@ -14227,6 +14227,174 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // ==================== PAYMENTS METHODS ====================
+
+  async getAllPayments(): Promise<any[]> {
+    try {
+      const payments = await db
+        .select({
+          id: orderPayments.id,
+          orderId: orderPayments.orderId,
+          orderNumber: orders.orderNumber,
+          clientName: clients.name,
+          correspondent: bankPaymentNotifications.correspondent,
+          paymentAmount: orderPayments.paymentAmount,
+          paymentType: orderPayments.paymentType,
+          paymentStatus: orderPayments.paymentStatus,
+          paymentDate: orderPayments.paymentDate,
+          bankAccount: orderPayments.bankAccount,
+          reference: orderPayments.reference,
+          notes: orderPayments.notes,
+          createdAt: orderPayments.createdAt,
+          bankNotificationId: orderPayments.bankNotificationId
+        })
+        .from(orderPayments)
+        .leftJoin(orders, eq(orderPayments.orderId, orders.id))
+        .leftJoin(clients, eq(orders.clientId, clients.id))
+        .leftJoin(bankPaymentNotifications, eq(orderPayments.bankNotificationId, bankPaymentNotifications.id))
+        .orderBy(desc(orderPayments.createdAt));
+
+      return payments;
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+      throw error;
+    }
+  }
+
+  async getPaymentStats(): Promise<any> {
+    try {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const thisWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      const [totalStats, todayStats, weekStats] = await Promise.all([
+        db
+          .select({
+            count: sql`count(*)`.mapWith(Number),
+            sum: sql`coalesce(sum(payment_amount), 0)`.mapWith(Number),
+          })
+          .from(orderPayments)
+          .where(eq(orderPayments.paymentStatus, 'completed')),
+          
+        db
+          .select({
+            count: sql`count(*)`.mapWith(Number),
+            sum: sql`coalesce(sum(payment_amount), 0)`.mapWith(Number),
+          })
+          .from(orderPayments)
+          .where(sql`payment_date >= ${today} AND payment_status = 'completed'`),
+          
+        db
+          .select({
+            count: sql`count(*)`.mapWith(Number),
+            sum: sql`coalesce(sum(payment_amount), 0)`.mapWith(Number),
+          })
+          .from(orderPayments)
+          .where(sql`payment_date >= ${thisWeek} AND payment_status = 'completed'`)
+      ]);
+
+      return {
+        totalPayments: totalStats[0]?.count || 0,
+        totalAmount: totalStats[0]?.sum || 0,
+        todayPayments: todayStats[0]?.count || 0,
+        todayAmount: todayStats[0]?.sum || 0,
+        weekPayments: weekStats[0]?.count || 0,
+        weekAmount: weekStats[0]?.sum || 0,
+      };
+    } catch (error) {
+      console.error('Error fetching payment stats:', error);
+      throw error;
+    }
+  }
+
+  async getPayment(id: number): Promise<any> {
+    try {
+      const [payment] = await db
+        .select({
+          id: orderPayments.id,
+          orderId: orderPayments.orderId,
+          orderNumber: orders.orderNumber,
+          clientName: clients.name,
+          correspondent: bankPaymentNotifications.correspondent,
+          paymentAmount: orderPayments.paymentAmount,
+          paymentType: orderPayments.paymentType,
+          paymentStatus: orderPayments.paymentStatus,
+          paymentDate: orderPayments.paymentDate,
+          bankAccount: orderPayments.bankAccount,
+          reference: orderPayments.reference,
+          notes: orderPayments.notes,
+          createdAt: orderPayments.createdAt,
+          bankNotificationId: orderPayments.bankNotificationId
+        })
+        .from(orderPayments)
+        .leftJoin(orders, eq(orderPayments.orderId, orders.id))
+        .leftJoin(clients, eq(orders.clientId, clients.id))
+        .leftJoin(bankPaymentNotifications, eq(orderPayments.bankNotificationId, bankPaymentNotifications.id))
+        .where(eq(orderPayments.id, id));
+
+      return payment;
+    } catch (error) {
+      console.error('Error fetching payment:', error);
+      throw error;
+    }
+  }
+
+  async createPayment(paymentData: any): Promise<any> {
+    try {
+      const [created] = await db
+        .insert(orderPayments)
+        .values({
+          orderId: paymentData.orderId,
+          paymentAmount: paymentData.paymentAmount,
+          paymentType: paymentData.paymentType || 'manual',
+          paymentStatus: paymentData.paymentStatus || 'completed',
+          paymentDate: paymentData.paymentDate || new Date(),
+          bankAccount: paymentData.bankAccount,
+          reference: paymentData.reference,
+          notes: paymentData.notes,
+          bankNotificationId: paymentData.bankNotificationId,
+          createdAt: new Date()
+        })
+        .returning();
+
+      return created;
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      throw error;
+    }
+  }
+
+  async updatePayment(id: number, updateData: any): Promise<any> {
+    try {
+      const [updated] = await db
+        .update(orderPayments)
+        .set({
+          ...updateData,
+          updatedAt: new Date()
+        })
+        .where(eq(orderPayments.id, id))
+        .returning();
+
+      return updated;
+    } catch (error) {
+      console.error('Error updating payment:', error);
+      throw error;
+    }
+  }
+
+  async deletePayment(id: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(orderPayments)
+        .where(eq(orderPayments.id, id));
+
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting payment:', error);
+      throw error;
+    }
+  }
+
 }
 
 export const storage = new DatabaseStorage();

@@ -450,7 +450,17 @@ export class BankEmailService {
                     const result = await this.processBankEmail(mockEmail);
                     
                     if (result.success) {
-                      console.log(`🏦✅ Email ${seqno} оброблено успішно`);
+                      // Позначаємо повідомлення як оброблене
+                      if (result.notification && result.notification.id) {
+                        try {
+                          await storage.markBankNotificationAsProcessed(result.notification.id, true);
+                          console.log(`🏦✅ Email ${seqno} оброблено успішно та позначено як processed`);
+                        } catch (error) {
+                          console.error(`❌ Помилка позначання email ${seqno} як оброблений:`, error);
+                        }
+                      } else {
+                        console.log(`🏦✅ Email ${seqno} оброблено успішно`);
+                      }
                     } else {
                       console.log(`🏦⚠️ Email ${seqno}: ${result.message}`);
                     }

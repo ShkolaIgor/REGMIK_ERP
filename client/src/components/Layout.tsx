@@ -62,7 +62,8 @@ import {
   LogOut,
   User,
   Wrench,
-  Shield
+  Shield,
+  CreditCard
 } from "lucide-react";
 
 interface LayoutProps {
@@ -80,6 +81,7 @@ const navigationItems = [
     title: "Модуль Продажі",
     items: [
       { name: "Замовлення", href: "/orders", icon: ShoppingCart },
+      { name: "Платежі", href: "/payments", icon: CreditCard },
       { name: "Листування", href: "/client-mail", icon: Mail },
       { name: "Відвантаження", href: "/shipments", icon: Truck }
     ]

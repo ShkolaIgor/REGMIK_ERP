@@ -682,6 +682,14 @@ export interface IStorage {
   create1CClient(clientData: any): Promise<any>;
   update1CClient(external1cId: string, clientData: any): Promise<any>;
   delete1CClient(external1cId: string): Promise<any>;
+
+  // Payments Methods
+  getAllPayments(): Promise<any[]>;
+  getPaymentStats(): Promise<any>;
+  getPayment(id: number): Promise<any>;
+  createPayment(paymentData: any): Promise<any>;
+  updatePayment(id: number, updateData: any): Promise<any>;
+  deletePayment(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -2355,6 +2363,38 @@ export class MemStorage implements IStorage {
 
   async updateOrderPaymentStatus(orderId: number, paymentAmount: number, paymentType: string = "bank_transfer", bankNotificationId?: number, bankAccount?: string, correspondent?: string): Promise<{ order: Order; payment: OrderPayment }> {
     throw new Error("MemStorage не підтримує оновлення статусу платежів");
+  }
+
+  // Payments Methods
+  async getAllPayments(): Promise<any[]> {
+    return [];
+  }
+
+  async getPaymentStats(): Promise<any> {
+    return {
+      totalPayments: 0,
+      totalAmount: 0,
+      todayPayments: 0,
+      todayAmount: 0,
+      weekPayments: 0,
+      weekAmount: 0
+    };
+  }
+
+  async getPayment(id: number): Promise<any> {
+    return null;
+  }
+
+  async createPayment(paymentData: any): Promise<any> {
+    throw new Error("MemStorage не підтримує створення платежів");
+  }
+
+  async updatePayment(id: number, updateData: any): Promise<any> {
+    throw new Error("MemStorage не підтримує оновлення платежів");
+  }
+
+  async deletePayment(id: number): Promise<boolean> {
+    throw new Error("MemStorage не підтримує видалення платежів");
   }
 }
 

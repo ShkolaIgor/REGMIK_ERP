@@ -9442,6 +9442,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== PAYMENTS API ROUTES ====================
+
+  // Get all payments
+  app.get("/api/payments", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const payments = await storage.getAllPayments();
+      res.json(payments);
+    } catch (error) {
+      console.error("Error fetching payments:", error);
+      res.status(500).json({ error: "Помилка отримання платежів" });
+    }
+  });
+
+  // Get payment statistics
+  app.get("/api/payments/stats", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const stats = await storage.getPaymentStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching payment stats:", error);
+      res.status(500).json({ error: "Помилка отримання статистики платежів" });
+    }
+  });
+
+  // Get payment by ID
+  app.get("/api/payments/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const paymentId = parseInt(req.params.id);
+      const payment = await storage.getPayment(paymentId);
+      
+      if (!payment) {
+        return res.status(404).json({ error: "Платіж не знайдено" });
+      }
+      
+      res.json(payment);
+    } catch (error) {
+      console.error("Error fetching payment:", error);
+      res.status(500).json({ error: "Помилка отримання платежу" });
+    }
+  });
+
+  // Create new payment
+  app.post("/api/payments", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const payment = await storage.createPayment(req.body);
+      res.status(201).json(payment);
+    } catch (error) {
+      console.error("Error creating payment:", error);
+      res.status(500).json({ error: "Помилка створення платежу" });
+    }
+  });
+
+  // Update payment
+  app.put("/api/payments/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const paymentId = parseInt(req.params.id);
+      const payment = await storage.updatePayment(paymentId, req.body);
+      
+      if (!payment) {
+        return res.status(404).json({ error: "Платіж не знайдено" });
+      }
+      
+      res.json(payment);
+    } catch (error) {
+      console.error("Error updating payment:", error);
+      res.status(500).json({ error: "Помилка оновлення платежу" });
+    }
+  });
+
+  // Delete payment
+  app.delete("/api/payments/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const paymentId = parseInt(req.params.id);
+      const success = await storage.deletePayment(paymentId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Платіж не знайдено" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting payment:", error);
+      res.status(500).json({ error: "Помилка видалення платежу" });
+    }
+  });
+
+  // Export payments (placeholder for future implementation)
+  app.post("/api/payments/export", isSimpleAuthenticated, async (req, res) => {
+    try {
+      // TODO: Implement payment export functionality
+      res.json({ message: "Експорт платежів буде додано пізніше" });
+    } catch (error) {
+      console.error("Error exporting payments:", error);
+      res.status(500).json({ error: "Помилка експорту платежів" });
+    }
+  });
+
   // Process supplier XML import asynchronously
   async function processSupplierXmlImportAsync(jobId: string, fileBuffer: Buffer) {
     const job = supplierImportJobs.get(jobId);
@@ -14071,6 +14168,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: error.message,
         message: "Помилка тестування универсального парсингу"
       });
+    }
+  });
+
+  // ==================== PAYMENTS API ====================
+  
+  // Отримати всі платежі з фільтрацією
+  app.get("/api/payments", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const payments = await storage.getAllPayments();
+      res.json(payments);
+    } catch (error) {
+      console.error("Error fetching payments:", error);
+      res.status(500).json({ error: "Failed to fetch payments" });
+    }
+  });
+
+  // Отримати статистику платежів
+  app.get("/api/payments/stats", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const stats = await storage.getPaymentStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching payment stats:", error);
+      res.status(500).json({ error: "Failed to fetch payment stats" });
+    }
+  });
+
+  // Отримати платіж за ID
+  app.get("/api/payments/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const payment = await storage.getPayment(parseInt(req.params.id));
+      if (!payment) {
+        return res.status(404).json({ error: "Payment not found" });
+      }
+      res.json(payment);
+    } catch (error) {
+      console.error("Error fetching payment:", error);
+      res.status(500).json({ error: "Failed to fetch payment" });
+    }
+  });
+
+  // Створити новий платіж
+  app.post("/api/payments", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const paymentData = req.body;
+      const payment = await storage.createPayment(paymentData);
+      res.status(201).json(payment);
+    } catch (error) {
+      console.error("Error creating payment:", error);
+      res.status(500).json({ error: "Failed to create payment" });
+    }
+  });
+
+  // Оновити платіж
+  app.patch("/api/payments/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const paymentId = parseInt(req.params.id);
+      const updateData = req.body;
+      const payment = await storage.updatePayment(paymentId, updateData);
+      if (!payment) {
+        return res.status(404).json({ error: "Payment not found" });
+      }
+      res.json(payment);
+    } catch (error) {
+      console.error("Error updating payment:", error);
+      res.status(500).json({ error: "Failed to update payment" });
+    }
+  });
+
+  // Видалити платіж
+  app.delete("/api/payments/:id", isSimpleAuthenticated, async (req, res) => {
+    try {
+      const paymentId = parseInt(req.params.id);
+      const deleted = await storage.deletePayment(paymentId);
+      if (!deleted) {
+        return res.status(404).json({ error: "Payment not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting payment:", error);
+      res.status(500).json({ error: "Failed to delete payment" });
     }
   });
 
