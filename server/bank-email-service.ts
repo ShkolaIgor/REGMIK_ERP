@@ -414,6 +414,13 @@ export class BankEmailService {
 
         imap.once('error', (err: any) => {
           console.error("❌ Помилка IMAP з'єднання:", err);
+          
+          // Детальна інформація про помилку автентифікації
+          if (err.textCode === 'AUTHENTICATIONFAILED' || err.message?.includes('Authentication failed')) {
+            console.log(`❌ Перевірте налаштування: host=${bankEmailHost}, port=${bankEmailPort}, user=${bankEmailUser}`);
+            console.log(`❌ Можлива причина: невірні credentials або заблокований доступ IMAP`);
+          }
+          
           reject(err);
         });
 

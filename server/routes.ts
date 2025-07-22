@@ -11093,8 +11093,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Запускаємо перевірку нових банківських повідомлень
-      await bankEmailService.checkForNewEmails();
-      console.log(`🏦 Перевірку нових email завершено`);
+      try {
+        await bankEmailService.checkForNewEmails();
+        console.log(`🏦 Перевірку нових email завершено`);
+      } catch (emailError: any) {
+        console.log(`🏦 IMAP помилка:`, emailError.message);
+        
+        // Якщо помилка автентифікації, повертаємо корисну інформацію
+        if (emailError.message?.includes('Authentication failed')) {
+          return res.status(400).json({
+            success: false,
+            message: "Банківський IMAP доступ заблокований",
+            hint: "Перевірте налаштування email або зверніться до адміністратора банку",
+            details: {
+              host: bankEmailSettings?.bankEmailHost,
+              port: bankEmailSettings?.bankEmailPort,
+              user: bankEmailSettings?.bankEmailUser
+            }
+          });
+        }
+        
+        // Інші IMAP помилки
+        return res.status(500).json({
+          success: false,
+          message: "Помилка підключення до банківської пошти",
+          error: emailError.message,
+          hint: "Спробуйте пізніше або зверніться до технічної підтримки"
+        });
+      }
 
       // Шукаємо платежі за номером рахунку замовлення
       let foundPayment = false;
