@@ -830,6 +830,12 @@ export class DatabaseStorage implements IStorage {
 
     // Пошук за клієнтом (якщо вказано кореспондента)
     if (paymentInfo.correspondent) {
+      // Витягуємо назву з лапок у форматі: ТОВ "ЛЮПЕКС АГРО" → ЛЮПЕКС АГРО
+      const quotedNameMatch = paymentInfo.correspondent.match(/"([^"]+)"/);
+      const searchTerm = quotedNameMatch ? quotedNameMatch[1] : paymentInfo.correspondent;
+      
+      console.log(`🔍 Пошук клієнта за кореспондентом: "${paymentInfo.correspondent}" → пошуковий термін: "${searchTerm}"`);
+      
       // Приєднуємо таблицю клієнтів для пошуку за назвою
       const ordersWithClient = await db.select({
         order: orders,
@@ -837,9 +843,11 @@ export class DatabaseStorage implements IStorage {
       })
       .from(orders)
       .leftJoin(clients, eq(orders.clientId, clients.id))
-      .where(sql`${clients.name} ILIKE ${'%' + paymentInfo.correspondent + '%'}`);
+      .where(sql`${clients.name} ILIKE ${'%' + searchTerm + '%'}`);
 
       const clientOrders = ordersWithClient.map(row => row.order);
+      
+      console.log(`🔍 Знайдено ${clientOrders.length} замовлень за кореспондентом "${searchTerm}"`);
       
       if (conditions.length > 0) {
         // Комбінуємо з іншими умовами - правильно з'єднуємо SQL умови

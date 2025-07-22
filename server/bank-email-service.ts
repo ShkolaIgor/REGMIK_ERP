@@ -710,6 +710,7 @@ export class BankEmailService {
     vatAmount?: number;
   } | null {
     try {
+      console.log("🏦 СТАРТ АНАЛІЗУ EMAIL КОНТЕНТУ");
       console.log("🏦 Аналіз тексту email:", emailText.substring(0, 200) + "...");
       
       // УНІВЕРСАЛЬНІ регекси на основі реального формату Укрсіббанку (українська/російська)
@@ -719,8 +720,11 @@ export class BankEmailService {
       const operationMatch = emailText.match(/тип операці[їиі]:\s*([^\n\r,]+)/i);
       // УНІВЕРСАЛЬНИЙ формат: "сумма:" або "Сумма операции:"
       const amountMatch = emailText.match(/(?:сумм?а(?:\s+операці[їиі])?|сумма):\s*([\d,\.]+)/i);
-      // УНІВЕРСАЛЬНИЙ формат: "кореспондент:" або "Кореспондент:"  
-      const correspondentMatch = emailText.match(/кореспондент:\s*([^\n\r,]+)/i);
+      // УНІВЕРСАЛЬНИЙ формат: "кореспондент:" або "Кореспондент:" - витягуємо назву компанії
+      let correspondentMatch = emailText.match(/кореспондент:\s*([^,<]+)/i);
+      if (!correspondentMatch) {
+        correspondentMatch = emailText.match(/кореспондент:\s*(.+?)(?:,\s*<br>)/i);
+      }
       // УНІВЕРСАЛЬНИЙ формат: "призначення платежу:" або "Призначення платежу:"
       const purposeMatch = emailText.match(/призначення платежу:\s*([^\n\r]+)/i);
       
@@ -731,6 +735,72 @@ export class BankEmailService {
       console.log("  amountMatch:", amountMatch?.[1]);
       console.log("  correspondentMatch:", correspondentMatch?.[1]);
       console.log("  purposeMatch:", purposeMatch?.[1]);
+      
+      // EMERGENCY FIX: Якщо correspondentMatch не спрацював, витягуємо кореспондента простим способом
+      if (!correspondentMatch) {
+        console.log("🏦 EMERGENCY: Виконую резервний пошук кореспондента...");
+        
+        try {
+          // Простий підхід - знаходимо позицію "корреспондент:" (може бути різні варіанти написання)
+          const searchVariants = [
+            'корреспондент:',
+            'кореспондент:',
+            'корреспондент: ',
+            'кореспондент: ',
+            ' корреспондент:',
+            ' кореспондент:'
+          ];
+          
+          let correspondentIndex = -1;
+          let keywordLength = 0;
+          
+          for (const variant of searchVariants) {
+            correspondentIndex = emailText.indexOf(variant);
+            if (correspondentIndex !== -1) {
+              keywordLength = variant.length;
+              console.log("🏦 EMERGENCY: Знайдено варіант:", variant, "на позиції:", correspondentIndex);
+              break;
+            }
+          }
+          if (correspondentIndex !== -1) {
+            const startPos = correspondentIndex + keywordLength;
+            let endPos = emailText.indexOf(',', startPos);
+            const brPos = emailText.indexOf('<br>', startPos);
+            
+            // Використовуємо найближчу позицію
+            if (endPos === -1 || (brPos !== -1 && brPos < endPos)) {
+              endPos = brPos;
+            }
+            
+            if (endPos > startPos) {
+              const correspondentText = emailText.substring(startPos, endPos).trim();
+              console.log("🏦 EMERGENCY: ✅ Знайдено кореспондента:", correspondentText);
+              correspondentMatch = [null, correspondentText]; // Fake regex match format
+            } else {
+              console.log("🏦 EMERGENCY: ❌ Не вдалося знайти кінець імені кореспондента");
+            }
+          } else {
+            console.log("🏦 EMERGENCY: ❌ Не знайдено жодного варіанту 'кореспондент:'");
+            // Додатковий debug - показуємо фрагмент тексту для аналізу
+            const keywordPos = emailText.toLowerCase().indexOf('кореспондент');
+            if (keywordPos !== -1) {
+              const fragment = emailText.substring(keywordPos, keywordPos + 50);
+              console.log("🏦 EMERGENCY DEBUG: Фрагмент з 'кореспондент':", fragment);
+            }
+          }
+        } catch (emergencyError) {
+          console.log("🏦 EMERGENCY: ❌ Помилка в emergency пошуку:", emergencyError);
+        }
+      }
+      
+      // DEBUG: Перевіримо чи є слово "кореспондент" в тексті
+      const hasCorrespondent = emailText.toLowerCase().includes('кореспондент');
+      console.log("🏦 DEBUG: Чи є 'кореспондент' в тексті:", hasCorrespondent);
+      if (hasCorrespondent) {
+        const correspondentIndex = emailText.toLowerCase().indexOf('кореспондент');
+        const contextAround = emailText.substring(correspondentIndex - 10, correspondentIndex + 100);
+        console.log("🏦 DEBUG: Контекст навколо 'кореспондент':", contextAround);
+      }
       
       // Шукаємо номер рахунку в призначенні платежу (РМ00-XXXXXX або рах.№ XXXXX)
       const invoiceMatch = emailText.match(/(?:РМ00-(\d+)|рах\.?\s*№?\s*(\d+))/i);
@@ -745,6 +815,17 @@ export class BankEmailService {
       console.log("  invoiceMatch:", invoiceMatch);
       console.log("  dateMatch:", dateMatch);
       console.log("  vatMatch:", vatMatch);
+
+      // FINAL FIX: Якщо correspondentMatch не спрацював, витягуємо з додаткових регексів
+      if (!correspondentMatch && invoiceMatch?.input) {
+        console.log("🏦 FINAL FIX: Витягуємо кореспондента з повного input тексту...");
+        const fullText = invoiceMatch.input;
+        const correspondentMatch2 = fullText.match(/корреспондент:\s*([^<,]+)/i);
+        if (correspondentMatch2) {
+          correspondentMatch = correspondentMatch2;
+          console.log("🏦 FINAL FIX: ✅ Знайдено кореспондента:", correspondentMatch2[1]);
+        }
+      }
 
       // Для карткових операцій accountMatch може бути відсутнім
       if (!operationMatch || !amountMatch || !correspondentMatch) {
