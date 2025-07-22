@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -137,6 +137,8 @@ const orderSchema = z.object({
   productionApproved: z.boolean().optional(),
   productionApprovedBy: z.string().optional(),
   productionApprovedAt: z.string().optional(),
+  customerEmail: z.string().optional(),
+  customerPhone: z.string().optional(),
   // Nova Poshta поля
   recipientCityRef: z.string().optional(),
   recipientCityName: z.string().optional(),
@@ -228,10 +230,28 @@ export default function Orders() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Стабільний обробник зміни пошуку
+  // Стабільний обробник зміни пошуку з захистом від event bubbling та втрати фокусу
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+    e.preventDefault();
+    e.stopPropagation();
+    const value = e.target.value;
+    
+    // Зберігаємо позицію курсора
+    const cursorPosition = e.target.selectionStart;
+    
+    setSearchTerm(value);
+    
+    // Відновлюємо фокус та позицію курсора після setState
+    requestAnimationFrame(() => {
+      if (searchInputRef.current) {
+        searchInputRef.current.focus();
+        if (cursorPosition !== null) {
+          searchInputRef.current.setSelectionRange(cursorPosition, cursorPosition);
+        }
+      }
+    });
   }, []);
 
   // Стабільні обробники фільтрів
@@ -687,22 +707,24 @@ export default function Orders() {
     queryKey: ["/api/carriers"],
   });
 
-  // Стабільний debounce для пошуку
+  // Стабільний debounce з мемоізацією для пошуку
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
+      if (searchTerm !== debouncedSearchTerm) {
+        setDebouncedSearchTerm(searchTerm);
+      }
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [searchTerm, debouncedSearchTerm]);
 
-  // Оновлення серверної пагінації при зміні фільтрів
-  React.useEffect(() => {
+  // Стабільне оновлення серверної пагінації при зміні фільтрів
+  useEffect(() => {
     setServerPagination(prev => ({ ...prev, page: 1 }));
   }, [debouncedSearchTerm, statusFilter, paymentFilter, dateRangeFilter]);
 
-  // Оновлення серверної пагінації при зміні itemsPerPage
-  React.useEffect(() => {
+  // Стабільне оновлення серверної пагінації при зміні itemsPerPage
+  useEffect(() => {
     setServerPagination(prev => ({ 
       ...prev, 
       limit: itemsPerPage,
@@ -2578,10 +2600,20 @@ export default function Orders() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
+                  ref={searchInputRef}
+                  type="text"
                   placeholder="Пошук за номером замовлення, клієнтом, email або телефоном..."
                   value={searchTerm}
                   onChange={handleSearchChange}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
                   className="pl-10"
+                  autoComplete="off"
+                  suppressHydrationWarning
                 />
               </div>
 
