@@ -575,16 +575,22 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(orders.status, statusFilter));
     }
 
-    // Фільтр за оплатою
+    // Фільтр за оплатою - використовуємо paidAmount замість paymentDate
     if (paymentFilter && paymentFilter !== 'all') {
       if (paymentFilter === 'paid') {
-        conditions.push(isNotNull(orders.paymentDate));
+        conditions.push(gt(orders.paidAmount, '0'));
       } else if (paymentFilter === 'unpaid') {
-        conditions.push(isNull(orders.paymentDate));
+        conditions.push(or(
+          isNull(orders.paidAmount),
+          eq(orders.paidAmount, '0')
+        ));
       } else if (paymentFilter === 'overdue') {
         conditions.push(
           and(
-            isNull(orders.paymentDate),
+            or(
+              isNull(orders.paidAmount),
+              eq(orders.paidAmount, '0')
+            ),
             isNotNull(orders.dueDate),
             lt(orders.dueDate, new Date())
           )

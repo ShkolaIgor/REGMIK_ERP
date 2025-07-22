@@ -311,8 +311,9 @@ export default function Orders() {
           (new Date().getTime() - new Date(order.updatedAt).getTime()) < 2 * 60 * 1000;
         
         // Перевіряємо чи був новий платіж протягом останніх 2 хвилин
-        const hasRecentPayment = order.paymentDate && 
-          (new Date().getTime() - new Date(order.paymentDate).getTime()) < 2 * 60 * 1000;
+        // Перевіряємо за updatedAt замість paymentDate для зелених крапок
+        const hasRecentPayment = order.updatedAt && 
+          (new Date().getTime() - new Date(order.updatedAt).getTime()) < 2 * 60 * 1000;
         
         const showGreenDot = isRecentlyUpdated || hasRecentPayment;
         
@@ -378,8 +379,8 @@ export default function Orders() {
         const totalAmount = parseFloat(order.totalAmount);
         
         const getPaymentDisplay = () => {
-          // Якщо немає дати оплати, показуємо кнопку оплати незалежно від типу оплати
-          if (!order.paymentDate) {
+          // Якщо немає оплати (paidAmount = 0), показуємо кнопку оплати незалежно від типу оплати
+          if (paidAmount === 0) {
             return (
               <div onClick={(e) => e.stopPropagation()}>
                 <PaymentDialog
@@ -1450,19 +1451,26 @@ export default function Orders() {
   const isOrderOverdue = (order: any) => {
     if (!order.dueDate || order.shippedDate) return false;
     
-    const dueDate = new Date(order.dueDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    dueDate.setHours(0, 0, 0, 0);
+    // Перевіряємо чи замовлення оплачене
+    const paidAmount = parseFloat(order.paidAmount || '0');
+    if (paidAmount === 0) {
+      const dueDate = new Date(order.dueDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      dueDate.setHours(0, 0, 0, 0);
+      
+      return today > dueDate;
+    }
     
-    return today > dueDate;
+    return false; // Оплачені замовлення не можуть бути простроченими
   };
 
   const getOrderNumberBgColor = (order: any) => {
     // Якщо замовлення прострочене
     if (isOrderOverdue(order)) return "bg-red-100 border-red-300 border-2 text-red-800";
     // Якщо оплачено
-    if (order.paymentDate) return "bg-green-50 border-green-200";
+    const paidAmount = parseFloat(order.paidAmount || '0');
+    if (paidAmount > 0) return "bg-green-50 border-green-200";
     // Якщо близько до дедлайну (менше 3 днів)
     if (order.dueDate && new Date(order.dueDate) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)) return "bg-yellow-50 border-yellow-200";
     return "bg-gray-50";
