@@ -411,8 +411,11 @@ export default function Orders() {
                         <Badge className="bg-green-100 text-green-800 border-green-300">
                           ✅ Повна оплата
                         </Badge>
+                        <div className="text-xs text-gray-600">
+                          {formatCurrency(paidAmount)} UAH
+                        </div>
                         <div className="text-xs text-green-700 font-medium flex items-center gap-1">
-                          📅 <UkrainianDate date={order.paymentDate} format="short" />
+                          📅 <UkrainianDate date={order.lastPaymentDate} format="short" />
                         </div>
                       </div>
                     }
@@ -439,7 +442,7 @@ export default function Orders() {
                           {formatCurrency(paidAmount)} з {formatCurrency(totalAmount)}
                         </div>
                         <div className="text-xs text-yellow-700 font-medium flex items-center gap-1">
-                          📅 <UkrainianDate date={order.paymentDate} format="short" />
+                          📅 <UkrainianDate date={order.lastPaymentDate} format="short" />
                         </div>
                       </div>
                     }
@@ -482,6 +485,16 @@ export default function Orders() {
                     currentPaymentType={order.paymentType || "none"}
                     currentPaidAmount={order.paidAmount || "0"}
                     isProductionApproved={order.productionApproved || false}
+                    trigger={
+                      <div className="space-y-1 cursor-pointer hover:opacity-80">
+                        <Badge variant="secondary" className="bg-gray-100 text-gray-700 border-gray-300">
+                          💰 Не оплачено
+                        </Badge>
+                        <div className="text-xs text-gray-500">
+                          До оплати: {formatCurrency(totalAmount)} UAH
+                        </div>
+                      </div>
+                    }
                   />
                 </div>
               );

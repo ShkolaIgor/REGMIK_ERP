@@ -739,11 +739,28 @@ export class DatabaseStorage implements IStorage {
           }
         }
 
+        // Завантаження дати останнього платежу
+        let lastPaymentDate = null;
+        try {
+          const lastPayment = await db.select()
+            .from(orderPayments)
+            .where(eq(orderPayments.orderId, order.id))
+            .orderBy(desc(orderPayments.paymentDate))
+            .limit(1);
+          
+          if (lastPayment.length > 0) {
+            lastPaymentDate = lastPayment[0].paymentDate;
+          }
+        } catch (error) {
+          console.error(`Error fetching last payment for order ${order.id}:`, error);
+        }
+
         return {
           ...order,
           items: filteredItems as (OrderItem & { product: Product })[],
           client: clientData,
-          contact: contactData
+          contact: contactData,
+          lastPaymentDate: lastPaymentDate
         };
       })
     );
