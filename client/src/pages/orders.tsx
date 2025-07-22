@@ -158,85 +158,22 @@ type OrderFormData = z.infer<typeof orderSchema>;
 type OrderItemFormData = z.infer<typeof orderItemSchema>;
 type StatusFormData = z.infer<typeof statusSchema>;
 
-// Uncontrolled компонент пошуку з debounce
-const SearchInput = memo(({ 
-  initialValue, 
-  onChange, 
-  placeholder 
-}: { 
-  initialValue: string; 
-  onChange: (value: string) => void; 
-  placeholder: string;
-}) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    if (inputRef.current && inputRef.current.value !== initialValue) {
-      inputRef.current.value = initialValue;
-    }
-  }, [initialValue]);
-
-  const handleInput = useCallback((e: Event) => {
-    const target = e.target as HTMLInputElement;
-    const value = target.value;
-    
-    // Відміняємо попередній timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    
-    // Встановлюємо новий timeout
-    timeoutRef.current = setTimeout(() => {
-      onChange(value);
-    }, 300);
-  }, [onChange]);
-
-  useEffect(() => {
-    const input = inputRef.current;
-    if (input) {
-      input.addEventListener('input', handleInput);
-      
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-      };
-      
-      input.addEventListener('keydown', handleKeyDown);
-      
-      return () => {
-        input.removeEventListener('input', handleInput);
-        input.removeEventListener('keydown', handleKeyDown);
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
-      };
-    }
-  }, [handleInput]);
-
+// Тимчасово вимкнений пошук через проблеми перезавантаження
+const SearchPlaceholder = () => {
   return (
     <div className="relative flex-1">
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-      <input
-        ref={inputRef}
-        type="text"
-        placeholder={placeholder}
-        defaultValue={initialValue}
-        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10"
-        autoComplete="off"
-      />
+      <div className="flex h-10 w-full rounded-md border border-input bg-gray-50 px-3 py-2 text-sm text-gray-500 pl-10">
+        Пошук тимчасово вимкнений (проблеми з перезавантаженням)
+      </div>
     </div>
   );
-});
-
-SearchInput.displayName = "SearchInput";
+};
 
 export default function Orders() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(""); // Тимчасово вимкнений
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [paymentFilter, setPaymentFilter] = useState<string>("all");
@@ -306,10 +243,10 @@ export default function Orders() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Стабільний обробник зміни пошуку
-  const handleSearchChange = useCallback((value: string) => {
-    setSearchTerm(value);
-  }, []);
+  // Тимчасово вимкнений пошук
+  // const handleSearchChange = useCallback((value: string) => {
+  //   setSearchTerm(value);
+  // }, []);
 
   // Стабільні обробники фільтрів
   const handleStatusFilterChange = useCallback((value: string) => {
@@ -2653,12 +2590,8 @@ export default function Orders() {
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-col lg:flex-row gap-4 items-center">
-              {/* Search */}
-              <SearchInput
-                initialValue={searchTerm}
-                onChange={handleSearchChange}
-                placeholder="Пошук за номером замовлення, клієнтом, email або телефоном..."
-              />
+              {/* Search - Тимчасово вимкнений */}
+              <SearchPlaceholder />
 
               {/* Status Filter */}
               <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
