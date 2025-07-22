@@ -202,7 +202,7 @@ export function DataTable({
 
   // Optimized sort for large datasets
   const sortedData = useMemo(() => {
-    if (!settings.sortField) return data;
+    if (!Array.isArray(data) || !settings.sortField) return Array.isArray(data) ? data : [];
 
     return [...data].sort((a, b) => {
       const aVal = a[settings.sortField];
@@ -231,10 +231,10 @@ export function DataTable({
   
   // Reduce default page size for large datasets
   useEffect(() => {
-    if (data.length > 10000 && settings.pageSize > 200) {
+    if (Array.isArray(data) && data.length > 10000 && settings.pageSize > 200) {
       setSettings(prev => ({ ...prev, pageSize: 100 }));
     }
-  }, [data.length, settings.pageSize]);
+  }, [data, settings.pageSize]);
 
   const totalPages = Math.ceil(sortedData.length / settings.pageSize);
   
