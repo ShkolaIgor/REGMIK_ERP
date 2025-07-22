@@ -536,3 +536,325 @@ export default function Payments() {
     </div>
   );
 }
+      label: "№",
+      width: "60px",
+      render: (value: any, row: any) => (
+        <div className="font-medium">#{value}</div>
+      ),
+    },
+    {
+      key: "orderNumber",
+      label: "Замовлення",
+      width: "120px",
+      render: (value: any, row: any) => (
+        <div className="font-medium text-blue-600">
+          {value || `ID: ${row.orderId}`}
+        </div>
+      ),
+    },
+    {
+      key: "client",
+      label: "Клієнт/Кореспондент",
+      width: "200px",
+      render: (value: any, row: any) => (
+        <div>
+          <div className="font-medium">{row.clientName || "Не вказано"}</div>
+          {row.correspondent && (
+            <div className="text-sm text-gray-500">{row.correspondent}</div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "paymentAmount",
+      label: "Сума",
+      width: "120px",
+      render: (value: any, row: any) => {
+        const amount = parseFloat(row.paymentAmount || value || "0");
+        return (
+          <div className="font-semibold text-green-600">
+            {amount.toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} грн
+          </div>
+        );
+      },
+    },
+    {
+      key: "paymentType",
+      label: "Тип платежу",
+      width: "120px",
+      render: (value: any, row: any) => (
+        <Badge variant="outline">{getTypeLabel(value)}</Badge>
+      ),
+    },
+    {
+      key: "paymentStatus",
+      label: "Статус",
+      render: (value: any, row: any) => (
+        <div className="flex items-center space-x-2">
+          {getStatusIcon(value)}
+          {getStatusBadge(value)}
+        </div>
+      ),
+    },
+    {
+      key: "paymentDate",
+      label: "Дата платежу",
+      render: (value: any, row: any) => (
+        <div className="text-sm">
+          {new Date(value).toLocaleDateString('uk-UA', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          })}
+        </div>
+      ),
+    },
+    {
+      key: "actions",
+      label: "Дії",
+      render: (value: any, row: any) => (
+        <div className="flex items-center space-x-2">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedPayment(row)}
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Деталі платежу #{selectedPayment?.id}</DialogTitle>
+                <DialogDescription>
+                  Повна інформація про платіж
+                </DialogDescription>
+              </DialogHeader>
+              {selectedPayment && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Замовлення</label>
+                    <div className="font-medium">{selectedPayment.orderNumber || `ID: ${selectedPayment.orderId}`}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Сума платежу</label>
+                    <div className="font-semibold text-green-600">{parseFloat(selectedPayment.paymentAmount || "0").toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} грн</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Тип платежу</label>
+                    <div>{getTypeLabel(selectedPayment.paymentType)}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Статус</label>
+                    <div>{getStatusBadge(selectedPayment.paymentStatus)}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Дата платежу</label>
+                    <div>{new Date(selectedPayment.paymentDate).toLocaleString('uk-UA')}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Дата створення</label>
+                    <div>{new Date(selectedPayment.createdAt).toLocaleString('uk-UA')}</div>
+                  </div>
+                  {selectedPayment.correspondent && (
+                    <div className="col-span-2">
+                      <label className="text-sm font-medium text-gray-500">Кореспондент</label>
+                      <div>{selectedPayment.correspondent}</div>
+                    </div>
+                  )}
+                  {selectedPayment.bankAccount && (
+                    <div className="col-span-2">
+                      <label className="text-sm font-medium text-gray-500">Банківський рахунок</label>
+                      <div className="font-mono text-sm">{selectedPayment.bankAccount}</div>
+                    </div>
+                  )}
+                  {selectedPayment.reference && (
+                    <div className="col-span-2">
+                      <label className="text-sm font-medium text-gray-500">Референс</label>
+                      <div>{selectedPayment.reference}</div>
+                    </div>
+                  )}
+                  {selectedPayment.notes && (
+                    <div className="col-span-2">
+                      <label className="text-sm font-medium text-gray-500">Примітки</label>
+                      <div className="text-sm text-gray-600">{selectedPayment.notes}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Підтвердити видалення</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Ви впевнені, що хочете видалити цей платіж? Цю дію неможливо скасувати.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Скасувати</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => deleteMutation.mutate(row.id)}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Видалити
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Платежі</h1>
+        <p className="text-muted-foreground">
+          Управління та відстеження платежів за замовленнями
+        </p>
+      </div>
+
+      {/* Статистика */}
+      {stats && !statsLoading && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Всього платежів</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalPayments}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats.totalAmount.toLocaleString()} грн
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Сьогодні</CardTitle>
+              <RefreshCw className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.todayPayments}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats.todayAmount.toLocaleString()} грн
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Підтверджені</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.confirmedPayments}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Банківські перекази</CardTitle>
+              <CreditCard className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.bankTransfers}</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Фільтри */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Фільтри та пошук</CardTitle>
+          <CardDescription>
+            Знайдіть потрібні платежі за різними критеріями
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Пошук за номером замовлення, клієнтом, кореспондентом..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Статус" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Всі статуси</SelectItem>
+                <SelectItem value="confirmed">Підтверджені</SelectItem>
+                <SelectItem value="pending">Очікують</SelectItem>
+                <SelectItem value="failed">Помилка</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Тип платежу" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Всі типи</SelectItem>
+                <SelectItem value="bank_transfer">Банківський переказ</SelectItem>
+                <SelectItem value="card_payment">Картка</SelectItem>
+                <SelectItem value="cash">Готівка</SelectItem>
+                <SelectItem value="other">Інше</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              onClick={() => exportMutation.mutate()}
+              disabled={exportMutation.isPending}
+              variant="outline"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {exportMutation.isPending ? "Експорт..." : "Експорт"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Таблиця платежів */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Список платежів</CardTitle>
+              <CardDescription>
+                Знайдено {filteredPayments.length} платежів
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/payments"] })}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+              Оновити
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <DataTable 
+            columns={columns} 
+            data={filteredPayments} 
+            loading={isLoading}
+            storageKey="payments"
+          />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

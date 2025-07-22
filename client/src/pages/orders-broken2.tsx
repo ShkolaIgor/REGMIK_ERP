@@ -17,12 +17,22 @@ import { UkrainianDate } from "@/components/ui/ukrainian-date";
 import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
 import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X, Settings, Palette, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, HandPlatter, DollarSign, Clock, TrendingUp, Printer, Mail } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { ClientForm } from "@/components/ClientForm";
+import { PaymentDialog } from "@/components/PaymentDialog";
+import DueDateButton from "@/components/DueDateButton";
 import { useSorting } from "@/hooks/useSorting";
+import { InlineSerialNumbers } from "@/components/InlineSerialNumbers";
+import { NovaPoshtaIntegration } from "@/components/NovaPoshtaIntegration";
+import { OrdersXmlImport } from "@/components/OrdersXmlImport";
+import { OrderItemsXmlImport } from "@/components/OrderItemsXmlImport";
+import { PrintPreviewModal } from "@/components/PrintPreviewModal";
+import ComponentDeductions from "@/components/ComponentDeductions";
 // Типи
 type Order = {
   id: number;
@@ -3046,7 +3056,7 @@ export default function Orders() {
                     
                     {/* Списання компонентів */}
                     <div className="mt-6 border-t pt-4">
-                      <p className="text-sm text-gray-500">Деталі замовлення</p>
+                      <ComponentDeductions orderId={order.id} />
                     </div>
                   </div>
                 )}
@@ -3059,7 +3069,108 @@ export default function Orders() {
        {/* </main> */}
       </div>
 
+      {/* Діалог часткового відвантаження */}
+      {selectedOrderForShipment && (
+        <PartialShipmentDialog
+          open={isPartialShipmentOpen}
+          onOpenChange={setIsPartialShipmentOpen}
+          orderId={selectedOrderForShipment.id}
+          orderNumber={selectedOrderForShipment.orderNumber}
+        />
+      )}
 
+      {/* Діалог для створення нового клієнта */}
+      <Dialog open={isCreateClientDialogOpen} onOpenChange={setIsCreateClientDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Створити нового клієнта</DialogTitle>
+            <DialogDescription>
+              Додайте повну інформацію про нового клієнта
+            </DialogDescription>
+          </DialogHeader>
+          <ClientForm
+            prefillName={newClientName}
+            onSubmit={handleCreateNewClient}
+            onCancel={() => {
+              setIsCreateClientDialogOpen(false);
+              setNewClientName("");
+            }}
+            isLoading={createClientMutation.isPending}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Попередній перегляд друку */}
+      <PrintPreviewModal
+        isOpen={isPrintPreviewOpen}
+        onClose={() => setIsPrintPreviewOpen(false)}
+        printData={printData}
+        onPrint={handlePrint}
+      />
+
+      {/* Попередній перегляд друку */}
+      <PrintPreviewModal
+        isOpen={showPrintPreview}
+        onClose={() => setShowPrintPreview(false)}
+        printData={selectedOrderForPrint}
+        onPrint={(orderData) => {
+          if (orderData) {
+            // Викликаємо друк
+            console.log('Друк накладної для замовлення:', orderData);
+            // Тут може бути логіка відправки на принтер або відкриття PDF
+          }
+          setShowPrintPreview(false);
+          setSelectedOrderForPrint(null);
+        }}
+      />
+
+      {/* Діалог оновлення дати виконання */}
+      <Dialog open={isEditMode} onOpenChange={(open) => {
+        if (!open) {
+          setIsEditMode(false);
+          setEditingOrder(null);
+          setOrderItems([]);
+          form.reset();
+          setIsDialogOpen(false);
+        }
+      }}>
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              {editingOrder ? 'Редагувати замовлення' : 'Створити нове замовлення'}
+            </DialogTitle>
+            <DialogDescription>
+              {editingOrder ? 
+                'Внесіть зміни до замовлення та натисніть "Зберегти"' : 
+                'Заповніть форму для створення нового замовлення'
+              }
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto">
+            <OrderForm
+              order={editingOrder}
+              onSuccess={(orderId) => {
+                setIsEditMode(false);
+                setEditingOrder(null);
+                setOrderItems([]);
+                form.reset();
+                setIsDialogOpen(false);
+                
+                queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+                queryClient.invalidateQueries({ queryKey: ['/api/products/ordered'] });
+                
+                toast({
+                  title: editingOrder ? "Замовлення оновлено" : "Замовлення створено",
+                  description: editingOrder ? 
+                    `Замовлення ${editingOrder.orderNumber} успішно оновлено` :
+                    "Нове замовлення успішно створено",
+                });
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Модальне вікно з формою замовлення */}
       <Dialog open={isDialogOpen} onOpenChange={(open) => {
@@ -3111,3 +3222,6 @@ export default function Orders() {
     </div>
   );
 }
+                                <TableHead
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
