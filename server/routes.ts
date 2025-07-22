@@ -11213,10 +11213,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: null
       });
 
-      // Запускаємо перевірку нових банківських повідомлень
+      // Запускаємо перевірку ВСіХ банківських повідомлень БЕЗ позначення як прочитані
       try {
-        await bankEmailService.checkForNewEmails();
-        console.log(`🏦 Перевірку нових email завершено`);
+        await bankEmailService.checkForProcessedEmails();
+        console.log(`🏦 Перевірку всіх email завершено`);
       } catch (emailError: any) {
         console.log(`🏦 IMAP помилка:`, emailError.message);
         
