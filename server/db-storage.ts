@@ -14274,7 +14274,7 @@ export class DatabaseStorage implements IStorage {
             sum: sql`coalesce(sum(payment_amount), 0)`.mapWith(Number),
           })
           .from(orderPayments)
-          .where(eq(orderPayments.paymentStatus, 'completed')),
+          .where(eq(orderPayments.paymentStatus, 'confirmed')),
           
         db
           .select({
@@ -14282,7 +14282,7 @@ export class DatabaseStorage implements IStorage {
             sum: sql`coalesce(sum(payment_amount), 0)`.mapWith(Number),
           })
           .from(orderPayments)
-          .where(sql`payment_date >= ${today} AND payment_status = 'completed'`),
+          .where(sql`payment_date >= ${today} AND payment_status = 'confirmed'`),
           
         db
           .select({
@@ -14290,8 +14290,34 @@ export class DatabaseStorage implements IStorage {
             sum: sql`coalesce(sum(payment_amount), 0)`.mapWith(Number),
           })
           .from(orderPayments)
-          .where(sql`payment_date >= ${thisWeek} AND payment_status = 'completed'`)
+          .where(sql`payment_date >= ${thisWeek} AND payment_status = 'confirmed'`)
       ]);
+
+      // Додаткові статистики для різних статусів та типів
+      const [statusStats, typeStats] = await Promise.all([
+        db
+          .select({
+            status: orderPayments.paymentStatus,
+            count: sql`count(*)`.mapWith(Number)
+          })
+          .from(orderPayments)
+          .groupBy(orderPayments.paymentStatus),
+          
+        db
+          .select({
+            type: orderPayments.paymentType,
+            count: sql`count(*)`.mapWith(Number)
+          })
+          .from(orderPayments)
+          .groupBy(orderPayments.paymentType)
+      ]);
+
+      const confirmedPayments = statusStats.find(s => s.status === 'confirmed')?.count || 0;
+      const pendingPayments = statusStats.find(s => s.status === 'pending')?.count || 0;
+      
+      const bankTransfers = typeStats.find(t => t.type === 'bank_transfer')?.count || 0;
+      const cardPayments = typeStats.find(t => t.type === 'card_payment')?.count || 0;
+      const cashPayments = typeStats.find(t => t.type === 'cash')?.count || 0;
 
       return {
         totalPayments: totalStats[0]?.count || 0,
@@ -14300,6 +14326,11 @@ export class DatabaseStorage implements IStorage {
         todayAmount: todayStats[0]?.sum || 0,
         weekPayments: weekStats[0]?.count || 0,
         weekAmount: weekStats[0]?.sum || 0,
+        confirmedPayments,
+        pendingPayments,
+        bankTransfers,
+        cardPayments,
+        cashPayments
       };
     } catch (error) {
       console.error('Error fetching payment stats:', error);

@@ -450,7 +450,7 @@ export default function Payments() {
           <DataTable 
             columns={columns} 
             data={filteredPayments} 
-            isLoading={isLoading}
+            loading={isLoading}
             pageSize={20}
           />
         </CardContent>
