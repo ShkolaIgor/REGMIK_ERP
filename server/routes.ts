@@ -13960,61 +13960,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // TEST ENDPOINT - Тестування нового формату "рахунку №" для розпізнавання номерів рахунків  
-  app.post("/api/test-enhanced-invoice-regex", async (req, res) => {
+  // TEST ENDPOINT - Тестування універсального алгоритму розпізнавання номерів рахунків
+  app.post("/api/test-universal-invoice-parsing", async (req, res) => {
     try {
-      const testEmailContent = req.body.content || "Передоплата за товар згідно рахунку №27688 від 11.07.2025р у т.ч. ПДВ 20% - 1512.00 грн.";
-      
-      console.log("🧪 Testing enhanced invoice regex with content:", testEmailContent);
-      
-      // Симулюємо банківське повідомлення
-      const fullBankMessage = `
-        ОПЕРАЦІЯ ЗА КАРТКОЮ
-        Кореспондент: ТОВ "ТЕСТОВА КОМПАНІЯ"
-        Тип операції: зараховано
-        Сума: 7564.80 UAH
-        Призначення платежу: ${testEmailContent}
-      `;
-      
-      // Використовуємо метод parsePaymentInfo з bankEmailService
-      const paymentInfo = await bankEmailService.parsePaymentInfo(fullBankMessage);
-      
-      if (paymentInfo) {
-        console.log("🧪 Parsed payment info:", paymentInfo);
+      // Функція парсингу рахунків (копія логіки з bank-email-service.ts)
+      function parseInvoiceFromText(text: string): string | null {
+        // Етап 1: стандартні формати рахунків
+        let invoiceMatch = text.match(/(?:РМ00-(\d+)|(?:згідно\s+)?(?:рах\.?|рахунку)\s*№?\s*(\d+))/i);
         
-        // Пробуємо знайти замовлення
-        const orders = await storage.findOrdersByPaymentInfo({
-          invoiceNumber: paymentInfo.invoiceNumber,
-          invoiceDate: paymentInfo.invoiceDate,
-          amount: paymentInfo.amount
-        });
+        // Етап 2: номери з датами (будь-який текст між номером та датою)
+        if (!invoiceMatch) {
+          invoiceMatch = text.match(/(\d{5,6}).*?(\d{1,2}\.\d{1,2}\.(?:\d{4}|\d{2}р?))/i);
+          if (invoiceMatch) {
+            // Створюємо структуру як для стандартного match
+            invoiceMatch = [invoiceMatch[0], null, null, invoiceMatch[1]] as RegExpMatchArray;
+          }
+        }
         
-        res.json({
-          success: true,
-          testContent: testEmailContent,
-          fullMessage: fullBankMessage,
-          parsedPaymentInfo: paymentInfo,
-          foundOrders: orders,
-          ordersCount: orders.length,
-          message: orders.length > 0 ? 
-            `Знайдено ${orders.length} замовлення для рахунку ${paymentInfo.invoiceNumber}` :
-            `Замовлення для рахунку ${paymentInfo.invoiceNumber} не знайдено`
-        });
-      } else {
-        res.json({
-          success: false,
-          testContent: testEmailContent,
-          fullMessage: fullBankMessage,
-          parsedPaymentInfo: null,
-          message: "Не вдалося розпарсити банківське повідомлення"
+        return invoiceMatch ? `РМ00-${invoiceMatch[1] || invoiceMatch[2] || invoiceMatch[3]}` : null;
+      }
+
+      // Тестові варіанти різних форматів
+      const testCases = [
+        {
+          description: "Номер з датою через пробіл: 27711 від 16.07.25",
+          content: "Передоплата за товар 27711 від 16.07.25",
+          expectedInvoice: "РМ00-27711"
+        },
+        {
+          description: "Номер з датою без слова 'від': 27711 16.07.25",
+          content: "Оплата 27711 16.07.25",
+          expectedInvoice: "РМ00-27711"
+        },
+        {
+          description: "Номер з текстом між номером та датою",
+          content: "Платіж 27711 надходження 16.07.25",
+          expectedInvoice: "РМ00-27711"
+        },
+        {
+          description: "Номер з датою без пробілу: 27711від16.07.25",
+          content: "Оплата 27711від16.07.25",
+          expectedInvoice: "РМ00-27711"
+        },
+        {
+          description: "Формат згідно рах + номер",
+          content: "Передоплата за товар згідно рах 27711 від16.07.25",
+          expectedInvoice: "РМ00-27711"
+        },
+        {
+          description: "Формат згідно рахунку № + номер",
+          content: "Оплата згідно рахунку №27688 від 11.07.2025р",
+          expectedInvoice: "РМ00-27688"
+        },
+        {
+          description: "Формат рах.№ + номер",
+          content: "Оплата по рах.№27688",
+          expectedInvoice: "РМ00-27688"
+        },
+        {
+          description: "Стандартний РМ00 формат",
+          content: "Оплата РМ00-027688",
+          expectedInvoice: "РМ00-027688"
+        }
+      ];
+
+      const results = [];
+      
+      for (const testCase of testCases) {
+        // Парсимо номер рахунку
+        const actualInvoice = parseInvoiceFromText(testCase.content);
+        
+        // Шукаємо замовлення якщо номер знайдено
+        let foundOrders = [];
+        if (actualInvoice) {
+          try {
+            foundOrders = await storage.findOrdersByPaymentInfo({
+              invoiceNumber: actualInvoice
+            });
+          } catch (e) {
+            console.log(`Помилка пошуку замовлення ${actualInvoice}:`, e.message);
+          }
+        }
+        
+        results.push({
+          description: testCase.description,
+          testContent: testCase.content,
+          expectedInvoice: testCase.expectedInvoice,
+          actualInvoice: actualInvoice || "НЕ ЗНАЙДЕНО",
+          success: actualInvoice === testCase.expectedInvoice,
+          ordersFound: foundOrders.length,
+          orderDetails: foundOrders.map(o => ({ id: o.id, invoiceNumber: o.invoiceNumber }))
         });
       }
+
+      const allSuccessful = results.every(r => r.success);
+      
+      res.json({
+        success: allSuccessful,
+        totalTests: results.length,
+        passedTests: results.filter(r => r.success).length,
+        results,
+        message: allSuccessful ? 
+          "Всі формати рахунків розпізнано правильно!" :
+          "Деякі формати рахунків розпізнано неправильно"
+      });
       
     } catch (error) {
-      console.error("❌ Enhanced regex test error:", error);
+      console.error("❌ Universal parsing test error:", error);
       res.status(500).json({ 
         error: error.message,
-        message: "Помилка тестування покращеного regex"
+        message: "Помилка тестування универсального парсингу"
       });
     }
   });
