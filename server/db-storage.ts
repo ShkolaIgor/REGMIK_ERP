@@ -4482,6 +4482,24 @@ export class DatabaseStorage implements IStorage {
   // Order Payment methods
   async createOrderPayment(payment: InsertOrderPayment): Promise<OrderPayment> {
     try {
+      // Перевіряємо на дублікати за orderId, paymentAmount та paymentDate
+      const existing = await db
+        .select()
+        .from(orderPayments)
+        .where(
+          and(
+            eq(orderPayments.orderId, payment.orderId),
+            eq(orderPayments.paymentAmount, payment.paymentAmount),
+            eq(orderPayments.paymentDate, payment.paymentDate)
+          )
+        )
+        .limit(1);
+
+      if (existing.length > 0) {
+        console.log("Платіж вже існує, повертаємо існуючий:", existing[0].id);
+        return existing[0];
+      }
+
       const [created] = await db
         .insert(orderPayments)
         .values(payment)

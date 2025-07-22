@@ -197,6 +197,7 @@ export default function Payments() {
     {
       key: "paymentStatus",
       label: "Статус",
+      width: "100px",
       render: (value: any, row: any) => (
         <div className="flex items-center space-x-2">
           {getStatusIcon(value)}
@@ -207,6 +208,7 @@ export default function Payments() {
     {
       key: "paymentDate",
       label: "Дата платежу",
+      width: "110px",
       render: (value: any, row: any) => (
         <div className="text-sm">
           {new Date(value).toLocaleDateString('uk-UA', {
@@ -220,6 +222,7 @@ export default function Payments() {
     {
       key: "actions",
       label: "Дії",
+      width: "80px",
       render: (value: any, row: any) => (
         <div className="flex items-center space-x-2">
           <Dialog>
