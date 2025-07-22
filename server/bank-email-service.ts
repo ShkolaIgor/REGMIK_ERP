@@ -802,8 +802,8 @@ export class BankEmailService {
         console.log("🏦 DEBUG: Контекст навколо 'кореспондент':", contextAround);
       }
       
-      // Шукаємо номер рахунку в призначенні платежу (РМ00-XXXXXX або рах.№ XXXXX)
-      const invoiceMatch = emailText.match(/(?:РМ00-(\d+)|рах\.?\s*№?\s*(\d+))/i);
+      // Шукаємо номер рахунку в призначенні платежу (РМ00-XXXXXX, рах.№ XXXXX, рахунку №XXXXX)
+      const invoiceMatch = emailText.match(/(?:РМ00-(\d+)|рах\.?\s*№?\s*(\d+)|рахунку\s*№?\s*(\d+))/i);
       
       // Шукаємо дату рахунку (підтримка різних форматів: від 18.07.2025, від 18.07.25р.)
       const dateMatch = emailText.match(/від\s*(\d{2}\.\d{2}\.(?:\d{4}|\d{2}р?))/i);
@@ -875,7 +875,7 @@ export class BankEmailService {
         amount: amount,
         correspondent: correspondentMatch[1].trim(),
         paymentPurpose: purposeMatch?.[1]?.trim() || "",
-        invoiceNumber: invoiceMatch ? `РМ00-${invoiceMatch[1] || invoiceMatch[2]}` : undefined,
+        invoiceNumber: invoiceMatch ? `РМ00-${invoiceMatch[1] || invoiceMatch[2] || invoiceMatch[3]}` : undefined,
         invoiceDate: invoiceDate,
         vatAmount: vatAmount,
       };

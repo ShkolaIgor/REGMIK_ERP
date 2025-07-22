@@ -13960,5 +13960,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // TEST ENDPOINT - Тестування нового формату "рахунку №" для розпізнавання номерів рахунків  
+  app.post("/api/test-enhanced-invoice-regex", async (req, res) => {
+    try {
+      const testEmailContent = req.body.content || "Передоплата за товар згідно рахунку №27688 від 11.07.2025р у т.ч. ПДВ 20% - 1512.00 грн.";
+      
+      console.log("🧪 Testing enhanced invoice regex with content:", testEmailContent);
+      
+      // Симулюємо банківське повідомлення
+      const fullBankMessage = `
+        ОПЕРАЦІЯ ЗА КАРТКОЮ
+        Кореспондент: ТОВ "ТЕСТОВА КОМПАНІЯ"
+        Тип операції: зараховано
+        Сума: 7564.80 UAH
+        Призначення платежу: ${testEmailContent}
+      `;
+      
+      // Використовуємо метод parsePaymentInfo з bankEmailService
+      const paymentInfo = await bankEmailService.parsePaymentInfo(fullBankMessage);
+      
+      if (paymentInfo) {
+        console.log("🧪 Parsed payment info:", paymentInfo);
+        
+        // Пробуємо знайти замовлення
+        const orders = await storage.findOrdersByPaymentInfo({
+          invoiceNumber: paymentInfo.invoiceNumber,
+          invoiceDate: paymentInfo.invoiceDate,
+          amount: paymentInfo.amount
+        });
+        
+        res.json({
+          success: true,
+          testContent: testEmailContent,
+          fullMessage: fullBankMessage,
+          parsedPaymentInfo: paymentInfo,
+          foundOrders: orders,
+          ordersCount: orders.length,
+          message: orders.length > 0 ? 
+            `Знайдено ${orders.length} замовлення для рахунку ${paymentInfo.invoiceNumber}` :
+            `Замовлення для рахунку ${paymentInfo.invoiceNumber} не знайдено`
+        });
+      } else {
+        res.json({
+          success: false,
+          testContent: testEmailContent,
+          fullMessage: fullBankMessage,
+          parsedPaymentInfo: null,
+          message: "Не вдалося розпарсити банківське повідомлення"
+        });
+      }
+      
+    } catch (error) {
+      console.error("❌ Enhanced regex test error:", error);
+      res.status(500).json({ 
+        error: error.message,
+        message: "Помилка тестування покращеного regex"
+      });
+    }
+  });
+
   return httpServer;
 }
