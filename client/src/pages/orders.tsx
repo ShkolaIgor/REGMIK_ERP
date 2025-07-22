@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -228,6 +228,31 @@ export default function Orders() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Стабільний обробник зміни пошуку
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  }, []);
+
+  // Стабільні обробники фільтрів
+  const handleStatusFilterChange = useCallback((value: string) => {
+    setStatusFilter(value);
+  }, []);
+
+  const handlePaymentFilterChange = useCallback((value: string) => {
+    setPaymentFilter(value);
+  }, []);
+
+  const handleDateRangeFilterChange = useCallback((value: string) => {
+    setDateRangeFilter(value);
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setPaymentFilter("all");
+    setDateRangeFilter("all");
+  }, []);
 
   // Функція обробки перетягування стовпців
   const handleColumnDragEnd = (result: any) => {
@@ -591,22 +616,36 @@ export default function Orders() {
     limit: itemsPerPage
   });
 
+  // Стабільний queryKey з мемоізацією
+  const ordersQueryKey = useMemo(() => [
+    "/api/orders", 
+    serverPagination.page, 
+    serverPagination.limit, 
+    debouncedSearchTerm, 
+    statusFilter, 
+    paymentFilter, 
+    dateRangeFilter
+  ], [serverPagination.page, serverPagination.limit, debouncedSearchTerm, statusFilter, paymentFilter, dateRangeFilter]);
+
+  // Стабільна queryFn з useCallback
+  const fetchOrders = useCallback(async () => {
+    const params = new URLSearchParams({
+      page: serverPagination.page.toString(),
+      limit: serverPagination.limit.toString(),
+      ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
+      ...(statusFilter !== 'all' && { status: statusFilter }),
+      ...(paymentFilter !== 'all' && { payment: paymentFilter }),
+      ...(dateRangeFilter !== 'all' && { dateRange: dateRangeFilter })
+    });
+    
+    const response = await fetch(`/api/orders?${params}`);
+    if (!response.ok) throw new Error('Failed to fetch orders');
+    return response.json();
+  }, [serverPagination.page, serverPagination.limit, debouncedSearchTerm, statusFilter, paymentFilter, dateRangeFilter]);
+
   const { data: ordersResponse, isLoading } = useQuery({
-    queryKey: ["/api/orders", serverPagination.page, serverPagination.limit, debouncedSearchTerm, statusFilter, paymentFilter, dateRangeFilter],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        page: serverPagination.page.toString(),
-        limit: serverPagination.limit.toString(),
-        ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
-        ...(statusFilter !== 'all' && { status: statusFilter }),
-        ...(paymentFilter !== 'all' && { payment: paymentFilter }),
-        ...(dateRangeFilter !== 'all' && { dateRange: dateRangeFilter })
-      });
-      
-      const response = await fetch(`/api/orders?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch orders');
-      return response.json();
-    },
+    queryKey: ordersQueryKey,
+    queryFn: fetchOrders,
   });
 
   const allOrders = ordersResponse?.orders || [];
@@ -648,11 +687,11 @@ export default function Orders() {
     queryKey: ["/api/carriers"],
   });
 
-  // Debounce для основного пошуку
+  // Стабільний debounce для пошуку
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-    }, 300); // 300мс затримка для пошуку замовлень
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
@@ -2541,13 +2580,13 @@ export default function Orders() {
                 <Input
                   placeholder="Пошук за номером замовлення, клієнтом, email або телефоном..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={handleSearchChange}
                   className="pl-10"
                 />
               </div>
 
               {/* Status Filter */}
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="Статус" />
                 </SelectTrigger>
@@ -2562,7 +2601,7 @@ export default function Orders() {
               </Select>
 
               {/* Payment Filter */}
-              <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+              <Select value={paymentFilter} onValueChange={handlePaymentFilterChange}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="Оплата" />
                 </SelectTrigger>
@@ -2575,7 +2614,7 @@ export default function Orders() {
               </Select>
 
               {/* Date Range Filter */}
-              <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
+              <Select value={dateRangeFilter} onValueChange={handleDateRangeFilterChange}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="Період" />
                 </SelectTrigger>
@@ -2592,12 +2631,7 @@ export default function Orders() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    setSearchTerm("");
-                    setStatusFilter("all");
-                    setPaymentFilter("all");
-                    setDateRangeFilter("all");
-                  }}
+                  onClick={handleClearFilters}
                 >
                   <X className="w-4 h-4 mr-1" />
                   Очистити
