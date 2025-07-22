@@ -121,6 +121,38 @@ export function BankMonitoringTest() {
     },
   });
 
+  // Тестування універсального алгоритму розпізнавання номерів
+  const testUniversalMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("/api/test-universal-invoice-parsing", {
+        method: "GET",
+      });
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        toast({
+          title: "✅ Універсальний алгоритм працює",
+          description: data.message,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "❌ Помилка алгоритму",
+          description: data.message,
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "❌ Помилка тестування",
+        description: "Не вдалося протестувати універсальний алгоритм",
+        variant: "destructive",
+      });
+      console.error("Universal test error:", error);
+    },
+  });
+
   // Отримання статистики банківських платежів
   const { data: stats } = useQuery({
     queryKey: ["/api/bank-payments/stats"],

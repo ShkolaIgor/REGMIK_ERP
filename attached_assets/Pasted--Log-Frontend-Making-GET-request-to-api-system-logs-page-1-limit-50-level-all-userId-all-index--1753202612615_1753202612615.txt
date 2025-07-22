@@ -1,0 +1,52 @@
+[Log] Frontend: Making GET request to: /api/system-logs?page=1&limit=50&level=all&userId=all (index-BJ6ujtc4.js, line 48)
+[Log] Frontend: Request headers: – Object (index-BJ6ujtc4.js, line 48)
+Object
+[Log] Frontend: Request body: – undefined (index-BJ6ujtc4.js, line 48)
+[Log] Frontend: Document cookies: – "sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22…" (index-BJ6ujtc4.js, line 48)
+"sidebar_state=true; _ga_Z5YXFPYHZ8=GS2.1.s1750952750$o47$g1$t1750952800$j10$l0$h0; _ga=GA1.1.155356835.1736686175; rl_user_id=%22%22; rl_anonymous_id=%2237a74817-e000-44cc-b59b-f3639cbd0cec%22"
+[Log] Frontend: Response status: 200 for GET /api/system-logs?page=1&limit=50&level=all&userId=all (index-BJ6ujtc4.js, line 48)
+[Log] Frontend: Response headers: – Object (index-BJ6ujtc4.js, line 48)
+Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-BJ6ujtc4.js, line 1525)
+[Log] 1C Invoices Debug: – Object (index-BJ6ujtc4.js, line 1456)
+Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: – Object (index-BJ6ujtc4.js, line 1468)
+Object
+[Log] UI: Рендеринг інтеграції: – 1 – "1c_get_invoices_in" – "Імпорт вхідних накладних з 1С" (index-BJ6ujtc4.js, line 1525)
+[Log] 1C Invoices Debug: – Object (index-BJ6ujtc4.js, line 1456)
+Object
+[Log] 🔧 1C Outgoing Invoices Frontend Debug: (index-BJ6ujtc4.js, line 1468)
+Object
+
+displayDataCount: 0
+
+errorMessage: null
+
+firstDisplayInvoice: null
+
+firstRealInvoice: null
+
+hasError: false
+
+isOpen: false
+
+loadingInvoices: false
+
+realDataCount: 0
+
+Object Prototype
+[Error] ReferenceError: Can't find variable: testUniversalMutation
+	Z3 (index-BJ6ujtc4.js:40:167)
+	(anonymous function) (index-BJ6ujtc4.js:40:391)
+	gR (index-BJ6ujtc4.js:38:15561)
+	DR (index-BJ6ujtc4.js:40:32081)
+	xY (index-BJ6ujtc4.js:40:31500)
+	Zpe (index-BJ6ujtc4.js:40:31050)
+	nge (index-BJ6ujtc4.js:40:40963)
+	Vm (index-BJ6ujtc4.js:40:40316)
+	MR (index-BJ6ujtc4.js:40:36916)
+	rm (index-BJ6ujtc4.js:38:3290)
+	(anonymous function) (index-BJ6ujtc4.js:40:34289)
+[Error] ReferenceError: Can't find variable: testUniversalMutation
+	rm (index-BJ6ujtc4.js:38:3381)
+	(anonymous function) (index-BJ6ujtc4.js:40:34289)
