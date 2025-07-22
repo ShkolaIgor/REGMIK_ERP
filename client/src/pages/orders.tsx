@@ -158,44 +158,74 @@ type OrderFormData = z.infer<typeof orderSchema>;
 type OrderItemFormData = z.infer<typeof orderItemSchema>;
 type StatusFormData = z.infer<typeof statusSchema>;
 
-// Ізольований компонент пошуку
+// Uncontrolled компонент пошуку з debounce
 const SearchInput = memo(({ 
-  value, 
+  initialValue, 
   onChange, 
   placeholder 
 }: { 
-  value: string; 
+  initialValue: string; 
   onChange: (value: string) => void; 
   placeholder: string;
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onChange(e.target.value);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (inputRef.current && inputRef.current.value !== initialValue) {
+      inputRef.current.value = initialValue;
+    }
+  }, [initialValue]);
+
+  const handleInput = useCallback((e: Event) => {
+    const target = e.target as HTMLInputElement;
+    const value = target.value;
+    
+    // Відміняємо попередній timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    // Встановлюємо новий timeout
+    timeoutRef.current = setTimeout(() => {
+      onChange(value);
+    }, 300);
   }, [onChange]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      e.stopPropagation();
+  useEffect(() => {
+    const input = inputRef.current;
+    if (input) {
+      input.addEventListener('input', handleInput);
+      
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      };
+      
+      input.addEventListener('keydown', handleKeyDown);
+      
+      return () => {
+        input.removeEventListener('input', handleInput);
+        input.removeEventListener('keydown', handleKeyDown);
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+      };
     }
-  }, []);
+  }, [handleInput]);
 
   return (
     <div className="relative flex-1">
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-      <Input
+      <input
         ref={inputRef}
         type="text"
         placeholder={placeholder}
-        value={value}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        className="pl-10"
+        defaultValue={initialValue}
+        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10"
         autoComplete="off"
-        suppressHydrationWarning
       />
     </div>
   );
@@ -2625,7 +2655,7 @@ export default function Orders() {
             <div className="flex flex-col lg:flex-row gap-4 items-center">
               {/* Search */}
               <SearchInput
-                value={searchTerm}
+                initialValue={searchTerm}
                 onChange={handleSearchChange}
                 placeholder="Пошук за номером замовлення, клієнтом, email або телефоном..."
               />
