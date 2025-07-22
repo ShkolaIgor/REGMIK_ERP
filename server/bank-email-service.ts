@@ -805,8 +805,8 @@ export class BankEmailService {
       // Шукаємо номер рахунку в призначенні платежу (РМ00-XXXXXX або рах.№ XXXXX)
       const invoiceMatch = emailText.match(/(?:РМ00-(\d+)|рах\.?\s*№?\s*(\d+))/i);
       
-      // Шукаємо дату рахунку
-      const dateMatch = emailText.match(/від\s*(\d{2}\.\d{2}\.\d{4})/i);
+      // Шукаємо дату рахунку (підтримка різних форматів: від 18.07.2025, від 18.07.25р.)
+      const dateMatch = emailText.match(/від\s*(\d{2}\.\d{2}\.(?:\d{4}|\d{2}р?))/i);
       
       // Шукаємо ПДВ
       const vatMatch = emailText.match(/ПДВ.*?(\d+[,\.]\d+)/i);
@@ -842,8 +842,23 @@ export class BankEmailService {
 
       let invoiceDate: Date | undefined;
       if (dateMatch) {
-        const [day, month, year] = dateMatch[1].split('.');
+        const datePart = dateMatch[1];
+        const [day, month, yearPart] = datePart.split('.');
+        
+        // Обробляємо різні формати року: 2025, 25р., 25
+        let year: string;
+        if (yearPart.length === 4) {
+          year = yearPart; // 2025
+        } else if (yearPart.endsWith('р.') || yearPart.endsWith('р')) {
+          year = '20' + yearPart.replace(/р\.?/, ''); // 25р. → 2025
+        } else if (yearPart.length === 2) {
+          year = '20' + yearPart; // 25 → 2025
+        } else {
+          year = yearPart;
+        }
+        
         invoiceDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        console.log(`🏦 Розпізнано дату: ${datePart} → ${invoiceDate.toLocaleDateString('uk-UA')}`);
       }
 
       // Очищаємо operationType від зайвих символів і тексту (включно з комами)

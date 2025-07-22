@@ -11121,6 +11121,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint for Ukrainian date parsing
+  app.get('/api/test-date-parsing', async (req, res) => {
+    try {
+      const testText = 'за термоперетворювач, зг. рах.№ РМ00-027731 від 18.07.25р.,В тому числі ПДВ 2 383,42 грн.';
+      
+      // Test regex for date matching  
+      const dateMatch = testText.match(/від\s*(\d{2}\.\d{2}\.(?:\d{4}|\d{2}р?))/i);
+      
+      console.log('🏦 TEST DATE PARSING:');
+      console.log('  Input text:', testText);
+      console.log('  Date regex match:', dateMatch);
+      
+      let parsedDate = null;
+      if (dateMatch) {
+        const datePart = dateMatch[1];
+        const [day, month, yearPart] = datePart.split('.');
+        
+        let year: string;
+        if (yearPart.length === 4) {
+          year = yearPart;
+        } else if (yearPart.endsWith('р.') || yearPart.endsWith('р')) {
+          year = '20' + yearPart.replace(/р\.?/, '');
+        } else if (yearPart.length === 2) {
+          year = '20' + yearPart;
+        } else {
+          year = yearPart;
+        }
+        
+        parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        console.log('  Parsed date parts:', { day, month, yearPart, finalYear: year });
+        console.log('  Final parsed date:', parsedDate.toLocaleDateString('uk-UA'));
+      }
+      
+      res.json({
+        success: true,
+        testText,
+        dateMatch: dateMatch ? dateMatch[0] : null,
+        datePart: dateMatch ? dateMatch[1] : null,
+        parsedDate: parsedDate ? parsedDate.toISOString() : null,
+        localeDateString: parsedDate ? parsedDate.toLocaleDateString('uk-UA') : null
+      });
+      
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  });
+
   // Ручна перевірка ВСІХ банківських повідомлень (включно з прочитаними) - тестовий endpoint
   app.post("/api/bank-email/manual-check", (req, res, next) => {
     // Пропускаємо авторизацію для curl тестів
