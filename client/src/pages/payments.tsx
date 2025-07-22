@@ -149,7 +149,7 @@ export default function Payments() {
     {
       key: "id",
       label: "№",
-      width: "60px",
+      width: 60,
       render: (value: any, row: any) => (
         <div className="font-medium">#{value}</div>
       ),
@@ -157,17 +157,28 @@ export default function Payments() {
     {
       key: "orderNumber",
       label: "Замовлення",
-      width: "120px",
-      render: (value: any, row: any) => (
-        <div className="font-medium text-blue-600">
-          {value || `ID: ${row.orderId}`}
-        </div>
-      ),
+      width: 120,
+      render: (value: any, row: any) => {
+        // Перевіряємо чи створювався платіж протягом останніх 2 хвилин
+        const isRecentPayment = row.createdAt && 
+          (new Date().getTime() - new Date(row.createdAt).getTime()) < 2 * 60 * 1000;
+        
+        return (
+          <div className="flex items-center gap-2">
+            {isRecentPayment && (
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Новий платіж"></div>
+            )}
+            <div className="font-medium text-blue-600">
+              {value || `ID: ${row.orderId}`}
+            </div>
+          </div>
+        );
+      },
     },
     {
       key: "client",
       label: "Клієнт/Кореспондент",
-      width: "200px",
+      width: 200,
       render: (value: any, row: any) => (
         <div>
           <div className="font-medium">{row.clientName || "Не вказано"}</div>
@@ -180,7 +191,7 @@ export default function Payments() {
     {
       key: "paymentAmount",
       label: "Сума",
-      width: "120px",
+      width: 120,
       render: (value: any, row: any) => {
         const amount = parseFloat(row.paymentAmount || value || "0");
         return (
@@ -193,7 +204,7 @@ export default function Payments() {
     {
       key: "paymentType",
       label: "Тип платежу",
-      width: "120px",
+      width: 120,
       render: (value: any, row: any) => (
         <Badge variant="outline">{getTypeLabel(value)}</Badge>
       ),
@@ -201,7 +212,7 @@ export default function Payments() {
     {
       key: "paymentStatus",
       label: "Статус",
-      width: "100px",
+      width: 100,
       render: (value: any, row: any) => (
         <div className="flex items-center space-x-2">
           {getStatusIcon(value)}
@@ -212,7 +223,7 @@ export default function Payments() {
     {
       key: "paymentDate",
       label: "Дата платежу",
-      width: "110px",
+      width: 110,
       render: (value: any, row: any) => (
         <div className="text-sm">
           {new Date(value).toLocaleDateString('uk-UA', {
@@ -226,7 +237,7 @@ export default function Payments() {
     {
       key: "actions",
       label: "Дії",
-      width: "80px",
+      width: 80,
       render: (value: any, row: any) => (
         <div className="flex items-center space-x-2">
           <Dialog>
@@ -254,7 +265,7 @@ export default function Payments() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Сума платежу</label>
-                    <div className="font-semibold text-green-600">{parseFloat(selectedPayment.paymentAmount || "0").toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} грн</div>
+                    <div className="font-semibold text-green-600">{(typeof selectedPayment.paymentAmount === 'string' ? parseFloat(selectedPayment.paymentAmount) : selectedPayment.paymentAmount || 0).toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} грн</div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Тип платежу</label>

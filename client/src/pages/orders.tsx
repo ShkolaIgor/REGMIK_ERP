@@ -306,10 +306,26 @@ export default function Orders() {
     switch (columnKey) {
       case 'orderSequenceNumber':
         const isOverdue = isOrderOverdue(order);
+        // Перевіряємо чи оновлювався запис протягом останніх 2 хвилин
+        const isRecentlyUpdated = order.updatedAt && 
+          (new Date().getTime() - new Date(order.updatedAt).getTime()) < 2 * 60 * 1000;
+        
+        // Перевіряємо чи був новий платіж протягом останніх 2 хвилин
+        const hasRecentPayment = order.paymentDate && 
+          (new Date().getTime() - new Date(order.paymentDate).getTime()) < 2 * 60 * 1000;
+        
+        const showGreenDot = isRecentlyUpdated || hasRecentPayment;
+        
         return (
           <div className={`font-semibold text-center text-lg p-2 rounded ${getOrderNumberBgColor(order)}`}>
             {isOverdue && <div className="text-xs text-red-600 font-bold mb-1">ПРОСТРОЧЕНО</div>}
-            {order.orderNumber || order.orderSequenceNumber}
+            <div className="flex items-center justify-center gap-2">
+              {showGreenDot && (
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" 
+                     title={hasRecentPayment ? "Новий платіж" : "Щойно оновлено"}></div>
+              )}
+              <span>{order.orderNumber || order.orderSequenceNumber}</span>
+            </div>
           </div>
         );
       
