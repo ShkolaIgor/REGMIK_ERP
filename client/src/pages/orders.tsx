@@ -182,7 +182,6 @@ export default function Orders() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState(""); // Пошук відновлено
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [paymentFilter, setPaymentFilter] = useState<string>("all");
   const [dateRangeFilter, setDateRangeFilter] = useState<string>("all");
@@ -643,18 +642,18 @@ export default function Orders() {
     "/api/orders", 
     serverPagination.page, 
     serverPagination.limit, 
-    debouncedSearchTerm, 
+    searchTerm, 
     statusFilter, 
     paymentFilter, 
     dateRangeFilter
-  ], [serverPagination.page, serverPagination.limit, debouncedSearchTerm, statusFilter, paymentFilter, dateRangeFilter]);
+  ], [serverPagination.page, serverPagination.limit, searchTerm, statusFilter, paymentFilter, dateRangeFilter]);
 
   // Стабільна queryFn з useCallback
   const fetchOrders = useCallback(async () => {
     const params = new URLSearchParams({
       page: serverPagination.page.toString(),
       limit: serverPagination.limit.toString(),
-      ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
+      ...(searchTerm && { search: searchTerm }),
       ...(statusFilter !== 'all' && { status: statusFilter }),
       ...(paymentFilter !== 'all' && { payment: paymentFilter }),
       ...(dateRangeFilter !== 'all' && { dateRange: dateRangeFilter })
@@ -663,7 +662,7 @@ export default function Orders() {
     const response = await fetch(`/api/orders?${params}`);
     if (!response.ok) throw new Error('Failed to fetch orders');
     return response.json();
-  }, [serverPagination.page, serverPagination.limit, debouncedSearchTerm, statusFilter, paymentFilter, dateRangeFilter]);
+  }, [serverPagination.page, serverPagination.limit, searchTerm, statusFilter, paymentFilter, dateRangeFilter]);
 
   const { data: ordersResponse, isLoading } = useQuery({
     queryKey: ordersQueryKey,
@@ -709,21 +708,10 @@ export default function Orders() {
     queryKey: ["/api/carriers"],
   });
 
-  // Стабільний debounce з мемоізацією для пошуку
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchTerm !== debouncedSearchTerm) {
-        setDebouncedSearchTerm(searchTerm);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchTerm, debouncedSearchTerm]);
-
   // Стабільне оновлення серверної пагінації при зміні фільтрів
   useEffect(() => {
     setServerPagination(prev => ({ ...prev, page: 1 }));
-  }, [debouncedSearchTerm, statusFilter, paymentFilter, dateRangeFilter]);
+  }, [searchTerm, statusFilter, paymentFilter, dateRangeFilter]);
 
   // Стабільне оновлення серверної пагінації при зміні itemsPerPage
   useEffect(() => {
