@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef, memo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -158,6 +158,51 @@ type OrderFormData = z.infer<typeof orderSchema>;
 type OrderItemFormData = z.infer<typeof orderItemSchema>;
 type StatusFormData = z.infer<typeof statusSchema>;
 
+// Ізольований компонент пошуку
+const SearchInput = memo(({ 
+  value, 
+  onChange, 
+  placeholder 
+}: { 
+  value: string; 
+  onChange: (value: string) => void; 
+  placeholder: string;
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onChange(e.target.value);
+  }, [onChange]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, []);
+
+  return (
+    <div className="relative flex-1">
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+      <Input
+        ref={inputRef}
+        type="text"
+        placeholder={placeholder}
+        value={value}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        className="pl-10"
+        autoComplete="off"
+        suppressHydrationWarning
+      />
+    </div>
+  );
+});
+
+SearchInput.displayName = "SearchInput";
+
 export default function Orders() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
@@ -230,28 +275,10 @@ export default function Orders() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Стабільний обробник зміни пошуку з захистом від event bubbling та втрати фокусу
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const value = e.target.value;
-    
-    // Зберігаємо позицію курсора
-    const cursorPosition = e.target.selectionStart;
-    
+  // Стабільний обробник зміни пошуку
+  const handleSearchChange = useCallback((value: string) => {
     setSearchTerm(value);
-    
-    // Відновлюємо фокус та позицію курсора після setState
-    requestAnimationFrame(() => {
-      if (searchInputRef.current) {
-        searchInputRef.current.focus();
-        if (cursorPosition !== null) {
-          searchInputRef.current.setSelectionRange(cursorPosition, cursorPosition);
-        }
-      }
-    });
   }, []);
 
   // Стабільні обробники фільтрів
@@ -2597,25 +2624,11 @@ export default function Orders() {
           <CardContent className="p-4">
             <div className="flex flex-col lg:flex-row gap-4 items-center">
               {/* Search */}
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Пошук за номером замовлення, клієнтом, email або телефоном..."
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }
-                  }}
-                  className="pl-10"
-                  autoComplete="off"
-                  suppressHydrationWarning
-                />
-              </div>
+              <SearchInput
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Пошук за номером замовлення, клієнтом, email або телефоном..."
+              />
 
               {/* Status Filter */}
               <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
