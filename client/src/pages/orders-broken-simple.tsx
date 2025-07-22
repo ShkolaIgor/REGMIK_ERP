@@ -1,18 +1,11 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/DataTable/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { HandPlatter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-
-// Перевіряємо чи дані є масивом
-const ensureArray = (data: any) => Array.isArray(data) ? data : (data?.orders || []);
 
 interface Order {
   id: number;
@@ -69,11 +62,9 @@ export default function Orders() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: ordersData = [], isLoading } = useQuery({
+  const { data: orders = [], isLoading } = useQuery({
     queryKey: ["/api/orders"],
   });
-
-  const orders = ensureArray(ordersData);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
