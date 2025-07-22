@@ -12039,7 +12039,8 @@ export class DatabaseStorage implements IStorage {
       invoiceNumber: invoice.number,
       clientId: client.id,
       totalAmount: invoice.total || 0,
-      status: "pending"
+      status: "pending",
+      createdAt: invoice.date ? new Date(invoice.date) : new Date() // Використовуємо дату рахунку з 1С
     };
     
     console.log(`📋 Створюємо замовлення з даними:`, JSON.stringify(orderData, null, 2));
@@ -13619,7 +13620,7 @@ export class DatabaseStorage implements IStorage {
         currency: currency,
         status: 'pending',
         notes: invoiceData.notes || invoiceData.Комментарий || '',
-        createdAt: new Date()
+        createdAt: invoiceData.ДатаДокумента ? new Date(invoiceData.ДатаДокумента) : (invoiceData.date ? new Date(invoiceData.date) : new Date())
       };
       
       // Перевіряємо чи вже існує замовлення з таким номером рахунку та датою
@@ -13768,6 +13769,7 @@ export class DatabaseStorage implements IStorage {
         currency: currency,
         status: invoiceData.status || existingOrder.status,
         notes: invoiceData.notes || invoiceData.Комментарий || existingOrder.notes,
+        createdAt: invoiceData.ДатаДокумента ? new Date(invoiceData.ДатаДокумента) : (invoiceData.date ? new Date(invoiceData.date) : existingOrder.createdAt),
         updatedAt: new Date()
       };
       
