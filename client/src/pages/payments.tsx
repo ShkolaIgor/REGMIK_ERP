@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Search, RefreshCw, Download, Eye, CreditCard, CheckCircle, XCircle } from "lucide-react";
+import { Trash2, Search, RefreshCw, Download, Eye, CreditCard, CheckCircle, XCircle, Euro } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DataTable } from "@/components/DataTable";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -385,99 +385,146 @@ export default function Payments() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Платежі</h1>
-          <p className="text-muted-foreground">
-            Управління та відстеження платежів за замовленнями
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" className="text-red-600 hover:text-red-700" size="sm">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Видалити дублікати
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Підтвердити видалення дублікатів</AlertDialogTitle>
-                <AlertDialogDescription>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+       {/* Header Section  sticky top-0 z-40 */}
+        <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+          <div className="w-full px-8 py-3">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Euro className="w-6 h-6 text-white" />
+                  </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">Платежі</h1>
+                  <p className="text-gray-500 mt-1">
+            Управління та відстеження платежів за замовленнями</p>
+                </div>                 
+                <div className="flex items-center space-x-4">
+                  <div className="border-blue-200 text-purple-600 hover:bg-blue-50 flex gap-2">          
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" className="text-red-600 hover:text-red-700" size="sm">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Видалити дублікати
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Підтвердити видалення дублікатів</AlertDialogTitle>
+                          <AlertDialogDescription>
                   Ця операція знайде та видалить всі дублікати платежів (однакові замовлення, суми та кореспонденти).
                   Перший платіж з групи дублікатів залишиться, решта будуть видалені.
                   Цю дію неможливо скасувати.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Скасувати</AlertDialogCancel>
-                <AlertDialogAction
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Скасувати</AlertDialogCancel>
+                          <AlertDialogAction
                   onClick={() => removeDuplicatesMutation.mutate()}
                   className="bg-red-600 hover:bg-red-700"
                   disabled={removeDuplicatesMutation.isPending}
                 >
                   {removeDuplicatesMutation.isPending ? "Видаляю..." : "Видалити дублікати"}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          <div className="flex items-center gap-1 text-sm text-gray-600">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             Автооновлення кожні 30с
+                    </div>
+                  </div>
+             </div>
+           </div>
           </div>
         </div>
-      </div>
-
+      </header> 
+      
       {/* Статистика */}
       {stats && !statsLoading && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Всього платежів</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalPayments}</div>
-              <p className="text-xs text-muted-foreground">
-                {stats.totalAmount.toLocaleString()} грн
-              </p>
+      <div className="w-full px-8 pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <CreditCard className="w-4 h-4 text-blue-600" />
+                    <p className="text-sm text-blue-700 font-medium">Всього платежів</p>
+                  </div>
+                  <p className="text-3xl font-bold text-blue-900 mb-1">{stats.totalPayments}</p>
+                  <p className="text-xs text-blue-600">+{stats.totalAmount.toLocaleString()} грн</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <CreditCard className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>   
+          
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <RefreshCw className="w-4 h-4 text-emerald-600" />
+                    <p className="text-sm text-emerald-700 font-medium">Сьогодні</p>
+                  </div>
+                  <p className="text-3xl font-bold text-emerald-900 mb-1">         {stats.todayPayments}</p>
+                  <p className="text-xs text-emerald-600">{stats.todayAmount.toLocaleString()} грн</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <RefreshCw className="w-8 h-8 text-white" />
+                </div>
+              </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Сьогодні</CardTitle>
-              <RefreshCw className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.todayPayments}</div>
-              <p className="text-xs text-muted-foreground">
-                {stats.todayAmount.toLocaleString()} грн
-              </p>
+        
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle className="w-4 h-4 text-purple-600" />
+                    <p className="text-sm text-purple-700 font-medium">Підтверджені</p>
+                  </div>
+                  <p className="text-3xl font-bold text-purple-900 mb-1">{stats.confirmedPayments}</p>
+                  <p className="text-xs text-purple-600">Грн.</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <CheckCircle className="w-8 h-8 text-white" />
+                </div>
+              </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Підтверджені</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.confirmedPayments}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Банківські перекази</CardTitle>
-              <CreditCard className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.bankTransfers}</div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-500 hover:scale-105 group">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <CreditCard className="w-4 h-4 text-orange-600" />
+                    <p className="text-sm text-orange-700 font-medium">Банківські перекази</p>
+                  </div>
+                  <p className="text-3xl font-bold text-orange-900 mb-1">{stats.bankTransfers}</p>
+                  <p className="text-xs text-orange-600">Грн.</p>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-3">
+                  <CreditCard className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>  
+      </div>  
+      )}
+      
       {/* Фільтри */}
+      <div className="w-full pb-3"> {/* відступ знизу та зверху */}
       <Card>
         <CardHeader>
           <CardTitle>Фільтри та пошук</CardTitle>
@@ -530,7 +577,10 @@ export default function Payments() {
           </div>
         </CardContent>
       </Card>
+      </div>
 
+      {/* Content */}
+      <div className="w-full space-y-6 flex-1 overflow-auto">
       {/* Таблиця платежів */}
       <Card>
         <CardHeader>
@@ -560,6 +610,8 @@ export default function Payments() {
           />
         </CardContent>
       </Card>
+      </div>
+      
     </div>
   );
 }

@@ -51,7 +51,6 @@ type Order = {
   paymentDate: Date | null;
   paymentType: string | null;
   paidAmount: string | null;
-  lastPaymentDate: string | null;
   contractNumber: string | null;
   productionApproved: boolean | null;
   productionApprovedBy: string | null;

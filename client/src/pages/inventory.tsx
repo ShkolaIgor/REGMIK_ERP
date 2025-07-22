@@ -196,6 +196,7 @@ export default function Inventory() {
                     <p className="text-gray-500 mt-1">Управління товарами на складах</p>
                   </div>
               </div>
+              
             <div className="flex items-center space-x-4">
               <div className="border-blue-200 text-purple-600 hover:bg-blue-50 flex gap-2">
                 <ScannerButton
@@ -252,7 +253,7 @@ export default function Inventory() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <DollarSign className="w-4 h-4 text-emerald-600" />
-                      <p className="text-sm text-emerald-700 font-medium">агальна вартість запасів</p>
+                      <p className="text-sm text-emerald-700 font-medium">Загальна вартість запасів</p>
                     </div>
                     <p className="text-3xl font-bold text-emerald-900 mb-1">
                       {formatCurrency(inventory.reduce((total: number, inv: any) => {
