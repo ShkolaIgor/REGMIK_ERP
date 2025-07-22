@@ -433,15 +433,11 @@ export class BankEmailService {
                     }
 
                     // Створюємо об'єкт email з декодованим вмістом
-                    // ВАЖЛИВО: використовуємо дату отримання email з IMAP атрибутів для платежу
-                    const emailDate = attrs.date ? new Date(attrs.date) : new Date();
-                    console.log(`🏦 Email ${seqno} отримано: ${emailDate.toLocaleString('uk-UA')} (буде використано як дата платежу)`);
-                    
                     const mockEmail = {
                       messageId: `imap-${seqno}-${Date.now()}`,
                       subject: actualSubject,
                       fromAddress: emailSettings.bankEmailAddress || 'noreply@ukrsib.com.ua',
-                      receivedAt: emailDate, // Дата отримання з поштового листа
+                      receivedAt: new Date(),
                       textContent: decodedContent
                     };
 
@@ -628,8 +624,7 @@ export class BankEmailService {
         });
         
         console.log("🏦 DEBUG: paymentInfo для обробки:", paymentInfo);
-        console.log("🏦 DEBUG: Дата email для платежу:", emailContent.receivedAt.toLocaleString('uk-UA'));
-        const paymentResult = await this.processPayment(savedNotification.id, paymentInfo, emailContent.receivedAt);
+        const paymentResult = await this.processPayment(savedNotification.id, paymentInfo);
         
         if (paymentResult.success) {
           await storage.updateBankPaymentNotification(savedNotification.id, {
@@ -914,7 +909,7 @@ export class BankEmailService {
   /**
    * Обробка платежу - знаходження замовлення та оновлення його статусу
    */
-  private async processPayment(notificationId: number, paymentInfo: any, emailDate?: Date): Promise<{ success: boolean; message: string; orderId?: number }> {
+  private async processPayment(notificationId: number, paymentInfo: any): Promise<{ success: boolean; message: string; orderId?: number }> {
     try {
       console.log(`🏦 processPayment called with notificationId=${notificationId}, paymentInfo:`, paymentInfo);
       
@@ -979,16 +974,15 @@ export class BankEmailService {
 
       console.log(`🏦 DEBUG: Found order for payment processing:`, { orderId: order.id, orderNumber: order.invoiceNumber, amount: paymentInfo.amount });
 
-      // Оновлюємо статус оплати замовлення з датою email
-      console.log(`🏦 DEBUG: Calling updateOrderPaymentStatus з датою email: ${emailDate?.toLocaleString('uk-UA') || 'не вказана'}`);
+      // Оновлюємо статус оплати замовлення
+      console.log(`🏦 DEBUG: Calling updateOrderPaymentStatus...`);
       const result = await storage.updateOrderPaymentStatus(
         order.id, 
         paymentInfo.amount, 
         "bank_transfer",
         notificationId,
         paymentInfo.accountNumber,
-        paymentInfo.correspondent,
-        emailDate // Передаємо дату email як дату платежу
+        paymentInfo.correspondent
       );
 
       console.log(`🏦 DEBUG: updateOrderPaymentStatus result:`, result);
