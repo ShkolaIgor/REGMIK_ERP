@@ -188,17 +188,43 @@ export function DataTable({
 
   // Initialize column order and settings
   useEffect(() => {
-    if (settings.columnOrder.length === 0) {
-      setSettings(prev => ({
-        ...prev,
-        columnOrder: columns.map(col => col.key),
-        columnSettings: columns.reduce((acc, col) => {
-          acc[col.key] = { ...defaultColumnSettings };
-          return acc;
-        }, {} as Record<string, ColumnSettings>)
-      }));
+    const currentColumnKeys = columns.map(col => col.key);
+    const existingKeys = settings.columnOrder;
+    
+    // Check if we need to add new columns or initialize from scratch
+    const missingColumns = currentColumnKeys.filter(key => !existingKeys.includes(key));
+    const hasNewColumns = missingColumns.length > 0;
+    const isEmpty = settings.columnOrder.length === 0;
+    
+    if (isEmpty || hasNewColumns) {
+      setSettings(prev => {
+        // For empty settings, use all columns
+        if (isEmpty) {
+          return {
+            ...prev,
+            columnOrder: currentColumnKeys,
+            columnSettings: currentColumnKeys.reduce((acc, col) => {
+              acc[col] = { ...defaultColumnSettings };
+              return acc;
+            }, {} as Record<string, ColumnSettings>)
+          };
+        }
+        
+        // For existing settings with new columns, add the new ones at the end
+        return {
+          ...prev,
+          columnOrder: [...prev.columnOrder, ...missingColumns],
+          columnSettings: {
+            ...prev.columnSettings,
+            ...missingColumns.reduce((acc, col) => {
+              acc[col] = { ...defaultColumnSettings };
+              return acc;
+            }, {} as Record<string, ColumnSettings>)
+          }
+        };
+      });
     }
-  }, [columns, settings.columnOrder.length]);
+  }, [columns]);
 
   // Optimized sort for large datasets
   const sortedData = useMemo(() => {
