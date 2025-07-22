@@ -250,30 +250,30 @@ export default function Orders() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Обробник зміни пошуку (скопійовано з робочої сторінки клієнтів)
-  const handleSearchChange = useCallback((value: string) => {
+  // Обробник зміни пошуку
+  const handleSearchChange = (value: string) => {
     setSearchTerm(value);
-  }, []);
+  };
 
-  // Стабільні обробники фільтрів
-  const handleStatusFilterChange = useCallback((value: string) => {
+  // Обробники фільтрів
+  const handleStatusFilterChange = (value: string) => {
     setStatusFilter(value);
-  }, []);
+  };
 
-  const handlePaymentFilterChange = useCallback((value: string) => {
+  const handlePaymentFilterChange = (value: string) => {
     setPaymentFilter(value);
-  }, []);
+  };
 
-  const handleDateRangeFilterChange = useCallback((value: string) => {
+  const handleDateRangeFilterChange = (value: string) => {
     setDateRangeFilter(value);
-  }, []);
+  };
 
-  const handleClearFilters = useCallback(() => {
+  const handleClearFilters = () => {
     setSearchTerm("");
     setStatusFilter("all");
     setPaymentFilter("all");
     setDateRangeFilter("all");
-  }, []);
+  };
 
   // Функція обробки перетягування стовпців
   const handleColumnDragEnd = (result: any) => {
