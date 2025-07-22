@@ -17,22 +17,12 @@ import { UkrainianDate } from "@/components/ui/ukrainian-date";
 import { UkrainianDatePicker } from "@/components/ui/ukrainian-date-picker";
 import { Plus, Eye, Edit, Trash2, ShoppingCart, Truck, Package, FileText, Check, ChevronsUpDown, GripVertical, ChevronUp, ChevronDown, Search, Filter, X, Settings, Palette, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, HandPlatter, DollarSign, Clock, TrendingUp, Printer, Mail } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { PartialShipmentDialog } from "@/components/PartialShipmentDialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { ClientForm } from "@/components/ClientForm";
-import { PaymentDialog } from "@/components/PaymentDialog";
-import DueDateButton from "@/components/DueDateButton";
 import { useSorting } from "@/hooks/useSorting";
-import { InlineSerialNumbers } from "@/components/InlineSerialNumbers";
-import { NovaPoshtaIntegration } from "@/components/NovaPoshtaIntegration";
-import { OrdersXmlImport } from "@/components/OrdersXmlImport";
-import { OrderItemsXmlImport } from "@/components/OrderItemsXmlImport";
-import { PrintPreviewModal } from "@/components/PrintPreviewModal";
-import ComponentDeductions from "@/components/ComponentDeductions";
 // Типи
 type Order = {
   id: number;
@@ -1942,7 +1932,7 @@ export default function Orders() {
   }
 
   return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         {/* Header Section */}
         <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
           <div className="w-full px-8 py-3">
@@ -1966,7 +1956,7 @@ export default function Orders() {
                 variant="outline"
                 onClick={() => setIsStatusSettingsOpen(!isStatusSettingsOpen)}
               >
-                <Settings className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-3002" />
+                <Settings className="w-4 h-4 mr-2" />
                 Налаштування статусів
               </Button>
               <div className="flex gap-2">
@@ -3054,9 +3044,8 @@ export default function Orders() {
                       <p className="text-gray-500 text-sm">Замовлення не містить товарів</p>
                     )}
                     
-                    {/* Списання компонентів */}
                     <div className="mt-6 border-t pt-4">
-                      <ComponentDeductions orderId={order.id} />
+                      <p className="text-sm text-gray-500">Деталі замовлення</p>
                     </div>
                   </div>
                 )}
@@ -3066,111 +3055,9 @@ export default function Orders() {
             )}
           </CardContent>
         </Card>
-       {/* </main> */}
       </div>
 
-      {/* Діалог часткового відвантаження */}
-      {selectedOrderForShipment && (
-        <PartialShipmentDialog
-          open={isPartialShipmentOpen}
-          onOpenChange={setIsPartialShipmentOpen}
-          orderId={selectedOrderForShipment.id}
-          orderNumber={selectedOrderForShipment.orderNumber}
-        />
-      )}
 
-      {/* Діалог для створення нового клієнта */}
-      <Dialog open={isCreateClientDialogOpen} onOpenChange={setIsCreateClientDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Створити нового клієнта</DialogTitle>
-            <DialogDescription>
-              Додайте повну інформацію про нового клієнта
-            </DialogDescription>
-          </DialogHeader>
-          <ClientForm
-            prefillName={newClientName}
-            onSubmit={handleCreateNewClient}
-            onCancel={() => {
-              setIsCreateClientDialogOpen(false);
-              setNewClientName("");
-            }}
-            isLoading={createClientMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Попередній перегляд друку */}
-      <PrintPreviewModal
-        isOpen={isPrintPreviewOpen}
-        onClose={() => setIsPrintPreviewOpen(false)}
-        printData={printData}
-        onPrint={handlePrint}
-      />
-
-      {/* Попередній перегляд друку */}
-      <PrintPreviewModal
-        isOpen={showPrintPreview}
-        onClose={() => setShowPrintPreview(false)}
-        printData={selectedOrderForPrint}
-        onPrint={(orderData) => {
-          if (orderData) {
-            // Викликаємо друк
-            console.log('Друк накладної для замовлення:', orderData);
-            // Тут може бути логіка відправки на принтер або відкриття PDF
-          }
-          setShowPrintPreview(false);
-          setSelectedOrderForPrint(null);
-        }}
-      />
-
-      {/* Діалог оновлення дати виконання */}
-      <Dialog open={isEditMode} onOpenChange={(open) => {
-        if (!open) {
-          setIsEditMode(false);
-          setEditingOrder(null);
-          setOrderItems([]);
-          form.reset();
-          setIsDialogOpen(false);
-        }
-      }}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle>
-              {editingOrder ? 'Редагувати замовлення' : 'Створити нове замовлення'}
-            </DialogTitle>
-            <DialogDescription>
-              {editingOrder ? 
-                'Внесіть зміни до замовлення та натисніть "Зберегти"' : 
-                'Заповніть форму для створення нового замовлення'
-              }
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="flex-1 overflow-y-auto">
-            <OrderForm
-              order={editingOrder}
-              onSuccess={(orderId) => {
-                setIsEditMode(false);
-                setEditingOrder(null);
-                setOrderItems([]);
-                form.reset();
-                setIsDialogOpen(false);
-                
-                queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-                queryClient.invalidateQueries({ queryKey: ['/api/products/ordered'] });
-                
-                toast({
-                  title: editingOrder ? "Замовлення оновлено" : "Замовлення створено",
-                  description: editingOrder ? 
-                    `Замовлення ${editingOrder.orderNumber} успішно оновлено` :
-                    "Нове замовлення успішно створено",
-                });
-              }}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Модальне вікно з формою замовлення */}
       <Dialog open={isDialogOpen} onOpenChange={(open) => {
@@ -3195,294 +3082,19 @@ export default function Orders() {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="flex-1 overflow-y-auto">
-            <OrderForm
-              order={editingOrder}
-              onSuccess={(orderId) => {
-                setIsDialogOpen(false);
-                setIsEditMode(false);
-                setEditingOrder(null);
-                setOrderItems([]);
-                form.reset();
-                
-                queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-                queryClient.invalidateQueries({ queryKey: ['/api/products/ordered'] });
-                
-                toast({
-                  title: editingOrder ? "Замовлення оновлено" : "Замовлення створено",
-                  description: editingOrder ? 
-                    `Замовлення ${editingOrder.orderNumber} успішно оновлено` :
-                    "Нове замовлення успішно створено",
-                });
-              }}
-            />
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="text-center">
+              <p className="text-gray-500">Форма редагування замовлень тимчасово недоступна</p>
+              <Button 
+                className="mt-4"
+                onClick={() => setIsDialogOpen(false)}
+              >
+                Закрити
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-                                <TableHead
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  className={`relative ${snapshot.isDragging ? 'bg-blue-100 shadow-lg' : ''}`}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing">
-                                      <GripVertical className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                                    </div>
-                                    {columnKey !== 'actions' ? (
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleSort(columnKey);
-                                        }}
-                                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
-                                      >
-                                        <span>{columnLabels[columnKey as keyof typeof columnLabels]}</span>
-                                        {sortConfig.field === columnKey && (
-                                          sortConfig.direction === 'asc' ? 
-                                            <ChevronUp className="w-4 h-4" /> : 
-                                            <ChevronDown className="w-4 h-4" />
-                                        )}
-                                      </button>
-                                    ) : (
-                                      <span>{columnLabels[columnKey as keyof typeof columnLabels]}</span>
-                                    )}
-                                  </div>
-                                </TableHead>
-                              )}
-                            </Draggable>
-                          ))}
-                          {provided.placeholder}
-                        </TableRow>
-                      )}
-                    </Droppable>
-                  </TableHeader>
-                  <TableBody>
-                    {orders.map((order: any) => [
-                      <TableRow 
-                        key={order.id}
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => toggleOrderExpansion(order.id)}
-                      >
-                        {columnOrder.map((columnKey: any) => (
-                          <TableCell key={columnKey}>
-                            {renderColumnContent(columnKey, order)}
-                          </TableCell>
-                        ))}
-                      </TableRow>,
-                      
-                      expandedOrderId === order.id && (
-                        <TableRow key={`expanded-${order.id}`}>
-                          <TableCell colSpan={columnOrder.length} className="bg-gray-50 p-0">
-                            <div className="p-4">
-                              <h4 className="font-medium mb-3">Склад замовлення:</h4>
-                              {order.items && order.items.length > 0 ? (
-                                <div className="space-y-4">
-                                  {order.items.map((item: any, index: number) => (
-                                    <div key={index} className="bg-white rounded border p-4 space-y-4">
-                                      <div className="flex justify-between items-center">
-                                        <div className="flex-1">
-                                          <span className="font-medium">{item.product?.name || 'Товар не знайдено'}</span>
-                                          <span className="text-sm text-gray-500 ml-2">({item.product?.sku})</span>
-                                        </div>
-                                        <div className="flex items-center space-x-4">
-                                          <span className="text-sm text-gray-600">
-                                            Кількість: <span className="font-medium">{item.quantity}</span>
-                                          </span>
-                                          <span className="text-sm text-gray-600">
-                                            Ціна: <span className="font-medium">{formatCurrency(item.unitPrice)}</span>
-                                          </span>
-                                          <span className="text-sm font-medium">
-                                            Всього: {formatCurrency(item.totalPrice)}
-                                          </span>
-                                        </div>
-                                      </div>
-                                      
-                                      {/* Компонент для прив'язки серійних номерів */}
-                                      {item.product?.hasSerialNumbers && (
-                                        <InlineSerialNumbers 
-                                          orderItemId={item.id}
-                                          productId={item.productId}
-                                          productName={item.product?.name || 'Невідомий товар'}
-                                          quantity={parseInt(item.quantity)}
-                                        />
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <p className="text-gray-500 text-sm">Замовлення не містить товарів</p>
-                              )}
-                              
-                              {/* Списання компонентів */}
-                              <div className="mt-6 border-t pt-4">
-                                <ComponentDeductions orderId={order.id} />
-                              </div>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    ]).flat()}
-                  </TableBody>
-                </Table>
-              </DragDropContext>
-
-              {orders.length > 0 && (
-                <div className="flex items-center justify-between p-4 border-t">
-                  <div className="flex items-center space-x-4">
-                    <p className="text-sm text-muted-foreground">
-                      Показано {((serverPagination.page - 1) * serverPagination.limit) + 1}-{Math.min(serverPagination.page * serverPagination.limit, totalServerRecords)} з {totalServerRecords} замовлень
-                    </p>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowPaginationSettings(!showPaginationSettings)}
-                      className="h-8"
-                    >
-                      <Settings className="h-4 w-4 mr-1" />
-                      Налаштування
-                    </Button>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    {showPaginationSettings && (
-                      <div className="flex items-center space-x-2 mr-4">
-                        <Label className="text-sm">Рядків на сторінці:</Label>
-                        <Select
-                          value={itemsPerPage.toString()}
-                          onValueChange={(value) => setItemsPerPage(Number(value))}
-                        >
-                          <SelectTrigger className="h-8 w-[80px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent side="top">
-                            {itemsPerPageOptions.map((pageSize) => (
-                              <SelectItem key={pageSize} value={pageSize.toString()}>
-                                {pageSize}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center space-x-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={goToFirstPage}
-                        disabled={serverPagination.page === 1}
-                        className="h-8 w-8 p-0"
-                        title="Перша сторінка"
-                      >
-                        <ChevronsLeft className="h-4 w-4" />
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={goToPreviousPage}
-                        disabled={serverPagination.page === 1}
-                        className="h-8 w-8 p-0"
-                        title="Попередня сторінка"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      
-                      <div className="flex items-center space-x-2 mx-2">
-                        <Input
-                          className="w-16 h-8 text-center"
-                          type="number"
-                          min={1}
-                          max={totalServerPages}
-                          value={serverPagination.page}
-                          onChange={(e) => {
-                            const page = parseInt(e.target.value);
-                            if (!isNaN(page)) {
-                              goToPage(page);
-                            }
-                          }}
-                        />
-                        <span className="text-sm text-muted-foreground whitespace-nowrap">
-                          з {totalServerPages}
-                        </span>
-                      </div>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={goToNextPage}
-                        disabled={serverPagination.page >= totalServerPages}
-                        className="h-8 w-8 p-0"
-                        title="Наступна сторінка"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={goToLastPage}
-                        disabled={serverPagination.page >= totalServerPages}
-                        className="h-8 w-8 p-0"
-                        title="Остання сторінка"
-                      >
-                        <ChevronsRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-              </>
-            )}
-          </CardContent>
-        </Card>
-       {/* </main> */}
-      </div>
-
-      {/* Діалог часткового відвантаження */}
-      {selectedOrderForShipment && (
-        <PartialShipmentDialog
-          open={isPartialShipmentOpen}
-          onOpenChange={setIsPartialShipmentOpen}
-          orderId={selectedOrderForShipment.id}
-          orderNumber={selectedOrderForShipment.orderNumber}
-        />
-      )}
-
-      {/* Діалог для створення нового клієнта */}
-      <Dialog open={isCreateClientDialogOpen} onOpenChange={setIsCreateClientDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Створити нового клієнта</DialogTitle>
-            <DialogDescription>
-              Додайте повну інформацію про нового клієнта
-            </DialogDescription>
-          </DialogHeader>
-          <ClientForm
-            prefillName={newClientName}
-            onSubmit={handleCreateNewClient}
-            onCancel={() => {
-              setIsCreateClientDialogOpen(false);
-              setNewClientName("");
-            }}
-            isLoading={createClientMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Попередній перегляд друку */}
-      <PrintPreviewModal
-        isOpen={isPrintPreviewOpen}
-        onClose={() => setIsPrintPreviewOpen(false)}
-        printData={printData}
-        orderId={printOrderId}
-      />
-    </div>
-    </div>
-        </div>
   );
 }
