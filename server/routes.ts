@@ -11032,6 +11032,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Детальна діагностика банківського моніторингу
+  app.post("/api/bank-email/detailed-check", isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log("🏦 ДЕТАЛЬНА ДІАГНОСТИКА: Початок повної перевірки банківського email моніторингу");
+      
+      const emailSettings = await storage.getEmailSettings();
+      console.log("🏦 ДЕТАЛЬНА ДІАГНОСТИКА: Налаштування отримано:", {
+        hasSettings: !!emailSettings,
+        bankMonitoringEnabled: emailSettings?.bankMonitoringEnabled,
+        hasBankEmailUser: !!emailSettings?.bankEmailUser,
+        bankEmailHost: emailSettings?.bankEmailHost,
+        bankEmailPort: emailSettings?.bankEmailPort,
+        bankSslEnabled: emailSettings?.bankSslEnabled
+      });
+      
+      await bankEmailService.checkForNewEmails();
+      
+      res.json({
+        success: true,
+        message: "Детальна діагностика завершена - перевірте консоль сервера для деталей",
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("❌ ДЕТАЛЬНА ДІАГНОСТИКА: Помилка:", error);
+      res.status(500).json({
+        success: false,
+        message: "Помилка детальної діагностики",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // API для перевірки оплат на пошті
   app.post('/api/orders/:id/check-post-payment', isSimpleAuthenticated, async (req, res) => {
     const startTime = Date.now();

@@ -344,13 +344,18 @@ export class BankEmailService {
               return;
             }
 
+            console.log(`🏦 Відкрито INBOX, всього повідомлень: ${box.messages.total}`);
+
             // Шукаємо нові email від банку за останні 24 години
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
             
+            const bankFromAddress = emailSettings.bankEmailAddress || 'noreply@ukrsib.com.ua';
+            console.log(`🏦 Пошук email за критеріями: від=${bankFromAddress}, з=${yesterday.toDateString()}, непрочитані`);
+            
             imap.search([
               'UNSEEN',
-              ['FROM', emailSettings.bankEmailAddress || 'noreply@ukrsib.com.ua'],
+              ['FROM', bankFromAddress],
               ['SINCE', yesterday]
             ], (err: any, results: any) => {
               if (err) {
@@ -360,14 +365,18 @@ export class BankEmailService {
                 return;
               }
 
+              console.log(`🏦 Результати пошуку email: знайдено ${results ? results.length : 0} повідомлень`);
+
               if (!results || results.length === 0) {
-                console.log("🏦 Нових банківських email не знайдено");
+                console.log("🏦 Нових банківських email не знайдено (перевірено INBOX за сьогодні)");
+                console.log(`🏦 Пошук завершено для: ${bankFromAddress} з ${yesterday.toDateString()}`);
                 imap.end();
                 resolve();
                 return;
               }
 
               console.log(`🏦 Знайдено ${results.length} нових банківських email`);
+              console.log(`🏦 Початок обробки email повідомлень...`);
 
               // Обробляємо кожен email
               const fetch = imap.fetch(results, { bodies: '', markSeen: true });
@@ -409,6 +418,7 @@ export class BankEmailService {
                     
                     if (processedCount === results.length) {
                       console.log(`🏦 Обробка завершена: ${processedCount}/${results.length} email`);
+                      console.log(`🏦 Усі банківські повідомлення оброблено успішно`);
                       imap.end();
                       resolve();
                     }
