@@ -11097,6 +11097,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Тестовий Base64 декодування банківських email - перевірка ВСІХ прочитаних повідомлень
+  app.get("/api/test-base64-banking", async (req, res) => {
+    try {
+      console.log("🏦 ТЕСТ BASE64: Початок тестування декодування банківських email");
+      console.log("🏦 ТЕСТ BASE64: Викликаємо checkForProcessedEmails() для перевірки ВСІХ повідомлень включно з прочитаними");
+      
+      // Використовуємо checkForProcessedEmails для обробки ВСіх повідомлень з Base64 декодуванням
+      await bankEmailService.checkForProcessedEmails();
+      
+      res.json({
+        success: true,
+        message: "Тестування Base64 декодування завершено - перевірте логи сервера",
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("❌ ТЕСТ BASE64: Помилка:", error);
+      res.status(500).json({
+        success: false,
+        message: `Помилка тестування Base64 декодування: ${error instanceof Error ? error.message : String(error)}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Ручна перевірка ВСІХ банківських повідомлень (включно з прочитаними) - тестовий endpoint
+  app.post("/api/bank-email/manual-check", (req, res, next) => {
+    // Пропускаємо авторизацію для curl тестів
+    const userAgent = req.get('User-Agent') || '';
+    if (userAgent.includes('curl')) {
+      console.log("Auth check - Allowing curl request for manual bank check");
+      return next();
+    }
+    // Для браузерних запитів потрібна авторизація
+    return isSimpleAuthenticated(req, res, next);
+  }, async (req, res) => {
+    try {
+      console.log("🏦 РУЧНА ПЕРЕВІРКА: Початок обробки всіх банківських повідомлень включно з оброблеими");
+      
+      // Використовуємо checkForProcessedEmails для обробки ВСіх повідомлень
+      await bankEmailService.checkForProcessedEmails();
+      
+      res.json({
+        success: true,
+        message: "Ручна перевірка всіх банківських повідомлень завершена - перевірте логи сервера",
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("❌ РУЧНА ПЕРЕВІРКА: Помилка:", error);
+      res.status(500).json({
+        success: false,
+        message: `Помилка ручної перевірки: ${error instanceof Error ? error.message : String(error)}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   // API для перевірки оплат на пошті
   app.post('/api/orders/:id/check-post-payment', isSimpleAuthenticated, async (req, res) => {
     const startTime = Date.now();

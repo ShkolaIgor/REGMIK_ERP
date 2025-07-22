@@ -419,18 +419,33 @@ export class BankEmailService {
                     // Використовуємо отриманий subject або fallback
                     const actualSubject = emailSubject || 'Банківське повідомлення';
                     
+                    // Декодуємо Base64 контент якщо потрібно
+                    let decodedContent = emailContent;
+                    try {
+                      // Перевіряємо чи це Base64 (типово починається з букв і цифр без пробілів)
+                      if (/^[A-Za-z0-9+/]+=*$/.test(emailContent.replace(/\s/g, ''))) {
+                        decodedContent = Buffer.from(emailContent, 'base64').toString('utf8');
+                        console.log(`🏦 Email ${seqno} декодовано з Base64`);
+                      }
+                    } catch (error) {
+                      console.log(`🏦 Email ${seqno} не потребує декодування Base64`);
+                      decodedContent = emailContent;
+                    }
+
+                    // Створюємо об'єкт email з декодованим вмістом
                     const mockEmail = {
                       messageId: `imap-${seqno}-${Date.now()}`,
                       subject: actualSubject,
                       fromAddress: emailSettings.bankEmailAddress || 'noreply@ukrsib.com.ua',
                       receivedAt: new Date(),
-                      textContent: emailContent
+                      textContent: decodedContent
                     };
 
                     console.log(`🏦 Готовий до обробки email ${seqno}:`);
                     console.log(`  Subject: ${actualSubject}`);
-                    console.log(`  Content length: ${emailContent.length} символів`);
-                    console.log(`  Content preview: ${emailContent.substring(0, 150)}...`);
+                    console.log(`  Original length: ${emailContent.length} символів`);
+                    console.log(`  Decoded length: ${decodedContent.length} символів`);
+                    console.log(`  Decoded preview: ${decodedContent.substring(0, 150)}...`);
 
                     const result = await this.processBankEmail(mockEmail);
                     
@@ -872,6 +887,202 @@ export class BankEmailService {
   }
 
 
+
+  /**
+   * Перевірка ВСіХ банківських повідомлень (включно з прочитаними)
+   */
+  async checkForProcessedEmails(): Promise<void> {
+    try {
+      const emailSettings = await storage.getEmailSettings();
+      
+      const bankEmailUser = emailSettings?.bankEmailUser || process.env.BANK_EMAIL_USER;
+      const bankEmailPassword = emailSettings?.bankEmailPassword || process.env.BANK_EMAIL_PASSWORD;
+      const bankEmailHost = emailSettings?.bankEmailHost || process.env.BANK_EMAIL_HOST || 'mail.regmik.ua';
+      const bankEmailPort = emailSettings?.bankEmailPort || parseInt(process.env.BANK_EMAIL_PORT || '993');
+      
+      if (!bankEmailUser || !bankEmailPassword) {
+        console.log("🏦 Відсутні налаштування банківського email");
+        return;
+      }
+
+      console.log("🏦 ОБРОБКА ПРОЧИТАНИХ: Підключення до IMAP для аналізу всіх банківських повідомлень...");
+
+      const imapConfig: any = {
+        user: bankEmailUser,
+        password: bankEmailPassword,
+        host: bankEmailHost,
+        port: bankEmailPort,
+        authTimeout: 15000,
+        connTimeout: 20000,
+        tlsOptions: {
+          rejectUnauthorized: false,
+          secureProtocol: 'TLSv1_2_method'
+        }
+      };
+
+      const bankSslEnabled = emailSettings?.bankSslEnabled ?? (bankEmailPort === 993);
+      imapConfig.tls = bankSslEnabled;
+
+      console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: IMAP налаштування: host=${bankEmailHost}, port=${bankEmailPort}, TLS=${imapConfig.tls}`);
+      
+      const { default: Imap } = await import('imap');
+      const imap = new Imap(imapConfig);
+
+      return new Promise((resolve, reject) => {
+        imap.once('ready', () => {
+          console.log("🏦 ОБРОБКА ПРОЧИТАНИХ: IMAP з'єднання встановлено");
+          
+          imap.openBox('INBOX', false, (err: any, box: any) => {
+            if (err) {
+              console.error("❌ ОБРОБКА ПРОЧИТАНИХ: Помилка відкриття INBOX:", err);
+              imap.end();
+              resolve();
+              return;
+            }
+
+            console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: INBOX відкрито, всього повідомлень: ${box.messages.total}`);
+
+            // Шукаємо ВСІ email від банку (включно з прочитаними) за останні 7 днів
+            const lastWeek = new Date();
+            lastWeek.setDate(lastWeek.getDate() - 7);
+            
+            const bankFromAddress = emailSettings.bankEmailAddress || 'online@ukrsibbank.com';
+            console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: Пошук за критеріями: від=${bankFromAddress}, за останні 7 днів (ВСІ повідомлення)`);
+            
+            imap.search([
+              ['FROM', bankFromAddress],
+              ['SINCE', lastWeek]
+              // НЕ додаємо 'UNSEEN' щоб отримати ВСІ повідомлення а не тільки непрочитані
+            ], (err: any, results: any) => {
+              if (err) {
+                console.error("❌ ОБРОБКА ПРОЧИТАНИХ: Помилка пошуку email:", err);
+                imap.end();
+                resolve();
+                return;
+              }
+
+              console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: Знайдено ${results ? results.length : 0} email від банку`);
+
+              if (!results || results.length === 0) {
+                console.log("🏦 ОБРОБКА ПРОЧИТАНИХ: Email від банку не знайдено");
+                imap.end();
+                resolve();
+                return;
+              }
+
+              // Обробляємо всі знайдені email
+              console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: Обробляємо ${results.length} email...`);
+
+              const fetch = imap.fetch(results, { 
+                bodies: 'TEXT',
+                struct: true,
+                markSeen: false // НЕ позначаємо як прочитані
+              });
+
+              let processedCount = 0;
+
+              fetch.on('message', (msg: any, seqno: any) => {
+                let emailContent = '';
+                let emailSubject = '';
+
+                msg.on('body', (stream: any, info: any) => {
+                  if (info.which === 'TEXT') {
+                    let buffer = '';
+                    stream.on('data', (chunk: any) => {
+                      buffer += chunk.toString('utf8');
+                    });
+                    
+                    stream.once('end', () => {
+                      emailContent = buffer;
+                      console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: Email ${seqno} - зміст отримано, довжина: ${buffer.length} символів`);
+                    });
+                  }
+                });
+
+                msg.once('attributes', (attrs: any) => {
+                  if (attrs.envelope && attrs.envelope.subject) {
+                    emailSubject = attrs.envelope.subject;
+                    console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: Email ${seqno} subject: ${emailSubject}`);
+                  }
+                });
+
+                msg.once('end', async () => {
+                  try {
+                    const actualSubject = emailSubject || 'Банківське повідомлення';
+                    
+                    // Декодуємо Base64 контент якщо потрібно
+                    let decodedContent = emailContent;
+                    try {
+                      if (/^[A-Za-z0-9+/]+=*$/.test(emailContent.replace(/\s/g, ''))) {
+                        decodedContent = Buffer.from(emailContent, 'base64').toString('utf8');
+                        console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: Email ${seqno} декодовано з Base64`);
+                      }
+                    } catch (error) {
+                      console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: Email ${seqno} не потребує декодування Base64`);
+                      decodedContent = emailContent;
+                    }
+
+                    const mockEmail = {
+                      messageId: `processed-${seqno}-${Date.now()}`,
+                      subject: actualSubject,
+                      fromAddress: emailSettings.bankEmailAddress || 'online@ukrsibbank.com',
+                      receivedAt: new Date(),
+                      textContent: decodedContent
+                    };
+
+                    console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: Готовий до обробки email ${seqno}:`);
+                    console.log(`  Subject: ${actualSubject}`);
+                    console.log(`  Original length: ${emailContent.length} символів`);
+                    console.log(`  Decoded length: ${decodedContent.length} символів`);
+                    console.log(`  Decoded preview: ${decodedContent.substring(0, 150)}...`);
+
+                    const result = await this.processBankEmail(mockEmail);
+                    
+                    if (result.success) {
+                      console.log(`🏦✅ ОБРОБКА ПРОЧИТАНИХ: Email ${seqno} оброблено успішно - ${result.message}`);
+                    } else {
+                      console.log(`🏦⚠️ ОБРОБКА ПРОЧИТАНИХ: Email ${seqno}: ${result.message}`);
+                    }
+
+                    processedCount++;
+                    
+                    if (processedCount === results.length) {
+                      console.log(`🏦 ОБРОБКА ПРОЧИТАНИХ: Завершено: ${processedCount}/${results.length} email оброблено`);
+                      imap.end();
+                      resolve();
+                    }
+                  } catch (error) {
+                    console.error(`❌ ОБРОБКА ПРОЧИТАНИХ: Помилка обробки email ${seqno}:`, error);
+                    processedCount++;
+                    
+                    if (processedCount === results.length) {
+                      imap.end();
+                      resolve();
+                    }
+                  }
+                });
+              });
+
+              fetch.once('error', (err: any) => {
+                console.error("❌ ОБРОБКА ПРОЧИТАНИХ: Помилка отримання email:", err);
+                imap.end();
+                resolve();
+              });
+            });
+          });
+        });
+
+        imap.once('error', (err: any) => {
+          console.error("❌ ОБРОБКА ПРОЧИТАНИХ: Помилка IMAP з'єднання:", err);
+          resolve();
+        });
+
+        imap.connect();
+      });
+    } catch (error) {
+      console.error("❌ ОБРОБКА ПРОЧИТАНИХ: Загальна помилка:", error);
+    }
+  }
 
   /**
    * Ручна обробка банківського повідомлення (для тестування)

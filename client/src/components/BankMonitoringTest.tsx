@@ -24,6 +24,38 @@ export function BankMonitoringTest() {
 З повагою,
 Укрсіббанк`);
 
+  // Тестування Base64 декодування - перевірка ВСІХ прочитаних повідомлень
+  const testBase64Mutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("/api/test-base64-banking", {
+        method: "GET",
+      });
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        toast({
+          title: "✅ Base64 декодування працює",
+          description: data.message,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "❌ Помилка Base64 декодування",
+          description: data.message,
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "❌ Помилка тестування Base64",
+        description: "Не вдалося протестувати Base64 декодування",
+        variant: "destructive",
+      });
+      console.error("Base64 test error:", error);
+    },
+  });
+
   // Тестування системи з реальним email зразком
   const testPresetMutation = useMutation({
     mutationFn: async () => {
@@ -129,6 +161,22 @@ export function BankMonitoringTest() {
               </div>
             </div>
           )}
+
+          {/* Тестування Base64 декодування */}
+          <div className="space-y-2">
+            <h4 className="font-semibold">Тестування Base64 декодування банківських email:</h4>
+            <Button
+              onClick={() => testBase64Mutation.mutate()}
+              disabled={testBase64Mutation.isPending}
+              className="w-full bg-purple-600 hover:bg-purple-700"
+            >
+              <TestTube className="w-4 h-4 mr-2" />
+              {testBase64Mutation.isPending ? "Обробка ВСІХ email..." : "Обробити всі банківські email (включно з прочитаними)"}
+            </Button>
+            <p className="text-sm text-gray-600">
+              Перевіряє та обробляє ВСІ банківські повідомлення за останній тиждень з Base64 декодуванням
+            </p>
+          </div>
 
           {/* Швидкий тест з прикладом */}
           <div className="space-y-2">
