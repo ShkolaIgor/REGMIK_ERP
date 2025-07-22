@@ -378,33 +378,59 @@ export class BankEmailService {
               console.log(`🏦 Знайдено ${results.length} нових банківських email`);
               console.log(`🏦 Початок обробки email повідомлень...`);
 
-              // Обробляємо кожен email
-              const fetch = imap.fetch(results, { bodies: '', markSeen: true });
+              // Обробляємо кожен email - отримуємо повний зміст
+              const fetch = imap.fetch(results, { 
+                bodies: 'TEXT', // Отримуємо текстову частину email
+                struct: true,
+                markSeen: true 
+              });
               let processedCount = 0;
 
               fetch.on('message', (msg: any, seqno: any) => {
                 let emailContent = '';
+                let emailSubject = '';
 
+                // Отримуємо заголовки
                 msg.on('body', (stream: any, info: any) => {
-                  let buffer = '';
-                  stream.on('data', (chunk: any) => {
-                    buffer += chunk.toString('utf8');
-                  });
-                  
-                  stream.once('end', () => {
-                    emailContent = buffer;
-                  });
+                  if (info.which === 'TEXT') {
+                    // Це текстовий зміст email
+                    let buffer = '';
+                    stream.on('data', (chunk: any) => {
+                      buffer += chunk.toString('utf8');
+                    });
+                    
+                    stream.once('end', () => {
+                      emailContent = buffer;
+                      console.log(`🏦 Отримано зміст email ${seqno}, довжина: ${buffer.length} символів`);
+                    });
+                  }
+                });
+
+                // Отримуємо атрибути повідомлення (subject, date тощо)
+                msg.once('attributes', (attrs: any) => {
+                  if (attrs.envelope && attrs.envelope.subject) {
+                    emailSubject = attrs.envelope.subject;
+                    console.log(`🏦 Email ${seqno} subject: ${emailSubject}`);
+                  }
                 });
 
                 msg.once('end', async () => {
                   try {
+                    // Використовуємо отриманий subject або fallback
+                    const actualSubject = emailSubject || 'Банківське повідомлення';
+                    
                     const mockEmail = {
                       messageId: `imap-${seqno}-${Date.now()}`,
-                      subject: 'Банківське повідомлення',
+                      subject: actualSubject,
                       fromAddress: emailSettings.bankEmailAddress || 'noreply@ukrsib.com.ua',
                       receivedAt: new Date(),
                       textContent: emailContent
                     };
+
+                    console.log(`🏦 Готовий до обробки email ${seqno}:`);
+                    console.log(`  Subject: ${actualSubject}`);
+                    console.log(`  Content length: ${emailContent.length} символів`);
+                    console.log(`  Content preview: ${emailContent.substring(0, 150)}...`);
 
                     const result = await this.processBankEmail(mockEmail);
                     
@@ -844,6 +870,8 @@ export class BankEmailService {
       return { success: false, message: `Помилка обробки платежу: ${errorMessage}` };
     }
   }
+
+
 
   /**
    * Ручна обробка банківського повідомлення (для тестування)

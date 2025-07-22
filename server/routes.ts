@@ -11064,6 +11064,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Тестування покращеного парсингу банківських email з ПРОЧИТАНИМИ повідомленнями
+  app.post("/api/bank-email/test-full-parsing", isSimpleAuthenticated, async (req, res) => {
+    try {
+      console.log("🏦 ТЕСТУВАННЯ: Початок тестування покращеного парсингу банківських email");
+      
+      const emailSettings = await storage.getEmailSettings();
+      if (!emailSettings?.bankEmailUser || !emailSettings?.bankEmailPassword) {
+        return res.status(400).json({
+          success: false,
+          message: "Банківські налаштування email не знайдені"
+        });
+      }
+
+      console.log("🏦 ТЕСТУВАННЯ: Викликаємо звичайний checkForNewEmails для перевірки покращеного парсингу");
+
+      // Викликаємо звичайний метод перевірки email
+      await bankEmailService.checkForNewEmails();
+      
+      res.json({
+        success: true,
+        message: "Тестування покращеного парсингу завершено - перевірте логи сервера",
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("❌ ТЕСТУВАННЯ: Помилка:", error);
+      res.status(500).json({
+        success: false,
+        message: "Помилка тестування парсингу",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // API для перевірки оплат на пошті
   app.post('/api/orders/:id/check-post-payment', isSimpleAuthenticated, async (req, res) => {
     const startTime = Date.now();
