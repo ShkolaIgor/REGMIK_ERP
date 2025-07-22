@@ -160,6 +160,7 @@ export default function Orders() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [paymentFilter, setPaymentFilter] = useState<string>("all");
   const [dateRangeFilter, setDateRangeFilter] = useState<string>("all");
@@ -591,12 +592,12 @@ export default function Orders() {
   });
 
   const { data: ordersResponse, isLoading } = useQuery({
-    queryKey: ["/api/orders", serverPagination.page, serverPagination.limit, searchTerm, statusFilter, paymentFilter, dateRangeFilter],
+    queryKey: ["/api/orders", serverPagination.page, serverPagination.limit, debouncedSearchTerm, statusFilter, paymentFilter, dateRangeFilter],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: serverPagination.page.toString(),
         limit: serverPagination.limit.toString(),
-        ...(searchTerm && { search: searchTerm }),
+        ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
         ...(statusFilter !== 'all' && { status: statusFilter }),
         ...(paymentFilter !== 'all' && { payment: paymentFilter }),
         ...(dateRangeFilter !== 'all' && { dateRange: dateRangeFilter })
@@ -647,10 +648,19 @@ export default function Orders() {
     queryKey: ["/api/carriers"],
   });
 
+  // Debounce для основного пошуку
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300мс затримка для пошуку замовлень
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   // Оновлення серверної пагінації при зміні фільтрів
   React.useEffect(() => {
     setServerPagination(prev => ({ ...prev, page: 1 }));
-  }, [searchTerm, statusFilter, paymentFilter, dateRangeFilter]);
+  }, [debouncedSearchTerm, statusFilter, paymentFilter, dateRangeFilter]);
 
   // Оновлення серверної пагінації при зміні itemsPerPage
   React.useEffect(() => {

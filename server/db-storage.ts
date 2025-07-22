@@ -14271,7 +14271,7 @@ export class DatabaseStorage implements IStorage {
         db
           .select({
             count: sql`count(*)`.mapWith(Number),
-            sum: sql`coalesce(sum(payment_amount), 0)`.mapWith(Number),
+            sum: sql`coalesce(sum(${orderPayments.paymentAmount}), 0)`.mapWith(Number),
           })
           .from(orderPayments)
           .where(eq(orderPayments.paymentStatus, 'confirmed')),
@@ -14279,18 +14279,18 @@ export class DatabaseStorage implements IStorage {
         db
           .select({
             count: sql`count(*)`.mapWith(Number),
-            sum: sql`coalesce(sum(payment_amount), 0)`.mapWith(Number),
+            sum: sql`coalesce(sum(${orderPayments.paymentAmount}), 0)`.mapWith(Number),
           })
           .from(orderPayments)
-          .where(sql`payment_date >= ${today} AND payment_status = 'confirmed'`),
+          .where(sql`${orderPayments.paymentDate} >= ${today} AND ${orderPayments.paymentStatus} = 'confirmed'`),
           
         db
           .select({
             count: sql`count(*)`.mapWith(Number),
-            sum: sql`coalesce(sum(payment_amount), 0)`.mapWith(Number),
+            sum: sql`coalesce(sum(${orderPayments.paymentAmount}), 0)`.mapWith(Number),
           })
           .from(orderPayments)
-          .where(sql`payment_date >= ${thisWeek} AND payment_status = 'confirmed'`)
+          .where(sql`${orderPayments.paymentDate} >= ${thisWeek} AND ${orderPayments.paymentStatus} = 'confirmed'`)
       ]);
 
       // Додаткові статистики для різних статусів та типів
