@@ -311,21 +311,21 @@ export class BankEmailService {
         }
       };
 
-      // Налаштування SSL/TLS залежно від порту
-      if (bankEmailPort === 993) {
-        // Порт 993 - IMAP over SSL
-        imapConfig.tls = true;
-      } else if (bankEmailPort === 143) {
-        // Порт 143 - IMAP plain або STARTTLS
-        imapConfig.tls = false;
+      // Перевіряємо налаштування SSL з бази даних
+      const bankSslEnabled = emailSettings?.bankSslEnabled ?? (bankEmailPort === 993);
+      
+      // Налаштування SSL/TLS
+      imapConfig.tls = bankSslEnabled;
+      
+      console.log(`🏦 SSL налаштування: ${bankSslEnabled ? 'увімкнено' : 'вимкнено'}`);
+      
+      // Автоматичні рекомендації за портом
+      if (bankEmailPort === 993 && !bankSslEnabled) {
+        console.log("⚠️ Увага: порт 993 зазвичай використовується з SSL");
+      } else if (bankEmailPort === 143 && bankSslEnabled) {
+        console.log("⚠️ Увага: порт 143 зазвичай використовується без SSL");
       } else if (bankEmailPort === 587) {
-        // Порт 587 - це SMTP, але спробуємо як IMAP з STARTTLS
-        imapConfig.tls = false;
         console.log("⚠️ Увага: порт 587 зазвичай для SMTP, але спробуємо IMAP");
-      } else {
-        // Для інших портів використовуємо без TLS
-        imapConfig.tls = false;
-        console.log(`🏦 Використовуємо порт ${bankEmailPort} без TLS`);
       }
 
       console.log(`🏦 IMAP конфігурація: порт=${bankEmailPort}, TLS=${imapConfig.tls}`);

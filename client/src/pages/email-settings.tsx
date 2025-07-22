@@ -38,7 +38,8 @@ export default function EmailSettings() {
       bankEmailPassword: "",
       bankEmailAddress: "",
       bankEmailHost: "",
-      bankEmailPort: 587,
+      bankEmailPort: 993,
+      bankSslEnabled: true,
       bankMonitoringEnabled: false,
     },
   });
@@ -59,7 +60,8 @@ export default function EmailSettings() {
         bankEmailPassword: emailSettings?.bankEmailPassword || "",
         bankEmailAddress: emailSettings?.bankEmailAddress || "",
         bankEmailHost: emailSettings?.bankEmailHost || "",
-        bankEmailPort: emailSettings?.bankEmailPort || 587,
+        bankEmailPort: emailSettings?.bankEmailPort || 993,
+        bankSslEnabled: emailSettings?.bankSslEnabled ?? true,
         bankMonitoringEnabled: emailSettings?.bankMonitoringEnabled || false,
       });
     }
@@ -380,6 +382,15 @@ export default function EmailSettings() {
                   </p>
                 )}
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="bankSslEnabled"
+                checked={Boolean(form.watch("bankSslEnabled"))}
+                onCheckedChange={(checked) => form.setValue("bankSslEnabled", checked)}
+              />
+              <Label htmlFor="bankSslEnabled">SSL підключення (використовувати порт 993)</Label>
             </div>
 
             <div className="flex items-center space-x-2">

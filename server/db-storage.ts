@@ -4350,6 +4350,7 @@ export class DatabaseStorage implements IStorage {
         bankEmailAddress: settings.bankEmailAddress,
         bankEmailHost: settings.bankEmailHost,
         bankEmailPort: settings.bankEmailPort,
+        bankSslEnabled: settings.bankSslEnabled,
         bankMonitoringEnabled: settings.bankMonitoringEnabled,
         createdAt: settings.createdAt,
         updatedAt: settings.updatedAt,
