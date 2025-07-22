@@ -173,11 +173,14 @@ export default function Payments() {
     {
       key: "paymentAmount",
       label: "Сума",
-      render: (value: any, row: any) => (
-        <div className="font-semibold text-green-600">
-          {Number(value).toLocaleString()} грн
-        </div>
-      ),
+      render: (value: any, row: any) => {
+        const amount = parseFloat(row.paymentAmount || value || "0");
+        return (
+          <div className="font-semibold text-green-600">
+            {amount.toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} грн
+          </div>
+        );
+      },
     },
     {
       key: "paymentType",
@@ -239,7 +242,7 @@ export default function Payments() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Сума платежу</label>
-                    <div className="font-semibold text-green-600">{Number(selectedPayment.paymentAmount).toLocaleString()} грн</div>
+                    <div className="font-semibold text-green-600">{parseFloat(selectedPayment.paymentAmount || "0").toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} грн</div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Тип платежу</label>
@@ -451,7 +454,6 @@ export default function Payments() {
             columns={columns} 
             data={filteredPayments} 
             loading={isLoading}
-            pageSize={20}
           />
         </CardContent>
       </Card>
