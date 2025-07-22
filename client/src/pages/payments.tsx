@@ -145,6 +145,7 @@ export default function Payments() {
     {
       key: "id",
       label: "№",
+      width: "60px",
       render: (value: any, row: any) => (
         <div className="font-medium">#{value}</div>
       ),
@@ -152,6 +153,7 @@ export default function Payments() {
     {
       key: "orderNumber",
       label: "Замовлення",
+      width: "120px",
       render: (value: any, row: any) => (
         <div className="font-medium text-blue-600">
           {value || `ID: ${row.orderId}`}
@@ -161,6 +163,7 @@ export default function Payments() {
     {
       key: "client",
       label: "Клієнт/Кореспондент",
+      width: "200px",
       render: (value: any, row: any) => (
         <div>
           <div className="font-medium">{row.clientName || "Не вказано"}</div>
@@ -173,6 +176,7 @@ export default function Payments() {
     {
       key: "paymentAmount",
       label: "Сума",
+      width: "120px",
       render: (value: any, row: any) => {
         const amount = parseFloat(row.paymentAmount || value || "0");
         return (
@@ -185,6 +189,7 @@ export default function Payments() {
     {
       key: "paymentType",
       label: "Тип платежу",
+      width: "120px",
       render: (value: any, row: any) => (
         <Badge variant="outline">{getTypeLabel(value)}</Badge>
       ),
@@ -454,6 +459,7 @@ export default function Payments() {
             columns={columns} 
             data={filteredPayments} 
             loading={isLoading}
+            storageKey="payments"
           />
         </CardContent>
       </Card>

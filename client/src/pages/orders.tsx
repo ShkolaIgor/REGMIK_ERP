@@ -1284,7 +1284,7 @@ export default function Orders() {
         client = order.client;
       } else {
         // Якщо нема в замовленні, шукаємо в загальному списку
-        const clientsArray = allClients?.clients || allClients || [];
+        const clientsArray = Array.isArray(allClients) ? allClients : (allClients?.clients || []);
         client = clientsArray.find((c: any) => c.id === order.clientId);
         
         // Якщо не знайшли, використовуємо данні зі спеціального запиту
