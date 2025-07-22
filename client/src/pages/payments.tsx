@@ -27,6 +27,8 @@ interface Payment {
   reference?: string;
   notes?: string;
   createdAt: string;
+  invoiceNumber?: string;
+  invoiceDate?: string;
 }
 
 interface PaymentStats {
@@ -133,17 +135,8 @@ export default function Payments() {
     }
   };
 
-  const filteredPayments = payments?.filter(payment => {
-    const matchesSearch = !searchTerm || 
-      payment.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.correspondent?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || payment.paymentStatus === statusFilter;
-    const matchesType = typeFilter === "all" || payment.paymentType === typeFilter;
-    
-    return matchesSearch && matchesStatus && matchesType;
-  }) || [];
+  // Дані фільтруються на backend, тому використовуємо їх напряму
+  const filteredPayments = payments || [];
 
   const columns = [
     {
@@ -200,6 +193,30 @@ export default function Payments() {
           </div>
         );
       },
+    },
+    {
+      key: "invoice",
+      label: "Рахунок",
+      width: 150,
+      render: (value: any, row: any) => (
+        <div className="text-sm">
+          {row.invoiceNumber && (
+            <>
+              <div className="font-medium">{row.invoiceNumber}</div>
+              {row.invoiceDate && (
+                <div className="text-gray-500 text-xs">
+                  {new Date(row.invoiceDate).toLocaleDateString('uk-UA', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  })}
+                </div>
+              )}
+            </>
+          )}
+          {!row.invoiceNumber && <span className="text-gray-400">—</span>}
+        </div>
+      ),
     },
     {
       key: "paymentType",
@@ -417,7 +434,7 @@ export default function Payments() {
             <div className="relative flex-1">
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Пошук за номером замовлення, клієнтом, кореспондентом..."
+                placeholder="Пошук за номером замовлення, клієнтом, кореспондентом, номером рахунку..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8"

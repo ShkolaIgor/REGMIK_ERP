@@ -9447,8 +9447,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all payments
   app.get("/api/payments", isSimpleAuthenticated, async (req, res) => {
     try {
+      const { search, status, type } = req.query;
       const payments = await storage.getAllPayments();
-      res.json(payments);
+      
+      let filteredPayments = payments;
+      
+      // Фільтрація за пошуковим терміном (включно з номером рахунку)
+      if (search) {
+        const searchTerm = search.toString().toLowerCase();
+        filteredPayments = filteredPayments.filter(payment => 
+          (payment.orderNumber && payment.orderNumber.toLowerCase().includes(searchTerm)) ||
+          (payment.clientName && payment.clientName.toLowerCase().includes(searchTerm)) ||
+          (payment.correspondent && payment.correspondent.toLowerCase().includes(searchTerm)) ||
+          (payment.invoiceNumber && payment.invoiceNumber.toLowerCase().includes(searchTerm))
+        );
+      }
+      
+      // Фільтрація за статусом
+      if (status && status !== 'all') {
+        filteredPayments = filteredPayments.filter(payment => payment.paymentStatus === status);
+      }
+      
+      // Фільтрація за типом платежу
+      if (type && type !== 'all') {
+        filteredPayments = filteredPayments.filter(payment => payment.paymentType === type);
+      }
+      
+      res.json(filteredPayments);
     } catch (error) {
       console.error("Error fetching payments:", error);
       res.status(500).json({ error: "Помилка отримання платежів" });

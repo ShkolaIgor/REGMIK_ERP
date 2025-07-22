@@ -4556,6 +4556,21 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`🏦 DEBUG: updateOrderPaymentStatus(orderId=${orderId}, paymentAmount=${paymentAmount}, paymentType=${paymentType})`);
       
+      // Перевіряємо чи вже існує платіж з цим bankNotificationId
+      if (bankNotificationId) {
+        const existingPayment = await db
+          .select()
+          .from(orderPayments)
+          .where(eq(orderPayments.bankNotificationId, bankNotificationId))
+          .limit(1);
+          
+        if (existingPayment.length > 0) {
+          console.log(`🏦 DEBUG: Payment for bank notification ${bankNotificationId} already exists, skipping duplicate`);
+          const order = await this.getOrder(orderId);
+          return { order: order!, payment: existingPayment[0] };
+        }
+      }
+      
       // Отримуємо замовлення
       const order = await this.getOrder(orderId);
       if (!order) {
@@ -14287,7 +14302,9 @@ export class DatabaseStorage implements IStorage {
           reference: orderPayments.reference,
           notes: orderPayments.notes,
           createdAt: orderPayments.createdAt,
-          bankNotificationId: orderPayments.bankNotificationId
+          bankNotificationId: orderPayments.bankNotificationId,
+          invoiceNumber: orders.invoiceNumber,
+          invoiceDate: orders.createdAt
         })
         .from(orderPayments)
         .leftJoin(orders, eq(orderPayments.orderId, orders.id))
